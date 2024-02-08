@@ -2,6 +2,7 @@ import { awscdk, javascript, typescript } from 'projen';
 import { JestOptions, PrettierOptions, TrailingComma, TypescriptConfigOptions } from 'projen/lib/javascript';
 import { pathsToModuleNameMapper } from 'ts-jest';
 import { setupProjectFolders } from './projenrc/easy-genomics-project-setup';
+import { Husky } from './projenrc/husky';
 import { Nx } from './projenrc/nx';
 import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
@@ -83,12 +84,31 @@ const root = new typescript.TypeScriptProject({
   release: false,
   devDeps: [
     '@aws-sdk/types',
+    '@commitlint/cli',
+    '@commitlint/config-conventional',
+    '@commitlint/cz-commitlint',
     '@types/aws-lambda',
     '@types/uuid',
+    '@typescript-eslint/eslint-plugin',
+    '@typescript-eslint/parser',
     'aws-cdk-lib',
     'aws-sdk-client-mock',
     'aws-sdk-client-mock-jest',
+    'cz-conventional-changelog',
+    'eslint',
+    'husky',
+    'lint-staged',
+    'validate-branch-name',
   ],
+});
+root.addScripts({
+  ['build']: 'pnpm nx run-many --targets=lint,test,build,nuxt-generate --all',
+  ['test']: 'pnpm nx run-many --targets=lint,compile,test --all',
+  ['deploy']: 'pnpm nx run-many --targets=lint,test,build,nuxt-generate,deploy --all',
+  ['build-back-end']: 'pnpm nx run-many --targets=lint,test,build --projects=@easy-genomics/back-end',
+  ['build-front-end']: 'pnpm nx run-many --targets=lint,test,build,nuxt-generate --projects=@easy-genomics/front-end',
+  ['build-shared-lib']: 'pnpm nx run-many --targets=lint,test,build --projects=@easy-genomics/shared-lib',
+  ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
 });
 
 // Defines the Easy Genomics 'shared-lib' subproject
@@ -186,7 +206,8 @@ frontEndApp.addScripts({
 
 new PnpmWorkspace(root);
 new VscodeSettings(root);
-new Nx(root); // add nx to root
+new Nx(root);
+new Husky(root);
 
 // Provision templated project folders structure with README.md descriptions.
 setupProjectFolders(root);

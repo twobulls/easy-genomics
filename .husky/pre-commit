@@ -1,0 +1,2 @@
+# pre-commit hook file
+pnpm exec validate-branch-name

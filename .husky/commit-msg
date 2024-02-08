@@ -1,0 +1,2 @@
+# commit-msg hook file
+pnpm exec commitlint --edit $1

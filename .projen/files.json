@@ -5,6 +5,8 @@
     ".github/pull_request_template.md",
     ".github/workflows/pull-request-lint.yml",
     ".gitignore",
+    ".husky/commit-msg",
+    ".husky/pre-commit",
     ".npmignore",
     ".npmrc",
     ".prettierignore",

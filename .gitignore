@@ -45,6 +45,8 @@ jspm_packages/
 !/pnpm-workspace.yaml
 !/.vscode/settings.json
 !/nx.json
+!/.husky/commit-msg
+!/.husky/pre-commit
 !/packages/back-end/src/app/README.md
 !/packages/back-end/src/app/controllers/README.md
 !/packages/back-end/src/app/controllers/easy-genomics/README.md

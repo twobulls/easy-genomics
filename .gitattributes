@@ -6,6 +6,8 @@
 /.github/pull_request_template.md linguist-generated
 /.github/workflows/pull-request-lint.yml linguist-generated
 /.gitignore linguist-generated
+/.husky/commit-msg linguist-generated
+/.husky/pre-commit linguist-generated
 /.npmignore linguist-generated
 /.npmrc linguist-generated
 /.prettierignore linguist-generated

@@ -5,6 +5,18 @@
       "type": "build"
     },
     {
+      "name": "@commitlint/cli",
+      "type": "build"
+    },
+    {
+      "name": "@commitlint/config-conventional",
+      "type": "build"
+    },
+    {
+      "name": "@commitlint/cz-commitlint",
+      "type": "build"
+    },
+    {
       "name": "@nrwl/devkit",
       "version": "^15",
       "type": "build"
@@ -59,6 +71,10 @@
       "type": "build"
     },
     {
+      "name": "cz-conventional-changelog",
+      "type": "build"
+    },
+    {
       "name": "eslint-config-prettier",
       "type": "build"
     },
@@ -80,7 +96,15 @@
       "type": "build"
     },
     {
+      "name": "husky",
+      "type": "build"
+    },
+    {
       "name": "jest",
+      "type": "build"
+    },
+    {
+      "name": "lint-staged",
       "type": "build"
     },
     {
@@ -106,6 +130,10 @@
     },
     {
       "name": "typescript",
+      "type": "build"
+    },
+    {
+      "name": "validate-branch-name",
       "type": "build"
     }
   ],

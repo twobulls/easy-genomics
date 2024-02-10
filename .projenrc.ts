@@ -108,6 +108,10 @@ root.addScripts({
   ['build-back-end']: 'pnpm nx run-many --targets=lint,test,build --projects=@easy-genomics/back-end',
   ['build-front-end']: 'pnpm nx run-many --targets=lint,test,build,nuxt-generate --projects=@easy-genomics/front-end',
   ['build-shared-lib']: 'pnpm nx run-many --targets=lint,test,build --projects=@easy-genomics/shared-lib',
+  ['deploy-back-end']:
+    'pnpm nx run-many --targets=lint,test,build,deploy --projects=@easy-genomics/back-end,@easy-genomics/shared-lib',
+  ['deploy-front-end']:
+    'pnpm nx run-many --targets=lint,test,build,nuxt-generate,deploy --projects=@easy-genomics/front-end,@easy-genomics/shared-lib',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
 });
 

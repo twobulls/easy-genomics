@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This open-source web application project aims to help simplify genomic analysis of sequenced genetic data for bioinformaticians utilizing AWS HealthOmics & NextFlow Tower. This project is an initiative of the University of Wisconsin Madison, Wisconsin State Laboratory of Hygiene (WSLH), AWS HealthOmics, and the US Centers for Disease Control (CDC).
+This open-source web application project aims to help simplify genomic analysis of sequenced genetic data for bioinformaticians utilizing AWS HealthOmics & NextFlow Tower. This project is an initiative of the Wisconsin State Laboratory of Hygiene (WSLH), AWS HealthOmics, and the US Centers for Disease Control and Prevention (CDC).
 
 This web application has been designed to work on AWS Cloud Infrastructure and utilises:
 * AWS CDK leveraging CloudFormation for Infrastructure-as-Code (IaC)

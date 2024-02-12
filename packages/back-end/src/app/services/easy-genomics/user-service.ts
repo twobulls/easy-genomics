@@ -1,7 +1,7 @@
 import { DeleteItemCommandOutput, GetItemCommandOutput, PutItemCommandOutput, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
 import { ResponseMetadata } from '@aws-sdk/types';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/user';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class UserService extends DynamoDBService {

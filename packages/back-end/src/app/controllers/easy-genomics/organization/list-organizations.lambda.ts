@@ -1,4 +1,4 @@
-import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/organization';
+import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationService } from '../../../services/easy-genomics/organization-service';

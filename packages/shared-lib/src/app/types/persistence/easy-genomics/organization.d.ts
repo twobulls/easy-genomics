@@ -17,7 +17,7 @@
  *   ModifiedBy?: <string>,
  * }
  */
-import { BaseAttributes } from './base-entity';
+import { BaseAttributes } from '../base-entity';
 
 export interface Organization extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (UUID)

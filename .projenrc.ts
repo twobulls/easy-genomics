@@ -101,17 +101,19 @@ const root = new typescript.TypeScriptProject({
     'validate-branch-name',
   ],
 });
+root.removeScript('build');
+root.removeScript('deploy');
 root.addScripts({
-  ['build']: 'pnpm nx run-many --targets=lint,test,build,nuxt-generate --all',
-  ['test']: 'pnpm nx run-many --targets=lint,compile,test --all',
-  ['deploy']: 'pnpm nx run-many --targets=lint,test,build,nuxt-generate,deploy --all',
-  ['build-back-end']: 'pnpm nx run-many --targets=lint,test,build --projects=@easy-genomics/back-end',
-  ['build-front-end']: 'pnpm nx run-many --targets=lint,test,build,nuxt-generate --projects=@easy-genomics/front-end',
-  ['build-shared-lib']: 'pnpm nx run-many --targets=lint,test,build --projects=@easy-genomics/shared-lib',
+  ['build-all']: 'pnpm nx run-many --targets=eslint,test,build,nuxt-generate --all',
+  ['test-all']: 'pnpm nx run-many --targets=eslint,compile,test --all',
+  ['deploy-all']: 'pnpm nx run-many --targets=test,build,nuxt-generate,deploy --all',
+  ['build-back-end']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/back-end',
+  ['build-front-end']: 'pnpm nx run-many --targets=eslint,test,build,nuxt-generate --projects=@easy-genomics/front-end',
+  ['build-shared-lib']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/shared-lib',
   ['deploy-back-end']:
-    'pnpm nx run-many --targets=lint,test,build,deploy --projects=@easy-genomics/back-end,@easy-genomics/shared-lib',
+    'pnpm nx run-many --targets=test,build,deploy --projects=@easy-genomics/back-end,@easy-genomics/shared-lib',
   ['deploy-front-end']:
-    'pnpm nx run-many --targets=lint,test,build,nuxt-generate,deploy --projects=@easy-genomics/front-end,@easy-genomics/shared-lib',
+    'pnpm nx run-many --targets=test,build,nuxt-generate,deploy --projects=@easy-genomics/front-end,@easy-genomics/shared-lib',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
 });
 

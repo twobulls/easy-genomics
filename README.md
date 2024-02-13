@@ -61,24 +61,28 @@ The following steps provide a quick start local development guide:
    HOSTED_ZONE_NAME=<AWS Route53 Hosted Zone Name>
    CERTIFICATE_ARN=<AWS Certificate ARN>             // AWS Certificate ARN for Wildcard SSL Certificate e.g. *.easy-genomics.myinstitution.org
    ````
-7. Run `pnpm build` to build the entire Easy Genomics web application which will run linting, tests, and build for each of the sub-projects:
+7. Run `pnpm build-all` to build the entire Easy Genomics web application, which will run eslint, tests, and build for each of the sub-projects:
    ````
-   [easy-genomics]$ pnpm build
+   [easy-genomics]$ pnpm build-all
    ````
-8. Run `pnpm deploy` to deploy the entire Easy Genomics web application to the configured AWS Account & Region:
+8. Run `pnpm test-all` to test the entire Easy Genomics web application, which will run eslint, compilation, and tests for each of the sub-projects:
    ````
-   [easy-genomics]$ pnpm deploy
+   [easy-genomics]$ pnpm test-all
    ````
-9. If you wish to only focus development on either the `back-end` or `front-end` sub-project you are able to do so by the following commands which will automatically include the `shared-lib` dependency:
+9. Run `pnpm deploy-all` to deploy the entire Easy Genomics web application to the configured AWS Account & Region:
    ````
-   [easy-genomics]$ pnpm build-back-end      // Executes linting, tests, and builds the back-end sub-project with the shared-lib dependency 
+   [easy-genomics]$ pnpm deploy-all
+   ````
+10. If you wish to only focus development on either the `back-end` or `front-end` sub-project you are able to do so by the following commands which will automatically include the `shared-lib` dependency:
+   ````
+   [easy-genomics]$ pnpm build-back-end      // Executes eslint, tests, and builds the back-end sub-project with the shared-lib dependency 
     
-   [easy-genomics]$ pnpm deploy-back-end     // Executes linting, tests, builds, and deploys the back-end resources to the configured AWS Account & Region
+   [easy-genomics]$ pnpm deploy-back-end     // Executes tests, builds, and deploys the back-end resources to the configured AWS Account & Region
    
    
-   [easy-genomics]$ pnpm build-front-end     // Executes linting, tests, builds, and generates static site contents for the front-end sub-project with the shared-lib dependency
+   [easy-genomics]$ pnpm build-front-end     // Executes eslint, tests, builds, and generates static site contents for the front-end sub-project with the shared-lib dependency
 
-   [easy-genomics]$ pnpm deploy-front-end    // Executes linting, tests, builds, generates static site contents, and deploys the front-end resources to the AWS Account & Region
+   [easy-genomics]$ pnpm deploy-front-end    // Executes tests, builds, generates static site contents, and deploys the front-end resources to the AWS Account & Region
    ````
 
 ## Contributions

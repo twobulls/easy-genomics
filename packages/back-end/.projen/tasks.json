@@ -165,13 +165,13 @@
       },
       "steps": [
         {
-          "exec": "pnpx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@aws-sdk/util-dynamodb,@types/aws-lambda,@types/jest,@types/node,@typescript-eslint/eslint-plugin,@typescript-eslint/parser,aws-cdk,aws-sdk-client-mock,esbuild,eslint-import-resolver-typescript,eslint-plugin-import,eslint,jest,jest-junit,projen,ts-jest,ts-node,typescript,@aws-sdk/client-dynamodb,@aws-sdk/lib-dynamodb,aws-cdk-lib,aws-lambda,aws-sdk,constructs,dotenv"
+          "exec": "pnpx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@aws-sdk/util-dynamodb,@types/aws-lambda,@types/jest,aws-sdk-client-mock,esbuild,eslint-import-resolver-typescript,eslint-plugin-import,jest,projen,ts-jest,ts-node,typescript,@aws-sdk/client-dynamodb,@aws-sdk/lib-dynamodb,@easy-genomics/shared-lib,aws-lambda,aws-sdk,dotenv"
         },
         {
           "exec": "pnpm i --no-frozen-lockfile"
         },
         {
-          "exec": "pnpm update @aws-sdk/types @aws-sdk/util-dynamodb @types/aws-lambda @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk aws-sdk-client-mock esbuild eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit projen ts-jest ts-node typescript @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb aws-cdk-lib aws-lambda aws-sdk constructs dotenv"
+          "exec": "pnpm update @aws-sdk/types @aws-sdk/util-dynamodb @types/aws-lambda @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk aws-sdk-client-mock esbuild eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit projen ts-jest ts-node typescript @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb @easy-genomics/shared-lib aws-cdk-lib aws-lambda aws-sdk constructs dotenv"
         },
         {
           "exec": "pnpm dlx projen"

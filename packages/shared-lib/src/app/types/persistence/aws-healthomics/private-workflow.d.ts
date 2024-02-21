@@ -18,6 +18,7 @@ import { BaseAttributes } from '../base-entity';
 export interface PrivateWorkflow extends BaseAttributes {
   Url: string; // DynamoDB Partition Key (String)
   Version: string; // DynamoDB Sort Key (String)
+  Id: string; // DynamoDB Global Secondary Index (String)
   Status?: WorkflowStatus;
   EfsVolumeUri?: string;
 }

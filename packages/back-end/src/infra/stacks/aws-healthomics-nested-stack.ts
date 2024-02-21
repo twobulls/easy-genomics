@@ -42,6 +42,12 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
           name: 'Version', // Workflow Release Version
           type: AttributeType.STRING,
         },
+        gsi: [{
+          partitionKey: {
+            name: 'Id', // Global Secondary Index to support REST API get / update / delete requests
+            type: AttributeType.STRING,
+          },
+        }],
       },
       this.props.devEnv,
     );

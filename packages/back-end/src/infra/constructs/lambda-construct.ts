@@ -1,24 +1,23 @@
 import * as fs from 'fs';
 import path from 'path';
-import { AssociativeArray } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { AssociativeArray, HttpRequest } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { toPascalCase } from '@easy-genomics/shared-lib/src/app/utils/string-utils';
-import { aws_lambda, aws_lambda_nodejs, Duration, StackProps } from 'aws-cdk-lib';
+import { aws_lambda, aws_lambda_nodejs, Duration } from 'aws-cdk-lib';
 import {
   JsonSchema,
   LambdaIntegration,
   Resource,
-  RestApi,
   CognitoUserPoolsAuthorizer,
 } from 'aws-cdk-lib/aws-apigateway';
-import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { IEventSource, IFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
+import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
-export interface LambdaConstructProps extends StackProps {
-  restApi: RestApi;
-  userPool: UserPool;
+export const LAMBDA_FUNCTION_ROOT_DIR = 'src/app/controllers'; // DO NOT CHANGE
+
+export interface LambdaConstructProps extends EasyGenomicsNestedStackProps {
   lambdaFunctionsDir: string;
   lambdaFunctionsNamespace: string;
   lambdaFunctionsResources: {
@@ -32,10 +31,9 @@ export interface LambdaConstructProps extends StackProps {
 }
 
 interface LambdaFunctionsResources {
-  policies?: PolicyStatement[];
   schemas?: JsonSchema[];
   events?: IEventSource[];
-  misc?: ((fn: IFunction) => void)[];
+  callbacks?: ((fn: IFunction) => void)[];
   environment?: {
     // Specific process.env settings
     [key: string]: string;
@@ -43,19 +41,23 @@ interface LambdaFunctionsResources {
 }
 
 // List of allowed Lambda Function operation with respective REST API command mapping
-export enum ALLOWED_LAMBDA_FUNCTION_OPERATIONS {
-  create = 'POST',
-  abort = 'POST',
-  complete = 'POST',
-  request = 'POST',
-  list = 'GET', // List multiple records
-  read = 'GET', // Read single record
-  update = 'PUT',
-  cancel = 'PUT',
-  patch = 'PATCH',
-  delete = 'DELETE',
-  process = 'None', // Generic operation not mapped to REST API (e.g. S3 Event Trigger, etc.)
-}
+const ALLOWED_LAMBDA_FUNCTION_OPERATIONS: AssociativeArray<HttpRequest> = {
+  ['create']: 'POST',
+  ['request']: 'POST',
+  ['list']: 'GET', // List multiple records
+  ['read']: 'GET',
+  ['update']: 'PUT',
+  ['patch']: 'PATCH',
+  ['delete']: 'DELETE',
+};
+
+// List of allowed Lambda Function operations requiring path parameter 'id' for specific resource
+const ALLOWED_LAMBDA_FUNCTION_OPERATIONS_WITH_RESOURCE_ID: AssociativeArray<HttpRequest> = {
+  ['read']: 'GET', // Read specific record
+  ['update']: 'PUT', // Update specific record
+  ['patch']: 'PATCH', // Patch specific record
+  ['delete']: 'DELETE', // Delete specific record
+};
 
 export class LambdaConstruct extends Construct {
   private props: LambdaConstructProps;
@@ -69,10 +71,9 @@ export class LambdaConstruct extends Construct {
       cognitoUserPools: [this.props.userPool],
     });
 
-    // Find all existing Lambda Functions within specified lambdaFunctionsDir
+    // Find all existing Lambda Functions within specified lambdaFunctionsDir and register them as REST APIs with API Gateway / Event Triggers
     this.getLambdaFunctions(path.join(__dirname, `../../../${this.props.lambdaFunctionsDir}`)).map(
       (lambdaFunction: AssociativeArray<string>) => {
-        // Register Lambda Function with API Gateway REST API
         this.registerLambdaFunction(lambdaFunction);
       },
     );
@@ -97,7 +98,7 @@ export class LambdaConstruct extends Construct {
     const lambdaHandlerName: string = path.parse(lambdaFunction.path).name; // Removes .ts
     const lambdaName: string = path.parse(lambdaHandlerName).name; // Removes .lambda
     const lambdaId: string = `${this.props.lambdaFunctionsNamespace}-${lambdaName}`;
-    const lambdaApiDir = `${lambdaPath.split(this.props.lambdaFunctionsDir)[1]}`;
+    const lambdaApiDir: string = lambdaPath.split(LAMBDA_FUNCTION_ROOT_DIR).pop() || '';
     const lambdaApiEndpoint: string = `${lambdaApiDir}/${lambdaName}`;
 
     const commonProcessEnv = this.props.environment || undefined;
@@ -125,112 +126,38 @@ export class LambdaConstruct extends Construct {
       },
     });
 
-    // Attach relevant IAM policies to Lambda Function matching specific API Endpoint or the associated parent API Dir
-    if (this.props.lambdaFunctionsResources[lambdaApiEndpoint]) {
-      // e.g. /omics-storage/create-reference-store
-      this.props.lambdaFunctionsResources[lambdaApiEndpoint].policies?.map((policyStatement: PolicyStatement) => {
-        lambdaHandler.addToRolePolicy(policyStatement);
-      });
-
-      if (lambdaFunction.command === 'process') {
-        this.props.lambdaFunctionsResources[lambdaApiEndpoint].events?.map((eventSource: IEventSource) => {
-          // Register Lambda Function Event Source Listeners/Triggers
-          lambdaHandler.addEventSource(eventSource);
-        });
-      }
-
-      this.props.lambdaFunctionsResources[lambdaApiEndpoint].misc?.forEach((callback) => {
-        callback(lambdaHandler);
-      });
-    } else if (this.props.lambdaFunctionsResources[lambdaApiDir]) {
-      // e.g. /omics-storage
-      this.props.lambdaFunctionsResources[lambdaApiDir].policies?.map((policyStatement: PolicyStatement) => {
-        lambdaHandler.addToRolePolicy(policyStatement);
-      });
+    // Attach relevant IAM policies to Lambda Function matching specific API Endpoint
+    const iamPolicyStatement: PolicyStatement | undefined = this.props.iamPolicyStatements.get(lambdaApiEndpoint);
+    if (iamPolicyStatement) {
+      console.debug(`Attaching IAM Policy to REST API Endpoint / Lambda Function: ${lambdaApiEndpoint} <- ${JSON.stringify(iamPolicyStatement)}`);
+      lambdaHandler.addToRolePolicy(iamPolicyStatement);
     }
 
-    if (lambdaFunction.command !== 'process') {
+    if (lambdaFunction.command === 'process') {
+      // Register Event Source Listeners/Triggers for the respective Lambda function
+      this.props.lambdaFunctionsResources[lambdaApiEndpoint].events?.map((eventSource: IEventSource) => {
+        lambdaHandler.addEventSource(eventSource);
+      });
+
+      // Register Callback Functions for the respective Lambda function
+      this.props.lambdaFunctionsResources[lambdaApiEndpoint].callbacks?.map((callback) => {
+        callback(lambdaHandler);
+      });
+    } else {
       // Register Lambda Function Endpoint with API Gateway REST API
       const pathResource = this.props.restApi.root.resourceForPath(lambdaApiEndpoint);
       // Attach REST API Request methods for the respective Lambda function
-      switch (lambdaFunction.command) {
-        case 'create': {
-          pathResource.addMethod(ALLOWED_LAMBDA_FUNCTION_OPERATIONS.create, new LambdaIntegration(lambdaHandler), {
-            authorizer: this.authorizer,
-          });
-          break;
-        }
-        case 'abort': {
-          pathResource.addMethod(ALLOWED_LAMBDA_FUNCTION_OPERATIONS.abort, new LambdaIntegration(lambdaHandler), {
-            authorizer: this.authorizer,
-          });
-          break;
-        }
-        case 'complete': {
-          pathResource.addMethod(ALLOWED_LAMBDA_FUNCTION_OPERATIONS.complete, new LambdaIntegration(lambdaHandler), {
-            authorizer: this.authorizer,
-          });
-          break;
-        }
-        case 'request': {
-          pathResource.addMethod(ALLOWED_LAMBDA_FUNCTION_OPERATIONS.request, new LambdaIntegration(lambdaHandler), {
-            authorizer: this.authorizer,
-          });
-          break;
-        }
-        case 'list': {
-          pathResource.addMethod(ALLOWED_LAMBDA_FUNCTION_OPERATIONS.list, new LambdaIntegration(lambdaHandler), {
-            authorizer: this.authorizer,
-          });
-          break;
-        }
-        case 'read': {
-          const pathResourceWithId: Resource = pathResource.addResource('{id}');
-          pathResourceWithId.addMethod(ALLOWED_LAMBDA_FUNCTION_OPERATIONS.read, new LambdaIntegration(lambdaHandler), {
-            authorizer: this.authorizer,
-          });
-          break;
-        }
-        case 'update': {
-          const pathResourceWithId: Resource = pathResource.addResource('{id}');
-          pathResourceWithId.addMethod(
-            ALLOWED_LAMBDA_FUNCTION_OPERATIONS.update,
-            new LambdaIntegration(lambdaHandler),
-            {
-              authorizer: this.authorizer,
-            },
-          );
-          break;
-        }
-        case 'cancel': {
-          const pathResourceWithId: Resource = pathResource.addResource('{id}');
-          pathResourceWithId.addMethod(
-            ALLOWED_LAMBDA_FUNCTION_OPERATIONS.cancel,
-            new LambdaIntegration(lambdaHandler),
-            {
-              authorizer: this.authorizer,
-            },
-          );
-          break;
-        }
-        case 'patch': {
-          const pathResourceWithId: Resource = pathResource.addResource('{id}');
-          pathResourceWithId.addMethod(ALLOWED_LAMBDA_FUNCTION_OPERATIONS.patch, new LambdaIntegration(lambdaHandler), {
-            authorizer: this.authorizer,
-          });
-          break;
-        }
-        case 'delete': {
-          const pathResourceWithId: Resource = pathResource.addResource('{id}');
-          pathResourceWithId.addMethod(
-            ALLOWED_LAMBDA_FUNCTION_OPERATIONS.delete,
-            new LambdaIntegration(lambdaHandler),
-            { authorizer: this.authorizer },
-          );
-          break;
-        }
-        default:
-          throw new Error(`Unsupported REST API Command: ${lambdaFunction.command}`);
+      if (lambdaFunction.command in ALLOWED_LAMBDA_FUNCTION_OPERATIONS_WITH_RESOURCE_ID) {
+        const pathResourceWithId: Resource = pathResource.addResource('{id}');
+        pathResourceWithId.addMethod(
+          ALLOWED_LAMBDA_FUNCTION_OPERATIONS_WITH_RESOURCE_ID[lambdaFunction.command],
+          new LambdaIntegration(lambdaHandler),
+          { authorizer: this.authorizer });
+      } else {
+        pathResource.addMethod(
+          ALLOWED_LAMBDA_FUNCTION_OPERATIONS[lambdaFunction.command],
+          new LambdaIntegration(lambdaHandler),
+          { authorizer: this.authorizer });
       }
     }
   };
@@ -241,7 +168,8 @@ export class LambdaConstruct extends Construct {
    * registering with API Gateway.
    *
    * The Lambda function definitions must start with a support REST API command
-   * as defined by ALLOWED_LAMBDA_FUNCTION_OPERATIONS and end with '.lambda.ts'.
+   * as defined by ALLOWED_LAMBDA_FUNCTION_OPERATIONS or starts with 'process',
+   * and ends with '.lambda.ts'.
    *
    * @param directory
    * @param lambdaFunctions
@@ -252,16 +180,16 @@ export class LambdaConstruct extends Construct {
   ): AssociativeArray<string>[] => {
     const filesInDirectory: string[] = fs.readdirSync(directory);
     for (const file of filesInDirectory) {
-      const absolute: string = path.join(directory, file);
-      if (fs.statSync(absolute).isDirectory()) {
-        this.getLambdaFunctions(absolute, lambdaFunctions);
+      const absolutePath: string = path.join(directory, file);
+      if (fs.statSync(absolutePath).isDirectory()) {
+        this.getLambdaFunctions(absolutePath, lambdaFunctions);
       } else {
         if (file.endsWith('.lambda.ts')) {
           const lambdaRestApiCommand: string = file.split('-', 1).pop()!;
-          if (lambdaRestApiCommand in ALLOWED_LAMBDA_FUNCTION_OPERATIONS) {
+          if (lambdaRestApiCommand in ALLOWED_LAMBDA_FUNCTION_OPERATIONS || lambdaRestApiCommand === 'process') {
             lambdaFunctions.push({
-              path: absolute,
-              command: lambdaRestApiCommand,
+              path: absolutePath,
+              command: lambdaRestApiCommand, // ALLOWED_LAMBDA_FUNCTION_OPERATIONS key (e.g. 'create', 'list', 'read', etc..)
             });
           }
         }

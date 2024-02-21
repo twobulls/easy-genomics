@@ -26,6 +26,9 @@ import {
   PutItemCommand,
   PutItemCommandInput,
   PutItemCommandOutput,
+  QueryCommand,
+  QueryCommandInput,
+  QueryCommandOutput,
   ScanCommand,
   ScanCommandInput,
   ScanCommandOutput,
@@ -39,6 +42,7 @@ enum DynamoDBCommand {
   PUT_ITEM = 'put-item', // Create
   SCAN_ITEMS = 'scan-items', // List
   GET_ITEM = 'get-item', // Read
+  QUERY_ITEMS = 'query-items', // Query
   UPDATE_ITEM = 'update-item', // Update
   DELETE_ITEM = 'delete-item', // Delete
 }
@@ -54,6 +58,13 @@ export class DynamoDBService {
     return this.dynamoDBRequest<GetItemCommandInput, GetItemCommandOutput>(
       DynamoDBCommand.GET_ITEM,
       getItemCommandInput,
+    );
+  };
+
+  protected queryItems = async (queryCommandInput: QueryCommandInput): Promise<QueryCommandOutput> => {
+    return this.dynamoDBRequest<QueryCommandInput, QueryCommandOutput>(
+      DynamoDBCommand.QUERY_ITEMS,
+      queryCommandInput,
     );
   };
 
@@ -119,6 +130,8 @@ export class DynamoDBService {
         return new ScanCommand(data);
       case DynamoDBCommand.GET_ITEM:
         return new GetItemCommand(data);
+      case DynamoDBCommand.QUERY_ITEMS:
+        return new QueryCommand(data);
       case DynamoDBCommand.UPDATE_ITEM:
         return new UpdateItemCommand(data);
       case DynamoDBCommand.DELETE_ITEM:

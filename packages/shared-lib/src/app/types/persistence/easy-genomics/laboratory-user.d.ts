@@ -14,7 +14,8 @@
  *   ModifiedBy?: <string>,
  * }
  */
-import { BaseAttributes, LaboratoryRoles } from './base-entity';
+import { BaseAttributes } from '../base-entity';
+import { LaboratoryRoles } from './roles';
 
 export interface LaboratoryUser extends LaboratoryRoles, BaseAttributes {
   LaboratoryId: string; // DynamoDB Partition Key (UUID)

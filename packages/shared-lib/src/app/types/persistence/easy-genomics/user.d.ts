@@ -17,7 +17,7 @@
  *   ModifiedBy?: <string>,
  * }
  */
-import { BaseAttributes, Status } from './base-entity';
+import { BaseAttributes, Status } from '../base-entity';
 
 export interface User extends BaseAttributes {
   UserId: string; // DynamoDB Partition Key (UUID)

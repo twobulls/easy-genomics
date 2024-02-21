@@ -1,4 +1,4 @@
-import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { UserService } from '../../../services/easy-genomics/user-service';

@@ -50,6 +50,11 @@ export function validateEasyGenomicsAwsRegion(awsRegion: string): boolean {
 }
 
 /**
+ * This defines the HTTP Request types supported for the REST APIs.
+ */
+export type HttpRequest = 'POST' | 'GET' | 'PUT' | 'PATCH' | 'DELETE';
+
+/**
  * This defines the allowed access control headers.
  */
 export const ACCESS_CONTROL_ALLOW_HEADERS = [

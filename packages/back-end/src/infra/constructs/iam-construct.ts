@@ -94,57 +94,30 @@ export class IamConstruct extends Construct {
       }),
     );
 
-    // dynamodb-organization-table-crud-access-policy-statement
+    // /easy-genomics/organization/list-organizations
     this.policyStatements.set(
-      'dynamodb-organization-table-crud-access-policy-statement',
+      '/easy-genomics/organization/list-organizations',
       new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`,
-        ],
-        actions: [
-          'dynamodb:PutItem',
-          'dynamodb:DeleteItem',
-          'dynamodb:GetItem',
-          'dynamodb:Scan',
-          'dynamodb:Query',
-          'dynamodb:UpdateItem',
-        ],
+        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+        actions: ['dynamodb:Scan'],
         effect: Effect.ALLOW,
       }),
     );
-    // dynamodb-laboratory-table-crud-access-policy-statement
+    // /easy-genomics/laboratory/list-laboratories
     this.policyStatements.set(
-      'dynamodb-laboratory-table-crud-access-policy-statement',
+      '/easy-genomics/laboratory/list-laboratories',
       new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-laboratory-table`,
-        ],
-        actions: [
-          'dynamodb:PutItem',
-          'dynamodb:DeleteItem',
-          'dynamodb:GetItem',
-          'dynamodb:Scan',
-          'dynamodb:Query',
-          'dynamodb:UpdateItem',
-        ],
+        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-laboratory-table`],
+        actions: ['dynamodb:Scan'],
         effect: Effect.ALLOW,
       }),
     );
-    // dynamodb-user-table-crud-access-policy-statement
+    // /easy-genomics/user/list-users
     this.policyStatements.set(
-      'dynamodb-user-table-crud-access-policy-statement',
+      '/easy-genomics/user/list-users',
       new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-user-table`,
-        ],
-        actions: [
-          'dynamodb:PutItem',
-          'dynamodb:DeleteItem',
-          'dynamodb:GetItem',
-          'dynamodb:Scan',
-          'dynamodb:Query',
-          'dynamodb:UpdateItem',
-        ],
+        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-user-table`],
+        actions: ['dynamodb:Scan'],
         effect: Effect.ALLOW,
       }),
     );

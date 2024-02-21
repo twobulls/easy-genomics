@@ -165,24 +165,14 @@ export class EasyGenomicsNestedStack extends NestedStack {
   // Easy Genomics specific REST API endpoints / Lambda Functions
   private setupRestApiEndpoints = () => {
     new LambdaConstruct(this, `${this.props.constructNamespace}-lambda`, {
-      restApi: this.props.restApi,
-      userPool: this.props.userPool,
-      lambdaFunctionsDir: 'src/app/controllers',
+      ...this.props,
+      lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}-lambda`,
-      lambdaFunctionsResources: { // Attach relevant IAM Policies
-        ['/easy-genomics/organization']: {
-          policies: [this.props.iamPolicyStatements.get('dynamodb-organization-table-crud-access-policy-statement')!],
-        },
-        ['/easy-genomics/laboratory']: {
-          policies: [this.props.iamPolicyStatements.get('dynamodb-laboratory-table-crud-access-policy-statement')!],
-        },
-        ['/easy-genomics/user']: {
-          policies: [this.props.iamPolicyStatements.get('dynamodb-user-table-crud-access-policy-statement')!],
-        },
-      },
+      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
       lambdaTimeoutInSeconds: this.props.lambdaTimeoutInSeconds,
       environment: {
         ENV_NAME: this.props.envName,
+        AWS_ACCOUNT_ID: this.props.env.account!,
       },
     });
   };

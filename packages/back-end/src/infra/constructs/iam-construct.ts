@@ -121,5 +121,71 @@ export class IamConstruct extends Construct {
         effect: Effect.ALLOW,
       }),
     );
+
+    // /aws-healthomics/private-workflow/create-private-workflow
+    this.policyStatements.set(
+      '/aws-healthomics/private-workflow/create-private-workflow',
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
+        ],
+        actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    );
+    // /aws-healthomics/private-workflow/list-private-workflows
+    this.policyStatements.set(
+      '/aws-healthomics/private-workflow/list-private-workflows',
+      new PolicyStatement({
+        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
+        actions: ['dynamodb:Scan'],
+        effect: Effect.ALLOW,
+      }),
+    );
+    // /aws-healthomics/private-workflow/request-private-workflow
+    this.policyStatements.set(
+      '/aws-healthomics/private-workflow/request-private-workflow',
+      new PolicyStatement({
+        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+    );
+    // /aws-healthomics/private-workflow/read-private-workflow
+    this.policyStatements.set(
+      '/aws-healthomics/private-workflow/read-private-workflow',
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    );
+    // /aws-healthomics/private-workflow/update-private-workflow
+    this.policyStatements.set(
+      '/aws-healthomics/private-workflow/update-private-workflow',
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+        effect: Effect.ALLOW,
+      }),
+    );
+    // /aws-healthomics/private-workflow/delete-private-workflow
+    this.policyStatements.set(
+      '/aws-healthomics/private-workflow/delete-private-workflow',
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+        ],
+        actions: ['dynamodb:DeleteItem', 'dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    );
   }
 }

@@ -171,8 +171,9 @@ new awscdk.AwsCdkTypeScriptApp({
     'aws-lambda',
     'aws-sdk',
     'dotenv',
+    'uuid',
   ],
-  devDeps: ['@aws-sdk/util-dynamodb', '@aws-sdk/types', '@types/aws-lambda', 'aws-sdk-client-mock'],
+  devDeps: ['@aws-sdk/util-dynamodb', '@aws-sdk/types', '@types/aws-lambda', '@types/uuid', 'aws-sdk-client-mock'],
 });
 
 // Defines the Easy Genomics 'front-end' subproject
@@ -197,8 +198,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
-  deps: ['@easy-genomics/shared-lib@workspace:*', 'aws-sdk', 'dotenv', 'nuxt', 'vue', 'vue-router'],
-  devDeps: ['@aws-sdk/types'],
+  deps: ['@easy-genomics/shared-lib@workspace:*', 'aws-sdk', 'dotenv', 'nuxt', 'uuid', 'vue', 'vue-router'],
+  devDeps: ['@aws-sdk/types', '@types/uuid'],
 });
 
 // Add additional Nuxt Scripts to front-end/package.json

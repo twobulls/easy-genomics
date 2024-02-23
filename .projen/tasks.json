@@ -168,7 +168,7 @@
       },
       "steps": [
         {
-          "exec": "pnpx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@commitlint/cli,@commitlint/config-conventional,@commitlint/cz-commitlint,@types/aws-lambda,@types/jest,@types/uuid,aws-cdk-lib,aws-sdk-client-mock,aws-sdk-client-mock-jest,cz-conventional-changelog,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,husky,jest,lint-staged,prettier,projen,ts-jest,ts-node,typescript,validate-branch-name"
+          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@commitlint/cli,@commitlint/config-conventional,@commitlint/cz-commitlint,@types/aws-lambda,@types/jest,@types/uuid,aws-cdk-lib,aws-sdk-client-mock,aws-sdk-client-mock-jest,cz-conventional-changelog,eslint-config-prettier,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,husky,jest,lint-staged,prettier,projen,ts-jest,ts-node,typescript,validate-branch-name"
         },
         {
           "exec": "pnpm i --no-frozen-lockfile"

@@ -14,6 +14,10 @@
       "type": "build"
     },
     {
+      "name": "@types/uuid",
+      "type": "build"
+    },
+    {
       "name": "@typescript-eslint/eslint-plugin",
       "version": "^6",
       "type": "build"
@@ -95,6 +99,10 @@
     },
     {
       "name": "nuxt",
+      "type": "runtime"
+    },
+    {
+      "name": "uuid",
       "type": "runtime"
     },
     {

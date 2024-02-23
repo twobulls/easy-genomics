@@ -34,6 +34,7 @@
     "@aws-sdk/types": "^3.502.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^18",
+    "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6",
     "@typescript-eslint/parser": "^6",
     "aws-cdk": "^2.124.0",
@@ -55,6 +56,7 @@
     "constructs": "^10.0.5",
     "dotenv": "^16.4.1",
     "nuxt": "^3.10.1",
+    "uuid": "^8.3.2",
     "vue": "^3.4.15",
     "vue-router": "^4.2.5"
   },

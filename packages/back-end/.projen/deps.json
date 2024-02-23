@@ -22,6 +22,10 @@
       "type": "build"
     },
     {
+      "name": "@types/uuid",
+      "type": "build"
+    },
+    {
       "name": "@typescript-eslint/eslint-plugin",
       "version": "^6",
       "type": "build"
@@ -123,6 +127,10 @@
     },
     {
       "name": "dotenv",
+      "type": "runtime"
+    },
+    {
+      "name": "uuid",
       "type": "runtime"
     }
   ],

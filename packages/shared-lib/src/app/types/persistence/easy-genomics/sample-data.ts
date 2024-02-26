@@ -10,21 +10,30 @@ const laboratoryId = uuidv4();
 const userId = uuidv4();
 
 export const organization: Organization = {
-  OrganizationId: organizationId,
-  Name: 'Test Organization',
+  Id: organizationId,
+  Name: 'DEPT-Health',
   Country: 'Australia',
-  AwsAccount: '1234567890',
-  AwsRegion: 'ap-southeast-2',
+  AwsHealthOmicsEnabled: true,
+  NextFlowTowerEnabled: false,
   CreatedAt: new Date().toISOString(),
-  CreatedBy: userId,
+};
+
+export const laboratory: Laboratory = {
+  OrganizationId: organizationId,
+  Id: laboratoryId,
+  Name: 'Microbial Genomics Laboratory',
+  Status: 'Active',
+  AwsHealthOmicsEnabled: true,
+  NextFlowTowerEnabled: false,
+  CreatedAt: new Date().toISOString(),
 };
 
 export const user: User = {
-  UserId: userId,
+  Id: userId,
+  Email: 'admin.easy-genomics@twobulls.dev',
   Title: 'Dr',
   FirstName: 'Rick',
   LastName: 'Sanchez',
-  Email: 'admin.easy-genomics@twobulls.dev',
   Status: 'Active',
   CreatedAt: new Date().toISOString(),
 };
@@ -38,19 +47,10 @@ export const organizationUser: OrganizationUser = {
   CreatedAt: new Date().toISOString(),
 };
 
-export const laboratory: Laboratory = {
-  OrganizationId: organizationId,
-  LaboratoryId: laboratoryId,
-  Name: 'Test Laboratory',
-  OmicsAccess: true,
-  NextflowAccess: false,
-  CreatedAt: new Date().toISOString(),
-  CreatedBy: userId,
-};
-
 export const laboratoryUser: LaboratoryUser = {
   LaboratoryId: laboratoryId,
   UserId: userId,
   LabManager: 'Active',
+  LabTechnician: 'Active',
   CreatedAt: new Date().toISOString(),
 };

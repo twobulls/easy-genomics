@@ -47,7 +47,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       organizationTableName,
       {
         partitionKey: {
-          name: 'OrganizationId', // UUID
+          name: 'Id',
           type: AttributeType.STRING,
         },
       },
@@ -55,6 +55,54 @@ export class EasyGenomicsNestedStack extends NestedStack {
       organization, // Seed data
     );
     this.dynamoDBTables.set(organizationTableName, organizationTable);
+
+    // Laboratory table
+    const laboratoryTableName = `${this.props.envName}-laboratory-table`;
+    const laboratoryTable = dynamoDB.createTable<Laboratory>(
+      laboratoryTableName,
+      {
+        partitionKey: {
+          name: 'OrganizationId',
+          type: AttributeType.STRING,
+        },
+        sortKey: {
+          name: 'Id',
+          type: AttributeType.STRING,
+        },
+        gsi: [{
+          partitionKey: {
+            name: 'Id', // Global Secondary Index to support REST API get / update / delete requests
+            type: AttributeType.STRING,
+          },
+        }],
+      },
+      this.props.devEnv,
+      laboratory, // Seed data
+    );
+    this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
+
+    // User table
+    const userTableName = `${this.props.envName}-user-table`;
+    const userTable = dynamoDB.createTable<User>(
+      userTableName,
+      {
+        partitionKey: {
+          name: 'Id',
+          type: AttributeType.STRING,
+        },
+        gsi: [
+          {
+            partitionKey: {
+              name: 'Email', // Global Secondary Index to support lookup by Email requests
+              type: AttributeType.STRING,
+            },
+          },
+        ],
+      },
+      this.props.devEnv,
+      user, // Seed data
+    );
+    this.dynamoDBTables.set(userTableName, userTable);
 
     // Organization User table
     const organizationUserTableName = `${this.props.envName}-organization-user-table`;
@@ -72,7 +120,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         gsi: [
           {
             partitionKey: {
-              name: 'UserId',
+              name: 'UserId', // Global Secondary Index to support Organization lookup by UserId requests
               type: AttributeType.STRING,
             },
           },
@@ -83,71 +131,23 @@ export class EasyGenomicsNestedStack extends NestedStack {
     );
     this.dynamoDBTables.set(organizationUserTableName, organizationUserTable);
 
-    // User table
-    const userTableName = `${this.props.envName}-user-table`;
-    const userTable = dynamoDB.createTable<User>(
-      userTableName,
-      {
-        partitionKey: {
-          name: 'UserId', // UUID
-          type: AttributeType.STRING,
-        },
-        gsi: [
-          {
-            partitionKey: {
-              name: 'UserId',
-              type: AttributeType.STRING,
-            },
-          },
-        ],
-      },
-      this.props.devEnv,
-      user, // Seed data
-    );
-    this.dynamoDBTables.set(userTableName, userTable);
-
-    // Laboratory table
-    const laboratoryTableName = `${this.props.envName}-laboratory-table`;
-    const laboratoryTable = dynamoDB.createTable<Laboratory>(
-      laboratoryTableName,
-      {
-        partitionKey: {
-          name: 'OrganizationId', // UUID
-          type: AttributeType.STRING,
-        },
-        sortKey: {
-          name: 'LaboratoryId', // UUID
-          type: AttributeType.STRING,
-        },
-        lsi: [
-          {
-            name: 'Name',
-            type: AttributeType.STRING,
-          },
-        ],
-      },
-      this.props.devEnv,
-      laboratory, // Seed data
-    );
-    this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
-
     // Laboratory User table
     const laboratoryUserTableName = `${this.props.envName}-laboratory-user-table`;
     const laboratoryUserTable = dynamoDB.createTable<LaboratoryUser>(
       laboratoryUserTableName,
       {
         partitionKey: {
-          name: 'LaboratoryId', // UUID
+          name: 'LaboratoryId',
           type: AttributeType.STRING,
         },
         sortKey: {
-          name: 'UserId', // UUID
+          name: 'UserId',
           type: AttributeType.STRING,
         },
         gsi: [
           {
             partitionKey: {
-              name: 'UserId',
+              name: 'UserId', // Global Secondary Index to support Laboratory lookup by UserId requests
               type: AttributeType.STRING,
             },
           },

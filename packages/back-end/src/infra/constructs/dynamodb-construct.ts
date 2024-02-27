@@ -68,13 +68,7 @@ export class DynamoConstruct extends Construct {
     }
 
     // Add Local Secondary Indexes if table has an existing Sort Key
-    if (sortKey) {
-      if (!settings.lsi) {
-        settings.lsi = baseLSIAttributes;
-      } else {
-        settings.lsi.push(...baseLSIAttributes);
-      }
-
+    if (sortKey && settings.lsi) {
       // NOTE: Local Secondary Indexes can only be defined at the initial table creation
       // and cannot be added / removed after the table has been created
       settings.lsi.forEach((value: Attribute, _index: number, _array: Attribute[]) => {

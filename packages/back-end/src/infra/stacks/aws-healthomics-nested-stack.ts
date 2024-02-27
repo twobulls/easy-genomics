@@ -2,7 +2,7 @@ import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/persist
 import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
-import { DynamoConstruct } from '../constructs/dynamodb-construct';
+import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
 import { AwsHealthOmicsNestedStackProps } from '../types/back-end-stack';
 
@@ -61,6 +61,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
             type: AttributeType.STRING,
           },
         }],
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
     );

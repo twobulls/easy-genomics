@@ -32,6 +32,9 @@ import {
   ScanCommand,
   ScanCommandInput,
   ScanCommandOutput,
+  TransactWriteItemsCommand,
+  TransactWriteItemsCommandInput,
+  TransactWriteItemsCommandOutput,
   UpdateItemCommand,
   UpdateItemCommandInput,
   UpdateItemCommandOutput,
@@ -40,6 +43,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 
 enum DynamoDBCommand {
   PUT_ITEM = 'put-item', // Create
+  TRANSACT_WRITE = 'transact-write', // Create with Transaction
   SCAN_ITEMS = 'scan-items', // List
   GET_ITEM = 'get-item', // Read
   QUERY_ITEMS = 'query-items', // Query
@@ -53,6 +57,20 @@ export class DynamoDBService {
   public constructor() {
     this.dynamoDBDocClient = DynamoDBDocumentClient.from(new DynamoDBClient());
   }
+
+  protected putItem = async (putItemCommandInput: PutItemCommandInput): Promise<PutItemCommandOutput> => {
+    return this.dynamoDBRequest<PutItemCommandInput, PutItemCommandOutput>(
+      DynamoDBCommand.PUT_ITEM,
+      putItemCommandInput,
+    );
+  };
+
+  protected transactWriteItems = async (transactWriteItemsCommandInput: TransactWriteItemsCommandInput): Promise<TransactWriteItemsCommandOutput> => {
+    return this.dynamoDBRequest<TransactWriteItemsCommandInput, TransactWriteItemsCommandOutput>(
+      DynamoDBCommand.TRANSACT_WRITE,
+      transactWriteItemsCommandInput,
+    );
+  };
 
   protected findItem = async (getItemCommandInput: GetItemCommandInput): Promise<GetItemCommandOutput> => {
     return this.dynamoDBRequest<GetItemCommandInput, GetItemCommandOutput>(
@@ -70,13 +88,6 @@ export class DynamoDBService {
 
   protected findAll = async (scanCommandInput: ScanCommandInput): Promise<ScanCommandOutput> => {
     return this.dynamoDBRequest<ScanCommandInput, ScanCommandOutput>(DynamoDBCommand.SCAN_ITEMS, scanCommandInput);
-  };
-
-  protected putItem = async (putItemCommandInput: PutItemCommandInput): Promise<PutItemCommandOutput> => {
-    return this.dynamoDBRequest<PutItemCommandInput, PutItemCommandOutput>(
-      DynamoDBCommand.PUT_ITEM,
-      putItemCommandInput,
-    );
   };
 
   protected updateItem = async (updateItemCommandInput: UpdateItemCommandInput): Promise<UpdateItemCommandOutput> => {
@@ -126,6 +137,8 @@ export class DynamoDBService {
     switch (command) {
       case DynamoDBCommand.PUT_ITEM:
         return new PutItemCommand(data);
+      case DynamoDBCommand.TRANSACT_WRITE:
+        return new TransactWriteItemsCommand(data);
       case DynamoDBCommand.SCAN_ITEMS:
         return new ScanCommand(data);
       case DynamoDBCommand.GET_ITEM:

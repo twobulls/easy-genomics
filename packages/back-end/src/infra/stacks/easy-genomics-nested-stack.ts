@@ -9,6 +9,7 @@ import {
   organizationUser,
   user,
 } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/sample-data';
+import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/unique-reference';
 import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/user';
 import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
@@ -162,6 +163,24 @@ export class EasyGenomicsNestedStack extends NestedStack {
       laboratoryUser, // Seed data
     );
     this.dynamoDBTables.set(laboratoryUserTableName, laboratoryUserTable);
+
+    // Unique-Reference table
+    const uniqueReferenceTableName = `${this.props.envName}-unique-reference-table`;
+    const uniqueReferenceTable = dynamoDB.createTable<UniqueReference>(
+      uniqueReferenceTableName,
+      {
+        partitionKey: {
+          name: 'Value',
+          type: AttributeType.STRING,
+        },
+        sortKey: {
+          name: 'Type',
+          type: AttributeType.STRING,
+        },
+      },
+      this.props.devEnv,
+    );
+    this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
   };
 
   // Easy Genomics specific S3 Buckets

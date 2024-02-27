@@ -14,7 +14,7 @@ import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
-import { DynamoConstruct } from '../constructs/dynamodb-construct';
+import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
@@ -50,6 +50,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           name: 'Id',
           type: AttributeType.STRING,
         },
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
       organization, // Seed data
@@ -75,6 +76,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             type: AttributeType.STRING,
           },
         }],
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
       laboratory, // Seed data
@@ -98,6 +100,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             },
           },
         ],
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
       user, // Seed data
@@ -125,6 +128,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             },
           },
         ],
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
       organizationUser, // Seed data
@@ -152,6 +156,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             },
           },
         ],
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
       laboratoryUser, // Seed data

@@ -72,7 +72,7 @@ export class DynamoDBService {
     );
   };
 
-  protected findItem = async (getItemCommandInput: GetItemCommandInput): Promise<GetItemCommandOutput> => {
+  protected getItem = async (getItemCommandInput: GetItemCommandInput): Promise<GetItemCommandOutput> => {
     return this.dynamoDBRequest<GetItemCommandInput, GetItemCommandOutput>(
       DynamoDBCommand.GET_ITEM,
       getItemCommandInput,

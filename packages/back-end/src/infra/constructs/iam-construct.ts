@@ -106,6 +106,15 @@ export class IamConstruct extends Construct {
         effect: Effect.ALLOW,
       }),
     );
+    // /easy-genomics/organization/read-organization
+    this.policyStatements.set(
+      '/easy-genomics/organization/read-organization',
+      new PolicyStatement({
+        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+    );
     // /easy-genomics/organization/list-organizations
     this.policyStatements.set(
       '/easy-genomics/organization/list-organizations',

@@ -3,15 +3,15 @@
  * organization-user-table to define the User's role association with
  * an Organization.
  *
- * A User can belong to one or more Organizations, if required.
+ * The OrganizationId serves as the DynamoDB HashKey, and the UserId serves as
+ * the DynamoDB SortKey - and cannot be modified after creation.
  *
- * A User can have one or more roles in an Organization. This is to support
- * access control various hierarchical restricted and/or mutually-exclusive
- * functionality.
+ * A User can belong to one or more Organizations, if required, and can also
+ * have one or more roles within an Organization.
  *
  * {
- *   OrganizationId: <UUID>,
- *   UserId: <UUID>,
+ *   OrganizationId: <string>,
+ *   UserId: <string>,
  *   OrganizationAdmin?: 'Active' | 'Inactive' | null,
  *   LabManager?: 'Active' | 'Inactive' | null,
  *   LabTechnician?: 'Active' | 'Inactive' | null,
@@ -25,6 +25,6 @@ import { BaseAttributes } from '../base-entity';
 import { OrganizationRoles } from './roles';
 
 export interface OrganizationUser extends OrganizationRoles, BaseAttributes {
-  OrganizationId: string; // DynamoDB Partition Key (UUID)
-  UserId: string; // DynamoDB Sort Key (UUID) & GSI
+  OrganizationId: string; // DynamoDB Partition Key (String)
+  UserId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
 }

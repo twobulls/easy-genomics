@@ -9,12 +9,13 @@ import {
   organizationUser,
   user,
 } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/sample-data';
+import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/unique-reference';
 import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/user';
 import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
-import { DynamoConstruct } from '../constructs/dynamodb-construct';
+import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
@@ -47,14 +48,65 @@ export class EasyGenomicsNestedStack extends NestedStack {
       organizationTableName,
       {
         partitionKey: {
-          name: 'OrganizationId', // UUID
+          name: 'OrganizationId',
           type: AttributeType.STRING,
         },
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
       organization, // Seed data
     );
     this.dynamoDBTables.set(organizationTableName, organizationTable);
+
+    // Laboratory table
+    const laboratoryTableName = `${this.props.envName}-laboratory-table`;
+    const laboratoryTable = dynamoDB.createTable<Laboratory>(
+      laboratoryTableName,
+      {
+        partitionKey: {
+          name: 'OrganizationId',
+          type: AttributeType.STRING,
+        },
+        sortKey: {
+          name: 'LaboratoryId',
+          type: AttributeType.STRING,
+        },
+        gsi: [{
+          partitionKey: {
+            name: 'LaboratoryId', // Global Secondary Index to support REST API get / update / delete requests
+            type: AttributeType.STRING,
+          },
+        }],
+        lsi: baseLSIAttributes,
+      },
+      this.props.devEnv,
+      laboratory, // Seed data
+    );
+    this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
+
+    // User table
+    const userTableName = `${this.props.envName}-user-table`;
+    const userTable = dynamoDB.createTable<User>(
+      userTableName,
+      {
+        partitionKey: {
+          name: 'UserId',
+          type: AttributeType.STRING,
+        },
+        gsi: [
+          {
+            partitionKey: {
+              name: 'Email', // Global Secondary Index to support lookup by Email requests
+              type: AttributeType.STRING,
+            },
+          },
+        ],
+        lsi: baseLSIAttributes,
+      },
+      this.props.devEnv,
+      user, // Seed data
+    );
+    this.dynamoDBTables.set(userTableName, userTable);
 
     // Organization User table
     const organizationUserTableName = `${this.props.envName}-organization-user-table`;
@@ -72,64 +124,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
         gsi: [
           {
             partitionKey: {
-              name: 'UserId',
+              name: 'UserId', // Global Secondary Index to support Organization lookup by UserId requests
               type: AttributeType.STRING,
             },
           },
         ],
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
       organizationUser, // Seed data
     );
     this.dynamoDBTables.set(organizationUserTableName, organizationUserTable);
-
-    // User table
-    const userTableName = `${this.props.envName}-user-table`;
-    const userTable = dynamoDB.createTable<User>(
-      userTableName,
-      {
-        partitionKey: {
-          name: 'UserId', // UUID
-          type: AttributeType.STRING,
-        },
-        gsi: [
-          {
-            partitionKey: {
-              name: 'UserId',
-              type: AttributeType.STRING,
-            },
-          },
-        ],
-      },
-      this.props.devEnv,
-      user, // Seed data
-    );
-    this.dynamoDBTables.set(userTableName, userTable);
-
-    // Laboratory table
-    const laboratoryTableName = `${this.props.envName}-laboratory-table`;
-    const laboratoryTable = dynamoDB.createTable<Laboratory>(
-      laboratoryTableName,
-      {
-        partitionKey: {
-          name: 'OrganizationId', // UUID
-          type: AttributeType.STRING,
-        },
-        sortKey: {
-          name: 'LaboratoryId', // UUID
-          type: AttributeType.STRING,
-        },
-        lsi: [
-          {
-            name: 'Name',
-            type: AttributeType.STRING,
-          },
-        ],
-      },
-      this.props.devEnv,
-      laboratory, // Seed data
-    );
-    this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
 
     // Laboratory User table
     const laboratoryUserTableName = `${this.props.envName}-laboratory-user-table`;
@@ -137,26 +142,45 @@ export class EasyGenomicsNestedStack extends NestedStack {
       laboratoryUserTableName,
       {
         partitionKey: {
-          name: 'LaboratoryId', // UUID
+          name: 'LaboratoryId',
           type: AttributeType.STRING,
         },
         sortKey: {
-          name: 'UserId', // UUID
+          name: 'UserId',
           type: AttributeType.STRING,
         },
         gsi: [
           {
             partitionKey: {
-              name: 'UserId',
+              name: 'UserId', // Global Secondary Index to support Laboratory lookup by UserId requests
               type: AttributeType.STRING,
             },
           },
         ],
+        lsi: baseLSIAttributes,
       },
       this.props.devEnv,
       laboratoryUser, // Seed data
     );
     this.dynamoDBTables.set(laboratoryUserTableName, laboratoryUserTable);
+
+    // Unique-Reference table
+    const uniqueReferenceTableName = `${this.props.envName}-unique-reference-table`;
+    const uniqueReferenceTable = dynamoDB.createTable<UniqueReference>(
+      uniqueReferenceTableName,
+      {
+        partitionKey: {
+          name: 'Value',
+          type: AttributeType.STRING,
+        },
+        sortKey: {
+          name: 'Type',
+          type: AttributeType.STRING,
+        },
+      },
+      this.props.devEnv,
+    );
+    this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
   };
 
   // Easy Genomics specific S3 Buckets

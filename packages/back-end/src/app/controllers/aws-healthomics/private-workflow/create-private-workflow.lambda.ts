@@ -22,7 +22,7 @@ export const handler: Handler = async (
 
     const response: PrivateWorkflow = await privateWorkflowService.add({
       ...request,
-      Id: uuidv4(),
+      PrivateWorkflowId: uuidv4(),
       Status: 'New',
       CreatedAt: new Date().toISOString(),
       CreatedBy: userId,

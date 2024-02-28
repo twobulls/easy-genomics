@@ -12,7 +12,7 @@ import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class PrivateWorkflowService extends DynamoDBService implements Service {
-  readonly TABLE_NAME: string = `${process.env.ENV_NAME}-healthomics-private-workflow-table`;
+  readonly PRIVATE_WORKFLOW_TABLE_NAME: string = `${process.env.ENV_NAME}-healthomics-private-workflow-table`;
 
   public constructor() {
     super();
@@ -23,7 +23,7 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     console.info(`${logRequestMessage}`);
 
     const response: PutItemCommandOutput = await this.putItem({
-      TableName: this.TABLE_NAME,
+      TableName: this.PRIVATE_WORKFLOW_TABLE_NAME,
       Item: marshall(privateWorkflow),
       ConditionExpression: 'attribute_not_exists(#PK) AND attribute_not_exists(#SK)',
       ExpressionAttributeNames: {
@@ -43,8 +43,8 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     const logRequestMessage = `Get Private Workflow Url=${hashKey}, Version=${sortKey} request`;
     console.info(logRequestMessage);
 
-    const response: GetItemCommandOutput = await this.findItem({
-      TableName: this.TABLE_NAME,
+    const response: GetItemCommandOutput = await this.getItem({
+      TableName: this.PRIVATE_WORKFLOW_TABLE_NAME,
       Key: {
         Url: { S: hashKey },
         Version: { S: sortKey },
@@ -63,13 +63,13 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
   };
 
   public find = async (gsiId: string): Promise<PrivateWorkflow> => {
-    const logRequestMessage = `Find Private Workflow by Id=${gsiId} request`;
+    const logRequestMessage = `Find Private Workflow by PrivateWorkflowId=${gsiId} request`;
     console.info(logRequestMessage);
 
     const response: QueryCommandOutput = await this.queryItems({
-      TableName: this.TABLE_NAME,
-      IndexName: 'Id_Index', // Secondary Global Index
-      KeyConditionExpression: 'Id = :v_id',
+      TableName: this.PRIVATE_WORKFLOW_TABLE_NAME,
+      IndexName: 'PrivateWorkflowId_Index', // Secondary Global Index
+      KeyConditionExpression: 'PrivateWorkflowId = :v_id',
       ExpressionAttributeValues: {
         ':v_id': { S: gsiId },
       },
@@ -98,7 +98,7 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     console.info(logRequestMessage);
 
     const response: ScanCommandOutput = await this.findAll({
-      TableName: this.TABLE_NAME,
+      TableName: this.PRIVATE_WORKFLOW_TABLE_NAME,
     });
 
     if (response.$metadata.httpStatusCode === 200) {
@@ -113,7 +113,7 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     console.info(logRequestMessage);
 
     const response: UpdateItemCommandOutput = await this.updateItem({
-      TableName: this.TABLE_NAME,
+      TableName: this.PRIVATE_WORKFLOW_TABLE_NAME,
       Key: {
         Url: { S: hashKey },
         Version: { S: sortKey },
@@ -167,7 +167,7 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     console.info(logRequestMessage);
 
     const response: DeleteItemCommandOutput = await this.deleteItem({
-      TableName: this.TABLE_NAME,
+      TableName: this.PRIVATE_WORKFLOW_TABLE_NAME,
       Key: {
         Url: { S: hashKey },
         Version: { S: sortKey },

@@ -1,58 +1,102 @@
-import { DeleteItemCommandOutput, GetItemCommandOutput, PutItemCommandOutput, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
-import { ResponseMetadata } from '@aws-sdk/types';
+import {
+  GetItemCommandOutput,
+  ScanCommandOutput,
+} from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
+import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
-export class OrganizationService extends DynamoDBService {
-  readonly TABLE_NAME: string = `${process.env.ENV_NAME}-organization-table`;
+export class OrganizationService extends DynamoDBService implements Service {
+  readonly ORGANIZATION_TABLE_NAME: string = `${process.env.ENV_NAME}-organization-table`;
+  readonly UNIQUE_REFERENCE_TABLE_NAME: string = `${process.env.ENV_NAME}-unique-reference-table`;
 
   public constructor() {
     super();
   }
 
-  public addOrganization = async (organization: Organization): Promise<ResponseMetadata> => {
-    const result: PutItemCommandOutput = await this.putItem({
-      TableName: this.TABLE_NAME,
-      Item: marshall(organization),
-    });
-    return result.$metadata;
-  };
+  public add = async (organization: Organization): Promise<Organization> => {
+    const logRequestMessage = `Add Organization OrganizationId=${organization.OrganizationId}, Name=${organization.Name} request`;
+    console.info(`${logRequestMessage}`);
 
-  public deleteOrganization = async (organizationId: string): Promise<ResponseMetadata> => {
-    const result: DeleteItemCommandOutput = await this.deleteItem({
-      TableName: this.TABLE_NAME,
-      Key: {
-        OrganizationId: { S: organizationId },
-      },
+    const response = await this.transactWriteItems({
+      TransactItems: [
+        {
+          Put: {
+            TableName: this.ORGANIZATION_TABLE_NAME,
+            ConditionExpression: 'attribute_not_exists(#PK)',
+            ExpressionAttributeNames: {
+              '#PK': 'OrganizationId',
+            },
+            Item: marshall(organization),
+          },
+        },
+        {
+          Put: {
+            TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+            ConditionExpression: 'attribute_not_exists(#PK)',
+            ExpressionAttributeNames: {
+              '#PK': 'Value',
+            },
+            Item: marshall({
+              Value: organization.Name,
+              Type: 'organization-name',
+            }),
+          },
+        },
+      ],
     });
-    return result.$metadata;
-  };
 
-  public findOrganization = async (organizationId: string): Promise<Organization> => {
-    const result: GetItemCommandOutput = await this.findItem({
-      TableName: this.TABLE_NAME,
-      Key: {
-        OrganizationId: { S: organizationId },
-      },
-    });
-
-    if (result.Item) {
-      return <Organization>unmarshall(result.Item);
+    if (response.$metadata.httpStatusCode === 200) {
+      return organization;
     } else {
-      throw new Error(`Unable to find Organization: ${organizationId}`);
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
   };
 
-  public listOrganizations = async (): Promise<Organization[]> => {
-    const result: ScanCommandOutput = await this.findAll({
-      TableName: this.TABLE_NAME,
+  public get = async (hashKey: string): Promise<Organization> => {
+    const logRequestMessage = `Get Organization OrganizationId=${hashKey} request`;
+    console.info(logRequestMessage);
+
+    const response: GetItemCommandOutput = await this.getItem({
+      TableName: this.ORGANIZATION_TABLE_NAME,
+      Key: {
+        OrganizationId: { S: hashKey },
+      },
     });
 
-    if (result.Items) {
-      return <Organization[]>result.Items.map((item) => unmarshall(item));
+    if (response.$metadata.httpStatusCode === 200) {
+      if (response.Item) {
+        return <Organization>unmarshall(response.Item);
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+      }
     } else {
-      throw new Error('Unable to list Organizations');
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
   };
+
+  public list = async (): Promise<Organization[]> => {
+    const logRequestMessage = 'List Organization(s) request';
+    console.info(logRequestMessage);
+
+    const response: ScanCommandOutput = await this.findAll({
+      TableName: this.ORGANIZATION_TABLE_NAME,
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return <Organization[]>response.Items?.map(item => unmarshall(item));
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  };
+
+  public update = async <T>(object: T, hashKey: string, sortKey?: string): Promise<T> => {
+    return Promise.resolve(object);
+  };
+
+  public delete = async <T>(hashKey: string, sortKey?: string): Promise<boolean> => {
+    return Promise.resolve(false);
+  };
+
 }

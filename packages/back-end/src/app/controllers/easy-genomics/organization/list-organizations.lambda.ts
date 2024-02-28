@@ -10,18 +10,20 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    const response: Organization[] = await organizationService.listOrganizations();
-
-    if (response) {
-      return buildResponse(200, JSON.stringify(response), event);
-    } else {
-      throw new Error(`Unable to find Organizations: ${JSON.stringify(response)}`);
-    }
+    const response: Organization[] = await organizationService.list();
+    return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
     return {
       statusCode: 400,
-      body: `Error: ${err.message}`,
+      body: JSON.stringify({
+        Error: getErrorMessage(err),
+      }),
     };
   }
+};
+
+// Used for customising error messages by exception types
+function getErrorMessage(err: any) {
+  return err.message;
 };

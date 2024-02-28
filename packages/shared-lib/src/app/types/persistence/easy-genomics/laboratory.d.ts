@@ -2,7 +2,7 @@
  * The following Laboratory model represents the data stored in the
  * laboratory-table to store the Laboratory specific settings.
  *
- * The OrganizationId serves as the DynamoDB HashKey, and the Laboratory Id
+ * The OrganizationId serves as the DynamoDB HashKey, and the LaboratoryId
  * serves as the DynamoDB SortKey - and cannot be modified after creation.
  *
  * The Laboratory Name is modifiable but it is enforced to be unique within the
@@ -11,7 +11,7 @@
  *
  * {
  *   OrganizationId: <string>,
- *   Id: <string>,
+ *   LaboratoryId: <string>,
  *   Name: <string>,
  *   Status: <string>,
  *   AwsHealthOmicsEnabled?: <boolean>,
@@ -28,7 +28,7 @@ import { BaseAttributes, Status } from "../base-entity";
 
 export interface Laboratory extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
-  Id: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
+  LaboratoryId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
   Name: string;
   Status: Status,
   AwsHealthOmicsEnabled?: boolean;

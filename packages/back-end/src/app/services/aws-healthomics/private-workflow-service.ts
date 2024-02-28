@@ -63,13 +63,13 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
   };
 
   public find = async (gsiId: string): Promise<PrivateWorkflow> => {
-    const logRequestMessage = `Find Private Workflow by Id=${gsiId} request`;
+    const logRequestMessage = `Find Private Workflow by PrivateWorkflowId=${gsiId} request`;
     console.info(logRequestMessage);
 
     const response: QueryCommandOutput = await this.queryItems({
       TableName: this.TABLE_NAME,
-      IndexName: 'Id_Index', // Secondary Global Index
-      KeyConditionExpression: 'Id = :v_id',
+      IndexName: 'PrivateWorkflowId_Index', // Secondary Global Index
+      KeyConditionExpression: 'PrivateWorkflowId = :v_id',
       ExpressionAttributeValues: {
         ':v_id': { S: gsiId },
       },

@@ -10,7 +10,7 @@ const laboratoryId = uuidv4();
 const userId = uuidv4();
 
 export const organization: Organization = {
-  Id: organizationId,
+  OrganizationId: organizationId,
   Name: 'DEPT-Health',
   Country: 'Australia',
   AwsHealthOmicsEnabled: true,
@@ -20,7 +20,7 @@ export const organization: Organization = {
 
 export const laboratory: Laboratory = {
   OrganizationId: organizationId,
-  Id: laboratoryId,
+  LaboratoryId: laboratoryId,
   Name: 'Microbial Genomics Laboratory',
   Status: 'Active',
   AwsHealthOmicsEnabled: true,
@@ -29,7 +29,7 @@ export const laboratory: Laboratory = {
 };
 
 export const user: User = {
-  Id: userId,
+  UserId: userId,
   Email: 'admin.easy-genomics@twobulls.dev',
   Title: 'Dr',
   FirstName: 'Rick',

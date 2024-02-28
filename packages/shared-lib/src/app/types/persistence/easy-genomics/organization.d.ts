@@ -2,14 +2,14 @@
  * The following Organization model represents the data stored in the
  * organization-table.
  *
- * The Organization Id serves as the Hash Key and is unique, and cannot be
+ * The OrganizationId serves as the Hash Key and is unique, and cannot be
  * modified after creation.
  *
  * The Organization Name is modifiable but it is enforced to be unique via a
  * transaction that checks the 'unique-reference-table' for uniqueness.
  *
  * {
- *   Id: <string>,
+ *   OrganizationId: <string>,
  *   Name: <string>,
  *   Country: <string>,
  *   AwsHealthOmicsEnabled?: <string>,
@@ -25,7 +25,7 @@
 import { BaseAttributes } from '../base-entity';
 
 export interface Organization extends BaseAttributes {
-  Id: string; // DynamoDB Partition Key (String)
+  OrganizationId: string; // DynamoDB Partition Key (String)
   Name: string;
   Country: string;
   AwsHealthOmicsEnabled?: boolean,

@@ -57,7 +57,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         },
         gsi: [{
           partitionKey: {
-            name: 'Id', // Global Secondary Index to support REST API get / update / delete requests
+            name: 'PrivateWorkflowId', // Global Secondary Index to support REST API get / update / delete requests
             type: AttributeType.STRING,
           },
         }],

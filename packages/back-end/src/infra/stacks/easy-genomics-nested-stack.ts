@@ -48,7 +48,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       organizationTableName,
       {
         partitionKey: {
-          name: 'Id',
+          name: 'OrganizationId',
           type: AttributeType.STRING,
         },
         lsi: baseLSIAttributes,
@@ -68,12 +68,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
           type: AttributeType.STRING,
         },
         sortKey: {
-          name: 'Id',
+          name: 'LaboratoryId',
           type: AttributeType.STRING,
         },
         gsi: [{
           partitionKey: {
-            name: 'Id', // Global Secondary Index to support REST API get / update / delete requests
+            name: 'LaboratoryId', // Global Secondary Index to support REST API get / update / delete requests
             type: AttributeType.STRING,
           },
         }],
@@ -90,7 +90,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       userTableName,
       {
         partitionKey: {
-          name: 'Id',
+          name: 'UserId',
           type: AttributeType.STRING,
         },
         gsi: [

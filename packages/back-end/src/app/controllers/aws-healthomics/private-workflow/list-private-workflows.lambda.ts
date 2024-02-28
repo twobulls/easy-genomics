@@ -17,8 +17,13 @@ export const handler: Handler = async (
     return {
       statusCode: 400,
       body: JSON.stringify({
-        Error: err.message,
+        Error: getErrorMessage(err),
       }),
     };
   }
+};
+
+// Used for customising error messages by exception types
+function getErrorMessage(err: any) {
+  return err.message;
 };

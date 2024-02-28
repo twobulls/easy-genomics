@@ -5,12 +5,10 @@
  * The Url serves as the DynamoDB HashKey, and the Version serves as the
  * DynamoDB SortKey - and cannot be modified after creation.
  *
- * The Id field is a Global Secondary Index (GSI) and serves to support quick
- * referencing of the record for updating, and deleting via a REST API.
- *
  * {
  *   Url: <string>,
  *   Version: <string>,
+ *   PrivateWorkflowId: <string>
  *   Status?: <string>,
  *   EfsVolumeUri?: <string>,
  *   CreatedAt?: <string>,
@@ -24,7 +22,7 @@ import { BaseAttributes } from '../base-entity';
 export interface PrivateWorkflow extends BaseAttributes {
   Url: string; // DynamoDB Partition Key (String)
   Version: string; // DynamoDB Sort Key (String)
-  Id: string; // DynamoDB Global Secondary Index (String)
+  PrivateWorkflowId: string; // DynamoDB Global Secondary Index (String)
   Status?: WorkflowStatus;
   EfsVolumeUri?: string;
 }

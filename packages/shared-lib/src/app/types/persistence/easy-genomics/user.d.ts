@@ -2,14 +2,14 @@
  * The following User model represents the data stored in the user-table for
  * an EasyGenomics User's account details & preferences.
  *
- * The User Id serves as the Hash Key and is unique, and cannot be modified
+ * The UserId serves as the Hash Key and is unique, and cannot be modified
  * after creation.
  *
  * The User Email is modifiable but it is enforced to be unique via a
  * transaction that checks the 'unique-reference-table' for uniqueness.
  *
  * {
- *   Id: <string>,
+ *   UserId: <string>,
  *   Email: <string>,
  *   Title?: 'Prof' | 'Dr' | 'Mr' | 'Mrs' | 'Ms',
  *   PreferredName?: <string>,
@@ -26,7 +26,7 @@
 import { BaseAttributes, Status } from '../base-entity';
 
 export interface User extends BaseAttributes {
-  Id: string; // DynamoDB Partition Key (String)
+  UserId: string; // DynamoDB Partition Key (String)
   Email: string;
   Title?: UserTitle;
   PreferredName?: string;

@@ -11,7 +11,7 @@
  * {
  *   OrganizationId: <string>,
  *   Name: <string>,
- *   Country: <string>,
+ *   Country?: <string>,
  *   AwsHealthOmicsEnabled?: <string>,
  *   NextFlowTowerEnabled?: <string>,
  *   BillingContact?: <string>,
@@ -27,7 +27,7 @@ import { BaseAttributes } from '../base-entity';
 export interface Organization extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
   Name: string;
-  Country: string;
+  Country?: string;
   AwsHealthOmicsEnabled?: boolean,
   NextFlowTowerEnabled?: boolean,
   BillingContact?: string;

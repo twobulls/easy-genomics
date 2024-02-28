@@ -94,6 +94,18 @@ export class IamConstruct extends Construct {
       }),
     );
 
+    // /easy-genomics/organization/create-organization
+    this.policyStatements.set(
+      '/easy-genomics/organization/create-organization',
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`,
+        ],
+        actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    );
     // /easy-genomics/organization/list-organizations
     this.policyStatements.set(
       '/easy-genomics/organization/list-organizations',
@@ -103,6 +115,7 @@ export class IamConstruct extends Construct {
         effect: Effect.ALLOW,
       }),
     );
+
     // /easy-genomics/laboratory/list-laboratories
     this.policyStatements.set(
       '/easy-genomics/laboratory/list-laboratories',

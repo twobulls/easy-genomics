@@ -8,7 +8,7 @@ import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 export interface EasyGenomicsNestedStackProps extends MainStackProps, NestedStackProps {
     restApi: RestApi,
     userPool: UserPool,
-    iamPolicyStatements: Map<string, PolicyStatement>,
+    iamPolicyStatements: Map<string, PolicyStatement[]>,
 }
 
 // Defines the AWS HealthOmics specific props

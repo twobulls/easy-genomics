@@ -13,7 +13,7 @@ export class IamConstruct extends Construct {
   private props: IamConstructProps;
 
   // Collection of IAM Policy statement definitions - accessed by getPolicyStatement()
-  readonly policyStatements = new Map<string, PolicyStatement>();
+  readonly policyStatements = new Map<string, PolicyStatement[]>();
 
   // Collection of IAM Policy Document definitions - accessed by getPolicyDocument()
   readonly policyDocuments = new Map<string, PolicyDocument>();
@@ -32,8 +32,8 @@ export class IamConstruct extends Construct {
     this.setupPolicyStatements();
   }
 
-  public getPolicyStatement(name: string): PolicyStatement {
-    const policyStatement: PolicyStatement | undefined = this.policyStatements.get(name);
+  public getPolicyStatements(name: string): PolicyStatement[] {
+    const policyStatement: PolicyStatement[] | undefined = this.policyStatements.get(name);
     if (!policyStatement) {
       throw new Error(`Unable to retrieve IAM Policy Statement: ${name}`);
     }
@@ -77,149 +77,193 @@ export class IamConstruct extends Construct {
     // cognito-policy-statement
     this.policyStatements.set(
       'cognito-policy-statement',
-      new PolicyStatement({
-        resources: [this.props.awsCognitoUserPoolArn],
-        actions: ['cognito-idp:ListUsers'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [this.props.awsCognitoUserPoolArn],
+          actions: ['cognito-idp:ListUsers'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
 
     // iam-get-role-pass-role-policy-statement
     this.policyStatements.set(
       'iam-get-role-pass-role-policy-statement',
-      new PolicyStatement({
-        resources: ['arn:aws:iam:::role/*', `arn:aws:iam::${this.props.env.account!}:role/*`],
-        actions: ['iam:GetRole', 'iam:PassRole'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: ['arn:aws:iam:::role/*', `arn:aws:iam::${this.props.env.account!}:role/*`],
+          actions: ['iam:GetRole', 'iam:PassRole'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
 
     // /easy-genomics/organization/create-organization
     this.policyStatements.set(
       '/easy-genomics/organization/create-organization',
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`,
-        ],
-        actions: ['dynamodb:PutItem'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /easy-genomics/organization/read-organization
     this.policyStatements.set(
       '/easy-genomics/organization/read-organization',
-      new PolicyStatement({
-        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
-        actions: ['dynamodb:GetItem'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /easy-genomics/organization/list-organizations
     this.policyStatements.set(
       '/easy-genomics/organization/list-organizations',
-      new PolicyStatement({
-        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
-        actions: ['dynamodb:Scan'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+          actions: ['dynamodb:Scan'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/organization/update-organization
+    this.policyStatements.set(
+      '/easy-genomics/organization/update-organization',
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+          actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /easy-genomics/organization/delete-organization
     this.policyStatements.set(
       '/easy-genomics/organization/delete-organization',
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`,
-        ],
-        actions: ['dynamodb:DeleteItem', 'dynamodb:GetItem'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
 
     // /easy-genomics/laboratory/list-laboratories
     this.policyStatements.set(
       '/easy-genomics/laboratory/list-laboratories',
-      new PolicyStatement({
-        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-laboratory-table`],
-        actions: ['dynamodb:Scan'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-laboratory-table`],
+          actions: ['dynamodb:Scan'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /easy-genomics/user/list-users
     this.policyStatements.set(
       '/easy-genomics/user/list-users',
-      new PolicyStatement({
-        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-user-table`],
-        actions: ['dynamodb:Scan'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-user-table`],
+          actions: ['dynamodb:Scan'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
 
     // /aws-healthomics/private-workflow/create-private-workflow
     this.policyStatements.set(
       '/aws-healthomics/private-workflow/create-private-workflow',
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
-        ],
-        actions: ['dynamodb:PutItem'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /aws-healthomics/private-workflow/list-private-workflows
     this.policyStatements.set(
       '/aws-healthomics/private-workflow/list-private-workflows',
-      new PolicyStatement({
-        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
-        actions: ['dynamodb:Scan'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
+          actions: ['dynamodb:Scan'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /aws-healthomics/private-workflow/request-private-workflow
     this.policyStatements.set(
       '/aws-healthomics/private-workflow/request-private-workflow',
-      new PolicyStatement({
-        resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
-        actions: ['dynamodb:GetItem'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /aws-healthomics/private-workflow/read-private-workflow
     this.policyStatements.set(
       '/aws-healthomics/private-workflow/read-private-workflow',
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
-        ],
-        actions: ['dynamodb:Query'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /aws-healthomics/private-workflow/update-private-workflow
     this.policyStatements.set(
       '/aws-healthomics/private-workflow/update-private-workflow',
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
-        ],
-        actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+          ],
+          actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
     // /aws-healthomics/private-workflow/delete-private-workflow
     this.policyStatements.set(
       '/aws-healthomics/private-workflow/delete-private-workflow',
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
-        ],
-        actions: ['dynamodb:DeleteItem', 'dynamodb:Query'],
-        effect: Effect.ALLOW,
-      }),
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+          ],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+      ],
     );
   }
 }

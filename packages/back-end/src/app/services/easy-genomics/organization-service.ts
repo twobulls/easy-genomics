@@ -1,8 +1,8 @@
 import {
-  DeleteItemCommandOutput,
   GetItemCommandOutput,
   ScanCommandOutput,
   TransactWriteItemsCommandOutput,
+  UpdateItemCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
@@ -93,8 +93,125 @@ export class OrganizationService extends DynamoDBService implements Service {
     }
   };
 
-  public update = async <T>(object: T): Promise<T> => {
-    return Promise.resolve(object);
+  public update = async (organization: Organization, existing: Organization): Promise<Organization> => {
+    const logRequestMessage = `Update Organization OrganizationId=${organization.OrganizationId}, Name=${organization.Name} request`;
+    console.info(logRequestMessage);
+
+    // Check if Organization Name is unchanged
+    if (organization.Name === existing.Name) {
+      // Perform normal update request
+      const response: UpdateItemCommandOutput = await this.updateItem({
+        TableName: this.ORGANIZATION_TABLE_NAME,
+        Key: {
+          OrganizationId: { S: organization.OrganizationId },
+        },
+        ConditionExpression: '#PK = :pk',
+        ExpressionAttributeNames: {
+          '#PK': 'OrganizationId',
+          '#Country': 'Country',
+          '#ModifiedAt': 'ModifiedAt',
+          '#ModifiedBy': 'ModifiedBy',
+        },
+        ExpressionAttributeValues: {
+          ':pk': {
+            S: organization.OrganizationId,
+          },
+          ':country': {
+            S: organization.Country || '',
+          },
+          ':modifiedAt': {
+            S: organization.ModifiedAt || '',
+          },
+          ':modifiedBy': {
+            S: organization.ModifiedBy || '',
+          },
+        },
+        UpdateExpression: 'SET #Country = :country, #ModifiedAt = :modifiedAt, #ModifiedBy = :modifiedBy',
+        ReturnValues: 'ALL_NEW',
+      });
+      if (response.$metadata.httpStatusCode === 200) {
+        if (response.Attributes) {
+          return <Organization>unmarshall(response.Attributes);
+        } else {
+          throw new Error(`${logRequestMessage} unsuccessful: Returned unexpected response`);
+        }
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+      }
+    } else {
+      // Perform transaction update request to include updating the Organization Name and enforce uniqueness
+      const response: TransactWriteItemsCommandOutput = await this.transactWriteItems({
+        TransactItems: [
+          {
+            Update: {
+              TableName: this.ORGANIZATION_TABLE_NAME,
+              Key: {
+                OrganizationId: { S: organization.OrganizationId },
+              },
+              ConditionExpression: '#PK = :pk',
+              ExpressionAttributeNames: {
+                '#PK': 'OrganizationId',
+                '#Name': 'Name',
+                '#Country': 'Country',
+                '#ModifiedAt': 'ModifiedAt',
+                '#ModifiedBy': 'ModifiedBy',
+              },
+              ExpressionAttributeValues: {
+                ':pk': {
+                  S: organization.OrganizationId,
+                },
+                ':name': {
+                  S: organization.Name,
+                },
+                ':country': {
+                  S: organization.Country || '',
+                },
+                ':modifiedAt': {
+                  S: organization.ModifiedAt || '',
+                },
+                ':modifiedBy': {
+                  S: organization.ModifiedBy || '',
+                },
+              },
+              UpdateExpression: 'SET #Name = :name, #Country = :country, #ModifiedAt = :modifiedAt, #ModifiedBy = :modifiedBy',
+              ReturnValues: 'ALL_NEW',
+            },
+          },
+          {
+            Delete: {
+              TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+              Key: {
+                Value: { S: existing.Name },
+                Type: { S: 'organization-name' },
+              },
+            },
+          },
+          {
+            Put: {
+              TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+              Key: {
+                Value: { S: organization.Name },
+                Type: { S: 'organization-name' },
+              },
+              ConditionExpression: 'attribute_not_exists(#PK)',
+              ExpressionAttributeNames: {
+                '#PK': 'Value',
+              },
+              Item: marshall({
+                Value: organization.Name,
+                Type: 'organization-name',
+              }),
+            },
+          },
+        ],
+      });
+      if (response.$metadata.httpStatusCode === 200) {
+        // Transaction Updates do not return the updated Organization details, so explicitly retrieve it
+        return this.get(organization.OrganizationId);
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+      }
+    }
   };
 
   public delete = async (organization: Organization): Promise<boolean> => {

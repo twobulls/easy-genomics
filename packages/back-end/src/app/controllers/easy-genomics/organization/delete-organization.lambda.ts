@@ -1,9 +1,9 @@
-import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/persistence/aws-healthomics/private-workflow';
+import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { PrivateWorkflowService } from '../../../services/aws-healthomics/private-workflow-service';
+import { OrganizationService } from '../../../services/easy-genomics/organization-service';
 
-const privateWorkflowService = new PrivateWorkflowService();
+const organizationService = new OrganizationService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -14,9 +14,9 @@ export const handler: Handler = async (
     const id: string = event.pathParameters?.id || '';
     if (id === '') throw new Error('Required id is missing');
 
-    // Lookup by GSI Id for convenience to confirm existence before deletion
-    const existing: PrivateWorkflow = await privateWorkflowService.find(id);
-    const isDeleted: boolean = await privateWorkflowService.delete(existing);
+    // Lookup by OrganizationId to confirm existence before deletion
+    const existing: Organization = await organizationService.get(id);
+    const isDeleted: boolean = await organizationService.delete(existing);
     return buildResponse(200, JSON.stringify({
       deleted: isDeleted,
     }), event);

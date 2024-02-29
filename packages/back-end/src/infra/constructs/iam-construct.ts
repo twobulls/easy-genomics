@@ -124,6 +124,18 @@ export class IamConstruct extends Construct {
         effect: Effect.ALLOW,
       }),
     );
+    // /easy-genomics/organization/delete-organization
+    this.policyStatements.set(
+      '/easy-genomics/organization/delete-organization',
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`,
+        ],
+        actions: ['dynamodb:DeleteItem', 'dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+    );
 
     // /easy-genomics/laboratory/list-laboratories
     this.policyStatements.set(

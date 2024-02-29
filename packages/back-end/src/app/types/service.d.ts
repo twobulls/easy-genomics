@@ -14,8 +14,8 @@ export abstract class Service {
   public async list<T>(): Promise<T[]>; // Scan Items
 
   // Update operations
-  public async update<T>(object: T, hashKey: string, sortKey?: string): Promise<T>; // Update Item
+  public async update<T>(object: T): Promise<T>; // Update Item
 
   // Delete operation
-  public async delete<T>(hashKey: string, sortKey?: string): Promise<boolean>; // Delete Item
+  public async delete<T>(object: T): Promise<boolean>; // Delete Item
 }

@@ -1,4 +1,3 @@
-import { InternalServerError } from '@aws-sdk/client-dynamodb';
 import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/persistence/aws-healthomics/private-workflow';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -26,11 +25,11 @@ export const handler: Handler = async (
     const updated: PrivateWorkflow = await privateWorkflowService.update(
       {
         ...request,
+        Url: existing.Url,
+        Version: existing.Version,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: userId,
       },
-      existing.Url,
-      existing.Version,
     );
     return buildResponse(200, JSON.stringify(updated), event);
   } catch (err: any) {

@@ -93,12 +93,12 @@ export class OrganizationService extends DynamoDBService implements Service {
     }
   };
 
-  public update = async <T>(object: T, hashKey: string, sortKey?: string): Promise<T> => {
+  public update = async <T>(object: T): Promise<T> => {
     return Promise.resolve(object);
   };
 
-  public delete = async (hashKey: string, uniqueReferenceKey: string): Promise<boolean> => {
-    const logRequestMessage = `Delete Organization OrganizationId=${hashKey}, Name=${uniqueReferenceKey} request`;
+  public delete = async (organization: Organization): Promise<boolean> => {
+    const logRequestMessage = `Delete Organization OrganizationId=${organization.OrganizationId}, Name=${organization.Name} request`;
     console.info(logRequestMessage);
 
     const response: TransactWriteItemsCommandOutput = await this.transactWriteItems({
@@ -107,7 +107,7 @@ export class OrganizationService extends DynamoDBService implements Service {
           Delete: {
             TableName: this.ORGANIZATION_TABLE_NAME,
             Key: {
-              OrganizationId: { S: hashKey },
+              OrganizationId: { S: organization.OrganizationId },
             },
           },
         },
@@ -115,7 +115,7 @@ export class OrganizationService extends DynamoDBService implements Service {
           Delete: {
             TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
             Key: {
-              Value: { S: uniqueReferenceKey },
+              Value: { S: organization.Name },
               Type: { S: 'organization-name' },
             },
           },

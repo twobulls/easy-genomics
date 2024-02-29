@@ -16,7 +16,7 @@ export const handler: Handler = async (
 
     // Lookup by OrganizationId to confirm existence before deletion
     const existing: Organization = await organizationService.get(id);
-    const isDeleted: boolean = await organizationService.delete(existing.OrganizationId, existing.Name);
+    const isDeleted: boolean = await organizationService.delete(existing);
     return buildResponse(200, JSON.stringify({
       deleted: isDeleted,
     }), event);

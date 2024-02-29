@@ -108,15 +108,15 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     }
   };
 
-  public update = async (privateWorkflow: PrivateWorkflow, hashKey: string, sortKey: string): Promise<PrivateWorkflow> => {
-    const logRequestMessage = `Update Private Workflow Url=${hashKey}, Version=${sortKey} request`;
+  public update = async (privateWorkflow: PrivateWorkflow): Promise<PrivateWorkflow> => {
+    const logRequestMessage = `Update Private Workflow Url=${privateWorkflow.Url}, Version=${privateWorkflow.Version} request`;
     console.info(logRequestMessage);
 
     const response: UpdateItemCommandOutput = await this.updateItem({
       TableName: this.PRIVATE_WORKFLOW_TABLE_NAME,
       Key: {
-        Url: { S: hashKey },
-        Version: { S: sortKey },
+        Url: { S: privateWorkflow.Url },
+        Version: { S: privateWorkflow.Version },
       },
       ConditionExpression: '#PK = :pk AND #SK = :sk',
       ExpressionAttributeNames: {
@@ -129,10 +129,10 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
       },
       ExpressionAttributeValues: {
         ':pk': {
-          S: hashKey,
+          S: privateWorkflow.Url,
         },
         ':sk': {
-          S: sortKey,
+          S: privateWorkflow.Version,
         },
         ':status': {
           S: privateWorkflow.Status || '',
@@ -162,28 +162,15 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     }
   };
 
-  public delete = async (hashKey: string, sortKey: string): Promise<boolean> => {
-    const logRequestMessage = `Delete Private Workflow Url=${hashKey}, Version=${sortKey} request`;
+  public delete = async (privateWorkflow: PrivateWorkflow): Promise<boolean> => {
+    const logRequestMessage = `Delete Private Workflow Url=${privateWorkflow.Url}, Version=${privateWorkflow.Version} request`;
     console.info(logRequestMessage);
 
     const response: DeleteItemCommandOutput = await this.deleteItem({
       TableName: this.PRIVATE_WORKFLOW_TABLE_NAME,
       Key: {
-        Url: { S: hashKey },
-        Version: { S: sortKey },
-      },
-      ConditionExpression: '#PK = :pk AND #SK = :sk',
-      ExpressionAttributeNames: {
-        '#PK': 'Url',
-        '#SK': 'Version',
-      },
-      ExpressionAttributeValues: {
-        ':pk': {
-          S: hashKey,
-        },
-        ':sk': {
-          S: sortKey,
-        },
+        Url: { S: privateWorkflow.Url },
+        Version: { S: privateWorkflow.Version },
       },
     });
 

@@ -1,4 +1,3 @@
-import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/persistence/aws-healthomics/private-workflow';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -17,7 +16,7 @@ export const handler: Handler = async (
 
     // Lookup by GSI Id for convenience to confirm existence before deletion
     const existing: PrivateWorkflow = await privateWorkflowService.find(id);
-    const isDeleted: boolean = await privateWorkflowService.delete(existing.Url, existing.Version);
+    const isDeleted: boolean = await privateWorkflowService.delete(existing);
     return buildResponse(200, JSON.stringify({
       deleted: isDeleted,
     }), event);

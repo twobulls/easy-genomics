@@ -1,6 +1,8 @@
 import {
+  DeleteItemCommandOutput,
   GetItemCommandOutput,
   ScanCommandOutput,
+  TransactWriteItemsCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
@@ -95,8 +97,37 @@ export class OrganizationService extends DynamoDBService implements Service {
     return Promise.resolve(object);
   };
 
-  public delete = async <T>(hashKey: string, sortKey?: string): Promise<boolean> => {
-    return Promise.resolve(false);
+  public delete = async (hashKey: string, uniqueReferenceKey: string): Promise<boolean> => {
+    const logRequestMessage = `Delete Organization OrganizationId=${hashKey}, Name=${uniqueReferenceKey} request`;
+    console.info(logRequestMessage);
+
+    const response: TransactWriteItemsCommandOutput = await this.transactWriteItems({
+      TransactItems: [
+        {
+          Delete: {
+            TableName: this.ORGANIZATION_TABLE_NAME,
+            Key: {
+              OrganizationId: { S: hashKey },
+            },
+          },
+        },
+        {
+          Delete: {
+            TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+            Key: {
+              Value: { S: uniqueReferenceKey },
+              Type: { S: 'organization-name' },
+            },
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 
 }

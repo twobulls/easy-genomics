@@ -14,7 +14,7 @@ if (validateEasyGenomicsEnvSettings(process)) {
 
     const envName = process.env.ENV_NAME!.trim().toLowerCase();
     const devEnv: boolean = envName === 'local' || envName === 'sandbox' || envName === 'dev';
-    const domainName = envName === 'prod' ? process.env.DOMAIN_NAME!.trim().toLowerCase() : `${envName}-${process.env.DOMAIN_NAME!.trim().toLowerCase()}`;
+    const domainName = envName === 'prod' ? process.env.DOMAIN_NAME!.trim().toLowerCase() : `${envName}.${process.env.DOMAIN_NAME!.trim().toLowerCase()}`;
 
     // Setups Front-End Stack to support static web hosting for the UI
     new FrontEndStack(app, `${envName}-front-end-stack`, {

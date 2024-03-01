@@ -13,7 +13,7 @@ if (validateEasyGenomicsEnvSettings(process)) {
     const app = new App();
 
     const envName = process.env.ENV_NAME!.trim().toLowerCase();
-    const devEnv: boolean = envName === 'local' || envName === 'sandbox' || envName === 'dev';
+    const devEnv: boolean = envName === 'local' || envName === 'sandbox' || envName === 'quality' || envName === 'dev';
     const domainName = envName === 'prod' ? process.env.DOMAIN_NAME!.trim().toLowerCase() : `${envName}-${process.env.DOMAIN_NAME!.trim().toLowerCase()}`;
 
     // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower

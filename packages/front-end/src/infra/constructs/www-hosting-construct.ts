@@ -20,7 +20,7 @@ import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { ARecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
-import { Bucket } from 'aws-cdk-lib/aws-s3';
+import { Bucket, BucketAccessControl } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
@@ -101,7 +101,7 @@ export class WwwHostingConstruct extends Construct {
     const wwwBucket: Bucket = s3.createBucket(
       wwwBucketName,
       {
-        websiteIndexDocument: this.props.webSiteIndexDocument,
+        accessControl: BucketAccessControl.PRIVATE,
       },
       this.props.devEnv,
     );

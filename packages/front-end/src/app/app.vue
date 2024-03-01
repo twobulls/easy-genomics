@@ -1,5 +1,5 @@
 <template>
   <div>
-    Easy Genomics
+    <NuxtWelcome />
   </div>
 </template>

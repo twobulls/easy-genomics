@@ -21,14 +21,14 @@ if (validateEasyGenomicsEnvSettings(process)) {
     const domainName: string = process.env.DOMAIN_NAME!.trim().toLowerCase();
     const applicationUri: string = envType === 'prod' ? `${appName}.${domainName}` : `${appName}.${envType}.${domainName}`;
 
-
     if (validateEasyGenomicsEnvType(envType)) {
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
+      const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${appName}`;
 
       // Setups Front-End Stack to support static web hosting for the UI
-      new FrontEndStack(app, `${envType}-front-end-stack`, {
-        constructNamespace: `${envType}-easy-genomics`,
+      new FrontEndStack(app, `${appName}-main-front-end-stack`, {
+        constructNamespace: 'easy-genomics',
         env: {
           account: process.env.AWS_ACCOUNT_ID!,
           region: process.env.AWS_REGION!,
@@ -36,8 +36,10 @@ if (validateEasyGenomicsEnvSettings(process)) {
         envType: envType,
         devEnv: devEnv,
         lambdaTimeoutInSeconds: 30,
+        namePrefix: namePrefix,
         siteDistribution: {
           applicationUri: applicationUri,
+          domainName: domainName,
         },
       });
     }

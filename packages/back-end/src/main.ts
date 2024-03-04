@@ -24,10 +24,11 @@ if (validateEasyGenomicsEnvSettings(process)) {
     if (validateEasyGenomicsEnvType(envType)) {
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
+      const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${appName}`;
 
       // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
-      new BackEndStack(app, `${envType}-back-end-stack`, {
-        constructNamespace: `${envType}-easy-genomics`,
+      new BackEndStack(app, `${appName}-main-back-end-stack`, {
+        constructNamespace: 'easy-genomics',
         env: {
           account: process.env.AWS_ACCOUNT_ID!,
           region: process.env.AWS_REGION!,
@@ -35,8 +36,10 @@ if (validateEasyGenomicsEnvSettings(process)) {
         envType: envType,
         devEnv: devEnv,
         lambdaTimeoutInSeconds: 30,
+        namePrefix: namePrefix,
         siteDistribution: {
           applicationUri: applicationUri,
+          domainName: domainName,
         },
       });
     }

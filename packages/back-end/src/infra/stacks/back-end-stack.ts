@@ -69,7 +69,7 @@ export class BackEndStack extends Stack {
     // EasyGenomicsNestedStackProps extends the MainStackProps
     const easyGenomicsNestedStackProps: EasyGenomicsNestedStackProps = {
       ...this.props,
-      constructNamespace: `${this.props.envType}-easy-genomics`, // Overriding value
+      constructNamespace: 'easy-genomics', // Overriding value
       restApi: this.apiGateway.restApi, // Use the same REST API provided from this stack.
       userPool: this.cognitoIdp.userPool,
       iamPolicyStatements: this.iam.policyStatements,
@@ -79,23 +79,21 @@ export class BackEndStack extends Stack {
     // AwsHealthOmicsNestedStackProps extends the EasyGenomicsNestedStackProps
     const awsHealthOmicsNestedStackProps: AwsHealthOmicsNestedStackProps = {
       ...easyGenomicsNestedStackProps,
-      constructNamespace: `${this.props.envType}-aws-healthomics`, // Overriding value
+      constructNamespace: 'aws-healthomics', // Overriding value
       // Use the same REST API provided from this stack - but this can be replaced later with a separate REST API specific for AWS HealthOmics.
       restApi: this.apiGateway.restApi,
     };
     new AwsHealthOmicsNestedStack(
-      this,
-      `${this.props.envType}-aws-healthomics-nested-stack`,
-      awsHealthOmicsNestedStackProps,
+      this, 'aws-healthomics-nested-stack', awsHealthOmicsNestedStackProps,
     );
 
     // NFTowerNestedStackProps extends the EasyGenomicsNestedStackProps
     const nfTowerNestedStackProps: NFTowerNestedStackProps = {
       ...easyGenomicsNestedStackProps,
-      constructNamespace: `${this.props.envType}-nf-tower`, // Overriding value
+      constructNamespace: 'nf-tower', // Overriding value
       // Use the same REST API provided from this stack - but this can be replaced later with a separate REST API specific for NF Tower.
       restApi: this.apiGateway.restApi,
     };
-    new NFTowerNestedStack(this, `${this.props.envType}-nf-tower-nested-stack`, nfTowerNestedStackProps);
+    new NFTowerNestedStack(this, 'nf-tower-nested-stack', nfTowerNestedStackProps);
   };
 }

@@ -12,7 +12,7 @@ import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class PrivateWorkflowService extends DynamoDBService implements Service {
-  readonly PRIVATE_WORKFLOW_TABLE_NAME: string = `${process.env.ENV_NAME}-healthomics-private-workflow-table`;
+  readonly PRIVATE_WORKFLOW_TABLE_NAME: string = `${process.env.NAME_PREFIX}-healthomics-private-workflow-table`;
 
   public constructor() {
     super();

@@ -6,13 +6,11 @@ import { APIGatewayProxyWithCognitoAuthorizerEvent, APIGatewayProxyResult } from
  * @param process
  */
 export function validateEasyGenomicsEnvSettings(process: NodeJS.Process): boolean {
-  if (!process.env.ENV_NAME) throw new Error('ENV_NAME setting is required'); // e.g. local, sandbox, dev, uat, stage, demo, prod
   if (!process.env.AWS_ACCOUNT_ID) throw new Error('AWS_ACCOUNT_ID setting is required');
   if (!process.env.AWS_REGION) throw new Error('AWS_REGION setting is required');
+  if (!process.env.APP_NAME) throw new Error('APP_NAME setting is required');
+  if (!process.env.ENV_TYPE) throw new Error('ENV_TYPE setting is required'); // e.g. dev, pre-prod, prod
   if (!process.env.DOMAIN_NAME) throw new Error('DOMAIN_NAME setting is required');
-  if (!process.env.HOSTED_ZONE_ID) throw new Error('HOSTED_ZONE_ID setting is required');
-  if (!process.env.HOSTED_ZONE_NAME) throw new Error('HOSTED_ZONE_NAME setting is required');
-  if (!process.env.CERTIFICATE_ARN) throw new Error('CERTIFICATE_ARN setting is required');
 
   return true;
 }
@@ -30,6 +28,8 @@ export enum AWS_REGIONS {
   EU_WEST_2 = 'eu-west-2', // Europe (London)
 }
 
+const VALID_ENV_NAME: string[] = ['dev', 'pre-prod', 'prod'];
+
 /**
  * Shared function to consistently validate Easy Genomics is restricted to AWS regions that supports AWS HealthOmics.
  * This is currently limited to:
@@ -46,6 +46,14 @@ export function validateEasyGenomicsAwsRegion(awsRegion: string): boolean {
     return true;
   } else {
     throw new Error(`Easy Genomics configured AWS_REGION: ${awsRegion} is not supported - FAILED`);
+  }
+}
+
+export function validateEasyGenomicsEnvType(envType: string): boolean {
+  if (VALID_ENV_NAME.includes(envType)) {
+    return true;
+  } else {
+    throw new Error(`Easy Genomics configured ENV_TYPE: ${envType} is unsupported. Supported ENV_TYPE values include: ${VALID_ENV_NAME.join('|')}`);
   }
 }
 

@@ -8,9 +8,12 @@ import { APIGatewayProxyWithCognitoAuthorizerEvent, APIGatewayProxyResult } from
 export function validateEasyGenomicsEnvSettings(process: NodeJS.Process): boolean {
   if (!process.env.AWS_ACCOUNT_ID) throw new Error('AWS_ACCOUNT_ID setting is required');
   if (!process.env.AWS_REGION) throw new Error('AWS_REGION setting is required');
-  if (!process.env.APP_NAME) throw new Error('APP_NAME setting is required');
   if (!process.env.ENV_TYPE) throw new Error('ENV_TYPE setting is required'); // e.g. dev, pre-prod, prod
+  if (!process.env.SUB_DOMAIN) throw new Error('SUB_DOMAIN setting is required');
   if (!process.env.DOMAIN_NAME) throw new Error('DOMAIN_NAME setting is required');
+  if (!process.env.HOSTED_ZONE_ID) throw new Error('HOSTED_ZONE_ID setting is required');
+  if (!process.env.HOSTED_ZONE_NAME) throw new Error('HOSTED_ZONE_NAME setting is required');
+  if (!process.env.CERTIFICATE_ARN) throw new Error('CERTIFICATE_ARN setting is required');
 
   return true;
 }

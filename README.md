@@ -53,15 +53,27 @@ The following steps provide a quick start local development guide:
    ````
 6. Edit the `.env.local` settings for your AWS environment:
    ````
-   ENV_NAME=prod                                     // Unique environment identifier e.g. dev, uat, prod
-   AWS_ACCOUNT_ID={AWS Account ID}
-   AWS_REGION=us-east-1                              // Must be an AWS Region that supports AWS HealthOmics
-   DOMAIN_NAME=<Your desired domain name>            // e.g. easy-genomics.myinstitution.org
+   AWS_ACCOUNT_ID=<AWS Account ID>                   # AWS Account to deploy to.
+   AWS_REGION=<AWS Region>                           # Must be an AWS Region that supports AWS HealthOmics
+   
+   # The following ENV_TYPE, SUB_DOMAIN, and DOMAIN_NAME settings will be used to generate the Site Application URL. 
+   # The Site Application URL generated will be:
+   # - prod: https://{SUB_DOMAIN}.{DOMAIN_NAME}
+   # - dev / pre-prod: https://{SUB_DOMAIN}.{ENV_TYPE}.{DOMAIN_NAME}
+   ENV_TYPE=prod                                     # e.g. dev, pre-prod, prod
+   SUB_DOMAIN=                                       # e.g. easy-genomics
+   DOMAIN_NAME=<Your desired domain name>            # e.g. myinstitution.org
+   
+   # The following HOSTED_ZONE_ID, HOSTED_ZONE_NAME AND CERTIFICATE_ARN will need to be preconfigured in AWS.
    HOSTED_ZONE_ID=<AWS Route53 Hosted Zone ID>
-   HOSTED_ZONE_NAME=<AWS Route53 Hosted Zone Name>
-   CERTIFICATE_ARN=<AWS Certificate ARN>             // AWS Certificate ARN for Wildcard SSL Certificate e.g. *.easy-genomics.myinstitution.org
+   HOSTED_ZONE_NAME=<AWS Route53 Hosted Zone Name>   # Should be the same as the Site Application URL
+   CERTIFICATE_ARN=<AWS Certificate ARN>             # AWS ACM Certificate ARN for the Site Application URL
    ````
-7. Run `pnpm build-all` to build the entire Easy Genomics web application, which will run eslint, tests, and build for each of the sub-projects:
+7. Run `pnpm bootstrap-all` to bootstrap CDK for configured AWS Account ID & Region:
+   ````
+   [easy-genomics]$ pnpm bootstrap-all
+   ````
+8. Run `pnpm build-all` to build the entire Easy Genomics web application, which will run eslint, tests, and build for each of the sub-projects:
    ````
    [easy-genomics]$ pnpm build-all
    ````
@@ -75,11 +87,15 @@ The following steps provide a quick start local development guide:
    ````
 10. If you wish to only focus development on either the `back-end` or `front-end` sub-project you are able to do so by the following commands which will automatically include the `shared-lib` dependency:
    ````
+   [easy-genomics]$ pnpm boostrap-back-end   // Boostraps the back-end sub-project to the configured AWS Account & Region 
+
    [easy-genomics]$ pnpm build-back-end      // Executes eslint, tests, and builds the back-end sub-project with the shared-lib dependency 
     
    [easy-genomics]$ pnpm deploy-back-end     // Executes tests, builds, and deploys the back-end resources to the configured AWS Account & Region
    
    
+   [easy-genomics]$ pnpm boostrap-front-end  // Boostraps the front-end sub-project to the configured AWS Account & Region
+
    [easy-genomics]$ pnpm build-front-end     // Executes eslint, tests, builds, and generates static site contents for the front-end sub-project with the shared-lib dependency
 
    [easy-genomics]$ pnpm deploy-front-end    // Executes tests, builds, generates static site contents, and deploys the front-end resources to the AWS Account & Region

@@ -20,6 +20,7 @@
     "upgrade": "pnpm dlx projen upgrade",
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
+    "bootstrap": "pnpm cdk bootstrap",
     "nuxt-build": "nuxt build",
     "nuxt-dev": "nuxt dev",
     "nuxt-generate": "nuxt generate",

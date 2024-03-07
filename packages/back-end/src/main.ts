@@ -16,19 +16,22 @@ if (validateEasyGenomicsEnvSettings(process)) {
   if (validateEasyGenomicsAwsRegion(process.env.AWS_REGION!)) {
     const app = new App();
 
-    const appName: string = process.env.APP_NAME!.trim().toLowerCase();
     const envType: string = process.env.ENV_TYPE!.trim().toLowerCase();
+    const subDomain: string = process.env.SUB_DOMAIN!.trim().toLowerCase();
     const domainName: string = process.env.DOMAIN_NAME!.trim().toLowerCase();
-    const applicationUri: string = envType === 'prod' ? `${appName}.${domainName}` : `${appName}.${envType}.${domainName}`;
+    const applicationUri: string = envType === 'prod' ? `${subDomain}.${domainName}` : `${subDomain}.${envType}.${domainName}`;
+    const hostedZoneId: string = process.env.HOSTED_ZONE_ID!.trim();
+    const hostedZoneName: string = process.env.HOSTED_ZONE_NAME!.trim().toLowerCase();
+    const certificateArn: string = process.env.CERTIFICATE_ARN!.trim();
 
     if (validateEasyGenomicsEnvType(envType)) {
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
-      const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${appName}`;
+      const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${subDomain}`;
 
       // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
-      new BackEndStack(app, `${appName}-main-back-end-stack`, {
-        constructNamespace: 'easy-genomics',
+      new BackEndStack(app, `${subDomain}-main-back-end-stack`, {
+        constructNamespace: `${subDomain}-easy-genomics`,
         env: {
           account: process.env.AWS_ACCOUNT_ID!,
           region: process.env.AWS_REGION!,
@@ -39,7 +42,9 @@ if (validateEasyGenomicsEnvSettings(process)) {
         namePrefix: namePrefix,
         siteDistribution: {
           applicationUri: applicationUri,
-          domainName: domainName,
+          hostedZoneId: hostedZoneId,
+          hostedZoneName: hostedZoneName,
+          certificateArn: certificateArn,
         },
       });
     }

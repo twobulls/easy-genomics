@@ -16,6 +16,8 @@ export interface MainStackProps extends StackProps {
          * the application uri for the frontend application deployment
          */
         applicationUri: string;
-        domainName: string;
+        hostedZoneId: string;
+        hostedZoneName: string;
+        certificateArn: string;
     }
 }

@@ -4,17 +4,18 @@ import { Environment, StackProps } from 'aws-cdk-lib';
 export interface MainStackProps extends StackProps {
     constructNamespace: string;
     env: Environment;
-    envName: string;
+    envType: string;
     devEnv?: boolean;
     lambdaTimeoutInSeconds: number;
+    namePrefix: string;
     /**
      * The deployment of the frontend application
      */
     siteDistribution: {
         /**
-         * the domain of the frontend application deployment
+         * the application uri for the frontend application deployment
          */
-        domainName: string;
+        applicationUri: string;
         hostedZoneId: string;
         hostedZoneName: string;
         certificateArn: string;

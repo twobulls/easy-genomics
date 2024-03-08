@@ -8,7 +8,6 @@ import { Construct } from 'constructs';
 export interface CognitoIDPConstructProps {
   constructNamespace: string;
   devEnv?: boolean;
-  envName: string;
 }
 
 export class CognitoIdpConstruct extends Construct {

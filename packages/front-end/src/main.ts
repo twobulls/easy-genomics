@@ -1,4 +1,8 @@
-import { validateEasyGenomicsAwsRegion, validateEasyGenomicsEnvSettings } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  validateEasyGenomicsAwsRegion,
+  validateEasyGenomicsEnvSettings,
+  validateEasyGenomicsEnvType,
+} from '@easy-genomics/shared-lib/src/app/utils/common';
 import { App } from 'aws-cdk-lib';
 import dotenv from 'dotenv';
 import { FrontEndStack } from './infra/stacks/front-end-stack';
@@ -12,27 +16,38 @@ if (validateEasyGenomicsEnvSettings(process)) {
   if (validateEasyGenomicsAwsRegion(process.env.AWS_REGION!)) {
     const app = new App();
 
-    const envName = process.env.ENV_NAME!.trim().toLowerCase();
-    const devEnv: boolean = envName === 'local' || envName === 'sandbox' || envName === 'dev';
-    const domainName = envName === 'prod' ? process.env.DOMAIN_NAME!.trim().toLowerCase() : `${envName}.${process.env.DOMAIN_NAME!.trim().toLowerCase()}`;
+    const envType: string = process.env.ENV_TYPE!.trim().toLowerCase();
+    const subDomain: string = process.env.SUB_DOMAIN!.trim().toLowerCase();
+    const domainName: string = process.env.DOMAIN_NAME!.trim().toLowerCase();
+    const applicationUri: string = envType === 'prod' ? `${subDomain}.${domainName}` : `${subDomain}.${envType}.${domainName}`;
+    const hostedZoneId: string = process.env.HOSTED_ZONE_ID!.trim();
+    const hostedZoneName: string = process.env.HOSTED_ZONE_NAME!.trim().toLowerCase();
+    const certificateArn: string = process.env.CERTIFICATE_ARN!.trim();
 
-    // Setups Front-End Stack to support static web hosting for the UI
-    new FrontEndStack(app, `${envName}-front-end-stack`, {
-      constructNamespace: `${envName}-easy-genomics`,
-      env: {
-        account: process.env.AWS_ACCOUNT_ID!,
-        region: process.env.AWS_REGION!,
-      },
-      envName: envName,
-      devEnv: devEnv,
-      lambdaTimeoutInSeconds: 30,
-      siteDistribution: {
-        domainName: domainName,
-        hostedZoneId: process.env.HOSTED_ZONE_ID!,
-        hostedZoneName: process.env.HOSTED_ZONE_NAME!,
-        certificateArn: process.env.CERTIFICATE_ARN!,
-      },
-    });
+    if (validateEasyGenomicsEnvType(envType)) {
+      // AWS infrastructure resources can be destroyed only when devEnv is true
+      const devEnv: boolean = envType === 'dev';
+      const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${subDomain}`;
+
+      // Setups Front-End Stack to support static web hosting for the UI
+      new FrontEndStack(app, `${subDomain}-main-front-end-stack`, {
+        constructNamespace: `${subDomain}-easy-genomics`,
+        env: {
+          account: process.env.AWS_ACCOUNT_ID!,
+          region: process.env.AWS_REGION!,
+        },
+        envType: envType,
+        devEnv: devEnv,
+        lambdaTimeoutInSeconds: 30,
+        namePrefix: namePrefix,
+        siteDistribution: {
+          applicationUri: applicationUri,
+          hostedZoneId: hostedZoneId,
+          hostedZoneName: hostedZoneName,
+          certificateArn: certificateArn,
+        },
+      });
+    }
 
     app.synth();
   }

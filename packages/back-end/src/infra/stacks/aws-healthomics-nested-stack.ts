@@ -27,8 +27,8 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
       lambdaTimeoutInSeconds: this.props.lambdaTimeoutInSeconds,
       environment: {
-        ENV_NAME: this.props.envName,
         AWS_ACCOUNT_ID: this.props.env.account!,
+        NAME_PREFIX: this.props.namePrefix,
       },
     });
   };
@@ -36,14 +36,13 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
   // AWS HealthOmics specific DynamoDB tables
   private setupDynamoDBTables = () => {
     const dynamoDB = new DynamoConstruct(this, `${this.props.constructNamespace}-dynamodb`, {
-      envName: this.props.envName,
       devEnv: this.props.devEnv,
     });
 
     /** Update the definitions below to update / add additional DynamoDB tables **/
 
     // AWS HealthOmics Private Workflow table - used for tracking the creation & setup of private workflows to add to AWS HealthOmics
-    const awsHealthOmicsPrivateWorkflowsTableName = `${this.props.envName}-healthomics-private-workflow-table`;
+    const awsHealthOmicsPrivateWorkflowsTableName = `${this.props.namePrefix}-healthomics-private-workflow-table`;
     const awsHealthOmicsPrivateWorkflowsTable = dynamoDB.createTable<PrivateWorkflow>(
       awsHealthOmicsPrivateWorkflowsTableName,
       {

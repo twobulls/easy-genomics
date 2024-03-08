@@ -4,7 +4,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/
 import { DynamoDBService } from '../dynamodb-service';
 
 export class LaboratoryService extends DynamoDBService {
-  readonly TABLE_NAME: string = `${process.env.ENV_NAME}-laboratory-table`;
+  readonly LABORATORY_TABLE_NAME: string = `${process.env.NAME_PREFIX}-laboratory-table`;
 
   public constructor() {
     super();
@@ -12,7 +12,7 @@ export class LaboratoryService extends DynamoDBService {
 
   public listLaboratories = async (): Promise<Laboratory[]> => {
     const result: ScanCommandOutput = await this.findAll({
-      TableName: this.TABLE_NAME,
+      TableName: this.LABORATORY_TABLE_NAME,
     });
 
     if (result.Items) {

@@ -30,7 +30,6 @@ export type DynamoDBTableDetails = {
 };
 
 export interface DynamoConstructProps {
-  envName: string;
   devEnv?: boolean;
 }
 

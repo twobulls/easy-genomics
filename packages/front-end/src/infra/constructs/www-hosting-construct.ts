@@ -86,17 +86,18 @@ export class WwwHostingConstruct extends Construct {
     // WWW S3 Bucket
     this.setupS3Buckets();
 
-    // CloudFront Distribution & Certificate
+    // CloudFront Distribution
     this.setupCloudFrontDistribution();
   }
 
   // WWW S3 Bucket for static web pages
   private setupS3Buckets = () => {
+    const applicationUri: string = this.props.siteDistribution.applicationUri;
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3`, {});
 
     // Using the configured domainName for the WWW S3 Bucket
-    const wwwBucketName: string = `${this.props.siteDistribution.domainName}`; // Must be globally unique
-    new CfnOutput(this, 'Site', { value: `https://${this.props.siteDistribution.domainName}` });
+    const wwwBucketName: string = applicationUri; // Must be globally unique
+    new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${applicationUri}` });
 
     const wwwBucket: Bucket = s3.createBucket(
       wwwBucketName,
@@ -108,119 +109,117 @@ export class WwwHostingConstruct extends Construct {
     this.s3Buckets.set(wwwBucketName, wwwBucket); // Add Bucket to Map collection
   };
 
-  // CloudFront Distribution & Certificate
+  // CloudFront Distribution - requires the HostedZone and Certificate are already configured in AWS
   private setupCloudFrontDistribution = () => {
-    const wwwBucketName: string = `${this.props.siteDistribution.domainName}`;
-    const wwwBucket: Bucket | undefined = this.s3Buckets.get(wwwBucketName);
+    const applicationUri: string = this.props.siteDistribution.applicationUri;
 
-    if (wwwBucket) {
-      // Grant CloudFront access to WWW S3 Bucket
-      const originAccessIdentity: OriginAccessIdentity = new OriginAccessIdentity(this, 'cloudfront-OAI', {
-        comment: `OAI for ${wwwBucketName}`,
-      });
+    const wwwBucket: Bucket | undefined = this.s3Buckets.get(applicationUri);
+    if (!wwwBucket) {
+      throw new Error(`S3 Bucket not found: ${applicationUri}`);
+    }
 
-      wwwBucket.grantRead(originAccessIdentity);
+    // Grant CloudFront access to WWW S3 Bucket
+    const originAccessIdentity: OriginAccessIdentity = new OriginAccessIdentity(this, 'cloudfront-OAI', {
+      comment: `OAI for ${applicationUri}`,
+    });
 
-      wwwBucket.addToResourcePolicy(
-        new PolicyStatement({
-          actions: ['s3:GetObject'],
-          resources: [wwwBucket.arnForObjects('*')],
-          principals: [
-            new CanonicalUserPrincipal(originAccessIdentity.cloudFrontOriginAccessIdentityS3CanonicalUserId),
-          ],
-        }),
-      );
-      new CfnOutput(this, 'HostingBucketName', { value: wwwBucket.bucketName });
+    wwwBucket.grantRead(originAccessIdentity);
 
-      const responseHeadersPolicy: ResponseHeadersPolicy | undefined = this.applySecurityHeaders();
+    wwwBucket.addToResourcePolicy(
+      new PolicyStatement({
+        actions: ['s3:GetObject'],
+        resources: [wwwBucket.arnForObjects('*')],
+        principals: [
+          new CanonicalUserPrincipal(originAccessIdentity.cloudFrontOriginAccessIdentityS3CanonicalUserId),
+        ],
+      }),
+    );
+    new CfnOutput(this, 'HostingBucketName', { key: 'HostingBucketName', value: wwwBucket.bucketName });
 
-      const indexCachePolicy = new CachePolicy(this, 'IndexCachePolicy', {
-        maxTtl: this.props.indexCacheDuration,
-        minTtl: this.props.indexCacheDuration,
-        defaultTtl: this.props.indexCacheDuration,
-        comment: `Caching policy for ${this.props.siteDistribution.domainName}`,
-        enableAcceptEncodingGzip: true,
-        enableAcceptEncodingBrotli: true,
-      });
+    const responseHeadersPolicy: ResponseHeadersPolicy | undefined = this.applySecurityHeaders();
 
-      // TLS certificate
-      const certificate: ICertificate = Certificate.fromCertificateArn(
-        this,
-        'SiteCertificate',
-        this.props.siteDistribution.certificateArn,
-      );
-      new CfnOutput(this, 'Certificate', { value: certificate.certificateArn });
+    const indexCachePolicy = new CachePolicy(this, 'IndexCachePolicy', {
+      maxTtl: this.props.indexCacheDuration,
+      minTtl: this.props.indexCacheDuration,
+      defaultTtl: this.props.indexCacheDuration,
+      comment: `Caching policy for ${applicationUri}`,
+      enableAcceptEncodingGzip: true,
+      enableAcceptEncodingBrotli: true,
+    });
 
-      const s3Origin: S3Origin = new S3Origin(wwwBucket, { originAccessIdentity: originAccessIdentity });
-      const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-        hostedZoneId: this.props.siteDistribution.hostedZoneId,
-        zoneName: this.props.siteDistribution.hostedZoneName,
-      });
+    // Retrieve Hosted Zone
+    const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+      hostedZoneId: this.props.siteDistribution.hostedZoneId,
+      zoneName: this.props.siteDistribution.hostedZoneName,
+    });
+    new CfnOutput(this, 'HostedZoneId', { key: 'HostedZoneId', value: hostedZone.hostedZoneId });
+    new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
 
-      const indexPath: string = `/${this.props.webSiteIndexDocument}`;
+    // Retrieve TLS certificate
+    const certificate: ICertificate = Certificate.fromCertificateArn(
+      this,
+      'SiteCertificate',
+      this.props.siteDistribution.certificateArn,
+    );
+    new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
 
-      // CloudFront distribution
-      const distribution: Distribution = new Distribution(this, 'SiteDistribution', {
-        certificate: certificate,
-        defaultRootObject: this.props.webSiteIndexDocument,
-        domainNames: [`${this.props.siteDistribution.domainName}`],
-        minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
-        webAclId: this.props.webAclId, // Optional AWS WAF web ACL
-        defaultBehavior: {
+    const s3Origin: S3Origin = new S3Origin(wwwBucket, { originAccessIdentity: originAccessIdentity });
+    const indexPath: string = `/${this.props.webSiteIndexDocument}`;
+
+    // CloudFront distribution
+    const distribution: Distribution = new Distribution(this, 'SiteDistribution', {
+      certificate: certificate,
+      defaultRootObject: this.props.webSiteIndexDocument,
+      domainNames: [applicationUri],
+      minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
+      webAclId: this.props.webAclId, // Optional AWS WAF web ACL
+      defaultBehavior: {
+        origin: s3Origin,
+        cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+        compress: true,
+        allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS, // HEAD, GET, OPTIONS
+        viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
+        responseHeadersPolicy: responseHeadersPolicy,
+      },
+      additionalBehaviors: {
+        [indexPath]: {
           origin: s3Origin,
-          cachePolicy: CachePolicy.CACHING_OPTIMIZED,
-          compress: true,
-          allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS, // HEAD, GET, OPTIONS
-          viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
+          cachePolicy: indexCachePolicy,
           responseHeadersPolicy: responseHeadersPolicy,
         },
-        additionalBehaviors: {
-          [indexPath]: {
-            origin: s3Origin,
-            cachePolicy: indexCachePolicy,
-            responseHeadersPolicy: responseHeadersPolicy,
-          },
+      },
+      errorResponses: [
+        {
+          httpStatus: 403,
+          responseHttpStatus: 403,
+          responsePagePath: '/error.html',
+          ttl: this.props.indexCacheDuration,
         },
-        errorResponses: [
-          {
-            httpStatus: 403,
-            responseHttpStatus: 403,
-            responsePagePath: '/error.html',
-            ttl: this.props.indexCacheDuration,
-          },
-          {
-            httpStatus: 404,
-            responseHttpStatus: 404,
-            responsePagePath: '/error.html',
-            ttl: this.props.indexCacheDuration,
-          },
-        ],
+        {
+          httpStatus: 404,
+          responseHttpStatus: 404,
+          responsePagePath: '/error.html',
+          ttl: this.props.indexCacheDuration,
+        },
+      ],
+    });
+    new CfnOutput(this, 'DistributionId', { key: 'DistributionId', value: distribution.distributionId });
+
+    // Route53 alias record for the CloudFront distribution
+    new ARecord(this, 'SiteAliasRecord', {
+      target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+      zone: hostedZone,
+    });
+
+    const wwwSourceDir = path.join(__dirname, '../../../dist'); // Generated site contents folder
+    if (fs.existsSync(wwwSourceDir)) {
+      // Deploy site contents to S3 bucket
+      new BucketDeployment(this, 'DeployWithInvalidation', {
+        sources: [Source.asset(wwwSourceDir)],
+        destinationBucket: wwwBucket,
+        distribution,
+        distributionPaths: ['/*'],
       });
-      new CfnOutput(this, 'DistributionId', { value: distribution.distributionId });
-
-      const subDomain: string | undefined = this.props.siteDistribution.domainName
-        .split(`.${this.props.siteDistribution.hostedZoneName}`)
-        .shift();
-
-      if (subDomain) {
-        // Route53 alias record for the CloudFront distribution
-        new ARecord(this, 'SiteAliasRecord', {
-          recordName: `${subDomain}`,
-          target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
-          zone: hostedZone,
-        });
-      }
-
-      const wwwSourceDir = path.join(__dirname, '../../../dist'); // Generated site contents folder
-      if (fs.existsSync(wwwSourceDir)) {
-        // Deploy site contents to S3 bucket
-        new BucketDeployment(this, 'DeployWithInvalidation', {
-          sources: [Source.asset(wwwSourceDir)],
-          destinationBucket: wwwBucket,
-          distribution,
-          distributionPaths: ['/*'],
-        });
-      }
     }
   };
 

@@ -104,8 +104,8 @@ export class IamConstruct extends Construct {
       [
         new PolicyStatement({
           resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`,
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
           ],
           actions: ['dynamodb:PutItem'],
           effect: Effect.ALLOW,
@@ -117,7 +117,7 @@ export class IamConstruct extends Construct {
       '/easy-genomics/organization/read-organization',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`],
           actions: ['dynamodb:GetItem'],
           effect: Effect.ALLOW,
         }),
@@ -128,7 +128,7 @@ export class IamConstruct extends Construct {
       '/easy-genomics/organization/list-organizations',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`],
           actions: ['dynamodb:Scan'],
           effect: Effect.ALLOW,
         }),
@@ -139,12 +139,12 @@ export class IamConstruct extends Construct {
       '/easy-genomics/organization/update-organization',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`],
           actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
           effect: Effect.ALLOW,
         }),
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
           actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
           effect: Effect.ALLOW,
         }),
@@ -155,12 +155,12 @@ export class IamConstruct extends Construct {
       '/easy-genomics/organization/delete-organization',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-organization-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`],
           actions: ['dynamodb:DeleteItem', 'dynamodb:GetItem'],
           effect: Effect.ALLOW,
         }),
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-unique-reference-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
           actions: ['dynamodb:DeleteItem'],
           effect: Effect.ALLOW,
         }),
@@ -172,7 +172,7 @@ export class IamConstruct extends Construct {
       '/easy-genomics/laboratory/list-laboratories',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-laboratory-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`],
           actions: ['dynamodb:Scan'],
           effect: Effect.ALLOW,
         }),
@@ -183,7 +183,7 @@ export class IamConstruct extends Construct {
       '/easy-genomics/user/list-users',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-user-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`],
           actions: ['dynamodb:Scan'],
           effect: Effect.ALLOW,
         }),
@@ -195,7 +195,7 @@ export class IamConstruct extends Construct {
       '/aws-healthomics/private-workflow/create-private-workflow',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`],
           actions: ['dynamodb:PutItem'],
           effect: Effect.ALLOW,
         }),
@@ -206,7 +206,7 @@ export class IamConstruct extends Construct {
       '/aws-healthomics/private-workflow/list-private-workflows',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`],
           actions: ['dynamodb:Scan'],
           effect: Effect.ALLOW,
         }),
@@ -217,7 +217,7 @@ export class IamConstruct extends Construct {
       '/aws-healthomics/private-workflow/request-private-workflow',
       [
         new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`],
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`],
           actions: ['dynamodb:GetItem'],
           effect: Effect.ALLOW,
         }),
@@ -229,8 +229,8 @@ export class IamConstruct extends Construct {
       [
         new PolicyStatement({
           resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
           ],
           actions: ['dynamodb:Query'],
           effect: Effect.ALLOW,
@@ -243,8 +243,8 @@ export class IamConstruct extends Construct {
       [
         new PolicyStatement({
           resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
           ],
           actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
           effect: Effect.ALLOW,
@@ -257,8 +257,8 @@ export class IamConstruct extends Construct {
       [
         new PolicyStatement({
           resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table`,
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.envName}-healthomics-private-workflow-table/index/*`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
           ],
           actions: ['dynamodb:DeleteItem', 'dynamodb:Query'],
           effect: Effect.ALLOW,

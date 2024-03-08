@@ -4,7 +4,7 @@ import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-g
 import { DynamoDBService } from '../dynamodb-service';
 
 export class UserService extends DynamoDBService {
-  readonly TABLE_NAME: string = `${process.env.ENV_NAME}-user-table`;
+  readonly USER_TABLE_NAME: string = `${process.env.NAME_PREFIX}-user-table`;
 
   public constructor() {
     super();
@@ -12,7 +12,7 @@ export class UserService extends DynamoDBService {
 
   public listUsers = async (): Promise<User[]> => {
     const result: ScanCommandOutput = await this.findAll({
-      TableName: this.TABLE_NAME,
+      TableName: this.USER_TABLE_NAME,
     });
 
     if (result.Items) {

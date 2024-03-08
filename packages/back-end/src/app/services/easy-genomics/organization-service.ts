@@ -10,8 +10,8 @@ import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class OrganizationService extends DynamoDBService implements Service {
-  readonly ORGANIZATION_TABLE_NAME: string = `${process.env.ENV_NAME}-organization-table`;
-  readonly UNIQUE_REFERENCE_TABLE_NAME: string = `${process.env.ENV_NAME}-unique-reference-table`;
+  readonly ORGANIZATION_TABLE_NAME: string = `${process.env.NAME_PREFIX}-organization-table`;
+  readonly UNIQUE_REFERENCE_TABLE_NAME: string = `${process.env.NAME_PREFIX}-unique-reference-table`;
 
   public constructor() {
     super();

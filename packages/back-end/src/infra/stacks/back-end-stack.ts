@@ -47,7 +47,6 @@ export class BackEndStack extends Stack {
     return new CognitoIdpConstruct(this, `${this.props.constructNamespace}-cognito-idp`, {
       constructNamespace: this.props.constructNamespace,
       devEnv: this.props.devEnv,
-      envName: this.props.envName,
     });
   };
 
@@ -70,7 +69,7 @@ export class BackEndStack extends Stack {
     // EasyGenomicsNestedStackProps extends the MainStackProps
     const easyGenomicsNestedStackProps: EasyGenomicsNestedStackProps = {
       ...this.props,
-      constructNamespace: `${this.props.envName}-easy-genomics`, // Overriding value
+      constructNamespace: 'easy-genomics', // Overriding value
       restApi: this.apiGateway.restApi, // Use the same REST API provided from this stack.
       userPool: this.cognitoIdp.userPool,
       iamPolicyStatements: this.iam.policyStatements,
@@ -80,23 +79,21 @@ export class BackEndStack extends Stack {
     // AwsHealthOmicsNestedStackProps extends the EasyGenomicsNestedStackProps
     const awsHealthOmicsNestedStackProps: AwsHealthOmicsNestedStackProps = {
       ...easyGenomicsNestedStackProps,
-      constructNamespace: `${this.props.envName}-aws-healthomics`, // Overriding value
+      constructNamespace: 'aws-healthomics', // Overriding value
       // Use the same REST API provided from this stack - but this can be replaced later with a separate REST API specific for AWS HealthOmics.
       restApi: this.apiGateway.restApi,
     };
     new AwsHealthOmicsNestedStack(
-      this,
-      `${this.props.envName}-aws-healthomics-nested-stack`,
-      awsHealthOmicsNestedStackProps,
+      this, 'aws-healthomics-nested-stack', awsHealthOmicsNestedStackProps,
     );
 
     // NFTowerNestedStackProps extends the EasyGenomicsNestedStackProps
     const nfTowerNestedStackProps: NFTowerNestedStackProps = {
       ...easyGenomicsNestedStackProps,
-      constructNamespace: `${this.props.envName}-nf-tower`, // Overriding value
+      constructNamespace: 'nf-tower', // Overriding value
       // Use the same REST API provided from this stack - but this can be replaced later with a separate REST API specific for NF Tower.
       restApi: this.apiGateway.restApi,
     };
-    new NFTowerNestedStack(this, `${this.props.envName}-nf-tower-nested-stack`, nfTowerNestedStackProps);
+    new NFTowerNestedStack(this, 'nf-tower-nested-stack', nfTowerNestedStackProps);
   };
 }

@@ -104,9 +104,12 @@ const root = new typescript.TypeScriptProject({
 root.removeScript('build');
 root.removeScript('deploy');
 root.addScripts({
+  ['bootstrap-all']: 'pnpm nx run-many --targets=bootstrap --all',
   ['build-all']: 'pnpm nx run-many --targets=eslint,test,build,nuxt-generate --all',
   ['test-all']: 'pnpm nx run-many --targets=eslint,compile,test --all',
   ['deploy-all']: 'pnpm nx run-many --targets=test,build,nuxt-generate,deploy --all',
+  ['bootstrap-back-end']: 'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/back-end',
+  ['bootstrap-front-end']: 'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/front-end',
   ['build-back-end']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/back-end',
   ['build-front-end']: 'pnpm nx run-many --targets=eslint,test,build,nuxt-generate --projects=@easy-genomics/front-end',
   ['build-shared-lib']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/shared-lib',
@@ -141,7 +144,7 @@ new typescript.TypeScriptProject({
 });
 
 // Defines the Easy Genomics 'back-end' subproject
-new awscdk.AwsCdkTypeScriptApp({
+const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   parent: root,
   name: '@easy-genomics/back-end',
   outdir: './packages/back-end',
@@ -175,6 +178,9 @@ new awscdk.AwsCdkTypeScriptApp({
   ],
   devDeps: ['@aws-sdk/util-dynamodb', '@aws-sdk/types', '@types/aws-lambda', '@types/uuid', 'aws-sdk-client-mock'],
 });
+backEndApp.addScripts({
+  ['bootstrap']: 'pnpm cdk bootstrap',
+});
 
 // Defines the Easy Genomics 'front-end' subproject
 const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
@@ -204,6 +210,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 
 // Add additional Nuxt Scripts to front-end/package.json
 frontEndApp.addScripts({
+  ['bootstrap']: 'pnpm cdk bootstrap',
   ['nuxt-build']: 'nuxt build',
   ['nuxt-dev']: 'nuxt dev',
   ['nuxt-generate']: 'nuxt generate',

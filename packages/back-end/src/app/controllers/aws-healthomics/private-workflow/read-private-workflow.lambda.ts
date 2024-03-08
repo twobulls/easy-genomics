@@ -15,7 +15,7 @@ export const handler: Handler = async (
     if (id === '') throw new Error('Required id is missing');
 
     // Lookup by GSI Id for convenience
-    const existing: PrivateWorkflow = await privateWorkflowService.find(id);
+    const existing: PrivateWorkflow = await privateWorkflowService.query(id);
     return buildResponse(200, JSON.stringify(existing), event);
   } catch (err: any) {
     console.error(err);

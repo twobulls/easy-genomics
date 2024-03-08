@@ -21,7 +21,7 @@ export const handler: Handler = async (
     const userId = event.requestContext.authorizer.claims['cognito:username'];
 
     // Lookup by GSI Id for convenience to confirm existence before update
-    const existing: PrivateWorkflow = await privateWorkflowService.find(id);
+    const existing: PrivateWorkflow = await privateWorkflowService.query(id);
     const updated: PrivateWorkflow = await privateWorkflowService.update(
       {
         ...request,

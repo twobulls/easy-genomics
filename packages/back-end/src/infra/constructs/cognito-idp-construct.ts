@@ -1,6 +1,6 @@
 import { user } from '@easy-genomics/shared-lib/lib/app/types/persistence/easy-genomics/sample-data';
 import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/user';
-import { RemovalPolicy } from 'aws-cdk-lib';
+import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
 import { AccountRecovery, UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
@@ -36,6 +36,7 @@ export class CognitoIdpConstruct extends Construct {
       },
       removalPolicy: removalPolicy,
     });
+    new CfnOutput(this, 'UserPoolId', { key: 'UserPoolId', value: this.userPool.userPoolId });
 
     this.userPoolClient = this.userPool.addClient('client', {
       userPoolClientName: `${props.constructNamespace}-user-pool-client`,
@@ -47,6 +48,7 @@ export class CognitoIdpConstruct extends Construct {
         userPassword: true,
       },
     });
+    new CfnOutput(this, 'UserPoolClientId', { key: 'UserPoolClientId', value: this.userPoolClient.userPoolClientId });
 
     if (props.devEnv) {
       this.setupTestAdminUser(user);

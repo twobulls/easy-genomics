@@ -7,6 +7,7 @@ import {
   laboratoryUser,
   organization,
   organizationUser,
+  uniqueReferences,
   user,
 } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/sample-data';
 import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/unique-reference';
@@ -178,6 +179,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
       },
       this.props.devEnv,
+      uniqueReferences, // Seed data
     );
     this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
   };

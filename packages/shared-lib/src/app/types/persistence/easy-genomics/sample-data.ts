@@ -3,6 +3,7 @@ import { Laboratory } from './laboratory';
 import { LaboratoryUser } from './laboratory-user';
 import { Organization } from './organization';
 import { OrganizationUser } from './organization-user';
+import { UniqueReference } from './unique-reference';
 import { User } from './user';
 
 const organizationId = uuidv4();
@@ -53,4 +54,9 @@ export const laboratoryUser: LaboratoryUser = {
   LabManager: 'Active',
   LabTechnician: 'Active',
   CreatedAt: new Date().toISOString(),
+};
+
+export const uniqueReferences: UniqueReference = {
+  Value: 'DEPT-Health',
+  Type: 'organization-name',
 };

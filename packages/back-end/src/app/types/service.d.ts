@@ -9,7 +9,7 @@ export abstract class Service {
   // Read operations
   public async get<T>(hashKey: string, sortKey?: string): Promise<T | undefined>; // Get Item
 
-  public async find?<T>(gsi: string): Promise<T>; // Querying by GSI (optional)
+  public async query?<T>(gsi: string): Promise<T>; // Querying by GSI (optional)
 
   public async list<T>(): Promise<T[]>; // Scan Items
 

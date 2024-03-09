@@ -1,4 +1,5 @@
 import { Component, Project, TextFile } from 'projen';
+import { PROJEN_MARKER } from 'projen/lib/common';
 
 /**
  * Custom projen component that generates .husky/{git hook} logic
@@ -13,6 +14,7 @@ export class Husky extends Component {
       const commitMsg = new TextFile(rootProject, '.husky/commit-msg', {
         marker: true,
       });
+      commitMsg.addLine(`# ${PROJEN_MARKER} -- see projenrc/husky.ts`);
       commitMsg.addLine('# commit-msg hook file');
       commitMsg.addLine('pnpm exec commitlint --edit $1');
       commitMsg.addLine('');
@@ -23,8 +25,11 @@ export class Husky extends Component {
       const preCommit = new TextFile(rootProject, '.husky/pre-commit', {
         marker: true,
       });
+      preCommit.addLine(`# ${PROJEN_MARKER} -- see projenrc/husky.ts`);
       preCommit.addLine('# pre-commit hook file');
-      preCommit.addLine('pnpm exec validate-branch-name');
+      preCommit.addLine(
+        "pnpm exec validate-branch-name -r '^(main|release){1}$|^(feat|fix|hotfix|release|refactor|chore|docs)/.+$'"
+      );
       preCommit.addLine('');
     }
   }

@@ -1,9 +1,9 @@
-import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/persistence/aws-healthomics/private-workflow';
+import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { PrivateWorkflowService } from '../../../services/aws-healthomics/private-workflow-service';
+import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 
-const privateWorkflowService = new PrivateWorkflowService();
+const laboratoryService = new LaboratoryService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -15,7 +15,7 @@ export const handler: Handler = async (
     if (id === '') throw new Error('Required id is missing');
 
     // Lookup by GSI Id for convenience
-    const existing: PrivateWorkflow = await privateWorkflowService.query(id);
+    const existing: Laboratory = await laboratoryService.query(id);
     return buildResponse(200, JSON.stringify(existing), event);
   } catch (err: any) {
     console.error(err);

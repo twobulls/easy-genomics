@@ -167,6 +167,31 @@ export class IamConstruct extends Construct {
       ],
     );
 
+    // /easy-genomics/laboratory/read-laboratory
+    this.policyStatements.set(
+      '/easy-genomics/laboratory/read-laboratory',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/request-laboratory
+    this.policyStatements.set(
+      '/easy-genomics/laboratory/request-laboratory',
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
     // /easy-genomics/laboratory/list-laboratories
     this.policyStatements.set(
       '/easy-genomics/laboratory/list-laboratories',
@@ -178,6 +203,7 @@ export class IamConstruct extends Construct {
         }),
       ],
     );
+
     // /easy-genomics/user/list-users
     this.policyStatements.set(
       '/easy-genomics/user/list-users',

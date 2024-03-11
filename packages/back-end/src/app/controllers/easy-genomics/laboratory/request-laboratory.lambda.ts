@@ -10,18 +10,27 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    const response: Laboratory[] = await laboratoryService.list();
+    // Post Request Body
+    const request: Laboratory = (
+      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
+    );
+    if (request.OrganizationId === '') throw new Error('Required OrganizationId is missing');
+    if (request.LaboratoryId === '') throw new Error('Required LaboratoryId is missing');
 
-    if (response) {
-      return buildResponse(200, JSON.stringify(response), event);
-    } else {
-      throw new Error(`Unable to find Laboratories: ${JSON.stringify(response)}`);
-    }
+    const response: Laboratory = await laboratoryService.get(request.OrganizationId, request.LaboratoryId);
+    return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
     return {
       statusCode: 400,
-      body: `Error: ${err.message}`,
+      body: JSON.stringify({
+        Error: getErrorMessage(err),
+      }),
     };
   }
+};
+
+// Used for customising error messages by exception types
+function getErrorMessage(err: any) {
+  return err.message;
 };

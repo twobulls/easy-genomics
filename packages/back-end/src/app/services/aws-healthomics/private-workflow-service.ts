@@ -62,8 +62,8 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     }
   };
 
-  public find = async (gsiId: string): Promise<PrivateWorkflow> => {
-    const logRequestMessage = `Find Private Workflow by PrivateWorkflowId=${gsiId} request`;
+  public query = async (gsiId: string): Promise<PrivateWorkflow> => {
+    const logRequestMessage = `Query Private Workflow by PrivateWorkflowId=${gsiId} request`;
     console.info(logRequestMessage);
 
     const response: QueryCommandOutput = await this.queryItems({

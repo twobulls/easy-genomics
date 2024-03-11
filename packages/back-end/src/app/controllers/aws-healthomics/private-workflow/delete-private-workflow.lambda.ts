@@ -15,7 +15,7 @@ export const handler: Handler = async (
     if (id === '') throw new Error('Required id is missing');
 
     // Lookup by GSI Id for convenience to confirm existence before deletion
-    const existing: PrivateWorkflow = await privateWorkflowService.find(id);
+    const existing: PrivateWorkflow = await privateWorkflowService.query(id);
     const isDeleted: boolean = await privateWorkflowService.delete(existing);
     return buildResponse(200, JSON.stringify({
       deleted: isDeleted,

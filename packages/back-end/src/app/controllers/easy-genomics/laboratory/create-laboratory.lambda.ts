@@ -1,5 +1,6 @@
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
+import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
@@ -23,7 +24,7 @@ export const handler: Handler = async (
     const userId = event.requestContext.authorizer.claims['cognito:username'];
 
     // Validate OrganizationId exists before creating Laboratory
-    const organization = await organizationService.get(request.OrganizationId);
+    const organization: Organization = await organizationService.get(request.OrganizationId);
     if (!organization) {
       throw new Error(`Laboratory OrganizationId '${request.OrganizationId}' not found`);
     }

@@ -105,25 +105,28 @@ The following steps provide a quick start local development guide:
 
 ### Branch Naming convention:
 
-This project requires the branch name to follow the default [validate-branch-name](https://www.npmjs.com/package/validate-branch-name) regular expression: `/^(master|main|develop){1}$|^(feature|fix|hotfix|release)\/.+$/g`
+This project requires the branch name to follow the customized [validate-branch-name](https://www.npmjs.com/package/validate-branch-name) regular expression: `^(main|release){1}$|^(feat|fix|hotfix|release|refactor|chore|docs)/.+$`, defined within the `.husky/pre-commit` hook.
 
 Format: `<Branch Type>/<Summary>`
 
 where `<Branch Type>`:
-- `feature`
+- `feat`
 - `fix`
 - `hotfix`
 - `release`
+- `refactor`
+- `chore`
+- `docs`
 
 #### Example branch names
 
 ````
-git checkout -b "feature/EG-XXX_add_new_feature"
+git checkout -b "feat/EG-XXX_add_new_feature"
 ^-------------^  ^-----^ ^--------------------^
 |                |       |
 |                |       +-> Summary in present tense with JIRA ticket prefix when possible.
 |                |
-|                +--> Branch Type: feature, fix, hotfix, release. 
+|                +--> Branch Type: feat, fix, hotfix, release, refactor, chore, docs.
 |
 +-------> Create new branch from current branch.
 ````
@@ -134,7 +137,7 @@ git branch -m "fix/EG-XXX_fix_something_&_something_else"
 |              |   |
 |              |   +-> Summary in present tense with JIRA ticket prefix when possible.
 |              |
-|              +--> Branch Type: feature, fix, hotfix, release.
+|              +--> Branch Type: feat, fix, hotfix, release, refactor, chore, docs.
 |
 +-------> Modify current branch name.
 ````

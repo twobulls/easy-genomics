@@ -23,7 +23,8 @@ export const handler: Handler = async (
     const userId = event.requestContext.authorizer.claims['cognito:username'];
 
     // Validate OrganizationId exists before creating Laboratory
-    if (!await organizationService.get(request.OrganizationId)) {
+    const organization = await organizationService.get(request.OrganizationId);
+    if (!organization) {
       throw new Error(`Laboratory OrganizationId '${request.OrganizationId}' not found`);
     }
 
@@ -31,9 +32,9 @@ export const handler: Handler = async (
       ...request,
       LaboratoryId: uuidv4(),
       Status: 'Active',
-      AwsHealthOmicsEnabled: false,
+      AwsHealthOmicsEnabled: organization.AwsHealthOmicsEnabled,
       AwsHealthOmicsWorkflows: [],
-      NextFlowTowerEnabled: false,
+      NextFlowTowerEnabled: organization.NextFlowTowerEnabled,
       NextFlowTowerPipelines: [],
       CreatedAt: new Date().toISOString(),
       CreatedBy: userId,

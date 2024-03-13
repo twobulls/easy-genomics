@@ -24,8 +24,10 @@ export const laboratory: Laboratory = {
   LaboratoryId: laboratoryId,
   Name: 'Microbial Genomics Laboratory',
   Status: 'Active',
-  AwsHealthOmicsEnabled: true,
-  NextFlowTowerEnabled: false,
+  AwsHealthOmicsEnabled: organization.AwsHealthOmicsEnabled,
+  AwsHealthOmicsWorkflows: [],
+  NextFlowTowerEnabled: organization.NextFlowTowerEnabled,
+  NextFlowTowerPipelines: [],
   CreatedAt: new Date().toISOString(),
 };
 

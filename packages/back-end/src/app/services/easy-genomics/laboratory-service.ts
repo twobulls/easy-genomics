@@ -1,5 +1,5 @@
 import { GetItemCommandOutput, QueryCommandOutput, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
-import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
@@ -13,7 +13,43 @@ export class LaboratoryService extends DynamoDBService implements Service {
   }
 
   public add = async (laboratory: Laboratory): Promise<Laboratory> => {
-    throw new Error('TBD');
+    const logRequestMessage = `Add Laboratory OrganizationId=${laboratory.OrganizationId}, LaboratoryId=${laboratory.LaboratoryId}, Name=${laboratory.Name} request`;
+    console.info(`${logRequestMessage}`);
+
+    const response = await this.transactWriteItems({
+      TransactItems: [
+        {
+          Put: {
+            TableName: this.LABORATORY_TABLE_NAME,
+            ConditionExpression: 'attribute_not_exists(#PK) AND attribute_not_exists(#SK)',
+            ExpressionAttributeNames: {
+              '#PK': 'OrganizationId',
+              '#SK': 'LaboratoryId',
+            },
+            Item: marshall(laboratory),
+          },
+        },
+        {
+          Put: {
+            TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+            ConditionExpression: 'attribute_not_exists(#PK)',
+            ExpressionAttributeNames: {
+              '#PK': 'Value',
+            },
+            Item: marshall({
+              Value: laboratory.Name,
+              Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
+            }),
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return laboratory;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 
   public get = async (hashKey: string, sortKey: string): Promise<Laboratory> => {

@@ -167,6 +167,27 @@ export class IamConstruct extends Construct {
       ],
     );
 
+    // /easy-genomics/laboratory/create-laboratory
+    this.policyStatements.set(
+      '/easy-genomics/laboratory/create-laboratory',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+          ],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
     // /easy-genomics/laboratory/read-laboratory
     this.policyStatements.set(
       '/easy-genomics/laboratory/read-laboratory',

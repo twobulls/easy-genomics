@@ -1,4 +1,9 @@
-import { GetItemCommandOutput, QueryCommandOutput, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
+import {
+  GetItemCommandOutput,
+  QueryCommandOutput,
+  ScanCommandOutput,
+  TransactWriteItemsCommandOutput,
+} from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
 import { Service } from '../../types/service';
@@ -107,7 +112,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
   };
 
   public list = async (): Promise<Laboratory[]> => {
-    const logRequestMessage = 'List Laboratories(s) request';
+    const logRequestMessage = 'List Laboratories request';
     console.info(logRequestMessage);
 
     const response: ScanCommandOutput = await this.findAll({
@@ -126,6 +131,36 @@ export class LaboratoryService extends DynamoDBService implements Service {
   };
 
   public delete = async (laboratory: Laboratory): Promise<boolean> => {
-    throw new Error('TBD');
+    const logRequestMessage = `Delete Laboratory OrganizationId=${laboratory.OrganizationId}, LaboratoryId=${laboratory.LaboratoryId}, Name=${laboratory.Name} request`;
+    console.info(logRequestMessage);
+
+    const response: TransactWriteItemsCommandOutput = await this.transactWriteItems({
+      TransactItems: [
+        {
+          Delete: {
+            TableName: this.LABORATORY_TABLE_NAME,
+            Key: {
+              OrganizationId: { S: laboratory.OrganizationId },
+              LaboratoryId: { S: laboratory.LaboratoryId },
+            },
+          },
+        },
+        {
+          Delete: {
+            TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+            Key: {
+              Value: { S: laboratory.Name },
+              Type: { S: `organization-${laboratory.OrganizationId}-laboratory-name` },
+            },
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 }

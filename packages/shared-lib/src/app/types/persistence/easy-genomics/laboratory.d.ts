@@ -14,6 +14,7 @@
  *   LaboratoryId: <string>,
  *   Name: <string>,
  *   Status: <string>,
+ *   S3Bucket?: <string>
  *   AwsHealthOmicsEnabled?: <boolean>,
  *   AwsHealthOmicsWorkflows?: <string[]>
  *   NextFlowTowerEnabled?: <boolean>,
@@ -31,6 +32,7 @@ export interface Laboratory extends BaseAttributes {
   LaboratoryId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
   Name: string;
   Status: Status,
+  S3Bucket?: string;
   AwsHealthOmicsEnabled?: boolean;
   AwsHealthOmicsWorkflows?: string[],
   NextFlowTowerEnabled?: boolean;

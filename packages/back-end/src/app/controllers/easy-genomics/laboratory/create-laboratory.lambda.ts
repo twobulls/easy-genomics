@@ -34,9 +34,7 @@ export const handler: Handler = async (
       LaboratoryId: uuidv4(),
       Status: 'Active',
       AwsHealthOmicsEnabled: organization.AwsHealthOmicsEnabled,
-      AwsHealthOmicsWorkflows: [],
       NextFlowTowerEnabled: organization.NextFlowTowerEnabled,
-      NextFlowTowerPipelines: [],
       CreatedAt: new Date().toISOString(),
       CreatedBy: userId,
     });

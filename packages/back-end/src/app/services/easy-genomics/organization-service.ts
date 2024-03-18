@@ -5,7 +5,7 @@ import {
   UpdateItemCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
+import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 

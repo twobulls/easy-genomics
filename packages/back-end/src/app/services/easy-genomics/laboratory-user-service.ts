@@ -2,7 +2,7 @@ import {
   QueryCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
-import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory-user';
+import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 

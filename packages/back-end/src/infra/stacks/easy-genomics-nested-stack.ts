@@ -1,7 +1,7 @@
-import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
-import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory-user';
-import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
-import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization-user';
+import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
+import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import {
   laboratory,
   laboratoryUser,
@@ -9,9 +9,9 @@ import {
   organizationUser,
   uniqueReferences,
   user,
-} from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/sample-data';
-import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/unique-reference';
-import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/user';
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sample-data';
+import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/unique-reference';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket } from 'aws-cdk-lib/aws-s3';

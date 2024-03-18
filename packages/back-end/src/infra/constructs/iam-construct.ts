@@ -1,4 +1,4 @@
-import { MainStackProps } from '@easy-genomics/shared-lib/src/app/types/main-stack';
+import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { Effect, Policy, PolicyDocument, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 

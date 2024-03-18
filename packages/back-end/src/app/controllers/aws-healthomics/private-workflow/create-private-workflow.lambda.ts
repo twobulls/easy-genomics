@@ -1,4 +1,5 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
+import { CreatePrivateWorkflowSchema } from '@easy-genomics/shared-lib/src/app/schema/aws-healthomics/private-workflow';
 import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/private-workflow';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -12,13 +13,13 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
+    const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
     const request: PrivateWorkflow = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
     );
-    if (request.Url === '') throw new Error('Required Url is missing');
-    if (request.Version === '') throw new Error('Required Version is missing');
-    const userId = event.requestContext.authorizer.claims['cognito:username'];
+    // Data validation safety check
+    if (!CreatePrivateWorkflowSchema.safeParse(request).success) throw new Error('Invalid request');
 
     const response: PrivateWorkflow = await privateWorkflowService.add({
       ...request,

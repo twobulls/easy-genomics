@@ -1,4 +1,7 @@
 import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import {
+  UpdateLaboratorySchema,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -15,23 +18,19 @@ export const handler: Handler = async (
     const id: string = event.pathParameters?.id || '';
     if (id === '') throw new Error('Required id is missing');
 
+    const userId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Put Request Body
     const request: Laboratory = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
     );
-    if (!request.Name || request.Name === '') throw new Error('Required Name is missing');
-    if (!request.Status || request.Status === '') throw new Error('Required Status is missing');
-    if (request.AwsHealthOmicsEnabled === undefined) throw new Error('Required AwsHealthOmicsEnabled is missing');
-    if (request.NextFlowTowerEnabled === undefined) throw new Error('Required NextFlowTowerEnabled is missing');
-    const userId = event.requestContext.authorizer.claims['cognito:username'];
+    // Data validation safety check
+    if (!UpdateLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
 
     // Lookup by LaboratoryId to confirm existence before updating
     const existing: Laboratory = await laboratoryService.query(id);
     const updated: Laboratory = await laboratoryService.update({
       ...existing,
       ...request,
-      OrganizationId: existing.OrganizationId,
-      LaboratoryId: existing.LaboratoryId,
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: userId,
     }, existing);

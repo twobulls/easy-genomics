@@ -1,3 +1,4 @@
+import { RequestLaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -14,8 +15,8 @@ export const handler: Handler = async (
     const request: Laboratory = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
     );
-    if (request.OrganizationId === '') throw new Error('Required OrganizationId is missing');
-    if (request.LaboratoryId === '') throw new Error('Required LaboratoryId is missing');
+    // Data validation safety check
+    if (!RequestLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
 
     const response: Laboratory = await laboratoryService.get(request.OrganizationId, request.LaboratoryId);
     return buildResponse(200, JSON.stringify(response), event);

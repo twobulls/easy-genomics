@@ -1,4 +1,5 @@
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import { CreateLaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
@@ -15,24 +16,23 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
+    const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
     const request: Laboratory = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
     );
-    if (request.Name === '') throw new Error('Required Name is missing');
-    if (request.OrganizationId === '') throw new Error('Required OrganizationId is missing');
-    const userId = event.requestContext.authorizer.claims['cognito:username'];
+    // Data validation safety check
+    if (!CreateLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
 
     // Validate OrganizationId exists before creating Laboratory
     const organization: Organization = await organizationService.get(request.OrganizationId);
     if (!organization) {
-      throw new Error(`Laboratory OrganizationId '${request.OrganizationId}' not found`);
+      throw new Error(`Laboratory creation error, OrganizationId '${request.OrganizationId}' not found`);
     }
 
     const response: Laboratory = await laboratoryService.add({
       ...request,
       LaboratoryId: uuidv4(),
-      Status: 'Active',
       AwsHealthOmicsEnabled: organization.AwsHealthOmicsEnabled,
       NextFlowTowerEnabled: organization.NextFlowTowerEnabled,
       CreatedAt: new Date().toISOString(),

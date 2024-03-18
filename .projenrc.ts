@@ -139,7 +139,7 @@ new typescript.TypeScriptProject({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
-  deps: ['aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'uuid'],
+  deps: ['aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'uuid', 'zod'],
   devDeps: ['@types/aws-lambda', '@types/uuid', 'aws-cdk-lib'],
 });
 

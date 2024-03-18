@@ -153,4 +153,95 @@ export class DynamoDBService {
         throw new Error(`Unsupported DynamoDB Command '${command}'`);
     }
   };
+
+  /**
+   * Helper service function to assist the generation of the DynamoDB
+   * ExpressionAttributeNames from an object's property names.
+   * @param object
+   */
+  public getExpressionAttributeNamesDefinition = <T>(object: T, exclusions?: string[]): {[p: string]: string} => {
+    const objectExpressionAttributeNames: {[p: string]: string}[] = Object.keys(object)
+      .filter((key: string) => !exclusions?.includes(key))
+      .map((key: string) => {
+        return { [`#${key}`]: key };
+      });
+    // @ts-ignore
+    return Object.assign({}, ...objectExpressionAttributeNames);
+  };
+
+  /**
+   * Helper service function to assist the generation of the DynamoDB
+   * ExpressionAttributeValues from an object's property values & types.
+   *
+   * The DynamoDB AttributeValue types supported attempts to cover the available
+   * types from:
+   *    https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html
+   *
+   * The following types are not currently supported: Binary, Binary Set, Null
+   *
+   * @param object
+   */
+  public getExpressionAttributeValuesDefinition = <T>(object: T, exclusions?: string[]): {[p: string]: any} => {
+    const objectExpressionAttributeValues: {[p: string]: any}[] = Object.keys(object)
+      .filter((key: string) => !exclusions?.includes(key))
+      .map((key: string) => {
+        const attributeId = `${key.charAt(0).toLowerCase() + key.slice(1)}`; // Camel Case
+        const attributeValue = object[key];
+        const attributeType = typeof attributeValue;
+
+        if (attributeType === 'boolean') {
+          return {
+            [`:${attributeId}`]: { BOOL: attributeValue }, // Boolean
+          };
+        } else if (attributeType === 'number') {
+          return {
+            [`:${attributeId}`]: { N: attributeValue }, // Number
+          };
+        } else if (attributeType === 'string') {
+          return {
+            [`:${attributeId}`]: { S: attributeValue }, // String
+          };
+        } else if (attributeType === 'object') {
+          if (Array.isArray(object[key])) {
+            if (object[key].every((_) => typeof _ === 'number')) {
+              return {
+                [`:${attributeId}`]: { NS: attributeValue }, // Number Set
+              };
+            } else if (object[key].every((_) => typeof _ === 'string')) {
+              return {
+                [`:${attributeId}`]: { SS: attributeValue }, // String Set
+              };
+            } else { // Array of objects
+              return {
+                [`:${attributeId}`]: { L: attributeValue }, // List
+              };
+            }
+          } else {
+            return {
+              [`:${attributeId}`]: { M: attributeValue }, // Map
+            };
+          }
+        } else {
+          throw new Error(`Attribute Type: ${attributeType} not supported`);
+        }
+      });
+    // @ts-ignore
+    return Object.assign({}, ...objectExpressionAttributeValues);
+  };
+
+  /**
+   * Helper service function to assist the generation of the DynamoDB
+   * UpdateExpression statement based off the ExpressionAttributeNames
+   * and ExpressionAttributeValues.
+   * @param attributeNames
+   * @param attributeValues
+   */
+  public getUpdateExpression = <T>(attributeNames: T, attributeValues: T): string => {
+    const attributeNameKeys = Object.keys(attributeNames);
+    const attributeValueKeys = Object.keys(attributeValues);
+
+    return 'SET ' + attributeNameKeys.map((value: string, index: number) => {
+      return `${value} = ${attributeValueKeys[index]}`;
+    }).join(', ');
+  };
 }

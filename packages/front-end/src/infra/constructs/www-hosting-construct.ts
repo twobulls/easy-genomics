@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import path from 'path';
-import { MainStackProps } from '@easy-genomics/shared-lib/src/app/types/main-stack';
 import { S3Construct } from '@easy-genomics/shared-lib/src/infra/constructs/s3-construct';
+import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { CfnOutput, Duration } from 'aws-cdk-lib';
 import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import {

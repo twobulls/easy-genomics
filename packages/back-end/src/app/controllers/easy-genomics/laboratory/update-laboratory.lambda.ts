@@ -1,4 +1,7 @@
-import { RequestLaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import {
+  UpdateLaboratorySchema,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/laboratory';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -11,15 +14,27 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Post Request Body
+    // Get Path Parameter
+    const id: string = event.pathParameters?.id || '';
+    if (id === '') throw new Error('Required id is missing');
+
+    const userId: string = event.requestContext.authorizer.claims['cognito:username'];
+    // Put Request Body
     const request: Laboratory = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
     );
     // Data validation safety check
-    if (!RequestLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!UpdateLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
 
-    const response: Laboratory = await laboratoryService.get(request.OrganizationId, request.LaboratoryId);
-    return buildResponse(200, JSON.stringify(response), event);
+    // Lookup by LaboratoryId to confirm existence before updating
+    const existing: Laboratory = await laboratoryService.query(id);
+    const updated: Laboratory = await laboratoryService.update({
+      ...existing,
+      ...request,
+      ModifiedAt: new Date().toISOString(),
+      ModifiedBy: userId,
+    }, existing);
+    return buildResponse(200, JSON.stringify(updated), event);
   } catch (err: any) {
     console.error(err);
     return {
@@ -33,5 +48,9 @@ export const handler: Handler = async (
 
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
-  return err.message;
+  if (err instanceof TransactionCanceledException) {
+    return 'Laboratory Name already taken';
+  } else {
+    return err.message;
+  }
 };

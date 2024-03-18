@@ -122,13 +122,13 @@
       },
       "steps": [
         {
-          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/aws-lambda,@types/jest,@types/uuid,aws-cdk-lib,eslint-import-resolver-typescript,eslint-plugin-import,jest,projen,ts-jest,typescript,aws-cdk,aws-lambda,uuid"
+          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/aws-lambda,@types/jest,@types/uuid,aws-cdk-lib,eslint-import-resolver-typescript,eslint-plugin-import,jest,projen,ts-jest,typescript,aws-cdk,aws-lambda,uuid,zod"
         },
         {
           "exec": "pnpm i --no-frozen-lockfile"
         },
         {
-          "exec": "pnpm update @types/aws-lambda @types/jest @types/node @types/uuid @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit projen ts-jest typescript aws-cdk aws-lambda uuid"
+          "exec": "pnpm update @types/aws-lambda @types/jest @types/node @types/uuid @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit projen ts-jest typescript aws-cdk aws-lambda uuid zod"
         },
         {
           "exec": "pnpm dlx projen"

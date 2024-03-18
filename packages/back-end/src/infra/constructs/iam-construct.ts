@@ -1,4 +1,4 @@
-import { MainStackProps } from '@easy-genomics/shared-lib/src/app/types/main-stack';
+import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { Effect, Policy, PolicyDocument, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
@@ -220,6 +220,25 @@ export class IamConstruct extends Construct {
         new PolicyStatement({
           resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`],
           actions: ['dynamodb:Scan'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/update-laboratory
+    this.policyStatements.set(
+      '/easy-genomics/laboratory/update-laboratory',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          ],
+          actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
           effect: Effect.ALLOW,
         }),
       ],

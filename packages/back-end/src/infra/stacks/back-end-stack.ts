@@ -1,4 +1,4 @@
-import { MainStackProps } from '@easy-genomics/shared-lib/src/app/types/main-stack';
+import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { AwsHealthOmicsNestedStack } from './aws-healthomics-nested-stack';

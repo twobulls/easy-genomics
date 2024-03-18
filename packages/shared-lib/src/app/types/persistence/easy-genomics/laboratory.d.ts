@@ -16,9 +16,7 @@
  *   Status: <string>,
  *   S3Bucket?: <string>
  *   AwsHealthOmicsEnabled?: <boolean>,
- *   AwsHealthOmicsWorkflows?: <string[]>
  *   NextFlowTowerEnabled?: <boolean>,
- *   NextFlowTowerPipelines?: <string[]>
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
  *   ModifiedAt?: <string>,
@@ -34,7 +32,5 @@ export interface Laboratory extends BaseAttributes {
   Status: Status,
   S3Bucket?: string;
   AwsHealthOmicsEnabled?: boolean;
-  AwsHealthOmicsWorkflows?: string[],
   NextFlowTowerEnabled?: boolean;
-  NextFlowTowerPipelines?: string[],
 }

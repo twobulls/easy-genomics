@@ -189,10 +189,10 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
   // Easy Genomics specific REST API endpoints / Lambda Functions
   private setupRestApiEndpoints = () => {
-    new LambdaConstruct(this, `${this.props.constructNamespace}-lambda`, {
+    new LambdaConstruct(this, `${this.props.constructNamespace}`, {
       ...this.props,
       lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
-      lambdaFunctionsNamespace: `${this.props.constructNamespace}-lambda`,
+      lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
       lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
       lambdaTimeoutInSeconds: this.props.lambdaTimeoutInSeconds,
       environment: {

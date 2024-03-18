@@ -1,4 +1,5 @@
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import { CreateOrganizationSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -12,12 +13,13 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
+    const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
     const request: Organization = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
     );
-    if (request.Name === '') throw new Error('Required Name is missing');
-    const userId = event.requestContext.authorizer.claims['cognito:username'];
+    // Data validation safety check
+    if (!CreateOrganizationSchema.safeParse(request).success) throw new Error('Invalid request');
 
     const response: Organization = await organizationService.add({
       ...request,

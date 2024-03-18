@@ -5,6 +5,7 @@ import {
   UpdateItemCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { OrganizationSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
@@ -21,14 +22,17 @@ export class OrganizationService extends DynamoDBService implements Service {
     const logRequestMessage = `Add Organization OrganizationId=${organization.OrganizationId}, Name=${organization.Name} request`;
     console.info(`${logRequestMessage}`);
 
+    // Data validation safety check
+    if (!OrganizationSchema.safeParse(organization).success) throw new Error('Invalid request');
+
     const response = await this.transactWriteItems({
       TransactItems: [
         {
           Put: {
             TableName: this.ORGANIZATION_TABLE_NAME,
-            ConditionExpression: 'attribute_not_exists(#PK)',
+            ConditionExpression: 'attribute_not_exists(#OrganizationId)',
             ExpressionAttributeNames: {
-              '#PK': 'OrganizationId',
+              '#OrganizationId': 'OrganizationId',
             },
             Item: marshall(organization),
           },
@@ -36,9 +40,10 @@ export class OrganizationService extends DynamoDBService implements Service {
         {
           Put: {
             TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
-            ConditionExpression: 'attribute_not_exists(#PK)',
+            ConditionExpression: 'attribute_not_exists(#Value) AND attribute_not_exists(#Type)',
             ExpressionAttributeNames: {
-              '#PK': 'Value',
+              '#Value': 'Value',
+              '#Type': 'Type',
             },
             Item: marshall({
               Value: organization.Name,
@@ -56,14 +61,14 @@ export class OrganizationService extends DynamoDBService implements Service {
     }
   };
 
-  public get = async (hashKey: string): Promise<Organization> => {
-    const logRequestMessage = `Get Organization OrganizationId=${hashKey} request`;
+  public get = async (organizationId: string): Promise<Organization> => {
+    const logRequestMessage = `Get Organization OrganizationId=${organizationId} request`;
     console.info(logRequestMessage);
 
     const response: GetItemCommandOutput = await this.getItem({
       TableName: this.ORGANIZATION_TABLE_NAME,
       Key: {
-        OrganizationId: { S: hashKey },
+        OrganizationId: { S: organizationId }, // Hash Key / Partition Key
       },
     });
 
@@ -79,7 +84,7 @@ export class OrganizationService extends DynamoDBService implements Service {
   };
 
   public list = async (): Promise<Organization[]> => {
-    const logRequestMessage = 'List Organization(s) request';
+    const logRequestMessage = 'List Organizations request';
     console.info(logRequestMessage);
 
     const response: ScanCommandOutput = await this.findAll({
@@ -97,6 +102,15 @@ export class OrganizationService extends DynamoDBService implements Service {
     const logRequestMessage = `Update Organization OrganizationId=${organization.OrganizationId}, Name=${organization.Name} request`;
     console.info(logRequestMessage);
 
+    // Data validation safety check
+    if (!OrganizationSchema.safeParse(organization).success) throw new Error('Invalid request');
+
+    const updateExclusions: string[] = ['OrganizationId', 'CreatedAt', 'CreatedBy'];
+
+    const expressionAttributeNames: {[p: string]: string} = this.getExpressionAttributeNamesDefinition(organization, updateExclusions);
+    const expressionAttributeValues: {[p: string]: any} = this.getExpressionAttributeValuesDefinition(organization, updateExclusions);
+    const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
+
     // Check if Organization Name is unchanged
     if (organization.Name === existing.Name) {
       // Perform normal update request
@@ -105,28 +119,9 @@ export class OrganizationService extends DynamoDBService implements Service {
         Key: {
           OrganizationId: { S: organization.OrganizationId },
         },
-        ConditionExpression: '#PK = :pk',
-        ExpressionAttributeNames: {
-          '#PK': 'OrganizationId',
-          '#Country': 'Country',
-          '#ModifiedAt': 'ModifiedAt',
-          '#ModifiedBy': 'ModifiedBy',
-        },
-        ExpressionAttributeValues: {
-          ':pk': {
-            S: organization.OrganizationId,
-          },
-          ':country': {
-            S: organization.Country || '',
-          },
-          ':modifiedAt': {
-            S: organization.ModifiedAt || '',
-          },
-          ':modifiedBy': {
-            S: organization.ModifiedBy || '',
-          },
-        },
-        UpdateExpression: 'SET #Country = :country, #ModifiedAt = :modifiedAt, #ModifiedBy = :modifiedBy',
+        ExpressionAttributeNames: expressionAttributeNames,
+        ExpressionAttributeValues: expressionAttributeValues,
+        UpdateExpression: updateExpression,
         ReturnValues: 'ALL_NEW',
       });
       if (response.$metadata.httpStatusCode === 200) {
@@ -148,32 +143,9 @@ export class OrganizationService extends DynamoDBService implements Service {
               Key: {
                 OrganizationId: { S: organization.OrganizationId },
               },
-              ConditionExpression: '#PK = :pk',
-              ExpressionAttributeNames: {
-                '#PK': 'OrganizationId',
-                '#Name': 'Name',
-                '#Country': 'Country',
-                '#ModifiedAt': 'ModifiedAt',
-                '#ModifiedBy': 'ModifiedBy',
-              },
-              ExpressionAttributeValues: {
-                ':pk': {
-                  S: organization.OrganizationId,
-                },
-                ':name': {
-                  S: organization.Name,
-                },
-                ':country': {
-                  S: organization.Country || '',
-                },
-                ':modifiedAt': {
-                  S: organization.ModifiedAt || '',
-                },
-                ':modifiedBy': {
-                  S: organization.ModifiedBy || '',
-                },
-              },
-              UpdateExpression: 'SET #Name = :name, #Country = :country, #ModifiedAt = :modifiedAt, #ModifiedBy = :modifiedBy',
+              ExpressionAttributeNames: expressionAttributeNames,
+              ExpressionAttributeValues: expressionAttributeValues,
+              UpdateExpression: updateExpression,
               ReturnValues: 'ALL_NEW',
             },
           },
@@ -189,13 +161,10 @@ export class OrganizationService extends DynamoDBService implements Service {
           {
             Put: {
               TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
-              Key: {
-                Value: { S: organization.Name },
-                Type: { S: 'organization-name' },
-              },
-              ConditionExpression: 'attribute_not_exists(#PK)',
+              ConditionExpression: 'attribute_not_exists(#Value) AND attribute_not_exists(#Type)',
               ExpressionAttributeNames: {
-                '#PK': 'Value',
+                '#Value': 'Value',
+                '#Type': 'Type',
               },
               Item: marshall({
                 Value: organization.Name,

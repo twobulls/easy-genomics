@@ -33,8 +33,8 @@ export const handler: Handler = async (
     const response: Laboratory = await laboratoryService.add({
       ...request,
       LaboratoryId: uuidv4(),
-      AwsHealthOmicsEnabled: organization.AwsHealthOmicsEnabled,
-      NextFlowTowerEnabled: organization.NextFlowTowerEnabled,
+      AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
+      NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,
       CreatedAt: new Date().toISOString(),
       CreatedBy: userId,
     });

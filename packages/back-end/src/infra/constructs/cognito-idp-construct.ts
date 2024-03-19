@@ -1,5 +1,5 @@
-import { user } from '@easy-genomics/shared-lib/lib/app/types/persistence/easy-genomics/sample-data';
-import { User } from '@easy-genomics/shared-lib/src/app/types/persistence/easy-genomics/user';
+import { user } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sample-data';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
 import { AccountRecovery, UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';

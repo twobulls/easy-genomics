@@ -1,4 +1,4 @@
-import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/persistence/aws-healthomics/private-workflow';
+import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/private-workflow';
 import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';

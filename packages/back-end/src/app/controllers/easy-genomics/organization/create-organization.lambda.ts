@@ -24,6 +24,8 @@ export const handler: Handler = async (
     const response: Organization = await organizationService.add({
       ...request,
       OrganizationId: uuidv4(),
+      AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || false,
+      NextFlowTowerEnabled: request.NextFlowTowerEnabled || false,
       CreatedAt: new Date().toISOString(),
       CreatedBy: userId,
     });

@@ -18,6 +18,8 @@ export const CreateLaboratorySchema = z.object({
   OrganizationId: z.string().uuid(),
   Name: z.string(),
   Status: z.enum(['Active', 'Inactive']),
+  AwsHealthOmicsEnabled: z.boolean().optional(),
+  NextFlowTowerEnabled: z.boolean().optional(),
 }).strict();
 
 export const RequestLaboratorySchema = z.object({

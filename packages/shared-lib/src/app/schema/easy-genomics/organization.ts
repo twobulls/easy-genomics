@@ -15,6 +15,8 @@ export const OrganizationSchema = z.object({
 export const CreateOrganizationSchema = z.object({
   Name: z.string(),
   Country: z.string().optional(),
+  AwsHealthOmicsEnabled: z.boolean().optional(),
+  NextFlowTowerEnabled: z.boolean().optional(),
 }).strict();
 
 export const UpdateOrganizationSchema = z.object({

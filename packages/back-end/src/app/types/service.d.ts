@@ -11,7 +11,7 @@ export abstract class Service {
 
   public async query?<T>(gsi: string): Promise<T>; // Querying by GSI (optional)
 
-  public async list<T>(): Promise<T[]>; // Scan Items
+  public async list?<T>(): Promise<T[]>; // Scan Items
 
   // Update operations
   public async update<T>(object: T, existing?: T): Promise<T>; // Update Item

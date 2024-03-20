@@ -1,7 +1,12 @@
 import {
+  DeleteItemCommandOutput,
+  GetItemCommandOutput,
+  PutItemCommandOutput,
   QueryCommandOutput,
+  UpdateItemCommandOutput,
 } from '@aws-sdk/client-dynamodb';
-import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { LaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
@@ -14,25 +19,64 @@ export class LaboratoryUserService extends DynamoDBService implements Service {
   }
 
   public add = async (laboratoryUser: LaboratoryUser): Promise<LaboratoryUser> => {
-    throw new Error('TBD');
+    const logRequestMessage = `Add LaboratoryUser LaboratoryId=${laboratoryUser.LaboratoryId}, UserId=${laboratoryUser.UserId} request`;
+    console.info(`${logRequestMessage}`);
+
+    // Data validation safety check
+    if (!LaboratoryUserSchema.safeParse(laboratoryUser).success) throw new Error('Invalid request');
+
+    const response: PutItemCommandOutput = await this.putItem({
+      TableName: this.LABORATORY_USER_TABLE_NAME,
+      ConditionExpression: 'attribute_not_exists(#LaboratoryId) AND attribute_not_exists(#UserId)',
+      ExpressionAttributeNames: {
+        '#LaboratoryId': 'LaboratoryId',
+        '#UserId': 'UserId',
+      },
+      Item: marshall(laboratoryUser),
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return laboratoryUser;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 
-  public get = async (hashKey: string, sortKey: string): Promise<LaboratoryUser> => {
-    throw new Error('TBD');
+  public get = async (laboratoryId: string, userId: string): Promise<LaboratoryUser> => {
+    const logRequestMessage = `Get LaboratoryUser LaboratoryId=${laboratoryId}, UserId=${userId} request`;
+    console.info(logRequestMessage);
+
+    const response: GetItemCommandOutput = await this.getItem({
+      TableName: this.LABORATORY_USER_TABLE_NAME,
+      Key: {
+        LaboratoryId: { S: laboratoryId }, // Hash Key / Partition Key
+        UserId: { S: userId }, // Sort Key
+      },
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      if (response.Item) {
+        return <LaboratoryUser>unmarshall(response.Item);
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+      }
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 
-  public query = async (hashKey: string): Promise<LaboratoryUser[]> => {
-    const logRequestMessage = `Query LaboratoryUser(s) by LaboratoryId=${hashKey} request`;
+  public queryByLaboratoryId = async (laboratoryId: string): Promise<LaboratoryUser[]> => {
+    const logRequestMessage = `Query LaboratoryUsers by LaboratoryId=${laboratoryId} request`;
     console.info(logRequestMessage);
 
     const response: QueryCommandOutput = await this.queryItems({
       TableName: this.LABORATORY_USER_TABLE_NAME,
-      KeyConditionExpression: '#PK = :pk',
+      KeyConditionExpression: '#LaboratoryId = :laboratoryId',
       ExpressionAttributeNames: {
-        '#PK': 'LaboratoryId',
+        '#LaboratoryId': 'LaboratoryId', // Hash / Partition Key
       },
       ExpressionAttributeValues: {
-        ':pk': { S: hashKey },
+        ':laboratoryId': { S: laboratoryId },
       },
       ScanIndexForward: false,
     });
@@ -48,15 +92,86 @@ export class LaboratoryUserService extends DynamoDBService implements Service {
     }
   };
 
-  public list = async (): Promise<LaboratoryUser[]> => {
-    throw new Error('TBD');
+  public queryByUserId = async (userId: string): Promise<LaboratoryUser[]> => {
+    const logRequestMessage = `Query LaboratoryUsers by UserId=${userId} request`;
+    console.info(logRequestMessage);
+
+    const response: QueryCommandOutput = await this.queryItems({
+      TableName: this.LABORATORY_USER_TABLE_NAME,
+      IndexName: 'UserId_Index', // Global Secondary Index
+      KeyConditionExpression: '#UserId = :userId',
+      ExpressionAttributeNames: {
+        '#UserId': 'UserId',
+      },
+      ExpressionAttributeValues: {
+        ':userId': { S: userId },
+      },
+      ScanIndexForward: false,
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      if (response.Items) {
+        return response.Items.map(item => <LaboratoryUser>unmarshall(item));
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+      }
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 
   public update = async (laboratoryUser: LaboratoryUser): Promise<LaboratoryUser> => {
-    throw new Error('TBD');
+    const logRequestMessage = `Update LaboratoryUser LaboratoryId=${laboratoryUser.LaboratoryId}, UserId=${laboratoryUser.UserId} request`;
+    console.info(logRequestMessage);
+
+    // Data validation safety check
+    if (!LaboratoryUserSchema.safeParse(laboratoryUser).success) throw new Error('Invalid request');
+
+    const updateExclusions: string[] = ['LaboratoryId', 'UserId', 'CreatedAt', 'CreatedBy'];
+
+    const expressionAttributeNames: {[p: string]: string} = this.getExpressionAttributeNamesDefinition(laboratoryUser, updateExclusions);
+    const expressionAttributeValues: {[p: string]: any} = this.getExpressionAttributeValuesDefinition(laboratoryUser, updateExclusions);
+    const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
+
+    const response: UpdateItemCommandOutput = await this.updateItem({
+      TableName: this.LABORATORY_USER_TABLE_NAME,
+      Key: {
+        LaboratoryId: { S: laboratoryUser.LaboratoryId },
+        UserId: { S: laboratoryUser.UserId },
+      },
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+      UpdateExpression: updateExpression,
+      ReturnValues: 'ALL_NEW',
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      if (response.Attributes) {
+        return <LaboratoryUser>unmarshall(response.Attributes);
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: Returned unexpected response`);
+      }
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 
   public delete = async (laboratoryUser: LaboratoryUser): Promise<boolean> => {
-    throw new Error('TBD');
+    const logRequestMessage = `Delete LaboratoryUser LaboratoryId=${laboratoryUser.LaboratoryId}, UserId=${laboratoryUser.UserId} request`;
+    console.info(logRequestMessage);
+
+    const response: DeleteItemCommandOutput = await this.deleteItem({
+      TableName: this.LABORATORY_USER_TABLE_NAME,
+      Key: {
+        LaboratoryId: { S: laboratoryUser.LaboratoryId },
+        UserId: { S: laboratoryUser.UserId },
+      },
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 }

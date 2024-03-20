@@ -21,9 +21,9 @@ export const handler: Handler = async (
     const existingLaboratory: Laboratory = await laboratoryService.query(id);
 
     // Check LaboratoryUsers are empty before deletion
-    const existingLaboratoryUser: LaboratoryUser[] = await laboratoryUserService.query(existingLaboratory.LaboratoryId);
-    if (existingLaboratoryUser.length > 0) {
-      throw new Error(`Laboratory deletion error, ${existingLaboratoryUser.length} Users exists.`);
+    const existingLaboratoryUsers: LaboratoryUser[] = await laboratoryUserService.queryByLaboratoryId(existingLaboratory.LaboratoryId);
+    if (existingLaboratoryUsers.length > 0) {
+      throw new Error(`Laboratory deletion error, ${existingLaboratoryUsers.length} Users exists.`);
     }
 
     const isDeleted: boolean = await laboratoryService.delete(existingLaboratory);

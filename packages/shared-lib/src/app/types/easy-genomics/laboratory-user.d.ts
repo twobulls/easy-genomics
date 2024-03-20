@@ -12,18 +12,20 @@
  * {
  *   LaboratoryId: <string>,
  *   UserId: <string>,
- *   LabManager?: 'Active' | 'Inactive' | null,
- *   LabTechnician?: 'Active' | 'Inactive' | null,
+ *   Status: 'Active' | 'Inactive',
+ *   LabManager: <boolean>,
+ *   LabTechnician: <boolean>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
  *   ModifiedAt?: <string>,
  *   ModifiedBy?: <string>,
  * }
  */
-import { BaseAttributes } from '../base-entity';
+import { BaseAttributes, Status } from '../base-entity';
 import { LaboratoryRoles } from './roles';
 
 export interface LaboratoryUser extends LaboratoryRoles, BaseAttributes {
   LaboratoryId: string; // DynamoDB Partition Key (String)
   UserId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
+  Status: Status;
 }

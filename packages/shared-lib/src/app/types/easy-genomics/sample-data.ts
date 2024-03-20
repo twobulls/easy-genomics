@@ -42,17 +42,17 @@ export const user: User = {
 export const organizationUser: OrganizationUser = {
   OrganizationId: organizationId,
   UserId: userId,
-  OrganizationAdmin: 'Active',
-  LabManager: 'Active',
-  LabTechnician: 'Active',
+  Status: 'Active',
+  OrganizationAdmin: true,
   CreatedAt: new Date().toISOString(),
 };
 
 export const laboratoryUser: LaboratoryUser = {
   LaboratoryId: laboratoryId,
   UserId: userId,
-  LabManager: 'Active',
-  LabTechnician: 'Active',
+  Status: 'Active',
+  LabManager: true,
+  LabTechnician: true,
   CreatedAt: new Date().toISOString(),
 };
 

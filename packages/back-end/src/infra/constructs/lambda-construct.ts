@@ -43,12 +43,16 @@ interface LambdaFunctionsResources {
 // List of allowed Lambda Function operation with respective REST API command mapping
 const ALLOWED_LAMBDA_FUNCTION_OPERATIONS: AssociativeArray<HttpRequest> = {
   ['create']: 'POST',
-  ['request']: 'POST',
   ['list']: 'GET', // List multiple records
   ['read']: 'GET',
   ['update']: 'PUT',
   ['patch']: 'PATCH',
   ['delete']: 'DELETE',
+  // Additional Lambda Function operations for managing objects by using the Posted Hash/Partition Key & Sort Key
+  ['add']: 'POST',
+  ['edit']: 'POST',
+  ['request']: 'POST',
+  ['remove']: 'POST',
 };
 
 // List of allowed Lambda Function operations requiring path parameter 'id' for specific resource

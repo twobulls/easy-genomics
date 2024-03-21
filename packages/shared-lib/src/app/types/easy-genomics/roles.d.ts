@@ -1,12 +1,8 @@
 export type OrganizationRoles = {
-    OrganizationAdmin?: RoleStatus;
-    LabManager?: RoleStatus;
-    LabTechnician?: RoleStatus;
+    OrganizationAdmin: boolean;
 }
 
 export type LaboratoryRoles = {
-    LabManager?: RoleStatus;
-    LabTechnician?: RoleStatus;
+    LabManager: boolean;
+    LabTechnician: boolean;
 }
-
-export type RoleStatus = 'Active' | 'Inactive' | null;

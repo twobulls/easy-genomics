@@ -1,7 +1,6 @@
 import {
   GetItemCommandOutput,
   QueryCommandOutput,
-  ScanCommandOutput,
   TransactWriteItemsCommandOutput,
   UpdateItemCommandOutput,
 } from '@aws-sdk/client-dynamodb';
@@ -86,7 +85,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
     }
   };
 
-  public query = async (laboratoryId: string): Promise<Laboratory> => {
+  public queryByLaboratoryId = async (laboratoryId: string): Promise<Laboratory> => {
     const logRequestMessage = `Query Laboratory by LaboratoryId=${laboratoryId} request`;
     console.info(logRequestMessage);
 
@@ -120,16 +119,28 @@ export class LaboratoryService extends DynamoDBService implements Service {
     }
   };
 
-  public list = async (): Promise<Laboratory[]> => {
-    const logRequestMessage = 'List Laboratories request';
+  public queryByOrganizationId = async (organizationId: string): Promise<Laboratory[]> => {
+    const logRequestMessage = `Query Laboratory by OrganizationId=${organizationId} request`;
     console.info(logRequestMessage);
 
-    const response: ScanCommandOutput = await this.findAll({
+    const response: QueryCommandOutput = await this.queryItems({
       TableName: this.LABORATORY_TABLE_NAME,
+      KeyConditionExpression: '#OrganizationId = :organizationId',
+      ExpressionAttributeNames: {
+        '#OrganizationId': 'OrganizationId', // Hash / Partition Key
+      },
+      ExpressionAttributeValues: {
+        ':organizationId': { S: organizationId },
+      },
+      ScanIndexForward: false,
     });
 
     if (response.$metadata.httpStatusCode === 200) {
-      return <Laboratory[]>response.Items?.map(item => unmarshall(item));
+      if (response.Items) {
+        return response.Items.map(item => <Laboratory>unmarshall(item));
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+      }
     } else {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
@@ -215,7 +226,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
       });
       if (response.$metadata.httpStatusCode === 200) {
         // Transaction Updates do not return the updated Organization details, so explicitly retrieve it
-        return this.query(laboratory.LaboratoryId);
+        return this.queryByLaboratoryId(laboratory.LaboratoryId);
       } else {
         throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
       }

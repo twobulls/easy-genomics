@@ -29,6 +29,8 @@ export enum AWS_REGIONS {
   EU_CENTRAL_1 = 'eu-central-1', // Europe (Frankfurt)
   EU_WEST_1 = 'eu-west-1', // Europe (Ireland)
   EU_WEST_2 = 'eu-west-2', // Europe (London)
+  // Allow deployment to AWS Sydney to fast track Pilot 1 development without requiring AWS HealthOmics resources
+  AP_SOUTHEAST_2 = 'ap-southeast-2' // Asia Pacific (Sydney)
 }
 
 const VALID_ENV_NAME: string[] = ['dev', 'pre-prod', 'prod'];
@@ -40,8 +42,11 @@ const VALID_ENV_NAME: string[] = ['dev', 'pre-prod', 'prod'];
  *  - us-west-2 // US West (Oregon)
  *  - ap-southeast-1 // Asia Pacific (Singapore)
  *  - eu-central-1  // Europe (Frankfurt)
- *  -  eu-west-1 // Europe (Ireland)
+ *  - eu-west-1 // Europe (Ireland)
  *  - eu-west-2 // Europe (London)
+ *
+ *  // Allow deployment to AWS Sydney to fast track Pilot 1 development without requiring AWS HealthOmics resources
+ *  - ap-southeast-2 // Asia Pacific (Sydney)
  */
 export function validateEasyGenomicsAwsRegion(awsRegion: string): boolean {
   if (Object.values(AWS_REGIONS).find((value: string) => value === awsRegion)) {

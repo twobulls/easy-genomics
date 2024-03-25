@@ -10,7 +10,11 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    const response: Laboratory[] = await laboratoryService.list();
+    // Get Query Parameter
+    const organizationId: string | undefined = event.queryStringParameters?.organizationId;
+    if (!organizationId) throw new Error('Required organizationId is missing');
+
+    const response: Laboratory[] = await laboratoryService.queryByOrganizationId(organizationId);
 
     if (response) {
       return buildResponse(200, JSON.stringify(response), event);

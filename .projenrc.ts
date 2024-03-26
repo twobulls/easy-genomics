@@ -46,7 +46,7 @@ const jestOptions: JestOptions = {
   jestConfig: {
     // Add all the special paths to let Jest resolve them properly
     moduleNameMapper: {
-      ...pathsToModuleNameMapper(tsConfigOptions.compilerOptions.paths!, { prefix: '<rootDir>/' }),
+      ...pathsToModuleNameMapper(tsConfigOptions.compilerOptions?.paths!, { prefix: '<rootDir>/' }),
     },
     coveragePathIgnorePatterns: ['/node_modules/'],
   },

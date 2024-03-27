@@ -224,7 +224,15 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
-  deps: ['@easy-genomics/shared-lib@workspace:*', 'aws-sdk', 'dotenv', 'nuxt', '@nuxt/ui', 'uuid', 'vue', 'vue-router'],
+  deps: [
+    '@easy-genomics/shared-lib@workspace:*',
+    'aws-sdk',
+    'dotenv',
+    'nuxt',
+    '@nuxt/ui',
+    'uuid',
+    'prettier-plugin-tailwindcss',
+  ],
   devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port'],
 });
 

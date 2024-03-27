@@ -110,15 +110,11 @@
       "type": "runtime"
     },
     {
+      "name": "prettier-plugin-tailwindcss",
+      "type": "runtime"
+    },
+    {
       "name": "uuid",
-      "type": "runtime"
-    },
-    {
-      "name": "vue",
-      "type": "runtime"
-    },
-    {
-      "name": "vue-router",
       "type": "runtime"
     }
   ],

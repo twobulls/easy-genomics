@@ -262,7 +262,7 @@ root.gitignore.addPatterns(
   '*.dtmp',
   '.env',
   '.env.*',
-  '!.env.local',
+  '.env.local',
   '.idea',
   '.DS_Store',
   'test-reports/*',

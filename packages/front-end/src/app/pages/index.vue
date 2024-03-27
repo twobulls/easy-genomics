@@ -1,11 +1,7 @@
-<script setup lang="ts">
-123123
-</script>
- 
+<script setup lang="ts"></script>
+
 <template>
-      <UButton>Button</UButton>
+  <UButton>Button</UButton>
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

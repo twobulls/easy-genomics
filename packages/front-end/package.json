@@ -32,24 +32,24 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/types": "^3.502.0",
+    "@aws-sdk/types": "^3.535.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^18",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6",
     "@typescript-eslint/parser": "^6",
     "aws-cdk": "^2.124.0",
-    "esbuild": "^0.20.0",
+    "esbuild": "^0.20.2",
     "eslint": "^8",
     "eslint-import-resolver-typescript": "^3.6.1",
     "eslint-plugin-import": "^2.29.1",
     "jest": "^29.7.0",
     "jest-junit": "^15",
     "kill-port": "^2.0.1",
-    "projen": "^0.79.7",
+    "projen": "^0.79.27",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.4.3"
   },
   "dependencies": {
     "@easy-genomics/shared-lib": "workspace:*",
@@ -57,7 +57,7 @@
     "aws-cdk-lib": "^2.124.0",
     "aws-sdk": "^2.1549.0",
     "constructs": "^10.0.5",
-    "dotenv": "^16.4.1",
+    "dotenv": "^16.4.5",
     "nuxt": "^3.10.1",
     "prettier-plugin-tailwindcss": "^0.5.12",
     "uuid": "^8.3.2"

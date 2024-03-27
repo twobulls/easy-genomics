@@ -4,6 +4,7 @@ import {
   QueryCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { OrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
@@ -16,7 +17,27 @@ export class OrganizationUserService extends DynamoDBService implements Service 
   }
 
   public add = async (organizationUser: OrganizationUser): Promise<OrganizationUser> => {
-    throw new Error('TBD');
+    const logRequestMessage = `Add OrganizationUser OrganizationId=${organizationUser.OrganizationId}, UserId=${organizationUser.UserId} request`;
+    console.info(`${logRequestMessage}`);
+
+    // Data validation safety check
+    if (!OrganizationUserSchema.safeParse(organizationUser).success) throw new Error('Invalid request');
+
+    const response: PutItemCommandOutput = await this.putItem({
+      TableName: this.ORGANIZATION_USER_TABLE_NAME,
+      ConditionExpression: 'attribute_not_exists(#OrganizationId) AND attribute_not_exists(#UserId)',
+      ExpressionAttributeNames: {
+        '#OrganizationId': 'OrganizationId',
+        '#UserId': 'UserId',
+      },
+      Item: marshall(organizationUser),
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return organizationUser;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 
   public get = async (organizationId: string, userId: string): Promise<OrganizationUser> => {

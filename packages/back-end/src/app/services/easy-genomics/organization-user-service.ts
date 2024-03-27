@@ -1,4 +1,5 @@
 import {
+  DeleteItemCommandOutput,
   GetItemCommandOutput,
   PutItemCommandOutput,
   QueryCommandOutput,
@@ -123,6 +124,21 @@ export class OrganizationUserService extends DynamoDBService implements Service 
   };
 
   public delete = async (organizationUser: OrganizationUser): Promise<boolean> => {
-    throw new Error('TBD');
+    const logRequestMessage = `Delete OrganizationUser OrganizationId=${organizationUser.OrganizationId}, UserId=${organizationUser.UserId} request`;
+    console.info(logRequestMessage);
+
+    const response: DeleteItemCommandOutput = await this.deleteItem({
+      TableName: this.ORGANIZATION_USER_TABLE_NAME,
+      Key: {
+        OrganizationId: { S: organizationUser.OrganizationId },
+        UserId: { S: organizationUser.UserId },
+      },
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 }

@@ -5,12 +5,16 @@
       "type": "build"
     },
     {
+      "name": "@nuxt/types",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
     {
       "name": "@types/node",
-      "version": "^18",
+      "version": "^20",
       "type": "build"
     },
     {
@@ -111,6 +115,14 @@
     },
     {
       "name": "prettier-plugin-tailwindcss",
+      "type": "runtime"
+    },
+    {
+      "name": "sass",
+      "type": "runtime"
+    },
+    {
+      "name": "tailwindcss",
       "type": "runtime"
     },
     {

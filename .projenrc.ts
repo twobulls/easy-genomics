@@ -18,7 +18,7 @@ import { VscodeSettings } from './projenrc/vscode';
 
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.124.0';
-const nodeVersion = '18.16.0';
+const nodeVersion = '20.11.0';
 const pnpmVersion = '8.6.0';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
@@ -232,8 +232,10 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@nuxt/ui',
     'uuid',
     'prettier-plugin-tailwindcss',
+    'sass',
+    'tailwindcss',
   ],
-  devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port'],
+  devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port', '@nuxt/types'],
 });
 
 // Add additional Nuxt Scripts to front-end/package.json

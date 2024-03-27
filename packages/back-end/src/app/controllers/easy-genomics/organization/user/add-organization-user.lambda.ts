@@ -3,9 +3,13 @@ import { AddOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/sch
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { OrganizationService } from '../../../../services/easy-genomics/organization-service';
 import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
+import { UserService } from '../../../../services/easy-genomics/user-service';
 
 const organizationUserService = new OrganizationUserService();
+const organizationService = new OrganizationService();
+const userService = new UserService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -19,6 +23,10 @@ export const handler: Handler = async (
     );
     // Data validation safety check
     if (!AddOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
+
+    // Try to retrieve OrganizationId and UserId to ensure they exist before adding
+    await organizationService.get(request.OrganizationId);
+    await userService.get(request.UserId);
 
     const response: OrganizationUser = await organizationUserService.add({
       ...request,

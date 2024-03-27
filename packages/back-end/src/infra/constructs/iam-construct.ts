@@ -167,6 +167,18 @@ export class IamConstruct extends Construct {
       ],
     );
 
+    // /easy-genomics/organization/user/add-organization-user
+    this.policyStatements.set(
+      '/easy-genomics/organization/user/add-organization-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+        }),
+      ],
+    );
     // /easy-genomics/organization/user/list-organization-users
     this.policyStatements.set(
       '/easy-genomics/organization/user/list-organization-users',

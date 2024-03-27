@@ -59,6 +59,10 @@
       "type": "build"
     },
     {
+      "name": "kill-port",
+      "type": "build"
+    },
+    {
       "name": "projen",
       "type": "build"
     },
@@ -77,6 +81,10 @@
     {
       "name": "@easy-genomics/shared-lib",
       "version": "workspace:*",
+      "type": "runtime"
+    },
+    {
+      "name": "@nuxt/ui",
       "type": "runtime"
     },
     {

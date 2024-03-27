@@ -1,0 +1,7 @@
+test-reports/trivy.json
+**/storybook-static/**
+**/coverage/**
+.yarn/**
+**/cdk.out/**
+**/.nuxt/**
+**/.output/**

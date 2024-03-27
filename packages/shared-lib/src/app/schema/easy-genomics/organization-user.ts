@@ -22,3 +22,8 @@ export const RequestOrganizationUserSchema = z.object({
   OrganizationId: z.string().uuid(),
   UserId: z.string().uuid(),
 }).strict();
+
+export const RemoveOrganizationUserSchema = z.object({
+  OrganizationId: z.string().uuid(),
+  UserId: z.string().uuid(),
+}).strict();

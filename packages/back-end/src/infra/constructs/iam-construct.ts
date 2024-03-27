@@ -211,6 +211,19 @@ export class IamConstruct extends Construct {
         }),
       ],
     );
+    // /easy-genomics/organization/user/remove-organization-user
+    this.policyStatements.set(
+      '/easy-genomics/organization/user/remove-organization-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:GetItem', 'dynamodb:DeleteItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
 
     // /easy-genomics/laboratory/create-laboratory
     this.policyStatements.set(

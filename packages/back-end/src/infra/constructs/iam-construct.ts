@@ -167,6 +167,25 @@ export class IamConstruct extends Construct {
       ],
     );
 
+    // /easy-genomics/organization/user/add-organization-user
+    this.policyStatements.set(
+      '/easy-genomics/organization/user/add-organization-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          ],
+          actions: ['dynamodb:GetItem'],
+        }),
+      ],
+    );
     // /easy-genomics/organization/user/list-organization-users
     this.policyStatements.set(
       '/easy-genomics/organization/user/list-organization-users',
@@ -189,6 +208,19 @@ export class IamConstruct extends Construct {
             `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
           ],
           actions: ['dynamodb:GetItem'],
+        }),
+      ],
+    );
+    // /easy-genomics/organization/user/remove-organization-user
+    this.policyStatements.set(
+      '/easy-genomics/organization/user/remove-organization-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:GetItem', 'dynamodb:DeleteItem'],
+          effect: Effect.ALLOW,
         }),
       ],
     );

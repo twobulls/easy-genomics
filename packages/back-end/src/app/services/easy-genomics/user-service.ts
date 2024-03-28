@@ -1,18 +1,59 @@
 import { GetItemCommandOutput, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
-import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class UserService extends DynamoDBService implements Service {
   readonly USER_TABLE_NAME: string = `${process.env.NAME_PREFIX}-user-table`;
+  readonly UNIQUE_REFERENCE_TABLE_NAME: string = `${process.env.NAME_PREFIX}-unique-reference-table`;
 
   public constructor() {
     super();
   }
 
   async add(user: User): Promise<User> {
-    throw new Error('TBD');
+    const logRequestMessage = `Add User UserId=${user.UserId} request`;
+    console.info(`${logRequestMessage}`);
+
+    // Data validation safety check
+    if (!UserSchema.safeParse(user).success) throw new Error('Invalid request');
+
+    const response = await this.transactWriteItems({
+      TransactItems: [
+        {
+          Put: {
+            TableName: this.USER_TABLE_NAME,
+            ConditionExpression: 'attribute_not_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#UserId': 'UserId',
+            },
+            Item: marshall(user),
+          },
+        },
+        {
+          Put: {
+            TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+            ConditionExpression: 'attribute_not_exists(#Value) AND attribute_not_exists(#Type)',
+            ExpressionAttributeNames: {
+              '#Value': 'Value',
+              '#Type': 'Type',
+            },
+            Item: marshall({
+              Value: user.Email,
+              Type: 'user-email',
+            }),
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return user;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   }
 
   public listUsers = async (): Promise<User[]> => {

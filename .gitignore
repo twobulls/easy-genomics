@@ -78,7 +78,6 @@ jspm_packages/
 *.dtmp
 .env
 .env.*
-.env.local
 .idea
 .DS_Store
 test-reports/*

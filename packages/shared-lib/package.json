@@ -22,7 +22,7 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.133",
     "@types/jest": "^29.5.11",
-    "@types/node": "^20",
+    "@types/node": "^18",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6",
     "@typescript-eslint/parser": "^6",
@@ -45,7 +45,7 @@
     "zod": "^3.22.4"
   },
   "engines": {
-    "node": ">= 20.11.0"
+    "node": ">= 18.16.0"
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",

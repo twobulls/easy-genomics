@@ -18,6 +18,13 @@ export const AddOrganizationUserSchema = z.object({
   OrganizationAdmin: z.boolean(),
 }).strict();
 
+export const EditOrganizationUserSchema = z.object({
+  OrganizationId: z.string().uuid(),
+  UserId: z.string().uuid(),
+  Status: z.enum(['Active', 'Inactive']),
+  OrganizationAdmin: z.boolean(),
+}).strict();
+
 export const RequestOrganizationUserSchema = z.object({
   OrganizationId: z.string().uuid(),
   UserId: z.string().uuid(),

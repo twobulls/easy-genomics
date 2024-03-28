@@ -1,4 +1,3 @@
-import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
 import { EditLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';

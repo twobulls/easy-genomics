@@ -3,6 +3,7 @@ import {
   GetItemCommandOutput,
   PutItemCommandOutput,
   QueryCommandOutput,
+  UpdateItemCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { OrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
@@ -120,7 +121,39 @@ export class OrganizationUserService extends DynamoDBService implements Service 
   };
 
   public update = async (organizationUser: OrganizationUser): Promise<OrganizationUser> => {
-    throw new Error('TBD');
+    const logRequestMessage = `Update OrganizationUser OrganizationId=${organizationUser.OrganizationId}, UserId=${organizationUser.UserId} request`;
+    console.info(logRequestMessage);
+
+    // Data validation safety check
+    if (!OrganizationUserSchema.safeParse(organizationUser).success) throw new Error('Invalid request');
+
+    const updateExclusions: string[] = ['OrganizationId', 'UserId', 'CreatedAt', 'CreatedBy'];
+
+    const expressionAttributeNames: {[p: string]: string} = this.getExpressionAttributeNamesDefinition(organizationUser, updateExclusions);
+    const expressionAttributeValues: {[p: string]: any} = this.getExpressionAttributeValuesDefinition(organizationUser, updateExclusions);
+    const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
+
+    const response: UpdateItemCommandOutput = await this.updateItem({
+      TableName: this.ORGANIZATION_USER_TABLE_NAME,
+      Key: {
+        OrganizationId: { S: organizationUser.OrganizationId },
+        UserId: { S: organizationUser.UserId },
+      },
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues,
+      UpdateExpression: updateExpression,
+      ReturnValues: 'ALL_NEW',
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      if (response.Attributes) {
+        return <OrganizationUser>unmarshall(response.Attributes);
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: Returned unexpected response`);
+      }
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   };
 
   public delete = async (organizationUser: OrganizationUser): Promise<boolean> => {

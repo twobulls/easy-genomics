@@ -5,6 +5,10 @@
       "type": "build"
     },
     {
+      "name": "@nuxt/types",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -59,6 +63,10 @@
       "type": "build"
     },
     {
+      "name": "kill-port",
+      "type": "build"
+    },
+    {
       "name": "projen",
       "type": "build"
     },
@@ -77,6 +85,10 @@
     {
       "name": "@easy-genomics/shared-lib",
       "version": "workspace:*",
+      "type": "runtime"
+    },
+    {
+      "name": "@nuxt/ui",
       "type": "runtime"
     },
     {
@@ -102,15 +114,19 @@
       "type": "runtime"
     },
     {
+      "name": "prettier-plugin-tailwindcss",
+      "type": "runtime"
+    },
+    {
+      "name": "sass",
+      "type": "runtime"
+    },
+    {
+      "name": "tailwindcss",
+      "type": "runtime"
+    },
+    {
       "name": "uuid",
-      "type": "runtime"
-    },
-    {
-      "name": "vue",
-      "type": "runtime"
-    },
-    {
-      "name": "vue-router",
       "type": "runtime"
     }
   ],

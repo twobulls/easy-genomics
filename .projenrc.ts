@@ -1,5 +1,14 @@
 import { awscdk, javascript, typescript } from 'projen';
-import { JestOptions, PrettierOptions, TrailingComma, TypescriptConfigOptions } from 'projen/lib/javascript';
+import {
+  ArrowParens,
+  HTMLWhitespaceSensitivity,
+  JestOptions,
+  PrettierOptions,
+  ProseWrap,
+  QuoteProps,
+  TrailingComma,
+  TypescriptConfigOptions,
+} from 'projen/lib/javascript';
 import { pathsToModuleNameMapper } from 'ts-jest';
 import { setupProjectFolders } from './projenrc/easy-genomics-project-setup';
 import { Husky } from './projenrc/husky';
@@ -22,6 +31,15 @@ const prettierOptions: PrettierOptions = {
     singleQuote: true,
     semi: true,
     trailingComma: TrailingComma.ES5,
+    arrowParens: ArrowParens.ALWAYS,
+    bracketSpacing: true,
+    htmlWhitespaceSensitivity: HTMLWhitespaceSensitivity.IGNORE,
+    proseWrap: ProseWrap.ALWAYS,
+    quoteProps: QuoteProps.PRESERVE,
+    useTabs: false,
+    vueIndentScriptAndStyle: true,
+    bracketSameLine: false,
+    plugins: ['prettier-plugin-tailwindcss'],
   },
 };
 
@@ -46,7 +64,9 @@ const jestOptions: JestOptions = {
   jestConfig: {
     // Add all the special paths to let Jest resolve them properly
     moduleNameMapper: {
-      ...pathsToModuleNameMapper(tsConfigOptions.compilerOptions?.paths!, { prefix: '<rootDir>/' }),
+      ...pathsToModuleNameMapper(tsConfigOptions.compilerOptions?.paths!, {
+        prefix: '<rootDir>/',
+      }),
     },
     coveragePathIgnorePatterns: ['/node_modules/'],
   },
@@ -204,15 +224,25 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
-  deps: ['@easy-genomics/shared-lib@workspace:*', 'aws-sdk', 'dotenv', 'nuxt', 'uuid', 'vue', 'vue-router'],
-  devDeps: ['@aws-sdk/types', '@types/uuid'],
+  deps: [
+    '@easy-genomics/shared-lib@workspace:*',
+    'aws-sdk',
+    'dotenv',
+    'nuxt',
+    '@nuxt/ui',
+    'uuid',
+    'prettier-plugin-tailwindcss',
+    'sass',
+    'tailwindcss',
+  ],
+  devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port', '@nuxt/types'],
 });
 
 // Add additional Nuxt Scripts to front-end/package.json
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
   ['nuxt-build']: 'nuxt build',
-  ['nuxt-dev']: 'nuxt dev',
+  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
   ['nuxt-generate']: 'nuxt generate',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
@@ -232,7 +262,6 @@ root.gitignore.addPatterns(
   '*.dtmp',
   '.env',
   '.env.*',
-  '!.env.local',
   '.idea',
   '.DS_Store',
   'test-reports/*',

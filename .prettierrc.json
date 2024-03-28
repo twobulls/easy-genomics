@@ -4,5 +4,16 @@
   "singleQuote": true,
   "semi": true,
   "trailingComma": "es5",
+  "arrowParens": "always",
+  "bracketSpacing": true,
+  "htmlWhitespaceSensitivity": "ignore",
+  "proseWrap": "always",
+  "quoteProps": "preserve",
+  "useTabs": false,
+  "vueIndentScriptAndStyle": true,
+  "bracketSameLine": false,
+  "plugins": [
+    "prettier-plugin-tailwindcss"
+  ],
   "overrides": []
 }

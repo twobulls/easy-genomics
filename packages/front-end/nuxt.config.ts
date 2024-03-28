@@ -1,5 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  srcDir:  'src/app/',
-})
+  modules: ['@nuxt/ui', '@nuxtjs/tailwindcss'],
+  srcDir: 'src/app/',
+  tailwindcss: {
+    // cssPath: ['~/assets/css/tailwind.css', { injectionPosition: 'last' }],
+  },
+});

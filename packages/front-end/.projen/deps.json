@@ -83,12 +83,26 @@
       "type": "build"
     },
     {
+      "name": "@aws-amplify/ui-vue",
+      "version": "3.1.30",
+      "type": "runtime"
+    },
+    {
       "name": "@easy-genomics/shared-lib",
       "version": "workspace:*",
       "type": "runtime"
     },
     {
       "name": "@nuxt/ui",
+      "type": "runtime"
+    },
+    {
+      "name": "@nuxtjs/tailwindcss",
+      "type": "runtime"
+    },
+    {
+      "name": "aws-amplify",
+      "version": "5.3.18",
       "type": "runtime"
     },
     {
@@ -127,6 +141,10 @@
     },
     {
       "name": "uuid",
+      "type": "runtime"
+    },
+    {
+      "name": "zod",
       "type": "runtime"
     }
   ],

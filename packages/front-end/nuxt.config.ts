@@ -7,4 +7,9 @@ export default defineNuxtConfig({
   tailwindcss: {
     // cssPath: ['~/assets/css/tailwind.css', { injectionPosition: 'last' }],
   },
+  vite: {
+    define: {
+      'window.global': {}, // required by Amplify
+    },
+  },
 });

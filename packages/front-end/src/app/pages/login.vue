@@ -42,7 +42,6 @@
     </UFormGroup>
 
     <UButton @click="login(state.email, state.password)">Log in</UButton>
-    <!--    <UButton type="submit">Log in</UButton>-->
   </UForm>
 </template>
 

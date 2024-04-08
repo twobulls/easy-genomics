@@ -136,6 +136,14 @@
       "type": "runtime"
     },
     {
+      "name": "unplugin-icons",
+      "type": "runtime"
+    },
+    {
+      "name": "unplugin-vue-components",
+      "type": "runtime"
+    },
+    {
       "name": "uuid",
       "type": "runtime"
     },

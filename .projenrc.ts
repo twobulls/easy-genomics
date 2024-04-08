@@ -248,6 +248,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'aws-amplify@5.3.18',
     '@aws-amplify/ui-vue@3.1.30',
     'zod',
+    'unplugin-icons',
+    'unplugin-vue-components',
   ],
   devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port', '@nuxt/types'],
 });

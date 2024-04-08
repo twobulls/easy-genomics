@@ -2,10 +2,17 @@
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  modules: ['@nuxt/ui', '@nuxtjs/tailwindcss'],
+  ssr: false,
+  modules: ['@nuxt/ui'],
   srcDir: 'src/app/',
-  tailwindcss: {
-    // cssPath: ['~/assets/css/tailwind.css', { injectionPosition: 'last' }],
+  css: ['@/styles/main.scss'],
+  runtimeConfig: {
+    public: {
+      AWS_REGION: process.env.AWS_REGION,
+      AWS_USER_POOL_ID: process.env.AWS_USER_POOL_ID,
+      AWS_CLIENT_ID: process.env.AWS_CLIENT_ID,
+      BASE_API_URL: process.env.BASE_API_URL,
+    },
   },
   vite: {
     define: {

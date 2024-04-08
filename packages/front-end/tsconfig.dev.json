@@ -25,7 +25,8 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "ESNext",
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "rootDir": "./src/app"
   },
   "include": [
     "src/**/*.ts",

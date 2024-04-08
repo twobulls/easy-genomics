@@ -207,9 +207,6 @@ importers:
       '@nuxt/ui':
         specifier: ^2.15.0
         version: 2.15.0(nuxt@3.10.1)(ts-node@10.9.2)(vite@5.2.6)(vue@3.4.21)
-      '@nuxtjs/tailwindcss':
-        specifier: ^6.11.4
-        version: 6.11.4(ts-node@10.9.2)
       aws-amplify:
         specifier: 5.3.18
         version: 5.3.18(react-native@0.73.6)

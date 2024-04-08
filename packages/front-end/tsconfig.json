@@ -2,7 +2,7 @@
 {
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "rootDir": "src",
+    "rootDir": "./src/app",
     "outDir": "lib",
     "alwaysStrict": true,
     "declaration": true,
@@ -10,9 +10,7 @@
     "experimentalDecorators": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "lib": [
-      "es2019"
-    ],
+    "lib": ["es2019"],
     "module": "ESNext",
     "noEmitOnError": false,
     "noFallthroughCasesInSwitch": true,
@@ -35,7 +33,5 @@
     "packages/front-end/src/**/*.ts",
     "packages/shared-lib/src/**/*.ts"
   ],
-  "exclude": [
-    "cdk.out"
-  ]
+  "exclude": ["cdk.out"]
 }

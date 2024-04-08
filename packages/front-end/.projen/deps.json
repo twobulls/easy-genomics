@@ -97,10 +97,6 @@
       "type": "runtime"
     },
     {
-      "name": "@nuxtjs/tailwindcss",
-      "type": "runtime"
-    },
-    {
       "name": "aws-amplify",
       "version": "5.3.18",
       "type": "runtime"

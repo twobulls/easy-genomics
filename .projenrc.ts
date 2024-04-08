@@ -232,6 +232,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
       'target': 'ESNext',
       'module': 'ESNext',
       verbatimModuleSyntax: false,
+      rootDir: './src/app',
     },
   },
   deps: [
@@ -246,7 +247,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'tailwindcss',
     'aws-amplify@5.3.18',
     '@aws-amplify/ui-vue@3.1.30',
-    '@nuxtjs/tailwindcss',
     'zod',
   ],
   devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port', '@nuxt/types'],

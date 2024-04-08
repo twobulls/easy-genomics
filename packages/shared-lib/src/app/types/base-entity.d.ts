@@ -9,3 +9,5 @@ export type BaseAttributes = {
 }
 
 export type Status = 'Active' | 'Inactive';
+
+export type UserStatus = 'Active' | 'Inactive' | 'Invited';

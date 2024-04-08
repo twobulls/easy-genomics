@@ -1,10 +1,10 @@
-import { EditLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
-import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
+import { EditOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
+import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryUserService } from '../../../../services/easy-genomics/laboratory-user-service';
+import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
 
-const laboratoryUserService = new LaboratoryUserService();
+const organizationUserService = new OrganizationUserService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -13,15 +13,15 @@ export const handler: Handler = async (
   try {
     const userId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: LaboratoryUser = (
+    const request: OrganizationUser = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
     );
     // Data validation safety check
-    if (!EditLaboratoryUserSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!EditOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
-    // Lookup by LaboratoryId & UserId to confirm existence before updating
-    const existing: LaboratoryUser = await laboratoryUserService.get(request.LaboratoryId, request.UserId);
-    const updated: LaboratoryUser = await laboratoryUserService.update({
+    // Lookup by OrganizationId & UserId to confirm existence before updating
+    const existing: OrganizationUser = await organizationUserService.get(request.OrganizationId, request.UserId);
+    const updated: OrganizationUser = await organizationUserService.update({
       ...existing,
       ...request,
       ModifiedAt: new Date().toISOString(),

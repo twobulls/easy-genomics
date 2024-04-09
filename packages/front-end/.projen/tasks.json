@@ -165,13 +165,13 @@
       },
       "steps": [
         {
-          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@nuxt/types,@types/jest,@types/uuid,esbuild,eslint-import-resolver-typescript,eslint-plugin-import,jest,kill-port,projen,ts-jest,ts-node,typescript,@easy-genomics/shared-lib,@nuxt/ui,aws-sdk,dotenv,nuxt,prettier-plugin-tailwindcss,sass,tailwindcss,uuid"
+          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@nuxt/types,@types/jest,@types/uuid,esbuild,eslint-import-resolver-typescript,eslint-plugin-import,jest,kill-port,projen,ts-jest,ts-node,typescript,@aws-amplify/ui-vue,@easy-genomics/shared-lib,@nuxt/ui,aws-amplify,aws-sdk,dotenv,nuxt,prettier-plugin-tailwindcss,sass,tailwindcss,unplugin-icons,unplugin-vue-components,uuid,zod"
         },
         {
           "exec": "pnpm i --no-frozen-lockfile"
         },
         {
-          "exec": "pnpm update @aws-sdk/types @nuxt/types @types/jest @types/node @types/uuid @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk esbuild eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit kill-port projen ts-jest ts-node typescript @easy-genomics/shared-lib @nuxt/ui aws-cdk-lib aws-sdk constructs dotenv nuxt prettier-plugin-tailwindcss sass tailwindcss uuid"
+          "exec": "pnpm update @aws-sdk/types @nuxt/types @types/jest @types/node @types/uuid @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk esbuild eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit kill-port projen ts-jest ts-node typescript @aws-amplify/ui-vue @easy-genomics/shared-lib @nuxt/ui aws-amplify aws-cdk-lib aws-sdk constructs dotenv nuxt prettier-plugin-tailwindcss sass tailwindcss unplugin-icons unplugin-vue-components uuid zod"
         },
         {
           "exec": "pnpm dlx projen"

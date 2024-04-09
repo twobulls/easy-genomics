@@ -1,8 +1,5 @@
-<script setup lang="ts"></script>
-
 <template>
-  <EGHeader />
-  <main class="mx-auto mt-12 px-4">
+  <main class="mx-auto mt-12">
     <slot />
   </main>
 </template>
@@ -12,3 +9,5 @@
     max-width: var(--max-page-container-width-px);
   }
 </style>
+
+<script setup lang="ts"></script>

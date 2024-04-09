@@ -7,6 +7,7 @@ import {
   ProseWrap,
   QuoteProps,
   TrailingComma,
+  TypescriptConfigExtends,
   TypescriptConfigOptions,
 } from 'projen/lib/javascript';
 import { pathsToModuleNameMapper } from 'ts-jest';
@@ -224,6 +225,14 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
+  tsconfig: {
+    ...tsConfigOptions,
+    extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
+    compilerOptions: {
+      verbatimModuleSyntax: false,
+      rootDir: './src/app',
+    },
+  },
   deps: [
     '@easy-genomics/shared-lib@workspace:*',
     'aws-sdk',
@@ -234,6 +243,11 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
+    'aws-amplify@5.3.18',
+    '@aws-amplify/ui-vue@3.1.30',
+    'zod',
+    'unplugin-icons',
+    'unplugin-vue-components',
   ],
   devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port', '@nuxt/types'],
 });
@@ -242,7 +256,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
   ['nuxt-build']: 'nuxt build',
-  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
+  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev --dotenv .env.local',
   ['nuxt-generate']: 'nuxt generate',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',

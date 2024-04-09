@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import EGButton from '../EGButton.vue';
-
   const { logOut } = useAuth();
 </script>
 

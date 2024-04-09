@@ -1,16 +1,10 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { onBeforeMount } from '../../../.nuxt/imports';
-  import { Auth } from 'aws-amplify';
-  import { useRuntimeConfig } from 'nuxt/app';
-
-  const { AWS_REGION } = useRuntimeConfig().public;
 
   definePageMeta({
     layout: 'login',
   });
 
-  const router = useRouter();
   const { login } = useAuth();
 
   const schema = z.object({
@@ -18,7 +12,7 @@
     password: z.string().min(8, 'Must be at least 8 characters'),
   });
 
-  type Schema = z.output<typeof schema>;
+  // type Schema = z.output<typeof schema>;
 
   const state = reactive({
     email: undefined,

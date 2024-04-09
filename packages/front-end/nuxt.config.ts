@@ -8,6 +8,7 @@ export default defineNuxtConfig({
   modules: ['@nuxt/ui'],
   srcDir: 'src/app/',
   css: ['@/styles/main.scss'],
+  ssr: false,
   build: {
     loaders: {
       scss: {

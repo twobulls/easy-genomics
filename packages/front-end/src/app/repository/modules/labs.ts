@@ -1,6 +1,6 @@
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import HttpFactory from '../factory';
 import { useRuntimeConfig } from 'nuxt/app';
+import HttpFactory from '../factory';
 
 class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();

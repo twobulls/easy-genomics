@@ -72,7 +72,7 @@
       body: 'p-0',
     }"
   >
-    <UTable class="LabsTable rounded-2xl" :rows="labsSortedAlphabetically" :columns="columns" :loading="pending">
+    <UTable class="LabsTable rounded-2xl" :rows="labsSortedAlphabetically" :columns="columns">
       <template #actions-data="{ row }">
         <EGActionButton :items="actionItems(row)" />
       </template>

@@ -5,7 +5,6 @@ import Components from 'unplugin-vue-components/vite';
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  ssr: false,
   modules: ['@nuxt/ui'],
   srcDir: 'src/app/',
   css: ['@/styles/main.scss'],

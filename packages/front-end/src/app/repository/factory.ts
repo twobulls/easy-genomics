@@ -25,7 +25,6 @@ class HttpFactory {
         Authorization: token,
       },
     });
-    console.warn($res);
     return $res;
   }
 }

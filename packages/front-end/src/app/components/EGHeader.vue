@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  const { logOut } = useAuth();
+  const { logOut, hasAuth } = useAuth();
 </script>
 
 <template>
@@ -44,7 +44,7 @@
         >
           Organizations
         </ULink>
-        <EGButton v-if="!hasAuth" @click="logOut()" class="ml-8 h-10" label="Log out" />
+        <EGButton v-if="hasAuth" @click="logOut()" class="ml-8 h-10" label="Log out" />
       </div>
     </div>
   </header>

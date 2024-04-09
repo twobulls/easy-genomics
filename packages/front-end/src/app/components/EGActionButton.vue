@@ -6,15 +6,14 @@
     },
   });
 
-  const isActive = ref(false);
+  const isOpen = ref(false);
 </script>
 
 <template>
-  <UDropdown class="EGActionButton" :items="items" :popper="{ placement: 'bottom-start' }">
+  <UDropdown class="EGActionButton" v-model:open="isOpen" :items="items" :popper="{ placement: 'bottom-start' }">
     <div class="rounded-full border">
       <UButton
-        :class="{ active: isActive }"
-        @click="isActive = !isActive"
+        :class="{ active: isOpen }"
         class="hover:bg-null h-10 w-10 justify-center text-black"
         variant="ghost"
         icon="i-heroicons-ellipsis-horizontal-20-solid"

@@ -229,8 +229,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     ...tsConfigOptions,
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
-      'target': 'ESNext',
-      'module': 'ESNext',
       verbatimModuleSyntax: false,
       rootDir: './src/app',
     },

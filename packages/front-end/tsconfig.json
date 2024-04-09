@@ -13,7 +13,7 @@
     "lib": [
       "es2019"
     ],
-    "module": "ESNext",
+    "module": "CommonJS",
     "noEmitOnError": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -26,7 +26,7 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "stripInternal": true,
-    "target": "ESNext",
+    "target": "ES2019",
     "verbatimModuleSyntax": false
   },
   "include": [

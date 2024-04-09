@@ -24,10 +24,6 @@
     email: undefined,
     password: undefined,
   });
-
-  onBeforeMount(() => {
-    console.log(Auth.configure());
-  });
 </script>
 
 <template>

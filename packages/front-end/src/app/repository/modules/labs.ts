@@ -1,12 +1,13 @@
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import HttpFactory from '../factory';
-const MOCK_ORG_ID = '';
+import { useRuntimeConfig } from 'nuxt/app';
 
 class LabsModule extends HttpFactory {
-  private RESOURCE = `${process.env.BASE_API_URL}/easy-genomics/laboratory`;
+  $config = useRuntimeConfig();
+  private RESOURCE = `${this.$config.public.BASE_API_URL}/easy-genomics/laboratory`;
 
-  async list(): Promise<Laboratory> {
-    return this.call<Laboratory>('GET', `${this.RESOURCE}/list-laboratories?organizationId=${MOCK_ORG_ID}`);
+  async list(orgId: string): Promise<Laboratory> {
+    return this.call<Laboratory>('GET', `${this.RESOURCE}/list-laboratories?organizationId=${orgId}`);
   }
 }
 

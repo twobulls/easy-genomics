@@ -6,6 +6,7 @@
   const pageTotal = computed(() => labData.value.length);
   const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
   const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
+  const MOCK_ORG_ID = '6a80b4fa-1cfe-4345-ae62-cdc58dbec69c';
 
   const columns = [
     {
@@ -52,7 +53,7 @@
 
   onBeforeMount(async () => {
     try {
-      labData.value = await $api.labs.list();
+      labData.value = await $api.labs.list(MOCK_ORG_ID);
     } catch (error) {
       console.error(error);
     }

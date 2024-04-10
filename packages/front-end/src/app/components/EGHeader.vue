@@ -22,7 +22,7 @@
           to="/workflows"
           disabled
           inactive-class="text-grey-500"
-          active-class="text-violet-700 bg-violet-100"
+          active-class="text-primary bg-primary-muted"
           class="font-heading flex items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-base text-sm tracking-normal"
         >
           Workflows

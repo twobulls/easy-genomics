@@ -22,6 +22,7 @@ export default defineNuxtConfig({
       AWS_USER_POOL_ID: process.env.AWS_USER_POOL_ID,
       AWS_CLIENT_ID: process.env.AWS_CLIENT_ID,
       BASE_API_URL: process.env.BASE_API_URL,
+      MOCK_ORG_ID: process.env.MOCK_ORG_ID,
     },
   },
 

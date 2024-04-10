@@ -1,12 +1,11 @@
 <script setup lang="ts">
   const { $api } = useNuxtApp();
+  const hasNoData = ref(false);
+  const isLoading = ref(true);
   const labData = ref([]);
   const page = ref(1);
   const pageCount = ref(10);
-  const pageTotal = computed(() => labData.value.length);
-  const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
-  const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
-  const MOCK_ORG_ID = '6a80b4fa-1cfe-4345-ae62-cdc58dbec69c';
+  const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
   const columns = [
     {
@@ -24,7 +23,7 @@
     },
   ];
 
-  const labsSortedAlphabetically = computed(() => {
+  const sortedData = computed(() => {
     return labData.value
       .slice((page.value - 1) * pageCount.value, page.value * pageCount.value)
       .sort((a, b) => a.Name.localeCompare(b.Name));
@@ -51,40 +50,60 @@
     ],
   ];
 
-  onBeforeMount(async () => {
+  const pageTotal = computed(() => labData.value.length);
+  const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
+  const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
+
+  useFetch(async () => {
     try {
       labData.value = await $api.labs.list(MOCK_ORG_ID);
+      if (!labData.value.length) {
+        hasNoData.value = true;
+      }
+      isLoading.value = false;
     } catch (error) {
       console.error(error);
+      isLoading.value = false;
+      throw error;
     }
   });
 </script>
 
 <template>
-  <div class="center mb-8 flex justify-between">
-    <EGText tag="h1">Labs</EGText>
+  <div class="center mb-11 flex justify-between">
+    <EGText tag="h1" v-if="labData">Labs</EGText>
     <EGButton label="Create a new Lab" class="self-end" />
   </div>
 
-  <UCard
-    class="rounded-2xl border-none shadow-none"
-    :ui="{
-      body: 'p-0',
-    }"
-  >
-    <UTable class="LabsTable rounded-2xl" :rows="labsSortedAlphabetically" :columns="columns">
-      <template #actions-data="{ row }">
-        <EGActionButton :items="actionItems(row)" />
-      </template>
-    </UTable>
-  </UCard>
+  <EGEmptyDataCTA
+    v-if="hasNoData"
+    message="You don't have any Labs set up yet."
+    :button-action="() => {}"
+    button-label="Create a new Lab"
+  />
 
-  <div class="text-muted flex flex-wrap items-center justify-between">
-    <div class="text-xs leading-5">Showing {{ pageFrom }} to {{ pageTo }} results</div>
-    <div class="flex justify-end px-3 py-3.5">
-      <UPagination v-if="labData.length > 1" v-model="page" :page-count="10" :total="labData.length" />
+  <template v-if="!loading && !hasNoData">
+    <UCard
+      class="rounded-2xl border-none shadow-none"
+      :ui="{
+        body: 'p-0',
+      }"
+    >
+      <UTable class="LabsTable rounded-2xl" :rows="sortedData" :columns="columns">
+        <template #actions-data="{ row }">
+          <EGActionButton :items="actionItems(row)" />
+        </template>
+        <template #empty-state>&nbsp;</template>
+      </UTable>
+    </UCard>
+
+    <div class="text-muted flex h-16 flex-wrap items-center justify-between">
+      <div class="text-xs leading-5">Showing {{ pageFrom }} to {{ pageTo }} results</div>
+      <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
+        <UPagination v-model="page" :page-count="10" :total="labData.length" />
+      </div>
     </div>
-  </div>
+  </template>
 </template>
 
 <style>
@@ -117,6 +136,7 @@
     }
 
     tbody tr td:nth-child(2) {
+      min-width: 500px;
       font-size: 12px;
       color: #818181;
     }

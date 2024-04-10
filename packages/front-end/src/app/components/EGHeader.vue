@@ -13,8 +13,8 @@
           to="/runs"
           disabled
           inactive-class="text-grey-500"
-          active-class="text-violet-700  bg-violet-100 "
-          class="font-heading flex justify-center whitespace-nowrap rounded-xl px-4 py-2 text-base tracking-normal"
+          active-class="text-violet-700 bg-violet-100"
+          class="font-heading flex items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-base text-sm tracking-normal"
         >
           Runs
         </ULink>
@@ -22,25 +22,24 @@
           to="/workflows"
           disabled
           inactive-class="text-grey-500"
-          active-class="text-violet-700  bg-violet-100 "
-          class="font-heading flex justify-center whitespace-nowrap rounded-xl px-4 py-2 text-base tracking-normal"
+          active-class="text-violet-700 bg-violet-100"
+          class="font-heading flex items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-base text-sm tracking-normal"
         >
           Workflows
         </ULink>
         <ULink
           to="/labs"
           inactive-class="text-grey-500"
-          active-class="text-violet-700  bg-violet-100 "
-          class="font-heading flex justify-center whitespace-nowrap rounded-xl px-4 py-2 text-base tracking-normal"
+          active-class="text-violet-700 bg-violet-100"
+          class="font-heading flex items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-base text-sm tracking-normal"
         >
           Labs
         </ULink>
         <ULink
           to="/organizations"
-          disabled
           inactive-class="text-grey-500"
-          active-class="text-violet-700  bg-violet-100 "
-          class="font-heading flex justify-center whitespace-nowrap rounded-xl px-4 py-2 text-base tracking-normal"
+          active-class="text-violet-700 bg-violet-100"
+          class="font-heading flex items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-base text-sm tracking-normal"
         >
           Organizations
         </ULink>

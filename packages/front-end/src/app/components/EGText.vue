@@ -54,7 +54,7 @@
     font-size: 1.25rem; /* 20px */
     line-height: 1.75rem; /* 28px */
     font-weight: bold;
-    letter-spacing: 0;
+    letter-spacing: -0.14px;
 
     > p {
       margin-bottom: 1.2rem;

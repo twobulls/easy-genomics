@@ -4,6 +4,7 @@ export const LaboratorySchema = z.object({
   OrganizationId: z.string().uuid(),
   LaboratoryId: z.string().uuid(),
   Name: z.string(),
+  Description: z.string().optional(),
   S3Bucket: z.string().optional(),
   Status: z.enum(['Active', 'Inactive']),
   AwsHealthOmicsEnabled: z.boolean().optional(),
@@ -17,6 +18,7 @@ export const LaboratorySchema = z.object({
 export const CreateLaboratorySchema = z.object({
   OrganizationId: z.string().uuid(),
   Name: z.string(),
+  Description: z.string().optional(),
   Status: z.enum(['Active', 'Inactive']),
   AwsHealthOmicsEnabled: z.boolean().optional(),
   NextFlowTowerEnabled: z.boolean().optional(),
@@ -29,6 +31,7 @@ export const RequestLaboratorySchema = z.object({
 
 export const UpdateLaboratorySchema = z.object({
   Name: z.string(),
+  Description: z.string().optional(),
   S3Bucket: z.string().optional(),
   Status: z.enum(['Active', 'Inactive']),
   AwsHealthOmicsEnabled: z.boolean().optional(),

@@ -18,7 +18,7 @@ export const handler: Handler = async (
     if (id === '') throw new Error('Required id is missing');
 
     // Lookup by LaboratoryId to confirm existence before deletion
-    const existingLaboratory: Laboratory = await laboratoryService.query(id);
+    const existingLaboratory: Laboratory = await laboratoryService.queryByLaboratoryId(id);
 
     // Check LaboratoryUsers are empty before deletion
     const existingLaboratoryUsers: LaboratoryUser[] = await laboratoryUserService.queryByLaboratoryId(existingLaboratory.LaboratoryId);

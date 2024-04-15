@@ -15,7 +15,7 @@ export const handler: Handler = async (
     if (id === '') throw new Error('Required id is missing');
 
     // Lookup by GSI Id for convenience
-    const existing: Laboratory = await laboratoryService.query(id);
+    const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
     return buildResponse(200, JSON.stringify(existing), event);
   } catch (err: any) {
     console.error(err);

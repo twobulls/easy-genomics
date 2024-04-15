@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const OrganizationSchema = z.object({
   OrganizationId: z.string().uuid(),
   Name: z.string(),
+  Description: z.string().optional(),
   Country: z.string().optional(),
   AwsHealthOmicsEnabled: z.boolean().optional(),
   NextFlowTowerEnabled: z.boolean().optional(),
@@ -14,6 +15,7 @@ export const OrganizationSchema = z.object({
 
 export const CreateOrganizationSchema = z.object({
   Name: z.string(),
+  Description: z.string().optional(),
   Country: z.string().optional(),
   AwsHealthOmicsEnabled: z.boolean().optional(),
   NextFlowTowerEnabled: z.boolean().optional(),
@@ -21,6 +23,7 @@ export const CreateOrganizationSchema = z.object({
 
 export const UpdateOrganizationSchema = z.object({
   Name: z.string(),
+  Description: z.string().optional(),
   Country: z.string().optional(),
   AwsHealthOmicsEnabled: z.boolean().optional(),
   NextFlowTowerEnabled: z.boolean().optional(),

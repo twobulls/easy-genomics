@@ -13,6 +13,7 @@
  *   OrganizationId: <string>,
  *   LaboratoryId: <string>,
  *   Name: <string>,
+ *   Description?: <string>,
  *   Status: <string>,
  *   S3Bucket?: <string>
  *   AwsHealthOmicsEnabled?: <boolean>,
@@ -24,11 +25,13 @@
  * }
  */
 import { BaseAttributes, Status } from "../base-entity";
+import { z } from "zod";
 
 export interface Laboratory extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
   LaboratoryId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
   Name: string;
+  Description?: string,
   Status: Status,
   S3Bucket?: string;
   AwsHealthOmicsEnabled?: boolean;

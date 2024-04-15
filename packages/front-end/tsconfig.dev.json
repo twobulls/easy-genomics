@@ -11,7 +11,7 @@
     "lib": [
       "es2019"
     ],
-    "module": "CommonJS",
+    "module": "esnext",
     "noEmitOnError": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -24,16 +24,16 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "stripInternal": true,
-    "target": "ES2019",
+    "target": "esnext",
     "verbatimModuleSyntax": false,
     "rootDir": "./src/app"
   },
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",
-    "packages/back-end/src/**/*.ts",
-    "packages/front-end/src/**/*.ts",
-    "packages/shared-lib/src/**/*.ts"
+    "./nuxt.d.ts",
+    "../**/*",
+    "../src/app/**/*"
   ],
   "exclude": [
     "node_modules"

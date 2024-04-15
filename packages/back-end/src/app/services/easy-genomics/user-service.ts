@@ -56,7 +56,7 @@ export class UserService extends DynamoDBService implements Service {
     }
   }
 
-  public listUsers = async (): Promise<User[]> => {
+  public listAllUsers = async (): Promise<User[]> => {
     const result: ScanCommandOutput = await this.findAll({
       TableName: this.USER_TABLE_NAME,
     });

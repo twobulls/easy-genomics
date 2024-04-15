@@ -25,7 +25,7 @@ export const handler: Handler = async (
     if (!UpdateLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
 
     // Lookup by LaboratoryId to confirm existence before updating
-    const existing: Laboratory = await laboratoryService.query(id);
+    const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
     const updated: Laboratory = await laboratoryService.update({
       ...existing,
       ...request,

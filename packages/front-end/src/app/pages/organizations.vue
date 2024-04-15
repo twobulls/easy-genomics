@@ -14,7 +14,7 @@
       sortable: true,
     },
     {
-      key: 'Name', // TODO: confirm Description API response
+      key: 'Description',
       label: 'Description',
     },
     {

@@ -3,9 +3,13 @@ import { AddLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schem
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { LaboratoryService } from '../../../../services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '../../../../services/easy-genomics/laboratory-user-service';
+import { UserService } from '../../../../services/easy-genomics/user-service';
 
 const laboratoryUserService = new LaboratoryUserService();
+const laboratoryService = new LaboratoryService();
+const userService = new UserService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -19,6 +23,10 @@ export const handler: Handler = async (
     );
     // Data validation safety check
     if (!AddLaboratoryUserSchema.safeParse(request).success) throw new Error('Invalid request');
+
+    // Try to retrieve LaboratoryId and UserId to ensure they exist before adding
+    await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
+    await userService.get(request.UserId);
 
     const response: LaboratoryUser = await laboratoryUserService.add({
       ...request,

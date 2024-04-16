@@ -104,10 +104,10 @@
     </UTable>
   </UCard>
 
-  <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!isLoading || hasNoData">
+  <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!isLoading && !hasNoData">
     <div class="text-xs leading-5">Showing {{ pageFrom }} to {{ pageTo }} results</div>
     <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
-      <UPagination v-model="page" :page-count="10" :total="labData.length" />
+      <UPagination v-model="page" :page-count="10" :total="orgData.length" />
     </div>
   </div>
 </template>

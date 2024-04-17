@@ -191,14 +191,14 @@ export class WwwHostingConstruct extends Construct {
       errorResponses: [
         {
           httpStatus: 403,
-          responseHttpStatus: 403,
-          responsePagePath: '/error.html',
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
           ttl: this.props.indexCacheDuration,
         },
         {
           httpStatus: 404,
-          responseHttpStatus: 404,
-          responsePagePath: '/error.html',
+          responseHttpStatus: 200,
+          responsePagePath: '/index.html',
           ttl: this.props.indexCacheDuration,
         },
       ],

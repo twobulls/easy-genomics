@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import path from 'path';
 import { S3Construct } from '@easy-genomics/shared-lib/src/infra/constructs/s3-construct';
 import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
-import { CfnOutput, Duration } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy } from "aws-cdk-lib";
 import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
@@ -99,10 +99,15 @@ export class WwwHostingConstruct extends Construct {
     const wwwBucketName: string = applicationUri; // Must be globally unique
     new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${applicationUri}` });
 
+    // Create S3 Bucket with custom props to enable static website hosting
     const wwwBucket: Bucket = s3.createBucket(
       wwwBucketName,
       {
         accessControl: BucketAccessControl.PRIVATE,
+        publicReadAccess: true,
+        blockPublicAccess: undefined,
+        websiteIndexDocument: 'index.html',
+        removalPolicy: RemovalPolicy.DESTROY,
       },
       this.props.devEnv,
     );

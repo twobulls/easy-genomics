@@ -99,7 +99,7 @@ export class WwwHostingConstruct extends Construct {
     const wwwBucketName: string = applicationUri; // Must be globally unique
     new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${applicationUri}` });
 
-    // Create S3 Bucket with custom props to enable static website hosting
+    // Create S3 Bucket with custom props to support static website hosting
     const wwwBucket: Bucket = s3.createBucket(
       wwwBucketName,
       {

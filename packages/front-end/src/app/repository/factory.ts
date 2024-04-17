@@ -13,19 +13,31 @@ class HttpFactory {
    * @param data
    * @param extras
    */
-  async call<T>(method: string, url: string, data?: object, extras = {}): Promise<T> {
-    // How to get a token from aws Cognito using aws-amplify
+  async call<T>(method = 'GET', url: string, data?: unknown): Promise<T | undefined> {
+    try {
+      const token = await this.getToken();
+      const headers = {
+        headers: {
+          Authorization: token,
+        },
+      };
+      const settings = {
+        method,
+        ...headers,
+        body: JSON.stringify(data),
+      };
+      const $res: T = await this.$fetch(url, settings);
+      return $res;
+    } catch (error) {
+      console.error('An error occurred:', error);
+      return undefined;
+    }
+  }
+
+  private async getToken(): Promise<string> {
     const session = await Auth.currentSession();
     const idToken = session.getIdToken().getJwtToken();
-    const token = `Bearer ${idToken}`;
-
-    const $res: T = await this.$fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: token,
-      },
-    });
-    return $res;
+    return `Bearer ${idToken}`;
   }
 }
 

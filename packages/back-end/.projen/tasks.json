@@ -165,7 +165,7 @@
       },
       "steps": [
         {
-          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@aws-sdk/util-dynamodb,@types/aws-lambda,@types/jest,@types/uuid,aws-sdk-client-mock,esbuild,eslint-import-resolver-typescript,eslint-plugin-import,jest,projen,ts-jest,ts-node,typescript,@aws-sdk/client-dynamodb,@aws-sdk/lib-dynamodb,@easy-genomics/shared-lib,aws-lambda,aws-sdk,dotenv,uuid"
+          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@aws-sdk/util-dynamodb,@types/aws-lambda,@types/jest,@types/uuid,aws-sdk-client-mock,esbuild,eslint-import-resolver-typescript,eslint-plugin-import,jest,projen,ts-jest,ts-node,typescript,@aws-sdk/client-dynamodb,@aws-sdk/lib-dynamodb,aws-lambda,aws-sdk,dotenv,uuid"
         },
         {
           "exec": "pnpm i --no-frozen-lockfile"

@@ -2,8 +2,9 @@
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
   const isLoading = ref(true);
-  const orgData = ref([]);
+  const labData = ref([]);
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
+  const $router = useRouter();
 
   const columns = [
     {
@@ -31,7 +32,7 @@
     [
       {
         label: 'View / Edit',
-        click: () => {},
+        click: () => $router.push({ path: `/labs/lab/${row.LaboratoryId}`, query: { labName: row.Name } }),
       },
     ],
     [
@@ -44,9 +45,9 @@
 
   onBeforeMount(async () => {
     try {
-      orgData.value = await $api.orgs.list(MOCK_ORG_ID);
+      labData.value = await $api.labs.list(MOCK_ORG_ID);
 
-      if (!orgData.value.length) {
+      if (!labData.value.length) {
         hasNoData.value = true;
       }
       isLoading.value = false;
@@ -60,20 +61,20 @@
 
 <template>
   <div class="mb-11 flex items-center justify-between">
-    <EGText tag="h1">Organizations</EGText>
-    <EGButton label="Create a new Organization" class="self-end" />
+    <EGText tag="h1" v-if="labData">Labs</EGText>
+    <EGButton label="Create a new Lab" class="self-end" />
   </div>
 
   <EGEmptyDataCTA
     v-if="hasNoData"
-    message="You don't have any Organization set up yet."
+    message="You don't have any Labs set up yet."
     :button-action="() => {}"
-    button-label="Create a new Organization"
+    button-label="Create a new Lab"
   />
 
   <EGTable
     v-else
-    :table-data="orgData"
+    :table-data="labData"
     :columns="columns"
     :is-loading="isLoading"
     :action-items="actionItems"

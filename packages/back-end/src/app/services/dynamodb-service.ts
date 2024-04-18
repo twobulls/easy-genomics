@@ -15,6 +15,9 @@
  *   - etc...
  */
 import {
+  BatchGetItemCommand,
+  BatchGetItemCommandInput,
+  BatchGetItemCommandOutput,
   DeleteItemCommand,
   DeleteItemCommandInput,
   DeleteItemCommandOutput,
@@ -45,6 +48,7 @@ enum DynamoDBCommand {
   PUT_ITEM = 'put-item', // Create
   TRANSACT_WRITE = 'transact-write', // Create with Transaction
   SCAN_ITEMS = 'scan-items', // List
+  BATCH_GET_ITEM = 'batch-get-item', // List
   GET_ITEM = 'get-item', // Read
   QUERY_ITEMS = 'query-items', // Query
   UPDATE_ITEM = 'update-item', // Update
@@ -69,6 +73,13 @@ export class DynamoDBService {
     return this.dynamoDBRequest<TransactWriteItemsCommandInput, TransactWriteItemsCommandOutput>(
       DynamoDBCommand.TRANSACT_WRITE,
       transactWriteItemsCommandInput,
+    );
+  };
+
+  protected batchGetItem = async (batchGetItemCommandInput: BatchGetItemCommandInput): Promise<BatchGetItemCommandOutput> => {
+    return this.dynamoDBRequest<BatchGetItemCommandInput, BatchGetItemCommandOutput>(
+      DynamoDBCommand.BATCH_GET_ITEM,
+      batchGetItemCommandInput,
     );
   };
 
@@ -141,6 +152,8 @@ export class DynamoDBService {
         return new TransactWriteItemsCommand(data);
       case DynamoDBCommand.SCAN_ITEMS:
         return new ScanCommand(data);
+      case DynamoDBCommand.BATCH_GET_ITEM:
+        return new BatchGetItemCommand(data);
       case DynamoDBCommand.GET_ITEM:
         return new GetItemCommand(data);
       case DynamoDBCommand.QUERY_ITEMS:

@@ -370,6 +370,19 @@ export class IamConstruct extends Construct {
       '/easy-genomics/laboratory/user/add-laboratory-user',
       [
         new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
           resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`],
           actions: ['dynamodb:PutItem'],
           effect: Effect.ALLOW,

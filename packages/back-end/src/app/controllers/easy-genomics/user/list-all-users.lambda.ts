@@ -10,7 +10,7 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    const response: User[] = await userService.listUsers();
+    const response: User[] = await userService.listAllUsers();
 
     if (response) {
       return buildResponse(200, JSON.stringify(response), event);

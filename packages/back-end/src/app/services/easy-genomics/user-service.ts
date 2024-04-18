@@ -1,4 +1,4 @@
-import { GetItemCommandOutput, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
+import { BatchGetItemCommandOutput, GetItemCommandOutput, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
@@ -56,13 +56,35 @@ export class UserService extends DynamoDBService implements Service {
     }
   }
 
-  public listUsers = async (): Promise<User[]> => {
+  public listAllUsers = async (): Promise<User[]> => {
     const result: ScanCommandOutput = await this.findAll({
       TableName: this.USER_TABLE_NAME,
     });
 
     if (result.Items) {
       return <User[]>result.Items.map((item) => unmarshall(item));
+    } else {
+      throw new Error('Unable to list Users');
+    }
+  };
+
+  public listUsers = async (userIds: string[]): Promise<User[]> => {
+    const requestItemKeys: {UserId: {S: string}}[] = userIds.map(userId => {
+      return {
+        ['UserId']: { S: userId },
+      };
+    });
+
+    const result: BatchGetItemCommandOutput = await this.batchGetItem({
+      RequestItems: {
+        [this.USER_TABLE_NAME]: {
+          Keys: requestItemKeys,
+        },
+      },
+    });
+
+    if (result.Responses) {
+      return <User[]>result.Responses[this.USER_TABLE_NAME].map((item) => unmarshall(item));
     } else {
       throw new Error('Unable to list Users');
     }

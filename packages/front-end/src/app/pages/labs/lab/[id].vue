@@ -92,12 +92,12 @@
     :ui="{
       base: 'focus:outline-none',
       list: {
-        base: 'border-b rounded-none',
+        base: 'border-b-2 rounded-none',
         padding: 'p-0',
         height: 'h-14',
         marker: {
           wrapper: 'duration-200 ease-out focus:outline-none',
-          base: 'absolute bottom-[0px] h-[1px]',
+          base: 'absolute bottom-[0px] h-[2px]',
           background: 'bg-primary',
           shadow: 'shadow-none',
         },

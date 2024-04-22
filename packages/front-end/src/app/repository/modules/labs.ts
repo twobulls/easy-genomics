@@ -29,6 +29,19 @@ class LabsModule extends HttpFactory {
 
     return res;
   }
+
+  async usersDetails(labId: string): Promise<LaboratoryUser> {
+    const res = await this.call<LaboratoryUser>(
+      'GET',
+      `${this.RESOURCE}/user/list-laboratory-users-details?laboratoryId=${labId}`
+    );
+
+    if (!res) {
+      throw new Error('Failed to retrieve Laboratory users details');
+    }
+
+    return res;
+  }
 }
 
 export default LabsModule;

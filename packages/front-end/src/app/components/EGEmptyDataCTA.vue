@@ -22,7 +22,7 @@
       <div class="ml-5 flex w-6/12 flex-col max-md:ml-0 max-md:w-full">
         <img
           loading="lazy"
-          src="~/assets/images/empty-state.svg"
+          src="~/assets/images/empty-state.jpg"
           class="aspect-[1.32] w-full grow max-md:mt-10 max-md:max-w-full"
         />
       </div>

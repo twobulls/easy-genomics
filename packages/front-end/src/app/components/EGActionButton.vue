@@ -28,7 +28,7 @@
       padding: 8px 12px;
     }
 
-    .p-1:nth-child(3) {
+    .p-1:last-child {
       button {
         color: #ef5c45;
       }

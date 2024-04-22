@@ -1,26 +1,24 @@
 <script setup lang="ts">
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-  import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-
   const { $api } = useNuxtApp();
   const isLoading = ref(true);
-  const allUsers = ref(Array<User>);
-  const labUsers = ref(Array<LaboratoryUser>);
+  const labUsersDetailsData = ref(Array<LaboratoryUser>);
   const page = ref(1);
   const pageCount = ref(10);
   const $router = useRouter();
   const $route = useRoute();
   const labName = $route.query.labName;
+  const searchOutput = ref('');
 
   const columns = [
     {
-      key: 'fullName',
+      key: 'UserDisplayName',
       label: 'Name',
       sortable: true,
     },
     {
-      key: 'assignedRoles',
-      label: 'Assigned Roles',
+      key: 'assignedRole',
+      label: 'Assigned Role',
     },
     {
       key: 'actions',
@@ -28,66 +26,52 @@
     },
   ];
 
-  const sortedData = computed(() => {
-    return labUsersMeta.value
-      .slice((page.value - 1) * pageCount.value, page.value * pageCount.value)
-      .sort((a, b) => a.Name.localeCompare(b.Name));
-  });
-
   const actionItems = (row: Array<{}>) => [
     [
       {
-        label: 'Reassign roles',
+        label: 'Edit lab access',
         click: () => {},
       },
     ],
     [
       {
-        label: 'Remove',
+        label: 'Remove from lab',
         click: () => {},
       },
     ],
   ];
 
-  const labUsersMeta = computed(() => {
-    return labUsers.value.map((user) => {
-      const userMeta = allUsers.value.find((u) => u.UserId === user.UserId);
-      userMeta.fullName = `${userMeta.FirstName} ${userMeta.LastName}`;
-      userMeta.assignedRoles = `${userMeta.FirstName} ${userMeta.LastName}`;
-
-      return {
-        ...user,
-        ...userMeta,
-      };
-    });
+  onMounted(async () => {
+    try {
+      labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
+      isLoading.value = false;
+    } catch (error) {
+      isLoading.value = false;
+      console.error(error);
+      throw error;
+    }
   });
 
-  const pageTotal = computed(() => labUsersMeta.value.length);
-  const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
-  const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
-  const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
-
-  try {
-    allUsers.value = await $api.users.list();
-    labUsers.value = await $api.labs.users($route.params.id);
-    isLoading.value = false;
-  } catch (error) {
-    console.error(error);
-    isLoading.value = false;
-    throw error;
+  function updateSearchOutput(newVal: any) {
+    searchOutput.value = newVal;
   }
 
-  const q = ref('');
   const filteredRows = computed(() => {
-    if (!q.value) {
-      return people;
+    if (!searchOutput.value) {
+      return labUsersDetailsData.value.map((person) => ({
+        ...person,
+        assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
+      }));
     }
 
-    return people.filter((person) => {
-      return Object.values(person).some((value) => {
-        return String(value).toLowerCase().includes(q.value.toLowerCase());
-      });
-    });
+    return labUsersDetailsData.value
+      .filter((person) => {
+        return String(person.UserDisplayName).toLowerCase().includes(searchOutput.value.toLowerCase());
+      })
+      .map((person) => ({
+        ...person,
+        assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
+      }));
   });
 </script>
 
@@ -95,7 +79,7 @@
   <div class="mb-11 flex flex-col justify-between">
     <a
       @click="$router.go(-1)"
-      class="text-primary mb-4 flex items-center gap-1 whitespace-nowrap text-base font-medium"
+      class="text-primary mb-4 flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
     >
       <i class="i-heroicons-arrow-left-solid"></i>
       <span>Back</span>
@@ -106,35 +90,23 @@
 
   <UTabs
     :ui="{
-      wrapper: 'relative space-y-2',
-      container: 'relative w-full',
       base: 'focus:outline-none',
       list: {
-        base: 'relative border-2 border-bottom border-primary rounded-md',
-        background: '',
-        rounded: 'rounded-lg',
-        shadow: '',
-        padding: 'p-1',
-        height: 'h-10',
-        width: 'w-full',
+        base: 'border-b rounded-none',
+        padding: 'p-0',
+        height: 'h-14',
         marker: {
-          wrapper: ' absolute top-[4px] left-[4px] duration-200 ease-out focus:outline-none',
-          base: 'w-full h-full',
-          background: 'bg-white dark:bg-gray-900',
-          rounded: 'rounded-md',
-          shadow: 'shadow-sm',
+          wrapper: 'duration-200 ease-out focus:outline-none',
+          base: 'absolute bottom-[0px] h-[1px]',
+          background: 'bg-primary',
+          shadow: 'shadow-none',
         },
         tab: {
-          base: 'font-heading relative inline-flex items-center justify-center flex-shrink-0 w-full ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 dark:ui-focus-visible:ring-primary-400 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 transition-colors duration-200 ease-out',
-          background: '',
-          active: 'text-primary bg-none',
+          base: 'w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out',
+          active: 'text-primary h-14',
           inactive: 'text-heading',
-          height: 'h-8',
-          padding: 'px-3',
-          size: 'text-sm',
-          font: 'font-medium',
-          rounded: 'rounded-md',
-          shadow: '',
+          height: 'h-14',
+          padding: 'p-0',
         },
       },
     }"
@@ -161,7 +133,7 @@
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <template v-if="!isLoading">
-          <EGSearchInput />
+          <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
           <UCard
             class="rounded-2xl border-none shadow-none"
@@ -169,9 +141,38 @@
               body: 'p-0',
             }"
           >
-            <UTable class="LabsTable rounded-2xl" :rows="sortedData" :columns="columns">
+            <UTable
+              class="LabsUsersTable rounded-2xl"
+              :rows="filteredRows"
+              :columns="columns"
+              :ui="{
+                wrapper: 'relative overflow-x-auto',
+                base: 'min-w-full table-fixed',
+                divide: 'divide-y divide-gray-300',
+              }"
+            >
+              <template #UserDisplayName-data="{ row }">
+                <div class="flex items-center">
+                  <EGUserAvatar
+                    class="mr-4"
+                    :name="row.UserDisplayName"
+                    :email="row.UserEmail"
+                    :lab-manager="row.LabManager"
+                    :lab-technician="row.LabTechnician"
+                  />
+                  <div class="flex flex-col">
+                    <div v-if="row.UserDisplayName">{{ row.UserDisplayName }}</div>
+                    <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
+                  </div>
+                </div>
+              </template>
+              <template #assignedRole-data="{ row }">
+                <span class="text-black">{{ row.assignedRole }}</span>
+              </template>
               <template #actions-data="{ row }">
-                <EGActionButton :items="actionItems(row)" />
+                <div class="flex items-center">
+                  <EGActionButton :items="actionItems(row)" />
+                </div>
               </template>
               <template #empty-state>&nbsp;</template>
             </UTable>
@@ -180,7 +181,7 @@
           <div class="text-muted flex h-16 flex-wrap items-center justify-between">
             <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
             <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
-              <UPagination v-model="page" :page-count="10" :total="labUsersMeta.length" />
+              <UPagination v-model="page" :page-count="10" :total="labUsersDetailsData.length" />
             </div>
           </div>
         </template>
@@ -191,7 +192,7 @@
 </template>
 
 <style>
-  .LabsTable {
+  .LabsUsersTable {
     font-size: 14px;
     width: 100%;
     table-layout: auto;

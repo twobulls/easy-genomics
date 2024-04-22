@@ -6,9 +6,13 @@ import Components from 'unplugin-vue-components/vite';
 export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxt/ui'],
+
   srcDir: 'src/app/',
+
   css: ['@/styles/main.scss'],
+
   ssr: false,
+
   build: {
     loaders: {
       scss: {

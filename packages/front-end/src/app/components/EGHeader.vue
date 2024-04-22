@@ -14,7 +14,7 @@
           disabled
           inactive-class="text-muted"
           active-class="text-primary bg-primary-muted"
-          class="font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
+          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
           Runs
         </ULink>
@@ -23,7 +23,7 @@
           disabled
           inactive-class="text-muted"
           active-class="text-primary bg-primary-muted"
-          class="font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
+          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
           Workflows
         </ULink>
@@ -31,7 +31,7 @@
           to="/labs"
           inactive-class="text-muted"
           active-class="text-violet-700 bg-violet-100"
-          class="font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
+          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
           Labs
         </ULink>
@@ -39,7 +39,7 @@
           to="/organizations"
           inactive-class="text-muted"
           active-class="text-violet-700 bg-violet-100"
-          class="font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm leading-5 tracking-normal"
+          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm leading-5 tracking-normal"
         >
           Organizations
         </ULink>
@@ -57,6 +57,10 @@
   }
   .header-container {
     max-width: 1262px;
+  }
+
+  .ULink {
+    line-height: 1.4rem;
   }
 </style>
 

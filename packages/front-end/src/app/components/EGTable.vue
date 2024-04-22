@@ -70,6 +70,7 @@
       v-model:sort="sortModel"
       sort-mode="manual"
     >
+      <slot />
       <template #actions-data="{ row }">
         <EGActionButton :items="actionItems(row)" />
       </template>
@@ -78,7 +79,7 @@
   </UCard>
 
   <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="showPagination">
-    <div class="text-xs leading-5">Showing {{ pageFrom }} to {{ pageTo }} results</div>
+    <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
     <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
       <UPagination v-model="page" :page-count="10" :total="localProps.tableData.length" />
     </div>

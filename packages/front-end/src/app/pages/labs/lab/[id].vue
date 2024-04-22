@@ -1,15 +1,20 @@
 <script setup lang="ts">
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
+  import { onBeforeMount } from '#imports';
   const { $api } = useNuxtApp();
-  const hasData = ref(false);
-  const isLoading = ref(true);
-  const labUsersDetailsData = ref(Array<LaboratoryUser>);
-  const page = ref(1);
-  const pageCount = ref(10);
   const $router = useRouter();
   const $route = useRoute();
   const labName = $route.query.labName;
+  const hasNoData = ref(false);
+  const isLoading = ref(true);
+  const labUsersDetailsData = ref<LaboratoryUser[]>([]);
+  const page = ref(1);
+  const pageCount = ref(10);
   const searchOutput = ref('');
+  const pageTotal = computed(() => labUsersDetailsData.value.length);
+  const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
+  const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
+  const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
 
   const columns = [
     {
@@ -41,12 +46,12 @@
     ],
   ];
 
-  onMounted(async () => {
+  onBeforeMount(async () => {
     try {
       labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
 
-      if (labUsersDetailsData.value.length) {
-        hasData.value = true;
+      if (!labUsersDetailsData.value.length) {
+        hasNoData.value = true;
       }
       isLoading.value = false;
     } catch (error) {
@@ -61,7 +66,7 @@
   }
 
   const filteredRows = computed(() => {
-    if (!searchOutput.value) {
+    if (!searchOutput.value && !hasNoData.value) {
       return labUsersDetailsData.value.map((person) => ({
         ...person,
         assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
@@ -144,7 +149,15 @@
     <template #item="{ item }">
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
-        <template v-if="!isLoading && hasData">
+        <EGEmptyDataCTA
+          v-if="hasNoData"
+          message="You don't have any users in this lab yet."
+          img-src="/images/empty-state-user.jpg"
+          :button-action="() => {}"
+          button-label="Invite new users"
+        />
+
+        <template v-else>
           <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
           <UCard
@@ -153,16 +166,7 @@
               body: 'p-0',
             }"
           >
-            <UTable
-              class="LabsUsersTable rounded-2xl"
-              :rows="filteredRows"
-              :columns="columns"
-              :ui="{
-                wrapper: 'relative overflow-x-auto',
-                base: 'min-w-full table-fixed',
-                divide: 'divide-y divide-gray-300',
-              }"
-            >
+            <UTable :loading="isLoading" class="LabsUsersTable rounded-2xl" :rows="filteredRows" :columns="columns">
               <template #UserDisplayName-data="{ row }">
                 <div class="flex items-center">
                   <EGUserAvatar
@@ -197,13 +201,6 @@
             </div>
           </div>
         </template>
-
-        <EGEmptyDataCTA
-          message="You don't have any users in this lab yet."
-          img-src="/images/empty-state-user.jpg"
-          :button-action="() => {}"
-          button-label="Invite new users"
-        />
       </div>
       <div v-else-if="item.key === 'workflow'" class="space-y-3">Workflow TBD</div>
     </template>
@@ -229,6 +226,7 @@
 
         th:first-child {
           padding-left: 40px;
+          width: 400px;
         }
       }
     }
@@ -240,7 +238,6 @@
     }
 
     tbody tr td:nth-child(2) {
-      min-width: 500px;
       font-size: 12px;
       color: #818181;
     }

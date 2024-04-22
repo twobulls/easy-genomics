@@ -26,7 +26,7 @@
     :placeholder="placeholder"
     icon="i-heroicons-magnifying-glass-20-solid"
     autocomplete="off"
-    trailing="true"
+    :trailing="true"
     :ui="{
       placeholder: 'placeholder-text-muted',
       focus: 'outline-none border-0',

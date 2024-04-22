@@ -25,14 +25,18 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "ES2019",
-    "verbatimModuleSyntax": false,
-    "rootDir": "."
+    "rootDir": ".",
+    "verbatimModuleSyntax": false
   },
   "include": [
     "src/**/*.ts",
     "test/**/*.ts",
-    "./.nuxt/nuxt.d.ts",
-    "./src/**/*"
+    ".nuxt/**/*.d.ts",
+    "auto-imports.d.ts",
+    "components.d.ts",
+    "**/*.ts",
+    "**/*d.ts",
+    "**/*.vue"
   ],
   "exclude": [
     "node_modules"

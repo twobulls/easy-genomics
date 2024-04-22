@@ -1,13 +1,13 @@
 <script setup lang="ts">
-  import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-  import { onBeforeMount } from '#imports';
+  import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
+
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
   const labName = $route.query.labName;
   const hasNoData = ref(false);
   const isLoading = ref(true);
-  const labUsersDetailsData = ref<LaboratoryUser[]>([]);
+  const labUsersDetailsData = ref<LaboratoryUserDetails[]>([]);
   const page = ref(1);
   const pageCount = ref(10);
   const searchOutput = ref('');
@@ -150,14 +150,14 @@
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGEmptyDataCTA
-          v-if="hasNoData"
+          v-if="!isLoading && hasNoData"
           message="You don't have any users in this lab yet."
           img-src="/images/empty-state-user.jpg"
           :button-action="() => {}"
           button-label="Invite new users"
         />
 
-        <template v-else>
+        <template v-else-if="!isLoading">
           <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
           <UCard
@@ -166,7 +166,13 @@
               body: 'p-0',
             }"
           >
-            <UTable :loading="isLoading" class="LabsUsersTable rounded-2xl" :rows="filteredRows" :columns="columns">
+            <UTable
+              :loading="isLoading"
+              class="LabsUsersTable rounded-2xl"
+              :loading-state="{ icon: '', label: '' }"
+              :rows="filteredRows"
+              :columns="columns"
+            >
               <template #UserDisplayName-data="{ row }">
                 <div class="flex items-center">
                   <EGUserAvatar
@@ -221,7 +227,6 @@
       }
 
       tr {
-        height: 50px;
         background-color: #efefef;
 
         th:first-child {

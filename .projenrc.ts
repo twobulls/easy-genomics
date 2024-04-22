@@ -229,10 +229,10 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     ...tsConfigOptions,
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
-      verbatimModuleSyntax: false,
       rootDir: '.',
+      verbatimModuleSyntax: false,
     },
-    include: ['./.nuxt/nuxt.d.ts', './src/**/*'],
+    'include': ['.nuxt/**/*.d.ts', 'auto-imports.d.ts', 'components.d.ts', '**/*.ts', '**/*d.ts', '**/*.vue'],
   },
   deps: [
     '@easy-genomics/shared-lib@workspace:*',

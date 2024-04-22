@@ -31,8 +31,12 @@
   },
   "include": [
     "src/**/*.ts",
-    "./.nuxt/nuxt.d.ts",
-    "./src/**/*"
+    ".nuxt/**/*.d.ts",
+    "auto-imports.d.ts",
+    "components.d.ts",
+    "**/*.ts",
+    "**/*d.ts",
+    "**/*.vue"
   ],
   "exclude": [
     "cdk.out"

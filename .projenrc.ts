@@ -226,14 +226,13 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
   tsconfig: {
+    ...tsConfigOptions,
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
-      module: 'esnext',
-      target: 'esnext',
       verbatimModuleSyntax: false,
-      rootDir: './src/app',
+      rootDir: '.',
     },
-    include: ['./nuxt.d.ts', '../**/*', '../src/app/**/*'],
+    include: ['./.nuxt/nuxt.d.ts', './src/**/*'],
   },
   deps: [
     '@easy-genomics/shared-lib@workspace:*',

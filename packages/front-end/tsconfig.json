@@ -2,7 +2,7 @@
 {
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src/app",
+    "rootDir": ".",
     "outDir": "lib",
     "alwaysStrict": true,
     "declaration": true,
@@ -13,7 +13,7 @@
     "lib": [
       "es2019"
     ],
-    "module": "esnext",
+    "module": "CommonJS",
     "noEmitOnError": false,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -26,14 +26,13 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "stripInternal": true,
-    "target": "esnext",
+    "target": "ES2019",
     "verbatimModuleSyntax": false
   },
   "include": [
     "src/**/*.ts",
-    "./nuxt.d.ts",
-    "../**/*",
-    "../src/app/**/*"
+    "./.nuxt/nuxt.d.ts",
+    "./src/**/*"
   ],
   "exclude": [
     "cdk.out"

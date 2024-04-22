@@ -8,7 +8,7 @@
 export default function useTable(pageFrom: Ref<number>, pageTo: Ref<number>, pageTotal: Ref<number>) {
   const showingResultsMsg = computed(() => {
     if (pageTotal.value === 1) {
-      return `Showing 1 result`;
+      return 'Showing 1 result';
     } else if (pageFrom.value === 1 && pageTo.value === pageTotal.value) {
       return `Showing ${pageTotal.value} results`;
     } else {

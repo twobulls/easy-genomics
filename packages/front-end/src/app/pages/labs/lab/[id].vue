@@ -15,7 +15,6 @@
     {
       key: 'UserDisplayName',
       label: 'Name',
-      sortable: true,
     },
     {
       key: 'assignedRole',
@@ -200,8 +199,8 @@
         </template>
 
         <EGEmptyDataCTA
-          v-else-if="!isLoading && !hasData"
           message="You don't have any users in this lab yet."
+          img-src="/images/empty-state-user.jpg"
           :button-action="() => {}"
           button-label="Invite new users"
         />

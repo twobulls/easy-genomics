@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   const { $api } = useNuxtApp();
+  const hasData = ref(false);
   const isLoading = ref(true);
   const labUsersDetailsData = ref(Array<LaboratoryUser>);
   const page = ref(1);
@@ -44,6 +45,10 @@
   onMounted(async () => {
     try {
       labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
+
+      if (labUsersDetailsData.value.length) {
+        hasData.value = true;
+      }
       isLoading.value = false;
     } catch (error) {
       isLoading.value = false;
@@ -84,15 +89,20 @@
       <i class="i-heroicons-arrow-left-solid"></i>
       <span>Back</span>
     </a>
-    <EGText tag="h1" class="mb-4">{{ labName }}</EGText>
-    <EGText tag="p" class="text-muted">Lab summary, statistics and its users</EGText>
+    <div class="flex items-start justify-between">
+      <div>
+        <EGText tag="h1" class="mb-4">{{ labName }}</EGText>
+        <EGText tag="p" class="text-muted">Lab summary, statistics and its users</EGText>
+      </div>
+      <EGButton label="Invite new user" class="self-start" />
+    </div>
   </div>
 
   <UTabs
     :ui="{
       base: 'focus:outline-none',
       list: {
-        base: 'border-b-2 rounded-none',
+        base: 'border-b-2 rounded-none  mb-4',
         padding: 'p-0',
         height: 'h-14',
         marker: {
@@ -101,8 +111,11 @@
           background: 'bg-primary',
           shadow: 'shadow-none',
         },
+        size: {
+          sm: 'text-lg',
+        },
         tab: {
-          base: 'w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out',
+          base: '!text-base w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out',
           active: 'text-primary h-14',
           inactive: 'text-heading',
           height: 'h-14',
@@ -132,7 +145,7 @@
     <template #item="{ item }">
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
-        <template v-if="!isLoading">
+        <template v-if="!isLoading && hasData">
           <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
           <UCard
@@ -185,6 +198,13 @@
             </div>
           </div>
         </template>
+
+        <EGEmptyDataCTA
+          v-else-if="!isLoading && !hasData"
+          message="You don't have any users in this lab yet."
+          :button-action="() => {}"
+          button-label="Invite new users"
+        />
       </div>
       <div v-else-if="item.key === 'workflow'" class="space-y-3">Workflow TBD</div>
     </template>

@@ -18,7 +18,7 @@
 <template>
   <!-- TODO: variant styles -->
   <UButton
-    class="EGButton btn text-body h-10 min-w-24 justify-center rounded-lg px-6 py-2 shadow-none"
+    class="EGButton btn text-body h-12 min-w-24 justify-center rounded-lg px-6 py-2 shadow-none"
     :class="{
       'bg-primary hover:bg-primary-dark text-white disabled:bg-gray-400 disabled:opacity-100': variant === 'primary',
       '': variant === 'secondary',

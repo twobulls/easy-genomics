@@ -12,7 +12,7 @@
         <ULink
           to="/runs"
           disabled
-          inactive-class="text-muted"
+          inactive-class="text-body"
           active-class="text-primary bg-primary-muted"
           class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
@@ -21,7 +21,7 @@
         <ULink
           to="/workflows"
           disabled
-          inactive-class="text-muted"
+          inactive-class="text-body"
           active-class="text-primary bg-primary-muted"
           class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
@@ -29,15 +29,15 @@
         </ULink>
         <ULink
           to="/labs"
-          inactive-class="text-muted"
+          inactive-class="text-body"
           active-class="text-violet-700 bg-violet-100"
-          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
+          class="ULink text-body font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
           Labs
         </ULink>
         <ULink
           to="/organizations"
-          inactive-class="text-muted"
+          inactive-class="text-body"
           active-class="text-violet-700 bg-violet-100"
           class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm leading-5 tracking-normal"
         >

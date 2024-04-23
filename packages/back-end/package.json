@@ -27,6 +27,7 @@
     "organization": true
   },
   "devDependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.556.0",
     "@aws-sdk/types": "^3.502.0",
     "@aws-sdk/util-dynamodb": "^3.506.0",
     "@types/aws-lambda": "^8.10.133",

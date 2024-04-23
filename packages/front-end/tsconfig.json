@@ -2,7 +2,7 @@
 {
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src/app",
+    "rootDir": ".",
     "outDir": "lib",
     "alwaysStrict": true,
     "declaration": true,
@@ -31,9 +31,12 @@
   },
   "include": [
     "src/**/*.ts",
-    "packages/back-end/src/**/*.ts",
-    "packages/front-end/src/**/*.ts",
-    "packages/shared-lib/src/**/*.ts"
+    ".nuxt/**/*.d.ts",
+    "auto-imports.d.ts",
+    "components.d.ts",
+    "**/*.ts",
+    "**/*d.ts",
+    "**/*.vue"
   ],
   "exclude": [
     "cdk.out"

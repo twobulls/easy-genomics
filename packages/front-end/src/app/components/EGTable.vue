@@ -20,6 +20,7 @@
   const localProps = reactive({
     tableData: props.tableData,
   });
+
   const isSortAsc = ref(true);
   const page = ref(1);
   const pageCount = ref(10);
@@ -27,6 +28,7 @@
   const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
   const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
   const sortModel = ref({ column: 'Name', direction: 'asc' });
+  const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
 
   const rows = computed(() => {
     return localProps.tableData.slice((page.value - 1) * pageCount.value, page.value * pageCount.value);
@@ -68,6 +70,7 @@
       v-model:sort="sortModel"
       sort-mode="manual"
     >
+      <slot />
       <template #actions-data="{ row }">
         <EGActionButton :items="actionItems(row)" />
       </template>
@@ -76,7 +79,7 @@
   </UCard>
 
   <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="showPagination">
-    <div class="text-xs leading-5">Showing {{ pageFrom }} to {{ pageTo }} results</div>
+    <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
     <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
       <UPagination v-model="page" :page-count="10" :total="localProps.tableData.length" />
     </div>

@@ -42,9 +42,10 @@
     ],
   ];
 
-  onMounted(async () => {
+  onBeforeMount(async () => {
     try {
       orgData.value = await $api.orgs.list(MOCK_ORG_ID);
+
       if (!orgData.value.length) {
         hasNoData.value = true;
       }
@@ -58,7 +59,7 @@
 </script>
 
 <template>
-  <div class="center mb-11 flex justify-between">
+  <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1">Organizations</EGText>
     <EGButton label="Create a new Organization" class="self-end" />
   </div>

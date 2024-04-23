@@ -61,7 +61,7 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1">Organizations</EGText>
-    <EGButton label="Create a new Organization" class="self-end" />
+    <EGButton label="Create a new Organization" class="self-end" to="organizations/create" />
   </div>
 
   <EGEmptyDataCTA

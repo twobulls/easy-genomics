@@ -93,8 +93,6 @@
     table-layout: auto;
 
     thead {
-      border-bottom: 1px solid #e5e5e5;
-
       button {
         color: black;
       }

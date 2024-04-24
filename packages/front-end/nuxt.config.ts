@@ -4,7 +4,12 @@ import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 
 export default defineNuxtConfig({
+  colorMode: {
+    preference: 'light',
+  },
+
   devtools: { enabled: true },
+
   modules: ['@nuxt/ui'],
 
   srcDir: 'src/app/',

@@ -1,8 +1,11 @@
 <script setup lang="ts">
+  import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+  import { ref } from 'vue';
+
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
   const isLoading = ref(true);
-  const labData = ref([]);
+  const labData = ref([] as Laboratory[]);
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
   const $router = useRouter();
 
@@ -22,7 +25,7 @@
     },
   ];
 
-  const actionItems = (row: Array<{}>) => [
+  const actionItems = (row: Laboratory) => [
     [
       {
         label: 'Summary',

@@ -1,6 +1,5 @@
 <script setup lang="ts">
   const { $api } = useNuxtApp();
-  const $router = useRouter();
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgData = ref([]);
@@ -32,7 +31,7 @@
     [
       {
         label: 'View / Edit',
-        click: () => $router.push({ path: `/orgs/org-settings/${row.OrganizationId}` }),
+        click: () => {},
       },
     ],
     [

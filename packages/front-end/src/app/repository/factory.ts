@@ -1,12 +1,6 @@
 import { Auth } from 'aws-amplify';
 
 class HttpFactory {
-  private $fetch: $Fetch;
-
-  constructor(fetcher: $Fetch) {
-    this.$fetch = fetcher;
-  }
-
   /**
    * @param method
    * @param url
@@ -18,7 +12,8 @@ class HttpFactory {
       const token = await this.getToken();
       const headers = {
         headers: {
-          Authorization: token,
+          'Authorization': token,
+          'Content-Type': 'application/json',
         },
       };
       const settings = {
@@ -26,8 +21,12 @@ class HttpFactory {
         ...headers,
         body: JSON.stringify(data),
       };
-      const $res: T = await this.$fetch(url, settings);
-      return $res;
+
+      const response = await fetch(url, settings);
+
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      return await (response.json() as Promise<T>);
     } catch (error) {
       console.error('An error occurred:', error);
       return undefined;

@@ -1,4 +1,4 @@
-import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
+import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { AwsHealthOmicsNestedStack } from './aws-healthomics-nested-stack';
@@ -22,12 +22,12 @@ import {
  * It then will provision the specific Easy Genomics, AWS HealthOmics, and NextFlow Tower Nested Stacks.
  */
 export class BackEndStack extends Stack {
-  readonly props: MainStackProps;
+  readonly props: BackEndStackProps;
   protected apiGateway!: ApiGatewayConstruct;
   protected cognitoIdp!: CognitoIdpConstruct;
   protected iam!: IamConstruct;
 
-  constructor(scope: Construct, id: string, props: MainStackProps) {
+  constructor(scope: Construct, id: string, props: BackEndStackProps) {
     super(scope, id, props);
     this.props = props;
 

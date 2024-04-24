@@ -1,11 +1,11 @@
 import { NestedStackProps } from "aws-cdk-lib";
-import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
+import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 
 // Defines the Easy Genomics specific props
-export interface EasyGenomicsNestedStackProps extends MainStackProps, NestedStackProps {
+export interface EasyGenomicsNestedStackProps extends BackEndStackProps, NestedStackProps {
     restApi: RestApi,
     userPool: UserPool,
     iamPolicyStatements: Map<string, PolicyStatement[]>,

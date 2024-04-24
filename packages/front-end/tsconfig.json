@@ -36,8 +36,7 @@
     "components.d.ts",
     "**/*.ts",
     "**/*d.ts",
-    "**/*.vue",
-    "./shared-lib/src/app/types/easy-genomics/**/*d.ts"
+    "**/*.vue"
   ],
   "exclude": [
     "cdk.out"

@@ -256,6 +256,9 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'zod',
     'unplugin-icons',
     'unplugin-vue-components',
+    '@vee-validate/zod',
+    'vee-validate',
+    'zod-validation-error',
   ],
   devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port', '@nuxt/types'],
 });

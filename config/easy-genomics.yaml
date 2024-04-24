@@ -1,0 +1,16 @@
+easy-genomics:
+  configurations:
+    - dev:
+        aws-account-id:
+        aws-region:
+        aws-cognito-user-pool-id:
+        aws-cognito-client-id:
+        aws-hosted-zone-id:
+        aws-hosted-zone-name:
+        aws-certificate-arn:
+        env-type:
+        sub-domain:
+        domain-name:
+        base-api-url:
+        system-admin-email:
+        mock-org-id:

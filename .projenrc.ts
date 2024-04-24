@@ -197,7 +197,14 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     'dotenv',
     'uuid',
   ],
-  devDeps: ['@aws-sdk/util-dynamodb', '@aws-sdk/types', '@types/aws-lambda', '@types/uuid', 'aws-sdk-client-mock'],
+  devDeps: [
+    '@aws-sdk/client-cognito-identity-provider',
+    '@aws-sdk/util-dynamodb',
+    '@aws-sdk/types',
+    '@types/aws-lambda',
+    '@types/uuid',
+    'aws-sdk-client-mock',
+  ],
 });
 backEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',

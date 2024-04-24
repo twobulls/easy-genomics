@@ -1,6 +1,5 @@
 <script setup lang="ts">
   const { $api } = useNuxtApp();
-  const $router = useRouter();
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgData = ref([]);
@@ -32,7 +31,7 @@
     [
       {
         label: 'View / Edit',
-        click: () => $router.push({ path: `/orgs/org-settings/${row.OrganizationId}` }),
+        click: () => {},
       },
     ],
     [
@@ -62,7 +61,7 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1">Organizations</EGText>
-    <EGButton label="Create a new Organization" class="self-end" to="organizations/create" />
+    <EGButton label="Create a new Organization" class="self-end" />
   </div>
 
   <EGEmptyDataCTA

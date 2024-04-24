@@ -125,10 +125,6 @@ const root = new typescript.TypeScriptProject({
 root.removeScript('build');
 root.removeScript('deploy');
 root.addScripts({
-  ['bootstrap-all']: 'pnpm nx run-many --targets=bootstrap --all',
-  ['build-all']: 'pnpm nx run-many --targets=eslint,test,build,nuxt-generate --all',
-  ['test-all']: 'pnpm nx run-many --targets=eslint,compile,test --all',
-  ['deploy-all']: 'pnpm nx run-many --targets=test,build,nuxt-generate,deploy --all',
   ['bootstrap-back-end']: 'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/back-end',
   ['bootstrap-front-end']: 'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/front-end',
   ['build-back-end']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/back-end',
@@ -160,8 +156,8 @@ new typescript.TypeScriptProject({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
-  deps: ['aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'uuid', 'zod'],
-  devDeps: ['@types/aws-lambda', '@types/uuid', 'aws-cdk-lib'],
+  deps: ['@nestjs/config', 'aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'js-yaml', 'uuid', 'zod'],
+  devDeps: ['@types/aws-lambda', '@types/js-yaml', '@types/uuid', 'aws-cdk-lib'],
 });
 
 // Defines the Easy Genomics 'back-end' subproject
@@ -187,6 +183,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
   deps: [
+    '@aws-sdk/client-cognito-identity-provider',
     '@aws-sdk/client-dynamodb',
     '@aws-sdk/lib-dynamodb',
     '@aws-sdk/types',
@@ -202,6 +199,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/util-dynamodb',
     '@aws-sdk/types',
     '@types/aws-lambda',
+    '@types/node',
     '@types/uuid',
     'aws-sdk-client-mock',
   ],
@@ -242,22 +240,22 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'include': ['.nuxt/**/*.d.ts', 'auto-imports.d.ts', 'components.d.ts', '**/*.ts', '**/*d.ts', '**/*.vue'],
   },
   deps: [
+    '@aws-amplify/ui-vue@3.1.30',
     '@easy-genomics/shared-lib@workspace:*',
+    '@nuxt/ui',
+    'aws-amplify@5.3.18',
     'aws-sdk',
     'dotenv',
     'nuxt',
-    '@nuxt/ui',
-    'uuid',
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
-    'aws-amplify@5.3.18',
-    '@aws-amplify/ui-vue@3.1.30',
-    'zod',
     'unplugin-icons',
     'unplugin-vue-components',
+    'uuid',
+    'zod',
   ],
-  devDeps: ['@aws-sdk/types', '@types/uuid', 'kill-port', '@nuxt/types'],
+  devDeps: ['@aws-sdk/types', '@types/node', '@types/uuid', 'kill-port', '@nuxt/types'],
 });
 
 // Add additional Nuxt Scripts to front-end/package.json

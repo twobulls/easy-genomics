@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import path from 'path';
 import { S3Construct } from '@easy-genomics/shared-lib/src/infra/constructs/s3-construct';
-import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
+import { FrontEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import {
@@ -59,7 +59,7 @@ export const DefaultSecurityHeaders: SecurityHeaders = {
   },
 };
 
-export interface WwwHostingConstructProps extends MainStackProps {
+export interface WwwHostingConstructProps extends FrontEndStackProps {
   description: string;
   indexCacheDuration?: Duration;
   securityHeaders?: SecurityHeaders;
@@ -92,12 +92,12 @@ export class WwwHostingConstruct extends Construct {
 
   // WWW S3 Bucket for static web pages
   private setupS3Buckets = () => {
-    const applicationUri: string = this.props.siteDistribution.applicationUri;
+    const applicationUrl: string = this.props.applicationUrl;
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3`, {});
 
     // Using the configured domainName for the WWW S3 Bucket
-    const wwwBucketName: string = applicationUri; // Must be globally unique
-    new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${applicationUri}` });
+    const wwwBucketName: string = applicationUrl; // Must be globally unique
+    new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${applicationUrl}` });
 
     // Create S3 Bucket for static website hosting through CloudFront distribution
     const wwwBucket: Bucket = s3.createBucket(
@@ -113,7 +113,7 @@ export class WwwHostingConstruct extends Construct {
 
   // CloudFront Distribution - requires the HostedZone and Certificate are already configured in AWS
   private setupCloudFrontDistribution = () => {
-    const applicationUri: string = this.props.siteDistribution.applicationUri;
+    const applicationUri: string = this.props.applicationUrl;
 
     const wwwBucket: Bucket | undefined = this.s3Buckets.get(applicationUri);
     if (!wwwBucket) {
@@ -151,8 +151,8 @@ export class WwwHostingConstruct extends Construct {
 
     // Retrieve Hosted Zone
     const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: this.props.siteDistribution.hostedZoneId,
-      zoneName: this.props.siteDistribution.hostedZoneName,
+      hostedZoneId: this.props.hostedZoneId,
+      zoneName: this.props.hostedZoneName,
     });
     new CfnOutput(this, 'HostedZoneId', { key: 'HostedZoneId', value: hostedZone.hostedZoneId });
     new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
@@ -161,7 +161,7 @@ export class WwwHostingConstruct extends Construct {
     const certificate: ICertificate = Certificate.fromCertificateArn(
       this,
       'SiteCertificate',
-      this.props.siteDistribution.certificateArn,
+      this.props.certificateArn,
     );
     new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
 

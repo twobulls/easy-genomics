@@ -262,7 +262,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
   ['nuxt-build']: 'nuxt build',
-  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev --dotenv .env.local',
+  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
   ['nuxt-generate']: 'nuxt generate',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',

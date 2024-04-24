@@ -36,7 +36,7 @@
           Labs
         </ULink>
         <ULink
-          to="/organizations"
+          to="/orgs"
           inactive-class="text-body"
           active-class="text-violet-700 bg-violet-100"
           class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm leading-5 tracking-normal"

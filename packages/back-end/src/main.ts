@@ -18,14 +18,15 @@ if (configurations.length === 0) {
     if (envName && configSettings) {
       const awsAccountId: string = configSettings['aws-account-id'].toString();
       const awsRegion: string = configSettings['aws-region'];
-      const constructNamespace: string = `${envName}-easy-genomics`;
       const envType: string = configSettings['env-type']; // dev | pre-prod | prod
-      const subDomain: string | undefined = configSettings['sub-domain'];
-      const systemAdminEmail: string | undefined = configSettings['system-admin-email'];
+      const applicationUrl: string = configSettings['application-url'];
+
+      const systemAdminEmail: string = configSettings['back-end']['system-admin-email'];
 
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
-      const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${subDomain}`;
+      const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
+      const constructNamespace: string = `${envName}-easy-genomics`;
 
       // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
       new BackEndStack(app, `${envName}-main-back-end-stack`, {
@@ -37,7 +38,7 @@ if (configurations.length === 0) {
         devEnv: devEnv,
         envName: envName,
         envType: envType,
-        lambdaTimeoutInSeconds: 30,
+        applicationUrl: applicationUrl,
         namePrefix: namePrefix,
         systemAdminEmail: systemAdminEmail,
       });

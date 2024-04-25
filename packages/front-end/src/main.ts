@@ -17,22 +17,16 @@ if (configurations.length === 0) {
     if (envName && configSettings) {
       const awsAccountId: string = configSettings['aws-account-id'].toString();
       const awsRegion: string = configSettings['aws-region'];
-      const awsCertificateArn: string = configSettings['aws-certificate-arn'];
-      const awsCognitoClientId: string = configSettings['aws-cognito-client-id'];
-      const awsCognitoUserPoolId: string = configSettings['aws-cognito-user-pool-id'];
-      const awsHostedZoneId: string = configSettings['aws-hosted-zone-id'];
-      const awsHostedZoneName: string = configSettings['aws-hosted-zone-name'];
-      const constructNamespace: string = `${envName}-easy-genomics`;
       const envType: string = configSettings['env-type']; // dev | pre-prod | prod
-      const subDomain: string | undefined = configSettings['sub-domain'];
-      const domainName: string = configSettings['domain-name'];
-      const applicationUrl: string = envType === 'prod'
-        ? (subDomain ? `${subDomain}.${domainName}` : `${domainName}`)
-        : `${subDomain}.${envType}.${domainName}`;
-      const baseApiUrl: string = configSettings['base-api-url'];
+      const applicationUrl: string = configSettings['application-url'];
+
+      const awsHostedZoneId: string = configSettings['front-end']['aws-hosted-zone-id'];
+      const awsHostedZoneName: string = configSettings['front-end']['aws-hosted-zone-name'];
+      const awsCertificateArn: string = configSettings['front-end']['aws-certificate-arn'];
 
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
+      const constructNamespace: string = `${envName}-easy-genomics`;
 
       // Setups Front-End Stack to support static web hosting for the UI
       new FrontEndStack(app, `${envName}-main-front-end-stack`, {
@@ -45,10 +39,7 @@ if (configurations.length === 0) {
         envName: envName,
         envType: envType,
         applicationUrl: applicationUrl,
-        baseApiUrl: baseApiUrl,
         certificateArn: awsCertificateArn,
-        cognitoClientId: awsCognitoClientId,
-        cognitoUserPoolId: awsCognitoUserPoolId,
         hostedZoneId: awsHostedZoneId,
         hostedZoneName: awsHostedZoneName,
       });

@@ -113,16 +113,16 @@ export class WwwHostingConstruct extends Construct {
 
   // CloudFront Distribution - requires the HostedZone and Certificate are already configured in AWS
   private setupCloudFrontDistribution = () => {
-    const applicationUri: string = this.props.applicationUrl;
+    const applicationUrl: string = this.props.applicationUrl;
 
-    const wwwBucket: Bucket | undefined = this.s3Buckets.get(applicationUri);
+    const wwwBucket: Bucket | undefined = this.s3Buckets.get(applicationUrl);
     if (!wwwBucket) {
-      throw new Error(`S3 Bucket not found: ${applicationUri}`);
+      throw new Error(`S3 Bucket not found: ${applicationUrl}`);
     }
 
     // Grant CloudFront access to WWW S3 Bucket
     const originAccessIdentity: OriginAccessIdentity = new OriginAccessIdentity(this, 'cloudfront-OAI', {
-      comment: `OAI for ${applicationUri}`,
+      comment: `OAI for ${applicationUrl}`,
     });
 
     wwwBucket.grantRead(originAccessIdentity);
@@ -144,7 +144,7 @@ export class WwwHostingConstruct extends Construct {
       maxTtl: this.props.indexCacheDuration,
       minTtl: this.props.indexCacheDuration,
       defaultTtl: this.props.indexCacheDuration,
-      comment: `Caching policy for ${applicationUri}`,
+      comment: `Caching policy for ${applicationUrl}`,
       enableAcceptEncodingGzip: true,
       enableAcceptEncodingBrotli: true,
     });
@@ -172,7 +172,7 @@ export class WwwHostingConstruct extends Construct {
     const distribution: Distribution = new Distribution(this, 'SiteDistribution', {
       certificate: certificate,
       defaultRootObject: this.props.webSiteIndexDocument,
-      domainNames: [applicationUri],
+      domainNames: [applicationUrl],
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
       webAclId: this.props.webAclId, // Optional AWS WAF web ACL
       defaultBehavior: {

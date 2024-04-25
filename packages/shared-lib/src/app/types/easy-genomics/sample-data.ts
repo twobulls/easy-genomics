@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { Laboratory } from './laboratory';
 import { LaboratoryUser } from './laboratory-user';
 import { Organization } from './organization';
@@ -6,9 +5,9 @@ import { OrganizationUser } from './organization-user';
 import { UniqueReference } from './unique-reference';
 import { User } from './user';
 
-const organizationId = uuidv4();
-const laboratoryId = uuidv4();
-const userId = uuidv4();
+const organizationId = '61c86013-74f2-4d30-916a-70b03a97ba14';
+const laboratoryId = 'bbac4190-0446-4db4-a084-cfdbc8102297';
+const userId = 'c6705721-90ba-4d4a-9460-af2828bb4181';
 
 export const organization: Organization = {
   OrganizationId: organizationId,
@@ -31,7 +30,7 @@ export const laboratory: Laboratory = {
 
 export const user: User = {
   UserId: userId,
-  Email: 'admin.easy-genomics@twobulls.dev',
+  Email: 'test.user@easygenomics.org',
   Title: 'Dr',
   FirstName: 'Rick',
   LastName: 'Sanchez',

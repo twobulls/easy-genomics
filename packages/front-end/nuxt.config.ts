@@ -57,10 +57,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       AWS_REGION: configSettings['aws-region'],
-      AWS_USER_POOL_ID: configSettings['aws-cognito-user-pool-id'],
-      AWS_CLIENT_ID: configSettings['aws-cognito-client-id'],
-      BASE_API_URL: configSettings['base-api-url'],
-      MOCK_ORG_ID: configSettings['mock-org-id'],
+      AWS_USER_POOL_ID: configSettings['front-end']['aws-cognito-user-pool-id'],
+      AWS_CLIENT_ID: configSettings['front-end']['aws-cognito-client-id'],
+      BASE_API_URL: configSettings['front-end']['base-api-url'],
+      MOCK_ORG_ID: configSettings['front-end']['mock-org-id'],
     },
   },
 

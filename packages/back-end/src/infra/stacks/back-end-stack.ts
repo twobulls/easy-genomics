@@ -1,7 +1,8 @@
-import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
+import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { AwsHealthOmicsNestedStack } from './aws-healthomics-nested-stack';
+import { DataSeedingNestedStack } from './data-seeding-nested-stack';
 import { EasyGenomicsNestedStack } from './easy-genomics-nested-stack';
 import { NFTowerNestedStack } from './nf-tower-nested-stack';
 import { ApiGatewayConstruct } from '../constructs/api-gateway-construct';
@@ -10,7 +11,7 @@ import { IamConstruct } from '../constructs/iam-construct';
 import {
   AwsHealthOmicsNestedStackProps,
   EasyGenomicsNestedStackProps,
-  NFTowerNestedStackProps,
+  NFTowerNestedStackProps, DataSeedingNestedStackProps,
 } from '../types/back-end-stack';
 
 /**
@@ -22,12 +23,12 @@ import {
  * It then will provision the specific Easy Genomics, AWS HealthOmics, and NextFlow Tower Nested Stacks.
  */
 export class BackEndStack extends Stack {
-  readonly props: MainStackProps;
+  readonly props: BackEndStackProps;
   protected apiGateway!: ApiGatewayConstruct;
   protected cognitoIdp!: CognitoIdpConstruct;
   protected iam!: IamConstruct;
 
-  constructor(scope: Construct, id: string, props: MainStackProps) {
+  constructor(scope: Construct, id: string, props: BackEndStackProps) {
     super(scope, id, props);
     this.props = props;
 
@@ -66,20 +67,20 @@ export class BackEndStack extends Stack {
   };
 
   private initiateNestedStacks = () => {
-    // EasyGenomicsNestedStackProps extends the MainStackProps
+    // EasyGenomicsNestedStackProps extends the BackEndStackProps
     const easyGenomicsNestedStackProps: EasyGenomicsNestedStackProps = {
       ...this.props,
-      constructNamespace: 'easy-genomics', // Overriding value
+      constructNamespace: `${this.props.namePrefix}-easy-genomics`, // Overriding value
       restApi: this.apiGateway.restApi, // Use the same REST API provided from this stack.
       userPool: this.cognitoIdp.userPool,
       iamPolicyStatements: this.iam.policyStatements,
     };
-    new EasyGenomicsNestedStack(this, 'easy-genomics-nested-stack', easyGenomicsNestedStackProps);
+    const easyGenomicsNestedStack = new EasyGenomicsNestedStack(this, 'easy-genomics-nested-stack', easyGenomicsNestedStackProps);
 
     // AwsHealthOmicsNestedStackProps extends the EasyGenomicsNestedStackProps
     const awsHealthOmicsNestedStackProps: AwsHealthOmicsNestedStackProps = {
       ...easyGenomicsNestedStackProps,
-      constructNamespace: 'aws-healthomics', // Overriding value
+      constructNamespace: `${this.props.namePrefix}-aws-healthomics`, // Overriding value
       // Use the same REST API provided from this stack - but this can be replaced later with a separate REST API specific for AWS HealthOmics.
       restApi: this.apiGateway.restApi,
     };
@@ -90,10 +91,18 @@ export class BackEndStack extends Stack {
     // NFTowerNestedStackProps extends the EasyGenomicsNestedStackProps
     const nfTowerNestedStackProps: NFTowerNestedStackProps = {
       ...easyGenomicsNestedStackProps,
-      constructNamespace: 'nf-tower', // Overriding value
+      constructNamespace: `${this.props.namePrefix}-nf-tower`, // Overriding value
       // Use the same REST API provided from this stack - but this can be replaced later with a separate REST API specific for NF Tower.
       restApi: this.apiGateway.restApi,
     };
     new NFTowerNestedStack(this, 'nf-tower-nested-stack', nfTowerNestedStackProps);
+
+    // DataSeedingNestedStackProps extends the BackEndStackProps
+    const dataSeedingNestedStackProps: DataSeedingNestedStackProps = {
+      ...this.props,
+      userPool: this.cognitoIdp.userPool,
+      dynamoDBTables: easyGenomicsNestedStack.dynamoDBTables,
+    };
+    new DataSeedingNestedStack(this, 'data-seeding-nested-stack', dataSeedingNestedStackProps);
   };
 }

@@ -1,8 +1,8 @@
-import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
+import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { Effect, Policy, PolicyDocument, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
-export interface IamConstructProps extends MainStackProps {
+export interface IamConstructProps extends BackEndStackProps {
   awsCognitoUserPoolArn: string;
 }
 

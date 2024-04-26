@@ -23,7 +23,6 @@ export interface LambdaConstructProps extends EasyGenomicsNestedStackProps {
   lambdaFunctionsResources: {
     [key: string]: LambdaFunctionsResources;
   };
-  lambdaTimeoutInSeconds: number;
   environment?: {
     // Common process.env settings
     [key: string]: string;
@@ -110,7 +109,7 @@ export class LambdaConstruct extends Construct {
 
     const lambdaHandler: IFunction = new aws_lambda_nodejs.NodejsFunction(this, `${lambdaId}`, {
       runtime: Runtime.NODEJS_18_X,
-      timeout: Duration.seconds(this.props.lambdaTimeoutInSeconds),
+      timeout: Duration.seconds(30),
       functionName: `${this.props.lambdaFunctionsNamespace}-${lambdaName}`.slice(0, 64),
       entry: `${lambdaFunction.path}`,
       handler: 'handler',

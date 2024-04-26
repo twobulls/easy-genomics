@@ -1,11 +1,12 @@
 import { NestedStackProps } from "aws-cdk-lib";
-import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
+import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Table } from "aws-cdk-lib/aws-dynamodb";
 
 // Defines the Easy Genomics specific props
-export interface EasyGenomicsNestedStackProps extends MainStackProps, NestedStackProps {
+export interface EasyGenomicsNestedStackProps extends BackEndStackProps, NestedStackProps {
     restApi: RestApi,
     userPool: UserPool,
     iamPolicyStatements: Map<string, PolicyStatement[]>,
@@ -17,4 +18,10 @@ export interface AwsHealthOmicsNestedStackProps extends EasyGenomicsNestedStackP
 
 // Defines the NextFlow Tower specific props
 export interface NFTowerNestedStackProps extends EasyGenomicsNestedStackProps {
+}
+
+// Defines the Data Seeding specific props
+export interface DataSeedingNestedStackProps extends BackEndStackProps, NestedStackProps {
+    userPool: UserPool,
+    dynamoDBTables: Map<string, Table>
 }

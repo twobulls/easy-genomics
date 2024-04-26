@@ -1,6 +1,5 @@
-import { custom_resources, RemovalPolicy } from 'aws-cdk-lib';
+import { RemovalPolicy } from 'aws-cdk-lib';
 import { Attribute, AttributeType, BillingMode, SchemaOptions, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { DynamoDB } from 'aws-sdk';
 import { Construct } from 'constructs';
 
 export const baseLSIAttributes: Attribute[] = [
@@ -41,7 +40,7 @@ export class DynamoConstruct extends Construct {
     this.props = props;
   }
 
-  public createTable = <T>(envTableName: string, settings: DynamoDBTableDetails, devEnv?: boolean, seedData?: T) => {
+  public createTable = (envTableName: string, settings: DynamoDBTableDetails, devEnv?: boolean) => {
     const partitionKey = { name: settings.partitionKey.name, type: settings.partitionKey.type };
     const sortKey = settings.sortKey ? { name: settings.sortKey.name, type: settings.sortKey.type } : undefined;
     const removalPolicy = devEnv ? RemovalPolicy.DESTROY : undefined; // Only for Local, Sandbox, Dev
@@ -75,27 +74,6 @@ export class DynamoConstruct extends Construct {
           indexName: `${value.name}_Index`,
           sortKey: value,
         });
-      });
-    }
-
-    // Only seed table data for Local, Sandbox, Dev
-    if (devEnv && seedData) {
-      new custom_resources.AwsCustomResource(this, `${envTableName}_InitData`, {
-        onCreate: {
-          service: 'DynamoDB',
-          action: 'putItem',
-          parameters: {
-            TableName: envTableName,
-            Item: DynamoDB.Converter.input(seedData).M,
-          },
-          physicalResourceId: {
-            id: `${envTableName}_InitData`,
-          },
-        },
-        installLatestAwsSdk: false,
-        policy: custom_resources.AwsCustomResourcePolicy.fromSdkCalls({
-          resources: [table.tableArn],
-        }),
       });
     }
 

@@ -5,6 +5,8 @@
   import EGCharacterCounter from '~/components/EGCharacterCounter.vue';
   import EGButton from '~/components/EGButton.vue';
 
+  const { $api } = useNuxtApp();
+
   /*
     Organization Name
     - Minimum of 1 character
@@ -21,6 +23,7 @@
   */
   const NAME_MIN_LENGTH = 1;
   const NAME_MAX_LENGTH = 50;
+
   const nameSchema = z
     .string()
     .min(NAME_MIN_LENGTH, { message: `Name must be at least ${NAME_MIN_LENGTH} ${getCharacterText(NAME_MIN_LENGTH)}` })
@@ -40,6 +43,7 @@
     - If a user attempts to paste invalid special characters, these characters will be filtered out and only the valid characters will be pasted
   */
   const DESCRIPTION_MAX_LENGTH = 500;
+
   const descriptionSchema = z
     .string()
     .min(0)
@@ -58,6 +62,7 @@
     Name: '',
     Description: '',
     isFormValid: false,
+    isFormDisabled: true,
   });
 
   const nameCharCount = computed(() => state.Name.length);
@@ -75,6 +80,7 @@
       state.Name = cleanedName;
       target.value = cleanedName;
     }
+    validateForm({ name: cleanedName });
   }
 
   function handleDescriptionInput(event: InputEvent) {
@@ -85,18 +91,38 @@
       state.Description = cleanedDescription;
       target.value = cleanedDescription;
     }
+    validateForm({ description: cleanedDescription });
   }
 
-  function validateNameInput() {
-    state.isFormValid = formSchema.safeParse(state).success;
+  function validateForm({
+    name = state.Name,
+    description = state.Description,
+  }: {
+    name: string | undefined;
+    description: string | undefined;
+  }) {
+    const isNameValid = nameSchema.safeParse(name).success;
+    const isDescriptionValid = descriptionSchema.safeParse(description).success;
+    const isFormValid = isNameValid && isDescriptionValid;
+    state.isFormValid = isFormValid;
+    state.isFormDisabled = !isFormValid;
   }
-
-  // const { $api } = useNuxtApp();
-  // const $route = useRoute();
 
   async function onSubmit(event: FormSubmitEvent<FormSchema>) {
-    // Do something with data
-    console.log(event.data);
+    try {
+      state.isFormDisabled = true;
+      const { Name, Description } = event.data;
+      const result = await $api.orgs.create({ Name, Description });
+      if (result) {
+        // TODO: Display success toast message
+        await navigateTo('/orgs');
+      }
+    } catch (error) {
+      // TODO: Display error toast message
+      console.error('error:', error);
+    } finally {
+      state.isFormDisabled = false;
+    }
   }
 </script>
 
@@ -121,7 +147,7 @@
               <EGFormGroup label="Name" name="Name">
                 <EGInput
                   v-model.trim="state.Name"
-                  @blur="validateNameInput"
+                  @blur="validateForm"
                   @input.prevent="handleNameInput"
                   required
                   autofocus
@@ -129,12 +155,16 @@
                 <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
               </EGFormGroup>
               <EGFormGroup label="Description" name="Description">
-                <EGTextArea v-model.trim="state.Description" @blur="" @input.prevent="handleDescriptionInput" />
+                <EGTextArea
+                  v-model.trim="state.Description"
+                  @blur="validateForm"
+                  @input.prevent="handleDescriptionInput"
+                />
                 <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />
               </EGFormGroup>
             </div>
           </section>
-          <EGButton :disabled="!state.isFormValid" type="submit" variant="primary" label="Create" class="mt-6" />
+          <EGButton :disabled="state.isFormDisabled" type="submit" variant="primary" label="Create" class="mt-6" />
         </UForm>
       </div>
     </div>

@@ -255,7 +255,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'uuid',
     'zod',
   ],
-  devDeps: ['@aws-sdk/types', '@types/node', '@types/uuid', 'kill-port', '@nuxt/types'],
+  devDeps: ['@aws-sdk/types', '@nuxt/types', '@types/node', '@types/uuid', 'kill-port'],
 });
 
 // Add additional Nuxt Scripts to front-end/package.json

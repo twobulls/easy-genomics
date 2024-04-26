@@ -19,7 +19,6 @@ export class DataSeedingNestedStack extends NestedStack {
     super(scope, id, props);
     this.props = props;
 
-    // this.setupSystemAdmin();
     if (this.props.devEnv) {
       // Add test user to Cognito User Pool
       this.addCognitoTestUser(user);

@@ -97,10 +97,6 @@
       "type": "runtime"
     },
     {
-      "name": "@vee-validate/zod",
-      "type": "runtime"
-    },
-    {
       "name": "aws-amplify",
       "version": "5.3.18",
       "type": "runtime"
@@ -152,15 +148,7 @@
       "type": "runtime"
     },
     {
-      "name": "vee-validate",
-      "type": "runtime"
-    },
-    {
       "name": "zod",
-      "type": "runtime"
-    },
-    {
-      "name": "zod-validation-error",
       "type": "runtime"
     }
   ],

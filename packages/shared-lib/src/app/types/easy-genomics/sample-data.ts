@@ -11,17 +11,17 @@ const userId = 'c6705721-90ba-4d4a-9460-af2828bb4181';
 
 export const organization: Organization = {
   OrganizationId: organizationId,
-  Name: 'DEPT-Health',
-  Country: 'Australia',
-  AwsHealthOmicsEnabled: true,
-  NextFlowTowerEnabled: false,
+  Name: 'Default Organization',
+  Country: 'USA',
+  AwsHealthOmicsEnabled: false,
+  NextFlowTowerEnabled: true,
   CreatedAt: new Date().toISOString(),
 };
 
 export const laboratory: Laboratory = {
   OrganizationId: organizationId,
   LaboratoryId: laboratoryId,
-  Name: 'Microbial Genomics Laboratory',
+  Name: 'Test Laboratory',
   Status: 'Active',
   AwsHealthOmicsEnabled: organization.AwsHealthOmicsEnabled,
   NextFlowTowerEnabled: organization.NextFlowTowerEnabled,
@@ -55,7 +55,17 @@ export const laboratoryUser: LaboratoryUser = {
   CreatedAt: new Date().toISOString(),
 };
 
-export const uniqueReferences: UniqueReference = {
-  Value: 'DEPT-Health',
-  Type: 'organization-name',
-};
+export const uniqueReferences: UniqueReference[] = [
+  {
+    Value: organization.Name,
+    Type: 'organization-name',
+  },
+  {
+    Value: laboratory.Name,
+    Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
+  },
+  {
+    Value: user.Email,
+    Type: 'user-email',
+  },
+];

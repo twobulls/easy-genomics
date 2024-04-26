@@ -53,9 +53,11 @@
     Description: descriptionSchema,
   });
   type FormSchema = z.infer<typeof formSchema>;
+
   const state = reactive({
     Name: '',
     Description: '',
+    isFormValid: false,
   });
 
   const nameCharCount = computed(() => state.Name.length);
@@ -85,6 +87,10 @@
     }
   }
 
+  function validateNameInput() {
+    state.isFormValid = formSchema.safeParse(state).success;
+  }
+
   // const { $api } = useNuxtApp();
   // const $route = useRoute();
 
@@ -103,17 +109,23 @@
       <i class="i-heroicons-arrow-left-solid"></i>
       <span>Back</span>
     </a>
-    <div class="flex items-start justify-between">
+    <div class="flex items-start justify-between font-['Inter'] text-sm font-normal leading-tight text-zinc-900">
       <div class="w-full">
         <EGText tag="h1" class="mb-4">Create a new Organization</EGText>
         <EGText tag="h4" class="mb-[22px] mt-12">Organization details</EGText>
-        <UForm :schema="schema" :state="state" @submit="onSubmit">
+        <UForm :schema="formSchema" :state="state" @submit="onSubmit">
           <section
             class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 pb-12 text-sm leading-5 text-zinc-900 max-md:px-5"
           >
             <div class="space-y-8">
               <EGFormGroup label="Name" name="Name">
-                <EGInput v-model.trim="state.Name" @blur="" @input.prevent="handleNameInput" required autofocus />
+                <EGInput
+                  v-model.trim="state.Name"
+                  @blur="validateNameInput"
+                  @input.prevent="handleNameInput"
+                  required
+                  autofocus
+                />
                 <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
               </EGFormGroup>
               <EGFormGroup label="Description" name="Description">
@@ -122,7 +134,7 @@
               </EGFormGroup>
             </div>
           </section>
-          <EGButton type="submit" variant="primary" label="Create" class="mt-6" />
+          <EGButton :disabled="!state.isFormValid" type="submit" variant="primary" label="Create" class="mt-6" />
         </UForm>
       </div>
     </div>

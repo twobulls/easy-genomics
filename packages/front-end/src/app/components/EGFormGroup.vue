@@ -6,7 +6,11 @@
 </script>
 
 <template>
-  <UFormGroup :label="label" :name="name" class="[&_label]:font-normal">
+  <UFormGroup
+    :label="label"
+    :name="name"
+    class="[&_label]:text-sm [&_label]:font-normal [&_label]:leading-tight [&_label]:text-zinc-900 [&_p]:absolute [&_p]:mt-[2px]"
+  >
     <slot />
   </UFormGroup>
 </template>

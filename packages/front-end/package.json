@@ -21,6 +21,7 @@
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
     "bootstrap": "pnpm cdk bootstrap",
+    "build-cicd": "export CI_CD=true; pnpm dlx projen build; pnpm nuxt-generate",
     "nuxt-build": "nuxt build",
     "nuxt-dev": "pnpm kill-port 3000 && nuxt dev",
     "nuxt-generate": "nuxt generate",

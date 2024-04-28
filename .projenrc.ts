@@ -206,6 +206,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
 });
 backEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
+  ['build-cicd']: 'export CI_CD=true; pnpm dlx projen build',
 });
 
 // Defines the Easy Genomics 'front-end' subproject
@@ -261,6 +262,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 // Add additional Nuxt Scripts to front-end/package.json
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
+  ['build-cicd']: 'export CI_CD=true; pnpm dlx projen build; pnpm nuxt-generate',
   ['nuxt-build']: 'nuxt build',
   ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
   ['nuxt-generate']: 'nuxt generate',

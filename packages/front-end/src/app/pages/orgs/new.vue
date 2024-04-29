@@ -144,17 +144,18 @@
             class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 pb-12 text-sm leading-5 text-zinc-900 max-md:px-5"
           >
             <div class="space-y-8">
-              <EGFormGroup label="Name" name="Name">
+              <EGFormGroup label="Organization name" name="Name">
                 <EGInput
                   v-model.trim="state.Name"
                   @blur="validateForm"
                   @input.prevent="handleNameInput"
+                  placeholder="Enter organization name (required and must be unique)"
                   required
                   autofocus
                 />
                 <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
               </EGFormGroup>
-              <EGFormGroup label="Description" name="Description">
+              <EGFormGroup label="Organization description" name="Description">
                 <EGTextArea
                   v-model.trim="state.Description"
                   @blur="validateForm"

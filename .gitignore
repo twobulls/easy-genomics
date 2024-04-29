@@ -84,4 +84,5 @@ test-reports/*
 .nuxt
 .output
 dist
+config/easy-genomics.yaml
 !/.projenrc.ts

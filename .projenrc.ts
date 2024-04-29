@@ -254,6 +254,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'unplugin-vue-components',
     'uuid',
     'zod',
+    'ofetch',
   ],
   devDeps: ['@aws-sdk/types', '@nuxt/types', '@types/node', '@types/uuid', 'kill-port'],
 });
@@ -287,6 +288,7 @@ root.gitignore.addPatterns(
   'test-reports/*',
   '.nuxt',
   '.output',
-  'dist'
+  'dist',
+  'config/easy-genomics.yaml'
 );
 root.synth();

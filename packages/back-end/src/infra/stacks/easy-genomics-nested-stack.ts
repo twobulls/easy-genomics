@@ -1,17 +1,3 @@
-import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import {
-  laboratory,
-  laboratoryUser,
-  organization,
-  organizationUser,
-  uniqueReferences,
-  user,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sample-data';
-import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/unique-reference';
-import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
@@ -44,7 +30,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     // Organization table
     const organizationTableName = `${this.props.namePrefix}-organization-table`;
-    const organizationTable = dynamoDB.createTable<Organization>(
+    const organizationTable = dynamoDB.createTable(
       organizationTableName,
       {
         partitionKey: {
@@ -54,13 +40,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
         lsi: baseLSIAttributes,
       },
       this.props.devEnv,
-      organization, // Seed data
     );
     this.dynamoDBTables.set(organizationTableName, organizationTable);
 
     // Laboratory table
     const laboratoryTableName = `${this.props.namePrefix}-laboratory-table`;
-    const laboratoryTable = dynamoDB.createTable<Laboratory>(
+    const laboratoryTable = dynamoDB.createTable(
       laboratoryTableName,
       {
         partitionKey: {
@@ -80,13 +65,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
         lsi: baseLSIAttributes,
       },
       this.props.devEnv,
-      laboratory, // Seed data
     );
     this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
 
     // User table
     const userTableName = `${this.props.namePrefix}-user-table`;
-    const userTable = dynamoDB.createTable<User>(
+    const userTable = dynamoDB.createTable(
       userTableName,
       {
         partitionKey: {
@@ -104,13 +88,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
         lsi: baseLSIAttributes,
       },
       this.props.devEnv,
-      user, // Seed data
     );
     this.dynamoDBTables.set(userTableName, userTable);
 
     // Organization User table
     const organizationUserTableName = `${this.props.namePrefix}-organization-user-table`;
-    const organizationUserTable = dynamoDB.createTable<OrganizationUser>(
+    const organizationUserTable = dynamoDB.createTable(
       organizationUserTableName,
       {
         partitionKey: {
@@ -132,13 +115,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
         lsi: baseLSIAttributes,
       },
       this.props.devEnv,
-      organizationUser, // Seed data
     );
     this.dynamoDBTables.set(organizationUserTableName, organizationUserTable);
 
     // Laboratory User table
     const laboratoryUserTableName = `${this.props.namePrefix}-laboratory-user-table`;
-    const laboratoryUserTable = dynamoDB.createTable<LaboratoryUser>(
+    const laboratoryUserTable = dynamoDB.createTable(
       laboratoryUserTableName,
       {
         partitionKey: {
@@ -160,13 +142,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
         lsi: baseLSIAttributes,
       },
       this.props.devEnv,
-      laboratoryUser, // Seed data
     );
     this.dynamoDBTables.set(laboratoryUserTableName, laboratoryUserTable);
 
     // Unique-Reference table
     const uniqueReferenceTableName = `${this.props.namePrefix}-unique-reference-table`;
-    const uniqueReferenceTable = dynamoDB.createTable<UniqueReference>(
+    const uniqueReferenceTable = dynamoDB.createTable(
       uniqueReferenceTableName,
       {
         partitionKey: {
@@ -179,7 +160,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
       },
       this.props.devEnv,
-      uniqueReferences, // Seed data
     );
     this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
   };
@@ -194,7 +174,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
       lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
       lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
-      lambdaTimeoutInSeconds: this.props.lambdaTimeoutInSeconds,
       environment: {
         AWS_ACCOUNT_ID: this.props.env.account!,
         NAME_PREFIX: this.props.namePrefix,

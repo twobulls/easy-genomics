@@ -91,6 +91,10 @@
       "type": "build"
     },
     {
+      "name": "@aws-sdk/client-cognito-identity-provider",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/client-dynamodb",
       "type": "runtime"
     },

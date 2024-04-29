@@ -9,6 +9,10 @@
       "type": "build"
     },
     {
+      "name": "@types/js-yaml",
+      "type": "build"
+    },
+    {
       "name": "@types/node",
       "version": "^18",
       "type": "build"
@@ -71,6 +75,10 @@
       "type": "build"
     },
     {
+      "name": "@nestjs/config",
+      "type": "runtime"
+    },
+    {
       "name": "aws-cdk",
       "type": "runtime"
     },
@@ -80,6 +88,10 @@
     },
     {
       "name": "aws-lambda",
+      "type": "runtime"
+    },
+    {
+      "name": "js-yaml",
       "type": "runtime"
     },
     {

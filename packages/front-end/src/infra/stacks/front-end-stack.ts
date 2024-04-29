@@ -1,4 +1,4 @@
-import { MainStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
+import { FrontEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { WwwHostingConstruct } from '../constructs/www-hosting-construct';
@@ -10,10 +10,10 @@ import { WwwHostingConstruct } from '../constructs/www-hosting-construct';
  *  - Certificate
  */
 export class FrontEndStack extends Stack {
-  readonly props: MainStackProps;
+  readonly props: FrontEndStackProps;
   protected wwwHosting!: WwwHostingConstruct;
 
-  constructor(scope: Construct, id: string, props: MainStackProps) {
+  constructor(scope: Construct, id: string, props: FrontEndStackProps) {
     super(scope, id, props);
     this.props = props;
 

@@ -1,4 +1,3 @@
-import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/private-workflow';
 import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
@@ -25,7 +24,6 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       lambdaFunctionsDir: 'src/app/controllers/aws-healthomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
       lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
-      lambdaTimeoutInSeconds: this.props.lambdaTimeoutInSeconds,
       environment: {
         AWS_ACCOUNT_ID: this.props.env.account!,
         NAME_PREFIX: this.props.namePrefix,
@@ -43,7 +41,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
 
     // AWS HealthOmics Private Workflow table - used for tracking the creation & setup of private workflows to add to AWS HealthOmics
     const awsHealthOmicsPrivateWorkflowsTableName = `${this.props.namePrefix}-healthomics-private-workflow-table`;
-    const awsHealthOmicsPrivateWorkflowsTable = dynamoDB.createTable<PrivateWorkflow>(
+    const awsHealthOmicsPrivateWorkflowsTable = dynamoDB.createTable(
       awsHealthOmicsPrivateWorkflowsTableName,
       {
         partitionKey: {

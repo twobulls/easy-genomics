@@ -23,15 +23,19 @@
  *   ModifiedBy?: <string>,
  * }
  */
+import { z } from 'zod';
 import { BaseAttributes } from '../base-entity';
+import { CreateOrganizationSchema } from '../../schema/easy-genomics/organization';
 
 export interface Organization extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
   Name: string;
-  Description?: string,
+  Description?: string;
   Country?: string;
-  AwsHealthOmicsEnabled?: boolean,
-  NextFlowTowerEnabled?: boolean,
+  AwsHealthOmicsEnabled?: boolean;
+  NextFlowTowerEnabled?: boolean;
   BillingContact?: string;
   BillingMethod?: string;
 }
+
+export type CreateOrganization = z.infer<typeof CreateOrganizationSchema>;

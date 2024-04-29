@@ -2,8 +2,6 @@
   import { z } from 'zod';
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
-  import EGCharacterCounter from '~/components/EGCharacterCounter.vue';
-  import EGButton from '~/components/EGButton.vue';
 
   const { $api } = useNuxtApp();
 

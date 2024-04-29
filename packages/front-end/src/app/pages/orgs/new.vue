@@ -135,13 +135,13 @@
       <i class="i-heroicons-arrow-left-solid"></i>
       <span>Back</span>
     </a>
-    <div class="flex items-start justify-between font-['Inter'] text-sm font-normal leading-tight text-zinc-900">
+    <div class="flex items-start justify-between font-['Inter'] text-sm font-normal leading-tight">
       <div class="w-full">
         <EGText tag="h1" class="mb-4">Create a new Organization</EGText>
         <EGText tag="h4" class="mb-[22px] mt-12">Organization details</EGText>
         <UForm :schema="formSchema" :state="state" @submit="onSubmit">
           <section
-            class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 pb-12 text-sm leading-5 text-zinc-900 max-md:px-5"
+            class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 pb-12 text-sm leading-5 max-md:px-5"
           >
             <div class="space-y-8">
               <EGFormGroup label="Organization name" name="Name">

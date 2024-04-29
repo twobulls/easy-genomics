@@ -7,7 +7,7 @@ import { BackEndStack } from './infra/stacks/back-end-stack';
 const app = new App();
 
 if (process.env.CI_CD === 'true') {
-  console.log('Loading Back-End CI/CD Pipeline settings...');
+  console.log('Loading Back-End environment settings for CI/CD Pipeline...');
 
   // CI/CD Pipeline uses ENV parameters
   const awsAccountId: string | undefined = process.env.AWS_ACCOUNT_ID;
@@ -17,12 +17,12 @@ if (process.env.CI_CD === 'true') {
   const applicationUrl: string | undefined = process.env.APPLICATION_URL;
   const systemAdminEmail: string | undefined = process.env.SYSTEM_ADMIN_EMAIL;
 
-  if (!awsAccountId) throw new Error('ACCOUNT_ID undefined');
-  if (!awsRegion) throw new Error('AWS_REGION undefined');
-  if (!envName) throw new Error('ENV_NAME undefined');
-  if (!envType) throw new Error('ENV_TYPE undefined');
-  if (!applicationUrl) throw new Error('APPLICATION_URL undefined');
-  if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined');
+  if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the CI/CD environment configuration');
+  if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
+  if (!envName) throw new Error('ENV_NAME undefined, please check the CI/CD environment configuration');
+  if (!envType) throw new Error('ENV_TYPE undefined, please check the CI/CD environment configuration');
+  if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the CI/CD environment configuration');
+  if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the CI/CD environment configuration');
 
   // AWS infrastructure resources can be destroyed only when devEnv is true
   const devEnv: boolean = envType === 'dev';

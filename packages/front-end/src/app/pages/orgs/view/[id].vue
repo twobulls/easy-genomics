@@ -68,6 +68,7 @@
         slot: 'details',
         label: 'Details',
       },
+      // TODO: placeholder tab + slot name for all users list
       // {
       //   slot: 'users',
       //   label: 'All users',

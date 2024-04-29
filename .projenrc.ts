@@ -254,7 +254,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'unplugin-vue-components',
     'uuid',
     'zod',
-    'ofetch',
   ],
   devDeps: ['@aws-sdk/types', '@nuxt/types', '@types/node', '@types/uuid', 'kill-port'],
 });

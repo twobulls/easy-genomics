@@ -4,7 +4,7 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-  const labName = $route.query.labName;
+  const labName = $route.query.name;
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const labUsersDetailsData = ref<LaboratoryUserDetails[]>([]);

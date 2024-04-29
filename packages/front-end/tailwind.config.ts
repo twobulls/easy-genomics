@@ -29,6 +29,7 @@ export default <Partial<Config>>{
         'muted': '#818181',
         'background-dark-grey': '#e5e5e5',
         'background-grey': '#f5f5f5',
+        'background-light-grey': '#f7f7f7',
         'stroke-light': '#e5e5e5',
         'stroke-medium': '#f5f5f5',
         'stroke-dark': '#f5f5f5',

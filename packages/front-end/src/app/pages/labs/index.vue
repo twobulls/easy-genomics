@@ -35,7 +35,7 @@
     [
       {
         label: 'View / Edit',
-        click: () => $router.push({ path: `/labs/lab/${row.LaboratoryId}`, query: { labName: row.Name } }),
+        click: () => $router.push({ path: `/labs/lab/${row.LaboratoryId}`, query: { name: row.Name } }),
       },
     ],
     [

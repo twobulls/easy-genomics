@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const hasNoData = ref(false);
@@ -22,7 +24,7 @@
     },
   ];
 
-  const actionItems = (row: Array<{}>) => [
+  const actionItems = (row: Organization) => [
     [
       {
         label: 'Summary',
@@ -32,7 +34,7 @@
     [
       {
         label: 'View / Edit',
-        click: () => $router.push({ path: `/orgs/org-settings/${row.OrganizationId}` }),
+        click: () => $router.push({ path: `/orgs/view/${row.OrganizationId}`, query: { name: row.Name } }),
       },
     ],
     [

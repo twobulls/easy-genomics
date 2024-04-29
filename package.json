@@ -16,10 +16,10 @@
     "upgrade": "pnpm dlx projen upgrade",
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
-    "build-be-cicd": "pnpm nx run-many --targets=test,build-cicd --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose",
-    "build-fe-cicd": "pnpm nx run-many --targets=test,build-cicd --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose",
-    "deploy-be-cicd": "pnpm nx run-many --targets=deploy-cicd --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose",
-    "deploy-fe-cicd": "pnpm nx run-many --targets=deploy-cicd --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose",
+    "cicd-test-back-end": "pnpm nx run-many --targets=cicd-test-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose",
+    "cicd-build-deploy-back-end": "pnpm nx run-many --targets=cicd-build-deploy-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose",
+    "cicd-test-front-end": "pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose",
+    "cicd-build-deploy-front-end": "pnpm nx run-many --targets=cicd-build-deploy-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose",
     "prepare": "husky || true"
   },
   "author": {

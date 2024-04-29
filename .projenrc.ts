@@ -125,15 +125,14 @@ const root = new typescript.TypeScriptProject({
 root.removeScript('build');
 root.removeScript('deploy');
 root.addScripts({
-  ['bootstrap-back-end']: 'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/back-end',
-  ['bootstrap-front-end']: 'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/front-end',
-  ['build-back-end']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/back-end',
-  ['build-front-end']: 'pnpm nx run-many --targets=eslint,test,build,nuxt-generate --projects=@easy-genomics/front-end',
-  ['build-shared-lib']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/shared-lib',
-  ['deploy-back-end']:
-    'pnpm nx run-many --targets=test,build,deploy --projects=@easy-genomics/back-end,@easy-genomics/shared-lib',
-  ['deploy-front-end']:
-    'pnpm nx run-many --targets=test,build,nuxt-generate,deploy --projects=@easy-genomics/front-end,@easy-genomics/shared-lib',
+  ['build-be-cicd']:
+    'pnpm nx run-many --targets=test,build-cicd --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+  ['build-fe-cicd']:
+    'pnpm nx run-many --targets=test,build-cicd --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose',
+  ['deploy-be-cicd']:
+    'pnpm nx run-many --targets=deploy-cicd --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+  ['deploy-fe-cicd']:
+    'pnpm nx run-many --targets=deploy-cicd --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
 });
 
@@ -207,6 +206,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
 backEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
   ['build-cicd']: 'export CI_CD=true; pnpm dlx projen build',
+  ['deploy-cicd']: 'export CI_CD=true; pnpm dlx projen deploy',
 });
 
 // Defines the Easy Genomics 'front-end' subproject
@@ -263,6 +263,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
   ['build-cicd']: 'export CI_CD=true; pnpm dlx projen build; pnpm nuxt-generate',
+  ['deploy-cicd']: 'export CI_CD=true; pnpm dlx projen deploy',
   ['nuxt-build']: 'nuxt build',
   ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
   ['nuxt-generate']: 'nuxt generate',

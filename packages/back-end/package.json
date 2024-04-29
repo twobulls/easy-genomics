@@ -21,7 +21,8 @@
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
     "bootstrap": "pnpm cdk bootstrap",
-    "build-cicd": "export CI_CD=true; pnpm dlx projen build"
+    "build-cicd": "export CI_CD=true; pnpm dlx projen build",
+    "deploy-cicd": "export CI_CD=true; pnpm dlx projen deploy"
   },
   "author": {
     "name": "DEPT Agency",

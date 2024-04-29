@@ -31,7 +31,7 @@
     [
       {
         label: 'View / Edit',
-        click: async () => navigateTo({ path: `/orgs/org-settings/${row.OrganizationId}` }),
+        click: async () => navigateTo({ path: `/orgs/view/${row.OrganizationId}`, query: { name: row.Name } }),
       },
     ],
     [

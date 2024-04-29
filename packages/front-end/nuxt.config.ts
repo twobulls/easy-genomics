@@ -12,13 +12,15 @@ if (process.argv.length !== 5 || process.argv[3] !== '--stack' || process.argv[4
 const stackName: string = process.argv[4].trim();
 
 // Load configuration settings for each environment
-const configurations: {[p: string]: ConfigurationSettings}[] = loadConfigurations(join(__dirname, '../../config/easy-genomics.yaml'));
+const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
+  join(__dirname, '../../config/easy-genomics.yaml')
+);
 if (configurations.length === 0) {
   throw new Error('Easy Genomics Configuration(s) missing / invalid');
 }
 
-const configuration: {[p: string]: ConfigurationSettings} | undefined = configurations
-  .filter((c: {[p: string]: ConfigurationSettings}) => Object.keys(c).shift() === stackName)
+const configuration: { [p: string]: ConfigurationSettings } | undefined = configurations
+  .filter((c: { [p: string]: ConfigurationSettings }) => Object.keys(c).shift() === stackName)
   .shift();
 if (!configuration) {
   throw new Error(`Easy Genomics Configuration Settings for "${stackName}" stack not found`);
@@ -31,7 +33,6 @@ if (!envName || !configSettings) {
   throw new Error(`Easy Genomics Configuration Settings for "${stackName}" stack undefined`);
 }
 
-// @ts-ignore
 export default defineNuxtConfig({
   colorMode: {
     preference: 'light',
@@ -54,6 +55,7 @@ export default defineNuxtConfig({
       },
     },
   },
+
   runtimeConfig: {
     public: {
       AWS_REGION: configSettings['aws-region'],
@@ -82,7 +84,7 @@ export default defineNuxtConfig({
   vue: {
     template: {
       compilerOptions: {
-        isCustomElement: (tag) => tag.startsWith('Icon-'),
+        isCustomElement: (tag: string) => tag.startsWith('Icon-'),
       },
     },
   },

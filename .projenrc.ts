@@ -287,6 +287,7 @@ root.gitignore.addPatterns(
   'test-reports/*',
   '.nuxt',
   '.output',
-  'dist'
+  'dist',
+  'config/easy-genomics.yaml'
 );
 root.synth();

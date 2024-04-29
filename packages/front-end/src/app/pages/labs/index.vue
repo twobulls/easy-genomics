@@ -35,7 +35,7 @@
     [
       {
         label: 'View / Edit',
-        click: async () => await navigateTo({ path: `/labs/lab/${row.LaboratoryId}`, query: { labName: row.Name } }),
+        click: async () => await navigateTo({ path: `/labs/lab/${row.LaboratoryId}`, query: { name: row.Name } }),
       },
     ],
     [

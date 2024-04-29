@@ -5,6 +5,7 @@
   const $route = useRoute();
   const isLoading = ref(true);
   const orgSettingsData = ref({} as Organization | undefined);
+  const orgName = $route.query.name;
 
   useAsyncData('orgSettingsData', async () => {
     isLoading.value = true;
@@ -30,8 +31,8 @@
     </a>
     <div class="flex items-start justify-between">
       <div>
-        <EGText tag="h1" class="mb-4">Organization settings</EGText>
-        <EGText tag="p" class="text-muted">View details of the organization and its users</EGText>
+        <EGText tag="h1" class="mb-4">{{ orgName }}</EGText>
+        <EGText tag="p" class="text-muted">View your entire Organization</EGText>
       </div>
     </div>
   </div>
@@ -67,11 +68,11 @@
         slot: 'details',
         label: 'Details',
       },
-      {
-        slot: 'users',
-        label: 'Invited users',
-        disabled: true,
-      },
+      // TODO: placeholder tab + slot name for all users list
+      // {
+      //   slot: 'users',
+      //   label: 'All users',
+      // },
     ]"
   >
     <template #details>

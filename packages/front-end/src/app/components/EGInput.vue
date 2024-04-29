@@ -15,7 +15,7 @@
   <UInput
     :disabled="disabled"
     :ui="{
-      base: 'mt-2 !shadow-none border-background-dark-grey bg-white text-body',
+      base: 'mt-2 !shadow-none border-background-stroke-dark bg-white text-body disabled:bg-background-light-grey disabled:text-muted',
       rounded: 'rounded-md',
       placeholder: 'placeholder-text-muted',
       padding: {

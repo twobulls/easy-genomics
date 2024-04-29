@@ -14,7 +14,7 @@
     <div class="flex justify-between gap-5 max-md:flex-col max-md:gap-0">
       <div class="flex w-6/12 flex-col max-md:ml-0 max-md:w-full">
         <div class="my-auto flex flex-col self-stretch font-medium max-md:mt-10">
-          <h3 class="text-2xl leading-8 text-zinc-900">{{ message }}</h3>
+          <h3 class="text-heading text-2xl leading-8">{{ message }}</h3>
           <EGButton
             @click="buttonAction"
             :label="buttonLabel"

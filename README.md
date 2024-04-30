@@ -59,25 +59,8 @@ The following steps provide a quick start local development guide:
    Default region name [us-east-1]:
    Default output format [None]:
    ```
-6. Copy `.env.example` as `.env.local` and edit its settings for your AWS environment:
-
-   ```
-   AWS_ACCOUNT_ID=<AWS Account ID>                   # AWS Account to deploy to.
-   AWS_REGION=<AWS Region>                           # Must be an AWS Region that supports AWS HealthOmics
-
-   # The following ENV_TYPE, SUB_DOMAIN, and DOMAIN_NAME settings will be used to generate the Site Application URL.
-   # The Site Application URL generated will be:
-   # - prod: https://{SUB_DOMAIN}.{DOMAIN_NAME}
-   # - dev / pre-prod: https://{SUB_DOMAIN}.{ENV_TYPE}.{DOMAIN_NAME}
-   ENV_TYPE=prod                                     # e.g. dev, pre-prod, prod
-   SUB_DOMAIN=                                       # e.g. easy-genomics
-   DOMAIN_NAME=<Your desired domain name>            # e.g. myinstitution.org
-
-   # The following HOSTED_ZONE_ID, HOSTED_ZONE_NAME AND CERTIFICATE_ARN will need to be preconfigured in AWS.
-   HOSTED_ZONE_ID=<AWS Route53 Hosted Zone ID>
-   HOSTED_ZONE_NAME=<AWS Route53 Hosted Zone Name>   # Should be the same as the Site Application URL
-   CERTIFICATE_ARN=<AWS Certificate ARN>             # AWS ACM Certificate ARN for the Site Application URL
-   ```
+6. Copy `/config/easy-genomics.example.yaml` as `config/easy-genomics.yaml` and edit its settings for your deployment
+   environment. To add new environments add configuration following the example template.
 
 7. Run `pnpm bootstrap-all` to bootstrap CDK for configured AWS Account ID & Region:
    ```

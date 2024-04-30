@@ -3,6 +3,7 @@
     ".eslintrc.json",
     ".gitattributes",
     ".github/pull_request_template.md",
+    ".github/workflows/cicd-release-quality.yml",
     ".github/workflows/pull-request-lint.yml",
     ".gitignore",
     ".husky/commit-msg",

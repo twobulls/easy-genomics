@@ -1,8 +1,23 @@
-import * as yaml from 'js-yaml';
 import { readFileSync } from 'fs';
 import { ConfigService } from '@nestjs/config';
-import { Configuration, ConfigurationSettings } from '../types/configuration';
+import * as yaml from 'js-yaml';
 import { ConfigurationSettingsSchema } from '../schema/configuration';
+import { Configuration, ConfigurationSettings } from '../types/configuration';
+
+/**
+ * Shared function to read the command line argument: --stack {env-name}
+ */
+export function getStackEnvName(): string | undefined {
+  const args: (string | undefined)[] = process.argv.map((arg: string, index: number) => {
+    return (arg === '--stack' && process.argv.length > index+1) ? process.argv[index+1] : undefined;
+  });
+
+  const envName: string | undefined = args.flatMap(c => !!c ? [c] : []).shift();
+  if (envName) {
+    console.log(`Using supplied --stack {env-name}: ${envName}`);
+  }
+  return envName;
+}
 
 /**
  * Shared function to load the specified configuration file settings.
@@ -14,10 +29,26 @@ export function loadConfigurations(filePath: string): {[p: string]: Configuratio
 
   const configurations: Configuration[] | undefined = configService.get<Configuration[]>('easy-genomics.configurations');
   if (!configurations) {
-    throw new Error('Easy Genomics Configuration(s) missing / invalid');
+    throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
   }
 
   return loadValidConfigurations(configurations);
+}
+
+/**
+ * Shared function to find a specific configuration by the supplied envName.
+ * @param envName
+ * @param configurations
+ */
+export function findConfiguration(envName: string, configurations: {[p: string]: ConfigurationSettings}[]): {[p: string]: ConfigurationSettings} {
+  const configuration: {[p: string]: ConfigurationSettings} | undefined = configurations
+    .filter((c: {[p: string]: ConfigurationSettings}) => Object.keys(c).shift() === envName)
+    .shift();
+
+  if (!configuration) {
+    throw new Error(`Easy Genomics Configuration Settings for "${envName}" stack not found`);
+  }
+  return configuration;
 }
 
 /**

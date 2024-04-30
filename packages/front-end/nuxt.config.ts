@@ -3,36 +3,55 @@ import IconsResolver from 'unplugin-icons/resolver';
 import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
-import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
+import { findConfiguration, getStackEnvName, loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import { join } from 'path';
 
-if (process.argv.length !== 5 || process.argv[3] !== '--stack' || process.argv[4].trim() === '') {
-  throw new Error('NuxtConfig Setup Error: Missing required arguments --stack {env-name}');
+let awsRegion: string | undefined;
+let awsCognitoUserPoolId: string | undefined;
+let awsCognitoUserPoolClientId: string | undefined;
+let awsBaseApiUrl: string | undefined;
+let mockOrgId: string | undefined; // TODO: Remove once custom User Authorization logic retrieves OrgIds
+
+if (process.env.CI_CD === 'true') {
+  console.log('Loading Front-End Nuxt environment settings for CI/CD Pipeline...');
+
+  // CI/CD Pipeline uses ENV parameters
+  awsRegion = process.env.AWS_REGION;
+  awsCognitoUserPoolId = process.env.AWS_COGNITO_USER_POOL_ID;
+  awsCognitoUserPoolClientId = process.env.AWS_COGNITO_CLIENT_ID;
+  awsBaseApiUrl = process.env.AWS_BASE_API_URL;
+  mockOrgId = process.env.MOCK_ORG_ID; // TODO: Remove once custom User Authorization logic retrieves OrgIds
+} else {
+  console.log('Loading Front-End Nuxt easy-genomics.yaml settings...');
+
+  // Load configuration settings for each environment
+  const configurations: {[p: string]: ConfigurationSettings}[] = loadConfigurations(join(__dirname, '../../config/easy-genomics.yaml'));
+  if (configurations.length === 0) {
+    throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
+  }
+
+  // Try to retrieve optional command argument: --stack {env-name}
+  const STACK_ENV_NAME: string | undefined = getStackEnvName();
+  if (configurations.length > 1 && !STACK_ENV_NAME) {
+    throw new Error('Multiple configurations found in easy-genomics.yaml, please specify argument: --stack {env-name}');
+  }
+
+  const configuration: {[p: string]: ConfigurationSettings} = (configurations.length > 1)
+    ? findConfiguration(STACK_ENV_NAME!, configurations)
+    : configurations.shift()!;
+  const configSettings = Object.values(configuration).shift();
+  if (!configSettings) {
+    throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
+  }
+
+  awsRegion = configSettings['aws-region'];
+  awsCognitoUserPoolId = configSettings['front-end']['aws-cognito-user-pool-id'];
+  awsCognitoUserPoolClientId = configSettings['front-end']['aws-cognito-client-id'];
+  awsBaseApiUrl = configSettings['front-end']['base-api-url'];
+  mockOrgId = configSettings['front-end']['mock-org-id']; // TODO: Remove once custom User Authorization logic retrieves OrgIds
 }
-const stackName: string = process.argv[4].trim();
 
-// Load configuration settings for each environment
-const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
-  join(__dirname, '../../config/easy-genomics.yaml')
-);
-if (configurations.length === 0) {
-  throw new Error('Easy Genomics Configuration(s) missing / invalid');
-}
-
-const configuration: { [p: string]: ConfigurationSettings } | undefined = configurations
-  .filter((c: { [p: string]: ConfigurationSettings }) => Object.keys(c).shift() === stackName)
-  .shift();
-if (!configuration) {
-  throw new Error(`Easy Genomics Configuration Settings for "${stackName}" stack not found`);
-}
-
-const envName: string | undefined = Object.keys(configuration).shift();
-const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift();
-
-if (!envName || !configSettings) {
-  throw new Error(`Easy Genomics Configuration Settings for "${stackName}" stack undefined`);
-}
-
+// @ts-ignore
 export default defineNuxtConfig({
   colorMode: {
     preference: 'light',
@@ -58,11 +77,11 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      AWS_REGION: configSettings['aws-region'],
-      AWS_USER_POOL_ID: configSettings['front-end']['aws-cognito-user-pool-id'],
-      AWS_CLIENT_ID: configSettings['front-end']['aws-cognito-client-id'],
-      BASE_API_URL: configSettings['front-end']['base-api-url'],
-      MOCK_ORG_ID: configSettings['front-end']['mock-org-id'],
+      AWS_REGION: awsRegion,
+      AWS_USER_POOL_ID: awsCognitoUserPoolId,
+      AWS_CLIENT_ID: awsCognitoUserPoolClientId,
+      BASE_API_URL: awsBaseApiUrl,
+      MOCK_ORG_ID: mockOrgId, // TODO: Remove once custom User Authorization logic retrieves OrgIds
     },
   },
 

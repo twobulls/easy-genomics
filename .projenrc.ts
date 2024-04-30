@@ -16,6 +16,7 @@ import { Husky } from './projenrc/husky';
 import { Nx } from './projenrc/nx';
 import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
+import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
 
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.124.0';
@@ -56,6 +57,7 @@ const tsConfigOptions: TypescriptConfigOptions = {
       '@FE/*': ['packages/front-end/src/*'],
       '@SharedLib/*': ['packages/shared-lib/src/*'],
     },
+    // noUnusedLocals: false,
   },
   include: ['packages/back-end/src/**/*.ts', 'packages/front-end/src/**/*.ts', 'packages/shared-lib/src/**/*.ts'],
   exclude: [],
@@ -125,15 +127,14 @@ const root = new typescript.TypeScriptProject({
 root.removeScript('build');
 root.removeScript('deploy');
 root.addScripts({
-  ['bootstrap-back-end']: 'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/back-end',
-  ['bootstrap-front-end']: 'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/front-end',
-  ['build-back-end']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/back-end',
-  ['build-front-end']: 'pnpm nx run-many --targets=eslint,test,build,nuxt-generate --projects=@easy-genomics/front-end',
-  ['build-shared-lib']: 'pnpm nx run-many --targets=eslint,test,build --projects=@easy-genomics/shared-lib',
-  ['deploy-back-end']:
-    'pnpm nx run-many --targets=test,build,deploy --projects=@easy-genomics/back-end,@easy-genomics/shared-lib',
-  ['deploy-front-end']:
-    'pnpm nx run-many --targets=test,build,nuxt-generate,deploy --projects=@easy-genomics/front-end,@easy-genomics/shared-lib',
+  ['cicd-test-back-end']:
+    'pnpm nx run-many --targets=cicd-test-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+  ['cicd-build-deploy-back-end']:
+    'pnpm nx run-many --targets=cicd-build-deploy-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+  ['cicd-test-front-end']:
+    'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+  ['cicd-build-deploy-front-end']:
+    'pnpm nx run-many --targets=cicd-build-deploy-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
 });
 
@@ -206,6 +207,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
 });
 backEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
+  ['cicd-test-back-end']: 'export CI_CD=true; pnpm run test',
+  ['cicd-build-deploy-back-end']: 'export CI_CD=true; pnpm run build; pnpm run deploy',
 });
 
 // Defines the Easy Genomics 'front-end' subproject
@@ -257,13 +260,15 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
   devDeps: ['@aws-sdk/types', '@nuxt/types', '@types/node', '@types/uuid', 'kill-port'],
 });
-
-// Add additional Nuxt Scripts to front-end/package.json
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
+  ['cicd-test-front-end']: 'export CI_CD=true; pnpm run test',
+  ['cicd-build-deploy-front-end']:
+    'export CI_CD=true; pnpm run nuxt-prepare; pnpm run build; pnpm run nuxt-generate; pnpm run deploy',
   ['nuxt-build']: 'nuxt build',
   ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
   ['nuxt-generate']: 'nuxt generate',
+  ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
 });
@@ -272,6 +277,7 @@ new PnpmWorkspace(root);
 new VscodeSettings(root);
 new Nx(root);
 new Husky(root);
+new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion });
 
 // Provision templated project folders structure with README.md descriptions.
 setupProjectFolders(root);

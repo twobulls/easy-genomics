@@ -21,9 +21,12 @@
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
     "bootstrap": "pnpm cdk bootstrap",
+    "cicd-test-front-end": "export CI_CD=true; pnpm run test",
+    "cicd-build-deploy-front-end": "export CI_CD=true; pnpm run nuxt-prepare; pnpm run build; pnpm run nuxt-generate; pnpm run deploy",
     "nuxt-build": "nuxt build",
     "nuxt-dev": "pnpm kill-port 3000 && nuxt dev",
     "nuxt-generate": "nuxt generate",
+    "nuxt-prepare": "nuxt prepare",
     "nuxt-preview": "nuxt preview",
     "nuxt-postinstall": "nuxt prepare"
   },

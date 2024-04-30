@@ -20,7 +20,9 @@
     "upgrade": "pnpm dlx projen upgrade",
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
-    "bootstrap": "pnpm cdk bootstrap"
+    "bootstrap": "pnpm cdk bootstrap",
+    "cicd-test-back-end": "export CI_CD=true; pnpm run test",
+    "cicd-build-deploy-back-end": "export CI_CD=true; pnpm run build; pnpm run deploy"
   },
   "author": {
     "name": "DEPT Agency",

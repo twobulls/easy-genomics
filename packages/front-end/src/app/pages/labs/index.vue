@@ -46,18 +46,18 @@
     ],
   ];
 
-  onBeforeMount(async () => {
+  useAsyncData('labData', async () => {
     try {
       labData.value = await $api.labs.list(MOCK_ORG_ID);
 
       if (!labData.value.length) {
         hasNoData.value = true;
       }
-      isLoading.value = false;
     } catch (error) {
-      isLoading.value = false;
       console.error(error);
       throw error;
+    } finally {
+      isLoading.value = false;
     }
   });
 </script>
@@ -65,13 +65,13 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1" v-if="labData">Labs</EGText>
-    <EGButton label="Create a new Lab" class="self-end" />
+    <EGButton label="Create a new Lab" class="self-end" @click="() => navigateTo({ path: `/labs/new` })" />
   </div>
 
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Labs set up yet."
-    :button-action="() => {}"
+    :button-action="() => navigateTo({ path: `/labs/new` })"
     button-label="Create a new Lab"
   />
 

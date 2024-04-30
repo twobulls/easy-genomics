@@ -2,11 +2,12 @@
   import { z } from 'zod';
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
+  const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
   const { $api } = useNuxtApp();
 
   /*
-    Organization Name
+    Laboratory Name
     - Minimum of 1 character
     - Maximum of 50 characters
     - Accepts alphanumeric characters
@@ -28,8 +29,8 @@
     .max(NAME_MAX_LENGTH, { message: `${NAME_MAX_LENGTH} ${getCharacterText(NAME_MAX_LENGTH)} max` });
 
   /*
-    Organization Description
-    - Can be left blank
+    Laboratory Description
+    - Minimum of 1 character
     - Maximum of 500 characters
     - Accepts alphanumeric characters
     - Accepts UPPERCASE and lowercase characters
@@ -40,16 +41,20 @@
     - If a user attempts to paste values above 500 characters, these characters will be filtered out and only the first 500 characters will be pasted
     - If a user attempts to paste invalid special characters, these characters will be filtered out and only the valid characters will be pasted
   */
+
+  const DESCRIPTION_MIN_LENGTH = 1;
   const DESCRIPTION_MAX_LENGTH = 500;
 
   const descriptionSchema = z
     .string()
-    .min(0)
+    .min(DESCRIPTION_MIN_LENGTH, {
+      message: `Description must be at least ${DESCRIPTION_MIN_LENGTH} ${getCharacterText(DESCRIPTION_MIN_LENGTH)}`,
+    })
     .max(DESCRIPTION_MAX_LENGTH, {
       message: `${DESCRIPTION_MAX_LENGTH} ${getCharacterText(DESCRIPTION_MAX_LENGTH)} max`,
     });
 
-  // Keys use Title case to match the Organization schema
+  // Keys use Title case to match the Laboratory schema
   const formSchema = z.object({
     Name: nameSchema,
     Description: descriptionSchema,
@@ -110,13 +115,13 @@
     try {
       state.isFormDisabled = true;
       const { Name, Description } = event.data;
-      const result = await $api.orgs.create({ Name, Description });
+      const result = await $api.labs.create({ Name, Description, OrganizationId: MOCK_ORG_ID, Status: 'Active' });
       if (result) {
         // TODO: Display success toast message
-        await navigateTo('/orgs');
+        await navigateTo('/labs');
       }
     } catch (error) {
-      // TODO: Display error toast message
+      // TODO: optional catch block to handle thrown error from .call() further up the stack
       console.error('error:', error);
     } finally {
       state.isFormDisabled = false;
@@ -127,36 +132,38 @@
 <template>
   <div class="w-full">
     <EGBack />
-    <EGText tag="h1" class="mb-6">Create a new Organization</EGText>
-    <EGText tag="h4" class="mb-4">Organization details</EGText>
-    <UForm :schema="formSchema" :state="state" @submit="onSubmit">
-      <section
-        class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 pb-12 text-sm leading-5 max-md:px-5"
-      >
-        <div class="space-y-8">
-          <EGFormGroup label="Organization name*" name="Name">
-            <EGInput
-              v-model.trim="state.Name"
-              @blur="validateForm"
-              @input.prevent="handleNameInput"
-              placeholder="Enter organization name (required and must be unique)"
-              required
-              autofocus
-            />
-            <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
-          </EGFormGroup>
-          <EGFormGroup label="Organization description" name="Description">
-            <EGTextArea
-              v-model.trim="state.Description"
-              @blur="validateForm"
-              @input.prevent="handleDescriptionInput"
-              placeholder="Describe your organization and any relevant details"
-            />
-            <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />
-          </EGFormGroup>
-        </div>
-      </section>
-      <EGButton :disabled="state.isFormDisabled" type="submit" variant="primary" label="Create" class="mt-6" />
-    </UForm>
+    <EGText tag="h1" class="mb-6">Create a new lab</EGText>
+    <EGText tag="h4" class="mb-4">Lab details</EGText>
   </div>
+
+  <UForm :schema="formSchema" :state="state" @submit="onSubmit">
+    <section
+      class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 pb-12 text-sm leading-5 max-md:px-5"
+    >
+      <div class="space-y-8">
+        <EGFormGroup label="Lab name*" name="Name">
+          <EGInput
+            v-model.trim="state.Name"
+            @blur="validateForm"
+            @input.prevent="handleNameInput"
+            placeholder="Enter lab name (required and must be unique)"
+            required
+            autofocus
+          />
+          <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
+        </EGFormGroup>
+        <EGFormGroup label="Lab description*" name="Description">
+          <EGTextArea
+            v-model.trim="state.Description"
+            @blur="validateForm"
+            @input.prevent="handleDescriptionInput"
+            required
+            placeholder="Describe your lab and what runs should be launched by Lab users."
+          />
+          <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />
+        </EGFormGroup>
+      </div>
+    </section>
+    <EGButton :disabled="state.isFormDisabled" type="submit" variant="primary" label="Create" class="mt-6" />
+  </UForm>
 </template>

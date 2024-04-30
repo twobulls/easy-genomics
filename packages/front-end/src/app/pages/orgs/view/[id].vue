@@ -85,10 +85,10 @@
         v-else
         class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 text-sm leading-5 max-md:px-5"
       >
-        <h3 class="max-md:max-w-full">Organization name</h3>
+        <h3>Organization name</h3>
         <EGInput :placeholder="orgSettingsData.Name" disabled />
 
-        <h2 class="mt-10 max-md:max-w-full">Organization description</h2>
+        <h2>Organization description</h2>
         <EGInput :placeholder="orgSettingsData.Description" disabled />
       </section>
     </template>

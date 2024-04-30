@@ -9,24 +9,23 @@
         <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
       </div>
       <div class="flex items-center gap-2">
-        <ULink
-          to="/runs"
-          disabled
-          inactive-class="text-body"
-          active-class="text-primary bg-primary-muted"
-          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
-        >
-          Runs
-        </ULink>
-        <ULink
-          to="/workflows"
-          disabled
-          inactive-class="text-body"
-          active-class="text-primary bg-primary-muted"
-          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
-        >
-          Workflows
-        </ULink>
+        <!-- TODO: build pages for Runs and Workflow -->
+        <!--        <ULink-->
+        <!--          to="/runs"-->
+        <!--          inactive-class="text-body"-->
+        <!--          active-class="text-primary bg-primary-muted"-->
+        <!--          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"-->
+        <!--        >-->
+        <!--          Runs-->
+        <!--        </ULink>-->
+        <!--        <ULink-->
+        <!--          to="/workflows"-->
+        <!--          inactive-class="text-body"-->
+        <!--          active-class="text-primary bg-primary-muted"-->
+        <!--          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"-->
+        <!--        >-->
+        <!--          Workflows-->
+        <!--        </ULink>-->
         <ULink
           to="/labs"
           inactive-class="text-body"

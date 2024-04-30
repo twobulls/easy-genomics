@@ -2,15 +2,16 @@ import { Component, github, typescript } from 'projen';
 import { IConstruct } from 'constructs';
 
 // Custom projen component that configures a Github Actions Workflow.
-export class Workflow extends Component {
+export class GithubActionsCICDRelease extends Component {
+  private readonly environment: string;
   private readonly pnpmVersion: string;
 
-  constructor(rootProject: typescript.TypeScriptProject, options: { pnpmVersion: string }) {
+  constructor(rootProject: typescript.TypeScriptProject, options: { environment: string; pnpmVersion: string }) {
     super(<IConstruct>rootProject);
+    this.environment = options.environment;
     this.pnpmVersion = options.pnpmVersion;
 
-    const environment = 'quality';
-    const wf = new github.GithubWorkflow(rootProject.github!, `cicd-release-${environment}`);
+    const wf = new github.GithubWorkflow(rootProject.github!, `cicd-release-${this.environment}`);
     const runsOn = ['ubuntu-latest'];
     wf.on({ push: { branches: ['main'] } });
 
@@ -18,7 +19,7 @@ export class Workflow extends Component {
       ['test-back-end']: {
         name: 'Test Back-End',
         runsOn,
-        environment: environment,
+        environment: this.environment,
         env: this.loadEnv(),
         permissions: {
           contents: github.workflows.JobPermission.WRITE,
@@ -36,7 +37,7 @@ export class Workflow extends Component {
         name: 'Build & Deploy Back-End',
         needs: ['test-back-end'],
         runsOn,
-        environment: environment,
+        environment: this.environment,
         env: this.loadEnv(),
         permissions: {
           idToken: github.workflows.JobPermission.WRITE,
@@ -56,7 +57,7 @@ export class Workflow extends Component {
         name: 'Test Front-End',
         needs: ['build-deploy-back-end'],
         runsOn,
-        environment: environment,
+        environment: this.environment,
         env: this.loadEnv(),
         permissions: {
           contents: github.workflows.JobPermission.WRITE,
@@ -74,7 +75,7 @@ export class Workflow extends Component {
         name: 'Build & Deploy Front-End',
         needs: ['test-front-end'],
         runsOn,
-        environment: environment,
+        environment: this.environment,
         env: this.loadEnv(),
         permissions: {
           idToken: github.workflows.JobPermission.WRITE,

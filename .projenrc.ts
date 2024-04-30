@@ -16,7 +16,7 @@ import { Husky } from './projenrc/husky';
 import { Nx } from './projenrc/nx';
 import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
-import { Workflow } from './projenrc/github-actions-cicd-release';
+import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
 
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.124.0';
@@ -277,7 +277,7 @@ new PnpmWorkspace(root);
 new VscodeSettings(root);
 new Nx(root);
 new Husky(root);
-new Workflow(root, { pnpmVersion });
+new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion });
 
 // Provision templated project folders structure with README.md descriptions.
 setupProjectFolders(root);

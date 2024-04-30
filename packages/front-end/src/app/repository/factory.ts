@@ -28,8 +28,9 @@ class HttpFactory {
 
       return await (response.json() as Promise<T>);
     } catch (error) {
-      console.error('An error occurred:', error);
-      return undefined;
+      // TODO: handle error message via toast
+      console.error('Request error:', error);
+      throw error;
     }
   }
 

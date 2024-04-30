@@ -53,7 +53,7 @@
   h5 {
     font-size: 1.25rem; /* 20px */
     line-height: 1.75rem; /* 28px */
-    font-weight: bold;
+    font-weight: 500;
     letter-spacing: -0.14px;
 
     > p {

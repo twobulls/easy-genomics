@@ -46,19 +46,20 @@
     ],
   ];
 
-  onBeforeMount(async () => {
+  useAsyncData('labUsersDetailsData', async () => {
+    isLoading.value = true;
     try {
       labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
 
       if (!labUsersDetailsData.value.length) {
         hasNoData.value = true;
       }
-      isLoading.value = false;
     } catch (error) {
-      isLoading.value = false;
       console.error(error);
-      throw error;
+    } finally {
+      isLoading.value = false;
     }
+    return labUsersDetailsData.value;
   });
 
   function updateSearchOutput(newVal: any) {

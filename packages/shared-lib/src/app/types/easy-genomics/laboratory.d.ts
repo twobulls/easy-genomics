@@ -24,16 +24,19 @@
  *   ModifiedBy?: <string>,
  * }
  */
-import { BaseAttributes, Status } from "../base-entity";
-import { z } from "zod";
+import { BaseAttributes, Status } from '../base-entity';
+import { z } from 'zod';
+import { CreateLaboratorySchema } from '../../schema/easy-genomics/laboratory';
 
 export interface Laboratory extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
   LaboratoryId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
   Name: string;
-  Description?: string,
-  Status: Status,
+  Description?: string;
+  Status: Status;
   S3Bucket?: string;
   AwsHealthOmicsEnabled?: boolean;
   NextFlowTowerEnabled?: boolean;
 }
+
+export type CreateLaboratory = z.infer<typeof CreateLaboratorySchema>;

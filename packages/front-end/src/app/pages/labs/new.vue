@@ -30,7 +30,6 @@
 
   /*
     Laboratory Description
-    - Minimum of 1 character
     - Maximum of 500 characters
     - Accepts alphanumeric characters
     - Accepts UPPERCASE and lowercase characters
@@ -42,17 +41,11 @@
     - If a user attempts to paste invalid special characters, these characters will be filtered out and only the valid characters will be pasted
   */
 
-  const DESCRIPTION_MIN_LENGTH = 1;
   const DESCRIPTION_MAX_LENGTH = 500;
 
-  const descriptionSchema = z
-    .string()
-    .min(DESCRIPTION_MIN_LENGTH, {
-      message: `Description must be at least ${DESCRIPTION_MIN_LENGTH} ${getCharacterText(DESCRIPTION_MIN_LENGTH)}`,
-    })
-    .max(DESCRIPTION_MAX_LENGTH, {
-      message: `${DESCRIPTION_MAX_LENGTH} ${getCharacterText(DESCRIPTION_MAX_LENGTH)} max`,
-    });
+  const descriptionSchema = z.string().max(DESCRIPTION_MAX_LENGTH, {
+    message: `${DESCRIPTION_MAX_LENGTH} ${getCharacterText(DESCRIPTION_MAX_LENGTH)} max`,
+  });
 
   // Keys use Title case to match the Laboratory schema
   const formSchema = z.object({
@@ -152,12 +145,11 @@
           />
           <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
         </EGFormGroup>
-        <EGFormGroup label="Lab description*" name="Description">
+        <EGFormGroup label="Lab description" name="Description">
           <EGTextArea
             v-model.trim="state.Description"
             @blur="validateForm"
             @input.prevent="handleDescriptionInput"
-            required
             placeholder="Describe your lab and what runs should be launched by Lab users."
           />
           <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />

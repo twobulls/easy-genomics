@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const OrganizationUserSchema = z.object({
   OrganizationId: z.string().uuid(),
   UserId: z.string().uuid(),
-  Status: z.enum(['Active', 'Inactive']),
+  Status: z.enum(['Active', 'Inactive', 'Invited']),
   OrganizationAdmin: z.boolean(),
   CreatedAt: z.string().optional(),
   CreatedBy: z.string().optional(),
@@ -14,14 +14,14 @@ export const OrganizationUserSchema = z.object({
 export const AddOrganizationUserSchema = z.object({
   OrganizationId: z.string().uuid(),
   UserId: z.string().uuid(),
-  Status: z.enum(['Active', 'Inactive']),
+  Status: z.enum(['Active', 'Inactive', 'Invited']),
   OrganizationAdmin: z.boolean(),
 }).strict();
 
 export const EditOrganizationUserSchema = z.object({
   OrganizationId: z.string().uuid(),
   UserId: z.string().uuid(),
-  Status: z.enum(['Active', 'Inactive']),
+  Status: z.enum(['Active', 'Inactive', 'Invited']),
   OrganizationAdmin: z.boolean(),
 }).strict();
 

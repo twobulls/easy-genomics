@@ -12,7 +12,7 @@
  * {
  *   OrganizationId: <string>,
  *   UserId: <string>,
- *   Status: 'Active' | 'Inactive',
+ *   Status: 'Active' | 'Inactive' | 'Invited',
  *   OrganizationAdmin: <boolean>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
@@ -20,11 +20,11 @@
  *   ModifiedBy?: <string>,
  * }
  */
-import { BaseAttributes, Status } from '../base-entity';
+import { BaseAttributes, OrgUserStatus } from "../base-entity";
 import { OrganizationRoles } from './roles';
 
 export interface OrganizationUser extends OrganizationRoles, BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
   UserId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
-  Status: Status;
+  Status: OrgUserStatus;
 }

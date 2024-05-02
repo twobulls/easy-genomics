@@ -9,7 +9,8 @@
  *   LabManager: <boolean>,
  *   LabTechnician: <boolean>,
  *   UserDisplayName?: <string>,
- *   UserEmail?: <string>
+ *   UserEmail?: <string>,
+ *   UserStatus?: <string>
  * }
  */
 import { Status } from '../base-entity';
@@ -21,4 +22,5 @@ export interface OrganizationUserDetails {
   OrganizationAdmin: boolean;
   UserDisplayName?: string;
   UserEmail?: string;
+  UserStatus?: string;
 }

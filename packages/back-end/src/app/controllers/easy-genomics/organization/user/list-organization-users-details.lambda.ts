@@ -45,6 +45,7 @@ export const handler: Handler = async (
           OrganizationAdmin: orgUser.OrganizationAdmin,
           UserDisplayName: userDisplayName.flatMap(_ => _ ? _ : []).join(' ').trim(),
           UserEmail: user.Email,
+          UserStatus: user.Status
         };
       }
     }).flat();

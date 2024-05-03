@@ -10,6 +10,10 @@ export class VscodeSettings extends Component {
 
     new JsonFile(rootProject, '.vscode/settings.json', {
       obj: {
+        'tailwindCSS.experimental.classRegex': [
+          ['cva\\(([^)]*)\\)', '["\'`]([^"\'`]*).*?["\'`]'],
+          ['cx\\(([^)]*)\\)', "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+        ],
         'eslint.workingDirectories': rootProject.subprojects.map((project) => ({
           pattern: path.relative(rootProject.outdir, project.outdir),
         })),

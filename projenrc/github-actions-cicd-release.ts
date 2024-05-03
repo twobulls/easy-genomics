@@ -176,10 +176,10 @@ export class GithubActionsCICDRelease extends Component {
         id: 'configure_iam_credentials',
         uses: 'aws-actions/configure-aws-credentials@v1',
         with: {
-          'role-to-assume': 'arn:aws:iam::851725267090:role/GitHub_to_AWS_via_FederatedOIDC',
+          'role-to-assume': 'arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC',
           'role-session-name': 'GitHub_to_AWS_via_FederatedOIDC',
           'role-duration-seconds': 3600,
-          'aws-region': 'ap-southeast-1',
+          'aws-region': '${{ secrets.AWS_REGION }}',
           'audience': 'sts.amazonaws.com',
         },
       },

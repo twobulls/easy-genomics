@@ -260,6 +260,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@nuxt/ui',
     'aws-amplify@5.3.18',
     'aws-sdk',
+    'clsx',
     'dotenv',
     'nuxt',
     'prettier-plugin-tailwindcss',

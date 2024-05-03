@@ -38,19 +38,23 @@ The following steps provide a quick start local development guide:
    ```
    $ git clone https://github.com/twobulls/easy-genomics.git
    ```
+
 2. Change directory into the Easy Genomics project root directory:
    ```
    $ cd easy-genomics
    [easy-genomics]$
    ```
-3. Run `pnpm projen` to synthesize the project files and dependency changes:
+
+3. Run `pnpm projen install` to install the dependencies defined in the `.projenrc.ts` file to the latest versions:
+   ```
+   [easy-genomics]$ pnpm projen install
+   ```
+
+4. Run `pnpm projen` to synthesize the project files and dependency changes:
    ```
    [easy-genomics]$ pnpm projen
    ```
-4. Run `pnpm projen upgrade` to upgrade the dependencies defined in the `.projenrc.ts` file to the latest versions:
-   ```
-   [easy-genomics]$ pnpm projen upgrade
-   ```
+
 5. Configure your local machine AWS CLI credentials:
    ```
    [easy-genomics]$ aws configure
@@ -59,44 +63,107 @@ The following steps provide a quick start local development guide:
    Default region name [us-east-1]:
    Default output format [None]:
    ```
-6. Copy `/config/easy-genomics.example.yaml` as `config/easy-genomics.yaml` and edit its settings for your deployment
+   Alternatively, if you have access to the AWS access portal copy and paste the temporary credentials provided into your shell/terminal:
+   ```
+   e.g.
+
+   export AWS_ACCESS_KEY_ID="..."
+   export AWS_SECRET_ACCESS_KEY="..."
+   export AWS_SESSION_TOKEN="..."
+   ```
+
+6. Copy the `/config/easy-genomics.example.yaml` as `/config/easy-genomics.yaml` and edit its settings for your deployment
    environment. To add new environments add configuration following the example template.
+    - Please consult the [/packages/shared-lib/src/app/types/configuration.d.ts](https://github.com/twobulls/easy-genomics/blob/main/packages/shared-lib/src/app/types/configuration.d.ts) for more information regarding the configuration type definition.
+    - NOTE: Each configuration is validated at run-time, if a configuration is incomplete or invalid it will be ignored as part of the build and deployment.
 
-7. Run `pnpm bootstrap-all` to bootstrap CDK for configured AWS Account ID & Region:
    ```
-   [easy-genomics]$ pnpm bootstrap-all
+   e.g.
+
+   easy-genomics:
+      configurations:
+         - dev:
+            aws-account-id:
+            aws-region:
+            env-type: dev # e.g. dev | pre-prod | prod
+            application-url: dev.easygenomics.myinstitution.org # e.g. dev.easygenomics.org
+    
+            # Back-End specific settings
+            back-end:
+               system-admin-email: admin@myinstitution.org # e.g. sysadmin@easygenomics.org
+    
+            # Front-End specific settings
+               front-end:
+                  # The following Front-End Infrastructure settings will need to be pre-configured in AWS.
+                  aws-hosted-zone-id:
+                  aws-hosted-zone-name:
+                  aws-certificate-arn:
+    
+                  # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
+                  aws-cognito-user-pool-id:
+                  aws-cognito-client-id:
+                  base-api-url:
+                  mock-org-id:
+         - prod:
+            ...
    ```
-8. Run `pnpm build-all` to build the entire Easy Genomics web application, which will run eslint, tests, and build for
-   each of the sub-projects:
-   ```
-   [easy-genomics]$ pnpm build-all
-   ```
-9. Run `pnpm test-all` to test the entire Easy Genomics web application, which will run eslint, compilation, and tests
-   for each of the sub-projects:
-   ```
-   [easy-genomics]$ pnpm test-all
-   ```
-10. Run `pnpm deploy-all` to deploy the entire Easy Genomics web application to the configured AWS Account & Region:
+
+7. Within the root directory, run `pnpm run bootstrap` to bootstrap CDK for the Back-End & Front-End stacks for the configured AWS Account ID & Region.
+   - If you have multiple configurations in the `/config/easy-genomics.yaml` file, this command will bootstrap each valid configuration.
     ```
-    [easy-genomics]$ pnpm deploy-all
+    [easy-genomics]$ pnpm run bootstrap
     ```
-11. If you wish to only focus development on either the `back-end` or `front-end` sub-project you are able to do so by
-    the following commands which will automatically include the `shared-lib` dependency:
 
-```
-[easy-genomics]$ pnpm boostrap-back-end   // Boostraps the back-end sub-project to the configured AWS Account & Region
+8. If you only have one configuration in the `/config/easy-genomics.yaml`, you can use the following convenience commands to:
+   - Build the entire application:
+       ```
+       [easy-genomics]$ pnpm run build-all
+       ```
+   - Build and deploy the entire application:
+       ```
+       [easy-genomics]$ pnpm run deploy-all
+       ```
+        - HINT: Comment out additional configurations in the `/config/easy-genomics.yaml` to make use of these convenience commands.
 
-[easy-genomics]$ pnpm build-back-end      // Executes eslint, tests, and builds the back-end sub-project with the shared-lib dependency
-
-[easy-genomics]$ pnpm deploy-back-end     // Executes tests, builds, and deploys the back-end resources to the configured AWS Account & Region
-
-
-[easy-genomics]$ pnpm boostrap-front-end  // Boostraps the front-end sub-project to the configured AWS Account & Region
-
-[easy-genomics]$ pnpm build-front-end     // Executes eslint, tests, builds, and generates static site contents for the front-end sub-project with the shared-lib dependency
-
-[easy-genomics]$ pnpm deploy-front-end    // Executes tests, builds, generates static site contents, and deploys the front-end resources to the AWS Account & Region
-```
+   However, if you have multiple configurations in the `/config/easy-genomics.yaml`, you will require the following steps:
+    1. Change directory to the `/packages/back-end` directory.
+       ```
+       [easy-genomics]$ cd packages/back-end
+       ```
+    2. Run `pnpm run build`.
+       ```
+       [easy-genomics/packages/back-end]$ pnpm run build
+       ```
+    3. Run `pnpm run deploy {env-name}-main-back-end-stack`.
+       ```
+       e.g. where {env-name} = prod
+        
+       [easy-genomics/packages/back-end]$ pnpm run deploy prod-main-back-end-stack
+       ```
+    4. Change directory to the `/packages/front-end` directory.
+       ```
+       [easy-genomics/packages/front-end]$ cd ../front-end
+       ```
+    5. Run `pnpm run nuxt-prepare`.
+       ```
+       [easy-genomics/packages/front-end]$ pnpm run nuxt-prepare
+       ```
+    6. Run `pnpm run build`.
+       ```
+       [easy-genomics/packages/front-end]$ pnpm run build
+       ```
+    7. Run `pnpm run nuxt-generate --stack {env-name}`.
+       ```
+       e.g. where {env-name} = prod
+       
+       [easy-genomics/packages/front-end]$ pnpm run nuxt-generate --stack prod
+       ```
+    8. Run `pnpm run deploy {env-name}-main-front-end-stack`.
+       ```
+       e.g. where {env-name} = prod
+        
+       [easy-genomics/packages/front-end]$ pnpm run deploy prod-main-front-end-stack
+       ```
 
 ## Contributions
 

@@ -31,7 +31,7 @@ class LabsModule extends HttpFactory {
   async users(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
-      `${this.RESOURCE}/user/list-laboratory-users?laboratoryId=${labId}`
+      `${this.RESOURCE}/user/list-laboratory-users?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -44,7 +44,7 @@ class LabsModule extends HttpFactory {
   async usersDetails(labId: string): Promise<LaboratoryUserDetails[]> {
     const res = await this.call<LaboratoryUserDetails[]>(
       'GET',
-      `${this.RESOURCE}/user/list-laboratory-users-details?laboratoryId=${labId}`
+      `${this.RESOURCE}/user/list-laboratory-users-details?laboratoryId=${labId}`,
     );
 
     if (!res) {

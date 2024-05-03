@@ -127,6 +127,18 @@ const root = new typescript.TypeScriptProject({
 root.removeScript('build');
 root.removeScript('deploy');
 root.addScripts({
+  // Development convenience scripts
+  ['bootstrap-all']:
+    'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/back-end,@easy-genomics/front-end --verbose',
+  ['build-all']: 'pnpm run build-back-end && pnpm run build-front-end',
+  ['deploy-all']: 'pnpm run deploy-back-end && pnpm run deploy-front-end',
+  ['build-back-end']: 'pnpm nx run-many --targets=test,build --projects=@easy-genomics/back-end --verbose',
+  ['build-front-end']:
+    'pnpm nx run-many --targets=test,nuxt-prepare,build,nuxt-generate --projects=@easy-genomics/front-end --verbose',
+  ['deploy-back-end']: 'pnpm nx run-many --targets=test,build,deploy --projects=@easy-genomics/back-end --verbose',
+  ['deploy-front-end']:
+    'pnpm nx run-many --targets=test,nuxt-prepare,build,nuxt-generate,deploy --projects=@easy-genomics/front-end --verbose',
+  // CI/CD convenience scripts
   ['cicd-test-back-end']:
     'pnpm nx run-many --targets=cicd-test-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
   ['cicd-build-deploy-back-end']:

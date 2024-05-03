@@ -10,12 +10,12 @@ import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
 import { DynamoDB } from 'aws-sdk';
 import { Construct } from 'constructs';
-import { DataSeedingNestedStackProps } from '../types/back-end-stack';
+import { DataProvisioningNestedStackProps } from '../types/back-end-stack';
 
-export class DataSeedingNestedStack extends NestedStack {
-  readonly props: DataSeedingNestedStackProps;
+export class DataProvisioningNestedStack extends NestedStack {
+  readonly props: DataProvisioningNestedStackProps;
 
-  constructor(scope: Construct, id: string, props: DataSeedingNestedStackProps) {
+  constructor(scope: Construct, id: string, props: DataProvisioningNestedStackProps) {
     super(scope, id, props);
     this.props = props;
 

@@ -20,8 +20,8 @@ export interface AwsHealthOmicsNestedStackProps extends EasyGenomicsNestedStackP
 export interface NFTowerNestedStackProps extends EasyGenomicsNestedStackProps {
 }
 
-// Defines the Data Seeding specific props
-export interface DataSeedingNestedStackProps extends BackEndStackProps, NestedStackProps {
+// Defines the Data Provisioning specific props
+export interface DataProvisioningNestedStackProps extends BackEndStackProps, NestedStackProps {
     userPool: UserPool,
     dynamoDBTables: Map<string, Table>
 }

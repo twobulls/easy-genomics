@@ -33,19 +33,17 @@ export const handler: Handler = async (
     const response: OrganizationUserDetails[] = organizationUsers.map(orgUser => {
       const user: User | undefined = users.filter(u => u.UserId === orgUser.UserId).shift();
       if (user) {
-        const userDisplayName: (string | undefined)[] = [];
-        userDisplayName.push(...[user.Title]);
-        userDisplayName.push(...[user.PreferredName ? user.PreferredName : user.FirstName]);
-        userDisplayName.push(...[user.LastName]);
-
         return <OrganizationUserDetails>{
-          UserId: orgUser.UserId,
+          UserId: user.UserId,
+          UserEmail: user.Email,
+          UserStatus: user.Status,
+          Title: user.Title,
+          PreferredName: user.PreferredName,
+          FirstName: user.FirstName,
+          LastName: user.LastName,
           OrganizationId: orgUser.OrganizationId,
           OrganizationUserStatus: orgUser.Status,
           OrganizationAdmin: orgUser.OrganizationAdmin,
-          UserDisplayName: userDisplayName.flatMap(_ => _ ? _ : []).join(' ').trim(),
-          UserEmail: user.Email,
-          UserStatus: user.Status
         };
       }
     }).flat();

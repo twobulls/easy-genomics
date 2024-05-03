@@ -5,22 +5,28 @@
  *
  * {
  *   UserId: <string>,
- *   LaboratoryId: <string>,
- *   LabManager: <boolean>,
- *   LabTechnician: <boolean>,
- *   UserDisplayName?: <string>,
- *   UserEmail?: <string>,
- *   UserStatus?: <string>
+ *   UserEmail: <string>,
+ *   UserStatus: UserStatus,
+ *   Title: <string>
+ *   PreferredName: <string>
+ *   FirstName: <string>
+ *   LastName: <string>
+ *   OrganizationId: <string>,
+ *   OrganizationUserStatus: OrgUserStatus,
+ *   OrganizationAdmin: <boolean>,
  * }
  */
-import { Status } from '../base-entity';
+import { OrgUserStatus, UserStatus } from '../base-entity';
 
 export interface OrganizationUserDetails {
   UserId: string;
+  UserEmail: string;
+  UserStatus: UserStatus;
+  Title?: string;
+  PreferredName?: string;
+  FirstName?: string;
+  LastName?: string;
   OrganizationId: string;
-  OrganizationUserStatus: Status;
+  OrganizationUserStatus: OrgUserStatus;
   OrganizationAdmin: boolean;
-  UserDisplayName?: string;
-  UserEmail?: string;
-  UserStatus?: string;
 }

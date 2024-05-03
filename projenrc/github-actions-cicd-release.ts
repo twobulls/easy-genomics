@@ -28,8 +28,8 @@ export class GithubActionsCICDRelease extends Component {
         steps: [
           ...this.bootstrapSteps(),
           {
-            name: 'Run Test Back-End CI/CD',
-            run: 'pnpm cicd-test-back-end',
+            name: 'Run CI/CD Test Back-End',
+            run: 'pnpm run cicd-test-back-end',
           },
         ],
       },
@@ -48,8 +48,12 @@ export class GithubActionsCICDRelease extends Component {
           ...this.bootstrapSteps(),
           ...this.configureAwsCredentials(),
           {
-            name: 'Run Build & Deploy Back-End CI/CD',
-            run: 'pnpm cicd-build-deploy-back-end',
+            name: 'Run CI/CD CDK Bootstrap Back-End',
+            run: 'pnpm run cicd-bootstrap-back-end',
+          },
+          {
+            name: 'Run CI/CD Build & Deploy Back-End',
+            run: 'pnpm run cicd-build-deploy-back-end',
           },
         ],
       },
@@ -66,7 +70,7 @@ export class GithubActionsCICDRelease extends Component {
         steps: [
           ...this.bootstrapSteps(),
           {
-            name: 'Run Test Front-End CI/CD',
+            name: 'Run CI/CD Test Front-End',
             run: 'pnpm cicd-test-front-end',
           },
         ],
@@ -86,7 +90,11 @@ export class GithubActionsCICDRelease extends Component {
           ...this.bootstrapSteps(),
           ...this.configureAwsCredentials(),
           {
-            name: 'Run Build & Deploy Front-End CI/CD',
+            name: 'Run CI/CD CDK Bootstrap Back-End',
+            run: 'pnpm cicd-bootstrap-front-end',
+          },
+          {
+            name: 'Run CI/CD Build & Deploy Front-End',
             run: 'pnpm cicd-build-deploy-front-end',
           },
         ],

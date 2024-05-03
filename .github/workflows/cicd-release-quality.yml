@@ -53,8 +53,8 @@ jobs:
         uses: nrwl/nx-set-shas@v2
         with:
           main-branch-name: main
-      - name: Run Test Back-End CI/CD
-        run: pnpm cicd-test-back-end
+      - name: Run CI/CD Test Back-End
+        run: pnpm run cicd-test-back-end
   build-deploy-back-end:
     name: Build & Deploy Back-End
     needs: test-back-end
@@ -113,8 +113,10 @@ jobs:
           role-duration-seconds: 3600
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
-      - name: Run Build & Deploy Back-End CI/CD
-        run: pnpm cicd-build-deploy-back-end
+      - name: Run CI/CD CDK Bootstrap Back-End
+        run: pnpm run cicd-bootstrap-back-end
+      - name: Run CI/CD Build & Deploy Back-End
+        run: pnpm run cicd-build-deploy-back-end
   test-front-end:
     name: Test Front-End
     needs: build-deploy-back-end
@@ -163,7 +165,7 @@ jobs:
         uses: nrwl/nx-set-shas@v2
         with:
           main-branch-name: main
-      - name: Run Test Front-End CI/CD
+      - name: Run CI/CD Test Front-End
         run: pnpm cicd-test-front-end
   build-deploy-front-end:
     name: Build & Deploy Front-End
@@ -223,5 +225,7 @@ jobs:
           role-duration-seconds: 3600
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
-      - name: Run Build & Deploy Front-End CI/CD
+      - name: Run CI/CD CDK Bootstrap Back-End
+        run: pnpm cicd-bootstrap-front-end
+      - name: Run CI/CD Build & Deploy Front-End
         run: pnpm cicd-build-deploy-front-end

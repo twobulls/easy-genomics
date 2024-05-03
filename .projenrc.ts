@@ -260,6 +260,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@nuxt/ui',
     'aws-amplify@5.3.18',
     'aws-sdk',
+    'class-variance-authority',
     'clsx',
     'dotenv',
     'nuxt',

@@ -111,6 +111,10 @@
       "type": "runtime"
     },
     {
+      "name": "class-variance-authority",
+      "type": "runtime"
+    },
+    {
       "name": "clsx",
       "type": "runtime"
     },

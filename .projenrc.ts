@@ -266,6 +266,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
+    'tailwind-merge',
     'unplugin-icons',
     'unplugin-vue-components',
     'uuid',

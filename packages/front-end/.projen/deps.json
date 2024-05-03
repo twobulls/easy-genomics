@@ -136,6 +136,10 @@
       "type": "runtime"
     },
     {
+      "name": "tailwind-merge",
+      "type": "runtime"
+    },
+    {
       "name": "tailwindcss",
       "type": "runtime"
     },

@@ -33,23 +33,20 @@ export const handler: Handler = async (
     const response: OrganizationUserDetails[] = organizationUsers.map(orgUser => {
       const user: User | undefined = users.filter(u => u.UserId === orgUser.UserId).shift();
       if (user) {
-        return <OrganizationUserDetails> {
-          UserId: orgUser.UserId,
-          OrganizationId: orgUser.OrganizationId,
-          OrganizationUserStatus: orgUser.Status,
-          OrganizationAdmin: orgUser.OrganizationAdmin,
-          UserDisplayName: `${user.PreferredName ? user.PreferredName : user.FirstName} ${user.LastName}`.trim(),
+        return <OrganizationUserDetails>{
+          UserId: user.UserId,
           UserEmail: user.Email,
-        };
-      } else {
-        return <OrganizationUserDetails> {
-          UserId: orgUser.UserId,
+          UserStatus: user.Status,
+          Title: user.Title,
+          PreferredName: user.PreferredName,
+          FirstName: user.FirstName,
+          LastName: user.LastName,
           OrganizationId: orgUser.OrganizationId,
           OrganizationUserStatus: orgUser.Status,
           OrganizationAdmin: orgUser.OrganizationAdmin,
         };
       }
-    });
+    }).flat();
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

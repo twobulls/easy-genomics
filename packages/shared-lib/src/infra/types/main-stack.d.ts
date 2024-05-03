@@ -21,4 +21,5 @@ export interface FrontEndStackProps extends BaseStackProps {
 export interface BackEndStackProps extends BaseStackProps {
     namePrefix: string;
     systemAdminEmail: string;
+    systemAdminPassword: string;
 }

@@ -2,7 +2,7 @@ import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/mai
 import { Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { AwsHealthOmicsNestedStack } from './aws-healthomics-nested-stack';
-import { DataSeedingNestedStack } from './data-seeding-nested-stack';
+import { DataProvisioningNestedStack } from './data-provisioning-nested-stack';
 import { EasyGenomicsNestedStack } from './easy-genomics-nested-stack';
 import { NFTowerNestedStack } from './nf-tower-nested-stack';
 import { ApiGatewayConstruct } from '../constructs/api-gateway-construct';
@@ -11,7 +11,7 @@ import { IamConstruct } from '../constructs/iam-construct';
 import {
   AwsHealthOmicsNestedStackProps,
   EasyGenomicsNestedStackProps,
-  NFTowerNestedStackProps, DataSeedingNestedStackProps,
+  NFTowerNestedStackProps, DataProvisioningNestedStackProps,
 } from '../types/back-end-stack';
 
 /**
@@ -97,12 +97,12 @@ export class BackEndStack extends Stack {
     };
     new NFTowerNestedStack(this, 'nf-tower-nested-stack', nfTowerNestedStackProps);
 
-    // DataSeedingNestedStackProps extends the BackEndStackProps
-    const dataSeedingNestedStackProps: DataSeedingNestedStackProps = {
+    // DataProvisioningNestedStackProps extends the BackEndStackProps
+    const dataSeedingNestedStackProps: DataProvisioningNestedStackProps = {
       ...this.props,
       userPool: this.cognitoIdp.userPool,
       dynamoDBTables: easyGenomicsNestedStack.dynamoDBTables,
     };
-    new DataSeedingNestedStack(this, 'data-seeding-nested-stack', dataSeedingNestedStackProps);
+    new DataProvisioningNestedStack(this, 'data-provisioning-nested-stack', dataSeedingNestedStackProps);
   };
 }

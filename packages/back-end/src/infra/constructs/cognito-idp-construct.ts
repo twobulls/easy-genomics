@@ -48,7 +48,7 @@ export class CognitoIdpConstruct extends Construct {
     });
     new CfnOutput(this, 'UserPoolClientId', { key: 'UserPoolClientId', value: this.userPoolClient.userPoolClientId });
 
-    this.userPoolGroup = new CfnUserPoolGroup(this, 'user-pool-group', {
+    this.userPoolGroup = new CfnUserPoolGroup(this, 'system-admin-user-pool-group', {
       userPoolId: this.userPool.userPoolId,
       // the properties below are optional
       description: 'SystemAdmin Group',

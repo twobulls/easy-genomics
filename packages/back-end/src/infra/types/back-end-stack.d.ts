@@ -23,5 +23,6 @@ export interface NFTowerNestedStackProps extends EasyGenomicsNestedStackProps {
 // Defines the Data Provisioning specific props
 export interface DataProvisioningNestedStackProps extends BackEndStackProps, NestedStackProps {
     userPool: UserPool,
+    userPoolSystemAdminGroupName?: string,
     dynamoDBTables: Map<string, Table>
 }

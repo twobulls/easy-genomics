@@ -98,11 +98,12 @@ export class BackEndStack extends Stack {
     new NFTowerNestedStack(this, 'nf-tower-nested-stack', nfTowerNestedStackProps);
 
     // DataProvisioningNestedStackProps extends the BackEndStackProps
-    const dataSeedingNestedStackProps: DataProvisioningNestedStackProps = {
+    const dataProvisioningNestedStackProps: DataProvisioningNestedStackProps = {
       ...this.props,
       userPool: this.cognitoIdp.userPool,
+      userPoolSystemAdminGroupName: this.cognitoIdp.userPoolGroup.groupName,
       dynamoDBTables: easyGenomicsNestedStack.dynamoDBTables,
     };
-    new DataProvisioningNestedStack(this, 'data-provisioning-nested-stack', dataSeedingNestedStackProps);
+    new DataProvisioningNestedStack(this, 'data-provisioning-nested-stack', dataProvisioningNestedStackProps);
   };
 }

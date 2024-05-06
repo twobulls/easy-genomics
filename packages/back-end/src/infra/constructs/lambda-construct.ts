@@ -137,10 +137,12 @@ export class LambdaConstruct extends Construct {
     // Attach relevant IAM policies to Lambda Function matching specific API Endpoint
     const iamPolicyStatements: PolicyStatement[] | undefined = this.props.iamPolicyStatements?.get(lambdaApiEndpoint);
     if (iamPolicyStatements) {
-      // console.debug(`Attaching IAM Policy to REST API Endpoint: ${lambdaApiEndpoint}\n${JSON.stringify(iamPolicyStatements, null, 2)}`);
+      console.debug(`Attaching IAM Policy to REST API Endpoint: ${lambdaApiEndpoint}\n${JSON.stringify(iamPolicyStatements, null, 2)}`);
       iamPolicyStatements.map((iamPolicyStatement: PolicyStatement) => {
         lambdaHandler.addToRolePolicy(iamPolicyStatement);
       });
+    } else {
+      console.warn(`WARNING: ${lambdaApiEndpoint} does not have any IAM Policies attached`);
     }
 
     if (lambdaFunction.command === 'process') {
@@ -173,7 +175,6 @@ export class LambdaConstruct extends Construct {
       }
     }
 
-    console.log(` +++ ${lambdaApiEndpoint} +++ `);
     this.lambdaFunctions.set(lambdaApiEndpoint, lambdaHandler);
   };
 

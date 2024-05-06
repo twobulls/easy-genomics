@@ -7,9 +7,9 @@ import { Table } from "aws-cdk-lib/aws-dynamodb";
 
 // Defines the Easy Genomics specific props
 export interface EasyGenomicsNestedStackProps extends BackEndStackProps, NestedStackProps {
-    restApi: RestApi,
-    userPool: UserPool,
-    iamPolicyStatements: Map<string, PolicyStatement[]>,
+    restApi?: RestApi,
+    userPool?: UserPool,
+    iamPolicyStatements?: Map<string, PolicyStatement[]>,
 }
 
 // Defines the AWS HealthOmics specific props

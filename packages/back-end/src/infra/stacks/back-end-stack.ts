@@ -8,6 +8,7 @@ import { NFTowerNestedStack } from './nf-tower-nested-stack';
 import { ApiGatewayConstruct } from '../constructs/api-gateway-construct';
 import { CognitoIdpConstruct } from '../constructs/cognito-idp-construct';
 import { IamConstruct } from '../constructs/iam-construct';
+import { LambdaConstruct } from '../constructs/lambda-construct';
 import {
   AwsHealthOmicsNestedStackProps,
   EasyGenomicsNestedStackProps,
@@ -24,6 +25,7 @@ import {
  */
 export class BackEndStack extends Stack {
   readonly props: BackEndStackProps;
+  protected authLambdas!: LambdaConstruct;
   protected apiGateway!: ApiGatewayConstruct;
   protected cognitoIdp!: CognitoIdpConstruct;
   protected iam!: IamConstruct;
@@ -32,6 +34,8 @@ export class BackEndStack extends Stack {
     super(scope, id, props);
     this.props = props;
 
+    // Auth Lambda Functions
+    this.authLambdas = this.setupAuthLambdaFunctions();
     // Cognito User Pool / Groups for all users
     this.cognitoIdp = this.setupCognitoIdp();
     // API Gateway for REST APIs
@@ -43,11 +47,25 @@ export class BackEndStack extends Stack {
     this.initiateNestedStacks();
   }
 
+  private setupAuthLambdaFunctions = (): LambdaConstruct => {
+    return new LambdaConstruct(this, `${this.props.constructNamespace}-auth`, {
+      ...this.props,
+      lambdaFunctionsDir: 'src/app/controllers/auth',
+      lambdaFunctionsNamespace: `${this.props.constructNamespace}-auth`,
+      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      environment: {
+        AWS_ACCOUNT_ID: this.props.env.account!,
+        NAME_PREFIX: this.props.namePrefix,
+      },
+    });
+  };
+
   // Returns CognitoIdp Construct for easier access to associated objects (UserPool, UserPoolClient)
   private setupCognitoIdp = (): CognitoIdpConstruct => {
     return new CognitoIdpConstruct(this, `${this.props.constructNamespace}-cognito-idp`, {
       constructNamespace: this.props.constructNamespace,
       devEnv: this.props.devEnv,
+      authLambdaFunctions: this.authLambdas.lambdaFunctions,
     });
   };
 

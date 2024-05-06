@@ -1,11 +1,14 @@
 import { Auth } from 'aws-amplify';
+import { useToastStore } from '~/stores/stores';
 
 class HttpFactory {
   /**
+   * @description Call API with token and handle response errors
    * @param method
    * @param url
    * @param data
-   * @param extras
+   * @param successMsg
+   * @returns {Promise<T | undefined>}
    */
   async call<T>(method = 'GET', url: string, data?: unknown): Promise<T | undefined> {
     try {
@@ -21,17 +24,27 @@ class HttpFactory {
         ...headers,
         body: JSON.stringify(data),
       };
-
       const response = await fetch(url, settings);
 
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        await this.handleResponseError(response);
+      }
 
-      return await (response.json() as Promise<T>);
+      return (await response.json()) as Promise<T>;
     } catch (error) {
-      // TODO: handle error message via toast
-      console.error('Request error:', error);
-      throw error;
+      throw new Error(`Request error: ${error.message}`);
     }
+  }
+
+  private async handleResponseError(response: Response): Promise<void> {
+    let errorMessage = `HTTP error! status: ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      errorMessage = errorBody.message || errorMessage;
+    } catch (error) {
+      console.error('Error parsing response body', error);
+    }
+    throw new Error(errorMessage);
   }
 
   private async getToken(): Promise<string> {

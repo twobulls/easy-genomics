@@ -3,7 +3,11 @@ import IconsResolver from 'unplugin-icons/resolver';
 import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
-import { findConfiguration, getStackEnvName, loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
+import {
+  findConfiguration,
+  getStackEnvName,
+  loadConfigurations,
+} from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import { join } from 'path';
 
 let awsRegion: string | undefined;
@@ -25,7 +29,9 @@ if (process.env.CI_CD === 'true') {
   console.log('Loading Front-End Nuxt easy-genomics.yaml settings...');
 
   // Load configuration settings for each environment
-  const configurations: {[p: string]: ConfigurationSettings}[] = loadConfigurations(join(__dirname, '../../config/easy-genomics.yaml'));
+  const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
+    join(__dirname, '../../config/easy-genomics.yaml')
+  );
   if (configurations.length === 0) {
     throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
   }
@@ -36,9 +42,8 @@ if (process.env.CI_CD === 'true') {
     throw new Error('Multiple configurations found in easy-genomics.yaml, please specify argument: --stack {env-name}');
   }
 
-  const configuration: {[p: string]: ConfigurationSettings} = (configurations.length > 1)
-    ? findConfiguration(STACK_ENV_NAME!, configurations)
-    : configurations.shift()!;
+  const configuration: { [p: string]: ConfigurationSettings } =
+    configurations.length > 1 ? findConfiguration(STACK_ENV_NAME!, configurations) : configurations.shift()!;
   const configSettings = Object.values(configuration).shift();
   if (!configSettings) {
     throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');

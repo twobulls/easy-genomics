@@ -9,10 +9,10 @@ export default defineNuxtRouteMiddleware(async (context) => {
   try {
     const user = await Auth.currentAuthenticatedUser();
     if (user && context.fullPath === '/login') {
-      return navigateTo('/labs');
+      return await navigateTo('/labs');
     }
     if (!user && context.fullPath !== '/login') {
-      return navigateTo('/login');
+      return await navigateTo('/login');
     }
   } catch (e) {
     if (context.fullPath !== '/login') {

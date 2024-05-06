@@ -16,6 +16,7 @@ if (process.env.CI_CD === 'true') {
   const envType: string | undefined = process.env.ENV_TYPE;
   const applicationUrl: string | undefined = process.env.APPLICATION_URL;
   const systemAdminEmail: string | undefined = process.env.SYSTEM_ADMIN_EMAIL;
+  const systemAdminPassword: string | undefined = process.env.SYSTEM_ADMIN_PASSWORD;
 
   if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the CI/CD environment configuration');
   if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
@@ -23,6 +24,7 @@ if (process.env.CI_CD === 'true') {
   if (!envType) throw new Error('ENV_TYPE undefined, please check the CI/CD environment configuration');
   if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the CI/CD environment configuration');
   if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the CI/CD environment configuration');
+  if (!systemAdminPassword) throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the CI/CD environment configuration');
 
   // AWS infrastructure resources can be destroyed only when devEnv is true
   const devEnv: boolean = envType === 'dev';
@@ -42,6 +44,7 @@ if (process.env.CI_CD === 'true') {
     applicationUrl: applicationUrl,
     namePrefix: namePrefix,
     systemAdminEmail: systemAdminEmail,
+    systemAdminPassword: systemAdminPassword,
   });
 } else {
   console.log('Loading Back-End easy-genomics.yaml settings...');
@@ -63,6 +66,7 @@ if (process.env.CI_CD === 'true') {
       const applicationUrl: string = configSettings['application-url'];
 
       const systemAdminEmail: string = configSettings['back-end']['system-admin-email'];
+      const systemAdminPassword: string = configSettings['back-end']['system-admin-password'];
 
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
@@ -82,6 +86,7 @@ if (process.env.CI_CD === 'true') {
         applicationUrl: applicationUrl,
         namePrefix: namePrefix,
         systemAdminEmail: systemAdminEmail,
+        systemAdminPassword: systemAdminPassword,
       });
     }
   });

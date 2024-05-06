@@ -7,6 +7,7 @@ export interface ConfigurationSettings {
   // Back-End specific settings
   ['back-end']: {
     ['system-admin-email']: string,
+    ['system-admin-password']: string, // Initial Cognito password
   }
 
   // Front-End specific settings

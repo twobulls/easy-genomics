@@ -115,10 +115,6 @@
       "type": "runtime"
     },
     {
-      "name": "clsx",
-      "type": "runtime"
-    },
-    {
       "name": "constructs",
       "version": "^10.0.5",
       "type": "runtime"
@@ -137,10 +133,6 @@
     },
     {
       "name": "sass",
-      "type": "runtime"
-    },
-    {
-      "name": "tailwind-merge",
       "type": "runtime"
     },
     {

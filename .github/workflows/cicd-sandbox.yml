@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - feat/eg-402_build_num
-  workflow_dispatch:
 
 jobs:
   test-back-end:

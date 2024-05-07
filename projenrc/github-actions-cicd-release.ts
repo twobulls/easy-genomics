@@ -1,5 +1,5 @@
-import { Component, github, typescript } from 'projen';
 import { IConstruct } from 'constructs';
+import { Component, github, typescript } from 'projen';
 
 // Custom projen component that configures a Github Actions Workflow.
 export class GithubActionsCICDRelease extends Component {

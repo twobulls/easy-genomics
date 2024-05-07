@@ -12,11 +12,11 @@ import {
 } from 'projen/lib/javascript';
 import { pathsToModuleNameMapper } from 'ts-jest';
 import { setupProjectFolders } from './projenrc/easy-genomics-project-setup';
+import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
 import { Husky } from './projenrc/husky';
 import { Nx } from './projenrc/nx';
 import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
-import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
 
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.124.0';

@@ -53,7 +53,7 @@ jobs:
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v2
         with:
-          main-branch-name: main
+          main-branch-name: feat/eg-402_build_num
       - name: Run CI/CD Test Back-End
         run: pnpm run cicd-test-back-end
   build-deploy-back-end:
@@ -105,7 +105,7 @@ jobs:
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v2
         with:
-          main-branch-name: main
+          main-branch-name: feat/eg-402_build_num
       - name: Configure AWS Credentials
         id: configure_iam_credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -167,7 +167,7 @@ jobs:
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v2
         with:
-          main-branch-name: main
+          main-branch-name: feat/eg-402_build_num
       - name: Run CI/CD Test Front-End
         run: pnpm cicd-test-front-end
   build-deploy-front-end:
@@ -175,7 +175,7 @@ jobs:
     needs: test-front-end
     runs-on: ubuntu-latest
     permissions:
-      id-token: write 
+      id-token: write
       contents: write
       actions: read
     environment: sandbox
@@ -219,7 +219,7 @@ jobs:
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v2
         with:
-          main-branch-name: main
+          main-branch-name: feat/eg-402_build_num
       - name: Configure AWS Credentials
         id: configure_iam_credentials
         uses: aws-actions/configure-aws-credentials@v1

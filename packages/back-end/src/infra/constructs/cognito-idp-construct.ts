@@ -1,10 +1,18 @@
 import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
-import { AccountRecovery, CfnUserPoolGroup, UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
+import {
+  AccountRecovery,
+  CfnUserPoolGroup,
+  UserPool,
+  UserPoolClient,
+  UserPoolOperation,
+} from 'aws-cdk-lib/aws-cognito';
+import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
 export interface CognitoIDPConstructProps {
   constructNamespace: string;
   devEnv?: boolean;
+  authLambdaFunctions?: Map<string, IFunction>;
 }
 
 export class CognitoIdpConstruct extends Construct {
@@ -55,6 +63,37 @@ export class CognitoIdpConstruct extends Construct {
       groupName: 'SystemAdmin',
       precedence: 0,
     });
+
+    if (props.authLambdaFunctions) {
+      /** AWS Reference: https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html **/
+      // Authentication Events
+      this.addCognitoLambdaTrigger(UserPoolOperation.PRE_AUTHENTICATION, props.authLambdaFunctions.get('/auth/process-pre-authentication'));
+      this.addCognitoLambdaTrigger(UserPoolOperation.POST_AUTHENTICATION, props.authLambdaFunctions.get('/auth/process-post-authentication'));
+      this.addCognitoLambdaTrigger(UserPoolOperation.PRE_TOKEN_GENERATION, props.authLambdaFunctions.get('/auth/process-pre-token-generation'));
+      // Sign-Up
+      this.addCognitoLambdaTrigger(UserPoolOperation.PRE_SIGN_UP, props.authLambdaFunctions.get('/auth/process-pre-signup'));
+      this.addCognitoLambdaTrigger(UserPoolOperation.POST_CONFIRMATION, props.authLambdaFunctions.get('/auth/process-post-confirmation'));
+      this.addCognitoLambdaTrigger(UserPoolOperation.USER_MIGRATION, props.authLambdaFunctions.get('/auth/process-user-migration'));
+      // Messages
+      this.addCognitoLambdaTrigger(UserPoolOperation.CUSTOM_MESSAGE, props.authLambdaFunctions.get('/auth/process-custom-message'));
+      // Email & SMS 3rd party providers
+      this.addCognitoLambdaTrigger(UserPoolOperation.CUSTOM_EMAIL_SENDER, props.authLambdaFunctions.get('/auth/process-custom-email-sender'));
+      this.addCognitoLambdaTrigger(UserPoolOperation.CUSTOM_SMS_SENDER, props.authLambdaFunctions.get('/auth/process-custom-sms-sender'));
+    }
   }
 
+  /**
+   * Helper function to register a Lambda function for Cognito Trigger Event.
+   *
+   * If the auth lambdaFunction is undefined, then the associated Cognito Trigger Event will not have a registered function.
+   *
+   * @param userPoolOperation
+   * @param lambdaFunction
+   * @private
+   */
+  private addCognitoLambdaTrigger(userPoolOperation: UserPoolOperation, lambdaFunction?: IFunction) {
+    if (lambdaFunction) {
+      this.userPool.addTrigger(userPoolOperation, lambdaFunction);
+    }
+  }
 }

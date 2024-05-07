@@ -5,6 +5,10 @@ import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Table } from "aws-cdk-lib/aws-dynamodb";
 
+// Defined the Auth specific props
+export interface AuthNestedStackProps extends BackEndStackProps, NestedStackProps {
+}
+
 // Defines the Easy Genomics specific props
 export interface EasyGenomicsNestedStackProps extends BackEndStackProps, NestedStackProps {
     restApi?: RestApi,

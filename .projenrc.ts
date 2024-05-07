@@ -250,6 +250,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
       rootDir: '.',
+      types: ['vue'],
       verbatimModuleSyntax: false,
     },
     'include': ['.nuxt/**/*.d.ts', 'auto-imports.d.ts', 'components.d.ts', '**/*.ts', '**/*d.ts', '**/*.vue'],

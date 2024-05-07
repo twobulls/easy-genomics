@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
 import { v4 as uuidv4 } from 'uuid';
+import { Toast } from '~/types/toast';
 
-const initialState = (): State => ({
+const initialState = (): ToastStoreState => ({
   toasts: [],
 });
 

@@ -5,6 +5,6 @@ type Toast = {
   variant: 'success' | 'error' | 'warning' | 'info';
 };
 
-interface State {
+interface ToastStoreState {
   toasts: Toast[];
 }

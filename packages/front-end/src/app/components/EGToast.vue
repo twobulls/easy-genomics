@@ -97,5 +97,3 @@
 <template>
   <UNotification :timeout="timeout" :id="id" :ui="variantUi" :title="title" :icon="variantUi.icon" />
 </template>
-
-<style lang="scss"></style>

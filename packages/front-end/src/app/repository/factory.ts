@@ -1,5 +1,4 @@
 import { Auth } from 'aws-amplify';
-import { useToastStore } from '~/stores/stores';
 
 class HttpFactory {
   /**

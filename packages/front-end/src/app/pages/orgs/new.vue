@@ -2,6 +2,7 @@
   import { z } from 'zod';
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
+  import { useToastStore } from '~/stores/stores';
 
   const { $api } = useNuxtApp();
 
@@ -110,14 +111,12 @@
     try {
       state.isFormDisabled = true;
       const { Name, Description } = event.data;
-      const result = await $api.orgs.create({ Name, Description });
-      if (result) {
-        // TODO: Display success toast message
-        await navigateTo('/orgs');
-      }
+
+      await $api.orgs.create({ Name, Description });
+      useToastStore().success('Organization created');
+      await navigateTo('/orgs');
     } catch (error) {
-      // TODO: Display error toast message
-      console.error('error:', error);
+      useToastStore().error('Failed to create organization');
     } finally {
       state.isFormDisabled = false;
     }

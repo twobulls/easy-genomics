@@ -3,6 +3,7 @@
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
+  import { useToastStore } from '~/stores/stores';
 
   const { $api } = useNuxtApp();
 
@@ -108,14 +109,12 @@
     try {
       state.isFormDisabled = true;
       const { Name, Description } = event.data;
-      const result = await $api.labs.create({ Name, Description, OrganizationId: MOCK_ORG_ID, Status: 'Active' });
-      if (result) {
-        // TODO: Display success toast message
-        await navigateTo('/labs');
-      }
+
+      await $api.labs.create({ Name, Description, OrganizationId: MOCK_ORG_ID, Status: 'Active' });
+      useToastStore().success('Laboratory created');
+      await navigateTo('/labs');
     } catch (error) {
-      // TODO: optional catch block to handle thrown error from .call() further up the stack
-      console.error('error:', error);
+      useToastStore().error('Failed to create lab');
     } finally {
       state.isFormDisabled = false;
     }

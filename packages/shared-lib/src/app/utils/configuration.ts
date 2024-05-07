@@ -9,10 +9,10 @@ import { Configuration, ConfigurationSettings } from '../types/configuration';
  */
 export function getStackEnvName(): string | undefined {
   const args: (string | undefined)[] = process.argv.map((arg: string, index: number) => {
-    return (arg === '--stack' && process.argv.length > index+1) ? process.argv[index+1] : undefined;
+    return arg === '--stack' && process.argv.length > index + 1 ? process.argv[index + 1] : undefined;
   });
 
-  const envName: string | undefined = args.flatMap(c => !!c ? [c] : []).shift();
+  const envName: string | undefined = args.flatMap((c) => (!!c ? [c] : [])).shift();
   if (envName) {
     console.log(`Using supplied --stack {env-name}: ${envName}`);
   }
@@ -23,11 +23,12 @@ export function getStackEnvName(): string | undefined {
  * Shared function to load the specified configuration file settings.
  * @param filePath
  */
-export function loadConfigurations(filePath: string): {[p: string]: ConfigurationSettings}[] {
+export function loadConfigurations(filePath: string): { [p: string]: ConfigurationSettings }[] {
   const yamlConfigs: Record<string, any> = loadYamlConfigFile(filePath);
   const configService = new ConfigService(yamlConfigs);
 
-  const configurations: Configuration[] | undefined = configService.get<Configuration[]>('easy-genomics.configurations');
+  const configurations: Configuration[] | undefined =
+    configService.get<Configuration[]>('easy-genomics.configurations');
   if (!configurations) {
     throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
   }
@@ -40,9 +41,12 @@ export function loadConfigurations(filePath: string): {[p: string]: Configuratio
  * @param envName
  * @param configurations
  */
-export function findConfiguration(envName: string, configurations: {[p: string]: ConfigurationSettings}[]): {[p: string]: ConfigurationSettings} {
-  const configuration: {[p: string]: ConfigurationSettings} | undefined = configurations
-    .filter((c: {[p: string]: ConfigurationSettings}) => Object.keys(c).shift() === envName)
+export function findConfiguration(
+  envName: string,
+  configurations: { [p: string]: ConfigurationSettings }[]
+): { [p: string]: ConfigurationSettings } {
+  const configuration: { [p: string]: ConfigurationSettings } | undefined = configurations
+    .filter((c: { [p: string]: ConfigurationSettings }) => Object.keys(c).shift() === envName)
     .shift();
 
   if (!configuration) {
@@ -57,14 +61,14 @@ export function findConfiguration(envName: string, configurations: {[p: string]:
  */
 function loadYamlConfigFile(filePath: string): Record<string, any> {
   return yaml.load(readFileSync(filePath, 'utf8')) as Record<string, any>;
-};
+}
 
 /**
  * Private function returning only validated ConfigurationSettings.
  * @param configurations
  */
-function loadValidConfigurations(configurations: Configuration[]): {[p: string]: ConfigurationSettings}[] {
-  const validConfigurations: ({[p: string]: ConfigurationSettings} | null)[] = configurations.map(config => {
+function loadValidConfigurations(configurations: Configuration[]): { [p: string]: ConfigurationSettings }[] {
+  const validConfigurations: ({ [p: string]: ConfigurationSettings } | null)[] = configurations.map((config) => {
     const envName: string | undefined = Object.keys(config).shift();
     const configurationSettings: ConfigurationSettings | undefined = Object.values(config).shift();
 
@@ -77,5 +81,5 @@ function loadValidConfigurations(configurations: Configuration[]): {[p: string]:
   });
 
   // Return only validated configurations
-  return validConfigurations.flatMap(c => !!c ? [c] : []);
+  return validConfigurations.flatMap((c) => (!!c ? [c] : []));
 }

@@ -2,6 +2,7 @@
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse } from '~/types/api';
+  import { useToastStore } from '~/stores/stores';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -37,12 +38,13 @@
       const res: DeletedResponse = await $api.labs.removeUser(laboratoryId, selectedUserId.value);
 
       if (res.deleted) {
+        useToastStore().success('User removed from lab');
         await getLabUsers();
       } else {
         throw new Error('User not deleted');
       }
     } catch (error) {
-      console.error(error);
+      useToastStore().error('Failed to remove user from lab');
     } finally {
       selectedUserId.value = '';
       isRemovingUser.value = false;

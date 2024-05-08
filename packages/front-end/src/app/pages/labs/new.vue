@@ -2,8 +2,9 @@
   import { z } from 'zod';
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
-  const { MOCK_ORG_ID } = useRuntimeConfig().public;
+  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
 
+  const { MOCK_ORG_ID } = useRuntimeConfig().public;
   const { $api } = useNuxtApp();
 
   /*
@@ -156,6 +157,13 @@
         </EGFormGroup>
       </div>
     </section>
-    <EGButton :disabled="state.isFormDisabled" type="submit" variant="primary" label="Create" class="mt-6" />
+    <EGButton
+      :disabled="state.isFormDisabled"
+      type="submit"
+      :variant="ButtonVariantEnum.enum.primary"
+      :size="ButtonSizeEnum.enum.md"
+      label="Create"
+      class="mt-6"
+    />
   </UForm>
 </template>

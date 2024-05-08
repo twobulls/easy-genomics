@@ -1,5 +1,7 @@
 <script setup lang="ts">
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
+  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
+  import { DeletedResponse } from '~/types/api';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -7,6 +9,7 @@
   const labName = $route.query.name;
   const hasNoData = ref(false);
   const isLoading = ref(true);
+  const isRemovingUser = ref(false);
   const labUsersDetailsData = ref<LaboratoryUserDetails[]>([]);
   const page = ref(1);
   const pageCount = ref(10);
@@ -15,6 +18,36 @@
   const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
   const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
   const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
+
+  const laboratoryId = $route.params.id;
+
+  // Dynamic remove user dialog values
+  const isOpen = ref(false);
+  const primaryMessage = ref('');
+  const selectedUserId = ref('');
+
+  async function handleRemoveUser() {
+    isOpen.value = false;
+    isRemovingUser.value = true;
+    try {
+      if (!selectedUserId.value) {
+        throw new Error('No selectedUserId');
+      }
+
+      const res: DeletedResponse = await $api.labs.removeUser(laboratoryId, selectedUserId.value);
+
+      if (res.deleted) {
+        await getLabUsers();
+      } else {
+        throw new Error('User not deleted');
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      selectedUserId.value = '';
+      isRemovingUser.value = false;
+    }
+  }
 
   const columns = [
     {
@@ -41,17 +74,21 @@
     [
       {
         label: 'Remove from lab',
-        click: () => {},
+        click: () => {
+          selectedUserId.value = row.UserId;
+          primaryMessage.value = `Are you sure you want to remove ${row.UserDisplayName} from ${labName}?`;
+          isOpen.value = true;
+        },
       },
     ],
   ];
 
-  useAsyncData('labUsersDetailsData', async () => {
+  async function getLabUsers() {
     isLoading.value = true;
     try {
       labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
 
-      if (!labUsersDetailsData.value.length) {
+      if (labUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
       }
     } catch (error) {
@@ -59,8 +96,7 @@
     } finally {
       isLoading.value = false;
     }
-    return labUsersDetailsData.value;
-  });
+  }
 
   function updateSearchOutput(newVal: any) {
     searchOutput.value = newVal;
@@ -83,6 +119,10 @@
         assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
       }));
   });
+
+  onMounted(async () => {
+    await getLabUsers();
+  });
 </script>
 
 <template>
@@ -99,7 +139,7 @@
         <EGText tag="h1" class="mb-4">{{ labName }}</EGText>
         <EGText tag="p" class="text-muted">Lab summary, statistics and its users</EGText>
       </div>
-      <EGButton label="Invite new user" class="self-start" />
+      <EGButton label="Invite new user" :variant="ButtonVariantEnum.enum.primary" :size="ButtonSizeEnum.enum.md" />
     </div>
   </div>
 
@@ -158,8 +198,18 @@
           button-label="Invite new users"
         />
 
-        <template v-else-if="!isLoading">
+        <template v-if="!hasNoData">
           <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+
+          <EGDialog
+            actionLabel="Remove User"
+            :actionVariant="ButtonVariantEnum.enum.destructive"
+            cancelLabel="Cancel"
+            :cancelVariant="ButtonVariantEnum.enum.secondary"
+            @action-triggered="handleRemoveUser"
+            :primaryMessage="primaryMessage"
+            v-model="isOpen"
+          />
 
           <UCard
             class="rounded-2xl border-none shadow-none"
@@ -168,7 +218,7 @@
             }"
           >
             <UTable
-              :loading="isLoading"
+              :loading="isLoading || isRemovingUser"
               class="LabsUsersTable rounded-2xl"
               :loading-state="{ icon: '', label: '' }"
               :rows="filteredRows"

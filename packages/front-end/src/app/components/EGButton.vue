@@ -1,5 +1,17 @@
 <script setup lang="ts">
   import { cva, type VariantProps } from 'class-variance-authority';
+  import { ButtonVariantEnum, ButtonVariant, ButtonSizeEnum, ButtonSize } from '~/types/buttons';
+
+  type ButtonProps = {
+    variant: ButtonVariant;
+    size: ButtonSize;
+    label?: string;
+  };
+
+  withDefaults(defineProps<ButtonProps>(), {
+    variant: ButtonVariantEnum.enum.primary,
+    size: ButtonSizeEnum.enum.md,
+  });
 
   const buttonVariants = cva(
     'rounded-lg text-center text-sm shadow-none focus-visible:outline-offset-1 transition-colors duration-200',
@@ -63,16 +75,9 @@
           lg: ['p-6 text-base font-semibold'],
         },
       },
-      compoundVariants: [{ variant: 'primary', size: 'md', class: 'primary-md' }],
+      defaultVariants: { variant: ButtonVariantEnum.enum.primary, size: ButtonSizeEnum.enum.md },
     }
   );
-
-  type ButtonProps = VariantProps<typeof buttonVariants>;
-
-  withDefaults(defineProps<{ variant: ButtonProps['variant']; size: ButtonProps['size']; label?: string }>(), {
-    variant: 'primary',
-    size: 'md',
-  });
 </script>
 
 <template>

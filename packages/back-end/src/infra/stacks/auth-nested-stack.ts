@@ -4,7 +4,7 @@ import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { CognitoIdpConstruct } from '../constructs/cognito-idp-construct';
 import { DynamoConstruct } from '../constructs/dynamodb-construct';
-import { IamConstruct } from '../constructs/iam-construct';
+import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
 import { AuthNestedStackProps } from '../types/back-end-stack';
 
@@ -21,7 +21,7 @@ export class AuthNestedStack extends NestedStack {
     this.props = props;
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
-      ...this.props,
+      ...<IamConstructProps>props, // Typecast to IamConstructProps
     });
     this.setupIamPolicies();
 

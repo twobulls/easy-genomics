@@ -1,5 +1,6 @@
 <template>
   <NuxtLayout>
+    <EGToasts />
     <NuxtPage />
   </NuxtLayout>
 </template>

@@ -1,5 +1,5 @@
 import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
-import { AccountRecovery, UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
+import { AccountRecovery, CfnUserPoolGroup, UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 export interface CognitoIDPConstructProps {
@@ -10,6 +10,7 @@ export interface CognitoIDPConstructProps {
 export class CognitoIdpConstruct extends Construct {
   readonly userPool: UserPool;
   readonly userPoolClient: UserPoolClient;
+  readonly userPoolGroup: CfnUserPoolGroup;
 
   constructor(scope: Construct, id: string, props: CognitoIDPConstructProps) {
     super(scope, id);
@@ -46,6 +47,14 @@ export class CognitoIdpConstruct extends Construct {
       },
     });
     new CfnOutput(this, 'UserPoolClientId', { key: 'UserPoolClientId', value: this.userPoolClient.userPoolClientId });
+
+    this.userPoolGroup = new CfnUserPoolGroup(this, 'system-admin-user-pool-group', {
+      userPoolId: this.userPool.userPoolId,
+      // the properties below are optional
+      description: 'SystemAdmin Group',
+      groupName: 'SystemAdmin',
+      precedence: 0,
+    });
   }
 
 }

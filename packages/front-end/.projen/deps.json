@@ -97,6 +97,10 @@
       "type": "runtime"
     },
     {
+      "name": "@pinia/nuxt",
+      "type": "runtime"
+    },
+    {
       "name": "aws-amplify",
       "version": "5.3.18",
       "type": "runtime"
@@ -125,6 +129,10 @@
     },
     {
       "name": "nuxt",
+      "type": "runtime"
+    },
+    {
+      "name": "pinia",
       "type": "runtime"
     },
     {

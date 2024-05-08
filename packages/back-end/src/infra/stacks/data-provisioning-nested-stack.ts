@@ -7,21 +7,48 @@ import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/easy-ge
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
-import { AwsCustomResource, AwsCustomResourcePolicy, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { AwsCustomResource, AwsCustomResourcePolicy } from 'aws-cdk-lib/custom-resources';
 import { DynamoDB } from 'aws-sdk';
 import { Construct } from 'constructs';
+import { CognitoUserConstruct } from '../constructs/cognito-user-construct';
 import { DataProvisioningNestedStackProps } from '../types/back-end-stack';
 
 export class DataProvisioningNestedStack extends NestedStack {
-  readonly props: DataProvisioningNestedStackProps;
+  private props: DataProvisioningNestedStackProps;
+  private cognitoUserConstruct: CognitoUserConstruct;
 
   constructor(scope: Construct, id: string, props: DataProvisioningNestedStackProps) {
     super(scope, id, props);
     this.props = props;
 
+    // Setup Cognito User Construct
+    this.cognitoUserConstruct = new CognitoUserConstruct(this, `${this.props.constructNamespace}-cognito-user`, {
+      constructNamespace: this.props.constructNamespace,
+      devEnv: this.props.devEnv,
+      userPool: this.props.userPool,
+    });
+
+    try {
+      // Add System Admin User Account
+      this.cognitoUserConstruct.addUser(
+        this.props.systemAdminEmail,
+        this.props.systemAdminPassword,
+        this.props.userPoolSystemAdminGroupName,
+      );
+    } catch (err: unknown) {
+      console.error('Unable to create System Admin User Account: ', err);
+    }
+
     if (this.props.devEnv) {
-      // Add test user to Cognito User Pool
-      this.addCognitoTestUser(user);
+      try {
+        // Add test user to Cognito User Pool
+        this.cognitoUserConstruct.addUser(
+          user.Email,
+          'P@ssw0rd',
+        );
+      } catch (err: unknown) {
+        console.error('Unable to create Test User Account: ', err);
+      }
 
       // Add seed data to DynamoDB Tables
       this.addDynamoDBSeedData<Organization>(`${this.props.namePrefix}-organization-table`, organization);
@@ -36,60 +63,6 @@ export class DataProvisioningNestedStack extends NestedStack {
       this.bulkAddDynamoDBSeedData<UniqueReference>(`${this.props.namePrefix}-unique-reference-table`, uniqueReferences);
     }
   }
-
-  private addCognitoTestUser = (testUser: User) => {
-    const username = testUser.Email.trim().toLowerCase();
-    const password = 'P@ssw0rd';
-
-    const adminCreateUser = new AwsCustomResource(this, 'Easy-Genomics-Test-Admin-User', {
-      onCreate: {
-        service: 'CognitoIdentityServiceProvider',
-        action: 'adminCreateUser',
-        parameters: {
-          UserPoolId: this.props.userPool.userPoolId,
-          Username: username,
-          MessageAction: 'SUPPRESS',
-          TemporaryPassword: password, // Overridden by force password change
-          UserAttributes: [
-            { Name: 'email', Value: `${username}` },
-            { Name: 'email_verified', Value: 'true' },
-          ],
-        },
-        physicalResourceId: PhysicalResourceId.of('Easy-Genomics-Cognito-Create-Test-User'),
-      },
-      onDelete: {
-        service: 'CognitoIdentityServiceProvider',
-        action: 'adminDeleteUser',
-        parameters: {
-          UserPoolId: this.props.userPool.userPoolId,
-          Username: username,
-        },
-      },
-      policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: AwsCustomResourcePolicy.ANY_RESOURCE }),
-      removalPolicy: RemovalPolicy.DESTROY,
-      installLatestAwsSdk: false,
-    });
-
-    // Force the password for the user, because by default when new users are created
-    // they are in FORCE_PASSWORD_CHANGE status. The newly created user has no way to change it though.
-    const adminSetUserPassword = new AwsCustomResource(this, 'AwsCustomResource-ForcePassword', {
-      onCreate: {
-        service: 'CognitoIdentityServiceProvider',
-        action: 'adminSetUserPassword',
-        parameters: {
-          UserPoolId: this.props.userPool.userPoolId,
-          Username: username,
-          Password: password,
-          Permanent: true,
-        },
-        physicalResourceId: PhysicalResourceId.of('Easy-Genomics-Cognito-Update-Test-User-Password'),
-      },
-      policy: AwsCustomResourcePolicy.fromSdkCalls({ resources: AwsCustomResourcePolicy.ANY_RESOURCE }),
-      removalPolicy: RemovalPolicy.DESTROY,
-      installLatestAwsSdk: false,
-    });
-    adminSetUserPassword.node.addDependency(adminCreateUser);
-  };
 
   private addDynamoDBSeedData<T>(tableName: string, testRecord: T) {
     const table: Table | undefined = this.props.dynamoDBTables.get(tableName);

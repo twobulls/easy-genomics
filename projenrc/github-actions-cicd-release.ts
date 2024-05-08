@@ -28,8 +28,8 @@ export class GithubActionsCICDRelease extends Component {
         steps: [
           ...this.bootstrapSteps(),
           {
-            name: 'Run Test Back-End CI/CD',
-            run: 'pnpm cicd-test-back-end',
+            name: 'Run CI/CD Test Back-End',
+            run: 'pnpm run cicd-test-back-end',
           },
         ],
       },
@@ -48,8 +48,12 @@ export class GithubActionsCICDRelease extends Component {
           ...this.bootstrapSteps(),
           ...this.configureAwsCredentials(),
           {
-            name: 'Run Build & Deploy Back-End CI/CD',
-            run: 'pnpm cicd-build-deploy-back-end',
+            name: 'Run CI/CD CDK Bootstrap Back-End',
+            run: 'pnpm run cicd-bootstrap-back-end',
+          },
+          {
+            name: 'Run CI/CD Build & Deploy Back-End',
+            run: 'pnpm run cicd-build-deploy-back-end',
           },
         ],
       },
@@ -66,7 +70,7 @@ export class GithubActionsCICDRelease extends Component {
         steps: [
           ...this.bootstrapSteps(),
           {
-            name: 'Run Test Front-End CI/CD',
+            name: 'Run CI/CD Test Front-End',
             run: 'pnpm cicd-test-front-end',
           },
         ],
@@ -86,7 +90,11 @@ export class GithubActionsCICDRelease extends Component {
           ...this.bootstrapSteps(),
           ...this.configureAwsCredentials(),
           {
-            name: 'Run Build & Deploy Front-End CI/CD',
+            name: 'Run CI/CD CDK Bootstrap Back-End',
+            run: 'pnpm cicd-bootstrap-front-end',
+          },
+          {
+            name: 'Run CI/CD Build & Deploy Front-End',
             run: 'pnpm cicd-build-deploy-front-end',
           },
         ],
@@ -103,6 +111,7 @@ export class GithubActionsCICDRelease extends Component {
       'APPLICATION_URL': '${{ vars.APPLICATION_URL }}',
       // Back-End specific settings
       'SYSTEM_ADMIN_EMAIL': '${{ vars.SYSTEM_ADMIN_EMAIL }}',
+      'SYSTEM_ADMIN_PASSWORD': '${{ secrets.SYSTEM_ADMIN_PASSWORD }}',
       // Front-End specific settings
       'AWS_HOSTED_ZONE_ID': '${{ secrets.AWS_HOSTED_ZONE_ID }}', // Must be pre-configured in AWS
       'AWS_HOSTED_ZONE_NAME': '${{ secrets.AWS_HOSTED_ZONE_NAME }}', // Must be pre-configured in AWS
@@ -176,10 +185,10 @@ export class GithubActionsCICDRelease extends Component {
         id: 'configure_iam_credentials',
         uses: 'aws-actions/configure-aws-credentials@v1',
         with: {
-          'role-to-assume': 'arn:aws:iam::851725267090:role/GitHub_to_AWS_via_FederatedOIDC',
+          'role-to-assume': 'arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC',
           'role-session-name': 'GitHub_to_AWS_via_FederatedOIDC',
           'role-duration-seconds': 3600,
-          'aws-region': 'ap-southeast-1',
+          'aws-region': '${{ secrets.AWS_REGION }}',
           'audience': 'sts.amazonaws.com',
         },
       },

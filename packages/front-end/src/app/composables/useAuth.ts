@@ -2,29 +2,36 @@ import { Auth } from 'aws-amplify';
 
 export default function useAuth() {
   async function hasAuth() {
-    return !!(await Auth.currentAuthenticatedUser());
+    try {
+      const authenticatedUser = await Auth.currentAuthenticatedUser();
+      return !!authenticatedUser;
+    } catch (error) {
+      console.error('Error occurred getting the authenticated user.', error);
+      throw error;
+    }
   }
 
   async function login(username: string, password: string) {
     try {
       const user = await Auth.signIn(username, password);
       if (user) {
-        navigateTo('/labs');
+        await navigateTo('/labs');
       }
     } catch (error) {
-      console.log('error signing in', error);
+      console.error('Error occurred during sign in.', error);
+      throw error;
     }
   }
 
   async function logOut() {
     try {
       await Auth.signOut();
-      navigateTo('/login');
+      await navigateTo('/login');
     } catch (error) {
-      console.log('Error signing out: ', error);
+      console.error('Error occurred during sign out.', error);
+      throw error;
     }
   }
-
   return {
     hasAuth,
     login,

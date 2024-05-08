@@ -141,10 +141,14 @@ root.addScripts({
   // CI/CD convenience scripts
   ['cicd-test-back-end']:
     'pnpm nx run-many --targets=cicd-test-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+  ['cicd-bootstrap-back-end']:
+    'pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/back-end --verbose',
   ['cicd-build-deploy-back-end']:
     'pnpm nx run-many --targets=cicd-build-deploy-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
   ['cicd-test-front-end']:
     'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+  ['cicd-bootstrap-front-end']:
+    'pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/front-end --verbose',
   ['cicd-build-deploy-front-end']:
     'pnpm nx run-many --targets=cicd-build-deploy-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
@@ -220,7 +224,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
 backEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
   ['cicd-test-back-end']: 'export CI_CD=true; pnpm run test',
-  ['cicd-build-deploy-back-end']: 'export CI_CD=true; pnpm run build; pnpm run deploy',
+  ['cicd-bootstrap-back-end']: 'export CI_CD=true; pnpm cdk bootstrap',
+  ['cicd-build-deploy-back-end']: 'export CI_CD=true; pnpm cdk bootstrap; pnpm run build; pnpm run deploy',
 });
 
 // Defines the Easy Genomics 'front-end' subproject
@@ -259,11 +264,13 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-amplify/ui-vue@3.1.30',
     '@easy-genomics/shared-lib@workspace:*',
     '@nuxt/ui',
+    '@pinia/nuxt',
     'aws-amplify@5.3.18',
     'aws-sdk',
     'class-variance-authority',
     'dotenv',
     'nuxt',
+    'pinia',
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
@@ -277,6 +284,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
   ['cicd-test-front-end']: 'export CI_CD=true; pnpm run test',
+  ['cicd-bootstrap-front-end']: 'export CI_CD=true; pnpm cdk bootstrap',
   ['cicd-build-deploy-front-end']:
     'export CI_CD=true; pnpm run nuxt-prepare; pnpm run build; pnpm run nuxt-generate; pnpm run deploy',
   ['nuxt-build']: 'nuxt build',

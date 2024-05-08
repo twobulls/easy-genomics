@@ -29,7 +29,7 @@ class HttpFactory {
         await this.handleResponseError(response);
       }
 
-      return (await response.json()) as Promise<T>;
+      return await ((await response.json()) as Promise<T>);
     } catch (error) {
       throw new Error(`Request error: ${error.message}`);
     }

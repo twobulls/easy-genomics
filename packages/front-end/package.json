@@ -64,6 +64,7 @@
     "aws-amplify": "5.3.18",
     "aws-cdk-lib": "^2.124.0",
     "aws-sdk": "^2.1549.0",
+    "class-variance-authority": "^0.7.0",
     "constructs": "^10.0.5",
     "dotenv": "^16.4.5",
     "nuxt": "^3.10.1",

@@ -3,6 +3,7 @@ import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-gen
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
+import { DeletedResponse } from '~/types/api';
 
 class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -36,6 +37,22 @@ class LabsModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Failed to retrieve Laboratory users');
+    }
+
+    return res;
+  }
+
+  async removeUser(labId: string, userId: string): Promise<DeletedResponse> {
+    console.log(`removeUser; labId: ${labId}; userId: ${userId}`);
+    const res = await this.call<DeletedResponse>('POST', `${this.RESOURCE}/user/remove-laboratory-user`, {
+      LaboratoryId: labId,
+      UserId: userId,
+    });
+
+    console.log(`removeUser; labId: ${labId}; userId: ${userId}; res: `, res);
+
+    if (!res) {
+      throw new Error('Failed to remove user from Laboratory');
     }
 
     return res;

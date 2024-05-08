@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { ref } from 'vue';
+  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
 
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
@@ -65,7 +66,13 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1" v-if="labData">Labs</EGText>
-    <EGButton label="Create a new Lab" class="self-end" @click="() => navigateTo({ path: `/labs/new` })" />
+    <EGButton
+      :variant="ButtonVariantEnum.enum.primary"
+      :size="ButtonSizeEnum.enum.md"
+      label="Create a new Lab"
+      class="self-end"
+      @click="() => navigateTo({ path: `/labs/new` })"
+    />
   </div>
 
   <EGEmptyDataCTA
@@ -79,7 +86,7 @@
     v-else
     :table-data="labData"
     :columns="columns"
-    :is-loading="isLoading"
+    :isLoading="isLoading"
     :action-items="actionItems"
     :show-pagination="!isLoading && !hasNoData"
   />

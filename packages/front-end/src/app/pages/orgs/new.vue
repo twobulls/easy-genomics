@@ -3,6 +3,7 @@
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
   import { useToastStore } from '~/stores/stores';
+  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
 
   const { $api } = useNuxtApp();
 
@@ -155,7 +156,14 @@
           </EGFormGroup>
         </div>
       </section>
-      <EGButton :disabled="state.isFormDisabled" type="submit" variant="primary" label="Create" class="mt-6" />
+      <EGButton
+        :variant="ButtonVariantEnum.enum.primary"
+        :size="ButtonSizeEnum.enum.sm"
+        :disabled="state.isFormDisabled"
+        type="submit"
+        label="Create"
+        class="mt-6"
+      />
     </UForm>
   </div>
 </template>

@@ -255,6 +255,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
       rootDir: '.',
+      types: ['vue'],
       verbatimModuleSyntax: false,
     },
     'include': ['.nuxt/**/*.d.ts', 'auto-imports.d.ts', 'components.d.ts', '**/*.ts', '**/*d.ts', '**/*.vue'],
@@ -266,6 +267,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@pinia/nuxt',
     'aws-amplify@5.3.18',
     'aws-sdk',
+    'class-variance-authority',
     'dotenv',
     'nuxt',
     'pinia',

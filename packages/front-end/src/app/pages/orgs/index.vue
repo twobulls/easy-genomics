@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
+
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
   const isLoading = ref(true);
@@ -61,7 +63,12 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1">Organizations</EGText>
-    <EGButton label="Create a new Organization" class="self-end" to="/orgs/new" />
+    <EGButton
+      :variant="ButtonVariantEnum.enum.primary"
+      :size="ButtonSizeEnum.enum.md"
+      label="Create a new Organization"
+      to="/orgs/new"
+    />
   </div>
 
   <EGEmptyDataCTA
@@ -75,7 +82,7 @@
     v-else
     :table-data="orgData"
     :columns="columns"
-    :is-loading="isLoading"
+    :isLoading="isLoading"
     :action-items="actionItems"
     :show-pagination="!isLoading && !hasNoData"
   />

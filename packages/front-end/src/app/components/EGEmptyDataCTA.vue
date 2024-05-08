@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
+
   const props = defineProps<{
     message: string;
     buttonLabel: string;
@@ -16,6 +18,8 @@
         <div class="my-auto flex flex-col self-stretch font-medium max-md:mt-10">
           <h3 class="text-heading text-2xl leading-8">{{ message }}</h3>
           <EGButton
+            :variant="ButtonVariantEnum.enum.primary"
+            :size="ButtonSizeEnum.enum.lg"
             @click="buttonAction"
             :label="buttonLabel"
             class="mt-6 justify-center self-start px-6 py-4 max-md:px-5"

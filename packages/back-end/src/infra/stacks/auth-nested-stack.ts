@@ -76,7 +76,7 @@ export class AuthNestedStack extends NestedStack {
       authenticationLogTableName,
       {
         partitionKey: {
-          name: 'Username',
+          name: 'UserName',
           type: AttributeType.STRING,
         },
         sortKey: {

@@ -11,14 +11,14 @@ export class AuthenticationLogService extends DynamoDBService {
   }
 
   public add = async (authenticationLogEvent: AuthenticationLogEvent): Promise<void> => {
-    const logRequestMessage = `Add Authentication Log Event Username=${authenticationLogEvent.Username}, DateTime=${authenticationLogEvent.DateTime}`;
+    const logRequestMessage = `Add Authentication Log Event UserName=${authenticationLogEvent.UserName}, DateTime=${authenticationLogEvent.DateTime}`;
     console.info(`${logRequestMessage}`);
 
     const response: PutItemCommandOutput = await this.putItem({
       TableName: this.AUTHENTICATION_LOG_TABLE_NAME,
-      ConditionExpression: 'attribute_not_exists(#Username) AND attribute_not_exists(#DateTime)',
+      ConditionExpression: 'attribute_not_exists(#UserName) AND attribute_not_exists(#DateTime)',
       ExpressionAttributeNames: {
-        '#Username': 'Username',
+        '#UserName': 'UserName',
         '#DateTime': 'DateTime',
       },
       Item: marshall(authenticationLogEvent),

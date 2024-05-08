@@ -15,7 +15,7 @@ export class UserService extends DynamoDBService implements Service {
 
   async add(user: User): Promise<User> {
     const logRequestMessage = `Add User UserId=${user.UserId} request`;
-    console.info(`${logRequestMessage}`);
+    console.info(logRequestMessage);
 
     // Data validation safety check
     if (!UserSchema.safeParse(user).success) throw new Error('Invalid request');

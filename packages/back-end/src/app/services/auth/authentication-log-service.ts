@@ -12,7 +12,7 @@ export class AuthenticationLogService extends DynamoDBService {
 
   public add = async (authenticationLogEvent: AuthenticationLogEvent): Promise<void> => {
     const logRequestMessage = `Add Authentication Log Event UserName=${authenticationLogEvent.UserName}, DateTime=${authenticationLogEvent.DateTime}`;
-    console.info(`${logRequestMessage}`);
+    console.info(logRequestMessage);
 
     const response: PutItemCommandOutput = await this.putItem({
       TableName: this.AUTHENTICATION_LOG_TABLE_NAME,

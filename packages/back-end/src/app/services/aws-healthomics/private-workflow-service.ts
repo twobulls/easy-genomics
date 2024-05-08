@@ -21,7 +21,7 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
 
   public add = async (privateWorkflow: PrivateWorkflow): Promise<PrivateWorkflow> => {
     const logRequestMessage = `Add Private Workflow Url=${privateWorkflow.Url}, Version=${privateWorkflow.Url} request`;
-    console.info(`${logRequestMessage}`);
+    console.info(logRequestMessage);
 
     // Data validation safety check
     if (!PrivateWorkflowSchema.safeParse(privateWorkflow).success) throw new Error('Invalid request');

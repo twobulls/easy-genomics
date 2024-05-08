@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
+
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
   const isLoading = ref(true);

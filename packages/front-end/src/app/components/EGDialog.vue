@@ -1,5 +1,4 @@
 <script setup lang="ts">
-  import EGButton from './EGButton.vue';
   import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
 
   defineProps<{

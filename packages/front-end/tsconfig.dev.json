@@ -26,6 +26,9 @@
     "stripInternal": true,
     "target": "ES2019",
     "rootDir": ".",
+    "types": [
+      "vue"
+    ],
     "verbatimModuleSyntax": false
   },
   "include": [

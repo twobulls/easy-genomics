@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
+
   const { logOut, hasAuth } = useAuth();
 </script>
 
@@ -42,7 +44,14 @@
         >
           Organizations
         </ULink>
-        <EGButton v-if="hasAuth" @click="logOut()" class="ml-8 h-10" label="Log out" />
+        <EGButton
+          :variant="ButtonVariantEnum.enum.primary"
+          :size="ButtonSizeEnum.enum.sm"
+          v-if="hasAuth"
+          @click="logOut()"
+          class="ml-8 h-10"
+          label="Log out"
+        />
       </div>
     </div>
   </header>

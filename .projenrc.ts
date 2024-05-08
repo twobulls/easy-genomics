@@ -12,11 +12,11 @@ import {
 } from 'projen/lib/javascript';
 import { pathsToModuleNameMapper } from 'ts-jest';
 import { setupProjectFolders } from './projenrc/easy-genomics-project-setup';
+import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
 import { Husky } from './projenrc/husky';
 import { Nx } from './projenrc/nx';
 import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
-import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
 
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.124.0';
@@ -255,6 +255,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
       rootDir: '.',
+      types: ['vue'],
       verbatimModuleSyntax: false,
     },
     'include': ['.nuxt/**/*.d.ts', 'auto-imports.d.ts', 'components.d.ts', '**/*.ts', '**/*d.ts', '**/*.vue'],
@@ -266,6 +267,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@pinia/nuxt',
     'aws-amplify@5.3.18',
     'aws-sdk',
+    'class-variance-authority',
     'dotenv',
     'nuxt',
     'pinia',

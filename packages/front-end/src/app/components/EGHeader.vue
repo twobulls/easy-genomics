@@ -44,14 +44,7 @@
         >
           Organizations
         </ULink>
-        <EGButton
-          :variant="ButtonVariantEnum.enum.primary"
-          :size="ButtonSizeEnum.enum.sm"
-          v-if="hasAuth"
-          @click="logOut()"
-          class="ml-8 h-10"
-          label="Log out"
-        />
+        <EGButton :size="ButtonSizeEnum.enum.sm" v-if="hasAuth" @click="logOut()" class="ml-8 h-10" label="Log out" />
       </div>
     </div>
   </header>

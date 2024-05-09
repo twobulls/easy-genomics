@@ -157,13 +157,6 @@
         </EGFormGroup>
       </div>
     </section>
-    <EGButton
-      :disabled="state.isFormDisabled"
-      type="submit"
-      :variant="ButtonVariantEnum.enum.primary"
-      :size="ButtonSizeEnum.enum.md"
-      label="Create"
-      class="mt-6"
-    />
+    <EGButton :disabled="state.isFormDisabled" type="submit" label="Create" class="mt-6" />
   </UForm>
 </template>

@@ -63,12 +63,7 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1">Organizations</EGText>
-    <EGButton
-      :variant="ButtonVariantEnum.enum.primary"
-      :size="ButtonSizeEnum.enum.md"
-      label="Create a new Organization"
-      to="/orgs/new"
-    />
+    <EGButton label="Create a new Organization" to="/orgs/new" />
   </div>
 
   <EGEmptyDataCTA

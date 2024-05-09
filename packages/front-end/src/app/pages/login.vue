@@ -11,7 +11,7 @@
       .string()
       .min(8, 'Min. 8 characters and at least 1 special symbol')
       .refine(
-        (value) => /[~`!#$%\^&*+=\-\[\]\\';,/{}|\\":<>\?]/g.test(value),
+        (value) => /[~`!#$%@\^&*+=\-\[\]\\';,/{}|\\":<>\?]/g.test(value),
         'Min. 8 characters and at least 1 special symbol'
       ),
   });

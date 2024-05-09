@@ -7,7 +7,7 @@
       variant?: ToastVariant;
     }>(),
     {
-      timeout: 5123000,
+      timeout: 5000,
       variant: 'info',
     }
   );

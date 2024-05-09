@@ -20,7 +20,7 @@ export class OrganizationUserService extends DynamoDBService implements Service 
 
   public add = async (organizationUser: OrganizationUser): Promise<OrganizationUser> => {
     const logRequestMessage = `Add OrganizationUser OrganizationId=${organizationUser.OrganizationId}, UserId=${organizationUser.UserId} request`;
-    console.info(`${logRequestMessage}`);
+    console.info(logRequestMessage);
 
     // Data validation safety check
     if (!OrganizationUserSchema.safeParse(organizationUser).success) throw new Error('Invalid request');

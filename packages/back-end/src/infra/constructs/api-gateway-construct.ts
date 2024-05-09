@@ -47,6 +47,6 @@ export class ApiGatewayConstruct extends Construct {
     usagePlan.addApiStage({
       stage: this.restApi.deploymentStage,
     });
-    new CfnOutput(this, 'InvokeUrl', { key: 'InvokeUrl', value: `${this.restApi.url}` });
+    new CfnOutput(this, 'BaseApiUrl', { key: 'BaseApiUrl', value: `${this.restApi.url}` });
   }
 }

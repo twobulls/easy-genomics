@@ -86,6 +86,8 @@ export default defineNuxtConfig({
       AWS_USER_POOL_ID: awsCognitoUserPoolId,
       AWS_CLIENT_ID: awsCognitoUserPoolClientId,
       BASE_API_URL: awsBaseApiUrl,
+      ENV_TYPE: process.env.envType || 'dev',
+      GITHUB_RUN_NUMBER: process.env.GITHUB_RUN_NUMBER || 'Unknown',
       MOCK_ORG_ID: mockOrgId, // TODO: Remove once custom User Authorization logic retrieves OrgIds
     },
   },

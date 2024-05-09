@@ -1,6 +1,10 @@
+<script setup lang="ts">
+  const { ENV_TYPE } = useRuntimeConfig().public;
+</script>
 <template>
   <NuxtLayout>
     <NuxtPage />
+    <EGBuildInfo v-if="ENV_TYPE !== 'prod'" />
   </NuxtLayout>
 </template>
 

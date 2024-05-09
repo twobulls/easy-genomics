@@ -20,7 +20,7 @@ export class LaboratoryUserService extends DynamoDBService implements Service {
 
   public add = async (laboratoryUser: LaboratoryUser): Promise<LaboratoryUser> => {
     const logRequestMessage = `Add LaboratoryUser LaboratoryId=${laboratoryUser.LaboratoryId}, UserId=${laboratoryUser.UserId} request`;
-    console.info(`${logRequestMessage}`);
+    console.info(logRequestMessage);
 
     // Data validation safety check
     if (!LaboratoryUserSchema.safeParse(laboratoryUser).success) throw new Error('Invalid request');

@@ -1,36 +1,445 @@
 import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { Bucket } from 'aws-cdk-lib/aws-s3';
+import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
+import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
 export class EasyGenomicsNestedStack extends NestedStack {
   readonly props: EasyGenomicsNestedStackProps;
   readonly dynamoDBTables: Map<string, Table> = new Map();
-  readonly s3Buckets: Map<string, Bucket> = new Map();
+  dynamoDB: DynamoConstruct;
+  iam: IamConstruct;
+  lambda: LambdaConstruct;
 
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
     super(scope, id, props);
     this.props = props;
 
+    this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
+      ...<IamConstructProps>props, // Typecast to IamConstructProps
+    });
+    this.setupIamPolicies();
+
+    this.dynamoDB = new DynamoConstruct(this, `${this.props.constructNamespace}-dynamodb`, {
+      devEnv: this.props.devEnv,
+    });
     this.setupDynamoDBTables();
-    this.setupS3Buckets();
-    this.setupRestApiEndpoints();
+
+    this.lambda = new LambdaConstruct(this, `${this.props.constructNamespace}`, {
+      ...this.props,
+      iamPolicyStatements: this.iam.policyStatements, // Pass declared Easy Genomics IAM policies for attaching to respective Lambda function
+      lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
+      lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
+      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      environment: {
+        AWS_ACCOUNT_ID: this.props.env.account!,
+        NAME_PREFIX: this.props.namePrefix,
+      },
+    });
+
   }
+
+  // Easy Genomics specific IAM policies
+  private setupIamPolicies = () => {
+    // /easy-genomics/organization/create-organization
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/create-organization',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/organization/read-organization
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/read-organization',
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/organization/list-organizations
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/list-organizations',
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`],
+          actions: ['dynamodb:Scan'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/organization/update-organization
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/update-organization',
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`],
+          actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/organization/delete-organization
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/delete-organization',
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+
+    // /easy-genomics/organization/user/add-organization-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/user/add-organization-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          ],
+          actions: ['dynamodb:GetItem'],
+        }),
+      ],
+    );
+    // /easy-genomics/organization/user/edit-organization-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/user/edit-organization-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/organization/user/list-organization-users
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/user/list-organization-users',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+        }),
+      ],
+    );
+    // /easy-genomics/organization/user/list-organization-users-details
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/user/list-organization-users-details',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:BatchGetItem'],
+        }),
+      ],
+    );
+    // /easy-genomics/organization/user/request-organization-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/user/request-organization-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:GetItem'],
+        }),
+      ],
+    );
+    // /easy-genomics/organization/user/remove-organization-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/organization/user/remove-organization-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:GetItem', 'dynamodb:DeleteItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+
+    // /easy-genomics/laboratory/create-laboratory
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/create-laboratory',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+          ],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/read-laboratory
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/read-laboratory',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/request-laboratory
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/request-laboratory',
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/list-laboratories
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/list-laboratories',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/update-laboratory
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/update-laboratory',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          ],
+          actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/delete-laboratory
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/delete-laboratory',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          ],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+
+    // /easy-genomics/laboratory/user/add-laboratory-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/user/add-laboratory-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/user/edit-laboratory-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/user/edit-laboratory-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+          ],
+          actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/user/list-laboratory-users
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/user/list-laboratory-users',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/user/list-laboratory-users-details
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/user/list-laboratory-users-details',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:BatchGetItem'],
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/user/remove-laboratory-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/user/remove-laboratory-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+          ],
+          actions: ['dynamodb:GetItem', 'dynamodb:DeleteItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/laboratory/user/request-laboratory-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/laboratory/user/request-laboratory-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+          ],
+          actions: ['dynamodb:GetItem'],
+        }),
+      ],
+    );
+
+    // /easy-genomics/user/create-user
+    this.iam.addPolicyStatements(
+      '/easy-genomics/user/create-user',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/user/list-all-users
+    this.iam.addPolicyStatements(
+      '/easy-genomics/user/list-all-users',
+      [
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`],
+          actions: ['dynamodb:Scan'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+  };
 
   // Easy Genomics specific DynamoDB tables
   private setupDynamoDBTables = () => {
-    const dynamoDB = new DynamoConstruct(this, `${this.props.constructNamespace}-dynamodb`, {
-      devEnv: this.props.devEnv,
-    });
-
     /** Update the definitions below to update / add additional DynamoDB tables **/
-
     // Organization table
     const organizationTableName = `${this.props.namePrefix}-organization-table`;
-    const organizationTable = dynamoDB.createTable(
+    const organizationTable = this.dynamoDB.createTable(
       organizationTableName,
       {
         partitionKey: {
@@ -45,7 +454,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     // Laboratory table
     const laboratoryTableName = `${this.props.namePrefix}-laboratory-table`;
-    const laboratoryTable = dynamoDB.createTable(
+    const laboratoryTable = this.dynamoDB.createTable(
       laboratoryTableName,
       {
         partitionKey: {
@@ -70,7 +479,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     // User table
     const userTableName = `${this.props.namePrefix}-user-table`;
-    const userTable = dynamoDB.createTable(
+    const userTable = this.dynamoDB.createTable(
       userTableName,
       {
         partitionKey: {
@@ -93,7 +502,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     // Organization User table
     const organizationUserTableName = `${this.props.namePrefix}-organization-user-table`;
-    const organizationUserTable = dynamoDB.createTable(
+    const organizationUserTable = this.dynamoDB.createTable(
       organizationUserTableName,
       {
         partitionKey: {
@@ -120,7 +529,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     // Laboratory User table
     const laboratoryUserTableName = `${this.props.namePrefix}-laboratory-user-table`;
-    const laboratoryUserTable = dynamoDB.createTable(
+    const laboratoryUserTable = this.dynamoDB.createTable(
       laboratoryUserTableName,
       {
         partitionKey: {
@@ -147,7 +556,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     // Unique-Reference table
     const uniqueReferenceTableName = `${this.props.namePrefix}-unique-reference-table`;
-    const uniqueReferenceTable = dynamoDB.createTable(
+    const uniqueReferenceTable = this.dynamoDB.createTable(
       uniqueReferenceTableName,
       {
         partitionKey: {
@@ -162,22 +571,5 @@ export class EasyGenomicsNestedStack extends NestedStack {
       this.props.devEnv,
     );
     this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
-  };
-
-  // Easy Genomics specific S3 Buckets
-  private setupS3Buckets = () => {};
-
-  // Easy Genomics specific REST API endpoints / Lambda Functions
-  private setupRestApiEndpoints = () => {
-    new LambdaConstruct(this, `${this.props.constructNamespace}`, {
-      ...this.props,
-      lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
-      lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
-      environment: {
-        AWS_ACCOUNT_ID: this.props.env.account!,
-        NAME_PREFIX: this.props.namePrefix,
-      },
-    });
   };
 }

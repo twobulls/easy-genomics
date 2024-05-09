@@ -43,7 +43,7 @@ export function loadConfigurations(filePath: string): { [p: string]: Configurati
  */
 export function findConfiguration(
   envName: string,
-  configurations: { [p: string]: ConfigurationSettings }[]
+  configurations: { [p: string]: ConfigurationSettings }[],
 ): { [p: string]: ConfigurationSettings } {
   const configuration: { [p: string]: ConfigurationSettings } | undefined = configurations
     .filter((c: { [p: string]: ConfigurationSettings }) => Object.keys(c).shift() === envName)

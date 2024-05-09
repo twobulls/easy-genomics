@@ -29,7 +29,7 @@ if (process.env.CI_CD === 'true') {
   // AWS infrastructure resources can be destroyed only when devEnv is true
   const devEnv: boolean = envType === 'dev';
   const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
-  const constructNamespace: string = `${envName}-easy-genomics`;
+  const constructNamespace: string = `${namePrefix}-easy-genomics`;
 
   // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
   new BackEndStack(app, `${envName}-main-back-end-stack`, {
@@ -71,9 +71,9 @@ if (process.env.CI_CD === 'true') {
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
       const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
-      const constructNamespace: string = `${envName}-easy-genomics`;
+      const constructNamespace: string = `${namePrefix}-easy-genomics`;
 
-      // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
+      // Setups Back-End Stack which initiates the nested stacks for Auth, Easy Genomics, AWS HealthOmics and NextFlow Tower
       new BackEndStack(app, `${envName}-main-back-end-stack`, {
         env: {
           account: awsAccountId,

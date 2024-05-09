@@ -141,7 +141,7 @@
         <EGText tag="h1" class="mb-4">{{ labName }}</EGText>
         <EGText tag="p" class="text-muted">Lab summary, statistics and its users</EGText>
       </div>
-      <EGButton label="Invite new user" :variant="ButtonVariantEnum.enum.primary" :size="ButtonSizeEnum.enum.md" />
+      <EGButton label="Invite new user" />
     </div>
   </div>
 

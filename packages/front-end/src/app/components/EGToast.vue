@@ -23,10 +23,6 @@
     rounded: 'rounded-2xl',
     padding: 'p-4',
     gap: 'gap-13',
-    icon: {
-      base: 'flex-shrink-0 w-8 h-5 mr-2',
-      color: 'text-black',
-    },
     progress: {
       base: 'absolute bottom-0 end-0 start-0 h-1',
       background: 'bg-alert-danger-500',
@@ -41,11 +37,7 @@
     },
     default: {
       color: 'primary',
-      closeButton: {
-        color: 'neutral-black',
-        variant: 'link',
-        padded: false,
-      },
+
       actionButton: {
         size: 'xs',
         color: 'white',
@@ -56,25 +48,25 @@
   const variantInfoUi = {
     ...baseUi,
     background: 'bg-alert-blue-muted',
-    icon: 'i-heroicons-information-circle',
+    icon: 'i-heroicons-information-circle w-6 h-6 mr-1',
     ring: 'ring-1 ring-blue-900',
   };
   const variantSuccessUi = {
     ...baseUi,
     background: 'bg-alert-success-muted',
-    icon: 'i-heroicons-check-20-solid',
+    icon: 'i-heroicons-check-20-solid w-6 h-6 mr-1',
     ring: 'ring-1 ring-alert-success',
   };
   const variantWarningUi = {
     ...baseUi,
     background: 'bg-alert-caution-muted',
-    icon: 'i-heroicons-information-circle',
+    icon: 'i-heroicons-information-circle w-6 h-6 mr-1',
     ring: 'ring-1 ring-alert-caution',
   };
   const variantErrorUi = {
     ...baseUi,
     background: 'bg-alert-danger-muted',
-    icon: 'i-heroicons-exclamation-triangle',
+    icon: 'i-heroicons-exclamation-triangle w-6 h-6 mr-1',
     ring: 'ring-1 ring-alert-danger',
   };
 

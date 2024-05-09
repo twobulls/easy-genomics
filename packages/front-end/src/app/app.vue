@@ -3,7 +3,6 @@
 </script>
 <template>
   <NuxtLayout>
-    <EGToasts />
     <NuxtPage />
     <EGBuildInfo v-if="ENV_TYPE !== 'prod'" />
   </NuxtLayout>

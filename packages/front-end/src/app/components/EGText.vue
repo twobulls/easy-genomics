@@ -5,23 +5,28 @@
    * Specifies a color class to use for the element being rendered.
    */
   defineProps({
-    tag: {
-      type: [String, Number],
-      validator: (tag: string) => ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'span'].includes(tag),
-    },
     colorClass: {
-      default: 'text-lifeline-dark-blue-100',
+      default: 'text-body',
       type: String,
+    },
+    href: {
+      type: String,
+    },
+    tag: {
+      type: [String],
+      validator: (tag: string) => ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'span', 'a'].includes(tag),
     },
   });
 </script>
 
 <template>
   <component
+    :href="href"
     :is="tag"
     :class="[
-      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag) ? `font-heading  ${colorClass}` : '',
-      ['p', 'span', 'div'].includes(tag) ? 'text-lifeline-dark-blue-200' : '',
+      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `font-heading  ${colorClass}` : '',
+      ['a'].includes(<string>tag) ? `hover:underline ${colorClass}` : '',
+      ['p', 'span', 'div'].includes(<string>tag) ? 'text-body' : '',
     ]"
   >
     <slot />
@@ -29,44 +34,59 @@
 </template>
 
 <style scoped lang="scss">
+  @import '@/styles/helpers.scss';
+
   h1,
   h2,
   h3,
   h4,
-  h5,
-  h6 {
+  h5 {
     font-family: 'PlusJakartaSans', sans-serif;
     font-weight: 600;
   }
   h1 {
-    font-size: 36px;
-    line-height: 42px;
+    font-size: toRem(36px);
+    line-height: toRem(42px);
     font-style: normal;
 
     > p {
-      margin-bottom: 1.875rem;
+      margin-bottom: toRem(30px);
     }
+  }
+  h2 {
+    font-size: toRem(36px);
+    line-height: toRem(44px);
+  }
+  h3 {
+    font-size: toRem(24px);
+    line-height: toRem(32px);
+  }
+  h4 {
+    font-size: toRem(18px);
+    line-height: toRem(22px);
+  }
+  h5 {
+    font-size: toRem(18px);
+    line-height: toRem(22px);
   }
   h2,
   h3,
   h4,
   h5 {
-    font-size: 1.25rem; /* 20px */
-    line-height: 1.75rem; /* 28px */
     font-weight: 500;
-    letter-spacing: -0.14px;
+    letter-spacing: toRem(-0.14px);
 
     > p {
       margin-bottom: 1.2rem;
     }
   }
 
+  a,
   p,
   div,
   span {
     font-family: 'Inter', sans-serif;
-    font-size: 1rem; /* 16px */
-    line-height: 1.5rem; /* 24px */
+    line-height: toRem(24px);
     font-weight: 400;
     letter-spacing: 0;
   }

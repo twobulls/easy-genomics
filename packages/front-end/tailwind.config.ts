@@ -2,11 +2,11 @@ import type { Config } from 'tailwindcss';
 
 export default <Partial<Config>>{
   theme: {
+    fontFamily: {
+      sans: ['PlusJakartaSans', 'sans-serif'], // heading font; translates to Tailwind class 'font-sans'
+      serif: ['Inter', 'serif'], // body font; translates to Tailwind class 'font-serif'
+    },
     extend: {
-      fontFamily: {
-        sans: ['Inter', 'serif'],
-        heading: ['PlusJakartaSans', 'sans-serif'],
-      },
       colors: {
         // `primaryCol` used by NuxtUI for the global `base` color: see `app.config.ts`
         primaryCol: {

@@ -7,13 +7,7 @@
   const { login } = useAuth();
   const schema = z.object({
     email: z.string().email('Must be a valid email address'),
-    password: z
-      .string()
-      .min(8, 'Min. 8 characters and at least 1 special symbol')
-      .refine(
-        (value) => /[~`!#$%@\^&*+=\-\[\]\\';,/{}|\\":<>\?]/g.test(value),
-        'Min. 8 characters and at least 1 special symbol'
-      ),
+    password: z.string().min(1, 'Enter a password'),
   });
   const state = ref({ email: '', password: '' });
   const isFormDisabled = ref(true);

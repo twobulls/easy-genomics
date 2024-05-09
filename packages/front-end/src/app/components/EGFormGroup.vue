@@ -9,7 +9,7 @@
   <UFormGroup
     :label="label"
     :name="name"
-    class="[&_label]:text-heading [&_label]:text-sm [&_label]:font-normal [&_label]:leading-tight [&_p]:absolute [&_p]:mt-[2px]"
+    class="[&_label]:text-heading !mb-10 !mt-0 [&_label]:text-sm [&_label]:font-normal [&_label]:leading-tight [&_p]:absolute [&_p]:mt-[2px]"
   >
     <slot />
   </UFormGroup>

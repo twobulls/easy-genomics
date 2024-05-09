@@ -1,38 +1,37 @@
 <script setup lang="ts">
+  import { watchEffect } from 'vue';
   import { z } from 'zod';
 
-  definePageMeta({
-    layout: 'login',
-  });
+  definePageMeta({ layout: 'login' });
 
   const { login } = useAuth();
-
   const schema = z.object({
-    email: z.string().email('Invalid email'),
-    password: z.string().min(8, 'Must be at least 8 characters'),
+    email: z.string().email('Must be a valid email address'),
+    password: z
+      .string()
+      .min(8, 'Min. 8 characters and at least 1 special symbol')
+      .refine(
+        (value) => /[~`!#$%\^&*+=\-\[\]\\';,/{}|\\":<>\?]/g.test(value),
+        'Min. 8 characters and at least 1 special symbol'
+      ),
   });
+  const state = ref({ email: '', password: '' });
+  const isFormDisabled = ref(true);
 
-  // type Schema = z.output<typeof schema>;
-
-  const state = reactive({
-    email: undefined,
-    password: undefined,
+  watchEffect(() => {
+    isFormDisabled.value = !schema.safeParse(state.value).success;
   });
 </script>
-
 <template>
-  <UForm :schema="schema" :state="state" class="space-y-4">
-    <!--  <UForm :schema="schema" :state="state" class="space-y-4" @submit="login(state.email, state.password)">-->
-    <UFormGroup label="Email" name="email">
-      <UInput v-model="state.email" />
-    </UFormGroup>
-
-    <UFormGroup label="Password" name="password">
-      <UInput v-model="state.password" type="password" />
-    </UFormGroup>
-
-    <UButton @click="login(state.email, state.password)">Log in</UButton>
+  <UForm :schema="schema" :state="state" class="w-full max-w-[408px] space-y-4">
+    <EGText tag="h2" class="mb-12">Sign in</EGText>
+    <EGFormGroup label="Email" name="email"><EGInput v-model="state.email" /></EGFormGroup>
+    <EGFormGroup label="Password" name="password">
+      <EGPasswordInput v-model="state.password" :password="true" />
+    </EGFormGroup>
+    <div class="flex items-center justify-between">
+      <EGButton :disabled="isFormDisabled" label="Sign in" @click="login(state.email, state.password)" />
+      <EGText href="#" tag="a" color-class="text-primary">Forgot password?</EGText>
+    </div>
   </UForm>
 </template>
-
-<style scoped></style>

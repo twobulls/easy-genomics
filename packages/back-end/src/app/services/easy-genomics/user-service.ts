@@ -1,4 +1,9 @@
-import { BatchGetItemCommandOutput, GetItemCommandOutput, ScanCommandOutput } from '@aws-sdk/client-dynamodb';
+import {
+  BatchGetItemCommandOutput,
+  GetItemCommandOutput,
+  QueryCommandOutput,
+  ScanCommandOutput,
+} from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
@@ -111,6 +116,34 @@ export class UserService extends DynamoDBService implements Service {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
   }
+
+  public queryByEmail = async (email: string): Promise<User[]> => {
+    const logRequestMessage = `Query Users by Email=${email} request`;
+    console.info(logRequestMessage);
+
+    const response: QueryCommandOutput = await this.queryItems({
+      TableName: this.USER_TABLE_NAME,
+      IndexName: 'Email_Index', // Global Secondary Index
+      KeyConditionExpression: '#Email = :email',
+      ExpressionAttributeNames: {
+        '#Email': 'Email',
+      },
+      ExpressionAttributeValues: {
+        ':email': { S: email },
+      },
+      ScanIndexForward: false,
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      if (response.Items) {
+        return response.Items.map(item => <User>unmarshall(item));
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+      }
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  };
 
   async update(user: User, existing?: User): Promise<User> {
     throw new Error('TBD');

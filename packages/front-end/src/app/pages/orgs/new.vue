@@ -157,7 +157,6 @@
         </div>
       </section>
       <EGButton
-        :variant="ButtonVariantEnum.enum.primary"
         :size="ButtonSizeEnum.enum.sm"
         :disabled="state.isFormDisabled"
         type="submit"

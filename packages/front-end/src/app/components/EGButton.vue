@@ -3,8 +3,8 @@
   import { ButtonVariantEnum, ButtonVariant, ButtonSizeEnum, ButtonSize } from '~/types/buttons';
 
   type ButtonProps = {
-    variant: ButtonVariant;
-    size: ButtonSize;
+    variant?: ButtonVariant;
+    size?: ButtonSize;
     label?: string;
   };
 

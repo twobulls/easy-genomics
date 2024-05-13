@@ -129,7 +129,7 @@ function getNewOrganizationUser(organizationId, userId: string, createdBy: strin
     Status: 'Invited',
     OrganizationAdmin: false,
     CreatedAt: new Date().toISOString(),
-    CreatedBy: userId,
+    CreatedBy: createdBy,
   };
   return organizationUser;
 }

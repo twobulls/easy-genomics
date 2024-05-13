@@ -8,10 +8,9 @@ import {
 } from 'aws-cdk-lib/aws-cognito';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
+import { AuthNestedStackProps } from '../types/back-end-stack';
 
-export interface CognitoIDPConstructProps {
-  constructNamespace: string;
-  devEnv?: boolean;
+export interface CognitoIDPConstructProps extends AuthNestedStackProps {
   authLambdaFunctions?: Map<string, IFunction>;
 }
 

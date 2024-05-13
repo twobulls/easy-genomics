@@ -44,6 +44,7 @@ export class AuthNestedStack extends NestedStack {
 
     // Setup Cognito IDP and make it accessible by other Nested Stacks
     this.cognito = new CognitoIdpConstruct(this, `${this.props.constructNamespace}-cognito-idp`, {
+      ...this.props,
       constructNamespace: this.props.constructNamespace,
       devEnv: this.props.devEnv,
       authLambdaFunctions: this.lambda.lambdaFunctions, // Pass Auth Lambda functions for registering with Cognito Event triggers

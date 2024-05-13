@@ -72,7 +72,7 @@ export const handler: Handler = async (
             }
           });
 
-        if (existingOrganizationUser) {
+        if (existingOrganizationUser && existingOrganizationUser.Status === 'Invited') {
           // Check if existing Organization-User's Status is still Invited to resend invitation
           // TODO: Re-send email
           return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);

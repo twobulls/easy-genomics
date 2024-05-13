@@ -202,6 +202,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   deps: [
     '@aws-sdk/client-cognito-identity-provider',
     '@aws-sdk/client-dynamodb',
+    '@aws-sdk/client-ses',
     '@aws-sdk/lib-dynamodb',
     '@aws-sdk/types',
     '@aws-sdk/util-dynamodb',

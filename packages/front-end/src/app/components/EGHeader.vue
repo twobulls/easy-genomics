@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
-
   const { logOut, hasAuth } = useAuth();
+  const labsPath = '/labs';
+  const orgsPath = '/orgs';
 </script>
 
 <template>
@@ -39,7 +40,7 @@
         <ULink
           to="/orgs"
           inactive-class="text-body"
-          active-class="text-violet-700 bg-violet-100"
+          :active-class="isSubpath(orgsPath) ? 'text-violet-700 bg-violet-100' : ''"
           class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm leading-5 tracking-normal"
         >
           Organizations
@@ -64,18 +65,3 @@
     line-height: 1.4rem;
   }
 </style>
-
-<!-- FIXME -->
-<!--&lt;!&ndash; Tailwind custom classes but be non-scoped &ndash;&gt;-->
-<!--<style lang="scss">-->
-<!--  .nav-link {-->
-<!--    height: 30px;-->
-<!--    @apply font-heading space-nowrap flex items-center justify-center rounded-xl px-4 py-1 text-sm tracking-normal text-white;-->
-<!--  }-->
-<!--  .nav-link&#45;&#45;inactive {-->
-<!--    @apply text-muted;-->
-<!--  }-->
-<!--  .nav-link&#45;&#45;active {-->
-<!--    @apply text-primary bg-primary-muted;-->
-<!--  }-->
-<!--</style>-->

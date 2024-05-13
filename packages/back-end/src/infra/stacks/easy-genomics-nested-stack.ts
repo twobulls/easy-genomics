@@ -36,6 +36,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
       environment: {
         AWS_ACCOUNT_ID: this.props.env.account!,
+        COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
         NAME_PREFIX: this.props.namePrefix,
       },
     });
@@ -428,6 +429,45 @@ export class EasyGenomicsNestedStack extends NestedStack {
         new PolicyStatement({
           resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`],
           actions: ['dynamodb:Scan'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+
+    // /easy-genomics/user/create-user-invite
+    this.iam.addPolicyStatements(
+      '/easy-genomics/user/create-user-invite',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool?.userPoolId}`,
+          ],
+          actions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminDeleteUser'],
           effect: Effect.ALLOW,
         }),
       ],

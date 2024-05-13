@@ -40,7 +40,7 @@ export const handler: Handler = async (
     const user: User | undefined = (await userService.queryByEmail(request.Email)).shift();
 
     if (!user) {
-      // Attempt to create new Cognito User account and send invitation with temporary password
+      // Attempt to create new Cognito User account
       const newUserId: string = await cognitoUserService.addNewUserToPlatform(request.Email);
 
       // Create new User and invite to the Organization and Platform

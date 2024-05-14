@@ -218,7 +218,6 @@
               body: 'p-0',
             }"
           >
-            <!-- FIXME: refactor as EGTable -->
             <UTable
               :loading="isLoading || isRemovingUser"
               class="LabsUsersTable rounded-2xl"

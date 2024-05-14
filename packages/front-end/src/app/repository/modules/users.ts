@@ -6,8 +6,15 @@ class UsersModule extends HttpFactory {
   $config = useRuntimeConfig();
   private RESOURCE = `${this.$config.public.BASE_API_URL}/easy-genomics/user`;
 
-  async list(): Promise<User> {
+  async list(): Promise<User | undefined> {
     return this.call<User>('GET', `${this.RESOURCE}/list-users`);
+  }
+
+  async invite(orgId: string, email: string): Promise<User | undefined> {
+    return this.call<User>('POST', `${this.RESOURCE}/create-user-invite`, {
+      Email: email,
+      OrganizationId: orgId,
+    });
   }
 }
 

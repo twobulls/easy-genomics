@@ -1,2 +1,3 @@
 import useToastStore from './toast';
-export { useToastStore };
+import useUiStore from './ui';
+export { useToastStore, useUiStore };

@@ -3,6 +3,12 @@
   const { logOut, hasAuth } = useAuth();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
+
+  function isSubpath(url: string) {
+    const { currentRoute } = useRouter();
+    return true;
+    // return new URL(url).pathname.includes(currentRoute.value.path);
+  }
 </script>
 
 <template>
@@ -32,7 +38,7 @@
         <ULink
           to="/labs"
           inactive-class="text-body"
-          active-class="text-violet-700 bg-violet-100"
+          :active-class="isSubpath(labsPath) ? 'text-violet-700 bg-violet-100' : ''"
           class="ULink text-body font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
           Labs

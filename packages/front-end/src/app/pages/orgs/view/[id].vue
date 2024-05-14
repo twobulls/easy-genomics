@@ -2,10 +2,11 @@
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useToastStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
 
-  const disabledButtons = ref({});
+  const { isRequestPending } = useUiStore();
+  const disabledButtons = ref<Record<number, unknown>>({});
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const orgName = $route.query.name;
@@ -41,25 +42,26 @@
     },
   ];
 
-  const actionItems = (row: OrganizationUserDetails) => [
+  // TODO: wire up action items when available
+  const actionItems = (row: any) => [
     [
       {
         label: 'TBC',
-        click: () => {},
+        click: (row) => {},
       },
     ],
   ];
 
   function isInvited(status: string) {
-    console.log(status, UserSchema.shape.Status.enum.Invited);
     return status === UserSchema.shape.Status.enum.Invited;
   }
 
   useAsyncData('orgSettingsData', async () => {
     isLoading.value = true;
     try {
-      orgSettingsData.value = await $api.orgs.orgSettings($route.params.id);
-      orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id);
+      useUiStore().setRequestPending(true);
+      orgSettingsData.value = await $api.orgs.orgSettings($route.params.id as string);
+      orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id as string);
 
       if (orgUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
@@ -68,23 +70,10 @@
       console.error(error);
     } finally {
       isLoading.value = false;
+      useUiStore().setRequestPending(false);
     }
     return orgSettingsData.value;
   });
-
-  function updateSearchOutput(newVal: any) {
-    searchOutput.value = newVal;
-  }
-
-  // TODO: wire up resend email API when available
-  function resendInvite(index: number) {
-    useToastStore().success('Invite resent');
-    disabledButtons.value[index] = true;
-  }
-
-  function isButtonDisabled(index: number) {
-    return disabledButtons.value[index];
-  }
 
   const filteredRows = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
@@ -105,6 +94,33 @@
       return fullName.includes(searchOutput.value.toLowerCase()) || email.includes(searchOutput.value.toLowerCase());
     });
   });
+
+  function disableButton(index: number) {
+    disabledButtons.value[index] = true;
+  }
+
+  function isButtonDisabled(index: number) {
+    return disabledButtons.value[index];
+  }
+
+  async function resendInvite(user: OrganizationUserDetails, index: number) {
+    const { OrganizationId: orgId, UserEmail: email } = user;
+    try {
+      useUiStore().setRequestPending(true);
+      await $api.users.invite(orgId, email);
+      useToastStore().success('Invite resent');
+      disableButton(index);
+    } catch (error) {
+      useToastStore().error('Failed to resend invite');
+      console.error(error);
+    } finally {
+      useUiStore().setRequestPending(false);
+    }
+  }
+
+  function updateSearchOutput(newVal: any) {
+    searchOutput.value = newVal;
+  }
 </script>
 
 <template>
@@ -179,9 +195,6 @@
       </section>
     </template>
     <template #users>
-      <!--      <template #item="{ item }">-->
-      <!--        <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>-->
-      <!--        <div v-else-if="item.key === 'users'" class="space-y-3">-->
       <EGEmptyDataCTA
         v-if="!isLoading && hasNoData"
         message="You don't have any users in this lab yet."
@@ -248,8 +261,9 @@
                   label="Resend invite"
                   class="mr-2"
                   v-if="isInvited(row.OrganizationUserStatus)"
-                  @click="resendInvite(index)"
-                  :disabled="isButtonDisabled(index)"
+                  @click="resendInvite(row, index)"
+                  :disabled="isButtonDisabled(index) || isRequestPending"
+                  :loading="isRequestPending"
                 />
                 <EGActionButton :items="actionItems(row)" />
               </div>

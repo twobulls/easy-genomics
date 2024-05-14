@@ -4,7 +4,3 @@ type Toast = {
   title: string;
   variant: 'success' | 'error' | 'warning' | 'info';
 };
-
-interface ToastStoreState {
-  toasts: Toast[];
-}

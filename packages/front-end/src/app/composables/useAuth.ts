@@ -1,5 +1,5 @@
 import { Auth } from 'aws-amplify';
-import { useToastStore } from '~/stores/stores';
+import { useToastStore, useUiStore } from '~/stores/stores';
 
 export default function useAuth() {
   async function hasAuth() {
@@ -14,6 +14,7 @@ export default function useAuth() {
 
   async function login(username: string, password: string) {
     try {
+      useUiStore().setRequestPending(true);
       const user = await Auth.signIn(username, password);
       if (user) {
         await navigateTo('/labs');
@@ -26,6 +27,8 @@ export default function useAuth() {
       }
       console.error('Error occurred during sign in.', error);
       throw error;
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 

@@ -1,7 +1,7 @@
 import { CreateOrganization, Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
 class OrgsModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -30,7 +30,7 @@ class OrgsModule extends HttpFactory {
   async usersDetails(orgId: string): Promise<OrganizationUserDetails[]> {
     const res = await this.call<OrganizationUserDetails[]>(
       'GET',
-      `${this.RESOURCE}/user/list-organization-users-details?organizationId=${orgId}`
+      `${this.RESOURCE}/user/list-organization-users-details?organizationId=${orgId}`,
     );
 
     if (!res) {

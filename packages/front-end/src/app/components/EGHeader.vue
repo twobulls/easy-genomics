@@ -6,7 +6,6 @@
   const { currentRoute } = useRouter();
 
   function isSubpath(url: string) {
-    console.log(currentRoute.value.path.includes(url));
     return currentRoute.value.path.includes(url);
   }
 </script>

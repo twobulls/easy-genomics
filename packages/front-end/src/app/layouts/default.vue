@@ -1,6 +1,14 @@
+<script setup lang="ts">
+  const routeKey = ref(0);
+
+  watch(routeKey, () => {
+    routeKey.value++;
+  });
+</script>
+
 <template>
   <EGToasts class="top-[70px]" />
-  <EGHeader />
+  <EGHeader :key="routeKey" />
   <main class="mx-auto mt-12 px-4">
     <slot />
   </main>

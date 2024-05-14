@@ -4,7 +4,6 @@
 
   definePageMeta({ layout: 'login' });
 
-  const { isRequestPending } = useUiStore();
   const { login } = useAuth();
 
   const schema = z.object({
@@ -28,8 +27,8 @@
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton
-        :disabled="isFormDisabled || isRequestPending"
-        :loading="isRequestPending"
+        :disabled="isFormDisabled || useUiStore().isRequestPending"
+        :loading="useUiStore().isRequestPending"
         label="Sign in"
         @click="login(state.email, state.password)"
       />

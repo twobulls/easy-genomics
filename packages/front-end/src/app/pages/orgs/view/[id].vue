@@ -5,7 +5,6 @@
   import { useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
 
-  const { isRequestPending } = useUiStore();
   const disabledButtons = ref<Record<number, unknown>>({});
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -262,8 +261,8 @@
                   class="mr-2"
                   v-if="isInvited(row.OrganizationUserStatus)"
                   @click="resendInvite(row, index)"
-                  :disabled="isButtonDisabled(index) || isRequestPending"
-                  :loading="isRequestPending"
+                  :disabled="isButtonDisabled(index) || useUiStore().isRequestPending"
+                  :loading="useUiStore().isRequestPending"
                 />
                 <EGActionButton :items="actionItems(row)" />
               </div>

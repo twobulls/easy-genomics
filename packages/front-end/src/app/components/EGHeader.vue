@@ -1,13 +1,13 @@
 <script setup lang="ts">
-  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
+  import { ButtonSizeEnum } from '~/types/buttons';
   const { logOut, hasAuth } = useAuth();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
+  const { currentRoute } = useRouter();
 
   function isSubpath(url: string) {
-    const { currentRoute } = useRouter();
-    return true;
-    // return new URL(url).pathname.includes(currentRoute.value.path);
+    console.log(currentRoute.value.path.includes(url));
+    return currentRoute.value.path.includes(url);
   }
 </script>
 
@@ -38,7 +38,8 @@
         <ULink
           to="/labs"
           inactive-class="text-body"
-          :active-class="isSubpath(labsPath) ? 'text-violet-700 bg-violet-100' : ''"
+          :active-class="'text-primary-dark bg-primary-muted'"
+          :class="isSubpath(labsPath) ? 'text-primary-dark bg-primary-muted' : ''"
           class="ULink text-body font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
           Labs
@@ -46,8 +47,9 @@
         <ULink
           to="/orgs"
           inactive-class="text-body"
-          :active-class="isSubpath(orgsPath) ? 'text-violet-700 bg-violet-100' : ''"
-          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm leading-5 tracking-normal"
+          :active-class="'text-primary-dark bg-primary-muted'"
+          :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"
+          class="ULink text-body font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
         >
           Organizations
         </ULink>

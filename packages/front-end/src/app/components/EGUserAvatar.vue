@@ -2,8 +2,8 @@
   const props = defineProps<{
     name?: string;
     email: string;
-    labManager: boolean;
-    labTechnician: boolean;
+    labManager?: boolean;
+    labTechnician?: boolean;
   }>();
 
   const initials = computed(() => {
@@ -22,10 +22,10 @@
       return 'bg-primary-muted text-primary-dark';
     } else {
       return props.labManager
-        ? 'bg-alert-success-dark text-white'
+        ? 'bg-alert-danger-dark text-white'
         : props.labTechnician
           ? 'bg-primary-500 text-white'
-          : ' text-white bg-text-muted';
+          : 'text-primary bg-primary-muted';
     }
   });
 </script>

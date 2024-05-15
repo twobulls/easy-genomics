@@ -1,4 +1,5 @@
 import { CreateOrganization, Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
 
@@ -21,6 +22,19 @@ class OrgsModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Failed to retrieve list of Organizations');
+    }
+
+    return res;
+  }
+
+  async usersDetails(orgId: string): Promise<OrganizationUserDetails[]> {
+    const res = await this.call<OrganizationUserDetails[]>(
+      'GET',
+      `${this.RESOURCE}/user/list-organization-users-details?organizationId=${orgId}`,
+    );
+
+    if (!res) {
+      throw new Error('Failed to retrieve Organization users details');
     }
 
     return res;

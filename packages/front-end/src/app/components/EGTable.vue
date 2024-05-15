@@ -6,8 +6,8 @@
 
   const props = withDefaults(
     defineProps<{
-      tableData: Array;
-      columns: Array;
+      tableData: any[];
+      columns: any[];
       isLoading?: boolean;
       actionItems: () => ActionItem[];
       showPagination: boolean;
@@ -74,7 +74,7 @@
       <template #actions-data="{ row }">
         <EGActionButton :items="actionItems(row)" />
       </template>
-      <template #empty-state>&nbsp;</template>
+      <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
     </UTable>
   </UCard>
 
@@ -88,6 +88,7 @@
 
 <style lang="scss">
   .EGTable {
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     width: 100%;
     table-layout: auto;
@@ -103,6 +104,10 @@
         th:first-child {
           padding-left: 40px;
           width: 400px;
+        }
+        th:last-child {
+          text-align: right;
+          padding-right: 40px;
         }
       }
     }

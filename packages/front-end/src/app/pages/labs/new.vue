@@ -2,10 +2,9 @@
   import { z } from 'zod';
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
-  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
 
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
-  import { useToastStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores/stores';
 
   const { $api } = useNuxtApp();
 
@@ -110,6 +109,8 @@
   async function onSubmit(event: FormSubmitEvent<FormSchema>) {
     try {
       state.isFormDisabled = true;
+      useUiStore().setRequestPending(true);
+
       const { Name, Description } = event.data;
 
       await $api.labs.create({ Name, Description, OrganizationId: MOCK_ORG_ID, Status: 'Active' });
@@ -119,6 +120,7 @@
       useToastStore().error('Failed to create lab');
     } finally {
       state.isFormDisabled = false;
+      useUiStore().setRequestPending(false);
     }
   }
 </script>
@@ -157,6 +159,12 @@
         </EGFormGroup>
       </div>
     </section>
-    <EGButton :disabled="state.isFormDisabled" type="submit" label="Create" class="mt-6" />
+    <EGButton
+      :disabled="state.isFormDisabled || useUiStore().isRequestPending"
+      :loading="useUiStore().isRequestPending"
+      type="submit"
+      label="Create"
+      class="mt-6"
+    />
   </UForm>
 </template>

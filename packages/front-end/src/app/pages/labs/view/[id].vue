@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
-  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
+  import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse } from '~/types/api';
   import { useToastStore } from '~/stores/stores';
 
@@ -19,7 +19,6 @@
   const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
   const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
   const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
-
   const laboratoryId = $route.params.id;
 
   // Dynamic remove user dialog values
@@ -66,7 +65,7 @@
     },
   ];
 
-  const actionItems = (row: Array<{}>) => [
+  const actionItems = (row: LaboratoryUserDetails) => [
     [
       {
         label: 'Edit lab access',
@@ -249,11 +248,11 @@
                   <EGActionButton :items="actionItems(row)" />
                 </div>
               </template>
-              <template #empty-state>&nbsp;</template>
+              <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
             </UTable>
           </UCard>
 
-          <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!searchOutput">
+          <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!searchOutput && !isLoading">
             <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
             <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
               <UPagination v-model="page" :page-count="10" :total="labUsersDetailsData.length" />
@@ -283,6 +282,10 @@
         th:first-child {
           padding-left: 40px;
           width: 400px;
+        }
+        th:last-child {
+          text-align: right;
+          padding-right: 40px;
         }
       }
     }

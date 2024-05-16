@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { OrganizationAccessSchema } from './user';
 
 export const OrganizationUserDetailsSchema = z.object({
   UserId: z.string().uuid(),
@@ -11,4 +12,5 @@ export const OrganizationUserDetailsSchema = z.object({
   OrganizationId: z.string().uuid(),
   OrganizationUserStatus: z.enum(['Active', 'Inactive', 'Invited']),
   OrganizationAdmin: z.boolean(),
+  OrganizationAccess: OrganizationAccessSchema.optional(),
 }).strict();

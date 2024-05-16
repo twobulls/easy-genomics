@@ -11,6 +11,7 @@
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgName = $route.query.name;
+  const orgDescription = $route.query.desc;
   const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
   const showInviteModule = ref(false);
@@ -147,7 +148,7 @@
     <div class="flex items-start justify-between">
       <div>
         <EGText tag="h1" class="mb-4">{{ orgName }}</EGText>
-        <EGText tag="p" class="text-muted">View your entire Organization</EGText>
+        <EGText tag="p" class="text-muted">{{ orgDescription }}</EGText>
       </div>
       <div class="relative flex flex-col items-end">
         <EGButton label="Invite users" @click="() => (showInviteModule = true)" />

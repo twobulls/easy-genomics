@@ -5,7 +5,6 @@
 
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
   import { useToastStore, useUiStore } from '~/stores/stores';
-  import EGCard from '~/components/EGCard.vue';
 
   const { $api } = useNuxtApp();
 

@@ -1,6 +1,11 @@
 import { useToastStore } from '~/stores/stores';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
+type inviteReqBody = {
+  OrganizationId: string;
+  UserEmail: string;
+};
+
 type UserNameOptions = {
   preferredName: string | undefined;
   firstName: string | undefined;
@@ -20,11 +25,6 @@ export default function useUser() {
     const preferredOrFirstName = preferredName || firstName;
     return preferredOrFirstName ? `${preferredOrFirstName} ${lastName}` : '';
   }
-
-  type inviteReqBody = {
-    OrganizationId: string;
-    UserEmail: string;
-  };
 
   async function handleInvite(reqBody: inviteReqBody, action: 'resend' | 'send') {
     const { OrganizationId: orgId, UserEmail: email } = reqBody;

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const OrganizationAccessSchema = z.record(z.string(), z.array(z.string()));
+
 export const UserSchema = z
   .object({
     UserId: z.string().uuid(),
@@ -9,6 +11,7 @@ export const UserSchema = z
     LastName: z.string().optional(),
     PhoneNumber: z.string().optional(),
     Status: z.enum(['Active', 'Inactive', 'Invited']),
+    OrganizationAccess: OrganizationAccessSchema.optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),

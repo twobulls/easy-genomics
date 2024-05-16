@@ -26,7 +26,7 @@
     try {
       isRequestPending.value = true;
       await invite({
-        UserEmail: state.value.email,
+        Email: state.value.email,
         OrganizationId: MOCK_ORG_ID,
       });
       state.value.email = '';

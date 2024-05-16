@@ -1,10 +1,7 @@
 import { useToastStore } from '~/stores/stores';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-
-type inviteReqBody = {
-  OrganizationId: string;
-  UserEmail: string;
-};
+import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
+import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invite';
 
 type UserNameOptions = {
   preferredName: string | undefined;
@@ -26,8 +23,14 @@ export default function useUser() {
     return preferredOrFirstName ? `${preferredOrFirstName} ${lastName}` : '';
   }
 
-  async function handleInvite(reqBody: inviteReqBody, action: 'resend' | 'send') {
-    const { OrganizationId: orgId, UserEmail: email } = reqBody;
+  async function handleInvite(reqBody: CreateUserInvite, action: 'resend' | 'send') {
+    const result = CreateUserInviteSchema.safeParse(reqBody);
+    if (!result.success) {
+      console.error('Zod validation failed', result.error);
+      return;
+    }
+
+    const { OrganizationId: orgId, Email: email } = result.data;
     const toastSuccessMessage = action === 'send' ? 'Invite sent' : 'Invite resent';
     const toastErrorMessage = action === 'send' ? 'Failed to send invite' : 'Failed to resend invite';
 
@@ -41,17 +44,17 @@ export default function useUser() {
   }
 
   async function resendInvite(user: OrganizationUserDetails) {
-    const { OrganizationId: orgId, UserEmail: email } = user;
+    const { OrganizationId: orgId, Email: email } = user;
     await handleInvite(
       {
         OrganizationId: orgId,
-        UserEmail: email,
+        Email: email,
       },
       'resend'
     );
   }
 
-  async function invite(reqBody: inviteReqBody) {
+  async function invite(reqBody: CreateUserInvite) {
     await handleInvite(reqBody, 'send');
   }
 

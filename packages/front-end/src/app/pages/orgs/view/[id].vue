@@ -7,6 +7,7 @@
 
   const $route = useRoute();
   const disabledButtons = ref<Record<number, unknown>>({});
+  const buttonRequestPending = ref<Record<number, unknown>>({});
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgName = $route.query.name;
@@ -101,16 +102,28 @@
 
   async function resend(userDetails: OrganizationUserDetails, index: number) {
     const { OrganizationId, UserEmail } = userDetails;
+    setButtonRequestPending(true, index);
+
     try {
       await resendInvite({ OrganizationId, UserEmail });
       disableButton(index);
     } catch (error) {
       console.error(error);
+    } finally {
+      setButtonRequestPending(false, index);
     }
   }
 
   function disableButton(index: number) {
     disabledButtons.value[index] = true;
+  }
+
+  function setButtonRequestPending(isPending: boolean, index: number) {
+    buttonRequestPending.value[index] = isPending;
+  }
+
+  function isButtonRequestPending(index: number) {
+    return buttonRequestPending.value[index];
   }
 
   function isButtonDisabled(index: number) {
@@ -263,8 +276,8 @@
                   class="mr-2"
                   v-if="isInvited(row.OrganizationUserStatus)"
                   @click="resend(row, index)"
-                  :disabled="isButtonDisabled(index) || useUiStore().isRequestPending"
-                  :loading="useUiStore().isRequestPending"
+                  :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
+                  :loading="isButtonRequestPending(index)"
                 />
                 <EGActionButton :items="actionItems(row)" />
               </div>

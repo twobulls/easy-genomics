@@ -43,7 +43,7 @@
 </script>
 
 <template>
-  <EGCard padding="4">
+  <EGCard :padding="4">
     <UForm :schema="formSchema" :state="state" @submit="onSubmit">
       <div class="flex w-full items-center justify-center space-x-2">
         <EGInput v-model="state.email" :placeholder="placeholder" :clearable="true" class="w-full" />

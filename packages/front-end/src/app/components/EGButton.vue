@@ -6,6 +6,7 @@
     variant?: ButtonVariant;
     size?: ButtonSize;
     label?: string;
+    icon?: string;
   };
 
   withDefaults(defineProps<ButtonProps>(), {
@@ -85,5 +86,20 @@
 </script>
 
 <template>
-  <UButton :class="buttonVariants({ variant, size })" :label="label" />
+  <UButton
+    :icon="icon"
+    trailing
+    :class="buttonVariants({ variant, size })"
+    :label="label"
+    :ui="{
+      base: 'w-fit',
+      icon: {
+        base: 'flex-shrink-0',
+        loading: 'animate-spin',
+      },
+      default: {
+        loadingIcon: 'i-heroicons-arrow-path-20-solid',
+      },
+    }"
+  />
 </template>

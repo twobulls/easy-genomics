@@ -1,19 +1,22 @@
 <script setup lang="ts">
-  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
+  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
-  const disabledButtons = ref<Record<number, unknown>>({});
-  const { $api } = useNuxtApp();
   const $route = useRoute();
-  const orgName = $route.query.name;
+  const disabledButtons = ref<Record<number, unknown>>({});
   const hasNoData = ref(false);
   const isLoading = ref(true);
+  const orgName = $route.query.name;
   const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
+  const showInviteModule = ref(false);
+  const { $api } = useNuxtApp();
+  const { resendInvite } = useUser();
 
+  // Table-related refs and computed props
   const page = ref(1);
   const pageCount = ref(10);
   const searchOutput = ref('');
@@ -74,6 +77,9 @@
     return orgSettingsData.value;
   });
 
+  /**
+   * Filter rows based on search input for both name and email
+   */
   const filteredRows = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
       return orgUsersDetailsData.value;
@@ -81,7 +87,6 @@
     return orgUsersDetailsData.value.filter((person: OrganizationUserDetails) => {
       const fullName = String(
         useUser().displayName({
-          title: person.Title || '',
           preferredName: person.PreferredName || '',
           firstName: person.FirstName || '',
           lastName: person.LastName || '',
@@ -94,6 +99,16 @@
     });
   });
 
+  async function resend(userDetails: OrganizationUserDetails, index: number) {
+    const { OrganizationId, UserEmail } = userDetails;
+    try {
+      await resendInvite({ OrganizationId, UserEmail });
+      disableButton(index);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   function disableButton(index: number) {
     disabledButtons.value[index] = true;
   }
@@ -102,28 +117,13 @@
     return disabledButtons.value[index];
   }
 
-  async function resendInvite(user: OrganizationUserDetails, index: number) {
-    const { OrganizationId: orgId, UserEmail: email } = user;
-    try {
-      useUiStore().setRequestPending(true);
-      await $api.users.invite(orgId, email);
-      useToastStore().success('Invite resent');
-      disableButton(index);
-    } catch (error) {
-      useToastStore().error('Failed to resend invite');
-      console.error(error);
-    } finally {
-      useUiStore().setRequestPending(false);
-    }
-  }
-
-  function updateSearchOutput(newVal: any) {
+  function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;
   }
 </script>
 
 <template>
-  <div class="mb-11 flex flex-col justify-between">
+  <div class="mb-16 flex flex-col justify-between">
     <a
       @click="$router.go(-1)"
       class="text-primary mb-4 flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
@@ -136,6 +136,12 @@
         <EGText tag="h1" class="mb-4">{{ orgName }}</EGText>
         <EGText tag="p" class="text-muted">View your entire Organization</EGText>
       </div>
+      <div class="relative flex flex-col items-end">
+        <EGButton label="Invite users" @click="() => (showInviteModule = true)" />
+        <div class="absolute top-[60px] w-[500px]" v-if="showInviteModule">
+          <EGInviteModule @invite-clicked="invite($event)" />
+        </div>
+      </div>
     </div>
   </div>
 
@@ -143,7 +149,7 @@
     :ui="{
       base: 'focus:outline-none',
       list: {
-        base: 'border-b-2 rounded-none  mb-4',
+        base: 'border-b-2 rounded-none mb-4  mt-2',
         padding: 'p-0',
         height: 'h-14',
         marker: {
@@ -182,16 +188,14 @@
         :ui="{ rounded: 'rounded-full' }"
         v-if="isLoading"
       />
-      <section
-        v-else
-        class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 text-sm leading-5 max-md:px-5"
-      >
-        <h3>Organization name</h3>
-        <EGInput class="mb-6" :placeholder="orgSettingsData.Name" disabled />
-
-        <h2>Organization description</h2>
-        <EGInput :placeholder="orgSettingsData.Description" disabled />
-      </section>
+      <EGCard v-else>
+        <EGFormGroup label="Organization name" name="Name">
+          <EGInput :placeholder="orgSettingsData.Name" disabled />
+        </EGFormGroup>
+        <EGFormGroup label="Organization description" name="Description">
+          <EGInput :placeholder="orgSettingsData.Description" disabled />
+        </EGFormGroup>
+      </EGCard>
     </template>
     <template #users>
       <EGEmptyDataCTA
@@ -224,7 +228,6 @@
                   class="mr-4"
                   :name="
                     useUser().displayName({
-                      title: '',
                       preferredName: row.PreferredName,
                       firstName: row.FirstName,
                       lastName: row.LastName,
@@ -236,7 +239,6 @@
                   <div>
                     {{
                       useUser().displayName({
-                        title: row.Title,
                         preferredName: row.PreferredName,
                         firstName: row.FirstName,
                         lastName: row.LastName,
@@ -260,7 +262,7 @@
                   label="Resend invite"
                   class="mr-2"
                   v-if="isInvited(row.OrganizationUserStatus)"
-                  @click="resendInvite(row, index)"
+                  @click="resend(row, index)"
                   :disabled="isButtonDisabled(index) || useUiStore().isRequestPending"
                   :loading="useUiStore().isRequestPending"
                 />
@@ -279,7 +281,7 @@
             <UPagination v-model="page" :page-count="10" :total="orgUsersDetailsData.length" />
           </div>
         </div>
-        <div class="text-muted mt-6 text-center text-xs">
+        <div class="text-muted my-6 text-center text-xs">
           This organisation can only be removed by contacting your System administrator at: [System admin email]
         </div>
       </template>

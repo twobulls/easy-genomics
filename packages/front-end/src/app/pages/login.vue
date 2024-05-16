@@ -1,27 +1,30 @@
 <script setup lang="ts">
   import { z } from 'zod';
   import { useUiStore } from '~/stores/stores';
+  import { ERRORS } from '~/constants/validation';
 
   definePageMeta({ layout: 'login' });
 
   const { login } = useAuth();
 
-  const schema = z.object({
-    email: z.string().email('Must be a valid email address'),
-    password: z.string().min(1, 'Enter a password'),
+  const formSchema = z.object({
+    email: z.string().email(ERRORS.email),
+    password: z.string().min(1, ERRORS.password),
   });
   const state = ref({ email: '', password: '' });
   const isFormDisabled = ref(true);
 
   watchEffect(() => {
-    isFormDisabled.value = !schema.safeParse(state.value).success;
+    isFormDisabled.value = !formSchema.safeParse(state.value).success;
   });
 </script>
 
 <template>
-  <UForm :schema="schema" :state="state" class="w-full max-w-[408px] space-y-4">
+  <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px] space-y-4">
     <EGText tag="h2" class="mb-12">Sign in</EGText>
-    <EGFormGroup label="Email" name="email"><EGInput v-model="state.email" /></EGFormGroup>
+    <EGFormGroup label="Email" name="email">
+      <EGInput v-model="state.email" />
+    </EGFormGroup>
     <EGFormGroup label="Password" name="password">
       <EGPasswordInput v-model="state.password" :password="true" />
     </EGFormGroup>

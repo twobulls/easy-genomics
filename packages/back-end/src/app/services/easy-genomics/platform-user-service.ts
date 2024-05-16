@@ -18,12 +18,15 @@ export class PlatformUserService extends DynamoDBService {
    *  - add an Unique-Reference record to reserve the new User's email as taken
    *  - add an Organization-User access mapping record for the new User to access the Organization
    *
-   *  If any part of the transaction fails, the whole transaction will be rejected in order to avoid data inconsistency.
+   * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
+   * writing the User record.
+   *
+   * If any part of the transaction fails, the whole transaction will be rejected in order to avoid data inconsistency.
    *
    * @param user
    * @param organizationUser
    */
-  async inviteNewUserToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
+  async addNewUserToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
     const logRequestMessage = `Invite New User To Organization UserId=${user.UserId} to OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
 
@@ -76,19 +79,33 @@ export class PlatformUserService extends DynamoDBService {
 
   /**
    * This function creates a DynamoDB transaction to:
+   *  - update the existing User to add OrganizationAccess meta-data simplify and improve data retrieval
    *  - add an Organization-User access mapping record for the existing User to access the Organization
    *
-   *  If any part of the transaction fails, the whole transaction will be rejected in order to avoid
-   *  data inconsistency.
+   * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
+   * writing the User record.
+   *
+   * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
+   * data inconsistency.
    * @param user
    * @param organizationUser
    */
-  async inviteExistingUserToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
+  async addExistingUserToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
     const logRequestMessage = `Invite Existing User To Organization UserId=${user.UserId} to OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
 
     const response = await this.transactWriteItems({
       TransactItems: [
+        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+          Put: {
+            TableName: this.USER_TABLE_NAME,
+            ConditionExpression: 'attribute_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#UserId': 'UserId',
+            },
+            Item: marshall(user),
+          },
+        },
         {
           Put: {
             TableName: this.ORGANIZATION_USER_TABLE_NAME,

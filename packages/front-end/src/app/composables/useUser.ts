@@ -1,4 +1,4 @@
-import { useToastStore, useUiStore } from '~/stores/stores';
+import { useToastStore } from '~/stores/stores';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
 type UserNameOptions = {

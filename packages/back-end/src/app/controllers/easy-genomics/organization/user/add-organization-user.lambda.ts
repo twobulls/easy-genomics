@@ -11,6 +11,7 @@ const organizationUserService = new OrganizationUserService();
 const organizationService = new OrganizationService();
 const userService = new UserService();
 
+// TODO: Replace the following logic and with create-user-invite API logic
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
 ): Promise<APIGatewayProxyResult> => {

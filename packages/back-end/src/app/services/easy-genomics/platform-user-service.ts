@@ -201,7 +201,7 @@ export class PlatformUserService extends DynamoDBService {
 
   /**
    * This function creates a DynamoDB transaction to:
-   *  - update the existing User to update the OrganizationAccess meta-data LaboratoryIds list
+   *  - update the existing User to update the OrganizationAccess meta-data LaboratoryIds list by adding the LaboratoryId
    *  - add a Laboratory-User access mapping record for the existing User to access the Laboratory
    *
    * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
@@ -238,6 +238,55 @@ export class PlatformUserService extends DynamoDBService {
               '#UserId': 'UserId',
             },
             Item: marshall(laboratoryUser),
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  }
+
+  /**
+   * This function creates a DynamoDB transaction to:
+   *  - update the existing User to update the OrganizationAccess meta-data LaboratoryIds list by removing the LaboratoryId
+   *  - remove the Laboratory-User access mapping record for the existing User to remove access to the Laboratory
+   *
+   * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
+   * writing the User record.
+   *
+   * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
+   * data inconsistency.
+   *
+   * @param user
+   * @param LaboratoryUser
+   */
+  async removeExistingUserFromLaboratory(user: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
+    const logRequestMessage = `Remove Existing User From Laboratory UserId=${user.UserId} LaboratoryId=${laboratoryUser.LaboratoryId} request`;
+    console.info(logRequestMessage);
+
+    const response = await this.transactWriteItems({
+      TransactItems: [
+        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+          Put: {
+            TableName: this.USER_TABLE_NAME,
+            ConditionExpression: 'attribute_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#UserId': 'UserId',
+            },
+            Item: marshall(user),
+          },
+        },
+        {
+          Delete: {
+            TableName: this.LABORATORY_USER_TABLE_NAME,
+            Key: {
+              LaboratoryId: { S: laboratoryUser.LaboratoryId },
+              UserId: { S: user.UserId },
+            },
           },
         },
       ],

@@ -78,7 +78,7 @@
     </UTable>
   </UCard>
 
-  <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="showPagination">
+  <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="showPagination && !isLoading">
     <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
     <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
       <UPagination v-model="page" :page-count="10" :total="localProps.tableData.length" />

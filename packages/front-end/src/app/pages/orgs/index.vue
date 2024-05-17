@@ -1,6 +1,4 @@
 <script setup lang="ts">
-  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
-
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
   const isLoading = ref(true);
@@ -33,7 +31,11 @@
     [
       {
         label: 'View / Edit',
-        click: async () => navigateTo({ path: `/orgs/view/${row.OrganizationId}`, query: { name: row.Name } }),
+        click: async () =>
+          navigateTo({
+            path: `/orgs/view/${row.OrganizationId}`,
+            query: { name: row.Name, desc: row.Description },
+          }),
       },
     ],
     [

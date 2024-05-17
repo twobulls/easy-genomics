@@ -3,7 +3,7 @@
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
   import { useToastStore } from '~/stores/stores';
-  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
+  import { ButtonSizeEnum } from '~/types/buttons';
 
   const { $api } = useNuxtApp();
 
@@ -130,32 +130,28 @@
     <EGText tag="h1" class="mb-6">Create a new Organization</EGText>
     <EGText tag="h4" class="mb-4">Organization details</EGText>
     <UForm :schema="formSchema" :state="state" @submit="onSubmit">
-      <section
-        class="flex flex-col rounded-2xl border border-solid border-neutral-200 bg-white p-6 pb-12 text-sm leading-5 max-md:px-5"
-      >
-        <div class="space-y-8">
-          <EGFormGroup label="Organization name*" name="Name">
-            <EGInput
-              v-model.trim="state.Name"
-              @blur="validateForm"
-              @input.prevent="handleNameInput"
-              placeholder="Enter organization name (required and must be unique)"
-              required
-              autofocus
-            />
-            <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
-          </EGFormGroup>
-          <EGFormGroup label="Organization description" name="Description">
-            <EGTextArea
-              v-model.trim="state.Description"
-              @blur="validateForm"
-              @input.prevent="handleDescriptionInput"
-              placeholder="Describe your organization and any relevant details"
-            />
-            <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />
-          </EGFormGroup>
-        </div>
-      </section>
+      <EGCard>
+        <EGFormGroup label="Organization name*" name="Name">
+          <EGInput
+            v-model.trim="state.Name"
+            @blur="validateForm"
+            @input.prevent="handleNameInput"
+            placeholder="Enter organization name (required and must be unique)"
+            required
+            autofocus
+          />
+          <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
+        </EGFormGroup>
+        <EGFormGroup label="Organization description" name="Description">
+          <EGTextArea
+            v-model.trim="state.Description"
+            @blur="validateForm"
+            @input.prevent="handleDescriptionInput"
+            placeholder="Describe your organization and any relevant details"
+          />
+          <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />
+        </EGFormGroup>
+      </EGCard>
       <EGButton
         :size="ButtonSizeEnum.enum.sm"
         :disabled="state.isFormDisabled"

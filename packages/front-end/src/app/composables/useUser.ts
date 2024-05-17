@@ -1,6 +1,6 @@
-import { useToastStore } from '~/stores/stores';
-import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
 import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invite';
+import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
+import { useToastStore } from '~/stores/stores';
 
 type UserNameOptions = {
   preferredName: string | undefined;

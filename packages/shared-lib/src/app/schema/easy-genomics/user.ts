@@ -1,6 +1,17 @@
 import { z } from 'zod';
 
-export const OrganizationAccessSchema = z.record(z.string(), z.array(z.string()));
+export const LaboratoryAccessDetailsSchema = z.object({
+  Status: z.enum(['Active', 'Inactive']),
+});
+
+export const LaboratoryAccessSchema = z.record(z.string(), LaboratoryAccessDetailsSchema);
+
+export const OrganizationAccessDetailsSchema = z.object({
+  Status: z.enum(['Active', 'Inactive', 'Invited']),
+  LaboratoryAccess: LaboratoryAccessSchema.optional(),
+});
+
+export const OrganizationAccessSchema = z.record(z.string(), OrganizationAccessDetailsSchema);
 
 export const UserSchema = z
   .object({

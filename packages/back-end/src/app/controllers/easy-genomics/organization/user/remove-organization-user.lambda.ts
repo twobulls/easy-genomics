@@ -24,9 +24,11 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!RemoveOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
-    // Lookup by OrganizationId & UserId to confirm existence before removing
-    const user: User = await userService.get(request.UserId);
+    // Verify User has access to the Organization - throws error if not found
     const organizationUser: OrganizationUser = await organizationUserService.get(request.OrganizationId, request.UserId);
+
+    // Retrieve User object for necessary details to perform update/delete transaction
+    const user: User = await userService.get(request.UserId);
     const response: boolean = await platformUserService.removeExistingUserFromOrganization({
       ...user,
       ModifiedAt: new Date().toISOString(),

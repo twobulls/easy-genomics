@@ -1,7 +1,7 @@
 import { marshall } from '@aws-sdk/util-dynamodb';
-import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import { OrganizationAccess, User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class PlatformUserService extends DynamoDBService {
@@ -29,7 +29,7 @@ export class PlatformUserService extends DynamoDBService {
    * @param organizationUser
    */
   async addNewUserToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
-    const logRequestMessage = `Invite New User To Organization UserId=${user.UserId} to OrganizationId=${organizationUser.OrganizationId} request`;
+    const logRequestMessage = `Add New User To Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
 
     const response = await this.transactWriteItems({
@@ -94,7 +94,7 @@ export class PlatformUserService extends DynamoDBService {
    * @param organizationUser
    */
   async addExistingUserToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
-    const logRequestMessage = `Invite Existing User To Organization UserId=${user.UserId} to OrganizationId=${organizationUser.OrganizationId} request`;
+    const logRequestMessage = `Add Existing User To Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
 
     const response = await this.transactWriteItems({
@@ -147,8 +147,8 @@ export class PlatformUserService extends DynamoDBService {
     console.info(logRequestMessage);
 
     // Find the current Organization Access to identify the existing associated LaboratoryIds to remove
-    const laboratoryIds: string[] = (user.OrganizationAccess && user.OrganizationAccess[organizationUser.OrganizationId])
-      ? user.OrganizationAccess[organizationUser.OrganizationId]
+    const laboratoryIds: string[] = (user.OrganizationAccess)
+      ? user.OrganizationAccess[organizationUser.OrganizationId] || []
       : [];
 
     // Generate array of Delete transaction items to remove the User's associated LaboratoryUser mappings
@@ -199,4 +199,54 @@ export class PlatformUserService extends DynamoDBService {
     }
   }
 
+  /**
+   * This function creates a DynamoDB transaction to:
+   *  - update the existing User to update the OrganizationAccess meta-data LaboratoryIds list
+   *  - add a Laboratory-User access mapping record for the existing User to access the Laboratory
+   *
+   * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
+   * writing the User record.
+   *
+   * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
+   * data inconsistency.
+   *
+   * @param user
+   * @param laboratoryUser
+   */
+  async addExistingUserToLaboratory(user: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
+    const logRequestMessage = `Add Existing User To Laboratory UserId=${user.UserId} LaboratoryId=${laboratoryUser.LaboratoryId} request`;
+    console.info(logRequestMessage);
+
+    const response = await this.transactWriteItems({
+      TransactItems: [
+        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+          Put: {
+            TableName: this.USER_TABLE_NAME,
+            ConditionExpression: 'attribute_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#UserId': 'UserId',
+            },
+            Item: marshall(user),
+          },
+        },
+        {
+          Put: {
+            TableName: this.LABORATORY_USER_TABLE_NAME,
+            ConditionExpression: 'attribute_not_exists(#LaboratoryId) AND attribute_not_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#LaboratoryId': 'LaboratoryId',
+              '#UserId': 'UserId',
+            },
+            Item: marshall(laboratoryUser),
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  }
 }

@@ -1,7 +1,10 @@
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import {
+  LaboratoryAccess,
+  User,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class PlatformUserService extends DynamoDBService {
@@ -146,23 +149,27 @@ export class PlatformUserService extends DynamoDBService {
     const logRequestMessage = `Remove Existing User From Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
 
-    // Find the current Organization Access to identify the existing associated LaboratoryIds to remove
-    const laboratoryIds: string[] = (user.OrganizationAccess)
-      ? user.OrganizationAccess[organizationUser.OrganizationId] || []
-      : [];
+    // Find the current OrganizationAccess to identify the existing associated LaboratoryIds to remove
+    const laboratoryAccess: LaboratoryAccess | undefined =
+      (user.OrganizationAccess && user.OrganizationAccess[organizationUser.OrganizationId])
+        ? user.OrganizationAccess[organizationUser.OrganizationId].LaboratoryAccess
+        : undefined;
 
     // Generate array of Delete transaction items to remove the User's associated LaboratoryUser mappings
-    const laboratoryUserDeletions = laboratoryIds.map(laboratoryId => {
-      return {
-        Delete: {
-          TableName: this.LABORATORY_USER_TABLE_NAME,
-          Key: {
-            LaboratoryId: { S: laboratoryId },
-            UserId: { S: user.UserId },
-          },
-        },
-      };
-    });
+    const laboratoryUserDeletions = (laboratoryAccess)
+      ? Object.keys(laboratoryAccess)
+        .map(laboratoryId => {
+          return {
+            Delete: {
+              TableName: this.LABORATORY_USER_TABLE_NAME,
+              Key: {
+                LaboratoryId: { S: laboratoryId },
+                UserId: { S: user.UserId },
+              },
+            },
+          };
+        })
+      : [];
 
     // Update the current Organization Access to exclude the Organization to remove
     (user.OrganizationAccess) ? (delete user.OrganizationAccess[organizationUser.OrganizationId]) : false;

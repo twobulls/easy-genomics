@@ -1,17 +1,28 @@
 import { EditOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
+import { Status } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
+import {
+  LaboratoryAccess,
+  OrganizationAccess,
+  OrganizationAccessDetails,
+  User,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
+import { PlatformUserService } from '../../../../services/easy-genomics/platform-user-service';
+import { UserService } from '../../../../services/easy-genomics/user-service';
 
 const organizationUserService = new OrganizationUserService();
+const platformUserService = new PlatformUserService();
+const userService = new UserService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    const userId: string = event.requestContext.authorizer.claims['cognito:username'];
+    const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
     const request: OrganizationUser = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
@@ -19,15 +30,41 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!EditOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
+    const status: Status = (request.Status === 'Inactive') ? 'Inactive' : 'Active';
+
     // Lookup by OrganizationId & UserId to confirm existence before updating
-    const existing: OrganizationUser = await organizationUserService.get(request.OrganizationId, request.UserId);
-    const updated: OrganizationUser = await organizationUserService.update({
-      ...existing,
-      ...request,
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: userId,
-    });
-    return buildResponse(200, JSON.stringify(updated), event);
+    const organizationUser: OrganizationUser = await organizationUserService.get(request.OrganizationId, request.UserId);
+    const user: User = await userService.get(request.UserId);
+
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
+    const laboratoryAccess: LaboratoryAccess | undefined =
+      (organizationAccess && organizationAccess[request.OrganizationId])
+        ? organizationAccess[request.OrganizationId].LaboratoryAccess
+        : undefined;
+
+    const response: boolean = await platformUserService.editExistingUserAccessToOrganization(
+      {
+        ...user,
+        OrganizationAccess: {
+          ...organizationAccess,
+          [request.OrganizationId]: <OrganizationAccessDetails>{
+            Status: status,
+            LaboratoryAccess: laboratoryAccess,
+          },
+        },
+        ModifiedAt: new Date().toISOString(),
+        ModifiedBy: currentUserId,
+      }, {
+        ...organizationUser,
+        Status: status,
+        ModifiedAt: new Date().toISOString(),
+        ModifiedBy: currentUserId,
+      });
+
+    if (response) {
+      return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
+    }
   } catch (err: any) {
     console.error(err);
     return {

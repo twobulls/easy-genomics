@@ -208,6 +208,57 @@ export class PlatformUserService extends DynamoDBService {
 
   /**
    * This function creates a DynamoDB transaction to:
+   *  - update the existing User to update the OrganizationAccess meta-data Status to 'Active' or 'Inactive'
+   *  - update the Organization-User access mapping record Status to 'Active' or 'Inactive'
+   *
+   * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
+   * writing the User record.
+   *
+   * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
+   * data inconsistency.
+   *
+   * @param user
+   * @param organizationUser
+   */
+  async editExistingUserAccessToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
+    const logRequestMessage = `Edit Existing User To Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
+    console.info(logRequestMessage);
+
+    const response = await this.transactWriteItems({
+      TransactItems: [
+        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+          Put: {
+            TableName: this.USER_TABLE_NAME,
+            ConditionExpression: 'attribute_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#UserId': 'UserId',
+            },
+            Item: marshall(user),
+          },
+        },
+        { // Using PutItem request to update the existing OrganizationUser record for marshalling convenience instead of UpdateItem
+          Put: {
+            TableName: this.ORGANIZATION_USER_TABLE_NAME,
+            ConditionExpression: 'attribute_exists(#OrganizationId) AND attribute_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#OrganizationId': 'OrganizationId',
+              '#UserId': 'UserId',
+            },
+            Item: marshall(organizationUser),
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  }
+
+  /**
+   * This function creates a DynamoDB transaction to:
    *  - update the existing User to update the OrganizationAccess meta-data LaboratoryIds list by adding the LaboratoryId
    *  - add a Laboratory-User access mapping record for the existing User to access the Laboratory
    *

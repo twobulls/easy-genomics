@@ -1,9 +1,12 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { AddLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
+import { Status } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import {
   LaboratoryAccess,
+  LaboratoryAccessDetails,
+  OrganizationAccess,
   OrganizationAccessDetails,
   User,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
@@ -32,6 +35,8 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!AddLaboratoryUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
+    const status: Status = (request.Status === 'Inactive') ? 'Inactive' : 'Active';
+
     // Lookup by LaboratoryId & UserId to confirm existence before adding
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
     const user: User = await userService.get(request.UserId);
@@ -47,7 +52,12 @@ export const handler: Handler = async (
       }
     }
 
-    // Retrieve the User's OrganizationAccess metadata to add LaboratoryId
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
+    const organizationStatus = (organizationAccess && organizationAccess[laboratory.OrganizationId])
+      ? organizationAccess[laboratory.OrganizationId].Status
+      : 'Inactive'; // Fallback default
+
     const laboratoryAccess: LaboratoryAccess | undefined =
       (user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId])
         ? user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess
@@ -58,10 +68,10 @@ export const handler: Handler = async (
       OrganizationAccess: {
         ...user.OrganizationAccess,
         [laboratory.OrganizationId]: <OrganizationAccessDetails>{
-          Status: 'Active',
-          LaboratoryAccess: {
+          Status: organizationStatus,
+          LaboratoryAccess: <LaboratoryAccessDetails>{
             ...laboratoryAccess,
-            [laboratory.LaboratoryId]: { Status: 'Active' },
+            [laboratory.LaboratoryId]: { Status: status },
           },
         },
       },

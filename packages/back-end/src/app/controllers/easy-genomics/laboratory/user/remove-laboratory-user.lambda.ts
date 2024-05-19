@@ -3,6 +3,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import {
   LaboratoryAccess,
+  OrganizationAccess,
   OrganizationAccessDetails,
   User,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
@@ -38,7 +39,12 @@ export const handler: Handler = async (
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
     const user: User = await userService.get(request.UserId);
 
-    // Retrieve the User's OrganizationAccess metadata to remove LaboratoryId
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
+    const organizationStatus = (organizationAccess && organizationAccess[laboratory.OrganizationId])
+      ? organizationAccess[laboratory.OrganizationId].Status
+      : 'Inactive'; // Fallback default
+
     const laboratoryAccess: LaboratoryAccess | undefined =
       (user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId])
         ? user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess
@@ -48,9 +54,9 @@ export const handler: Handler = async (
     const response: boolean = await platformUserService.removeExistingUserFromLaboratory({
       ...user,
       OrganizationAccess: {
-        ...user.OrganizationAccess,
+        ...organizationAccess,
         [laboratory.OrganizationId]: <OrganizationAccessDetails>{
-          Status: 'Active',
+          Status: organizationStatus,
           LaboratoryAccess: laboratoryAccess,
         },
       },

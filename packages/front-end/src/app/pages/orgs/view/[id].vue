@@ -151,7 +151,7 @@
         <EGText tag="p" class="text-muted">{{ orgDescription }}</EGText>
       </div>
       <div class="relative flex flex-col items-end">
-        <EGButton label="Invite users" @click="() => (showInviteModule = true)" />
+        <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
         <div class="absolute top-[60px] w-[500px]" v-if="showInviteModule">
           <EGInviteModule @invite-clicked="invite($event)" />
         </div>

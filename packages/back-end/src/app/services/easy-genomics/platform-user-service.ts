@@ -356,4 +356,56 @@ export class PlatformUserService extends DynamoDBService {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
   }
+
+  /**
+   * This function creates a DynamoDB transaction to:
+   *  - update the existing User to update the LaboratoryAccess meta-data Status to 'Active' or 'Inactive'
+   *  - update the Laboratory-User access mapping record Status to 'Active' or 'Inactive'
+   *
+   * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
+   * writing the User record.
+   *
+   * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
+   * data inconsistency.
+   *
+   * @param user
+   * @param LaboratoryUser
+   */
+  async editExistingUserAccessToLaboratory(user: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
+    const logRequestMessage = `Edit Existing User To Laboratory UserId=${user.UserId} OrganizationId=${laboratoryUser.LaboratoryId} request`;
+    console.info(logRequestMessage);
+
+    const response = await this.transactWriteItems({
+      TransactItems: [
+        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+          Put: {
+            TableName: this.USER_TABLE_NAME,
+            ConditionExpression: 'attribute_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#UserId': 'UserId',
+            },
+            Item: marshall(user),
+          },
+        },
+        { // Using PutItem request to update the existing LaboratoryUser record for marshalling convenience instead of UpdateItem
+          Put: {
+            TableName: this.LABORATORY_USER_TABLE_NAME,
+            ConditionExpression: 'attribute_exists(#LaboratoryId) AND attribute_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#LaboratoryId': 'LaboratoryId',
+              '#UserId': 'UserId',
+            },
+            Item: marshall(laboratoryUser),
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  }
+
 }

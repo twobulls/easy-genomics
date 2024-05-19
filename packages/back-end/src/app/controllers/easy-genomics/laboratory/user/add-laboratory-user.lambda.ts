@@ -2,7 +2,11 @@ import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { AddLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import {
+  LaboratoryAccess,
+  OrganizationAccessDetails,
+  User,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../../services/easy-genomics/laboratory-service';
@@ -44,15 +48,22 @@ export const handler: Handler = async (
     }
 
     // Retrieve the User's OrganizationAccess metadata to add LaboratoryId
-    const laboratoryIds: string[] = (user.OrganizationAccess)
-      ? user.OrganizationAccess[laboratory.OrganizationId] || []
-      : [];
+    const laboratoryAccess: LaboratoryAccess | undefined =
+      (user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId])
+        ? user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess
+        : undefined;
 
     const response: boolean = await platformUserService.addExistingUserToLaboratory({
       ...user,
       OrganizationAccess: {
         ...user.OrganizationAccess,
-        [laboratory.OrganizationId]: [...new Set([...laboratoryIds, laboratory.LaboratoryId])],
+        [laboratory.OrganizationId]: <OrganizationAccessDetails>{
+          Status: 'Active',
+          LaboratoryAccess: {
+            ...laboratoryAccess,
+            [laboratory.LaboratoryId]: { Status: 'Active' },
+          },
+        },
       },
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: currentUserId,

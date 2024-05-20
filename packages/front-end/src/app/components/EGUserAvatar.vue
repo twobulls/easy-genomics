@@ -21,11 +21,7 @@
     if (!props.name && props.email) {
       return 'bg-primary-muted text-primary-dark';
     } else {
-      return props.labManager
-        ? 'bg-alert-danger-dark text-white'
-        : props.labTechnician
-          ? 'bg-primary-500 text-white'
-          : 'text-primary bg-primary-muted';
+      return 'bg-primary-dark text-white';
     }
   });
 </script>

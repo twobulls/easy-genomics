@@ -1,7 +1,12 @@
 import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import {
+  LaboratoryAccess,
+  OrganizationAccess,
+  OrganizationAccessDetails,
+  User,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../../services/easy-genomics/laboratory-service';
@@ -34,16 +39,26 @@ export const handler: Handler = async (
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
     const user: User = await userService.get(request.UserId);
 
-    // Retrieve the User's OrganizationAccess metadata to add LaboratoryId
-    const laboratoryIds: string[] = (user.OrganizationAccess)
-      ? user.OrganizationAccess[laboratory.OrganizationId] || []
-      : [];
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
+    const organizationStatus = (organizationAccess && organizationAccess[laboratory.OrganizationId])
+      ? organizationAccess[laboratory.OrganizationId].Status
+      : 'Inactive'; // Fallback default
+
+    const laboratoryAccess: LaboratoryAccess | undefined =
+      (user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId])
+        ? user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess
+        : undefined;
+    (laboratoryAccess) ? delete laboratoryAccess[laboratory.LaboratoryId] : false;
 
     const response: boolean = await platformUserService.removeExistingUserFromLaboratory({
       ...user,
       OrganizationAccess: {
-        ...user.OrganizationAccess,
-        [laboratory.OrganizationId]: [...new Set([...laboratoryIds.filter(_ => _ !== laboratory.LaboratoryId)])],
+        ...organizationAccess,
+        [laboratory.OrganizationId]: <OrganizationAccessDetails>{
+          Status: organizationStatus,
+          LaboratoryAccess: laboratoryAccess,
+        },
       },
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: currentUserId,

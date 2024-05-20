@@ -7,9 +7,9 @@
 
 <template>
   <UDropdown class="EGActionButton" v-model:open="isOpen" :items="items" :popper="{ placement: 'bottom-start' }">
-    <div class="rounded-full border">
+    <div class="rounded-full border" :class="{ 'is-highlighted': isHighlighted }">
       <UButton
-        :class="{ active: isOpen.value, 'is-highlighted': isHighlighted.value }"
+        :class="{ active: isOpen, 'is-highlighted': isHighlighted }"
         class="hover:bg-null testClass h-10 w-10 justify-center text-black"
         variant="ghost"
         icon="i-heroicons-ellipsis-horizontal-20-solid"

@@ -55,19 +55,21 @@
     });
   }
 
-  // TODO: wire up action items when available
   const actionItems = (row: OrganizationUserDetails) => [
     [
       {
-        label: 'Edit User access',
+        label: 'Edit User Access',
         click: async () => editUser(row),
       },
-      {
-        label: 'Remove from Org',
-        click: (row: OrganizationUserDetails) => {},
-        isHighlighted: true,
-      },
     ],
+    // TODO: Add this back when the API is ready
+    // [
+    //   {
+    //     label: 'Remove from Org',
+    //     click: (row: OrganizationUserDetails) => {},
+    //     isHighlighted: true,
+    //   },
+    // ],
   ];
 
   function isInvited(status: string) {

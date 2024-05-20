@@ -35,7 +35,7 @@
         <EGText tag="small" color-class="text-muted">{{ UserEmail }}</EGText>
       </div>
     </div>
-    <div class="center justify-center">
+    <div class="flex items-center">
       <span class="text-xs">Organization Admin</span>
       <UToggle :model-value="toggleVal" @click="toggleOrgAdminPerm()" class="ml-2" />
     </div>

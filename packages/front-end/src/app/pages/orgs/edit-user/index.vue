@@ -3,14 +3,14 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
 
-  const isReady = ref(false);
+  const isLoading = ref(true);
 
   async function updateSelectedUser() {
     try {
       const user = await $api.orgs.usersDetailsByUserId($route.query.userId);
       if (user.length) {
         useOrgsStore().setSelectedUser(user[0]);
-        isReady.value = true;
+        isLoading.value = false;
       }
     } catch (error) {
       console.error(error);
@@ -24,9 +24,9 @@
 
 <template>
   <EGPageHeader title="Edit User Access" />
-
+  <USkeleton class="flex h-[82px] flex-col rounded bg-gray-200 p-6 max-md:px-5" v-if="isLoading" />
   <EGUserOrgAdminToggle
-    v-if="isReady"
+    v-if="!isLoading"
     :user="useOrgsStore().selectedUser"
     :display-name="useOrgsStore().userDisplayName"
     @update-user="updateSelectedUser($event)"

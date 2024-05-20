@@ -2,13 +2,7 @@
   const props = defineProps({ items: { type: Array, required: true } });
   const isOpen = ref(false);
 
-  // If any item in any group is 'isHighlighted = true'
   const isHighlighted = computed(() => props.items.flat().some((item) => item.isHighlighted));
-
-  // print the value of isHighlighted for debugging
-  watchEffect(() => {
-    console.log('The value of isHighlighted is: ', isHighlighted.value);
-  });
 </script>
 
 <template>

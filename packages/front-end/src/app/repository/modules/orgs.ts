@@ -84,17 +84,6 @@ class OrgsModule extends HttpFactory {
     }
     return res;
   }
-
-  //
-  // async orgSettings(orgId: string): Promise<Organization | undefined> {
-  //   const res = this.call<Organization>('GET', `/user/edit-organization-user`);
-  //
-  //   if (!res) {
-  //     throw new Error(`Failed to retrieve Organization ${orgId} settings`);
-  //   }
-  //
-  //   return res;
-  // }
 }
 
 export default OrgsModule;

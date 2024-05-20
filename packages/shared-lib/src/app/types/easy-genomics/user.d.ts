@@ -17,6 +17,7 @@
  *   LastName?: <string>,
  *   PhoneNumber?: <string>,
  *   Status: 'Active' | 'Inactive' | 'Invited',
+ *   OrganizationAccess?: <OrganizationAccess>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
  *   ModifiedAt?: <string>,
@@ -34,6 +35,9 @@ export interface User extends BaseAttributes {
   LastName?: string;
   PhoneNumber?: string;
   Status: UserStatus;
+  OrganizationAccess?: OrganizationAccess;
 }
+
+export type OrganizationAccess = Record<string, string[]>; // Mapping OrganizationId -> LaboratoryIds[]
 
 export type UserTitle = 'Prof' | 'Dr' | 'Mr' | 'Mrs' | 'Ms';

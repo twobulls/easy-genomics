@@ -5,6 +5,7 @@ import { OrganizationUserService } from '../../../../services/easy-genomics/orga
 
 const organizationUserService = new OrganizationUserService();
 
+// TODO: Replace the following logic and with list-organization-users-details API logic
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
 ): Promise<APIGatewayProxyResult> => {

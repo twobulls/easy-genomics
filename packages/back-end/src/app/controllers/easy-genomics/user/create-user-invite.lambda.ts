@@ -49,7 +49,10 @@ export const handler: Handler = async (
 
       try {
         // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
-        if (await platformUserService.inviteNewUserToOrganization(newUser, newOrganizationUser)) {
+        if (await platformUserService.addNewUserToOrganization({
+          ...newUser,
+          OrganizationAccess: { [organization.OrganizationId]: [] },
+        }, newOrganizationUser)) {
           // TODO: Send email
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
         }
@@ -81,7 +84,15 @@ export const handler: Handler = async (
           const newOrganizationUser = getNewOrganizationUser(organization.OrganizationId, user.UserId, currentUserId);
 
           // Attempt to add the User to the Organization in one transaction
-          if (await platformUserService.inviteExistingUserToOrganization(user, newOrganizationUser)) {
+          if (await platformUserService.addExistingUserToOrganization({
+            ...user,
+            OrganizationAccess: {
+              ...user.OrganizationAccess,
+              [organization.OrganizationId]: [],
+            },
+            ModifiedAt: new Date().toISOString(),
+            ModifiedBy: currentUserId,
+          }, newOrganizationUser)) {
             // TODO: Re-send email
             return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
           }

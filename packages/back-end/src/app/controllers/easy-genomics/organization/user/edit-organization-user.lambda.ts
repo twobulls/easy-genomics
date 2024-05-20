@@ -57,6 +57,7 @@ export const handler: Handler = async (
         ModifiedBy: currentUserId,
       }, {
         ...organizationUser,
+        ...request,
         Status: status,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,

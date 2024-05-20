@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useUiStore } from '~/stores/stores';
+  import { useUiStore, useOrgsStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
@@ -46,12 +46,26 @@
     },
   ];
 
+  async function editUser(user: OrganizationUserDetails) {
+    await navigateTo({
+      path: `/orgs/edit-user`,
+      query: {
+        userId: user.UserId,
+      },
+    });
+  }
+
   // TODO: wire up action items when available
-  const actionItems = (row: any) => [
+  const actionItems = (row: OrganizationUserDetails) => [
     [
       {
-        label: 'TBC',
-        click: (row) => {},
+        label: 'Edit User access',
+        click: async () => editUser(row),
+      },
+      {
+        label: 'Remove from Org',
+        click: (row: OrganizationUserDetails) => {},
+        isHighlighted: true,
       },
     ],
   ];
@@ -65,7 +79,7 @@
     try {
       useUiStore().setRequestPending(true);
       orgSettingsData.value = await $api.orgs.orgSettings($route.params.id as string);
-      orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id as string);
+      orgUsersDetailsData.value = await $api.orgs.usersDetailsFromOrgId($route.params.id as string);
 
       if (orgUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
@@ -138,13 +152,7 @@
 
 <template>
   <div class="mb-[90px] flex flex-col justify-between">
-    <a
-      @click="$router.go(-1)"
-      class="text-primary mb-4 flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
-    >
-      <i class="i-heroicons-arrow-left-solid"></i>
-      <span>Back</span>
-    </a>
+    <EGBack />
     <div class="flex items-start justify-between">
       <div>
         <EGText tag="h1" class="mb-4">{{ orgName }}</EGText>
@@ -280,7 +288,7 @@
                   :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                   :loading="isButtonRequestPending(index)"
                 />
-                <EGActionButton :items="actionItems(row)" />
+                <EGActionButton v-if="row.UserStatus === 'Active'" :items="actionItems(row)" />
               </div>
             </template>
             <template #empty-state>

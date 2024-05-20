@@ -87,7 +87,7 @@
   async function getLabUsers() {
     isLoading.value = true;
     try {
-      labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
+      labUsersDetailsData.value = await $api.labs.usersDetailsFromOrgId($route.params.id);
 
       if (labUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
@@ -128,13 +128,7 @@
 
 <template>
   <div class="mb-11 flex flex-col justify-between">
-    <a
-      @click="$router.go(-1)"
-      class="text-primary mb-4 flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
-    >
-      <i class="i-heroicons-arrow-left-solid"></i>
-      <span>Back</span>
-    </a>
+    <EGBack />
     <div class="flex items-start justify-between">
       <div>
         <EGText tag="h1" class="mb-4">{{ labName }}</EGText>

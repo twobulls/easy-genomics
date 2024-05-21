@@ -13,6 +13,7 @@
     }
   );
 
+  const $emit = defineEmits(['invite-success']);
   const formSchema = z.object({
     email: z.string().email(ERRORS.email),
   });
@@ -30,6 +31,7 @@
         OrganizationId: MOCK_ORG_ID,
       });
       state.value.email = '';
+      $emit('invite-success');
     } catch (error) {
       console.error(error);
     } finally {

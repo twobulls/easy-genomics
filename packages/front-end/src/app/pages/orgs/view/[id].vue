@@ -4,6 +4,7 @@
   import { useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+  import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
 
   const $route = useRoute();
   const disabledButtons = ref<Record<number, unknown>>({});
@@ -123,6 +124,11 @@
     buttonRequestPending.value[index] = isPending;
   }
 
+  async function refreshUserList() {
+    orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id as string);
+    showInviteModule.value = false;
+  }
+
   function isButtonRequestPending(index: number) {
     return buttonRequestPending.value[index];
   }
@@ -137,7 +143,7 @@
 </script>
 
 <template>
-  <div class="mb-[90px] flex flex-col justify-between">
+  <div class="flex flex-col justify-between">
     <a
       @click="$router.go(-1)"
       class="text-primary mb-4 flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
@@ -152,8 +158,8 @@
       </div>
       <div class="relative flex flex-col items-end">
         <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
-        <div class="absolute top-[60px] w-[500px]" v-if="showInviteModule">
-          <EGInviteModule @invite-clicked="invite($event)" />
+        <div class="mt-2 w-[500px]" v-if="showInviteModule">
+          <EGInviteModule @invite-success="refreshUserList($event)" />
         </div>
       </div>
     </div>
@@ -163,7 +169,7 @@
     :ui="{
       base: 'focus:outline-none',
       list: {
-        base: 'border-b-2 rounded-none mb-4  mt-2',
+        base: 'border-b-2 rounded-none mb-4 mt-0',
         padding: 'p-0',
         height: 'h-14',
         marker: {

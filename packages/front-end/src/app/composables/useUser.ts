@@ -2,6 +2,7 @@ import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema
 import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
 import { useToastStore } from '~/stores/stores';
 import { ERRORS } from '~/constants/validation';
+import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
 type UserNameOptions = {
   preferredName: string | undefined;
@@ -44,8 +45,8 @@ export default function useUser() {
     }
   }
 
-  async function resendInvite(user: CreateUserInvite) {
-    const { OrganizationId: orgId, Email: email } = user;
+  async function resendInvite(user: OrganizationUserDetails) {
+    const { OrganizationId: orgId, UserEmail: email } = user;
     await handleInvite(
       {
         OrganizationId: orgId,

@@ -1,16 +1,14 @@
 <script setup lang="ts">
   const props = defineProps({ items: { type: Array, required: true } });
   const isOpen = ref(false);
-
-  const isHighlighted = computed(() => props.items.flat().some((item) => item.isHighlighted));
 </script>
 
 <template>
   <UDropdown class="EGActionButton" v-model:open="isOpen" :items="items" :popper="{ placement: 'bottom-start' }">
-    <div class="rounded-full border" :class="{ 'is-highlighted': isHighlighted }">
+    <div class="rounded-full border">
       <UButton
-        :class="{ active: isOpen, 'is-highlighted': isHighlighted }"
-        class="hover:bg-null testClass h-10 w-10 justify-center text-black"
+        :class="{ active: isOpen }"
+        class="hover:bg-null h-10 w-10 justify-center text-black"
         variant="ghost"
         icon="i-heroicons-ellipsis-horizontal-20-solid"
       />
@@ -25,6 +23,7 @@
     }
   }
 
+  // TODO: add styling logic
   .is-highlighted {
     button {
       color: #ef5c45;

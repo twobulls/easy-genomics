@@ -11,7 +11,7 @@
 </script>
 
 <template>
-  <div class="mb-4 flex flex-col justify-between">
+  <div class="mb-6 flex flex-col justify-between">
     <EGBack />
     <div class="flex items-start justify-between">
       <div>

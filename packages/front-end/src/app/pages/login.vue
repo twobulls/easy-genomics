@@ -20,7 +20,7 @@
 </script>
 
 <template>
-  <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px] space-y-4">
+  <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
     <EGText tag="h2" class="mb-12">Sign in</EGText>
     <EGFormGroup label="Email" name="email">
       <EGInput v-model="state.email" />

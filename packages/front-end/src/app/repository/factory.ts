@@ -1,6 +1,9 @@
 import { Auth } from 'aws-amplify';
+import { useRuntimeConfig } from 'nuxt/app';
 
 class HttpFactory {
+  private baseRequestUrl = `${useRuntimeConfig().public.BASE_API_URL}/easy-genomics`;
+
   /**
    * @description Call API with token and handle response errors
    * @param method
@@ -9,7 +12,10 @@ class HttpFactory {
    * @param successMsg
    * @returns {Promise<T | undefined>}
    */
+
   async call<T>(method = 'GET', url: string, data?: unknown): Promise<T | undefined> {
+    const requestUrl = `${this.baseRequestUrl}${url}`;
+
     try {
       const token = await this.getToken();
       const headers = {
@@ -23,14 +29,14 @@ class HttpFactory {
         ...headers,
         body: JSON.stringify(data),
       };
-      const response = await fetch(url, settings);
+      const response = await fetch(requestUrl, settings);
 
       if (!response.ok) {
         await this.handleResponseError(response);
       }
 
       return await ((await response.json()) as Promise<T>);
-    } catch (error) {
+    } catch (error: any) {
       throw new Error(`Request error: ${error.message}`);
     }
   }
@@ -38,7 +44,7 @@ class HttpFactory {
   private async handleResponseError(response: Response): Promise<void> {
     let errorMessage = `HTTP error! status: ${response.status}`;
     try {
-      const errorBody = await response.json();
+      const errorBody: any = await response.json();
       errorMessage = errorBody.message || errorMessage;
     } catch (error) {
       console.error('Error parsing response body', error);

@@ -271,6 +271,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'dotenv',
     'nuxt',
     'pinia',
+    '@pinia-plugin-persistedstate/nuxt',
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',

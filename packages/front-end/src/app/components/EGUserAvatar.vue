@@ -18,16 +18,12 @@
   });
 
   const avatarColour = computed(() => {
-    if (!props.name && props.email) {
-      return 'bg-primary-muted text-primary-dark';
-    } else {
-      return 'bg-primary-dark text-white';
-    }
+    return !props.name && props.email ? 'bg-primary-muted text-primary-dark' : 'bg-primary-dark text-white';
   });
 </script>
 
 <template>
-  <div class="flex h-10 w-10 items-center justify-center rounded-full text-xs font-normal" :class="avatarColour">
+  <div class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-normal" :class="avatarColour">
     {{ initials }}
   </div>
 </template>

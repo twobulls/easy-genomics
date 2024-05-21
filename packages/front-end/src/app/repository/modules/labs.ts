@@ -7,10 +7,9 @@ import { DeletedResponse } from '~/types/api';
 
 class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();
-  private RESOURCE = `${this.$config.public.BASE_API_URL}/easy-genomics/laboratory`;
 
   async create(org: CreateLaboratory): Promise<Laboratory | undefined> {
-    const res = this.call<Laboratory>('POST', `${this.RESOURCE}/create-laboratory`, org);
+    const res = this.call<Laboratory>('POST', '/laboratory/create-laboratory', org);
 
     if (!res) {
       throw new Error('Failed to create Laboratory');
@@ -20,7 +19,7 @@ class LabsModule extends HttpFactory {
   }
 
   async list(orgId: string): Promise<Laboratory[]> {
-    const res = await this.call<Laboratory[]>('GET', `${this.RESOURCE}/list-laboratories?organizationId=${orgId}`);
+    const res = await this.call<Laboratory[]>('GET', `/laboratory/list-laboratories?organizationId=${orgId}`);
 
     if (!res) {
       throw new Error('Failed to retrieve Laboratory');
@@ -32,7 +31,7 @@ class LabsModule extends HttpFactory {
   async users(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
-      `${this.RESOURCE}/user/list-laboratory-users?laboratoryId=${labId}`,
+      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`
     );
 
     if (!res) {
@@ -44,7 +43,7 @@ class LabsModule extends HttpFactory {
 
   async removeUser(labId: string, userId: string): Promise<DeletedResponse> {
     console.log(`removeUser; labId: ${labId}; userId: ${userId}`);
-    const res = await this.call<DeletedResponse>('POST', `${this.RESOURCE}/user/remove-laboratory-user`, {
+    const res = await this.call<DeletedResponse>('POST', `/laboratory/user/remove-laboratory-user`, {
       LaboratoryId: labId,
       UserId: userId,
     });
@@ -61,7 +60,7 @@ class LabsModule extends HttpFactory {
   async usersDetails(labId: string): Promise<LaboratoryUserDetails[]> {
     const res = await this.call<LaboratoryUserDetails[]>(
       'GET',
-      `${this.RESOURCE}/user/list-laboratory-users-details?laboratoryId=${labId}`,
+      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`
     );
 
     if (!res) {

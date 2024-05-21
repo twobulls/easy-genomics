@@ -4,7 +4,7 @@
   import { useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-  import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
+  import EGPageHeader from '~/components/EGPageHeader.vue';
 
   const $route = useRoute();
   const disabledButtons = ref<Record<number, unknown>>({});
@@ -47,14 +47,30 @@
     },
   ];
 
-  // TODO: wire up action items when available
-  const actionItems = (row: any) => [
+  async function editUser(user: OrganizationUserDetails) {
+    await navigateTo({
+      path: `/orgs/edit-user`,
+      query: {
+        userId: user.UserId,
+      },
+    });
+  }
+
+  const actionItems = (row: OrganizationUserDetails) => [
     [
       {
-        label: 'TBC',
-        click: (row) => {},
+        label: 'Edit User Access',
+        click: async () => editUser(row),
       },
     ],
+    // TODO: Add this back when the API is ready
+    // [
+    //   {
+    //     label: 'Remove from Org',
+    //     click: (row: OrganizationUserDetails) => {},
+    //     isHighlighted: true,
+    //   },
+    // ],
   ];
 
   function isInvited(status: string) {
@@ -66,7 +82,7 @@
     try {
       useUiStore().setRequestPending(true);
       orgSettingsData.value = await $api.orgs.orgSettings($route.params.id as string);
-      orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id as string);
+      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId($route.params.id as string);
 
       if (orgUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
@@ -125,8 +141,9 @@
   }
 
   async function refreshUserList() {
-    orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id as string);
+    orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId($route.params.id as string);
     showInviteModule.value = false;
+    hasNoData.value = orgUsersDetailsData.value.length === 0;
   }
 
   function isButtonRequestPending(index: number) {
@@ -143,27 +160,12 @@
 </script>
 
 <template>
-  <div class="flex flex-col justify-between">
-    <a
-      @click="$router.go(-1)"
-      class="text-primary mb-4 flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
-    >
-      <i class="i-heroicons-arrow-left-solid"></i>
-      <span>Back</span>
-    </a>
-    <div class="flex items-start justify-between">
-      <div>
-        <EGText tag="h1" class="mb-4">{{ orgName }}</EGText>
-        <EGText tag="p" class="text-muted">{{ orgDescription }}</EGText>
-      </div>
-      <div class="relative flex flex-col items-end">
-        <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
-        <div class="mt-2 w-[500px]" v-if="showInviteModule">
-          <EGInviteModule @invite-success="refreshUserList($event)" />
-        </div>
-      </div>
+  <EGPageHeader :title="orgName" :description="orgDescription">
+    <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
+    <div class="mt-2 w-[500px]" v-if="showInviteModule">
+      <EGInviteModule @invite-success="refreshUserList($event)" :org-id="$route.params.id" />
     </div>
-  </div>
+  </EGPageHeader>
 
   <UTabs
     :ui="{
@@ -217,6 +219,7 @@
         </EGFormGroup>
       </EGCard>
     </template>
+
     <template #users>
       <EGEmptyDataCTA
         v-if="!isLoading && hasNoData"
@@ -280,13 +283,12 @@
                 <EGButton
                   size="sm"
                   label="Resend invite"
-                  class="mr-2"
                   v-if="isInvited(row.OrganizationUserStatus)"
                   @click="resend(row, index)"
                   :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                   :loading="isButtonRequestPending(index)"
                 />
-                <EGActionButton :items="actionItems(row)" />
+                <EGActionButton v-if="row.UserStatus === 'Active'" :items="actionItems(row)" class="ml-2" />
               </div>
             </template>
             <template #empty-state>

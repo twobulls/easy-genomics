@@ -40,8 +40,8 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
-  async usersDetailsByUserId(userId: string): Promise<OrganizationUserDetails> {
-    const res = await this.call<OrganizationUserDetails>(
+  async usersDetailsByUserId(userId: string): Promise<OrganizationUserDetails[]> {
+    const res = await this.call<OrganizationUserDetails[]>(
       'GET',
       `/organization/user/list-organization-users-details?userId=${userId}`
     );

@@ -1,8 +1,8 @@
 import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invite';
-import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
-import { useToastStore } from '~/stores/stores';
-import { ERRORS } from '~/constants/validation';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
+import { ERRORS } from '~/constants/validation';
+import { useToastStore } from '~/stores/stores';
 
 type UserNameOptions = {
   preferredName: string | undefined;
@@ -52,7 +52,7 @@ export default function useUser() {
         OrganizationId: orgId,
         Email: email,
       },
-      'resend'
+      'resend',
     );
   }
 

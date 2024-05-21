@@ -5,7 +5,6 @@
   import { useToastStore } from '~/stores/stores';
 
   const { $api } = useNuxtApp();
-  const $router = useRouter();
   const $route = useRoute();
   const labName = $route.query.name;
   const hasNoData = ref(false);
@@ -26,7 +25,7 @@
   const primaryMessage = ref('');
   const selectedUserId = ref('');
 
-  async function handleRemoveUser() {
+  async function handleRemoveLabUser() {
     isOpen.value = false;
     isRemovingUser.value = true;
     try {
@@ -74,7 +73,7 @@
     ],
     [
       {
-        label: 'Remove from lab',
+        label: 'Remove from Lab',
         click: () => {
           selectedUserId.value = row.UserId;
           primaryMessage.value = `Are you sure you want to remove ${row.UserDisplayName} from ${labName}?`;
@@ -201,7 +200,7 @@
             :actionVariant="ButtonVariantEnum.enum.destructive"
             cancelLabel="Cancel"
             :cancelVariant="ButtonVariantEnum.enum.secondary"
-            @action-triggered="handleRemoveUser"
+            @action-triggered="handleRemoveLabUser"
             :primaryMessage="primaryMessage"
             v-model="isOpen"
           />
@@ -221,13 +220,7 @@
             >
               <template #UserDisplayName-data="{ row }">
                 <div class="flex items-center">
-                  <EGUserAvatar
-                    class="mr-4"
-                    :name="row.UserDisplayName"
-                    :email="row.UserEmail"
-                    :lab-manager="row.LabManager"
-                    :lab-technician="row.LabTechnician"
-                  />
+                  <EGUserAvatar class="mr-4" :name="row.UserDisplayName" :email="row.UserEmail" :is-active="true" />
                   <div class="flex flex-col">
                     <div v-if="row.UserDisplayName">{{ row.UserDisplayName }}</div>
                     <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>

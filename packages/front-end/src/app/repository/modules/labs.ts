@@ -1,3 +1,4 @@
+import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { CreateLaboratory, Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
@@ -31,7 +32,7 @@ class LabsModule extends HttpFactory {
   async users(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`
+      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -42,13 +43,21 @@ class LabsModule extends HttpFactory {
   }
 
   async removeUser(labId: string, userId: string): Promise<DeletedResponse> {
-    console.log(`removeUser; labId: ${labId}; userId: ${userId}`);
-    const res = await this.call<DeletedResponse>('POST', `/laboratory/user/remove-laboratory-user`, {
+    const input = {
+      OrganizationId: labId,
+      UserId: userId,
+    };
+
+    try {
+      RemoveLaboratoryUserSchema.parse(input);
+    } catch (error) {
+      throw new Error(`Validation failed: ${error}`);
+    }
+
+    const res = await this.call<DeletedResponse>('POST', '/laboratory/user/remove-laboratory-user', {
       LaboratoryId: labId,
       UserId: userId,
     });
-
-    console.log(`removeUser; labId: ${labId}; userId: ${userId}; res: `, res);
 
     if (!res) {
       throw new Error('Failed to remove user from Laboratory');
@@ -60,7 +69,7 @@ class LabsModule extends HttpFactory {
   async usersDetails(labId: string): Promise<LaboratoryUserDetails[]> {
     const res = await this.call<LaboratoryUserDetails[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`
+      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`,
     );
 
     if (!res) {

@@ -2,7 +2,7 @@ import { Auth } from 'aws-amplify';
 import { useRuntimeConfig } from 'nuxt/app';
 
 class HttpFactory {
-  private baseRequestUrl = `${useRuntimeConfig().public.BASE_API_URL}/easy-genomics/organization`;
+  private baseRequestUrl = `${useRuntimeConfig().public.BASE_API_URL}/easy-genomics`;
 
   /**
    * @description Call API with token and handle response errors

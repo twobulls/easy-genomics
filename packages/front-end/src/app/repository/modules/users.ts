@@ -6,11 +6,11 @@ class UsersModule extends HttpFactory {
   $config = useRuntimeConfig();
 
   async list(): Promise<User | undefined> {
-    return this.call<User>('GET', '/list-users');
+    return this.call<User>('GET', '/user/list-users');
   }
 
   async invite(orgId: string, email: string): Promise<User | undefined> {
-    return this.call<User>('POST', '/create-user-invite', {
+    return this.call<User>('POST', '/user/create-user-invite', {
       Email: email,
       OrganizationId: orgId,
     });

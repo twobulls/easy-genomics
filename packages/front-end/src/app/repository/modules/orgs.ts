@@ -8,7 +8,7 @@ class OrgsModule extends HttpFactory {
   $config = useRuntimeConfig();
 
   async create(org: CreateOrganization): Promise<Organization | undefined> {
-    const res = this.call<Organization>('POST', '/create-organization', org);
+    const res = this.call<Organization>('POST', '/organization/create-organization', org);
 
     if (!res) {
       throw new Error('Failed to create Organization');
@@ -18,7 +18,7 @@ class OrgsModule extends HttpFactory {
   }
 
   async list(): Promise<Organization[] | undefined> {
-    const res = this.call<Organization[]>('GET', '/list-organizations');
+    const res = this.call<Organization[]>('GET', '/organization/list-organizations');
 
     if (!res) {
       throw new Error('Failed to retrieve list of Organizations');
@@ -30,7 +30,7 @@ class OrgsModule extends HttpFactory {
   async usersDetailsFromOrgId(orgId: string): Promise<OrganizationUserDetails[]> {
     const res = await this.call<OrganizationUserDetails[]>(
       'GET',
-      `/user/list-organization-users-details?organizationId=${orgId}`
+      `/organization/user/list-organization-users-details?organizationId=${orgId}`
     );
 
     if (!res) {
@@ -43,7 +43,7 @@ class OrgsModule extends HttpFactory {
   async usersDetailsByUserId(userId: string): Promise<OrganizationUserDetails> {
     const res = await this.call<OrganizationUserDetails>(
       'GET',
-      `/user/list-organization-users-details?userId=${userId}`
+      `/organization/user/list-organization-users-details?userId=${userId}`
     );
 
     if (!res) {
@@ -54,7 +54,7 @@ class OrgsModule extends HttpFactory {
   }
 
   async orgSettings(orgId: string): Promise<Organization | undefined> {
-    const res = this.call<Organization>('GET', `/read-organization/${orgId}`);
+    const res = this.call<Organization>('GET', `/organization/read-organization/${orgId}`);
 
     if (!res) {
       throw new Error(`Failed to retrieve Organization ${orgId} settings`);
@@ -77,7 +77,7 @@ class OrgsModule extends HttpFactory {
       throw new Error(`Validation failed: ${error}`);
     }
 
-    const res = this.call<Organization>('POST', '/user/edit-organization-user', input);
+    const res = this.call<Organization>('POST', '/organization/user/edit-organization-user', input);
 
     if (!res) {
       throw new Error(`Failed to update user's Org Admin access`);

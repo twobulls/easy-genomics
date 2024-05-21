@@ -11,7 +11,7 @@
 </script>
 
 <template>
-  <div class="mb-7 flex flex-col justify-between">
+  <div class="mb-4 flex flex-col justify-between">
     <EGBack />
     <div class="flex items-start justify-between">
       <div>
@@ -19,6 +19,7 @@
         <EGText tag="p" class="text-muted">{{ description }}</EGText>
       </div>
       <div class="relative flex flex-col items-end">
+        <!-- Right-aligned content  -->
         <slot />
       </div>
     </div>

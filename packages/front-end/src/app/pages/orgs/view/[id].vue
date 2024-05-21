@@ -4,6 +4,7 @@
   import { useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+  import EGPageHeader from '~/components/EGPageHeader.vue';
 
   const $route = useRoute();
   const disabledButtons = ref<Record<number, unknown>>({});
@@ -158,21 +159,12 @@
 </script>
 
 <template>
-  <div class="mb-[90px] flex flex-col justify-between">
-    <EGBack />
-    <div class="flex items-start justify-between">
-      <div>
-        <EGText tag="h1" class="mb-4">{{ orgName }}</EGText>
-        <EGText tag="p" class="text-muted">{{ orgDescription }}</EGText>
-      </div>
-      <div class="relative flex flex-col items-end">
-        <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
-        <div class="mt-2 w-[500px]" v-if="showInviteModule">
-          <EGInviteModule @invite-success="refreshUserList($event)" />
-        </div>
-      </div>
+  <EGPageHeader :title="orgName" :description="orgDescription">
+    <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
+    <div class="mt-2 w-[500px]" v-if="showInviteModule">
+      <EGInviteModule @invite-success="refreshUserList($event)" />
     </div>
-  </div>
+  </EGPageHeader>
 
   <UTabs
     :ui="{

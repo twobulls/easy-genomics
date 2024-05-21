@@ -142,7 +142,7 @@
     :ui="{
       base: 'focus:outline-none',
       list: {
-        base: 'border-b-2 rounded-none  mb-4',
+        base: 'border-b-2 rounded-none mb-4 mt-0',
         padding: 'p-0',
         height: 'h-14',
         marker: {

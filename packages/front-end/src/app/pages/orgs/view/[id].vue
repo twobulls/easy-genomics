@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useUiStore, useOrgsStore } from '~/stores/stores';
+  import { useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
@@ -139,6 +139,11 @@
     buttonRequestPending.value[index] = isPending;
   }
 
+  async function refreshUserList() {
+    orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id as string);
+    showInviteModule.value = false;
+  }
+
   function isButtonRequestPending(index: number) {
     return buttonRequestPending.value[index];
   }
@@ -162,8 +167,8 @@
       </div>
       <div class="relative flex flex-col items-end">
         <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
-        <div class="absolute top-[60px] w-[500px]" v-if="showInviteModule">
-          <EGInviteModule @invite-clicked="invite($event)" />
+        <div class="mt-2 w-[500px]" v-if="showInviteModule">
+          <EGInviteModule @invite-success="refreshUserList($event)" />
         </div>
       </div>
     </div>
@@ -173,7 +178,7 @@
     :ui="{
       base: 'focus:outline-none',
       list: {
-        base: 'border-b-2 rounded-none mb-4  mt-2',
+        base: 'border-b-2 rounded-none mb-4 mt-0',
         padding: 'p-0',
         height: 'h-14',
         marker: {

@@ -1,6 +1,8 @@
 import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invite';
 import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
 import { useToastStore } from '~/stores/stores';
+import { ERRORS } from '~/constants/validation';
+import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
 type UserNameOptions = {
   preferredName: string | undefined;
@@ -30,8 +32,9 @@ export default function useUser() {
     }
 
     const { OrganizationId: orgId, Email: email } = result.data;
-    const toastSuccessMessage = action === 'send' ? 'Invite sent' : 'Invite resent';
-    const toastErrorMessage = action === 'send' ? 'Failed to send invite' : 'Failed to resend invite';
+    const toastSuccessMessage =
+      action === 'send' ? `${email} has been sent an invite` : `${email} has been resent an invite`;
+    const toastErrorMessage = ERRORS.network;
 
     try {
       await $api.users.invite(orgId, email);
@@ -42,8 +45,8 @@ export default function useUser() {
     }
   }
 
-  async function resendInvite(user: CreateUserInvite) {
-    const { OrganizationId: orgId, Email: email } = user;
+  async function resendInvite(user: OrganizationUserDetails) {
+    const { OrganizationId: orgId, UserEmail: email } = user;
     await handleInvite(
       {
         OrganizationId: orgId,

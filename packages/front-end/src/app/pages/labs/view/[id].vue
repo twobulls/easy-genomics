@@ -87,7 +87,7 @@
   async function getLabUsers() {
     isLoading.value = true;
     try {
-      labUsersDetailsData.value = await $api.labs.usersDetailsFromOrgId($route.params.id);
+      labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
 
       if (labUsersDetailsData.value.length === 0) {
         hasNoData.value = true;

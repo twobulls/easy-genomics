@@ -82,7 +82,7 @@
     try {
       useUiStore().setRequestPending(true);
       orgSettingsData.value = await $api.orgs.orgSettings($route.params.id as string);
-      orgUsersDetailsData.value = await $api.orgs.usersDetailsFromOrgId($route.params.id as string);
+      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId($route.params.id as string);
 
       if (orgUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
@@ -141,8 +141,9 @@
   }
 
   async function refreshUserList() {
-    orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id as string);
+    orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId($route.params.id as string);
     showInviteModule.value = false;
+    hasNoData.value = orgUsersDetailsData.value.length === 0;
   }
 
   function isButtonRequestPending(index: number) {
@@ -162,7 +163,7 @@
   <EGPageHeader :title="orgName" :description="orgDescription">
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">
-      <EGInviteModule @invite-success="refreshUserList($event)" />
+      <EGInviteModule @invite-success="refreshUserList($event)" :org-id="$route.params.id" />
     </div>
   </EGPageHeader>
 
@@ -218,6 +219,7 @@
         </EGFormGroup>
       </EGCard>
     </template>
+
     <template #users>
       <EGEmptyDataCTA
         v-if="!isLoading && hasNoData"
@@ -281,13 +283,12 @@
                 <EGButton
                   size="sm"
                   label="Resend invite"
-                  class="mr-2"
                   v-if="isInvited(row.OrganizationUserStatus)"
                   @click="resend(row, index)"
                   :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                   :loading="isButtonRequestPending(index)"
                 />
-                <EGActionButton v-if="row.UserStatus === 'Active'" :items="actionItems(row)" />
+                <EGActionButton v-if="row.UserStatus === 'Active'" :items="actionItems(row)" class="ml-2" />
               </div>
             </template>
             <template #empty-state>

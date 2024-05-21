@@ -9,7 +9,7 @@
   }>();
 
   const $emit = defineEmits(['update-user']);
-  const { UserId, OrganizationId, UserStatus, UserEmail } = props.user;
+  const { UserId, OrganizationId, UserStatus, UserEmail, OrganizationUserStatus } = props.user;
   const toggleVal = ref(props.user.OrganizationAdmin);
 
   async function toggleOrgAdminPerm() {
@@ -29,7 +29,12 @@
 <template>
   <div class="border-stroke-light flex items-center justify-between gap-3 rounded border border-solid bg-white p-4">
     <div class="flex items-center gap-3">
-      <EGUserAvatar :name="displayName" :email="UserEmail" size="large" />
+      <EGUserAvatar
+        :name="displayName"
+        :email="UserEmail"
+        size="large"
+        :is-active="OrganizationUserStatus === 'Active'"
+      />
       <div class="flex flex-col">
         <EGText tag="div" color-class="text-black">{{ displayName }}</EGText>
         <EGText tag="small" color-class="text-muted">{{ UserEmail }}</EGText>

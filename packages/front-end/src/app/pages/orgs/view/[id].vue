@@ -1,16 +1,18 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useUiStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-  import EGPageHeader from '~/components/EGPageHeader.vue';
+  import { ButtonVariantEnum } from '~/types/buttons';
+  import { DeletedResponse } from '~/types/api';
 
   const $route = useRoute();
   const disabledButtons = ref<Record<number, unknown>>({});
   const buttonRequestPending = ref<Record<number, unknown>>({});
   const hasNoData = ref(false);
   const isLoading = ref(true);
+  const orgId = $route.params.id;
   const orgName = $route.query.name;
   const orgDescription = $route.query.desc;
   const orgSettingsData = ref({} as Organization | undefined);
@@ -18,6 +20,12 @@
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
   const { resendInvite } = useUser();
+
+  // Dynamic remove user dialog values
+  const isOpen = ref(false);
+  const primaryMessage = ref('');
+  const selectedUserId = ref('');
+  const isRemovingUser = ref(false);
 
   // Table-related refs and computed props
   const page = ref(1);
@@ -63,26 +71,76 @@
         click: async () => editUser(row),
       },
     ],
-    // TODO: Add this back when the API is ready
-    // [
-    //   {
-    //     label: 'Remove from Org',
-    //     click: (row: OrganizationUserDetails) => {},
-    //     isHighlighted: true,
-    //   },
-    // ],
+    [
+      {
+        label: 'Remove from Org',
+        click: () => {
+          selectedUserId.value = row.UserId;
+          primaryMessage.value = `Are you sure you want to remove ${row.UserDisplayName} from the Organization?`;
+          isOpen.value = true;
+        },
+      },
+    ],
   ];
+
+  async function handleRemoveOrgUser() {
+    isOpen.value = false;
+    isRemovingUser.value = true;
+    try {
+      if (!selectedUserId.value) {
+        throw new Error('No selectedUserId');
+      }
+
+      const res: DeletedResponse = await $api.orgs.removeUser(orgId, selectedUserId.value);
+
+      if (res.deleted) {
+        // TODO
+        useToastStore().success(`${props.displayName} has been removede from the Organization`);
+        await getLabUsers();
+      } else {
+        throw new Error('User not deleted');
+      }
+    } catch (error) {
+      useToastStore().error('Failed to remove user from Organization');
+    } finally {
+      selectedUserId.value = '';
+      isRemovingUser.value = false;
+    }
+  }
 
   function isInvited(status: string) {
     return status === UserSchema.shape.Status.enum.Invited;
   }
 
+  async function getOrgData(shouldGetOrgSettings: boolean = false) {
+    isLoading.value = true;
+    try {
+      if (shouldGetOrgSettings) {
+        orgSettingsData.value = await $api.orgs.orgSettings(orgId);
+      }
+      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
+
+      if (orgUsersDetailsData.value.length === 0) {
+        hasNoData.value = true;
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      isLoading.value = false;
+    }
+    return orgSettingsData.value;
+  }
+
+  onMounted(async () => {
+    await getOrgData(true);
+  });
+
   useAsyncData('orgSettingsData', async () => {
     isLoading.value = true;
     try {
       useUiStore().setRequestPending(true);
-      orgSettingsData.value = await $api.orgs.orgSettings($route.params.id as string);
-      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId($route.params.id as string);
+      orgSettingsData.value = await $api.orgs.orgSettings(orgId);
+      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
 
       if (orgUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
@@ -232,6 +290,16 @@
       <template v-if="!hasNoData">
         <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
+        <EGDialog
+          actionLabel="Remove User"
+          :actionVariant="ButtonVariantEnum.enum.destructive"
+          cancelLabel="Cancel"
+          :cancelVariant="ButtonVariantEnum.enum.secondary"
+          @action-triggered="handleRemoveOrgUser"
+          :primaryMessage="primaryMessage"
+          v-model="isOpen"
+        />
+
         <UCard
           class="rounded-2xl border-none shadow-none"
           :ui="{
@@ -257,6 +325,7 @@
                     })
                   "
                   :email="row.UserEmail"
+                  :is-active="row.OrganizationUserStatus === 'Active'"
                 />
                 <div class="flex flex-col">
                   <div>
@@ -282,13 +351,14 @@
               <div class="flex justify-end">
                 <EGButton
                   size="sm"
+                  variant="secondary"
                   label="Resend invite"
                   v-if="isInvited(row.OrganizationUserStatus)"
                   @click="resend(row, index)"
                   :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                   :loading="isButtonRequestPending(index)"
                 />
-                <EGActionButton v-if="row.UserStatus === 'Active'" :items="actionItems(row)" class="ml-2" />
+                <EGActionButton v-if="row.OrganizationUserStatus === 'Active'" :items="actionItems(row)" class="ml-2" />
               </div>
             </template>
             <template #empty-state>

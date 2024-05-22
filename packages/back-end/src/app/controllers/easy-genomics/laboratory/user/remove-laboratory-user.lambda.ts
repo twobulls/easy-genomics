@@ -3,6 +3,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import {
   LaboratoryAccess,
+  LaboratoryAccessDetails,
   OrganizationAccess,
   OrganizationAccessDetails,
   User,
@@ -57,7 +58,9 @@ export const handler: Handler = async (
         ...organizationAccess,
         [laboratory.OrganizationId]: <OrganizationAccessDetails>{
           Status: organizationStatus,
-          LaboratoryAccess: laboratoryAccess,
+          LaboratoryAccess: <LaboratoryAccessDetails>{
+            ...(laboratoryAccess) ? laboratoryAccess : {},
+          },
         },
       },
       ModifiedAt: new Date().toISOString(),

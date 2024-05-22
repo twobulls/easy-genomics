@@ -83,7 +83,7 @@ export const handler: Handler = async (
         [laboratory.OrganizationId]: <OrganizationAccessDetails>{
           Status: organizationStatus,
           LaboratoryAccess: <LaboratoryAccessDetails>{
-            ...laboratoryAccess,
+            ...(laboratoryAccess) ? laboratoryAccess : {},
             [laboratory.LaboratoryId]: { Status: status },
           },
         },

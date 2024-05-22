@@ -32,7 +32,7 @@ class LabsModule extends HttpFactory {
   async users(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`,
+      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`
     );
 
     if (!res) {
@@ -44,7 +44,7 @@ class LabsModule extends HttpFactory {
 
   async removeUser(labId: string, userId: string): Promise<DeletedResponse> {
     const input = {
-      OrganizationId: labId,
+      LaboratoryId: labId,
       UserId: userId,
     };
 
@@ -69,7 +69,7 @@ class LabsModule extends HttpFactory {
   async usersDetails(labId: string): Promise<LaboratoryUserDetails[]> {
     const res = await this.call<LaboratoryUserDetails[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`,
+      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`
     );
 
     if (!res) {

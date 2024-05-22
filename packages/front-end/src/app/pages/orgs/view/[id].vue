@@ -105,7 +105,7 @@
         throw new Error('User not removed from Organization');
       }
     } catch (error) {
-      useToastStore().error('Failed to remove user from ${orgName}');
+      useToastStore().error(`Failed to remove user from ${orgName}`);
       throw error;
     } finally {
       selectedUserId.value = '';

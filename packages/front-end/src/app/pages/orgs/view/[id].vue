@@ -98,7 +98,7 @@
 
       const res: DeletedResponse = await $api.orgs.removeUser(orgId, selectedUserId.value);
 
-      if (res.deleted) {
+      if (res?.Status === 'Success') {
         useToastStore().success(`${useOrgsStore().userDisplayName} has been removed from ${orgName}`);
         await getOrgData(false);
       } else {

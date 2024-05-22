@@ -35,14 +35,14 @@
 
       const res: DeletedResponse = await $api.labs.removeUser(laboratoryId, selectedUserId.value);
 
-      if (res.deleted) {
-        useToastStore().success('User removed from lab');
+      if (res?.Status === 'Success') {
+        useToastStore().success('User removed from Lab');
         await getLabUsers();
       } else {
-        throw new Error('User not deleted');
+        throw new Error('User not removed from Lab');
       }
     } catch (error) {
-      useToastStore().error('Failed to remove user from lab');
+      useToastStore().error('Failed to remove user from Lab');
       throw error;
     } finally {
       selectedUserId.value = '';

@@ -20,13 +20,14 @@ const useOrgsStore = defineStore('orgsStore', {
   },
 
   getters: {
+    // return the selected user's display name
     userDisplayName(): string {
       return String(
         useUser().displayName({
           preferredName: this.selectedUser?.PreferredName || '',
           firstName: this.selectedUser?.FirstName || '',
           lastName: this.selectedUser?.LastName || '',
-        }),
+        })
       );
     },
 

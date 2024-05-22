@@ -43,6 +43,7 @@
       }
     } catch (error) {
       useToastStore().error('Failed to remove user from lab');
+      throw error;
     } finally {
       selectedUserId.value = '';
       isRemovingUser.value = false;

@@ -150,10 +150,10 @@ export class PlatformUserService extends DynamoDBService {
     console.info(logRequestMessage);
 
     // Find the current OrganizationAccess to identify the existing associated LaboratoryIds to remove
-    const laboratoryAccess: LaboratoryAccess | undefined =
-      (user.OrganizationAccess && user.OrganizationAccess[organizationUser.OrganizationId])
+    const laboratoryAccess: LaboratoryAccess =
+      (user.OrganizationAccess && user.OrganizationAccess[organizationUser.OrganizationId].LaboratoryAccess)
         ? user.OrganizationAccess[organizationUser.OrganizationId].LaboratoryAccess
-        : undefined;
+        : {};
 
     // Generate array of Delete transaction items to remove the User's associated LaboratoryUser mappings
     const laboratoryUserDeletions = (laboratoryAccess)

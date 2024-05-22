@@ -45,10 +45,10 @@ export const handler: Handler = async (
       ? organizationAccess[laboratory.OrganizationId].Status
       : 'Inactive'; // Fallback default
 
-    const laboratoryAccess: LaboratoryAccess | undefined =
-      (user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId])
+    const laboratoryAccess: LaboratoryAccess =
+      (user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess)
         ? user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess
-        : undefined;
+        : {};
     (laboratoryAccess) ? delete laboratoryAccess[laboratory.LaboratoryId] : false;
 
     const response: boolean = await platformUserService.removeExistingUserFromLaboratory({

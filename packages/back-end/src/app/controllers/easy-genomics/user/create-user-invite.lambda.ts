@@ -51,7 +51,12 @@ export const handler: Handler = async (
         // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
         if (await platformUserService.addNewUserToOrganization({
           ...newUser,
-          OrganizationAccess: { [organization.OrganizationId]: { Status: newOrganizationUser.Status } },
+          OrganizationAccess: {
+            [organization.OrganizationId]: {
+              Status: newOrganizationUser.Status,
+              LaboratoryAccess: {},
+            },
+          },
         }, newOrganizationUser)) {
           // TODO: Send email
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
@@ -88,7 +93,10 @@ export const handler: Handler = async (
             ...user,
             OrganizationAccess: {
               ...user.OrganizationAccess,
-              [organization.OrganizationId]: { Status: newOrganizationUser.Status },
+              [organization.OrganizationId]: {
+                Status: newOrganizationUser.Status,
+                LaboratoryAccess: {},
+              },
             },
             ModifiedAt: new Date().toISOString(),
             ModifiedBy: currentUserId,

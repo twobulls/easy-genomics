@@ -38,10 +38,10 @@ export const handler: Handler = async (
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    const laboratoryAccess: LaboratoryAccess | undefined =
-      (organizationAccess && organizationAccess[request.OrganizationId])
+    const laboratoryAccess: LaboratoryAccess =
+      (organizationAccess && organizationAccess[request.OrganizationId].LaboratoryAccess)
         ? organizationAccess[request.OrganizationId].LaboratoryAccess
-        : undefined;
+        : {};
 
     const response: boolean = await platformUserService.editExistingUserAccessToOrganization(
       {

@@ -3,6 +3,7 @@ import { Status } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import {
   LaboratoryAccess,
+  LaboratoryAccessDetails,
   OrganizationAccess,
   OrganizationAccessDetails,
   User,
@@ -50,7 +51,9 @@ export const handler: Handler = async (
           ...organizationAccess,
           [request.OrganizationId]: <OrganizationAccessDetails>{
             Status: status,
-            LaboratoryAccess: laboratoryAccess,
+            LaboratoryAccess: <LaboratoryAccessDetails>{
+              ...(laboratoryAccess) ? laboratoryAccess : {},
+            },
           },
         },
         ModifiedAt: new Date().toISOString(),

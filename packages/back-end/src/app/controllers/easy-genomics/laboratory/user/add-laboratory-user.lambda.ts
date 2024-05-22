@@ -13,11 +13,13 @@ import {
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../../services/easy-genomics/laboratory-service';
+import { LaboratoryUserService } from '../../../../services/easy-genomics/laboratory-user-service';
 import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '../../../../services/easy-genomics/platform-user-service';
 import { UserService } from '../../../../services/easy-genomics/user-service';
 
 const laboratoryService = new LaboratoryService();
+const laboratoryUserService = new LaboratoryUserService();
 const organizationUserService = new OrganizationUserService();
 const platformUserService = new PlatformUserService();
 const userService = new UserService();
@@ -37,20 +39,31 @@ export const handler: Handler = async (
 
     const status: Status = (request.Status === 'Inactive') ? 'Inactive' : 'Active';
 
-    // Lookup by LaboratoryId & UserId to confirm existence before adding
+    // Verify User does not have an existing LaboratoryUser access mapping
+    const laboratoryUser: LaboratoryUser | void = await laboratoryUserService.get(request.LaboratoryId, request.UserId).catch((error: unknown) => {
+      if (error.message.endsWith('Resource not found')) {
+        // Do nothing - allow new Laboratory-User access mapping to proceed.
+      } else {
+        throw error;
+      }
+    });
+
+    if (laboratoryUser) {
+      throw new Error('Laboratory User already exists');
+    }
+
+    // Retrieve existing Laboratory and User record details
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
     const user: User = await userService.get(request.UserId);
 
     // Verify User has access to the Organization - throws error if not found
-    try {
-      await organizationUserService.get(laboratory.OrganizationId, user.UserId);
-    } catch (error: unknown) {
+    await organizationUserService.get(laboratory.OrganizationId, user.UserId).catch((error: unknown) => {
       if (error.message.endsWith('Resource not found')) {
         throw new Error('User not permitted access to the Laboratory without first granted access to the Organization');
       } else {
         throw error;
       }
-    }
+    });
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
@@ -70,7 +83,7 @@ export const handler: Handler = async (
         [laboratory.OrganizationId]: <OrganizationAccessDetails>{
           Status: organizationStatus,
           LaboratoryAccess: <LaboratoryAccessDetails>{
-            ...laboratoryAccess,
+            ...(laboratoryAccess) ? laboratoryAccess : {},
             [laboratory.LaboratoryId]: { Status: status },
           },
         },

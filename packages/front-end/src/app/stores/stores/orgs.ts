@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+import { defineStore } from 'pinia';
 import useUser from '~/composables/useUser';
 
 interface OrgsStoreState {
@@ -20,6 +20,7 @@ const useOrgsStore = defineStore('orgsStore', {
   },
 
   getters: {
+    // return the selected user's display name
     userDisplayName(): string {
       return String(
         useUser().displayName({

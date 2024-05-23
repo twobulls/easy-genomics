@@ -2,8 +2,7 @@
   const props = defineProps<{
     name?: string;
     email: string;
-    labManager?: boolean;
-    labTechnician?: boolean;
+    isActive: boolean;
   }>();
 
   const initials = computed(() => {
@@ -18,7 +17,7 @@
   });
 
   const avatarColour = computed(() => {
-    return !props.name && props.email ? 'bg-primary-muted text-primary-dark' : 'bg-primary-dark text-white';
+    return props.isActive ? 'bg-primary-dark text-white' : 'bg-primary-muted text-primary-dark';
   });
 </script>
 

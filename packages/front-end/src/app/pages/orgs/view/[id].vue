@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
   import { ButtonVariantEnum } from '~/types/buttons';
@@ -76,7 +76,11 @@
         label: 'Remove from Org',
         click: () => {
           selectedUserId.value = row.UserId;
-          primaryMessage.value = `Are you sure you want to remove ${row.UserDisplayName} from the Organization?`;
+          primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
+            preferredName: row.PreferredName,
+            firstName: row.FirstName,
+            lastName: row.LastName,
+          })} from the Organization?`;
           isOpen.value = true;
         },
       },
@@ -93,15 +97,15 @@
 
       const res: DeletedResponse = await $api.orgs.removeUser(orgId, selectedUserId.value);
 
-      if (res.deleted) {
-        // TODO
-        useToastStore().success(`${props.displayName} has been removede from the Organization`);
-        await getLabUsers();
+      if (res?.Status === 'Success') {
+        useToastStore().success(`${useOrgsStore().userDisplayName} has been removed from ${orgName}`);
+        await getOrgData(false);
       } else {
-        throw new Error('User not deleted');
+        throw new Error('User not removed from Organization');
       }
     } catch (error) {
-      useToastStore().error('Failed to remove user from Organization');
+      useToastStore().error(`Failed to remove user from ${orgName}`);
+      throw error;
     } finally {
       selectedUserId.value = '';
       isRemovingUser.value = false;
@@ -112,7 +116,11 @@
     return status === UserSchema.shape.Status.enum.Invited;
   }
 
-  async function getOrgData(shouldGetOrgSettings: boolean = false) {
+  /**
+   * Fetches Organization data - org users and (optionally) org settings
+   * @param shouldGetOrgSettings
+   */
+  async function getOrgData(shouldGetOrgSettings: boolean = true) {
     isLoading.value = true;
     try {
       if (shouldGetOrgSettings) {
@@ -125,6 +133,7 @@
       }
     } catch (error) {
       console.error(error);
+      throw error;
     } finally {
       isLoading.value = false;
     }
@@ -132,7 +141,7 @@
   }
 
   onMounted(async () => {
-    await getOrgData(true);
+    await getOrgData();
   });
 
   useAsyncData('orgSettingsData', async () => {

@@ -51,9 +51,11 @@ export const handler: Handler = async (
         // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
         if (await platformUserService.addNewUserToOrganization({
           ...newUser,
-          [organization.OrganizationId]: {
-            Status: newOrganizationUser.Status,
-            LaboratoryAccess: {},
+          OrganizationAccess: {
+            [organization.OrganizationId]: {
+              Status: newOrganizationUser.Status,
+              LaboratoryAccess: {},
+            },
           },
         }, newOrganizationUser)) {
           // TODO: Send email

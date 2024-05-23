@@ -76,7 +76,6 @@
         label: 'Remove from Org',
         click: () => {
           selectedUserId.value = row.UserId;
-          // FIXME: refactor args
           primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
             preferredName: row.PreferredName,
             firstName: row.FirstName,

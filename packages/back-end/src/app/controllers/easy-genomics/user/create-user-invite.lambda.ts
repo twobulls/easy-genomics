@@ -14,11 +14,17 @@ import { OrganizationService } from '../../../services/easy-genomics/organizatio
 import { OrganizationUserService } from '../../../services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
+import { SesService } from '../../../services/ses-service';
 
 const cognitoUserService = new CognitoUserService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const organizationService = new OrganizationService();
 const organizationUserService = new OrganizationUserService();
 const platformUserService = new PlatformUserService();
+const sesService = new SesService({
+  accountId: process.env.AWS_ACCOUNT_ID,
+  domainName: process.env.DOMAIN_NAME,
+  region: process.env.AWS_REGION,
+});
 const userService = new UserService();
 
 export const handler: Handler = async (
@@ -38,6 +44,7 @@ export const handler: Handler = async (
     // Check if Organization & User records exists
     const organization: Organization = await organizationService.get(request.OrganizationId); // Throws error if not found
     const user: User | undefined = (await userService.queryByEmail(request.Email)).shift();
+    const invitationJwt: string = '';
 
     if (!user) {
       // Attempt to create new Cognito User account
@@ -58,12 +65,12 @@ export const handler: Handler = async (
             },
           },
         }, newOrganizationUser)) {
-          // TODO: Send email
+          const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+          console.log('Send Invitation Email Response: ', response);
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
         }
       } catch (error: unknown) {
-        // Clean up the created Cognito User account due to failure in creating new User record / Organization-User access mapping.
-        await cognitoUserService.deleteUserFromPlatform(request.Email);
+        console.error(error);
         return buildResponse(200, JSON.stringify({ Status: 'Error', Message: error.message }), event);
       }
     } else {
@@ -82,7 +89,8 @@ export const handler: Handler = async (
 
         if (existingOrganizationUser && existingOrganizationUser.Status === 'Invited') {
           // Check if existing Organization-User's Status is still Invited to resend invitation
-          // TODO: Re-send email
+          const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+          console.log('Send Invitation Email Response: ', response);
           return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
         } else {
           // Create new Organization-User access mapping record
@@ -101,7 +109,8 @@ export const handler: Handler = async (
             ModifiedAt: new Date().toISOString(),
             ModifiedBy: currentUserId,
           }, newOrganizationUser)) {
-            // TODO: Re-send email
+            const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+            console.log('Send Invitation Email Response: ', response);
             return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
           }
         }

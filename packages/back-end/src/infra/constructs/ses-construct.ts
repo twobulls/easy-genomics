@@ -53,14 +53,14 @@ export class SesConstruct extends Construct {
                 <div class="youve-been-invited">You’ve been invited</div>
                 <div class="to-organisation-name">to {{ORGANIZATION_NAME}}, click the link below to set up your account and get started. This link will expire in 7 Days.</div>
               </div>
-              <div class="button" onclick="location.href='https://{{DOMAIN_NAME}}/accept-invitation?invite={{INVITATION_JWT}}';">
-                <div class="button-label">Accept Invite</div>
-              </div>
+              <a href="https://{{DOMAIN_NAME}}/accept-invitation?invite={{INVITATION_JWT}}">
+                  <div class="button"><div class="button-label">Accept Invite</div></div>
+              </a>
               <div class="footer-content">
                 <div class="footer-content-child"></div>
                 <div class="footer">
                   <div class="sent-from-easy">Sent from Easy Genomics</div>
-                  <div class="easy-genomics-inc">© {{COPYRIGHT_YEAR}}} Easy Genomics, Inc. All rights reserved.</div>
+                  <div class="easy-genomics-inc">© {{COPYRIGHT_YEAR}} Easy Genomics, Inc. All rights reserved.</div>
                 </div>
               </div>
             </div>

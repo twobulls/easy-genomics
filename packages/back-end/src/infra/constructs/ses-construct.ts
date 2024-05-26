@@ -15,7 +15,6 @@ export interface SesConstructProps extends StackProps {
  */
 export class SesConstruct extends Construct {
   readonly props: SesConstructProps;
-  readonly emailDomainIdentity: EmailIdentity;
 
   constructor(scope: Construct, id: string, props: SesConstructProps) {
     super(scope, id);
@@ -23,11 +22,11 @@ export class SesConstruct extends Construct {
 
     const hostedZone: IHostedZone = HostedZone.fromLookup(this, 'Zone', { domainName: this.props.domainName });
 
-    this.emailDomainIdentity = new EmailIdentity(this, 'VerifiedEmailDomainIdentity', {
+    const emailDomainIdentity = new EmailIdentity(this, 'VerifiedEmailDomainIdentity', {
       identity: Identity.publicHostedZone(hostedZone),
       mailFromDomain: `mail.${this.props.domainName}`,
     });
-    this.emailDomainIdentity.applyRemovalPolicy(RemovalPolicy.DESTROY);
+    emailDomainIdentity.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
     this.setupUserInvitationEmailTemplate();
   }

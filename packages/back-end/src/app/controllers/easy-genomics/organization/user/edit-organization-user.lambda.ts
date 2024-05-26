@@ -31,11 +31,14 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!EditOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
-    const status: Status = (request.Status === 'Inactive') ? 'Inactive' : 'Active';
-
     // Lookup by OrganizationId & UserId to confirm existence before updating
     const organizationUser: OrganizationUser = await organizationUserService.get(request.OrganizationId, request.UserId);
     const user: User = await userService.get(request.UserId);
+
+    // Prevent reverting OrganizationUser Status to 'Invited' if already 'Active' or 'Inactive'
+    if (organizationUser.Status !== 'Invited' && request.Status === 'Invited') {
+      throw new Error(`User Organization Status already '${organizationUser.Status}', cannot update Status to 'Invited'`);
+    }
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
@@ -50,7 +53,7 @@ export const handler: Handler = async (
         OrganizationAccess: {
           ...organizationAccess,
           [request.OrganizationId]: <OrganizationAccessDetails>{
-            Status: status,
+            Status: request.Status,
             LaboratoryAccess: <LaboratoryAccessDetails>{
               ...(laboratoryAccess) ? laboratoryAccess : {},
             },
@@ -61,7 +64,7 @@ export const handler: Handler = async (
       }, {
         ...organizationUser,
         ...request,
-        Status: status,
+        Status: request.Status,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
       });

@@ -9,6 +9,7 @@ import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user
 import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import jwt from 'jsonwebtoken';
 import { CognitoUserService } from '../../../services/easy-genomics/cognito-user-service';
 import { OrganizationService } from '../../../services/easy-genomics/organization-service';
 import { OrganizationUserService } from '../../../services/easy-genomics/organization-user-service';
@@ -44,7 +45,6 @@ export const handler: Handler = async (
     // Check if Organization & User records exists
     const organization: Organization = await organizationService.get(request.OrganizationId); // Throws error if not found
     const user: User | undefined = (await userService.queryByEmail(request.Email)).shift();
-    const invitationJwt: string = '';
 
     if (!user) {
       // Attempt to create new Cognito User account
@@ -55,8 +55,7 @@ export const handler: Handler = async (
       const newOrganizationUser: OrganizationUser = getNewOrganizationUser(organization.OrganizationId, newUser.UserId, currentUserId);
 
       try {
-        // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
-        if (await platformUserService.addNewUserToOrganization({
+        const newUserDetails: User = {
           ...newUser,
           OrganizationAccess: {
             [organization.OrganizationId]: {
@@ -64,7 +63,10 @@ export const handler: Handler = async (
               LaboratoryAccess: {},
             },
           },
-        }, newOrganizationUser)) {
+        };
+        // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
+        if (await platformUserService.addNewUserToOrganization(newUserDetails, newOrganizationUser)) {
+          const invitationJwt: string = generateUserInvitationJwt(newUserDetails);
           const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
           console.log('Send Invitation Email Response: ', response);
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
@@ -87,8 +89,9 @@ export const handler: Handler = async (
             }
           });
 
+        // Check if existing Organization-User's Status is still Invited to resend invitation
         if (existingOrganizationUser && existingOrganizationUser.Status === 'Invited') {
-          // Check if existing Organization-User's Status is still Invited to resend invitation
+          const invitationJwt: string = generateUserInvitationJwt(user);
           const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
           console.log('Send Invitation Email Response: ', response);
           return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
@@ -96,8 +99,7 @@ export const handler: Handler = async (
           // Create new Organization-User access mapping record
           const newOrganizationUser = getNewOrganizationUser(organization.OrganizationId, user.UserId, currentUserId);
 
-          // Attempt to add the User to the Organization in one transaction
-          if (await platformUserService.addExistingUserToOrganization({
+          const updatedUserDetails: User = {
             ...user,
             OrganizationAccess: {
               ...user.OrganizationAccess,
@@ -108,7 +110,11 @@ export const handler: Handler = async (
             },
             ModifiedAt: new Date().toISOString(),
             ModifiedBy: currentUserId,
-          }, newOrganizationUser)) {
+          };
+
+          // Attempt to add the User to the Organization in one transaction
+          if (await platformUserService.addExistingUserToOrganization(updatedUserDetails, newOrganizationUser)) {
+            const invitationJwt: string = generateUserInvitationJwt(updatedUserDetails);
             const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
             console.log('Send Invitation Email Response: ', response);
             return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
@@ -160,6 +166,12 @@ function getNewOrganizationUser(organizationId, userId: string, createdBy: strin
     CreatedBy: createdBy,
   };
   return organizationUser;
+}
+
+function generateUserInvitationJwt(user: User): string {
+  return jwt.sign(user, process.env.JWT_SECRET_KEY, {
+    expiresIn: '7 days',
+  });
 }
 
 // Used for customising error messages by exception types

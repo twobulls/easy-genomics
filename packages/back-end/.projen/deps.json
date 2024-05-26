@@ -21,6 +21,10 @@
       "type": "build"
     },
     {
+      "name": "@types/jsonwebtoken",
+      "type": "build"
+    },
+    {
       "name": "@types/node",
       "version": "^18",
       "type": "build"
@@ -139,6 +143,10 @@
     },
     {
       "name": "dotenv",
+      "type": "runtime"
+    },
+    {
+      "name": "jsonwebtoken",
       "type": "runtime"
     },
     {

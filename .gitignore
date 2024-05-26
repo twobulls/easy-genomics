@@ -86,4 +86,5 @@ test-reports/*
 .output
 dist
 config/easy-genomics.yaml
+packages/back-end/cdk.context.json
 !/.projenrc.ts

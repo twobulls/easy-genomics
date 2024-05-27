@@ -1,4 +1,4 @@
-import { CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
+import { RemovalPolicy } from 'aws-cdk-lib';
 import {
   AccountRecovery,
   CfnUserPoolGroup,
@@ -41,7 +41,6 @@ export class CognitoIdpConstruct extends Construct {
       },
       removalPolicy: removalPolicy,
     });
-    new CfnOutput(this, 'UserPoolId', { key: 'UserPoolId', value: this.userPool.userPoolId });
 
     this.userPoolClient = this.userPool.addClient('client', {
       userPoolClientName: `${props.constructNamespace}-user-pool-client`,
@@ -53,7 +52,6 @@ export class CognitoIdpConstruct extends Construct {
         userPassword: true,
       },
     });
-    new CfnOutput(this, 'UserPoolClientId', { key: 'UserPoolClientId', value: this.userPoolClient.userPoolClientId });
 
     this.userPoolGroup = new CfnUserPoolGroup(this, 'system-admin-user-pool-group', {
       userPoolId: this.userPool.userPoolId,

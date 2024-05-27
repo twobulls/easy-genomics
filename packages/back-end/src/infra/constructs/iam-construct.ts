@@ -53,6 +53,23 @@ export class IamConstruct extends Construct {
     return policyStatement;
   }
 
+  /**
+   * This function allows IAM documents to be defined in the appropriate nested stack
+   * and added to this construct's policyDocuments map collection for easy retrieval.
+   *
+   * @param name
+   * @param policyDocument
+   */
+  public addPolicyDocument(name: string, policyDocument: PolicyDocument) {
+    this.policyDocuments.set(name, policyDocument);
+  }
+
+  /**
+   * This function allows existing IAM documents for be easily retrieved from this
+   * construct's policyDocuments map collection by the name value.
+   *
+   * @param name
+   */
   public getPolicyDocument(name: string): PolicyDocument {
     const policyDocument: PolicyDocument | undefined = this.policyDocuments.get(name);
     if (!policyDocument) {

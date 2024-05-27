@@ -11,4 +11,4 @@ export const EditUserResponseSchema = z.object({
 });
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
 export type DeletedResponse = z.infer<typeof DeletedResponseSchema>;
-export type EditUserResponse = z.infer<typeof DeletedResponseSchema>;
+export type EditUserResponse = z.infer<typeof EditUserResponseSchema>;

@@ -36,7 +36,7 @@ export const handler: Handler = async (
 
     const status: Status = (request.Status === 'Inactive') ? 'Inactive' : 'Active';
 
-    // Verify User has access to the Organization - throws error if not found
+    // Verify User has access to the Laboratory - throws error if not found
     const laboratoryUser: LaboratoryUser = await laboratoryUserService.get(request.LaboratoryId, request.UserId);
 
     // Lookup by LaboratoryId & UserId to confirm existence before updating

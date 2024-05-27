@@ -309,6 +309,16 @@
           v-model="isOpen"
         />
 
+        <EGDialog
+          actionLabel="Remove User"
+          :actionVariant="ButtonVariantEnum.enum.destructive"
+          cancelLabel="Cancel"
+          :cancelVariant="ButtonVariantEnum.enum.secondary"
+          @action-triggered="handleRemoveOrgUser"
+          :primaryMessage="primaryMessage"
+          v-model="isOpen"
+        />
+
         <UCard
           class="rounded-2xl border-none shadow-none"
           :ui="{

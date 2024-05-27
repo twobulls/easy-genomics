@@ -1,5 +1,5 @@
 import { ACCESS_CONTROL_ALLOW_HEADERS } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { aws_apigateway, CfnOutput, StackProps } from 'aws-cdk-lib';
+import { aws_apigateway, StackProps } from 'aws-cdk-lib';
 import { EndpointType, IApiKey, Period, RestApi, UsagePlan } from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
 
@@ -47,6 +47,5 @@ export class ApiGatewayConstruct extends Construct {
     usagePlan.addApiStage({
       stage: this.restApi.deploymentStage,
     });
-    new CfnOutput(this, 'BaseApiUrl', { key: 'BaseApiUrl', value: `${this.restApi.url}` });
   }
 }

@@ -8,6 +8,7 @@ export interface ConfigurationSettings {
   ['back-end']: {
     ['system-admin-email']: string,
     ['system-admin-password']: string, // Initial Cognito password
+    ['secret-key']: string, // JWT signing secret
   }
 
   // Front-End specific settings

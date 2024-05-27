@@ -23,8 +23,8 @@
     <UCard>
       <template #header>
         <div class="flex flex-col">
-          <div class="flex">
-            <div class="flex flex-col">
+          <div class="flex flex-col">
+            <div class="flex">
               <div v-if="primaryMessage" class="font-heading mb-6 text-2xl font-medium">
                 {{ primaryMessage }}
               </div>
@@ -45,7 +45,7 @@
                 <UButton
                   @click="handleCancel"
                   icon="i-heroicons-x-mark"
-                  class="hover:bg-background-dark-grey"
+                  class="hover:bg-background-dark-gre ml-2"
                   color="black"
                   variant="ghost"
                   :ui="{ rounded: 'rounded-full' }"

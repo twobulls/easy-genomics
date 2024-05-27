@@ -67,11 +67,16 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
-  async editOrgUser(orgId: string, userId: string, status: string, val: boolean): Promise<Organization | undefined> {
+  async editOrgUser(
+    orgId: string,
+    userId: string,
+    orgUserStatus: string,
+    val: boolean
+  ): Promise<OrganizationUserDetails | undefined> {
     const input = {
       OrganizationId: orgId,
       UserId: userId,
-      Status: status,
+      Status: orgUserStatus,
       OrganizationAdmin: val,
     };
 
@@ -81,7 +86,7 @@ class OrgsModule extends HttpFactory {
       throw new Error(`Validation failed: ${error}`);
     }
 
-    const res = this.call<Organization>('POST', '/organization/user/edit-organization-user', input);
+    const res = this.call<OrganizationUserDetails>('POST', '/organization/user/edit-organization-user', input);
 
     if (!res) {
       throw new Error("Failed to update user's Org Admin access");

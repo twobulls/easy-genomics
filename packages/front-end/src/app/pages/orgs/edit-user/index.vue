@@ -106,7 +106,7 @@
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
-        useToastStore().success(`${lab.name} has been successfully updated for ${useOrgsStore().userDisplayName}`);
+        useToastStore().success(`${lab.name} has been successfully updated for ${useOrgsStore().getUserDisplayName}`);
       } else {
         throw new Error('Failed to update lab access');
       }
@@ -126,13 +126,13 @@
 
       if (res?.Status === 'Success') {
         useToastStore().success(
-          `${labRole.labName} has been successfully updated for ${useOrgsStore().userDisplayName}`
+          `${labRole.labName} has been successfully updated for ${useOrgsStore().getUserDisplayName}`
         );
       } else {
         throw new Error('Failed to update user role');
       }
     } catch (error) {
-      useToastStore().error(`Failed to update ${useOrgsStore().userDisplayName}`);
+      useToastStore().error(`Failed to update ${useOrgsStore().getUserDisplayName}`);
       throw error;
     } finally {
       // update UI with latest data
@@ -150,7 +150,7 @@
   <EGUserOrgAdminToggle
     v-if="!isLoading"
     :user="useOrgsStore().selectedUser"
-    :display-name="useOrgsStore().userDisplayName"
+    :display-name="useOrgsStore().getUserDisplayName"
     @update-user="updateSelectedUser($event)"
   />
 

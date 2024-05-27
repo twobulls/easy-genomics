@@ -30,35 +30,45 @@
               </div>
               <div v-if="secondaryMessage" class="mb-6 text-sm text-gray-600">
                 {{ secondaryMessage }}
+                <div>
+                  <UButton
+                    @click="handleCancel"
+                    icon="i-heroicons-x-mark"
+                    class="hover:bg-background-dark-grey ml-2"
+                    color="black"
+                    variant="ghost"
+                    :ui="{ rounded: 'rounded-full' }"
+                  />
+                </div>
+              </div>
+              <div>
+                <UButton
+                  @click="handleCancel"
+                  icon="i-heroicons-x-mark"
+                  class="hover:bg-background-dark-grey"
+                  color="black"
+                  variant="ghost"
+                  :ui="{ rounded: 'rounded-full' }"
+                />
               </div>
             </div>
-            <div>
-              <UButton
-                @click="handleCancel"
-                icon="i-heroicons-x-mark"
-                class="hover:bg-background-dark-grey"
-                color="black"
-                variant="ghost"
-                :ui="{ rounded: 'rounded-full' }"
-              />
-            </div>
-          </div>
-          <div class="flex justify-end gap-4">
-            <div v-if="cancelLabel">
+            <div class="flex justify-end gap-4">
+              <div v-if="cancelLabel">
+                <EGButton
+                  @click="handleCancel"
+                  :label="cancelLabel"
+                  :variant="ButtonVariantEnum.enum.secondary"
+                  :size="ButtonSizeEnum.enum.sm"
+                />
+              </div>
               <EGButton
-                @click="handleCancel"
-                :label="cancelLabel"
-                :variant="ButtonVariantEnum.enum.secondary"
+                @click="emit('action-triggered')"
+                :label="actionLabel"
                 :size="ButtonSizeEnum.enum.sm"
+                :variant="ButtonVariantEnum.enum.destructive"
+                autofocus
               />
             </div>
-            <EGButton
-              @click="emit('action-triggered')"
-              :label="actionLabel"
-              :size="ButtonSizeEnum.enum.sm"
-              :variant="ButtonVariantEnum.enum.destructive"
-              autofocus
-            />
           </div>
         </div>
       </template>

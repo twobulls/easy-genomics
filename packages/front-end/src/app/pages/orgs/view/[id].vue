@@ -36,7 +36,7 @@
   const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
   const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
 
-  const columns = [
+  const tableColumns = [
     {
       key: 'Name',
       label: 'Name',
@@ -98,7 +98,7 @@
       const res: DeletedResponse = await $api.orgs.removeUser(orgId, selectedUserId.value);
 
       if (res?.Status === 'Success') {
-        useToastStore().success(`${useOrgsStore().userDisplayName} has been removed from ${orgName}`);
+        useToastStore().success(`${useOrgsStore().getUserDisplayName} has been removed from ${orgName}`);
         await getOrgData(false);
       } else {
         throw new Error('User not removed from Organization');
@@ -166,7 +166,7 @@
   /**
    * Filter rows based on search input for both name and email
    */
-  const filteredRows = computed(() => {
+  const filteredTableData = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
       return orgUsersDetailsData.value;
     }
@@ -297,7 +297,17 @@
       />
 
       <template v-if="!hasNoData">
-        <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+        <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+
+        <EGDialog
+          actionLabel="Remove User"
+          :actionVariant="ButtonVariantEnum.enum.destructive"
+          cancelLabel="Cancel"
+          :cancelVariant="ButtonVariantEnum.enum.secondary"
+          @action-triggered="handleRemoveOrgUser"
+          :primaryMessage="primaryMessage"
+          v-model="isOpen"
+        />
 
         <EGDialog
           actionLabel="Remove User"
@@ -319,8 +329,8 @@
             :loading="isLoading"
             class="OrgUsersTable rounded-xl"
             :loading-state="{ icon: '', label: '' }"
-            :rows="filteredRows"
-            :columns="columns"
+            :rows="filteredTableData"
+            :columns="tableColumns"
           >
             <template #Name-data="{ row }">
               <div class="flex items-center">

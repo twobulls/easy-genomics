@@ -50,7 +50,7 @@
     }
   }
 
-  const columns = [
+  const tableColumns = [
     {
       key: 'UserDisplayName',
       label: 'Name',
@@ -103,7 +103,7 @@
     searchOutput.value = newVal;
   }
 
-  const filteredRows = computed(() => {
+  const filteredTableData = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
       return labUsersDetailsData.value.map((person) => ({
         ...person,
@@ -194,7 +194,7 @@
         />
 
         <template v-if="!hasNoData">
-          <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+          <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
           <EGDialog
             actionLabel="Remove User"
@@ -216,8 +216,8 @@
               :loading="isLoading || isRemovingUser"
               class="LabsUsersTable rounded-2xl"
               :loading-state="{ icon: '', label: '' }"
-              :rows="filteredRows"
-              :columns="columns"
+              :rows="filteredTableData"
+              :columns="tableColumns"
             >
               <template #UserDisplayName-data="{ row }">
                 <div class="flex items-center">

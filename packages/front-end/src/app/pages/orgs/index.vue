@@ -5,7 +5,7 @@
   const orgData = ref([]);
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
-  const columns = [
+  const tableColumns = [
     {
       key: 'Name',
       label: 'Name',
@@ -78,7 +78,7 @@
   <EGTable
     v-else
     :table-data="orgData"
-    :columns="columns"
+    :columns="tableColumns"
     :isLoading="isLoading"
     :action-items="actionItems"
     :show-pagination="!isLoading && !hasNoData"

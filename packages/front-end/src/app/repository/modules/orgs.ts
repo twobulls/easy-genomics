@@ -44,8 +44,8 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
-  async usersDetailsByUserId(userId: string): Promise<OrganizationUserDetails> {
-    const res = await this.call<OrganizationUserDetails>(
+  async usersDetailsByUserId(userId: string): Promise<OrganizationUserDetails[]> {
+    const res = await this.call<OrganizationUserDetails[]>(
       'GET',
       `/organization/user/list-organization-users-details?userId=${userId}`
     );
@@ -67,11 +67,16 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
-  async editUser(orgId: string, userId: string, status: string, val: boolean): Promise<Organization | undefined> {
+  async editOrgUser(
+    orgId: string,
+    userId: string,
+    orgUserStatus: string,
+    val: boolean
+  ): Promise<OrganizationUserDetails | undefined> {
     const input = {
       OrganizationId: orgId,
       UserId: userId,
-      Status: status,
+      Status: orgUserStatus,
       OrganizationAdmin: val,
     };
 
@@ -81,7 +86,7 @@ class OrgsModule extends HttpFactory {
       throw new Error(`Validation failed: ${error}`);
     }
 
-    const res = this.call<Organization>('POST', '/organization/user/edit-organization-user', input);
+    const res = this.call<OrganizationUserDetails>('POST', '/organization/user/edit-organization-user', input);
 
     if (!res) {
       throw new Error("Failed to update user's Org Admin access");

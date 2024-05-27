@@ -67,6 +67,29 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
+  async editOrgUser(orgId: string, userId: string, status: string, val: boolean): Promise<Organization | undefined> {
+    const input = {
+      OrganizationId: orgId,
+      UserId: userId,
+      Status: status,
+      OrganizationAdmin: val,
+    };
+
+    try {
+      EditOrganizationUserSchema.parse(input);
+    } catch (error) {
+      throw new Error(`Validation failed: ${error}`);
+    }
+
+    const res = this.call<Organization>('POST', '/organization/user/edit-organization-user', input);
+
+    if (!res) {
+      throw new Error("Failed to update user's Org Admin access");
+    }
+
+    return res;
+  }
+
   async removeUser(orgId: string, userId: string): Promise<DeletedResponse> {
     const input = {
       OrganizationId: orgId,

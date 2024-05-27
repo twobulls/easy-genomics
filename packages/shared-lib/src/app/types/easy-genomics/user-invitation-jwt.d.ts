@@ -11,7 +11,7 @@
  * }
  */
 
-export type UserInvitationJwt = {
+export interface UserInvitationJwt {
   InvitationCode: string;
   OrganizationId: string;
   OrganizationName: string;

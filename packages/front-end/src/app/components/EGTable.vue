@@ -23,7 +23,7 @@
     tableData: props.tableData,
   });
 
-  const $emit = defineEmits(['grant-access-clicked']);
+  const $emit = defineEmits(['grant-access-clicked', 'lab-access-selected']);
   const isSortAsc = ref(true);
   const page = ref(1);
   const pageCount = ref(10);

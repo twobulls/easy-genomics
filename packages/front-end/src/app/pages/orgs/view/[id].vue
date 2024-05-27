@@ -166,7 +166,7 @@
   /**
    * Filter rows based on search input for both name and email
    */
-  const filteredRows = computed(() => {
+  const filteredTableData = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
       return orgUsersDetailsData.value;
     }
@@ -329,7 +329,7 @@
             :loading="isLoading"
             class="OrgUsersTable rounded-xl"
             :loading-state="{ icon: '', label: '' }"
-            :rows="filteredRows"
+            :rows="filteredTableData"
             :columns="tableColumns"
           >
             <template #Name-data="{ row }">

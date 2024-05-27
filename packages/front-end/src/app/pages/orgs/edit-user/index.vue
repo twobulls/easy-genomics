@@ -3,6 +3,8 @@
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LabAccessRolesEnum } from '~/types/labAccessRoles';
+  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import useUser from '~/composables/useUser';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -78,26 +80,34 @@
     }
   }
 
-  const tableData = computed(() => {
-    return orgLabsData.value.map((lab) => {
-      const hasAccess =
-        useOrgsStore().selectedUser.OrganizationAccess[lab.OrganizationId]?.LaboratoryAccess[lab.LaboratoryId]
-          ?.Status === 'Active';
-      const userLab = selectedUserLabsData.value.find((userLab) => userLab.LaboratoryId === lab.LaboratoryId);
+  /**
+   * Filter rows based on search input for both name and email
+   */
+  const filteredTableData = computed(() => {
+    return orgLabsData.value
+      .filter((lab) => {
+        const labName = String(lab.Name).toLowerCase();
+        return labName.includes(searchOutput.value.toLowerCase());
+      })
+      .map((lab) => {
+        const hasAccess =
+          useOrgsStore().selectedUser.OrganizationAccess[lab.OrganizationId]?.LaboratoryAccess[lab.LaboratoryId]
+            ?.Status === 'Active';
+        const userLab = selectedUserLabsData.value.find((userLab) => userLab.LaboratoryId === lab.LaboratoryId);
 
-      return {
-        labAccessOptionsEnabled: hasAccess,
-        labAccess: !hasAccess,
-        labManager: userLab?.LabManager || false,
-        labTechnician: userLab?.LabTechnician || false,
-        Name: lab.Name,
-        LaboratoryId: lab.LaboratoryId,
-        labRole: {
-          role: userLab?.LabManager ? LabAccessRolesEnum.enum.LabManager : LabAccessRolesEnum.enum.LabTechnician,
-          label: userLab?.LabManager ? 'Lab Manager' : 'Lab Technician',
-        },
-      };
-    });
+        return {
+          labAccessOptionsEnabled: hasAccess,
+          labAccess: !hasAccess,
+          labManager: userLab?.LabManager || false,
+          labTechnician: userLab?.LabTechnician || false,
+          Name: lab.Name,
+          LaboratoryId: lab.LaboratoryId,
+          labRole: {
+            role: userLab?.LabManager ? LabAccessRolesEnum.enum.LabManager : LabAccessRolesEnum.enum.LabTechnician,
+            label: userLab?.LabManager ? 'Lab Manager' : 'Lab Technician',
+          },
+        };
+      });
   });
 
   async function handleAddUser(lab: { labId: string; name: string }) {
@@ -136,7 +146,6 @@
       throw error;
     } finally {
       // update UI with latest data
-      await fetchOrgLabs();
       await fetchLabsUserData();
     }
   }
@@ -157,10 +166,9 @@
   <EGSearchInput @input-event="updateSearchOutput" placeholder="Search all Labs" class="my-6 w-[408px]" />
 
   <EGTable
-    :table-data="tableData"
+    :table-data="filteredTableData"
     :columns="tableColumns"
     :isLoading="isLoading"
-    :action-items="actionItems"
     :show-pagination="!isLoading && !hasNoData"
     @grant-access-clicked="handleAddUser($event)"
     @lab-access-selected="handleLabAccess($event)"

@@ -103,7 +103,7 @@
     searchOutput.value = newVal;
   }
 
-  const filteredRows = computed(() => {
+  const filteredTableData = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
       return labUsersDetailsData.value.map((person) => ({
         ...person,
@@ -216,7 +216,7 @@
               :loading="isLoading || isRemovingUser"
               class="LabsUsersTable rounded-2xl"
               :loading-state="{ icon: '', label: '' }"
-              :rows="filteredRows"
+              :rows="filteredTableData"
               :columns="tableColumns"
             >
               <template #UserDisplayName-data="{ row }">

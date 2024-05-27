@@ -45,7 +45,7 @@
                 <UButton
                   @click="handleCancel"
                   icon="i-heroicons-x-mark"
-                  class="hover:bg-background-dark-gre ml-2"
+                  class="hover:bg-background-dark-grey ml-2"
                   color="black"
                   variant="ghost"
                   :ui="{ rounded: 'rounded-full' }"

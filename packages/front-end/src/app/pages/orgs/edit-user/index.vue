@@ -47,7 +47,7 @@
 
   async function fetchOrgLabs() {
     try {
-      orgLabsData.value = await $api.labs.list(useOrgsStore().selectedUser?.OrganizationId);
+      orgLabsData.value = await $api.labs.list($route.query.orgId);
 
       if (!orgLabsData.value.length) {
         hasNoData.value = true;

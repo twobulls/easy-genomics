@@ -3,8 +3,6 @@
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LabAccessRolesEnum } from '~/types/labAccessRoles';
-  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-  import useUser from '~/composables/useUser';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -29,6 +27,7 @@
     await updateSelectedUser();
     await fetchOrgLabs();
     await fetchLabsUserData();
+    isLoading.value = false;
   });
 
   function updateSearchOutput(newVal: string) {
@@ -40,7 +39,6 @@
       const user = await $api.orgs.usersDetailsByUserId($route.query.userId);
       if (user.length) {
         useOrgsStore().setSelectedUser(user[0]);
-        isLoading.value = false;
       }
     } catch (error) {
       console.error(error);
@@ -57,8 +55,6 @@
     } catch (error) {
       console.error(error);
       throw error;
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -75,8 +71,6 @@
     } catch (error) {
       console.error(error);
       throw error;
-    } finally {
-      isLoading.value = false;
     }
   }
 
@@ -154,18 +148,33 @@
 <template>
   <EGPageHeader title="Edit User Access" />
 
-  <USkeleton class="flex h-[82px] flex-col rounded bg-gray-200 p-6 max-md:px-5" v-if="isLoading" />
+  <div class="mb-4">
+    <USkeleton class="flex h-[82px] flex-col rounded bg-gray-200 p-6 max-md:px-5" v-if="isLoading" />
 
-  <EGUserOrgAdminToggle
-    v-if="!isLoading"
-    :user="useOrgsStore().selectedUser"
-    :display-name="useOrgsStore().getUserDisplayName"
-    @update-user="updateSelectedUser($event)"
+    <EGUserOrgAdminToggle
+      v-if="!isLoading"
+      :user="useOrgsStore().selectedUser"
+      :display-name="useOrgsStore().getUserDisplayName"
+      @update-user="updateSelectedUser($event)"
+    />
+  </div>
+
+  <EGSearchInput
+    v-if="!isLoading && !hasNoData"
+    @input-event="updateSearchOutput"
+    placeholder="Search all Labs"
+    class="my-6 w-[408px]"
   />
 
-  <EGSearchInput @input-event="updateSearchOutput" placeholder="Search all Labs" class="my-6 w-[408px]" />
+  <EGEmptyDataCTA
+    v-if="!isLoading && hasNoData"
+    message="There are no labs in your Organization"
+    :button-action="() => navigateTo('/labs/new')"
+    button-label="Create a Lab"
+  />
 
   <EGTable
+    v-else
     :table-data="filteredTableData"
     :columns="tableColumns"
     :isLoading="isLoading"

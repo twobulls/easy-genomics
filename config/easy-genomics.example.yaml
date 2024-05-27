@@ -10,6 +10,7 @@ easy-genomics:
         back-end:
             system-admin-email:
             system-admin-password:
+            secret-key:
 
         # Front-End specific settings
         front-end:

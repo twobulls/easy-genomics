@@ -168,6 +168,7 @@
     tbody tr td:last-child {
       width: 50px;
       padding-right: 40px;
+      text-align: right;
     }
   }
 </style>

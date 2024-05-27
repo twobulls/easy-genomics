@@ -60,6 +60,7 @@
       path: `/orgs/edit-user`,
       query: {
         userId: user.UserId,
+        orgId,
       },
     });
   }

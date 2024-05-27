@@ -1,7 +1,5 @@
 <script setup lang="ts">
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-  import { ref } from 'vue';
-  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
 
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
@@ -10,7 +8,7 @@
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
   const $router = useRouter();
 
-  const columns = [
+  const tableColumns = [
     {
       key: 'Name',
       label: 'Name',
@@ -79,7 +77,7 @@
   <EGTable
     v-else
     :table-data="labData"
-    :columns="columns"
+    :columns="tableColumns"
     :isLoading="isLoading"
     :action-items="actionItems"
     :show-pagination="!isLoading && !hasNoData"

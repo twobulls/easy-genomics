@@ -31,6 +31,10 @@ const useOrgsStore = defineStore('orgsStore', {
       );
     },
 
+    userLabAccess(): string {
+      return this.selectedUser?.OrganizationAccess?.LaboratoryAccess;
+    },
+
     reset() {
       Object.assign(this, initialState());
     },

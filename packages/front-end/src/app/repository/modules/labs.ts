@@ -4,7 +4,7 @@ import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-gen
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-import { DeletedResponse } from '~/types/api';
+import { DeletedResponse, EditUserResponse } from '~/types/api';
 
 class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -29,11 +29,66 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
-  async users(labId: string): Promise<LaboratoryUser[]> {
+  /**
+   * Add a user to a laboratory
+   * @param labId
+   * @param userId
+   */
+  async addUser(labId: string, userId: string): Promise<EditUserResponse> {
+    // TODO: zod
+    const res = await this.call<EditUserResponse>('POST', `/laboratory/user/add-laboratory-user`, {
+      'LaboratoryId': labId,
+      'UserId': userId,
+      'Status': 'Active',
+      'LabManager': false,
+      'LabTechnician': true,
+    });
+
+    if (!res) {
+      throw new Error('Failed to edit Laboratory user');
+    }
+
+    return res;
+  }
+
+  /**
+   * Edit a user role in a laboratory
+   * @param labId
+   * @param userId
+   * @param isLabManager
+   */
+  async editUserRole(labId: string, userId: string, isLabManager: boolean): Promise<EditUserResponse> {
+    // TODO: zod
+    const res = await this.call<EditUserResponse>('POST', `/laboratory/user/edit-laboratory-user`, {
+      'LaboratoryId': labId,
+      'UserId': userId,
+      'Status': 'Active',
+      'LabManager': isLabManager,
+      'LabTechnician': !isLabManager,
+    });
+
+    if (!res) {
+      throw new Error('Failed to edit Laboratory user');
+    }
+
+    return res;
+  }
+
+  async listLabUsersByLabId(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
       `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`
     );
+
+    if (!res) {
+      throw new Error('Failed to retrieve Laboratory users');
+    }
+
+    return res;
+  }
+
+  async listLabUsersByUserId(userId: string): Promise<LaboratoryUser[]> {
+    const res = await this.call<LaboratoryUser[]>('GET', `/laboratory/user/list-laboratory-users?userId=${userId}`);
 
     if (!res) {
       throw new Error('Failed to retrieve Laboratory users');

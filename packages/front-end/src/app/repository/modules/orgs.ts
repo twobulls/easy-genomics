@@ -67,7 +67,7 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
-  async editUser(orgId: string, userId: string, status: string, val: boolean): Promise<Organization | undefined> {
+  async editUserRole(orgId: string, userId: string, status: string, val: boolean): Promise<Organization | undefined> {
     const input = {
       OrganizationId: orgId,
       UserId: userId,

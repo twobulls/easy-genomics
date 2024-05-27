@@ -15,7 +15,7 @@
   async function toggleOrgAdminPerm() {
     toggleVal.value = !toggleVal.value;
     try {
-      await $api.orgs.editUser(OrganizationId, UserId, UserStatus, toggleVal.value);
+      await $api.orgs.editUserRole(OrganizationId, UserId, UserStatus, toggleVal.value);
       $emit('update-user');
       useToastStore().success(`${props.displayName}’s Lab Access has been successfully updated`);
     } catch (error) {

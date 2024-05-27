@@ -9,7 +9,7 @@
       tableData: any[];
       columns: any[];
       isLoading?: boolean;
-      actionItems: () => ActionItem[];
+      actionItems?: () => ActionItem[];
       showPagination: boolean;
     }>(),
     {
@@ -21,6 +21,7 @@
     tableData: props.tableData,
   });
 
+  const $emit = defineEmits(['grant-access-clicked']);
   const isSortAsc = ref(true);
   const page = ref(1);
   const pageCount = ref(10);
@@ -46,11 +47,22 @@
 
   watch(
     () => props.tableData,
-    (newTableData) => {
+    (newTableData: any) => {
       localProps.tableData = newTableData;
       sortAsc();
     }
   );
+
+  const labAccessItems = [
+    {
+      label: 'Lab Technician',
+      role: 'LabTechnician',
+    },
+    {
+      label: 'Lab Manager',
+      role: 'LabManager',
+    },
+  ];
 </script>
 
 <template>
@@ -70,14 +82,42 @@
       v-model:sort="sortModel"
       sort-mode="manual"
     >
-      <slot />
       <template #actions-data="{ row }">
-        <EGActionButton :items="actionItems(row)" />
+        <USelectMenu
+          v-if="row.labAccessOptionsEnabled"
+          v-model="row.labRole.role"
+          :options="labAccessItems"
+          value-attribute="role"
+          option-attribute="label"
+          @update:modelValue="
+            (newRole) => {
+              $emit('lab-access-selected', {
+                role: newRole,
+                labId: row.LaboratoryId,
+                labName: row.Name,
+              });
+            }
+          "
+        />
+        <EGButton
+          v-else-if="row.labAccess"
+          @click="
+            $emit('grant-access-clicked', {
+              labId: row.LaboratoryId,
+              name: row.Name,
+            })
+          "
+          label="Grant access"
+          variant="secondary"
+          size="sm"
+        />
+        <EGActionButton v-else-if="actionItems" :items="actionItems(row)" />
       </template>
       <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
     </UTable>
   </UCard>
 
+  <!-- TODO: componentize Pagination -->
   <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="showPagination && !isLoading">
     <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
     <div class="flex justify-end px-3" v-if="pageTotal > pageCount">

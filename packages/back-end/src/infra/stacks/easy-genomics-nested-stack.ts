@@ -5,6 +5,7 @@ import { Construct } from 'constructs';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
+import { SesConstruct } from '../constructs/ses-construct';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
 export class EasyGenomicsNestedStack extends NestedStack {
@@ -13,6 +14,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
   dynamoDB: DynamoConstruct;
   iam: IamConstruct;
   lambda: LambdaConstruct;
+  ses: SesConstruct;
 
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
     super(scope, id, props);
@@ -33,14 +35,27 @@ export class EasyGenomicsNestedStack extends NestedStack {
       iamPolicyStatements: this.iam.policyStatements, // Pass declared Easy Genomics IAM policies for attaching to respective Lambda function
       lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      lambdaFunctionsResources: {
+        '/easy-genomics/user/create-user-invite': {
+          environment: {
+            JWT_SECRET_KEY: this.props.secretKey,
+          },
+        },
+      }, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
       environment: {
         AWS_ACCOUNT_ID: this.props.env.account!,
         COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
+        DOMAIN_NAME: this.props.applicationUrl,
         NAME_PREFIX: this.props.namePrefix,
       },
     });
 
+    this.ses = new SesConstruct(this, `${this.props.constructNamespace}-ses`, {
+      awsAccount: this.props.env.account!,
+      awsRegion: this.props.env.region!,
+      domainName: this.props.applicationUrl,
+      emailSender: `no.reply@${this.props.applicationUrl}`,
+    });
   }
 
   // Easy Genomics specific IAM policies
@@ -529,6 +544,21 @@ export class EasyGenomicsNestedStack extends NestedStack {
           ],
           actions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminDeleteUser'],
           effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.applicationUrl}`,
+            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@twobulls.com`, // TODO: remove (only for Dev/Quality testing purposes)
+            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@deptagency.com`, // TODO: remove (only for Dev/Quality testing purposes)
+            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
+          ],
+          actions: ['ses:SendTemplatedEmail'],
+          effect: Effect.ALLOW,
+          conditions: {
+            StringEquals: {
+              'ses:FromAddress': `no.reply@${this.props.applicationUrl}`,
+            },
+          },
         }),
       ],
     );

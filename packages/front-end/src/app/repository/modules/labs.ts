@@ -35,7 +35,6 @@ class LabsModule extends HttpFactory {
    * @param userId
    */
   async addUser(labId: string, userId: string): Promise<EditUserResponse> {
-    // TODO: zod
     const res = await this.call<EditUserResponse>('POST', `/laboratory/user/add-laboratory-user`, {
       'LaboratoryId': labId,
       'UserId': userId,
@@ -52,13 +51,12 @@ class LabsModule extends HttpFactory {
   }
 
   /**
-   * Edit a user role in a laboratory
+   * Edit a user's access in a laboratory
    * @param labId
    * @param userId
    * @param isLabManager
    */
-  async editUserRole(labId: string, userId: string, isLabManager: boolean): Promise<EditUserResponse> {
-    // TODO: zod
+  async editUserLabAccess(labId: string, userId: string, isLabManager: boolean): Promise<EditUserResponse> {
     const res = await this.call<EditUserResponse>('POST', `/laboratory/user/edit-laboratory-user`, {
       'LaboratoryId': labId,
       'UserId': userId,
@@ -68,7 +66,7 @@ class LabsModule extends HttpFactory {
     });
 
     if (!res) {
-      throw new Error('Failed to edit Laboratory user');
+      throw new Error("Failed to edit user's Laboratory access");
     }
 
     return res;

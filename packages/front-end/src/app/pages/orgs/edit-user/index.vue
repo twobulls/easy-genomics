@@ -81,7 +81,7 @@
   }
 
   /**
-   * Filter rows based on search input for both name and email
+   * Filter rows based on search input for laboratory name
    */
   const filteredTableData = computed(() => {
     return orgLabsData.value
@@ -91,7 +91,7 @@
       })
       .map((lab) => {
         const hasAccess =
-          useOrgsStore().selectedUser.OrganizationAccess[lab.OrganizationId]?.LaboratoryAccess[lab.LaboratoryId]
+          useOrgsStore().selectedUser?.OrganizationAccess?.[lab.OrganizationId]?.LaboratoryAccess?.[lab.LaboratoryId]
             ?.Status === 'Active';
         const userLab = selectedUserLabsData.value.find((userLab) => userLab.LaboratoryId === lab.LaboratoryId);
 
@@ -112,7 +112,7 @@
 
   async function handleAddUser(lab: { labId: string; name: string }) {
     try {
-      const res = await $api.labs.addUser(lab.labId, useOrgsStore().selectedUser?.UserId);
+      const res = await $api.labs.addLabUser(lab.labId, useOrgsStore().selectedUser?.UserId);
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
@@ -132,7 +132,7 @@
     const isLabManager = labRole.role === 'LabManager';
 
     try {
-      const res = await $api.labs.editUserRole(labRole.labId, useOrgsStore().selectedUser?.UserId, isLabManager);
+      const res = await $api.labs.editUserLabAccess(labRole.labId, useOrgsStore().selectedUser?.UserId, isLabManager);
 
       if (res?.Status === 'Success') {
         useToastStore().success(

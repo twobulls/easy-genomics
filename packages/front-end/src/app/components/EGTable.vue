@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { LabAccessRolesEnum } from '~/types/labAccessRoles';
+
   interface ActionItem {
     label: string;
     click: Function;
@@ -56,11 +58,11 @@
   const labAccessItems = [
     {
       label: 'Lab Technician',
-      role: 'LabTechnician',
+      role: LabAccessRolesEnum.enum.LabTechnician,
     },
     {
       label: 'Lab Manager',
-      role: 'LabManager',
+      role: LabAccessRolesEnum.enum.LabManager,
     },
   ];
 </script>

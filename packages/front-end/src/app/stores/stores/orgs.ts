@@ -1,7 +1,7 @@
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+import { OrganizationAccessDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { defineStore } from 'pinia';
 import useUser from '~/composables/useUser';
-import { OrganizationAccessDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 
 interface OrgsStoreState {
   selectedUser: OrganizationUserDetails | undefined;
@@ -33,7 +33,7 @@ const useOrgsStore = defineStore('orgsStore', {
           firstName: this.selectedUser?.FirstName || '',
           lastName: this.selectedUser?.LastName || '',
           email: this.selectedUser?.UserEmail,
-        })
+        }),
       );
     },
 

@@ -55,21 +55,31 @@
       key: 'UserDisplayName',
       label: 'Name',
     },
-    {
-      key: 'assignedRole',
-      label: 'Assigned Role',
-    },
+    // {
+    //   key: 'assignedRole',
+    //   label: 'Assigned Role',
+    // },
     {
       key: 'actions',
-      label: '',
+      label: 'Lab Access',
     },
   ];
 
-  const actionItems = (row: LaboratoryUserDetails) => [
+  const labAccessItems = (row: Array<{}>) => [
     [
       {
-        label: 'Edit lab access',
-        click: () => {},
+        label: 'Lab Technician',
+        click: () => {
+          console.log('Assign Lab Technician role');
+        },
+      },
+    ],
+    [
+      {
+        label: 'Lab Manager',
+        click: () => {
+          console.log('Assign Lab Manager role');
+        },
       },
     ],
     [
@@ -245,7 +255,8 @@
               </template>
               <template #actions-data="{ row }">
                 <div class="flex items-center">
-                  <EGActionButton :items="actionItems(row)" />
+                  <!-- <EGActionButton :items="labAccessItems(row)" /> -->
+                  <USelect :items="items" />
                 </div>
               </template>
               <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>

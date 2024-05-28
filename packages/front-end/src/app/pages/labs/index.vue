@@ -40,6 +40,7 @@
     [
       {
         label: 'Remove',
+        class: 'text-alert-danger-dark',
         click: () => {},
       },
     ],

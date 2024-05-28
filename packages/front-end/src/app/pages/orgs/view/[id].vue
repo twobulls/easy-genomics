@@ -80,8 +80,8 @@
           primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
             preferredName: row.PreferredName,
             firstName: row.FirstName,
-            lastName: row.UserEmail,
-            email: row.LastName,
+            lastName: row.LastName,
+            email: row.UserEmail,
           })} from the Organization?`;
           isOpen.value = true;
         },

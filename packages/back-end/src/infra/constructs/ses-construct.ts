@@ -366,7 +366,7 @@ export class SesConstruct extends Construct {
                               <td style="width: 600px">
                                  <![endif]-->
                                  <div class="logo emb-logo-margin-box" style="font-size: 26px;line-height: 32px;Margin-top: 6px;Margin-bottom: 20px;color: #c3ced9;font-family: Helvetica,Arial,sans-serif;Margin-left: 20px;Margin-right: 20px;" align="center">
-                                    <div class="logo-center" align="center" id="emb-email-header"><img style="display: block;height: auto;width: 100%;border: 0;max-width: 200px;" src="https://build.dev.easygenomics.org/images/easy-genomics-email.png" alt="" width="200"></div>
+                                    <div class="logo-center" align="center" id="emb-email-header"><img style="display: block;height: auto;width: 100%;border: 0;max-width: 200px;" src="{{EASY_GENOMICS_EMAIL_LOGO}}" alt="" width="200"></div>
                                  </div>
                                  <!--[if mso]>
                               </td>
@@ -386,13 +386,13 @@ export class SesConstruct extends Construct {
                                     <td style="width: 600px" class="w560">
                                        <![endif]-->
                                        <div class="column" style="text-align: left;color: #787778;font-size: 16px;line-height: 24px;font-family: Helvetica,Arial,sans-serif;">
-                                          <div style="Margin-left: 20px;Margin-right: 20px;Margin-top: 24px;">
-                                             <div style="mso-line-height-rule: exactly;line-height: 20px;font-size: 1px;">&nbsp;</div>
+                                          <div style="Margin-left: 20px;Margin-right: 20px;Margin-top: 24px;"> 
+                                             <div style="mso-line-height-rule: exactly;line-height: 20px;font-size: 1px;">&nbsp;</div> 
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div style="mso-line-height-rule: exactly;mso-text-raise: 11px;vertical-align: middle;">
                                                 <h1 class="size-32" style="Margin-top: 0;Margin-bottom: 0;font-style: normal;font-weight: normal;color: #565656;font-size: 28px;line-height: 36px;font-family: sans-serif;text-align: center;" lang="x-size-32"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #12181f;">You've been invited</span></span></h1>
-                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">to [OrgName] , click the link below to set up your account and get started. This link will expire in 7 Days.</span></span></p>
+                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">to {{ ORGANIZATION_NAME }} , click the link below to set up your account and get started. This link will expire in 7 Days.</span></span></p>
                                              </div>
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
@@ -400,7 +400,7 @@ export class SesConstruct extends Construct {
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div class="btn btn--flat btn--large" style="Margin-bottom: 20px;text-align: center;">
-                                                <!--[if !mso]><!--><a style="border-radius: 4px;display: inline-block;font-size: 14px;font-weight: bold;line-height: 24px;padding: 12px 24px;text-align: center;text-decoration: none !important;transition: opacity 0.1s ease-in;color: #ffffff !important;background-color: #5524e0;font-family: sans-serif;" href="https://[DomainName]/accept-invitation?invite=[INVITATION_JWT]" target="_blank">Accept invite</a><!--<![endif]-->
+                                                <!--[if !mso]><!--><a style="border-radius: 4px;display: inline-block;font-size: 14px;font-weight: bold;line-height: 24px;padding: 12px 24px;text-align: center;text-decoration: none !important;transition: opacity 0.1s ease-in;color: #ffffff !important;background-color: #5524e0;font-family: sans-serif;" href="https://[DomainName]/accept-invitation?invite={{INVITATION_JWT}}" target="_blank">Accept invite</a><!--<![endif]-->
                                                 <!--[if mso]>
                                                 <p style="line-height:0;margin:0;">&nbsp;</p>
                                                 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="https://twobulls.createsend1.com/t/y-i-mcjhil-l-r/" style="width:101.25pt" arcsize="9%" fillcolor="#5524E0" stroke="f">
@@ -450,7 +450,7 @@ export class SesConstruct extends Construct {
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;Margin-bottom: 24px;">
                                              <div style="mso-line-height-rule: exactly;mso-text-raise: 11px;vertical-align: middle;">
-                                                <p class="size-12" style="Margin-top: 0;Margin-bottom: 0;font-family: sans-serif;font-size: 12px;line-height: 19px;text-align: left;" lang="x-size-12"><span class="font-sans-serif" style="text-decoration: inherit;">© 2024 Easy Genomics, Inc. All rights reserved.</span></p>
+                                                <p class="size-12" style="Margin-top: 0;Margin-bottom: 0;font-family: sans-serif;font-size: 12px;line-height: 19px;text-align: left;" lang="x-size-12"><span class="font-sans-serif" style="text-decoration: inherit;">© {{COPYRIGHT_YEAR}} Easy Genomics, Inc. All rights reserved.</span></p>
                                              </div>
                                           </div>
                                        </div>

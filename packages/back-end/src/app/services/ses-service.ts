@@ -39,6 +39,7 @@ export class SesService {
         DOMAIN_NAME: this.props.domainName,
         INVITATION_JWT: invitationJwt,
         ORGANIZATION_NAME: organizationName,
+        EASY_GENOMICS_EMAIL_LOGO: `${this.props.domainName}/images/email-logo.svg`,
       }),
     });
 

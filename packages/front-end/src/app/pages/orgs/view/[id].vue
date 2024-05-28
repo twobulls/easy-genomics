@@ -276,7 +276,7 @@
   >
     <template #details>
       <USkeleton
-        class="flex h-60 flex-col rounded-2xl bg-gray-200 p-6 max-md:px-5"
+        class="flex h-60 flex-col rounded-2xl p-6 max-md:px-5"
         :ui="{ rounded: 'rounded-full' }"
         v-if="isLoading"
       />
@@ -353,12 +353,14 @@
                 <div class="flex flex-col">
                   <div>
                     {{
-                      useUser().displayName({
-                        preferredName: row.PreferredName,
-                        firstName: row.FirstName,
-                        lastName: row.LastName,
-                        email: row.UserEmail,
-                      })
+                      row.FirstName
+                        ? useUser().displayName({
+                            preferredName: row.PreferredName,
+                            firstName: row.FirstName,
+                            lastName: row.LastName,
+                            email: row.UserEmail,
+                          })
+                        : ''
                     }}
                   </div>
                   <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
@@ -386,7 +388,7 @@
               </div>
             </template>
             <template #empty-state>
-              <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
+              <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
             </template>
           </UTable>
         </UCard>

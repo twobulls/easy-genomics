@@ -5,5 +5,8 @@ export default defineAppConfig({
     notifications: {
       position: 'top-0 bottom-auto',
     },
+    skeleton: {
+      background: 'bg-[#c2c2c2]',
+    },
   },
 });

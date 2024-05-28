@@ -9,7 +9,9 @@
     "experimentalDecorators": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "lib": ["es2019"],
+    "lib": [
+      "es2019"
+    ],
     "module": "CommonJS",
     "noEmitOnError": false,
     "noFallthroughCasesInSwitch": true,
@@ -23,13 +25,18 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "stripInternal": true,
-    "types": ["vue"],
     "target": "ES2019",
     "baseUrl": ".",
     "paths": {
-      "@BE/*": ["packages/back-end/src/*"],
-      "@FE/*": ["packages/front-end/src/*"],
-      "@SharedLib/*": ["packages/shared-lib/src/*"]
+      "@BE/*": [
+        "packages/back-end/src/*"
+      ],
+      "@FE/*": [
+        "packages/front-end/src/*"
+      ],
+      "@SharedLib/*": [
+        "packages/shared-lib/src/*"
+      ]
     }
   },
   "include": [

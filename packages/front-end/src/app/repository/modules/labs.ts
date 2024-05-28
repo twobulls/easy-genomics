@@ -35,12 +35,12 @@ class LabsModule extends HttpFactory {
    * @param userId
    */
   async addLabUser(labId: string, userId: string): Promise<EditUserResponse> {
-    const res = await this.call<EditUserResponse>('POST', `/laboratory/user/add-laboratory-user`, {
-      'LaboratoryId': labId,
-      'UserId': userId,
-      'Status': 'Active',
-      'LabManager': false,
-      'LabTechnician': true,
+    const res = await this.call<EditUserResponse>('POST', '/laboratory/user/add-laboratory-user', {
+      LaboratoryId: labId,
+      UserId: userId,
+      Status: 'Active',
+      LabManager: false,
+      LabTechnician: true,
     });
 
     if (!res) {
@@ -57,12 +57,12 @@ class LabsModule extends HttpFactory {
    * @param isLabManager
    */
   async editUserLabAccess(labId: string, userId: string, isLabManager: boolean): Promise<EditUserResponse> {
-    const res = await this.call<EditUserResponse>('POST', `/laboratory/user/edit-laboratory-user`, {
-      'LaboratoryId': labId,
-      'UserId': userId,
-      'Status': 'Active',
-      'LabManager': isLabManager,
-      'LabTechnician': !isLabManager,
+    const res = await this.call<EditUserResponse>('POST', '/laboratory/user/edit-laboratory-user', {
+      LaboratoryId: labId,
+      UserId: userId,
+      Status: 'Active',
+      LabManager: isLabManager,
+      LabTechnician: !isLabManager,
     });
 
     if (!res) {
@@ -75,7 +75,7 @@ class LabsModule extends HttpFactory {
   async listLabUsersByLabId(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`
+      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -122,7 +122,7 @@ class LabsModule extends HttpFactory {
   async usersDetails(labId: string): Promise<LaboratoryUserDetails[]> {
     const res = await this.call<LaboratoryUserDetails[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`
+      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`,
     );
 
     if (!res) {

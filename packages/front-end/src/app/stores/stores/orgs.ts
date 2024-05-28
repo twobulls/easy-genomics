@@ -32,6 +32,7 @@ const useOrgsStore = defineStore('orgsStore', {
           preferredName: this.selectedUser?.PreferredName || '',
           firstName: this.selectedUser?.FirstName || '',
           lastName: this.selectedUser?.LastName || '',
+          email: this.selectedUser?.UserEmail,
         })
       );
     },

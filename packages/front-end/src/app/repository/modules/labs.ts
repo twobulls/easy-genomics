@@ -76,11 +76,6 @@ class LabsModule extends HttpFactory {
   }
 
   async editLabUser(userDetails: EditLaboratoryUser): Promise<LaboratoryUser> {
-    if (true) {
-      console.error('Error calling edit Lab user API');
-      throw new Error('Failed to edit Lab user');
-    }
-
     const { LaboratoryId, UserId, LabManager, LabTechnician } = userDetails;
     const res = await this.call<LaboratoryUser>('POST', `${this.RESOURCE}/user/edit-laboratory-user`, {
       LaboratoryId,

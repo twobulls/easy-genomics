@@ -22,14 +22,6 @@
   const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
   const laboratoryId = $route.params.id;
 
-  const labUsers: LaboratoryUserDetails[] = computed(() => {
-    console.log('labUsers computed; typeof labUsersDetailsData.value', typeof labUsersDetailsData.value);
-    console.log('labUsers computed; labUsersDetailsData.value', toRaw(labUsersDetailsData.value));
-    labUsersDetailsData.value.map((user) => {
-      return user;
-    });
-  });
-
   // Dynamic remove user dialog values
   const isOpen = ref(false);
   const primaryMessage = ref('');
@@ -118,31 +110,24 @@
   }
 
   const filteredRows = computed(() => {
-    console.log('labUsers', labUsers.value);
-    console.log('typeof labUsers', typeof labUsers.value);
-
-    return [];
-
     if (!searchOutput.value && !hasNoData.value) {
-      return labUsers.map((user) => ({
-        ...user,
-        assignedRole: user.LabManager ? 'Lab Manager' : user.LabTechnician ? 'Lab Technician' : 'Unknown',
+      return labUsersDetailsData.value.map((person) => ({
+        ...person,
+        assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
       }));
     }
 
-    return labUsers
-      .filter((user) => {
-        return String(user.UserDisplayName).toLowerCase().includes(searchOutput.value.toLowerCase());
+    return labUsersDetailsData.value
+      .filter((person) => {
+        return String(person.UserDisplayName).toLowerCase().includes(searchOutput.value.toLowerCase());
       })
-      .map((user) => ({
-        ...user,
-        assignedRole: user.LabManager ? 'Lab Manager' : user.LabTechnician ? 'Lab Technician' : 'Unknown',
+      .map((person) => ({
+        ...person,
+        assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
       }));
   });
 
-  onMounted(async () => {
-    await getLabUsers();
-  });
+  await getLabUsers();
 </script>
 
 <template>
@@ -282,7 +267,7 @@
           >
             <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
             <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
-              <UPagination v-model="page" :page-count="10" :total="labUsers.length" />
+              <UPagination v-model="page" :page-count="10" :total="labUsersDetailsData.length" />
             </div>
           </div>
         </template>

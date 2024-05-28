@@ -31,23 +31,18 @@ export const handler: Handler = async (
     const response: LaboratoryUserDetails[] = laboratoryUsers.map(labUser => {
       const user: User | undefined = users.filter(u => u.UserId === labUser.UserId).shift();
       if (user) {
-        return <LaboratoryUserDetails> {
+        return <LaboratoryUserDetails>{
           UserId: labUser.UserId,
           LaboratoryId: labUser.LaboratoryId,
           LabManager: labUser.LabManager,
           LabTechnician: labUser.LabTechnician,
-          UserDisplayName: `${user.PreferredName ? user.PreferredName : user.FirstName} ${user.LastName}`.trim(),
+          PreferredName: user.PreferredName,
+          FirstName: user.FirstName,
+          LastName: user.LastName,
           UserEmail: user.Email,
         };
-      } else {
-        return <LaboratoryUserDetails> {
-          UserId: labUser.UserId,
-          LaboratoryId: labUser.LaboratoryId,
-          LabManager: labUser.LabManager,
-          LabTechnician: labUser.LabTechnician,
-        };
       }
-    });
+    }).flat();
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

@@ -26,7 +26,7 @@ const useOrgsStore = defineStore('orgsStore', {
 
   getters: {
     // return the selected user's display name
-    getUserDisplayName(): string {
+    getSelectedUserDisplayName(): string {
       return String(
         useUser().displayName({
           preferredName: this.selectedUser?.PreferredName || '',

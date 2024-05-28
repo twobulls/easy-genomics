@@ -388,7 +388,7 @@
               </div>
             </template>
             <template #empty-state>
-              <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
+              <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
             </template>
           </UTable>
         </UCard>

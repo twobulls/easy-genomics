@@ -276,7 +276,9 @@
                   <EGActionButton :items="actionItems(row)" />
                 </div>
               </template>
-              <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
+              <template #empty-state>
+                <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
+              </template>
             </UTable>
           </UCard>
 

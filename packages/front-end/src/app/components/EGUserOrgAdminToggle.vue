@@ -28,7 +28,7 @@
 </script>
 
 <template>
-  <div class="bg-skeleton-background flex h-[82px] items-center rounded p-4" v-if="isLoading">
+  <div class="bg-skeleton-container flex h-[82px] items-center rounded p-4" v-if="!isLoading">
     <div class="mr-2">
       <USkeleton class="h-[32px] w-[32px]" :ui="{ rounded: 'rounded-full' }" />
     </div>

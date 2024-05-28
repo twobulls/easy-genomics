@@ -356,7 +356,7 @@
                         preferredName: row.PreferredName,
                         firstName: row.FirstName,
                         lastName: row.LastName,
-                        email: person.UserEmail,
+                        email: row.UserEmail,
                       })
                     }}
                   </div>

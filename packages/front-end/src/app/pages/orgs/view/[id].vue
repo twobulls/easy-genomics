@@ -177,6 +177,7 @@
           preferredName: person.PreferredName || '',
           firstName: person.FirstName || '',
           lastName: person.LastName || '',
+          email: person.UserEmail,
         })
       ).toLowerCase();
 
@@ -342,6 +343,7 @@
                       preferredName: row.PreferredName,
                       firstName: row.FirstName,
                       lastName: row.LastName,
+                      email: person.UserEmail,
                     })
                   "
                   :email="row.UserEmail"
@@ -354,6 +356,7 @@
                         preferredName: row.PreferredName,
                         firstName: row.FirstName,
                         lastName: row.LastName,
+                        email: person.UserEmail,
                       })
                     }}
                   </div>

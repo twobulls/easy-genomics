@@ -5,9 +5,10 @@ import { ERRORS } from '~/constants/validation';
 import { useToastStore } from '~/stores/stores';
 
 type UserNameOptions = {
-  preferredName: string | undefined;
-  firstName: string | undefined;
-  lastName: string | undefined;
+  preferredName?: string | undefined;
+  firstName?: string | undefined;
+  lastName?: string | undefined;
+  email: string | undefined;
 };
 
 export default function useUser() {
@@ -18,10 +19,14 @@ export default function useUser() {
    * @param nameOptions
    */
   function displayName(nameOptions: UserNameOptions) {
-    const { preferredName, firstName, lastName } = nameOptions;
-
+    const { preferredName, firstName, lastName, email } = nameOptions;
     const preferredOrFirstName = preferredName || firstName;
-    return preferredOrFirstName ? `${preferredOrFirstName} ${lastName}` : '';
+
+    if (preferredOrFirstName) {
+      return `${preferredOrFirstName} ${lastName}`;
+    } else {
+      return email;
+    }
   }
 
   async function handleInvite(reqBody: CreateUserInvite, action: 'resend' | 'send') {
@@ -52,7 +57,7 @@ export default function useUser() {
         OrganizationId: orgId,
         Email: email,
       },
-      'resend',
+      'resend'
     );
   }
 

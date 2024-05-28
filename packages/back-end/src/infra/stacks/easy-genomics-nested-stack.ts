@@ -569,6 +569,20 @@ export class EasyGenomicsNestedStack extends NestedStack {
         }),
       ],
     );
+
+    // /easy-genomics/list-buckets
+    this.iam.addPolicyStatements(
+      '/easy-genomics/list-buckets',
+      [
+        new PolicyStatement({
+          resources: [
+            'arn:aws:s3:::*',
+          ],
+          actions: ['s3:ListAllMyBuckets'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
   };
 
   // Easy Genomics specific DynamoDB tables

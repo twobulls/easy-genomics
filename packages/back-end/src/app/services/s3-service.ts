@@ -16,6 +16,9 @@ import {
   DeleteObjectCommand,
   DeleteObjectCommandInput,
   InvalidObjectState,
+  ListBucketsCommand,
+  ListBucketsCommandInput,
+  ListBucketsCommandOutput,
   ListMultipartUploadsCommand,
   ListMultipartUploadsCommandInput,
   ListObjectsV2Command,
@@ -35,6 +38,7 @@ export enum S3Command {
   // Manage S3 Bucket
   CREATE_BUCKET = 'create-bucket',
   DELETE_BUCKET = 'delete-bucket',
+  LIST_BUCKETS = 'list-buckets',
   // Manage S3 Bucket objects
   COPY_BUCKET_OBJECT = 'copy-bucket-object',
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
@@ -65,6 +69,13 @@ export class S3Service {
     return this.s3Request<DeleteBucketCommandInput, DeleteBucketCommandOutput>(
       S3Command.DELETE_BUCKET,
       deleteBucketInput,
+    );
+  };
+
+  public listBuckets = async (listBucketsInput: ListBucketsCommandInput): Promise<ListBucketsCommandOutput> => {
+    return this.s3Request<ListBucketsCommandInput, ListBucketsCommandOutput>(
+      S3Command.LIST_BUCKETS,
+      listBucketsInput,
     );
   };
 
@@ -113,6 +124,8 @@ export class S3Service {
       // S3 Bucket Commands
       case S3Command.CREATE_BUCKET:
         return new CreateBucketCommand(data as CreateBucketCommandInput);
+      case S3Command.LIST_BUCKETS:
+        return new ListBucketsCommand(data as ListBucketsCommandInput);
       case S3Command.DELETE_BUCKET:
         return new DeleteBucketCommand(data as DeleteBucketCommandInput);
       // S3 Bucket Object Commands

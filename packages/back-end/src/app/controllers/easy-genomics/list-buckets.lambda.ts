@@ -1,5 +1,6 @@
 import { Bucket, ListBucketsCommandOutput } from '@aws-sdk/client-s3';
 import { buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
+import { S3Bucket } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/s3-bucket';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { S3Service } from '../../services/s3-service';
 
@@ -19,9 +20,11 @@ export const handler: Handler = async (
     const response: ListBucketsCommandOutput = await s3Service.listBuckets({});
     if (response.Buckets) {
       // Exclude CDK & Amplify Buckets
-      const buckets: Bucket[] = response.Buckets.filter((bucket: Bucket) =>
-        !bucket.Name?.startsWith('cdk') && !bucket.Name?.startsWith('amplify'),
-      );
+      const buckets: S3Bucket[] = response.Buckets.filter((bucket: Bucket) =>
+        (!bucket.Name?.startsWith('cdk') && !bucket.Name?.startsWith('amplify')),
+      ).flatMap((bucket: Bucket) => {
+        return <S3Bucket>{ Name: bucket.Name };
+      });
       return buildResponse(200, JSON.stringify(buckets), event);
     } else {
       throw new Error(`Unable to list Buckets: ${JSON.stringify(response)}`);

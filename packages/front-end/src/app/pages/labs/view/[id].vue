@@ -2,15 +2,16 @@
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse } from '~/types/api';
-  import { useToastStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores/stores';
+  import EGUserRoleDropdown from '~/components/EGUserRoleDropdown.vue';
+  import { EditLaboratoryUser } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
+  import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
   const labName = $route.query.name;
   const hasNoData = ref(false);
-  const isLoading = ref(true);
-  const isRemovingUser = ref(false);
   const labUsersDetailsData = ref<LaboratoryUserDetails[]>([]);
   const page = ref(1);
   const pageCount = ref(10);
@@ -21,32 +22,66 @@
   const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
   const laboratoryId = $route.params.id;
 
+  const labUsers: LaboratoryUserDetails[] = computed(() => {
+    console.log('labUsers computed; typeof labUsersDetailsData.value', typeof labUsersDetailsData.value);
+    console.log('labUsers computed; labUsersDetailsData.value', toRaw(labUsersDetailsData.value));
+    labUsersDetailsData.value.map((user) => {
+      return user;
+    });
+  });
+
   // Dynamic remove user dialog values
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const selectedUserId = ref('');
 
+  async function removeUserFromLab({ UserId, UserDisplayName }: { UserId: string; UserDisplayName: string }) {
+    selectedUserId.value = UserId;
+    primaryMessage.value = `Are you sure you want to remove ${UserDisplayName} from ${labName}?`;
+    isOpen.value = true;
+  }
+
   async function handleRemoveUser() {
     isOpen.value = false;
-    isRemovingUser.value = true;
     try {
       if (!selectedUserId.value) {
         throw new Error('No selectedUserId');
       }
 
+      useUiStore().setRequestPending(true);
+
       const res: DeletedResponse = await $api.labs.removeUser(laboratoryId, selectedUserId.value);
 
       if (res.deleted) {
         useToastStore().success('User removed from lab');
-        await getLabUsers();
       } else {
         throw new Error('User not deleted');
       }
     } catch (error) {
+      console.error('Error removing user from lab', error);
       useToastStore().error('Failed to remove user from lab');
     } finally {
+      await getLabUsers();
       selectedUserId.value = '';
-      isRemovingUser.value = false;
+      useUiStore().setRequestPending(false);
+    }
+  }
+
+  async function handleAssignRole(userDetails: EditLaboratoryUser) {
+    try {
+      useUiStore().setRequestPending(true);
+      const res: LaboratoryUser = await $api.labs.editLabUser(userDetails);
+      if (res) {
+        useToastStore().success('Assigned new role');
+      } else {
+        throw new Error('Failed to assign new role');
+      }
+    } catch (error) {
+      console.error('Error assigning new role', error);
+      useToastStore().error('Failed to assign new role');
+    } finally {
+      await getLabUsers();
+      useUiStore().setRequestPending(false);
     }
   }
 
@@ -55,57 +90,26 @@
       key: 'UserDisplayName',
       label: 'Name',
     },
-    // {
-    //   key: 'assignedRole',
-    //   label: 'Assigned Role',
-    // },
     {
       key: 'actions',
       label: 'Lab Access',
     },
   ];
 
-  const labAccessItems = (row: Array<{}>) => [
-    [
-      {
-        label: 'Lab Technician',
-        click: () => {
-          console.log('Assign Lab Technician role');
-        },
-      },
-    ],
-    [
-      {
-        label: 'Lab Manager',
-        click: () => {
-          console.log('Assign Lab Manager role');
-        },
-      },
-    ],
-    [
-      {
-        label: 'Remove from lab',
-        click: () => {
-          selectedUserId.value = row.UserId;
-          primaryMessage.value = `Are you sure you want to remove ${row.UserDisplayName} from ${labName}?`;
-          isOpen.value = true;
-        },
-      },
-    ],
-  ];
-
   async function getLabUsers() {
-    isLoading.value = true;
+    console.log('getLabUsers');
     try {
+      useUiStore().setRequestPending(true);
       labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
 
       if (labUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
       }
     } catch (error) {
-      console.error(error);
+      console.error('Error retrieving lab users', error);
+      useToastStore().error('Failed to retrieve lab users');
     } finally {
-      isLoading.value = false;
+      useUiStore().setRequestPending(false);
     }
   }
 
@@ -114,20 +118,25 @@
   }
 
   const filteredRows = computed(() => {
+    console.log('labUsers', labUsers.value);
+    console.log('typeof labUsers', typeof labUsers.value);
+
+    return [];
+
     if (!searchOutput.value && !hasNoData.value) {
-      return labUsersDetailsData.value.map((person) => ({
-        ...person,
-        assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
+      return labUsers.map((user) => ({
+        ...user,
+        assignedRole: user.LabManager ? 'Lab Manager' : user.LabTechnician ? 'Lab Technician' : 'Unknown',
       }));
     }
 
-    return labUsersDetailsData.value
-      .filter((person) => {
-        return String(person.UserDisplayName).toLowerCase().includes(searchOutput.value.toLowerCase());
+    return labUsers
+      .filter((user) => {
+        return String(user.UserDisplayName).toLowerCase().includes(searchOutput.value.toLowerCase());
       })
-      .map((person) => ({
-        ...person,
-        assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
+      .map((user) => ({
+        ...user,
+        assignedRole: user.LabManager ? 'Lab Manager' : user.LabTechnician ? 'Lab Technician' : 'Unknown',
       }));
   });
 
@@ -202,7 +211,7 @@
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGEmptyDataCTA
-          v-if="!isLoading && hasNoData"
+          v-if="!useUiStore().isRequestPending && hasNoData"
           message="You don't have any users in this lab yet."
           img-src="/images/empty-state-user.jpg"
           :button-action="() => {}"
@@ -229,44 +238,51 @@
             }"
           >
             <UTable
-              :loading="isLoading || isRemovingUser"
+              :loading="useUiStore().isRequestPending"
               class="LabsUsersTable rounded-2xl"
               :loading-state="{ icon: '', label: '' }"
               :rows="filteredRows"
               :columns="columns"
             >
-              <template #UserDisplayName-data="{ row }">
+              <template #UserDisplayName-data="{ row: user }">
                 <div class="flex items-center">
                   <EGUserAvatar
                     class="mr-4"
-                    :name="row.UserDisplayName"
-                    :email="row.UserEmail"
-                    :lab-manager="row.LabManager"
-                    :lab-technician="row.LabTechnician"
+                    :name="user.UserDisplayName"
+                    :email="user.UserEmail"
+                    :lab-manager="user.LabManager"
+                    :lab-technician="user.LabTechnician"
                   />
                   <div class="flex flex-col">
-                    <div v-if="row.UserDisplayName">{{ row.UserDisplayName }}</div>
-                    <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
+                    <div v-if="user.UserDisplayName">{{ user.UserDisplayName }}</div>
+                    <div class="text-muted text-xs font-normal">{{ user.UserEmail }}</div>
                   </div>
                 </div>
               </template>
-              <template #assignedRole-data="{ row }">
-                <span class="text-black">{{ row.assignedRole }}</span>
+              <template #assignedRole-data="{ row: user }">
+                <span class="text-black">{{ user.assignedRole }}</span>
               </template>
-              <template #actions-data="{ row }">
+              <template #actions-data="{ row: user }">
                 <div class="flex items-center">
-                  <!-- <EGActionButton :items="labAccessItems(row)" /> -->
-                  <USelect :items="items" />
+                  <EGUserRoleDropdown
+                    :disabled="useUiStore().isRequestPending"
+                    :user="user"
+                    @assign-role="handleAssignRole"
+                    @remove-user-from-lab="removeUserFromLab"
+                  />
                 </div>
               </template>
               <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
             </UTable>
           </UCard>
 
-          <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!searchOutput && !isLoading">
+          <div
+            class="text-muted flex h-16 flex-wrap items-center justify-between"
+            v-if="!searchOutput && !useUiStore().isRequestPending"
+          >
             <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
             <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
-              <UPagination v-model="page" :page-count="10" :total="labUsersDetailsData.length" />
+              <UPagination v-model="page" :page-count="10" :total="labUsers.length" />
             </div>
           </div>
         </template>

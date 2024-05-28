@@ -18,6 +18,8 @@ export interface LaboratoryUserDetails {
   LaboratoryId: string;
   LabManager: boolean;
   LabTechnician: boolean;
-  UserDisplayName?: string;
-  UserEmail?: string;
+  PreferredName?: string;
+  FirstName?: string;
+  LastName?: string;
+  UserEmail: string;
 }

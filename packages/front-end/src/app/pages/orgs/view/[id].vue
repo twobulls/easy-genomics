@@ -353,12 +353,14 @@
                 <div class="flex flex-col">
                   <div>
                     {{
-                      useUser().displayName({
-                        preferredName: row.PreferredName,
-                        firstName: row.FirstName,
-                        lastName: row.LastName,
-                        email: row.UserEmail,
-                      })
+                      row.FirstName
+                        ? useUser().displayName({
+                            preferredName: row.PreferredName,
+                            firstName: row.FirstName,
+                            lastName: row.LastName,
+                            email: row.UserEmail,
+                          })
+                        : ''
                     }}
                   </div>
                   <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>

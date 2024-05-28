@@ -3,6 +3,7 @@
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse } from '~/types/api';
   import { useToastStore } from '~/stores/stores';
+  import useUser from '~/composables/useUser';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -52,7 +53,7 @@
 
   const tableColumns = [
     {
-      key: 'UserDisplayName',
+      key: 'Name',
       label: 'Name',
     },
     {
@@ -77,7 +78,12 @@
         label: 'Remove from Lab',
         click: () => {
           selectedUserId.value = row.UserId;
-          primaryMessage.value = `Are you sure you want to remove ${row.UserDisplayName} from ${labName}?`;
+          primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
+            preferredName: row.PreferredName,
+            firstName: row.FirstName,
+            lastName: row.LastName,
+            email: row.UserEmail,
+          })} from ${labName}?`;
           isOpen.value = true;
         },
       },
@@ -105,15 +111,26 @@
 
   const filteredTableData = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
-      return labUsersDetailsData.value.map((person) => ({
+      return labUsersDetailsData.value.map((person: LaboratoryUserDetails) => ({
         ...person,
         assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
       }));
     }
 
     return labUsersDetailsData.value
-      .filter((person) => {
-        return String(person.UserDisplayName).toLowerCase().includes(searchOutput.value.toLowerCase());
+      .filter((person: LaboratoryUserDetails) => {
+        const fullName = String(
+          useUser().displayName({
+            preferredName: person.PreferredName || '',
+            firstName: person.FirstName || '',
+            lastName: person.LastName || '',
+            email: person.UserEmail,
+          })
+        ).toLowerCase();
+
+        const email = String(person.UserEmail).toLowerCase();
+
+        return fullName.includes(searchOutput.value.toLowerCase()) || email.includes(searchOutput.value.toLowerCase());
       })
       .map((person) => ({
         ...person,
@@ -219,11 +236,34 @@
               :rows="filteredTableData"
               :columns="tableColumns"
             >
-              <template #UserDisplayName-data="{ row }">
+              <template #Name-data="{ row }">
                 <div class="flex items-center">
-                  <EGUserAvatar class="mr-4" :name="row.UserDisplayName" :email="row.UserEmail" :is-active="true" />
+                  <EGUserAvatar
+                    class="mr-4"
+                    :name="
+                      useUser().displayName({
+                        preferredName: row.PreferredName,
+                        firstName: row.FirstName,
+                        lastName: row.LastName,
+                        email: row.UserEmail,
+                      })
+                    "
+                    :email="row.UserEmail"
+                    :is-active="row.OrganizationUserStatus === 'Active'"
+                  />
                   <div class="flex flex-col">
-                    <div v-if="row.UserDisplayName">{{ row.UserDisplayName }}</div>
+                    <div>
+                      {{
+                        row.FirstName
+                          ? useUser().displayName({
+                              preferredName: row.PreferredName,
+                              firstName: row.FirstName,
+                              lastName: row.LastName,
+                              email: row.UserEmail,
+                            })
+                          : ''
+                      }}
+                    </div>
                     <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
                   </div>
                 </div>

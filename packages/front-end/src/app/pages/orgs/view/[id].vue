@@ -276,7 +276,7 @@
   >
     <template #details>
       <USkeleton
-        class="flex h-60 flex-col rounded-2xl bg-gray-200 p-6 max-md:px-5"
+        class="bg-skeleton-background flex h-60 flex-col rounded-2xl p-6 max-md:px-5"
         :ui="{ rounded: 'rounded-full' }"
         v-if="isLoading"
       />

@@ -6,6 +6,7 @@
   const props = defineProps<{
     user: OrganizationUserDetails;
     displayName: string;
+    isLoading?: boolean;
   }>();
 
   const $emit = defineEmits(['update-user']);
@@ -27,7 +28,20 @@
 </script>
 
 <template>
-  <div class="border-stroke-light flex items-center justify-between gap-3 rounded border border-solid bg-white p-4">
+  <div class="bg-skeleton-background flex h-[82px] items-center rounded p-4" v-if="isLoading">
+    <div class="mr-2">
+      <USkeleton class="h-[32px] w-[32px]" :ui="{ rounded: 'rounded-full' }" />
+    </div>
+    <div class="space-y-2">
+      <USkeleton class="h-4 w-[250px] rounded-full" />
+      <USkeleton class="h-3 w-[200px] rounded-full" />
+    </div>
+  </div>
+
+  <div
+    v-else
+    class="border-stroke-light flex items-center justify-between gap-3 rounded border border-solid bg-white p-4"
+  >
     <div class="flex items-center gap-3">
       <EGUserAvatar
         :name="displayName"

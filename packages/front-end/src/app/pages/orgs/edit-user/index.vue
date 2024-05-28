@@ -151,10 +151,8 @@
   <EGPageHeader title="Edit User Access" />
 
   <div class="mb-4">
-    <USkeleton class="flex h-[82px] flex-col rounded bg-gray-200 p-6 max-md:px-5" v-if="isLoading" />
-
     <EGUserOrgAdminToggle
-      v-if="!isLoading"
+      :is-loading="isLoading"
       :user="useOrgsStore().selectedUser"
       :display-name="useOrgsStore().getSelectedUserDisplayName"
       @update-user="updateSelectedUser($event)"

@@ -124,7 +124,7 @@
     }
   }
 
-  async function handleLabAccess(labRole: { labId: string; role: string; labName: string }) {
+  async function handleAssignRole(labRole: { labId: string; role: string; labName: string }) {
     const isLabManager = labRole.role === 'LabManager';
 
     try {
@@ -180,7 +180,7 @@
     :isLoading="isLoading"
     :show-pagination="!isLoading && !hasNoData"
     @grant-access-clicked="handleAddUser($event)"
-    @lab-access-selected="handleLabAccess($event)"
+    @lab-access-selected="handleAssignRole($event)"
   />
 </template>
 

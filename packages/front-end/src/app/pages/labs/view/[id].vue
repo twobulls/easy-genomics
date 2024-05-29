@@ -1,16 +1,15 @@
 <script setup lang="ts">
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { ButtonVariantEnum } from '~/types/buttons';
-  import { DeletedResponse } from '~/types/api';
-  import { useToastStore } from '~/stores/stores';
+  import { DeletedResponse, EditUserResponse } from '~/types/api';
+  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
+  import EGUserRoleDropdown from '~/components/EGUserRoleDropdown.vue';
   import useUser from '~/composables/useUser';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const labName = $route.query.name;
   const hasNoData = ref(false);
-  const isLoading = ref(true);
-  const isRemovingUser = ref(false);
   const labUsersDetailsData = ref<LaboratoryUserDetails[]>([]);
   const page = ref(1);
   const pageCount = ref(10);
@@ -20,19 +19,27 @@
   const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
   const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
   const laboratoryId = $route.params.id;
+  const $emit = defineEmits(['remove-user-from-lab', 'assign-role']);
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const selectedUserId = ref('');
 
+  async function removeUserFromLab(UserId, displayName) {
+    selectedUserId.value = UserId;
+    primaryMessage.value = `Are you sure you want to remove ${displayName} from ${labName}?`;
+    isOpen.value = true;
+  }
+
   async function handleRemoveLabUser() {
     isOpen.value = false;
-    isRemovingUser.value = true;
     try {
       if (!selectedUserId.value) {
         throw new Error('No selectedUserId');
       }
+
+      useUiStore().setRequestPending(true);
 
       const res: DeletedResponse = await $api.labs.removeUser(laboratoryId, selectedUserId.value);
 
@@ -43,11 +50,39 @@
         throw new Error('User not removed from Lab');
       }
     } catch (error) {
+      await getLabUsers();
       useToastStore().error('Failed to remove user from Lab');
       throw error;
     } finally {
+      await getLabUsers();
       selectedUserId.value = '';
-      isRemovingUser.value = false;
+      useUiStore().setRequestPending(false);
+    }
+  }
+
+  async function handleAssignRole({
+    labUser,
+    displayName,
+  }: {
+    labUser: { LaboratoryId: string; UserId: string; LabManager: boolean };
+    displayName: string;
+  }) {
+    const { LaboratoryId, UserId, LabManager } = labUser;
+    try {
+      useUiStore().setRequestPending(true);
+      const res: EditUserResponse = await $api.labs.editUserLabAccess(LaboratoryId, UserId, LabManager);
+      if (res) {
+        useToastStore().success(`${labName} access has been successfully updated for ${displayName}`);
+      } else {
+        throw new Error('Failed to assign new role');
+      }
+    } catch (error) {
+      useToastStore().error(`Failed to update ${useOrgsStore().getSelectedUserDisplayName}`);
+      throw error;
+    } finally {
+      // update UI with latest data
+      await getLabUsers();
+      useUiStore().setRequestPending(false);
     }
   }
 
@@ -57,51 +92,24 @@
       label: 'Name',
     },
     {
-      key: 'assignedRole',
-      label: 'Assigned Role',
-    },
-    {
       key: 'actions',
-      label: '',
+      label: 'Lab Access',
     },
-  ];
-
-  const actionItems = (row: LaboratoryUserDetails) => [
-    [
-      {
-        label: 'Edit lab access',
-        click: () => {},
-      },
-    ],
-    [
-      {
-        label: 'Remove From Lab',
-        click: () => {
-          selectedUserId.value = row.UserId;
-          primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
-            preferredName: row.PreferredName,
-            firstName: row.FirstName,
-            lastName: row.LastName,
-            email: row.UserEmail,
-          })} from ${labName}?`;
-          isOpen.value = true;
-        },
-      },
-    ],
   ];
 
   async function getLabUsers() {
-    isLoading.value = true;
     try {
+      useUiStore().setRequestPending(true);
       labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
 
       if (labUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
       }
     } catch (error) {
-      console.error(error);
+      console.error('Error retrieving lab users', error);
+      useToastStore().error('Failed to retrieve lab users');
     } finally {
-      isLoading.value = false;
+      useUiStore().setRequestPending(false);
     }
   }
 
@@ -203,7 +211,7 @@
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGEmptyDataCTA
-          v-if="!isLoading && hasNoData"
+          v-if="!useUiStore().isRequestPending && hasNoData"
           message="You don't have any users in this lab yet."
           img-src="/images/empty-state-user.jpg"
           :button-action="() => {}"
@@ -230,7 +238,7 @@
             }"
           >
             <UTable
-              :loading="isLoading || isRemovingUser"
+              :loading="useUiStore().isRequestPending"
               class="LabsUsersTable rounded-2xl"
               :loading-state="{ icon: '', label: '' }"
               :rows="filteredTableData"
@@ -268,12 +276,18 @@
                   </div>
                 </div>
               </template>
-              <template #assignedRole-data="{ row }">
-                <span class="text-black">{{ row.assignedRole }}</span>
+              <template #assignedRole-data="{ row: user }">
+                <span class="text-black">{{ user.assignedRole }}</span>
               </template>
-              <template #actions-data="{ row }">
+              <template #actions-data="{ row: user }">
                 <div class="flex items-center">
-                  <EGActionButton :items="actionItems(row)" />
+                  <EGUserRoleDropdown
+                    :key="user"
+                    :disabled="useUiStore().isRequestPending"
+                    :user="user"
+                    @assign-role="handleAssignRole($event)"
+                    @remove-user-from-lab="({ UserId, displayName }) => removeUserFromLab(UserId, displayName)"
+                  />
                 </div>
               </template>
               <template #empty-state>
@@ -282,7 +296,7 @@
             </UTable>
           </UCard>
 
-          <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!searchOutput && !isLoading">
+          <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!searchOutput && !hasNoData">
             <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
             <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
               <UPagination v-model="page" :page-count="10" :total="labUsersDetailsData.length" />

@@ -1,3 +1,4 @@
+import { EditLaboratoryUser } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { CreateLaboratory, Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -13,6 +14,7 @@ class LabsModule extends HttpFactory {
     const res = this.call<Laboratory>('POST', '/laboratory/create-laboratory', org);
 
     if (!res) {
+      console.error('Error calling create Laboratory API');
       throw new Error('Failed to create Laboratory');
     }
 
@@ -23,6 +25,7 @@ class LabsModule extends HttpFactory {
     const res = await this.call<Laboratory[]>('GET', `/laboratory/list-laboratories?organizationId=${orgId}`);
 
     if (!res) {
+      console.error('Error calling list Laboratories API');
       throw new Error('Failed to retrieve Laboratory');
     }
 
@@ -75,10 +78,11 @@ class LabsModule extends HttpFactory {
   async listLabUsersByLabId(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`,
+      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`
     );
 
     if (!res) {
+      console.error('Error calling list Laboratory users API');
       throw new Error('Failed to retrieve Laboratory users');
     }
 
@@ -113,6 +117,7 @@ class LabsModule extends HttpFactory {
     });
 
     if (!res) {
+      console.error('Error calling remove user from Laboratory API');
       throw new Error('Failed to remove user from Laboratory');
     }
 
@@ -122,11 +127,30 @@ class LabsModule extends HttpFactory {
   async usersDetails(labId: string): Promise<LaboratoryUserDetails[]> {
     const res = await this.call<LaboratoryUserDetails[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`,
+      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`
     );
 
     if (!res) {
+      console.error('Error calling list Laboratory users details API');
       throw new Error('Failed to retrieve Laboratory users details');
+    }
+
+    return res;
+  }
+
+  async editLabUser(userDetails: EditLaboratoryUser): Promise<LaboratoryUser> {
+    const { LaboratoryId, UserId, LabManager, LabTechnician } = userDetails;
+    const res = await this.call<LaboratoryUser>('POST', `/user/edit-laboratory-user`, {
+      LaboratoryId,
+      UserId,
+      Status: 'Active',
+      LabManager,
+      LabTechnician,
+    });
+
+    if (!res) {
+      console.error('Error calling edit Lab user API');
+      throw new Error('Failed to edit Lab user');
     }
 
     return res;

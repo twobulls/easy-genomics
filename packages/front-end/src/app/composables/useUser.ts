@@ -16,7 +16,6 @@ export default function useUser() {
 
   /**
    * Returns the display name of a user
-   * @param nameOptions
    */
   function displayName(nameOptions: UserNameOptions) {
     const { preferredName, firstName, lastName, email } = nameOptions;
@@ -57,7 +56,7 @@ export default function useUser() {
         OrganizationId: orgId,
         Email: email,
       },
-      'resend',
+      'resend'
     );
   }
 

@@ -26,7 +26,6 @@
     }
   }
 
-  // TODO: add styling logic
   .is-highlighted {
     button {
       color: #ef5c45;

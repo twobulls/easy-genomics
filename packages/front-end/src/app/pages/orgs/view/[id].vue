@@ -371,6 +371,7 @@
             <template #status-data="{ row }">
               <span class="text-muted">{{ row.OrganizationUserStatus }}</span>
             </template>
+            <!-- TODO -->
             <template #labs-data="{ row }">
               <span class="text-muted">{{ row.LabCount }}</span>
             </template>

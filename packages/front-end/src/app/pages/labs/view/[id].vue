@@ -27,6 +27,12 @@
   const primaryMessage = ref('');
   const selectedUserId = ref('');
 
+  async function removeUserFromLab({ UserId, UserDisplayName }: { UserId: string; UserDisplayName: string }) {
+    selectedUserId.value = UserId;
+    primaryMessage.value = `Are you sure you want to remove ${UserDisplayName} from ${labName}?`;
+    isOpen.value = true;
+  }
+
   async function handleRemoveLabUser() {
     isOpen.value = false;
     try {
@@ -45,6 +51,7 @@
         throw new Error('User not removed from Lab');
       }
     } catch (error) {
+      await getLabUsers();
       useToastStore().error('Failed to remove user from Lab');
       throw error;
     } finally {
@@ -292,6 +299,7 @@
               <template #actions-data="{ row: user }">
                 <div class="flex items-center">
                   <EGUserRoleDropdown
+                    :key="user"
                     :disabled="useUiStore().isRequestPending"
                     :user="user"
                     @assign-role="handleAssignRole"

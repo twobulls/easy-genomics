@@ -266,20 +266,6 @@ export class SesConstruct extends Construct {
          margin-right: 20px;
          }
          }
-         @media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
-         .fblike {
-         background-image: url(https://i7.createsend1.com/static/eb/master/13-the-blueprint-3/images/fblike@2x.png) !important;
-         }
-         .tweet {
-         background-image: url(https://i8.createsend1.com/static/eb/master/13-the-blueprint-3/images/tweet@2x.png) !important;
-         }
-         .linkedinshare {
-         background-image: url(https://i9.createsend1.com/static/eb/master/13-the-blueprint-3/images/lishare@2x.png) !important;
-         }
-         .forwardtoafriend {
-         background-image: url(https://i10.createsend1.com/static/eb/master/13-the-blueprint-3/images/forward@2x.png) !important;
-         }
-         }
          @media (max-width: 321px) {
          .fixed-width.has-border .layout__inner {
          border-width: 1px 0 !important;
@@ -301,10 +287,6 @@ export class SesConstruct extends Construct {
          }
       </style>
       <!--[if !mso]><!-->
-      <style type="text/css">
-         @import url(https://fonts.googleapis.com/css?family=Ubuntu:400,700,400italic,700italic);
-      </style>
-      <link href="https://fonts.googleapis.com/css?family=Ubuntu:400,700,400italic,700italic" rel="stylesheet" type="text/css">
       <!--<![endif]-->
       <style type="text/css">
          .main,.mso{background-color:#fff}.logo a:hover,.logo a:focus{color:#859bb1 !important}.footer-logo a:hover,.footer-logo a:focus{color:#372d1b !important}.mso .layout-has-border{border-top:1px solid #ccc;border-bottom:1px solid #ccc}.mso .layout-has-bottom-border{border-bottom:1px solid #ccc}.mso .border{background-color:#ccc}.mso h1{}.mso h1{font-size:36px !important;line-height:43px !important}.mso h2{}.mso h2{font-size:22px !important;line-height:31px !important}.mso h3{}.mso h3{font-size:18px !important;line-height:26px !important}.mso .layout__inner{}.mso .footer__share-button p{}.mso .footer__share-button p{font-family:sans-serif}
@@ -324,7 +306,6 @@ export class SesConstruct extends Construct {
       <![endif]-->
       <meta name="robots" content="noindex,nofollow">
       <meta property="og:title" content="">
-      <link href="https://css.createsend1.com/frontend/css/previewiframe.090e57e0c6577c59a7cf.min.css?c=1691709802" rel="stylesheet">
    </head>
    <!--[if mso]>
    <body class="mso">
@@ -400,7 +381,7 @@ export class SesConstruct extends Construct {
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div class="btn btn--flat btn--large" style="Margin-bottom: 20px;text-align: center;">
-                                                <!--[if !mso]><!--><a style="border-radius: 4px;display: inline-block;font-size: 14px;font-weight: bold;line-height: 24px;padding: 12px 24px;text-align: center;text-decoration: none !important;transition: opacity 0.1s ease-in;color: #ffffff !important;background-color: #5524e0;font-family: sans-serif;" href="https://[DomainName]/accept-invitation?invite={{INVITATION_JWT}}" target="_blank">Accept invite</a><!--<![endif]-->
+                                                <!--[if !mso]><!--><a style="border-radius: 4px;display: inline-block;font-size: 14px;font-weight: bold;line-height: 24px;padding: 12px 24px;text-align: center;text-decoration: none !important;transition: opacity 0.1s ease-in;color: #ffffff !important;background-color: #5524e0;font-family: sans-serif;" href="https://{{DOMAIN_NAME}}/accept-invitation?invite={{INVITATION_JWT}}" target="_blank">Accept invite</a><!--<![endif]-->
                                                 <!--[if mso]>
                                                 <p style="line-height:0;margin:0;">&nbsp;</p>
                                                 <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="https://twobulls.createsend1.com/t/y-i-mcjhil-l-r/" style="width:101.25pt" arcsize="9%" fillcolor="#5524E0" stroke="f">
@@ -442,7 +423,7 @@ export class SesConstruct extends Construct {
                                     <td class="layout__edges">&nbsp;</td>
                                     <td style="width: 600px" class="w560">
                                        <![endif]-->
-                                       <div class="column" style="text-align: left;color: #787778;font-size: 16px;line-height: 24px;font-family: Ubuntu,sans-serif;">
+                                       <div class="column" style="text-align: left;color: #787778;font-size: 16px;line-height: 24px;font-family: Helvetica,Arial,sans-serif;">
                                           <div style="Margin-left: 20px;Margin-right: 20px;Margin-top: 24px;">
                                              <div style="mso-line-height-rule: exactly;mso-text-raise: 11px;vertical-align: middle;">
                                                 <p style="Margin-top: 0;Margin-bottom: 20px;font-family: sans-serif;text-align: left;"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">Sent from Easy Genomics</span></span></p>

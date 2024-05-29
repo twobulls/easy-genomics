@@ -1,7 +1,9 @@
 <script setup lang="ts">
-  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import {
+    OrganizationUserDetails,
+  } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
   import { ButtonVariantEnum } from '~/types/buttons';
@@ -228,6 +230,15 @@
   function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;
   }
+
+  /**
+   * Count the number of labs a user has access to; default to 0 if no access
+   * @param user
+   */
+  function labsCount(user: OrganizationUserDetails) {
+    const labsAccess = Object.values(user?.OrganizationAccess || {}).flatMap(orgAccess => Object.values(orgAccess?.LaboratoryAccess || {}));
+    return labsAccess.filter(labAccess => labAccess.Status === "Active").length;
+  }
 </script>
 
 <template>
@@ -372,7 +383,7 @@
               <span class="text-muted">{{ row.OrganizationUserStatus }}</span>
             </template>
             <template #labs-data="{ row }">
-              <span class="text-muted">{{ row.LabCount }}</span>
+              <span class="text-muted">{{ labsCount(row)}}</span>
             </template>
             <template #actions-data="{ row, index }">
               <div class="flex justify-end">

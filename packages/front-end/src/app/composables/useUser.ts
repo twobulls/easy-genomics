@@ -57,7 +57,7 @@ export default function useUser() {
         OrganizationId: orgId,
         Email: email,
       },
-      'resend'
+      'resend',
     );
   }
 

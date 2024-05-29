@@ -34,7 +34,7 @@ class OrgsModule extends HttpFactory {
   async usersDetailsByOrgId(orgId: string): Promise<OrganizationUserDetails[]> {
     const res = await this.call<OrganizationUserDetails[]>(
       'GET',
-      `/organization/user/list-organization-users-details?organizationId=${orgId}`
+      `/organization/user/list-organization-users-details?organizationId=${orgId}`,
     );
 
     if (!res) {
@@ -47,7 +47,7 @@ class OrgsModule extends HttpFactory {
   async usersDetailsByUserId(userId: string): Promise<OrganizationUserDetails[]> {
     const res = await this.call<OrganizationUserDetails[]>(
       'GET',
-      `/organization/user/list-organization-users-details?userId=${userId}`
+      `/organization/user/list-organization-users-details?userId=${userId}`,
     );
 
     if (!res) {
@@ -71,7 +71,7 @@ class OrgsModule extends HttpFactory {
     orgId: string,
     userId: string,
     orgUserStatus: string,
-    val: boolean
+    val: boolean,
   ): Promise<OrganizationUserDetails | undefined> {
     const input = {
       OrganizationId: orgId,

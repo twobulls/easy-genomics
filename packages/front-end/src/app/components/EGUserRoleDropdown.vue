@@ -41,7 +41,7 @@
 
   items.push([
     {
-      label: 'Remove from Lab',
+      label: 'Remove From Lab',
       click: () => {
         emit('remove-user-from-lab', { UserId, displayName });
       },
@@ -52,7 +52,7 @@
     const LabManager = role === LaboratoryRolesEnumSchema.enum.LabManager;
     const LabTechnician = role === LaboratoryRolesEnumSchema.enum.LabTechnician;
     const { assignedRole, ...cleanUser } = props.user;
-    const labUser = { ...cleanUser, LabManager, LabTechnician }; // use labUser instead of updatedLabUserDetails
+    const labUser = { ...cleanUser, LabManager, LabTechnician };
 
     emit('assign-role', { labUser, displayName });
   }
@@ -60,7 +60,7 @@
 
 <template>
   <div class="flex w-full justify-end">
-    <UDropdown class="EGActionButton" :items="items">
+    <UDropdown class="UDropdown" :items="items">
       <UButton :disabled="disabled" variant="ghost" color="gray" icon="i-heroicons-chevron-down" trailing>
         {{ assignedRole }}
       </UButton>
@@ -69,7 +69,7 @@
 </template>
 
 <style lang="scss">
-  .EGActionButton {
+  .UDropdown {
     .p-1 {
       padding: 8px 12px;
     }

@@ -4,10 +4,7 @@
   import { DeletedResponse, EditUserResponse } from '~/types/api';
   import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import EGUserRoleDropdown from '~/components/EGUserRoleDropdown.vue';
-  import { EditLaboratoryUser } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
-  import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import useUser from '~/composables/useUser';
-  import { LaboratoryRolesEnumSchema } from '~/types/roles';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -22,15 +19,16 @@
   const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
   const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
   const laboratoryId = $route.params.id;
+  const $emit = defineEmits(['remove-user-from-lab', 'assign-role']);
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const selectedUserId = ref('');
 
-  async function removeUserFromLab({ UserId, UserDisplayName }: { UserId: string; UserDisplayName: string }) {
+  async function removeUserFromLab(UserId, displayName) {
     selectedUserId.value = UserId;
-    primaryMessage.value = `Are you sure you want to remove ${UserDisplayName} from ${labName}?`;
+    primaryMessage.value = `Are you sure you want to remove ${displayName} from ${labName}?`;
     isOpen.value = true;
   }
 
@@ -70,11 +68,9 @@
     displayName: string;
   }) {
     const { LaboratoryId, UserId, LabManager } = labUser;
-    const isLabManager = LabManager;
-
     try {
       useUiStore().setRequestPending(true);
-      const res: EditUserResponse = await $api.labs.editUserLabAccess(LaboratoryId, UserId, isLabManager);
+      const res: EditUserResponse = await $api.labs.editUserLabAccess(LaboratoryId, UserId, LabManager);
       if (res) {
         useToastStore().success(`${labName} access has been successfully updated for ${displayName}`);
       } else {
@@ -99,30 +95,6 @@
       key: 'actions',
       label: 'Lab Access',
     },
-  ];
-
-  const actionItems = (row: LaboratoryUserDetails) => [
-    [
-      {
-        label: 'Edit lab access',
-        click: () => {},
-      },
-    ],
-    [
-      {
-        label: 'Remove From Lab',
-        click: () => {
-          selectedUserId.value = row.UserId;
-          primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
-            preferredName: row.PreferredName,
-            firstName: row.FirstName,
-            lastName: row.LastName,
-            email: row.UserEmail,
-          })} from ${labName}?`;
-          isOpen.value = true;
-        },
-      },
-    ],
   ];
 
   async function getLabUsers() {
@@ -314,7 +286,7 @@
                     :disabled="useUiStore().isRequestPending"
                     :user="user"
                     @assign-role="handleAssignRole($event)"
-                    @remove-user-from-lab="removeUserFromLab"
+                    @remove-user-from-lab="({ UserId, displayName }) => removeUserFromLab(UserId, displayName)"
                   />
                 </div>
               </template>

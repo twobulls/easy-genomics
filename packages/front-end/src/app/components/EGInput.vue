@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  const props = withDefaults(
+  withDefaults(
     defineProps<{
       modelValue?: string;
       placeholder?: string;
@@ -29,6 +29,7 @@
       icon: { trailing: { pointer: '' } },
       base: 'h-13 !shadow-none border-background-stroke-dark !bg-white text-body disabled:bg-background-light-grey disabled:text-muted',
       rounded: 'rounded-md',
+      disabled: 'background-grey text-muted',
       placeholder: 'text-muted',
       padding: {
         sm: 'p-4',

@@ -11,11 +11,11 @@
   const searchTerm = ref('');
 
   const emit = defineEmits<{
-    (event: 'output', data: searchTerm): void;
+    (event: 'input-event', data: string): void;
   }>();
 
   watch(searchTerm, (newValue) => {
-    emit('output', newValue);
+    emit('input-event', newValue);
   });
 </script>
 

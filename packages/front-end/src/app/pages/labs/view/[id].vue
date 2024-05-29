@@ -6,9 +6,9 @@
   import EGUserRoleDropdown from '~/components/EGUserRoleDropdown.vue';
   import { EditLaboratoryUser } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
+  import useUser from '~/composables/useUser';
 
   const { $api } = useNuxtApp();
-  const $router = useRouter();
   const $route = useRoute();
   const labName = $route.query.name;
   const hasNoData = ref(false);
@@ -27,13 +27,7 @@
   const primaryMessage = ref('');
   const selectedUserId = ref('');
 
-  async function removeUserFromLab({ UserId, UserDisplayName }: { UserId: string; UserDisplayName: string }) {
-    selectedUserId.value = UserId;
-    primaryMessage.value = `Are you sure you want to remove ${UserDisplayName} from ${labName}?`;
-    isOpen.value = true;
-  }
-
-  async function handleRemoveUser() {
+  async function handleRemoveLabUser() {
     isOpen.value = false;
     try {
       if (!selectedUserId.value) {
@@ -44,14 +38,15 @@
 
       const res: DeletedResponse = await $api.labs.removeUser(laboratoryId, selectedUserId.value);
 
-      if (res.deleted) {
-        useToastStore().success('User removed from lab');
+      if (res?.Status === 'Success') {
+        useToastStore().success('User removed from Lab');
+        await getLabUsers();
       } else {
-        throw new Error('User not deleted');
+        throw new Error('User not removed from Lab');
       }
     } catch (error) {
-      console.error('Error removing user from lab', error);
-      useToastStore().error('Failed to remove user from lab');
+      useToastStore().error('Failed to remove user from Lab');
+      throw error;
     } finally {
       await getLabUsers();
       selectedUserId.value = '';
@@ -77,9 +72,9 @@
     }
   }
 
-  const columns = [
+  const tableColumns = [
     {
-      key: 'UserDisplayName',
+      key: 'Name',
       label: 'Name',
     },
     {
@@ -88,8 +83,31 @@
     },
   ];
 
+  const actionItems = (row: LaboratoryUserDetails) => [
+    [
+      {
+        label: 'Edit lab access',
+        click: () => {},
+      },
+    ],
+    [
+      {
+        label: 'Remove from Lab',
+        click: () => {
+          selectedUserId.value = row.UserId;
+          primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
+            preferredName: row.PreferredName,
+            firstName: row.FirstName,
+            lastName: row.LastName,
+            email: row.UserEmail,
+          })} from ${labName}?`;
+          isOpen.value = true;
+        },
+      },
+    ],
+  ];
+
   async function getLabUsers() {
-    console.log('getLabUsers');
     try {
       useUiStore().setRequestPending(true);
       labUsersDetailsData.value = await $api.labs.usersDetails($route.params.id);
@@ -109,17 +127,28 @@
     searchOutput.value = newVal;
   }
 
-  const filteredRows = computed(() => {
+  const filteredTableData = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
-      return labUsersDetailsData.value.map((person) => ({
+      return labUsersDetailsData.value.map((person: LaboratoryUserDetails) => ({
         ...person,
         assignedRole: person.LabManager ? 'Lab Manager' : person.LabTechnician ? 'Lab Technician' : 'Unknown',
       }));
     }
 
     return labUsersDetailsData.value
-      .filter((person) => {
-        return String(person.UserDisplayName).toLowerCase().includes(searchOutput.value.toLowerCase());
+      .filter((person: LaboratoryUserDetails) => {
+        const fullName = String(
+          useUser().displayName({
+            preferredName: person.PreferredName || '',
+            firstName: person.FirstName || '',
+            lastName: person.LastName || '',
+            email: person.UserEmail,
+          })
+        ).toLowerCase();
+
+        const email = String(person.UserEmail).toLowerCase();
+
+        return fullName.includes(searchOutput.value.toLowerCase()) || email.includes(searchOutput.value.toLowerCase());
       })
       .map((person) => ({
         ...person,
@@ -127,18 +156,14 @@
       }));
   });
 
-  await getLabUsers();
+  onMounted(async () => {
+    await getLabUsers();
+  });
 </script>
 
 <template>
   <div class="mb-11 flex flex-col justify-between">
-    <a
-      @click="$router.go(-1)"
-      class="text-primary mb-4 flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
-    >
-      <i class="i-heroicons-arrow-left-solid"></i>
-      <span>Back</span>
-    </a>
+    <EGBack />
     <div class="flex items-start justify-between">
       <div>
         <EGText tag="h1" class="mb-4">{{ labName }}</EGText>
@@ -152,7 +177,7 @@
     :ui="{
       base: 'focus:outline-none',
       list: {
-        base: 'border-b-2 rounded-none  mb-4',
+        base: 'border-b-2 rounded-none mb-4 mt-0',
         padding: 'p-0',
         height: 'h-14',
         marker: {
@@ -204,14 +229,14 @@
         />
 
         <template v-if="!hasNoData">
-          <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+          <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
           <EGDialog
             actionLabel="Remove User"
             :actionVariant="ButtonVariantEnum.enum.destructive"
             cancelLabel="Cancel"
             :cancelVariant="ButtonVariantEnum.enum.secondary"
-            @action-triggered="handleRemoveUser"
+            @action-triggered="handleRemoveLabUser"
             :primaryMessage="primaryMessage"
             v-model="isOpen"
           />
@@ -226,21 +251,38 @@
               :loading="useUiStore().isRequestPending"
               class="LabsUsersTable rounded-2xl"
               :loading-state="{ icon: '', label: '' }"
-              :rows="filteredRows"
-              :columns="columns"
+              :rows="filteredTableData"
+              :columns="tableColumns"
             >
-              <template #UserDisplayName-data="{ row: user }">
+              <template #Name-data="{ row }">
                 <div class="flex items-center">
                   <EGUserAvatar
                     class="mr-4"
-                    :name="user.UserDisplayName"
-                    :email="user.UserEmail"
-                    :lab-manager="user.LabManager"
-                    :lab-technician="user.LabTechnician"
+                    :name="
+                      useUser().displayName({
+                        preferredName: row.PreferredName,
+                        firstName: row.FirstName,
+                        lastName: row.LastName,
+                        email: row.UserEmail,
+                      })
+                    "
+                    :email="row.UserEmail"
+                    :is-active="row.OrganizationUserStatus === 'Active'"
                   />
                   <div class="flex flex-col">
-                    <div v-if="user.UserDisplayName">{{ user.UserDisplayName }}</div>
-                    <div class="text-muted text-xs font-normal">{{ user.UserEmail }}</div>
+                    <div>
+                      {{
+                        row.FirstName
+                          ? useUser().displayName({
+                              preferredName: row.PreferredName,
+                              firstName: row.FirstName,
+                              lastName: row.LastName,
+                              email: row.UserEmail,
+                            })
+                          : ''
+                      }}
+                    </div>
+                    <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
                   </div>
                 </div>
               </template>
@@ -257,7 +299,9 @@
                   />
                 </div>
               </template>
-              <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
+              <template #empty-state>
+                <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
+              </template>
             </UTable>
           </UCard>
 

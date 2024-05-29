@@ -17,6 +17,7 @@ if (process.env.CI_CD === 'true') {
   const applicationUrl: string | undefined = process.env.APPLICATION_URL;
   const systemAdminEmail: string | undefined = process.env.SYSTEM_ADMIN_EMAIL;
   const systemAdminPassword: string | undefined = process.env.SYSTEM_ADMIN_PASSWORD;
+  const secretKey: string | undefined = process.env.SECRET_KEY;
 
   if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the CI/CD environment configuration');
   if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
@@ -25,6 +26,7 @@ if (process.env.CI_CD === 'true') {
   if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the CI/CD environment configuration');
   if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the CI/CD environment configuration');
   if (!systemAdminPassword) throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the CI/CD environment configuration');
+  if (!secretKey) throw new Error('SECRET_KEY undefined, please check the CI/CD environment configuration');
 
   // AWS infrastructure resources can be destroyed only when devEnv is true
   const devEnv: boolean = envType === 'dev';
@@ -45,6 +47,7 @@ if (process.env.CI_CD === 'true') {
     namePrefix: namePrefix,
     systemAdminEmail: systemAdminEmail,
     systemAdminPassword: systemAdminPassword,
+    secretKey: secretKey,
   });
 } else {
   console.log('Loading Back-End easy-genomics.yaml settings...');
@@ -60,13 +63,23 @@ if (process.env.CI_CD === 'true') {
     const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift();
 
     if (envName && configSettings) {
-      const awsAccountId: string = configSettings['aws-account-id'].toString();
-      const awsRegion: string = configSettings['aws-region'];
-      const envType: string = configSettings['env-type']; // dev | pre-prod | prod
-      const applicationUrl: string = configSettings['application-url'];
+      const awsAccountId: string | undefined = configSettings['aws-account-id'].toString();
+      const awsRegion: string | undefined = configSettings['aws-region'];
+      const envType: string | undefined = configSettings['env-type']; // dev | pre-prod | prod
+      const applicationUrl: string | undefined = configSettings['application-url'];
 
-      const systemAdminEmail: string = configSettings['back-end']['system-admin-email'];
-      const systemAdminPassword: string = configSettings['back-end']['system-admin-password'];
+      const systemAdminEmail: string | undefined = configSettings['back-end']['system-admin-email'];
+      const systemAdminPassword: string | undefined = configSettings['back-end']['system-admin-password'];
+      const secretKey: string | undefined = configSettings['back-end']['secret-key'];
+
+      if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the easy-genomics.yaml configuration');
+      if (!awsRegion) throw new Error('AWS_REGION undefined, please check the easy-genomics.yaml configuration');
+      if (!envName) throw new Error('ENV_NAME undefined, please check the easy-genomics.yaml configuration');
+      if (!envType) throw new Error('ENV_TYPE undefined, please check the easy-genomics.yaml configuration');
+      if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the easy-genomics.yaml configuration');
+      if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the easy-genomics.yaml configuration');
+      if (!systemAdminPassword) throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the easy-genomics.yaml configuration');
+      if (!secretKey) throw new Error('SECRET_KEY undefined, please check the easy-genomics.yaml configuration');
 
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
@@ -87,6 +100,7 @@ if (process.env.CI_CD === 'true') {
         namePrefix: namePrefix,
         systemAdminEmail: systemAdminEmail,
         systemAdminPassword: systemAdminPassword,
+        secretKey: secretKey,
       });
     }
   });

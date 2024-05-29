@@ -2,8 +2,7 @@
   const props = defineProps<{
     name?: string;
     email: string;
-    labManager?: boolean;
-    labTechnician?: boolean;
+    isActive: boolean;
   }>();
 
   const initials = computed(() => {
@@ -18,20 +17,12 @@
   });
 
   const avatarColour = computed(() => {
-    if (!props.name && props.email) {
-      return 'bg-primary-muted text-primary-dark';
-    } else {
-      return props.labManager
-        ? 'bg-alert-danger-dark text-white'
-        : props.labTechnician
-          ? 'bg-primary-500 text-white'
-          : 'text-primary bg-primary-muted';
-    }
+    return props.isActive ? 'bg-primary-dark text-white' : 'bg-primary-muted text-primary-dark';
   });
 </script>
 
 <template>
-  <div class="flex h-10 w-10 items-center justify-center rounded-full text-xs font-normal" :class="avatarColour">
+  <div class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-normal" :class="avatarColour">
     {{ initials }}
   </div>
 </template>

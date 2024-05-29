@@ -202,6 +202,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   deps: [
     '@aws-sdk/client-cognito-identity-provider',
     '@aws-sdk/client-dynamodb',
+    '@aws-sdk/client-ses',
+    '@aws-sdk/client-s3',
     '@aws-sdk/lib-dynamodb',
     '@aws-sdk/types',
     '@aws-sdk/util-dynamodb',
@@ -209,6 +211,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     'aws-lambda',
     'aws-sdk',
     'dotenv',
+    'jsonwebtoken',
     'uuid',
   ],
   devDeps: [
@@ -216,6 +219,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/util-dynamodb',
     '@aws-sdk/types',
     '@types/aws-lambda',
+    '@types/jsonwebtoken',
     '@types/node',
     '@types/uuid',
     'aws-sdk-client-mock',
@@ -271,6 +275,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'dotenv',
     'nuxt',
     'pinia',
+    '@pinia-plugin-persistedstate/nuxt',
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
@@ -316,6 +321,7 @@ root.gitignore.addPatterns(
   '.nuxt',
   '.output',
   'dist',
-  'config/easy-genomics.yaml'
+  'config/easy-genomics.yaml',
+  'packages/back-end/cdk.context.json',
 );
 root.synth();

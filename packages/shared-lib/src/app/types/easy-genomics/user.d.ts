@@ -17,13 +17,14 @@
  *   LastName?: <string>,
  *   PhoneNumber?: <string>,
  *   Status: 'Active' | 'Inactive' | 'Invited',
+ *   OrganizationAccess?: <OrganizationAccess>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
  *   ModifiedAt?: <string>,
  *   ModifiedBy?: <string>,
  * }
  */
-import { BaseAttributes, UserStatus } from "../base-entity";
+import { BaseAttributes, OrgUserStatus, Status, UserStatus } from "../base-entity";
 
 export interface User extends BaseAttributes {
   UserId: string; // DynamoDB Partition Key (String)
@@ -34,6 +35,20 @@ export interface User extends BaseAttributes {
   LastName?: string;
   PhoneNumber?: string;
   Status: UserStatus;
+  OrganizationAccess?: OrganizationAccess;
 }
+
+export type OrganizationAccess = Record<string, OrganizationAccessDetails>;
+
+export type OrganizationAccessDetails = {
+  Status: OrgUserStatus,
+  LaboratoryAccess?: LaboratoryAccess
+};
+
+export type LaboratoryAccess = Record<string, LaboratoryAccessDetails>;
+
+export type LaboratoryAccessDetails = {
+  Status: Status
+};
 
 export type UserTitle = 'Prof' | 'Dr' | 'Mr' | 'Mrs' | 'Ms';

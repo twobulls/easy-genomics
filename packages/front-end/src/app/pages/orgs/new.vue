@@ -3,7 +3,7 @@
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
   import { useToastStore } from '~/stores/stores';
-  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
+  import { ButtonSizeEnum } from '~/types/buttons';
 
   const { $api } = useNuxtApp();
 

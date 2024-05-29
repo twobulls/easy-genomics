@@ -12,9 +12,12 @@
     href: {
       type: String,
     },
+    small: {
+      type: Boolean,
+    },
     tag: {
       type: [String],
-      validator: (tag: string) => ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'span', 'a'].includes(tag),
+      validator: (tag: string) => ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div', 'span', 'a', 'small'].includes(tag),
     },
   });
 </script>
@@ -24,9 +27,9 @@
     :href="href"
     :is="tag"
     :class="[
-      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `font-heading  ${colorClass}` : '',
+      `${colorClass}`,
+      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `font-heading ${colorClass}` : '',
       ['a'].includes(<string>tag) ? `hover:underline ${colorClass}` : '',
-      ['p', 'span', 'div'].includes(<string>tag) ? 'text-body' : '',
     ]"
   >
     <slot />
@@ -84,7 +87,8 @@
   a,
   p,
   div,
-  span {
+  span,
+  small {
     font-family: 'Inter', sans-serif;
     line-height: toRem(24px);
     font-weight: 400;

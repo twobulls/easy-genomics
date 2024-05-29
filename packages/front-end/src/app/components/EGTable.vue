@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { LabAccessRolesEnum } from '~/types/labAccessRoles';
+
   interface ActionItem {
     label: string;
     click: Function;
@@ -9,7 +11,7 @@
       tableData: any[];
       columns: any[];
       isLoading?: boolean;
-      actionItems: () => ActionItem[];
+      actionItems?: () => ActionItem[];
       showPagination: boolean;
     }>(),
     {
@@ -21,6 +23,7 @@
     tableData: props.tableData,
   });
 
+  const $emit = defineEmits(['grant-access-clicked', 'lab-access-selected']);
   const isSortAsc = ref(true);
   const page = ref(1);
   const pageCount = ref(10);
@@ -46,11 +49,22 @@
 
   watch(
     () => props.tableData,
-    (newTableData) => {
+    (newTableData: any) => {
       localProps.tableData = newTableData;
       sortAsc();
     }
   );
+
+  const labAccessItems = [
+    {
+      label: 'Lab Technician',
+      role: LabAccessRolesEnum.enum.LabTechnician,
+    },
+    {
+      label: 'Lab Manager',
+      role: LabAccessRolesEnum.enum.LabManager,
+    },
+  ];
 </script>
 
 <template>
@@ -70,14 +84,44 @@
       v-model:sort="sortModel"
       sort-mode="manual"
     >
-      <slot />
       <template #actions-data="{ row }">
-        <EGActionButton :items="actionItems(row)" />
+        <USelectMenu
+          v-if="row.labAccessOptionsEnabled"
+          v-model="row.labRole.role"
+          :options="labAccessItems"
+          value-attribute="role"
+          option-attribute="label"
+          @update:modelValue="
+            (newRole) => {
+              $emit('lab-access-selected', {
+                role: newRole,
+                labId: row.LaboratoryId,
+                labName: row.Name,
+              });
+            }
+          "
+        />
+        <EGButton
+          v-else-if="row.labAccess"
+          @click="
+            $emit('grant-access-clicked', {
+              labId: row.LaboratoryId,
+              name: row.Name,
+            })
+          "
+          label="Grant access"
+          variant="secondary"
+          size="sm"
+        />
+        <EGActionButton v-else-if="actionItems" :items="actionItems(row)" />
       </template>
-      <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
+      <template #empty-state>
+        <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
+      </template>
     </UTable>
   </UCard>
 
+  <!-- TODO: componentize Pagination -->
   <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="showPagination && !isLoading">
     <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
     <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
@@ -126,6 +170,7 @@
     tbody tr td:last-child {
       width: 50px;
       padding-right: 40px;
+      text-align: right;
     }
   }
 </style>

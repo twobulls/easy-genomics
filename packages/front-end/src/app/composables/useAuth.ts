@@ -1,4 +1,5 @@
 import { Auth } from 'aws-amplify';
+import { ERRORS } from '~/constants/validation';
 import { useToastStore, useUiStore } from '~/stores/stores';
 
 export default function useAuth() {
@@ -23,7 +24,7 @@ export default function useAuth() {
       if (error.code === 'NotAuthorizedException') {
         useToastStore().error('Incorrect email or password. Please try again.');
       } else {
-        useToastStore().error('Huh, something went wrong. Please check your connection and try again');
+        useToastStore().error(ERRORS.network);
       }
       console.error('Error occurred during sign in.', error);
       throw error;

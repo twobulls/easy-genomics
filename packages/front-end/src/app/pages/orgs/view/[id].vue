@@ -1,15 +1,18 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useUiStore } from '~/stores/stores';
+  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+  import { ButtonVariantEnum } from '~/types/buttons';
+  import { DeletedResponse } from '~/types/api';
 
   const $route = useRoute();
   const disabledButtons = ref<Record<number, unknown>>({});
   const buttonRequestPending = ref<Record<number, unknown>>({});
   const hasNoData = ref(false);
   const isLoading = ref(true);
+  const orgId = $route.params.id;
   const orgName = $route.query.name;
   const orgDescription = $route.query.desc;
   const orgSettingsData = ref({} as Organization | undefined);
@@ -17,6 +20,12 @@
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
   const { resendInvite } = useUser();
+
+  // Dynamic remove user dialog values
+  const isOpen = ref(false);
+  const primaryMessage = ref('');
+  const selectedUserId = ref('');
+  const isRemovingUser = ref(false);
 
   // Table-related refs and computed props
   const page = ref(1);
@@ -27,7 +36,7 @@
   const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
   const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
 
-  const columns = [
+  const tableColumns = [
     {
       key: 'Name',
       label: 'Name',
@@ -46,26 +55,103 @@
     },
   ];
 
-  // TODO: wire up action items when available
-  const actionItems = (row: any) => [
+  async function editUser(user: OrganizationUserDetails) {
+    await navigateTo({
+      path: `/orgs/edit-user`,
+      query: {
+        userId: user.UserId,
+        orgId,
+      },
+    });
+  }
+
+  const actionItems = (row: OrganizationUserDetails) => [
     [
       {
-        label: 'TBC',
-        click: (row) => {},
+        label: 'Edit User Access',
+        click: async () => editUser(row),
+      },
+    ],
+    [
+      {
+        label: 'Remove from Org',
+        click: () => {
+          selectedUserId.value = row.UserId;
+          primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
+            preferredName: row.PreferredName,
+            firstName: row.FirstName,
+            lastName: row.LastName,
+            email: row.UserEmail,
+          })} from the Organization?`;
+          isOpen.value = true;
+        },
       },
     ],
   ];
+
+  async function handleRemoveOrgUser() {
+    isOpen.value = false;
+    isRemovingUser.value = true;
+    try {
+      if (!selectedUserId.value) {
+        throw new Error('No selectedUserId');
+      }
+
+      const res: DeletedResponse = await $api.orgs.removeUser(orgId, selectedUserId.value);
+
+      if (res?.Status === 'Success') {
+        useToastStore().success(`${useUser().displayName} has been removed from ${orgName}`);
+        await getOrgData(false);
+      } else {
+        throw new Error('User not removed from Organization');
+      }
+    } catch (error) {
+      useToastStore().error(`Failed to remove user from ${orgName}`);
+      throw error;
+    } finally {
+      selectedUserId.value = '';
+      isRemovingUser.value = false;
+    }
+  }
 
   function isInvited(status: string) {
     return status === UserSchema.shape.Status.enum.Invited;
   }
 
+  /**
+   * Fetches Organization data - org users and (optionally) org settings
+   * @param shouldGetOrgSettings
+   */
+  async function getOrgData(shouldGetOrgSettings: boolean = true) {
+    isLoading.value = true;
+    try {
+      if (shouldGetOrgSettings) {
+        orgSettingsData.value = await $api.orgs.orgSettings(orgId);
+      }
+      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
+
+      if (orgUsersDetailsData.value.length === 0) {
+        hasNoData.value = true;
+      }
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      isLoading.value = false;
+    }
+    return orgSettingsData.value;
+  }
+
+  onMounted(async () => {
+    await getOrgData();
+  });
+
   useAsyncData('orgSettingsData', async () => {
     isLoading.value = true;
     try {
       useUiStore().setRequestPending(true);
-      orgSettingsData.value = await $api.orgs.orgSettings($route.params.id as string);
-      orgUsersDetailsData.value = await $api.orgs.usersDetails($route.params.id as string);
+      orgSettingsData.value = await $api.orgs.orgSettings(orgId);
+      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
 
       if (orgUsersDetailsData.value.length === 0) {
         hasNoData.value = true;
@@ -82,7 +168,7 @@
   /**
    * Filter rows based on search input for both name and email
    */
-  const filteredRows = computed(() => {
+  const filteredTableData = computed(() => {
     if (!searchOutput.value && !hasNoData.value) {
       return orgUsersDetailsData.value;
     }
@@ -92,6 +178,7 @@
           preferredName: person.PreferredName || '',
           firstName: person.FirstName || '',
           lastName: person.LastName || '',
+          email: person.UserEmail,
         })
       ).toLowerCase();
 
@@ -123,6 +210,12 @@
     buttonRequestPending.value[index] = isPending;
   }
 
+  async function refreshUserList() {
+    orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId($route.params.id as string);
+    showInviteModule.value = false;
+    hasNoData.value = orgUsersDetailsData.value.length === 0;
+  }
+
   function isButtonRequestPending(index: number) {
     return buttonRequestPending.value[index];
   }
@@ -137,33 +230,18 @@
 </script>
 
 <template>
-  <div class="mb-[90px] flex flex-col justify-between">
-    <a
-      @click="$router.go(-1)"
-      class="text-primary mb-4 flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
-    >
-      <i class="i-heroicons-arrow-left-solid"></i>
-      <span>Back</span>
-    </a>
-    <div class="flex items-start justify-between">
-      <div>
-        <EGText tag="h1" class="mb-4">{{ orgName }}</EGText>
-        <EGText tag="p" class="text-muted">{{ orgDescription }}</EGText>
-      </div>
-      <div class="relative flex flex-col items-end">
-        <EGButton label="Invite users" @click="() => (showInviteModule = true)" />
-        <div class="absolute top-[60px] w-[500px]" v-if="showInviteModule">
-          <EGInviteModule @invite-clicked="invite($event)" />
-        </div>
-      </div>
+  <EGPageHeader :title="orgName" :description="orgDescription">
+    <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
+    <div class="mt-2 w-[500px]" v-if="showInviteModule">
+      <EGInviteModule @invite-success="refreshUserList($event)" :org-id="$route.params.id" />
     </div>
-  </div>
+  </EGPageHeader>
 
   <UTabs
     :ui="{
       base: 'focus:outline-none',
       list: {
-        base: 'border-b-2 rounded-none mb-4  mt-2',
+        base: 'border-b-2 rounded-none mb-4 mt-0',
         padding: 'p-0',
         height: 'h-14',
         marker: {
@@ -198,7 +276,7 @@
   >
     <template #details>
       <USkeleton
-        class="flex h-60 flex-col rounded-2xl bg-gray-200 p-6 max-md:px-5"
+        class="flex h-60 flex-col rounded-2xl p-6 max-md:px-5"
         :ui="{ rounded: 'rounded-full' }"
         v-if="isLoading"
       />
@@ -211,6 +289,7 @@
         </EGFormGroup>
       </EGCard>
     </template>
+
     <template #users>
       <EGEmptyDataCTA
         v-if="!isLoading && hasNoData"
@@ -221,7 +300,27 @@
       />
 
       <template v-if="!hasNoData">
-        <EGSearchInput @output="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+        <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+
+        <EGDialog
+          actionLabel="Remove User"
+          :actionVariant="ButtonVariantEnum.enum.destructive"
+          cancelLabel="Cancel"
+          :cancelVariant="ButtonVariantEnum.enum.secondary"
+          @action-triggered="handleRemoveOrgUser"
+          :primaryMessage="primaryMessage"
+          v-model="isOpen"
+        />
+
+        <EGDialog
+          actionLabel="Remove User"
+          :actionVariant="ButtonVariantEnum.enum.destructive"
+          cancelLabel="Cancel"
+          :cancelVariant="ButtonVariantEnum.enum.secondary"
+          @action-triggered="handleRemoveOrgUser"
+          :primaryMessage="primaryMessage"
+          v-model="isOpen"
+        />
 
         <UCard
           class="rounded-2xl border-none shadow-none"
@@ -233,8 +332,8 @@
             :loading="isLoading"
             class="OrgUsersTable rounded-xl"
             :loading-state="{ icon: '', label: '' }"
-            :rows="filteredRows"
-            :columns="columns"
+            :rows="filteredTableData"
+            :columns="tableColumns"
           >
             <template #Name-data="{ row }">
               <div class="flex items-center">
@@ -245,18 +344,23 @@
                       preferredName: row.PreferredName,
                       firstName: row.FirstName,
                       lastName: row.LastName,
+                      email: row.UserEmail,
                     })
                   "
                   :email="row.UserEmail"
+                  :is-active="row.OrganizationUserStatus === 'Active'"
                 />
                 <div class="flex flex-col">
                   <div>
                     {{
-                      useUser().displayName({
-                        preferredName: row.PreferredName,
-                        firstName: row.FirstName,
-                        lastName: row.LastName,
-                      })
+                      row.FirstName
+                        ? useUser().displayName({
+                            preferredName: row.PreferredName,
+                            firstName: row.FirstName,
+                            lastName: row.LastName,
+                            email: row.UserEmail,
+                          })
+                        : ''
                     }}
                   </div>
                   <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
@@ -273,18 +377,18 @@
               <div class="flex justify-end">
                 <EGButton
                   size="sm"
+                  variant="secondary"
                   label="Resend invite"
-                  class="mr-2"
                   v-if="isInvited(row.OrganizationUserStatus)"
                   @click="resend(row, index)"
                   :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                   :loading="isButtonRequestPending(index)"
                 />
-                <EGActionButton :items="actionItems(row)" />
+                <EGActionButton v-if="row.OrganizationUserStatus === 'Active'" :items="actionItems(row)" class="ml-2" />
               </div>
             </template>
             <template #empty-state>
-              <div class="text-muted text-normal flex h-12 items-center justify-center">No results found</div>
+              <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
             </template>
           </UTable>
         </UCard>

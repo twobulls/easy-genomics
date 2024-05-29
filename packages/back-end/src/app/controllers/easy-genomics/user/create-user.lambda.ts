@@ -8,6 +8,7 @@ import { UserService } from '../../../services/easy-genomics/user-service';
 
 const userService = new UserService();
 
+// TODO: Deprecate this unused API
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
 ): Promise<APIGatewayProxyResult> => {

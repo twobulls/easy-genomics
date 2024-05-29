@@ -35,6 +35,16 @@ export const user: User = {
   FirstName: 'Rick',
   LastName: 'Sanchez',
   Status: 'Active',
+  OrganizationAccess: {
+    [organizationId]: {
+      Status: 'Active',
+      LaboratoryAccess: {
+        [laboratoryId]: {
+          Status: 'Active',
+        },
+      },
+    },
+  },
   CreatedAt: new Date().toISOString(),
 };
 

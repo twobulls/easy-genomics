@@ -7,16 +7,18 @@
  *   UserId: <string>,
  *   UserEmail: <string>,
  *   UserStatus: UserStatus,
- *   Title: <string>
- *   PreferredName: <string>
- *   FirstName: <string>
- *   LastName: <string>
+ *   Title?: <string>
+ *   PreferredName?: <string>
+ *   FirstName?: <string>
+ *   LastName?: <string>
  *   OrganizationId: <string>,
  *   OrganizationUserStatus: OrgUserStatus,
  *   OrganizationAdmin: <boolean>,
+ *   OrganizationAccess?: OrganizationAccess
  * }
  */
 import { OrgUserStatus, UserStatus } from '../base-entity';
+import { OrganizationAccess } from "./user";
 
 export interface OrganizationUserDetails {
   UserId: string;
@@ -29,4 +31,5 @@ export interface OrganizationUserDetails {
   OrganizationId: string;
   OrganizationUserStatus: OrgUserStatus;
   OrganizationAdmin: boolean;
+  OrganizationAccess?: OrganizationAccess;
 }

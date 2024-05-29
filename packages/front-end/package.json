@@ -60,6 +60,7 @@
     "@aws-amplify/ui-vue": "3.1.30",
     "@easy-genomics/shared-lib": "workspace:*",
     "@nuxt/ui": "^2.15.0",
+    "@pinia-plugin-persistedstate/nuxt": "^1.2.0",
     "@pinia/nuxt": "^0.5.1",
     "aws-amplify": "5.3.18",
     "aws-cdk-lib": "^2.124.0",

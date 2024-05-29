@@ -1,11 +1,14 @@
-import { useToastStore } from '~/stores/stores';
-import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
 import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invite';
+import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
+import { ERRORS } from '~/constants/validation';
+import { useToastStore } from '~/stores/stores';
 
 type UserNameOptions = {
-  preferredName: string | undefined;
-  firstName: string | undefined;
-  lastName: string | undefined;
+  preferredName?: string | undefined;
+  firstName?: string | undefined;
+  lastName?: string | undefined;
+  email: string | undefined;
 };
 
 export default function useUser() {
@@ -16,10 +19,14 @@ export default function useUser() {
    * @param nameOptions
    */
   function displayName(nameOptions: UserNameOptions) {
-    const { preferredName, firstName, lastName } = nameOptions;
-
+    const { preferredName, firstName, lastName, email } = nameOptions;
     const preferredOrFirstName = preferredName || firstName;
-    return preferredOrFirstName ? `${preferredOrFirstName} ${lastName}` : '';
+
+    if (preferredOrFirstName) {
+      return `${preferredOrFirstName} ${lastName}`;
+    } else {
+      return email;
+    }
   }
 
   async function handleInvite(reqBody: CreateUserInvite, action: 'resend' | 'send') {
@@ -30,8 +37,9 @@ export default function useUser() {
     }
 
     const { OrganizationId: orgId, Email: email } = result.data;
-    const toastSuccessMessage = action === 'send' ? 'Invite sent' : 'Invite resent';
-    const toastErrorMessage = action === 'send' ? 'Failed to send invite' : 'Failed to resend invite';
+    const toastSuccessMessage =
+      action === 'send' ? `${email} has been sent an invite` : `${email} has been resent an invite`;
+    const toastErrorMessage = ERRORS.network;
 
     try {
       await $api.users.invite(orgId, email);
@@ -42,14 +50,14 @@ export default function useUser() {
     }
   }
 
-  async function resendInvite(user: CreateUserInvite) {
-    const { OrganizationId: orgId, Email: email } = user;
+  async function resendInvite(user: OrganizationUserDetails) {
+    const { OrganizationId: orgId, UserEmail: email } = user;
     await handleInvite(
       {
         OrganizationId: orgId,
         Email: email,
       },
-      'resend'
+      'resend',
     );
   }
 

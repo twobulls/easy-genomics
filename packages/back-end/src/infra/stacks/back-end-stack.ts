@@ -1,5 +1,5 @@
 import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
-import { Stack } from 'aws-cdk-lib';
+import { CfnOutput, Stack } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { AuthNestedStack } from './auth-nested-stack';
 import { AwsHealthOmicsNestedStack } from './aws-healthomics-nested-stack';
@@ -87,5 +87,9 @@ export class BackEndStack extends Stack {
       dynamoDBTables: easyGenomicsNestedStack.dynamoDBTables,
     };
     new DataProvisioningNestedStack(this, 'data-provisioning-nested-stack', dataProvisioningNestedStackProps);
+
+    new CfnOutput(this, 'CognitoUserPoolId', { key: 'CognitoUserPoolId', value: authNestedStack.cognito.userPool.userPoolId });
+    new CfnOutput(this, 'CognitoUserPoolClientId', { key: 'CognitoUserPoolClientId', value: authNestedStack.cognito.userPoolClient.userPoolClientId });
+    new CfnOutput(this, 'ApiGatewayRestApiUrl', { key: 'ApiGatewayRestApiUrl', value: this.apiGateway.restApi.url });
   };
 }

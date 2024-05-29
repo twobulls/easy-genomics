@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto';
 import {
   ConditionalCheckFailedException,
   TransactionCanceledException,
@@ -6,19 +7,27 @@ import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation-jwt';
 import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import jwt from 'jsonwebtoken';
 import { CognitoUserService } from '../../../services/easy-genomics/cognito-user-service';
 import { OrganizationService } from '../../../services/easy-genomics/organization-service';
 import { OrganizationUserService } from '../../../services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
+import { SesService } from '../../../services/ses-service';
 
 const cognitoUserService = new CognitoUserService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const organizationService = new OrganizationService();
 const organizationUserService = new OrganizationUserService();
 const platformUserService = new PlatformUserService();
+const sesService = new SesService({
+  accountId: process.env.AWS_ACCOUNT_ID,
+  domainName: process.env.DOMAIN_NAME,
+  region: process.env.AWS_REGION,
+});
 const userService = new UserService();
 
 export const handler: Handler = async (
@@ -37,9 +46,9 @@ export const handler: Handler = async (
 
     // Check if Organization & User records exists
     const organization: Organization = await organizationService.get(request.OrganizationId); // Throws error if not found
-    const user: User | undefined = (await userService.queryByEmail(request.Email)).shift();
+    const existingUser: User | undefined = (await userService.queryByEmail(request.Email)).shift();
 
-    if (!user) {
+    if (!existingUser) {
       // Attempt to create new Cognito User account
       const newUserId: string = await cognitoUserService.addNewUserToPlatform(request.Email);
 
@@ -48,23 +57,33 @@ export const handler: Handler = async (
       const newOrganizationUser: OrganizationUser = getNewOrganizationUser(organization.OrganizationId, newUser.UserId, currentUserId);
 
       try {
+        const newUserDetails: User = {
+          ...newUser,
+          OrganizationAccess: {
+            [organization.OrganizationId]: {
+              Status: newOrganizationUser.Status,
+              LaboratoryAccess: {},
+            },
+          },
+        };
         // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
-        if (await platformUserService.inviteNewUserToOrganization(newUser, newOrganizationUser)) {
-          // TODO: Send email
+        if (await platformUserService.addNewUserToOrganization(newUserDetails, newOrganizationUser)) {
+          const invitationJwt: string = generateUserInvitationJwt(newUserDetails, organization);
+          const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+          console.log('Send Invitation Email Response: ', response);
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
         }
       } catch (error: unknown) {
-        // Clean up the created Cognito User account due to failure in creating new User record / Organization-User access mapping.
-        await cognitoUserService.deleteUserFromPlatform(request.Email);
+        console.error(error);
         return buildResponse(200, JSON.stringify({ Status: 'Error', Message: error.message }), event);
       }
     } else {
       // Invite existing User to the Organization
-      if (user.Status === 'Inactive') {
+      if (existingUser.Status === 'Inactive') {
         throw new Error(`Unable to invite User to Organization "${organization.Name}": User Status is "Inactive"`);
       } else {
         const existingOrganizationUser: OrganizationUser | void =
-          await organizationUserService.get(organization.OrganizationId, user.UserId).catch((error: any) => {
+          await organizationUserService.get(organization.OrganizationId, existingUser.UserId).catch((error: any) => {
             if (error.message.endsWith('Resource not found')) { // TODO - improve error to handle ResourceNotFoundException instead of checking error message
               // Do nothing - allow new Organization-User access mapping to proceed.
             } else {
@@ -72,17 +91,34 @@ export const handler: Handler = async (
             }
           });
 
+        // Check if existing Organization-User's Status is still Invited to resend invitation
         if (existingOrganizationUser && existingOrganizationUser.Status === 'Invited') {
-          // Check if existing Organization-User's Status is still Invited to resend invitation
-          // TODO: Re-send email
+          const invitationJwt: string = generateUserInvitationJwt(existingUser, organization);
+          const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+          console.log('Send Invitation Email Response: ', response);
           return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
         } else {
           // Create new Organization-User access mapping record
-          const newOrganizationUser = getNewOrganizationUser(organization.OrganizationId, user.UserId, currentUserId);
+          const newOrganizationUser = getNewOrganizationUser(organization.OrganizationId, existingUser.UserId, currentUserId);
+
+          const existingUserDetails: User = {
+            ...existingUser,
+            OrganizationAccess: {
+              ...existingUser.OrganizationAccess,
+              [organization.OrganizationId]: {
+                Status: newOrganizationUser.Status,
+                LaboratoryAccess: {},
+              },
+            },
+            ModifiedAt: new Date().toISOString(),
+            ModifiedBy: currentUserId,
+          };
 
           // Attempt to add the User to the Organization in one transaction
-          if (await platformUserService.inviteExistingUserToOrganization(user, newOrganizationUser)) {
-            // TODO: Re-send email
+          if (await platformUserService.addExistingUserToOrganization(existingUserDetails, newOrganizationUser)) {
+            const invitationJwt: string = generateUserInvitationJwt(existingUserDetails, organization);
+            const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+            console.log('Send Invitation Email Response: ', response);
             return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
           }
         }
@@ -132,6 +168,28 @@ function getNewOrganizationUser(organizationId, userId: string, createdBy: strin
     CreatedBy: createdBy,
   };
   return organizationUser;
+}
+
+/**
+ * Helper function to generate User Invitation JWT to send in invitation email
+ * and used to verify User invitation acceptance.
+ * @organizationName
+ * @param user
+ * @param organization
+ */
+function generateUserInvitationJwt(user: User, organization: Organization): string {
+  const createdAt: number = Date.now(); // Salt
+  return jwt.sign(<UserInvitationJwt>{
+    InvitationCode: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
+      .update(user.UserId + organization.OrganizationId)
+      .digest('hex'),
+    OrganizationId: organization.OrganizationId,
+    OrganizationName: organization.Name,
+    Email: user.Email,
+    CreatedAt: createdAt,
+  }, process.env.JWT_SECRET_KEY, {
+    expiresIn: '7 days',
+  });
 }
 
 // Used for customising error messages by exception types

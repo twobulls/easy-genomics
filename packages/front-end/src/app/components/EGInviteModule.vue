@@ -2,10 +2,11 @@
   import { z } from 'zod';
   import { ERRORS } from '~/constants/validation';
 
-  withDefaults(
+  const props = withDefaults(
     defineProps<{
       placeholder?: string;
       disabled?: boolean;
+      orgId: string;
     }>(),
     {
       placeholder: 'Enter Email',
@@ -13,6 +14,7 @@
     }
   );
 
+  const $emit = defineEmits(['invite-success']);
   const formSchema = z.object({
     email: z.string().email(ERRORS.email),
   });
@@ -20,16 +22,16 @@
   const isRequestPending = ref(false);
   const state = ref({ email: '' });
   const { invite } = useUser();
-  const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
   async function onSubmit() {
     try {
       isRequestPending.value = true;
       await invite({
         Email: state.value.email,
-        OrganizationId: MOCK_ORG_ID,
+        OrganizationId: props.orgId,
       });
       state.value.email = '';
+      $emit('invite-success');
     } catch (error) {
       console.error(error);
     } finally {

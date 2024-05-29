@@ -1,11 +1,5 @@
 <script setup lang="ts">
-  defineProps({
-    items: {
-      type: Array,
-      required: true,
-    },
-  });
-
+  const props = defineProps({ items: { type: Array, required: true } });
   const isOpen = ref(false);
 </script>
 
@@ -27,20 +21,20 @@
     .p-1 {
       padding: 8px 12px;
     }
+  }
 
-    .p-1:last-child {
-      button {
-        color: #ef5c45;
-      }
-
-      &:hover {
-        color: #ef5c45;
-      }
+  // TODO: add styling logic
+  .is-highlighted {
+    button {
+      color: #ef5c45;
     }
-
-    .active {
-      border-radius: 100px;
-      background-color: #c2c2c2;
+    &:hover {
+      color: #ef5c45;
     }
+  }
+
+  .active {
+    border-radius: 100px;
+    background-color: #c2c2c2;
   }
 </style>

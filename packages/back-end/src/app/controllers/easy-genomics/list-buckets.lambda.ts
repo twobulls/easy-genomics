@@ -1,6 +1,6 @@
 import { Bucket, ListBucketsCommandOutput } from '@aws-sdk/client-s3';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { S3Bucket } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/s3-bucket';
+import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { S3Service } from '../../services/s3-service';
 

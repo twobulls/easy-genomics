@@ -13,6 +13,9 @@
         icon="i-heroicons-ellipsis-horizontal-20-solid"
       />
     </div>
+    <template #item="{ item }">
+      <span class="truncate" :class="{ 'is-highlighted': item.isHiglighted }">{{ item.label }}</span>
+    </template>
   </UDropdown>
 </template>
 

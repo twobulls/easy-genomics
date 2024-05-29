@@ -92,11 +92,16 @@ export const handler: Handler = async (
           });
 
         // Check if existing Organization-User's Status is still Invited to resend invitation
-        if (existingOrganizationUser && existingOrganizationUser.Status === 'Invited') {
-          const invitationJwt: string = generateUserInvitationJwt(existingUser, organization);
-          const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
-          console.log('Send Invitation Email Response: ', response);
-          return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
+        if (existingOrganizationUser) {
+          if (existingOrganizationUser.Status === 'Invited') {
+            const invitationJwt: string = generateUserInvitationJwt(existingUser, organization);
+            const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+            console.log('Send Invitation Email Response: ', response);
+            return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
+          } else {
+            // Existing Organization-User's Status is either Inactive or Active
+            throw new Error(`Unable to re-invite User to Organization "${organization.Name}": User Organization Status is "${existingOrganizationUser.Status}"`);
+          }
         } else {
           // Create new Organization-User access mapping record
           const newOrganizationUser = getNewOrganizationUser(organization.OrganizationId, existingUser.UserId, currentUserId);

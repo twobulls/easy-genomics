@@ -74,7 +74,8 @@
     ],
     [
       {
-        label: 'Remove from Org',
+        label: 'Remove From Org',
+        class: 'text-alert-danger-dark',
         click: () => {
           selectedUserId.value = row.UserId;
           primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
@@ -82,7 +83,7 @@
             firstName: row.FirstName,
             lastName: row.LastName,
             email: row.UserEmail,
-          })} from the Organization?`;
+          })} from ${orgName}?`;
           isOpen.value = true;
         },
       },
@@ -378,7 +379,7 @@
                 <EGButton
                   size="sm"
                   variant="secondary"
-                  label="Resend invite"
+                  label="Resend Invite"
                   v-if="isInvited(row.OrganizationUserStatus)"
                   @click="resend(row, index)"
                   :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"

@@ -9,7 +9,7 @@ export interface SesServiceProps {
   accountId: string;
   domainName: string;
   region: string;
-};
+}
 
 export class SesService {
   readonly sesClient;
@@ -21,7 +21,11 @@ export class SesService {
     this.sesClient = new SESClient({ region: props.region });
   }
 
-  public async sendUserInvitationEmail(toAddress: string, organizationName: string, invitationJwt: string): Promise<SendTemplatedEmailCommandOutput> {
+  public async sendUserInvitationEmail(
+    toAddress: string,
+    organizationName: string,
+    invitationJwt: string
+  ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send User Invitation Email request: ${toAddress}`;
     console.info(logRequestMessage);
 
@@ -39,6 +43,7 @@ export class SesService {
         DOMAIN_NAME: this.props.domainName,
         INVITATION_JWT: invitationJwt,
         ORGANIZATION_NAME: organizationName,
+        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/easy-genomics-email.png`,
       }),
     });
 

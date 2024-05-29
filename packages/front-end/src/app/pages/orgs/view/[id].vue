@@ -21,7 +21,7 @@
   const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
-  const { resendInvite } = useUser();
+  const { resendInvite, labsCount } = useUser();
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -231,14 +231,7 @@
     searchOutput.value = newVal;
   }
 
-  /**
-   * Count the number of labs a user has access to; default to 0 if no access
-   * @param user
-   */
-  function labsCount(user: OrganizationUserDetails) {
-    const labsAccess = Object.values(user?.OrganizationAccess || {}).flatMap(orgAccess => Object.values(orgAccess?.LaboratoryAccess || {}));
-    return labsAccess.filter(labAccess => labAccess.Status === "Active").length;
-  }
+
 </script>
 
 <template>

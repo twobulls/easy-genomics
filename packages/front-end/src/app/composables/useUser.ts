@@ -11,6 +11,9 @@ type UserNameOptions = {
   email: string | undefined;
 };
 
+/**
+ * Composables for any User related functions
+ */
 export default function useUser() {
   const { $api } = useNuxtApp();
 
@@ -65,9 +68,19 @@ export default function useUser() {
     await handleInvite(reqBody, 'send');
   }
 
+  /**
+   * Count the number of labs a user has access to; default to 0 if no access
+   * @param user
+   */
+  function labsCount(user: OrganizationUserDetails) {
+    const labsAccess = Object.values(user?.OrganizationAccess || {}).flatMap(orgAccess => Object.values(orgAccess?.LaboratoryAccess || {}));
+    return labsAccess.filter(labAccess => labAccess.Status === "Active").length;
+  }
+
   return {
     displayName,
-    resendInvite,
+    labsCount,
     invite,
+    resendInvite
   };
 }

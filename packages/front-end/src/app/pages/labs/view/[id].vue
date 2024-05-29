@@ -75,7 +75,7 @@
     ],
     [
       {
-        label: 'Remove from Lab',
+        label: 'Remove From Lab',
         click: () => {
           selectedUserId.value = row.UserId;
           primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({

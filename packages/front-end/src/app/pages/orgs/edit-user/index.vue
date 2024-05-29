@@ -162,7 +162,7 @@
   <EGSearchInput
     v-if="!isLoading && !hasNoData"
     @input-event="updateSearchOutput"
-    placeholder="Search all Labs"
+    placeholder="Search All Labs"
     class="my-6 w-[408px]"
   />
 

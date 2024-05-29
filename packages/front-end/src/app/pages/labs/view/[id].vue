@@ -1,12 +1,13 @@
 <script setup lang="ts">
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { ButtonVariantEnum } from '~/types/buttons';
-  import { DeletedResponse } from '~/types/api';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { DeletedResponse, EditUserResponse } from '~/types/api';
+  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import EGUserRoleDropdown from '~/components/EGUserRoleDropdown.vue';
   import { EditLaboratoryUser } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import useUser from '~/composables/useUser';
+  import { LaboratoryRolesEnumSchema } from '~/types/roles';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -61,19 +62,29 @@
     }
   }
 
-  async function handleAssignRole(userDetails: EditLaboratoryUser) {
+  async function handleAssignRole({
+    labUser,
+    displayName,
+  }: {
+    labUser: { LaboratoryId: string; UserId: string; LabManager: boolean };
+    displayName: string;
+  }) {
+    const { LaboratoryId, UserId, LabManager } = labUser;
+    const isLabManager = LabManager;
+
     try {
       useUiStore().setRequestPending(true);
-      const res: LaboratoryUser = await $api.labs.editLabUser(userDetails);
+      const res: EditUserResponse = await $api.labs.editUserLabAccess(LaboratoryId, UserId, isLabManager);
       if (res) {
-        useToastStore().success('Assigned new role');
+        useToastStore().success(`${labName} access has been successfully updated for ${displayName}`);
       } else {
         throw new Error('Failed to assign new role');
       }
     } catch (error) {
-      console.error('Error assigning new role', error);
-      useToastStore().error('Failed to assign new role');
+      useToastStore().error(`Failed to update ${useOrgsStore().getSelectedUserDisplayName}`);
+      throw error;
     } finally {
+      // update UI with latest data
       await getLabUsers();
       useUiStore().setRequestPending(false);
     }
@@ -302,7 +313,7 @@
                     :key="user"
                     :disabled="useUiStore().isRequestPending"
                     :user="user"
-                    @assign-role="handleAssignRole"
+                    @assign-role="handleAssignRole($event)"
                     @remove-user-from-lab="removeUserFromLab"
                   />
                 </div>
@@ -313,10 +324,7 @@
             </UTable>
           </UCard>
 
-          <div
-            class="text-muted flex h-16 flex-wrap items-center justify-between"
-            v-if="!searchOutput && !useUiStore().isRequestPending"
-          >
+          <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!searchOutput && !hasNoData">
             <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
             <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
               <UPagination v-model="page" :page-count="10" :total="labUsersDetailsData.length" />

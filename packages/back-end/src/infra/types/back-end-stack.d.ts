@@ -1,7 +1,7 @@
 import { NestedStackProps } from "aws-cdk-lib";
 import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { RestApi } from 'aws-cdk-lib/aws-apigateway';
-import { UserPool } from 'aws-cdk-lib/aws-cognito';
+import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Table } from "aws-cdk-lib/aws-dynamodb";
 
@@ -13,6 +13,7 @@ export interface AuthNestedStackProps extends BackEndStackProps, NestedStackProp
 export interface EasyGenomicsNestedStackProps extends BackEndStackProps, NestedStackProps {
     restApi?: RestApi,
     userPool?: UserPool,
+    userPoolClient?: UserPoolClient,
     iamPolicyStatements?: Map<string, PolicyStatement[]>,
 }
 

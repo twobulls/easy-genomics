@@ -60,6 +60,7 @@ export class BackEndStack extends Stack {
       constructNamespace: `${this.props.namePrefix}-easy-genomics`, // Overriding value
       restApi: this.apiGateway.restApi,
       userPool: authNestedStack.cognito.userPool,
+      userPoolClient: authNestedStack.cognito.userPoolClient,
     };
     const easyGenomicsNestedStack = new EasyGenomicsNestedStack(this, `${this.props.envName}-easy-genomics-nested-stack`, easyGenomicsNestedStackProps);
 

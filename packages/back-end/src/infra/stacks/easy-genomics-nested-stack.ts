@@ -41,6 +41,16 @@ export class EasyGenomicsNestedStack extends NestedStack {
             JWT_SECRET_KEY: this.props.secretKey,
           },
         },
+        '/easy-genomics/user/create-user-forgot-password-request': {
+          environment: {
+            COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient!.userPoolClientId,
+            COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
+          },
+          methodOptions: {
+            apiKeyRequired: true,
+            authorizer: undefined, // Explicitly remove authorizer
+          },
+        },
       }, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
       environment: {
         AWS_ACCOUNT_ID: this.props.env.account!,
@@ -566,6 +576,27 @@ export class EasyGenomicsNestedStack extends NestedStack {
               'ses:FromAddress': `no.reply@${this.props.applicationUrl}`,
             },
           },
+        }),
+      ],
+    );
+    // /easy-genomics/user/create-user-forgot-password-request
+    this.iam.addPolicyStatements(
+      '/easy-genomics/user/create-user-forgot-password-request',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool!.userPoolId}`,
+          ],
+          actions: ['cognito-idp:AdminGetUser', 'cognito-idp:ForgotPassword'],
+          effect: Effect.ALLOW,
         }),
       ],
     );

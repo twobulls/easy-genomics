@@ -24,7 +24,7 @@ export class SesService {
   public async sendUserInvitationEmail(
     toAddress: string,
     organizationName: string,
-    invitationJwt: string
+    invitationJwt: string,
   ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send User Invitation Email request: ${toAddress}`;
     console.info(logRequestMessage);

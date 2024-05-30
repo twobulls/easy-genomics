@@ -9,6 +9,7 @@ import {
   Resource,
   CognitoUserPoolsAuthorizer,
 } from 'aws-cdk-lib/aws-apigateway';
+import { MethodOptions } from 'aws-cdk-lib/aws-apigateway/lib/method';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { IEventSource, IFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
@@ -37,6 +38,7 @@ interface LambdaFunctionsResources {
     // Specific process.env settings
     [key: string]: string;
   };
+  methodOptions?: MethodOptions;
 }
 
 // List of allowed Lambda Function operation with respective REST API command mapping
@@ -111,6 +113,7 @@ export class LambdaConstruct extends Construct {
 
     const commonProcessEnv = this.props.environment || undefined;
     const lambdaProcessEnv = this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.environment || undefined;
+    const lambdaMethodOptions = this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.methodOptions || undefined;
 
     const lambdaHandler: IFunction = new aws_lambda_nodejs.NodejsFunction(this, `${lambdaId}`, {
       runtime: Runtime.NODEJS_18_X,
@@ -165,12 +168,18 @@ export class LambdaConstruct extends Construct {
           pathResourceWithId.addMethod(
             ALLOWED_LAMBDA_FUNCTION_OPERATIONS_WITH_RESOURCE_ID[lambdaFunction.command],
             new LambdaIntegration(lambdaHandler),
-            { authorizer: this.authorizer });
+            {
+              authorizer: this.authorizer,
+              ...lambdaMethodOptions,
+            });
         } else {
           pathResource.addMethod(
             ALLOWED_LAMBDA_FUNCTION_OPERATIONS[lambdaFunction.command],
             new LambdaIntegration(lambdaHandler),
-            { authorizer: this.authorizer });
+            {
+              authorizer: this.authorizer,
+              ...lambdaMethodOptions,
+            });
         }
       }
     }

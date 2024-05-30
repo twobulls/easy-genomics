@@ -1,5 +1,5 @@
 import { aws_apigateway } from 'aws-cdk-lib';
-import { APIGatewayProxyWithCognitoAuthorizerEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayProxyWithCognitoAuthorizerEvent, APIGatewayProxyResult, APIGatewayProxyEvent } from "aws-lambda";
 
 /**
  * This defines the HTTP Request types supported for the REST APIs.
@@ -22,7 +22,7 @@ export const ACCESS_CONTROL_ALLOW_HEADERS = [
 export function buildResponse(
   statusCode: number,
   body: string,
-  event: APIGatewayProxyWithCognitoAuthorizerEvent,
+  event: APIGatewayProxyWithCognitoAuthorizerEvent | APIGatewayProxyEvent,
 ): APIGatewayProxyResult {
   return {
     statusCode,

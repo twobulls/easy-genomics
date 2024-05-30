@@ -34,6 +34,15 @@
 
   async function handleRemoveLabUser() {
     isOpen.value = false;
+
+    const userToRemove = labUsersDetailsData.value.find(user => user.UserId === selectedUserId.value);
+    const displayName = useUser().displayName({
+      preferredName: userToRemove?.PreferredName,
+      firstName: userToRemove?.FirstName,
+      lastName: userToRemove?.LastName,
+      email: userToRemove?.UserEmail,
+    })
+
     try {
       if (!selectedUserId.value) {
         throw new Error('No selectedUserId');
@@ -44,14 +53,14 @@
       const res: DeletedResponse = await $api.labs.removeUser(laboratoryId, selectedUserId.value);
 
       if (res?.Status === 'Success') {
-        useToastStore().success('User removed from Lab');
+        useToastStore().success(`${displayName} has been removed from ${labName}`);
         await getLabUsers();
       } else {
         throw new Error('User not removed from Lab');
       }
     } catch (error) {
       await getLabUsers();
-      useToastStore().error('Failed to remove user from Lab');
+      useToastStore().error(`Failed to remove ${displayName} from ${labName}`);
       throw error;
     } finally {
       await getLabUsers();

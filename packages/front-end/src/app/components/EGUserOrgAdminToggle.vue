@@ -1,30 +1,41 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { useToastStore } from '~/stores/stores';
+  import useUser from '~/composables/useUser';
   const { $api } = useNuxtApp();
 
   const props = defineProps<{
     user: OrganizationUserDetails;
-    displayName: string;
     isLoading?: boolean;
   }>();
 
   const $emit = defineEmits(['update-user']);
   const { UserId, OrganizationId, UserEmail, OrganizationUserStatus } = props.user;
   const toggleVal = ref(props.user.OrganizationAdmin);
+  const displayName = useUser().displayName({
+    preferredName: props.user?.PreferredName,
+    firstName: props.user?.FirstName,
+    lastName: props.user?.LastName,
+    email: props.user.UserEmail,
+  });
 
   async function toggleOrgAdminPerm() {
     toggleVal.value = !toggleVal.value;
     try {
       await $api.orgs.editOrgUser(OrganizationId, UserId, OrganizationUserStatus, toggleVal.value);
       $emit('update-user');
-      useToastStore().success(`${props.displayName}’s Lab Access has been successfully updated`);
+      useToastStore().success(`${displayName}’s Lab Access has been successfully updated`);
     } catch (error) {
       useToastStore().error('Huh, something went wrong. Please check your connection and try again');
       toggleVal.value = !toggleVal.value;
       console.error(error);
     }
   }
+
+  // prevents the email showing if the display name is the same as the email
+  const showEmail = computed(() => {
+    return displayName !== UserEmail;
+  });
 </script>
 
 <template>
@@ -40,7 +51,7 @@
 
   <div
     v-else
-    class="border-stroke-light flex items-center justify-between gap-3 rounded border border-solid bg-white p-4"
+    class="border-stroke-light flex h-[82px] items-center justify-between gap-3 rounded border border-solid bg-white p-4"
   >
     <div class="flex items-center gap-3">
       <EGUserAvatar
@@ -51,7 +62,7 @@
       />
       <div class="flex flex-col">
         <EGText tag="div" color-class="text-black">{{ displayName }}</EGText>
-        <EGText tag="small" color-class="text-muted">{{ UserEmail }}</EGText>
+        <EGText v-if="showEmail" tag="small" color-class="text-muted">{{ UserEmail }}</EGText>
       </div>
     </div>
     <div class="flex items-center">

@@ -23,12 +23,10 @@
     },
   ];
 
-  onMounted(async () => {
-    await updateSelectedUser();
-    await fetchOrgLabs();
-    await fetchLabsUserData();
-    isLoading.value = false;
-  });
+  await updateSelectedUser();
+  await fetchOrgLabs();
+  await fetchLabsUserData();
+  isLoading.value = false;
 
   function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;
@@ -154,7 +152,6 @@
     <EGUserOrgAdminToggle
       :is-loading="isLoading"
       :user="useOrgsStore().selectedUser"
-      :display-name="useOrgsStore().getSelectedUserDisplayName"
       @update-user="updateSelectedUser($event)"
     />
   </div>

@@ -96,13 +96,13 @@
     isOpen.value = false;
     isRemovingUser.value = true;
 
-    const userToRemove = orgUsersDetailsData.value.find(user => user.UserId === selectedUserId.value);
+    const userToRemove = orgUsersDetailsData.value.find((user) => user.UserId === selectedUserId.value);
     const displayName = useUser().displayName({
       preferredName: userToRemove?.PreferredName,
       firstName: userToRemove?.FirstName,
       lastName: userToRemove?.LastName,
       email: userToRemove?.UserEmail,
-    })
+    });
 
     try {
       if (!selectedUserId.value) {

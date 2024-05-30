@@ -1,7 +1,9 @@
 <script setup lang="ts">
-  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import {
+    OrganizationUserDetails,
+  } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
   import { ButtonVariantEnum } from '~/types/buttons';
@@ -19,7 +21,7 @@
   const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
-  const { resendInvite } = useUser();
+  const { resendInvite, labsCount } = useUser();
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -228,6 +230,8 @@
   function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;
   }
+
+
 </script>
 
 <template>
@@ -373,7 +377,7 @@
             </template>
             <!-- TODO -->
             <template #labs-data="{ row }">
-              <span class="text-muted">{{ row.LabCount }}</span>
+              <span class="text-muted">{{ labsCount(row)}}</span>
             </template>
             <template #actions-data="{ row, index }">
               <div class="flex justify-end">

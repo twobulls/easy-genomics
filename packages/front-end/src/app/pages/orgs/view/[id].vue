@@ -93,6 +93,15 @@
   async function handleRemoveOrgUser() {
     isOpen.value = false;
     isRemovingUser.value = true;
+
+    const userToRemove = orgUsersDetailsData.value.find(user => user.UserId === selectedUserId.value);
+    const displayName = useUser().displayName({
+      preferredName: userToRemove?.PreferredName,
+      firstName: userToRemove?.FirstName,
+      lastName: userToRemove?.LastName,
+      email: userToRemove?.UserEmail,
+    })
+
     try {
       if (!selectedUserId.value) {
         throw new Error('No selectedUserId');
@@ -101,13 +110,13 @@
       const res: DeletedResponse = await $api.orgs.removeUser(orgId, selectedUserId.value);
 
       if (res?.Status === 'Success') {
-        useToastStore().success(`${useUser().displayName} has been removed from ${orgName}`);
+        useToastStore().success(`${displayName} has been removed from ${orgName}`);
         await getOrgData(false);
       } else {
         throw new Error('User not removed from Organization');
       }
     } catch (error) {
-      useToastStore().error(`Failed to remove user from ${orgName}`);
+      useToastStore().error(`Failed to remove ${displayName} from ${orgName}`);
       throw error;
     } finally {
       selectedUserId.value = '';

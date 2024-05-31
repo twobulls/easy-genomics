@@ -11,13 +11,13 @@ import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-
 import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import jwt from 'jsonwebtoken';
 import { CognitoUserService } from '../../../services/easy-genomics/cognito-user-service';
 import { OrganizationService } from '../../../services/easy-genomics/organization-service';
 import { OrganizationUserService } from '../../../services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
 import { SesService } from '../../../services/ses-service';
+import { generateJwt } from '../../../utils/jwt-utils';
 
 const cognitoUserService = new CognitoUserService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const organizationService = new OrganizationService();
@@ -184,7 +184,7 @@ function getNewOrganizationUser(organizationId, userId: string, createdBy: strin
  */
 function generateUserInvitationJwt(user: User, organization: Organization): string {
   const createdAt: number = Date.now(); // Salt
-  return jwt.sign(<UserInvitationJwt>{
+  const userInvitationJwt: UserInvitationJwt = {
     InvitationCode: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
       .update(user.UserId + organization.OrganizationId)
       .digest('hex'),
@@ -192,9 +192,8 @@ function generateUserInvitationJwt(user: User, organization: Organization): stri
     OrganizationName: organization.Name,
     Email: user.Email,
     CreatedAt: createdAt,
-  }, process.env.JWT_SECRET_KEY, {
-    expiresIn: '7 days',
-  });
+  };
+  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '7 days');
 }
 
 // Used for customising error messages by exception types

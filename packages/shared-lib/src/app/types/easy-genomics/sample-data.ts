@@ -67,15 +67,15 @@ export const laboratoryUser: LaboratoryUser = {
 
 export const uniqueReferences: UniqueReference[] = [
   {
-    Value: organization.Name,
+    Value: organization.Name.toLowerCase(),
     Type: 'organization-name',
   },
   {
-    Value: laboratory.Name,
+    Value: laboratory.Name.toLowerCase(),
     Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
   },
   {
-    Value: user.Email,
+    Value: user.Email.toLowerCase(),
     Type: 'user-email',
   },
 ];

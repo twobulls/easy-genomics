@@ -1,26 +1,31 @@
 import { RemovalPolicy } from 'aws-cdk-lib';
 import {
   AccountRecovery,
+  AdvancedSecurityMode,
   CfnUserPoolGroup,
   UserPool,
   UserPoolClient,
   UserPoolOperation,
 } from 'aws-cdk-lib/aws-cognito';
+import { Key } from 'aws-cdk-lib/aws-kms';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { AuthNestedStackProps } from '../types/back-end-stack';
 
 export interface CognitoIDPConstructProps extends AuthNestedStackProps {
   authLambdaFunctions?: Map<string, IFunction>;
+  customSenderKmsKey?: Key;
 }
 
 export class CognitoIdpConstruct extends Construct {
+  readonly props: CognitoIDPConstructProps;
   readonly userPool: UserPool;
   readonly userPoolClient: UserPoolClient;
   readonly userPoolGroup: CfnUserPoolGroup;
 
   constructor(scope: Construct, id: string, props: CognitoIDPConstructProps) {
     super(scope, id);
+    this.props = props;
     const removalPolicy = props.devEnv ? RemovalPolicy.DESTROY : undefined; // Only for Local, Sandbox, Dev
 
     // The auth construct defines Cognito Resources for user authentication.
@@ -32,6 +37,10 @@ export class CognitoIdpConstruct extends Construct {
       signInAliases: {
         email: true,
       },
+      autoVerify: {
+        email: true,
+        phone: false,
+      },
       passwordPolicy: {
         minLength: 8,
         requireDigits: true,
@@ -39,7 +48,9 @@ export class CognitoIdpConstruct extends Construct {
         requireUppercase: true,
         requireSymbols: true,
       },
+      customSenderKmsKey: props.customSenderKmsKey,
       removalPolicy: removalPolicy,
+      advancedSecurityMode: AdvancedSecurityMode.AUDIT,
     });
 
     this.userPoolClient = this.userPool.addClient('client', {
@@ -91,6 +102,11 @@ export class CognitoIdpConstruct extends Construct {
   private addCognitoLambdaTrigger(userPoolOperation: UserPoolOperation, lambdaFunction?: IFunction) {
     if (lambdaFunction) {
       this.userPool.addTrigger(userPoolOperation, lambdaFunction);
+
+      // Grant Lambda function permission to Decrypt
+      if (this.props.customSenderKmsKey) {
+        this.props.customSenderKmsKey.grantDecrypt(lambdaFunction);
+      }
     }
   }
 }

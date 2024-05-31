@@ -35,9 +35,10 @@ export class EasyGenomicsNestedStack extends NestedStack {
       iamPolicyStatements: this.iam.policyStatements, // Pass declared Easy Genomics IAM policies for attaching to respective Lambda function
       lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-      lambdaFunctionsResources: {
+      lambdaFunctionsResources: { // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
         '/easy-genomics/user/create-user-invite': {
           environment: {
+            COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
             JWT_SECRET_KEY: this.props.secretKey,
           },
         },
@@ -51,7 +52,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
-      }, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      },
       environment: { // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
         REGION: this.props.env.region!,

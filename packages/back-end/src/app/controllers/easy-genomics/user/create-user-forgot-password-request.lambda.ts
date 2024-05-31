@@ -1,3 +1,4 @@
+import { AdminGetUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { CreateUserForgotPasswordRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-password';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { CreateUserForgotPasswordRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
@@ -9,7 +10,6 @@ import {
 } from 'aws-lambda';
 import { CognitoIdpService } from '../../../services/cognito-idp-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
-import { AdminGetUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 
 const cognitoService: CognitoIdpService = new CognitoIdpService();
 const userService: UserService = new UserService();

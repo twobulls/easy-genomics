@@ -24,9 +24,9 @@ const organizationService = new OrganizationService();
 const organizationUserService = new OrganizationUserService();
 const platformUserService = new PlatformUserService();
 const sesService = new SesService({
-  accountId: process.env.AWS_ACCOUNT_ID,
+  accountId: process.env.ACCOUNT_ID,
+  region: process.env.REGION,
   domainName: process.env.DOMAIN_NAME,
-  region: process.env.AWS_REGION,
 });
 const userService = new UserService();
 

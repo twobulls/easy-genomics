@@ -7,8 +7,8 @@ import {
 
 export interface SesServiceProps {
   accountId: string;
-  domainName: string;
   region: string;
+  domainName: string;
 }
 
 export class SesService {

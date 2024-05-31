@@ -337,6 +337,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
           effect: Effect.ALLOW,
         }),
+        new PolicyStatement({
+          resources: [
+            'arn:aws:s3:::*',
+          ],
+          actions: ['s3:GetBucketLocation'],
+          effect: Effect.ALLOW,
+        }),
       ],
     );
     // /easy-genomics/laboratory/delete-laboratory

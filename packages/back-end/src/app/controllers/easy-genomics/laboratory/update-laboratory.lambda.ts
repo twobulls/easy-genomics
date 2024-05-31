@@ -4,8 +4,10 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
+import { S3Service } from '../../../services/s3-service';
 
 const laboratoryService = new LaboratoryService();
+const s3Service = new S3Service();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -23,6 +25,18 @@ export const handler: Handler = async (
     );
     // Data validation safety check
     if (!UpdateLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
+
+    // Check Laboratory S3 Bucket is valid
+    if (!request.S3Bucket) {
+      throw new Error('Laboratory S3 Bucket is required');
+    }
+    const bucketLocation = await s3Service.getBucketLocation({ Bucket: request.S3Bucket });
+    if (bucketLocation.$metadata.httpStatusCode !== 200) {
+      throw new Error(`Unable to find Laboratory S3 Bucket: ${request.S3Bucket}`);
+    }
+    if (bucketLocation.LocationConstraint !== process.env.REGION) {
+      throw new Error(`Laboratory S3 Bucket does not belong to the same AWS Region: ${process.env.AWS_REGION}`);
+    }
 
     // Lookup by LaboratoryId to confirm existence before updating
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);

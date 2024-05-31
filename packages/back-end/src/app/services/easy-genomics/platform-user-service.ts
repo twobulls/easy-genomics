@@ -56,7 +56,7 @@ export class PlatformUserService extends DynamoDBService {
               '#Type': 'Type',
             },
             Item: marshall({
-              Value: user.Email,
+              Value: user.Email.toLowerCase(),
               Type: 'user-email',
             }),
           },

@@ -1,6 +1,7 @@
-import { NestedStack } from 'aws-cdk-lib';
+import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Key, KeySpec } from 'aws-cdk-lib/aws-kms';
 import { Construct } from 'constructs';
 import { CognitoIdpConstruct } from '../constructs/cognito-idp-construct';
 import { DynamoConstruct } from '../constructs/dynamodb-construct';
@@ -10,6 +11,7 @@ import { AuthNestedStackProps } from '../types/back-end-stack';
 
 export class AuthNestedStack extends NestedStack {
   readonly props: AuthNestedStackProps;
+  readonly cognitoCustomSenderKmsKey: Key;
   dynamoDBTables: Map<string, Table> = new Map();
   dynamoDB: DynamoConstruct;
   iam: IamConstruct;
@@ -19,6 +21,13 @@ export class AuthNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: AuthNestedStackProps) {
     super(scope, id, props);
     this.props = props;
+
+    // Create KMS symmetric encryption key for Cognito to generate secrets - temporary passwords, verification codes, confirmation codes
+    this.cognitoCustomSenderKmsKey = new Key(this, `${this.props.constructNamespace}-cognito-kms-key`, {
+      alias: `${this.props.constructNamespace}-cognito-kms-key`,
+      keySpec: KeySpec.SYMMETRIC_DEFAULT,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
       ...<IamConstructProps>props, // Typecast to IamConstructProps
@@ -35,7 +44,13 @@ export class AuthNestedStack extends NestedStack {
       iamPolicyStatements: this.iam.policyStatements, // Pass declared Auth IAM policies for attaching to respective Lambda function
       lambdaFunctionsDir: 'src/app/controllers/auth',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      lambdaFunctionsResources: { // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+        '/auth/process-custom-email-sender': {
+          environment: {
+            JWT_SECRET_KEY: this.props.secretKey,
+          },
+        },
+      },
       environment: { // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
         REGION: this.props.env.region!,
@@ -50,6 +65,7 @@ export class AuthNestedStack extends NestedStack {
       constructNamespace: this.props.constructNamespace,
       devEnv: this.props.devEnv,
       authLambdaFunctions: this.lambda.lambdaFunctions, // Pass Auth Lambda functions for registering with Cognito Event triggers
+      customSenderKmsKey: this.cognitoCustomSenderKmsKey,
     });
   }
 
@@ -65,6 +81,36 @@ export class AuthNestedStack extends NestedStack {
           ],
           actions: ['dynamodb:PutItem'],
           effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    this.iam.addPolicyStatements(
+      '/auth/process-custom-email-sender',
+      [
+        new PolicyStatement({
+          resources: [this.cognitoCustomSenderKmsKey.keyArn],
+          actions: ['kms:CreateGrant', 'kms:Encrypt'],
+          effect: Effect.ALLOW,
+          conditions: {
+            StringEquals: {
+              'aws:SourceAccount': `${this.props.env.account!}`,
+            },
+          },
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.applicationUrl}`,
+            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@twobulls.com`, // TODO: remove (only for Dev/Quality testing purposes)
+            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@deptagency.com`, // TODO: remove (only for Dev/Quality testing purposes)
+            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
+          ],
+          actions: ['ses:SendTemplatedEmail'],
+          effect: Effect.ALLOW,
+          conditions: {
+            StringEquals: {
+              'ses:FromAddress': `no.reply@${this.props.applicationUrl}`,
+            },
+          },
         }),
       ],
     );

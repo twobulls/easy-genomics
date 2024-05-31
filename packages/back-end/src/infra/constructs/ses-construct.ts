@@ -811,7 +811,7 @@ export class SesConstruct extends Construct {
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div style="mso-line-height-rule: exactly;mso-text-raise: 11px;vertical-align: middle;">
                                                 <h1 class="size-32" style="Margin-top: 0;Margin-bottom: 0;font-style: normal;font-weight: normal;color: #565656;font-size: 28px;line-height: 36px;font-family: sans-serif;text-align: center;" lang="x-size-32"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #12181f;">Forgot your password?</span></span></h1>
-                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">Please click the button below to reset your password. This link will expire in 7 Days.</span></span></p>
+                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">Please click the button below to reset your password. This link will expire in 1 hour.</span></span></p>
                                              </div>
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">

@@ -47,7 +47,9 @@ export class SesService {
     });
 
     try {
-      return await this.sesClient.send<SendTemplatedEmailCommand>(sendTemplatedEmailCommand);
+      const response = await this.sesClient.send<SendTemplatedEmailCommand>(sendTemplatedEmailCommand);
+      console.info(`Send User Invitation Email to ${toAddress} response: `, response);
+      return response;
     } catch (error: unknown) {
       throw new Error(`${logRequestMessage} unsuccessful: ${error.message}`);
     }
@@ -78,7 +80,9 @@ export class SesService {
     });
 
     try {
-      return await this.sesClient.send<SendTemplatedEmailCommand>(sendTemplatedEmailCommand);
+      const response = await this.sesClient.send<SendTemplatedEmailCommand>(sendTemplatedEmailCommand);
+      console.info(`Send User Forgot Password Email to ${toAddress} response: `, response);
+      return response;
     } catch (error: unknown) {
       throw new Error(`${logRequestMessage} unsuccessful: ${error.message}`);
     }

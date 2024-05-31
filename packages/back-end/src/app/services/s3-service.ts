@@ -15,6 +15,9 @@ import {
   DeleteBucketCommandOutput,
   DeleteObjectCommand,
   DeleteObjectCommandInput,
+  GetBucketLocationCommand,
+  GetBucketLocationCommandInput,
+  GetBucketLocationCommandOutput,
   InvalidObjectState,
   ListBucketsCommand,
   ListBucketsCommandInput,
@@ -39,6 +42,7 @@ export enum S3Command {
   CREATE_BUCKET = 'create-bucket',
   DELETE_BUCKET = 'delete-bucket',
   LIST_BUCKETS = 'list-buckets',
+  GET_BUCKET_LOCATION = 'get-bucket-location',
   // Manage S3 Bucket objects
   COPY_BUCKET_OBJECT = 'copy-bucket-object',
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
@@ -52,7 +56,7 @@ export enum S3Command {
 }
 
 export class S3Service {
-  readonly s3Client;
+  private readonly s3Client;
 
   public constructor() {
     this.s3Client = new S3Client();
@@ -76,6 +80,13 @@ export class S3Service {
     return this.s3Request<ListBucketsCommandInput, ListBucketsCommandOutput>(
       S3Command.LIST_BUCKETS,
       listBucketsInput,
+    );
+  };
+
+  public getBucketLocation = async (getBucketLocationInput: GetBucketLocationCommandInput): Promise<GetBucketLocationCommandOutput> => {
+    return this.s3Request<GetBucketLocationCommandInput, GetBucketLocationCommandOutput>(
+      S3Command.GET_BUCKET_LOCATION,
+      getBucketLocationInput,
     );
   };
 
@@ -128,6 +139,8 @@ export class S3Service {
         return new ListBucketsCommand(data as ListBucketsCommandInput);
       case S3Command.DELETE_BUCKET:
         return new DeleteBucketCommand(data as DeleteBucketCommandInput);
+      case S3Command.GET_BUCKET_LOCATION:
+        return new GetBucketLocationCommand(data as GetBucketLocationCommandInput);
       // S3 Bucket Object Commands
       case S3Command.COPY_BUCKET_OBJECT:
         return new CopyObjectCommand(data as CopyObjectCommandInput);

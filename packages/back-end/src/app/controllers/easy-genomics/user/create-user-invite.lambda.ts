@@ -149,7 +149,7 @@ export const handler: Handler = async (
 function getNewUser(email: string, userId: string, createdBy?: string): User {
   const newUser: User = {
     UserId: userId,
-    Email: email,
+    Email: email.toLowerCase(),
     Status: 'Invited',
     CreatedAt: new Date().toISOString(),
     CreatedBy: createdBy,

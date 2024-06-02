@@ -7,8 +7,8 @@ import {
 
 export interface SesServiceProps {
   accountId: string;
-  domainName: string;
   region: string;
+  domainName: string;
 }
 
 export class SesService {
@@ -17,8 +17,7 @@ export class SesService {
 
   public constructor(props: SesServiceProps) {
     this.props = props;
-    // @ts-ignore
-    this.sesClient = new SESClient({ region: props.region });
+    this.sesClient = new SESClient();
   }
 
   public async sendUserInvitationEmail(
@@ -29,7 +28,7 @@ export class SesService {
     const logRequestMessage = `Send User Invitation Email request: ${toAddress}`;
     console.info(logRequestMessage);
 
-    const sendTemplatedEmailCommand = new SendTemplatedEmailCommand({
+    const sendTemplatedEmailCommand: SendTemplatedEmailCommand = new SendTemplatedEmailCommand({
       Source: `no.reply@${this.props.domainName}`,
       Destination: {
         ToAddresses: [toAddress],
@@ -48,7 +47,42 @@ export class SesService {
     });
 
     try {
-      return await this.sesClient.send<SendTemplatedEmailCommand>(sendTemplatedEmailCommand);
+      const response = await this.sesClient.send<SendTemplatedEmailCommand>(sendTemplatedEmailCommand);
+      console.info(`Send User Invitation Email to ${toAddress} response: `, response);
+      return response;
+    } catch (error: unknown) {
+      throw new Error(`${logRequestMessage} unsuccessful: ${error.message}`);
+    }
+  }
+
+  public async sendUserForgotPasswordEmail(
+    toAddress: string,
+    forgotPasswordJwt: string,
+  ): Promise<SendTemplatedEmailCommandOutput> {
+    const logRequestMessage = `Send User Forgot Password Email request: ${toAddress}`;
+    console.info(logRequestMessage);
+
+    const sendTemplatedEmailCommand: SendTemplatedEmailCommand = new SendTemplatedEmailCommand({
+      Source: `no.reply@${this.props.domainName}`,
+      Destination: {
+        ToAddresses: [toAddress],
+      },
+      ReplyToAddresses: [`no.reply@${this.props.domainName}`],
+      ReturnPath: `no.reply@${this.props.domainName}`,
+      SourceArn: `arn:aws:ses:${this.props.region}:${this.props.accountId}:identity/${this.props.domainName}`,
+      Template: 'UserForgotPasswordEmailTemplate',
+      TemplateData: JSON.stringify({
+        COPYRIGHT_YEAR: `${new Date().getFullYear()}`,
+        DOMAIN_NAME: this.props.domainName,
+        FORGOT_PASSWORD_JWT: forgotPasswordJwt,
+        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/easy-genomics-email.png`,
+      }),
+    });
+
+    try {
+      const response = await this.sesClient.send<SendTemplatedEmailCommand>(sendTemplatedEmailCommand);
+      console.info(`Send User Forgot Password Email to ${toAddress} response: `, response);
+      return response;
     } catch (error: unknown) {
       throw new Error(`${logRequestMessage} unsuccessful: ${error.message}`);
     }

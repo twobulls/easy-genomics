@@ -70,13 +70,13 @@ export class CognitoIdpService {
   private cognitoIdpRequest = async <RequestType, ResponseType>(command: CognitoIdpCommand, data?: RequestType): Promise<ResponseType> => {
     try {
       console.log(
-        `[cognito-idp-service : cognitoIdpRequest] accountId: ${process.env.AWS_ACCOUNT_ID}, region: ${process.env.AWS_REGION}, command: ${command}`,
+        `[cognito-idp-service : cognitoIdpRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
       );
 
       return (await this.cognitoIdpClient.send(this.getCognitoIdpCommand(command, data)));
     } catch (error: any) {
       console.error(
-        `[cognitoIdp-service : cognitoIdpRequest] accountId: ${process.env.AWS_ACCOUNT_ID}, region: ${process.env.AWS_REGION}, command: ${command} exception encountered:`,
+        `[cognitoIdp-service : cognitoIdpRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
         error,
       );
       throw this.handleError(error);

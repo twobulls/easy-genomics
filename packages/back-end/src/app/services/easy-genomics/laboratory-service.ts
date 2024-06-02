@@ -47,7 +47,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
               '#Type': 'Type',
             },
             Item: marshall({
-              Value: laboratory.Name,
+              Value: laboratory.Name.toLowerCase(),
               Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
             }),
           },
@@ -203,7 +203,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
             Delete: {
               TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
               Key: {
-                Value: { S: existing.Name },
+                Value: { S: existing.Name.toLowerCase() },
                 Type: { S: `organization-${existing.OrganizationId}-laboratory-name` },
               },
             },
@@ -217,7 +217,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
                 '#Type': 'Type',
               },
               Item: marshall({
-                Value: laboratory.Name,
+                Value: laboratory.Name.toLowerCase(),
                 Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
               }),
             },
@@ -252,7 +252,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
           Delete: {
             TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
             Key: {
-              Value: { S: laboratory.Name },
+              Value: { S: laboratory.Name.toLowerCase() },
               Type: { S: `organization-${laboratory.OrganizationId}-laboratory-name` },
             },
           },

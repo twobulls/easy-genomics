@@ -46,7 +46,7 @@ export class OrganizationService extends DynamoDBService implements Service {
               '#Type': 'Type',
             },
             Item: marshall({
-              Value: organization.Name,
+              Value: organization.Name.toLowerCase(),
               Type: 'organization-name',
             }),
           },
@@ -153,7 +153,7 @@ export class OrganizationService extends DynamoDBService implements Service {
             Delete: {
               TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
               Key: {
-                Value: { S: existing.Name },
+                Value: { S: existing.Name.toLowerCase() },
                 Type: { S: 'organization-name' },
               },
             },
@@ -167,7 +167,7 @@ export class OrganizationService extends DynamoDBService implements Service {
                 '#Type': 'Type',
               },
               Item: marshall({
-                Value: organization.Name,
+                Value: organization.Name.toLowerCase(),
                 Type: 'organization-name',
               }),
             },
@@ -201,7 +201,7 @@ export class OrganizationService extends DynamoDBService implements Service {
           Delete: {
             TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
             Key: {
-              Value: { S: organization.Name },
+              Value: { S: organization.Name.toString() },
               Type: { S: 'organization-name' },
             },
           },

@@ -48,7 +48,7 @@ export const handler: Handler = async (
       LaboratoryId: uuidv4(),
       AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
       NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,
-      S3Bucket: s3BucketId,
+      S3Bucket: s3Bucket,
       CreatedAt: new Date().toISOString(),
       CreatedBy: currentUserId,
     });

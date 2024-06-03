@@ -1,9 +1,11 @@
 <script setup lang="ts">
+  import { useOrgsStore } from '~/stores/stores';
+  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgData = ref([]);
-  const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
   const tableColumns = [
     {
@@ -21,7 +23,7 @@
     },
   ];
 
-  const actionItems = (row: Array<{}>) => [
+  const actionItems = (row: Organization) => [
     [
       {
         label: 'Summary',
@@ -31,11 +33,7 @@
     [
       {
         label: 'View / Edit',
-        click: async () =>
-          navigateTo({
-            path: `/orgs/view/${row.OrganizationId}`,
-            query: { name: row.Name, desc: row.Description },
-          }),
+        click: async () => viewOrg(row),
       },
     ],
     [
@@ -47,9 +45,16 @@
     ],
   ];
 
+  function viewOrg(org: Organization) {
+    useOrgsStore().setSelectedOrg(org);
+    navigateTo({
+      path: `/orgs/view/${org.OrganizationId}`,
+    });
+  }
+
   onBeforeMount(async () => {
     try {
-      orgData.value = await $api.orgs.list(MOCK_ORG_ID);
+      orgData.value = await $api.orgs.list();
 
       if (!orgData.value.length) {
         hasNoData.value = true;

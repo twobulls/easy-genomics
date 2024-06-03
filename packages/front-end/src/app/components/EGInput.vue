@@ -27,7 +27,7 @@
     :disabled="disabled"
     :ui="{
       icon: { trailing: { pointer: '' } },
-      base: 'h-13 !shadow-none border-background-stroke-dark !bg-white text-body disabled:bg-background-light-grey disabled:text-muted',
+      base: 'h-13 !shadow-none border-background-stroke-dark !bg-white text-body disabled:bg-red-200 disabled:text-muted',
       rounded: 'rounded-md',
       disabled: 'background-grey text-muted',
       placeholder: 'text-muted',

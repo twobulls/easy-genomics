@@ -1,13 +1,19 @@
 <script setup lang="ts">
-  import {
-    OrganizationUserDetails,
-  } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-  import { ButtonVariantEnum } from '~/types/buttons';
+  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse } from '~/types/api';
+  import type { FormSubmitEvent } from '#ui/types';
+  import { cleanText } from '~/utils/string-utils';
+  import { useOrgForm } from '~/composables/useOrgForm';
+  import { OrgDetailsFormSchema } from '~/types/forms';
+  import { ERRORS } from '~/constants/validation';
+
+  const { orgNameSchema, orgDescriptionSchema, ORG_NAME_MAX_LENGTH, orgDetailsFormSchema, ORG_DESCRIPTION_MAX_LENGTH } =
+    useOrgForm();
 
   const $route = useRoute();
   const disabledButtons = ref<Record<number, unknown>>({});
@@ -15,13 +21,26 @@
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgId = $route.params.id;
-  const orgName = $route.query.name;
-  const orgDescription = $route.query.desc;
   const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
   const { resendInvite, labsCount } = useUser();
+
+  // Form-related refs and computed props
+  const initialName = ref(useOrgsStore().selectedOrg?.Name || '');
+  const initialDescription = ref(useOrgsStore().selectedOrg?.Description || '');
+  const formState = reactive({
+    Name: initialName.value,
+    Description: initialDescription.value,
+    isFormValid: false,
+    isFormDisabled: true,
+  });
+  const didFormStateChange = computed(() => {
+    return initialName.value !== formState.Name || initialDescription.value !== formState.Description;
+  });
+  const orgNameCharCount = computed(() => formState.Name.length);
+  const orgDescriptionCharCount = computed(() => formState.Description.length);
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -85,12 +104,26 @@
             firstName: row.FirstName,
             lastName: row.LastName,
             email: row.UserEmail,
-          })} from ${orgName}?`;
+          })} from ${useOrgsStore().selectedOrg!.Name}?`;
           isOpen.value = true;
         },
       },
     ],
   ];
+
+  function validateForm({
+    name = formState.Name,
+    description = formState.Description,
+  }: {
+    name: string | undefined;
+    description: string | undefined;
+  }) {
+    const isNameValid = orgNameSchema.safeParse(name).success;
+    const isDescriptionValid = orgDescriptionSchema.safeParse(description).success;
+    const isFormValid = isNameValid && isDescriptionValid;
+    formState.isFormValid = isFormValid;
+    formState.isFormDisabled = !isFormValid;
+  }
 
   async function handleRemoveOrgUser() {
     isOpen.value = false;
@@ -112,13 +145,13 @@
       const res: DeletedResponse = await $api.orgs.removeUser(orgId, selectedUserId.value);
 
       if (res?.Status === 'Success') {
-        useToastStore().success(`${displayName} has been removed from ${orgName}`);
+        useToastStore().success(`${displayName} has been removed from ${useOrgsStore().selectedOrg!.Name}`);
         await getOrgData(false);
       } else {
         throw new Error('User not removed from Organization');
       }
     } catch (error) {
-      useToastStore().error(`Failed to remove ${displayName} from ${orgName}`);
+      useToastStore().error(`Failed to remove ${displayName} from  ${useOrgsStore().selectedOrg!.Name}`);
       throw error;
     } finally {
       selectedUserId.value = '';
@@ -240,11 +273,46 @@
     searchOutput.value = newVal;
   }
 
+  async function onSubmit(event: FormSubmitEvent<OrgDetailsFormSchema>) {
+    try {
+      useUiStore().setRequestPending(true);
+      formState.isFormDisabled = true;
+      const { Name, Description } = event.data;
+      await $api.orgs.update(useOrgsStore().selectedOrg?.OrganizationId, { Name, Description });
+      useToastStore().success('Organization updated');
+    } catch (error) {
+      useToastStore().error(ERRORS.network);
+    } finally {
+      useUiStore().setRequestPending(false);
+      formState.isFormDisabled = false;
+    }
+  }
 
+  function handleNameInput(event: InputEvent) {
+    const target: HTMLInputElement = event.target;
+    const name = target.value;
+    const cleanedName = cleanText(name, ORG_NAME_MAX_LENGTH);
+    if (name !== cleanedName) {
+      formState.Name = cleanedName;
+      target.value = cleanedName;
+    }
+    validateForm({ name: cleanedName });
+  }
+
+  function handleDescriptionInput(event: InputEvent) {
+    const target: HTMLInputElement = event.target;
+    const description = target.value;
+    const cleanedDescription = cleanText(description, ORG_DESCRIPTION_MAX_LENGTH);
+    if (description !== cleanedDescription) {
+      formState.Description = cleanedDescription;
+      target.value = cleanedDescription;
+    }
+    validateForm({ description: cleanedDescription });
+  }
 </script>
 
 <template>
-  <EGPageHeader :title="orgName" :description="orgDescription">
+  <EGPageHeader :title="useOrgsStore().selectedOrg!.Name" :description="useOrgsStore().selectedOrg!.Description">
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">
       <EGInviteModule @invite-success="refreshUserList($event)" :org-id="$route.params.id" />
@@ -294,14 +362,38 @@
         :ui="{ rounded: 'rounded-full' }"
         v-if="isLoading"
       />
-      <EGCard v-else>
-        <EGFormGroup label="Organization name" name="Name">
-          <EGInput :placeholder="orgSettingsData.Name" disabled />
-        </EGFormGroup>
-        <EGFormGroup label="Organization description" name="Description">
-          <EGInput :placeholder="orgSettingsData.Description" disabled />
-        </EGFormGroup>
-      </EGCard>
+      <UForm :schema="orgDetailsFormSchema" :state="formState" @submit="onSubmit" v-else>
+        <EGCard>
+          <EGFormGroup label="Organization name*" name="Name">
+            <EGInput
+              v-model.trim="formState.Name"
+              @blur="validateForm"
+              @input.prevent="handleNameInput"
+              :placeholder="formState.Name ? '' : 'Enter organization name (required and must be unique)'"
+              required
+              autofocus
+            />
+            <EGCharacterCounter :value="orgNameCharCount" :max="ORG_NAME_MAX_LENGTH" />
+          </EGFormGroup>
+          <EGFormGroup label="Organization description" name="Description">
+            <EGTextArea
+              v-model.trim="formState.Description"
+              @blur="validateForm"
+              @input.prevent="handleDescriptionInput"
+              placeholder="Describe your organization and any relevant details"
+            />
+            <EGCharacterCounter :value="orgDescriptionCharCount" :max="ORG_DESCRIPTION_MAX_LENGTH" />
+          </EGFormGroup>
+        </EGCard>
+        <EGButton
+          :size="ButtonSizeEnum.enum.sm"
+          :disabled="useUiStore().isRequestPending || formState.isFormDisabled || !didFormStateChange"
+          type="submit"
+          label="Save changes"
+          class="mt-6"
+          :loading="useUiStore().isRequestPending"
+        />
+      </UForm>
     </template>
 
     <template #users>
@@ -386,7 +478,7 @@
             </template>
             <!-- TODO -->
             <template #labs-data="{ row }">
-              <span class="text-muted">{{ labsCount(row)}}</span>
+              <span class="text-muted">{{ labsCount(row) }}</span>
             </template>
             <template #actions-data="{ row, index }">
               <div class="flex justify-end">

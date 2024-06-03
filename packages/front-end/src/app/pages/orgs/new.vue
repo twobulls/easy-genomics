@@ -2,8 +2,9 @@
   import { z } from 'zod';
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
-  import { useToastStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores/stores';
   import { ButtonSizeEnum } from '~/types/buttons';
+  import { ERRORS } from '~/constants/validation';
 
   const { $api } = useNuxtApp();
 
@@ -110,6 +111,7 @@
 
   async function onSubmit(event: FormSubmitEvent<FormSchema>) {
     try {
+      useUiStore().setRequestPending(true);
       state.isFormDisabled = true;
       const { Name, Description } = event.data;
 
@@ -117,8 +119,9 @@
       useToastStore().success('Organization created');
       await navigateTo('/orgs');
     } catch (error) {
-      useToastStore().error('Failed to create organization');
+      useToastStore().error(ERRORS.network);
     } finally {
+      useUiStore().setRequestPending(false);
       state.isFormDisabled = false;
     }
   }
@@ -154,10 +157,11 @@
       </EGCard>
       <EGButton
         :size="ButtonSizeEnum.enum.sm"
-        :disabled="state.isFormDisabled"
+        :disabled="useUiStore().isRequestPending || state.isFormDisabled"
         type="submit"
         label="Create"
         class="mt-6"
+        :loading="useUiStore().isRequestPending"
       />
     </UForm>
   </div>

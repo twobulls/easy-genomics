@@ -52,7 +52,7 @@ export default function useUser() {
     }
   }
 
-  async function resendInvite(user: OrganizationUserDetails) {
+  async function resendInvite(user: { OrganizationId: string; UserEmail: string }) {
     const { OrganizationId: orgId, UserEmail: email } = user;
     await handleInvite(
       {
@@ -72,14 +72,16 @@ export default function useUser() {
    * @param user
    */
   function labsCount(user: OrganizationUserDetails) {
-    const labsAccess = Object.values(user?.OrganizationAccess || {}).flatMap(orgAccess => Object.values(orgAccess?.LaboratoryAccess || {}));
-    return labsAccess.filter(labAccess => labAccess.Status === "Active").length;
+    const labsAccess = Object.values(user?.OrganizationAccess || {}).flatMap((orgAccess) =>
+      Object.values(orgAccess?.LaboratoryAccess || {})
+    );
+    return labsAccess.filter((labAccess) => labAccess.Status === 'Active').length;
   }
 
   return {
     displayName,
     labsCount,
     invite,
-    resendInvite
+    resendInvite,
   };
 }

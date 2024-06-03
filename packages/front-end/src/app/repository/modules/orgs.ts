@@ -7,6 +7,7 @@ import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
 import { DeletedResponse } from '~/types/api';
+import { UpdateOrganizationSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization';
 
 class OrgsModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -34,7 +35,7 @@ class OrgsModule extends HttpFactory {
   async usersDetailsByOrgId(orgId: string): Promise<OrganizationUserDetails[]> {
     const res = await this.call<OrganizationUserDetails[]>(
       'GET',
-      `/organization/user/list-organization-users-details?organizationId=${orgId}`,
+      `/organization/user/list-organization-users-details?organizationId=${orgId}`
     );
 
     if (!res) {
@@ -47,7 +48,7 @@ class OrgsModule extends HttpFactory {
   async usersDetailsByUserId(userId: string): Promise<OrganizationUserDetails[]> {
     const res = await this.call<OrganizationUserDetails[]>(
       'GET',
-      `/organization/user/list-organization-users-details?userId=${userId}`,
+      `/organization/user/list-organization-users-details?userId=${userId}`
     );
 
     if (!res) {
@@ -71,7 +72,7 @@ class OrgsModule extends HttpFactory {
     orgId: string,
     userId: string,
     orgUserStatus: string,
-    val: boolean,
+    val: boolean
   ): Promise<OrganizationUserDetails | undefined> {
     const input = {
       OrganizationId: orgId,
@@ -114,6 +115,21 @@ class OrgsModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Failed to remove user from Organization');
+    }
+
+    return res;
+  }
+
+  async update(orgId: string, body: Organization): Promise<Organization | undefined> {
+    try {
+      UpdateOrganizationSchema.parse(body);
+    } catch (error) {
+      throw new Error(`Validation failed: ${error}`);
+    }
+    const res = this.call<Organization>('PUT', `/organization/update-organization/${orgId}`, body);
+
+    if (!res) {
+      throw new Error('Failed to update Organization details');
     }
 
     return res;

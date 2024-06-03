@@ -7,9 +7,6 @@ export function useOrgForm() {
   const ORG_NAME_MAX_LENGTH = 50;
   const ORG_DESCRIPTION_MAX_LENGTH = 500;
 
-  const orgNameCharCount = computed(() => orgName.value.length);
-  const orgDescriptionCharCount = computed(() => orgDescription.value.length);
-
   const orgNameSchema = z
     .string()
     .min(ORG_NAME_MIN_LENGTH, { message: `Name must be at least ${ORG_NAME_MIN_LENGTH} characters` })
@@ -28,8 +25,6 @@ export function useOrgForm() {
   return {
     orgName,
     orgDescription,
-    orgNameCharCount,
-    orgDescriptionCharCount,
     orgNameSchema,
     orgDescriptionSchema,
     orgDetailsFormSchema,

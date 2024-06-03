@@ -16,8 +16,8 @@
     useOrgForm();
 
   const $route = useRoute();
-  const disabledButtons = ref<Record<number, unknown>>({});
-  const buttonRequestPending = ref<Record<number, unknown>>({});
+  const disabledButtons = ref<Record<number, boolean>>({});
+  const buttonRequestPending = ref<Record<number, boolean>>({});
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgId = $route.params.id;
@@ -130,11 +130,15 @@
 
       const email = String(person.UserEmail).toLowerCase();
 
-      return fullName.includes(searchOutput.value.toLowerCase()) || email.includes(searchOutput.value.toLowerCase());
+      return fullName.includes(lowerCasedSearch.value) || email.includes(lowerCasedSearch.value);
     });
   });
 
-  await getOrgData();
+  const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());
+
+  onMounted(async () => {
+    await getOrgData();
+  });
 
   async function handleRemoveOrgUser() {
     isOpen.value = false;
@@ -166,6 +170,7 @@
       throw error;
     } finally {
       selectedUserId.value = '';
+      isOpen.value = false;
       isRemovingUser.value = false;
     }
   }
@@ -215,6 +220,7 @@
 
   function disableButton(index: number) {
     disabledButtons.value[index] = true;
+    buttonRequestPending.value[index] = false;
   }
 
   function setButtonRequestPending(isPending: boolean, index: number) {
@@ -263,7 +269,7 @@
       formState.Name = cleanedName;
       target.value = cleanedName;
     }
-    validateForm({ name: cleanedName });
+    validateForm({ name: cleanedName, description: formState.Description });
   }
 
   function handleDescriptionInput(event: InputEvent) {

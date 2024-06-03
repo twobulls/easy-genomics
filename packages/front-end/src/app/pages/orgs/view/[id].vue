@@ -111,19 +111,30 @@
     ],
   ];
 
-  function validateForm({
-    name = formState.Name,
-    description = formState.Description,
-  }: {
-    name: string | undefined;
-    description: string | undefined;
-  }) {
-    const isNameValid = orgNameSchema.safeParse(name).success;
-    const isDescriptionValid = orgDescriptionSchema.safeParse(description).success;
-    const isFormValid = isNameValid && isDescriptionValid;
-    formState.isFormValid = isFormValid;
-    formState.isFormDisabled = !isFormValid;
-  }
+  /**
+   * Filter rows based on search input for both name and email
+   */
+  const filteredTableData = computed(() => {
+    if (!searchOutput.value && !hasNoData.value) {
+      return orgUsersDetailsData.value;
+    }
+    return orgUsersDetailsData.value.filter((person: OrganizationUserDetails) => {
+      const fullName = String(
+        useUser().displayName({
+          preferredName: person.PreferredName || '',
+          firstName: person.FirstName || '',
+          lastName: person.LastName || '',
+          email: person.UserEmail,
+        })
+      ).toLowerCase();
+
+      const email = String(person.UserEmail).toLowerCase();
+
+      return fullName.includes(searchOutput.value.toLowerCase()) || email.includes(searchOutput.value.toLowerCase());
+    });
+  });
+
+  await getOrgData();
 
   async function handleRemoveOrgUser() {
     isOpen.value = false;
@@ -172,6 +183,7 @@
     try {
       if (shouldGetOrgSettings) {
         orgSettingsData.value = await $api.orgs.orgSettings(orgId);
+        useOrgsStore().setSelectedOrg(orgSettingsData.value!);
       }
       orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
 
@@ -186,52 +198,6 @@
     }
     return orgSettingsData.value;
   }
-
-  onMounted(async () => {
-    await getOrgData();
-  });
-
-  useAsyncData('orgSettingsData', async () => {
-    isLoading.value = true;
-    try {
-      useUiStore().setRequestPending(true);
-      orgSettingsData.value = await $api.orgs.orgSettings(orgId);
-      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
-
-      if (orgUsersDetailsData.value.length === 0) {
-        hasNoData.value = true;
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      isLoading.value = false;
-      useUiStore().setRequestPending(false);
-    }
-    return orgSettingsData.value;
-  });
-
-  /**
-   * Filter rows based on search input for both name and email
-   */
-  const filteredTableData = computed(() => {
-    if (!searchOutput.value && !hasNoData.value) {
-      return orgUsersDetailsData.value;
-    }
-    return orgUsersDetailsData.value.filter((person: OrganizationUserDetails) => {
-      const fullName = String(
-        useUser().displayName({
-          preferredName: person.PreferredName || '',
-          firstName: person.FirstName || '',
-          lastName: person.LastName || '',
-          email: person.UserEmail,
-        })
-      ).toLowerCase();
-
-      const email = String(person.UserEmail).toLowerCase();
-
-      return fullName.includes(searchOutput.value.toLowerCase()) || email.includes(searchOutput.value.toLowerCase());
-    });
-  });
 
   async function resend(userDetails: OrganizationUserDetails, index: number) {
     const { OrganizationId, UserEmail } = userDetails;
@@ -279,6 +245,7 @@
       formState.isFormDisabled = true;
       const { Name, Description } = event.data;
       await $api.orgs.update(useOrgsStore().selectedOrg?.OrganizationId, { Name, Description });
+      await getOrgData();
       useToastStore().success('Organization updated');
     } catch (error) {
       useToastStore().error(ERRORS.network);
@@ -289,7 +256,7 @@
   }
 
   function handleNameInput(event: InputEvent) {
-    const target: HTMLInputElement = event.target;
+    const target = event.target as HTMLInputElement;
     const name = target.value;
     const cleanedName = cleanText(name, ORG_NAME_MAX_LENGTH);
     if (name !== cleanedName) {
@@ -300,14 +267,28 @@
   }
 
   function handleDescriptionInput(event: InputEvent) {
-    const target: HTMLInputElement = event.target;
+    const target = event.target as HTMLInputElement;
     const description = target.value;
     const cleanedDescription = cleanText(description, ORG_DESCRIPTION_MAX_LENGTH);
     if (description !== cleanedDescription) {
       formState.Description = cleanedDescription;
       target.value = cleanedDescription;
     }
-    validateForm({ description: cleanedDescription });
+    validateForm({ name: formState.Name, description: cleanedDescription });
+  }
+
+  function validateForm({
+    name = formState.Name,
+    description = formState.Description,
+  }: {
+    name: string | undefined;
+    description: string | undefined;
+  }) {
+    const isNameValid = orgNameSchema.safeParse(name).success;
+    const isDescriptionValid = orgDescriptionSchema.safeParse(description).success;
+    const isFormValid = isNameValid && isDescriptionValid;
+    formState.isFormValid = isFormValid;
+    formState.isFormDisabled = !isFormValid;
   }
 </script>
 
@@ -357,12 +338,7 @@
     ]"
   >
     <template #details>
-      <USkeleton
-        class="flex h-60 flex-col rounded-2xl p-6 max-md:px-5"
-        :ui="{ rounded: 'rounded-full' }"
-        v-if="isLoading"
-      />
-      <UForm :schema="orgDetailsFormSchema" :state="formState" @submit="onSubmit" v-else>
+      <UForm :schema="orgDetailsFormSchema" :state="formState" @submit="onSubmit">
         <EGCard>
           <EGFormGroup label="Organization name*" name="Name">
             <EGInput
@@ -371,6 +347,7 @@
               @input.prevent="handleNameInput"
               :placeholder="formState.Name ? '' : 'Enter organization name (required and must be unique)'"
               required
+              :disabled="useUiStore().isRequestPending"
               autofocus
             />
             <EGCharacterCounter :value="orgNameCharCount" :max="ORG_NAME_MAX_LENGTH" />
@@ -381,6 +358,7 @@
               @blur="validateForm"
               @input.prevent="handleDescriptionInput"
               placeholder="Describe your organization and any relevant details"
+              :disabled="useUiStore().isRequestPending"
             />
             <EGCharacterCounter :value="orgDescriptionCharCount" :max="ORG_DESCRIPTION_MAX_LENGTH" />
           </EGFormGroup>

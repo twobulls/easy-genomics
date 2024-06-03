@@ -74,7 +74,7 @@
   }
 
   function handleNameInput(event: InputEvent) {
-    const target: HTMLInputElement = event.target;
+    const target = event.target as HTMLInputElement;
     const name = target.value;
     const cleanedName = cleanText(name, NAME_MAX_LENGTH);
     if (name !== cleanedName) {
@@ -85,14 +85,14 @@
   }
 
   function handleDescriptionInput(event: InputEvent) {
-    const target: HTMLInputElement = event.target;
+    const target = event.target as HTMLInputElement;
     const description = target.value;
     const cleanedDescription = cleanText(description, DESCRIPTION_MAX_LENGTH);
     if (description !== cleanedDescription) {
       state.Description = cleanedDescription;
       target.value = cleanedDescription;
     }
-    validateForm({ description: cleanedDescription });
+    validateForm({ name: formState.Name, description: cleanedDescription });
   }
 
   function validateForm({

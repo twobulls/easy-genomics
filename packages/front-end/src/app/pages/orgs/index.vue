@@ -46,7 +46,6 @@
   ];
 
   function viewOrg(org: Organization) {
-    useOrgsStore().setSelectedOrg(org);
     navigateTo({
       path: `/orgs/view/${org.OrganizationId}`,
     });

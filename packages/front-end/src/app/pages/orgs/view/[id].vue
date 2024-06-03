@@ -4,16 +4,12 @@
   import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
+  import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse } from '~/types/api';
   import type { FormSubmitEvent } from '#ui/types';
-  import { cleanText } from '~/utils/string-utils';
-  import { useOrgForm } from '~/composables/useOrgForm';
   import { OrgDetailsFormSchema } from '~/types/forms';
   import { ERRORS } from '~/constants/validation';
-
-  const { orgNameSchema, orgDescriptionSchema, ORG_NAME_MAX_LENGTH, orgDetailsFormSchema, ORG_DESCRIPTION_MAX_LENGTH } =
-    useOrgForm();
+  import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
 
   const $route = useRoute();
   const disabledButtons = ref<Record<number, boolean>>({});
@@ -26,21 +22,6 @@
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
   const { resendInvite, labsCount } = useUser();
-
-  // Form-related refs and computed props
-  const initialName = ref(useOrgsStore().selectedOrg?.Name || '');
-  const initialDescription = ref(useOrgsStore().selectedOrg?.Description || '');
-  const formState = reactive({
-    Name: initialName.value,
-    Description: initialDescription.value,
-    isFormValid: false,
-    isFormDisabled: true,
-  });
-  const didFormStateChange = computed(() => {
-    return initialName.value !== formState.Name || initialDescription.value !== formState.Description;
-  });
-  const orgNameCharCount = computed(() => formState.Name.length);
-  const orgDescriptionCharCount = computed(() => formState.Description.length);
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -246,7 +227,6 @@
   async function onSubmit(event: FormSubmitEvent<OrgDetailsFormSchema>) {
     try {
       useUiStore().setRequestPending(true);
-      formState.isFormDisabled = true;
       const { Name, Description } = event.data;
       await $api.orgs.update(useOrgsStore().selectedOrg?.OrganizationId, { Name, Description });
       await getOrgData();
@@ -255,44 +235,7 @@
       useToastStore().error(ERRORS.network);
     } finally {
       useUiStore().setRequestPending(false);
-      formState.isFormDisabled = false;
     }
-  }
-
-  function handleNameInput(event: InputEvent) {
-    const target = event.target as HTMLInputElement;
-    const name = target.value;
-    const cleanedName = cleanText(name, ORG_NAME_MAX_LENGTH);
-    if (name !== cleanedName) {
-      formState.Name = cleanedName;
-      target.value = cleanedName;
-    }
-    validateForm({ name: cleanedName, description: formState.Description });
-  }
-
-  function handleDescriptionInput(event: InputEvent) {
-    const target = event.target as HTMLInputElement;
-    const description = target.value;
-    const cleanedDescription = cleanText(description, ORG_DESCRIPTION_MAX_LENGTH);
-    if (description !== cleanedDescription) {
-      formState.Description = cleanedDescription;
-      target.value = cleanedDescription;
-    }
-    validateForm({ name: formState.Name, description: cleanedDescription });
-  }
-
-  function validateForm({
-    name = formState.Name,
-    description = formState.Description,
-  }: {
-    name: string | undefined;
-    description: string | undefined;
-  }) {
-    const isNameValid = orgNameSchema.safeParse(name).success;
-    const isDescriptionValid = orgDescriptionSchema.safeParse(description).success;
-    const isFormValid = isNameValid && isDescriptionValid;
-    formState.isFormValid = isFormValid;
-    formState.isFormDisabled = !isFormValid;
   }
 </script>
 
@@ -342,40 +285,12 @@
     ]"
   >
     <template #details>
-      <UForm :schema="orgDetailsFormSchema" :state="formState" @submit="onSubmit">
-        <EGCard>
-          <EGFormGroup label="Organization name*" name="Name">
-            <EGInput
-              v-model.trim="formState.Name"
-              @blur="validateForm"
-              @input.prevent="handleNameInput"
-              :placeholder="formState.Name ? '' : 'Enter organization name (required and must be unique)'"
-              required
-              :disabled="useUiStore().isRequestPending"
-              autofocus
-            />
-            <EGCharacterCounter :value="orgNameCharCount" :max="ORG_NAME_MAX_LENGTH" />
-          </EGFormGroup>
-          <EGFormGroup label="Organization description" name="Description">
-            <EGTextArea
-              v-model.trim="formState.Description"
-              @blur="validateForm"
-              @input.prevent="handleDescriptionInput"
-              placeholder="Describe your organization and any relevant details"
-              :disabled="useUiStore().isRequestPending"
-            />
-            <EGCharacterCounter :value="orgDescriptionCharCount" :max="ORG_DESCRIPTION_MAX_LENGTH" />
-          </EGFormGroup>
-        </EGCard>
-        <EGButton
-          :size="ButtonSizeEnum.enum.sm"
-          :disabled="useUiStore().isRequestPending || formState.isFormDisabled || !didFormStateChange"
-          type="submit"
-          label="Save changes"
-          class="mt-6"
-          :loading="useUiStore().isRequestPending"
-        />
-      </UForm>
+      <EGFormOrgDetails
+        v-if="!isLoading"
+        @submit-form-org-details="onSubmit($event)"
+        :name="useOrgsStore().selectedOrg?.Name"
+        :description="useOrgsStore().selectedOrg?.Description"
+      />
     </template>
 
     <template #users>

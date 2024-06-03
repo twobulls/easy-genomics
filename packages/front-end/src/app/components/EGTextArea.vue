@@ -19,7 +19,7 @@
     :ui="{
       base: 'mt-2 !shadow-none border-background-dark-grey bg-white text-body disabled:text-muted disabled:bg-background-light-grey',
       rounded: 'rounded-md',
-      placeholder: 'placeholder-text-muted',
+      placeholder: 'text-muted',
       padding: {
         sm: 'p-4',
       },

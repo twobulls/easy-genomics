@@ -1,5 +1,7 @@
-import { EditLaboratoryUser } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
-import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
+import {
+  EditLaboratoryUser,
+  RemoveLaboratoryUserSchema,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { CreateLaboratory, Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
@@ -27,6 +29,17 @@ class LabsModule extends HttpFactory {
     if (!res) {
       console.error('Error calling list Laboratories API');
       throw new Error('Failed to retrieve Laboratory');
+    }
+
+    return res;
+  }
+
+  async delete(labId: string) {
+    const res = await this.call<DeletedResponse>('DELETE', `/laboratory/delete-laboratory/${labId}`);
+
+    if (!res) {
+      console.error('Error calling delete Laboratory API');
+      throw new Error('Failed to delete Laboratory');
     }
 
     return res;
@@ -140,7 +153,7 @@ class LabsModule extends HttpFactory {
 
   async editLabUser(userDetails: EditLaboratoryUser): Promise<LaboratoryUser> {
     const { LaboratoryId, UserId, LabManager, LabTechnician } = userDetails;
-    const res = await this.call<LaboratoryUser>('POST', `/user/edit-laboratory-user`, {
+    const res = await this.call<LaboratoryUser>('POST', '/user/edit-laboratory-user', {
       LaboratoryId,
       UserId,
       Status: 'Active',

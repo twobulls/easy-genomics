@@ -1,12 +1,12 @@
 <script setup lang="ts">
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+  import { ButtonVariantEnum } from '~/types/buttons';
+  import { useToastStore, useUiStore } from '~/stores/stores';
 
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
-  const isLoading = ref(true);
   const labData = ref([] as Laboratory[]);
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
-  const $router = useRouter();
 
   const tableColumns = [
     {
@@ -41,13 +41,61 @@
       {
         label: 'Remove',
         class: 'text-alert-danger-dark',
-        click: () => {},
+        click: () => deleteLab(row.LaboratoryId, row.Name),
       },
     ],
   ];
 
-  useAsyncData('labData', async () => {
+  // Dynamic delete lab dialog values
+  const isOpen = ref(false);
+  const primaryMessage = ref('');
+  const selectedId = ref('');
+  const displayName = ref('');
+
+  function resetSelectedLabValues() {
+    selectedId.value = '';
+    displayName.value = '';
+    primaryMessage.value = '';
+  }
+
+  async function deleteLab(LabId: string, labName: string) {
+    selectedId.value = LabId;
+    displayName.value = labName;
+    primaryMessage.value = `Are you sure you want to remove lab '${labName}'?`;
+    isOpen.value = true;
+  }
+
+  async function handleDeleteLab() {
     try {
+      useUiStore().setRequestPending(true);
+      isOpen.value = false;
+
+      if (!selectedId.value) {
+        throw new Error('No selectedId');
+      }
+
+      const res = await $api.labs.delete(selectedId.value);
+
+      if (res?.deleted) {
+        useToastStore().success(`Lab '${displayName.value}' has been removed`);
+        await getLabs();
+      } else {
+        throw new Error('Lab not removed');
+      }
+
+      await getLabs();
+    } catch (error) {
+      useUiStore().setRequestPending(false);
+      useToastStore().error(`Failed to remove lab '${displayName.value}'`);
+      throw error;
+    } finally {
+      resetSelectedLabValues();
+    }
+  }
+
+  async function getLabs() {
+    try {
+      useUiStore().setRequestPending(true);
       labData.value = await $api.labs.list(MOCK_ORG_ID);
 
       if (!labData.value.length) {
@@ -57,8 +105,12 @@
       console.error(error);
       throw error;
     } finally {
-      isLoading.value = false;
+      useUiStore().setRequestPending(false);
     }
+  }
+
+  onMounted(async () => {
+    await getLabs();
   });
 </script>
 
@@ -79,8 +131,18 @@
     v-else
     :table-data="labData"
     :columns="tableColumns"
-    :isLoading="isLoading"
+    :isLoading="useUiStore().isRequestPending"
     :action-items="actionItems"
-    :show-pagination="!isLoading && !hasNoData"
+    :show-pagination="!useUiStore().isRequestPending && !hasNoData"
+  />
+
+  <EGDialog
+    actionLabel="Remove Lab"
+    :actionVariant="ButtonVariantEnum.enum.destructive"
+    cancelLabel="Cancel"
+    :cancelVariant="ButtonVariantEnum.enum.secondary"
+    @action-triggered="handleDeleteLab"
+    :primaryMessage="primaryMessage"
+    v-model="isOpen"
   />
 </template>

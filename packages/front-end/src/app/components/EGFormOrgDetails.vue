@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useOrgsStore, useUiStore } from '~/stores/stores';
+  import { useUiStore } from '~/stores/stores';
   import { ButtonSizeEnum } from '~/types/buttons';
   import { cleanText } from '~/utils/string-utils';
   import { z } from 'zod';

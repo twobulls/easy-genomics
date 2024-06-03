@@ -136,9 +136,7 @@
 
   const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());
 
-  onMounted(async () => {
-    await getOrgData();
-  });
+  await getOrgData();
 
   async function handleRemoveOrgUser() {
     isOpen.value = false;

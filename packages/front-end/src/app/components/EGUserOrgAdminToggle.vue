@@ -2,8 +2,9 @@
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { useToastStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
-  const { $api } = useNuxtApp();
+  import { ERRORS } from '~/constants/validation';
 
+  const { $api } = useNuxtApp();
   const props = defineProps<{
     user: OrganizationUserDetails;
     isLoading?: boolean;
@@ -26,7 +27,7 @@
       $emit('update-user');
       useToastStore().success(`${displayName}’s Lab Access has been successfully updated`);
     } catch (error) {
-      useToastStore().error('Huh, something went wrong. Please check your connection and try again');
+      useToastStore().error(ERRORS.network);
       toggleVal.value = !toggleVal.value;
       console.error(error);
     }

@@ -258,6 +258,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     ...tsConfigOptions,
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
+      'lib': ['DOM', 'ESNext'],
       rootDir: '.',
       types: ['vue'],
       verbatimModuleSyntax: false,
@@ -322,6 +323,6 @@ root.gitignore.addPatterns(
   '.output',
   'dist',
   'config/easy-genomics.yaml',
-  'packages/back-end/cdk.context.json',
+  'packages/back-end/cdk.context.json'
 );
 root.synth();

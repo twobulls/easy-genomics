@@ -1,22 +1,22 @@
 <script setup lang="ts">
-  import {
-    OrganizationUserDetails,
-  } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse } from '~/types/api';
+  import type { FormSubmitEvent } from '#ui/types';
+  import { OrgDetailsFormSchema } from '~/types/forms';
+  import { ERRORS } from '~/constants/validation';
+  import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
 
   const $route = useRoute();
-  const disabledButtons = ref<Record<number, unknown>>({});
-  const buttonRequestPending = ref<Record<number, unknown>>({});
+  const disabledButtons = ref<Record<number, boolean>>({});
+  const buttonRequestPending = ref<Record<number, boolean>>({});
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgId = $route.params.id;
-  const orgName = $route.query.name;
-  const orgDescription = $route.query.desc;
   const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
   const showInviteModule = ref(false);
@@ -85,12 +85,39 @@
             firstName: row.FirstName,
             lastName: row.LastName,
             email: row.UserEmail,
-          })} from ${orgName}?`;
+          })} from ${useOrgsStore().selectedOrg!.Name}?`;
           isOpen.value = true;
         },
       },
     ],
   ];
+
+  /**
+   * Filter rows based on search input for both name and email
+   */
+  const filteredTableData = computed(() => {
+    if (!searchOutput.value && !hasNoData.value) {
+      return orgUsersDetailsData.value;
+    }
+    return orgUsersDetailsData.value.filter((person: OrganizationUserDetails) => {
+      const fullName = String(
+        useUser().displayName({
+          preferredName: person.PreferredName || '',
+          firstName: person.FirstName || '',
+          lastName: person.LastName || '',
+          email: person.UserEmail,
+        })
+      ).toLowerCase();
+
+      const email = String(person.UserEmail).toLowerCase();
+
+      return fullName.includes(lowerCasedSearch.value) || email.includes(lowerCasedSearch.value);
+    });
+  });
+
+  const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());
+
+  await getOrgData();
 
   async function handleRemoveOrgUser() {
     isOpen.value = false;
@@ -112,16 +139,17 @@
       const res: DeletedResponse = await $api.orgs.removeUser(orgId, selectedUserId.value);
 
       if (res?.Status === 'Success') {
-        useToastStore().success(`${displayName} has been removed from ${orgName}`);
+        useToastStore().success(`${displayName} has been removed from ${useOrgsStore().selectedOrg!.Name}`);
         await getOrgData(false);
       } else {
         throw new Error('User not removed from Organization');
       }
     } catch (error) {
-      useToastStore().error(`Failed to remove ${displayName} from ${orgName}`);
+      useToastStore().error(`Failed to remove ${displayName} from  ${useOrgsStore().selectedOrg!.Name}`);
       throw error;
     } finally {
       selectedUserId.value = '';
+      isOpen.value = false;
       isRemovingUser.value = false;
     }
   }
@@ -139,6 +167,7 @@
     try {
       if (shouldGetOrgSettings) {
         orgSettingsData.value = await $api.orgs.orgSettings(orgId);
+        useOrgsStore().setSelectedOrg(orgSettingsData.value!);
       }
       orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
 
@@ -153,52 +182,6 @@
     }
     return orgSettingsData.value;
   }
-
-  onMounted(async () => {
-    await getOrgData();
-  });
-
-  useAsyncData('orgSettingsData', async () => {
-    isLoading.value = true;
-    try {
-      useUiStore().setRequestPending(true);
-      orgSettingsData.value = await $api.orgs.orgSettings(orgId);
-      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
-
-      if (orgUsersDetailsData.value.length === 0) {
-        hasNoData.value = true;
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      isLoading.value = false;
-      useUiStore().setRequestPending(false);
-    }
-    return orgSettingsData.value;
-  });
-
-  /**
-   * Filter rows based on search input for both name and email
-   */
-  const filteredTableData = computed(() => {
-    if (!searchOutput.value && !hasNoData.value) {
-      return orgUsersDetailsData.value;
-    }
-    return orgUsersDetailsData.value.filter((person: OrganizationUserDetails) => {
-      const fullName = String(
-        useUser().displayName({
-          preferredName: person.PreferredName || '',
-          firstName: person.FirstName || '',
-          lastName: person.LastName || '',
-          email: person.UserEmail,
-        })
-      ).toLowerCase();
-
-      const email = String(person.UserEmail).toLowerCase();
-
-      return fullName.includes(searchOutput.value.toLowerCase()) || email.includes(searchOutput.value.toLowerCase());
-    });
-  });
 
   async function resend(userDetails: OrganizationUserDetails, index: number) {
     const { OrganizationId, UserEmail } = userDetails;
@@ -216,6 +199,7 @@
 
   function disableButton(index: number) {
     disabledButtons.value[index] = true;
+    buttonRequestPending.value[index] = false;
   }
 
   function setButtonRequestPending(isPending: boolean, index: number) {
@@ -240,11 +224,23 @@
     searchOutput.value = newVal;
   }
 
-
+  async function onSubmit(event: FormSubmitEvent<OrgDetailsFormSchema>) {
+    try {
+      useUiStore().setRequestPending(true);
+      const { Name, Description } = event.data;
+      await $api.orgs.update(useOrgsStore().selectedOrg?.OrganizationId, { Name, Description });
+      await getOrgData();
+      useToastStore().success('Organization updated');
+    } catch (error) {
+      useToastStore().error(ERRORS.network);
+    } finally {
+      useUiStore().setRequestPending(false);
+    }
+  }
 </script>
 
 <template>
-  <EGPageHeader :title="orgName" :description="orgDescription">
+  <EGPageHeader :title="useOrgsStore().selectedOrg!.Name" :description="useOrgsStore().selectedOrg!.Description">
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">
       <EGInviteModule @invite-success="refreshUserList($event)" :org-id="$route.params.id" />
@@ -289,19 +285,12 @@
     ]"
   >
     <template #details>
-      <USkeleton
-        class="flex h-60 flex-col rounded-2xl p-6 max-md:px-5"
-        :ui="{ rounded: 'rounded-full' }"
-        v-if="isLoading"
+      <EGFormOrgDetails
+        v-if="!isLoading"
+        @submit-form-org-details="onSubmit($event)"
+        :name="useOrgsStore().selectedOrg?.Name"
+        :description="useOrgsStore().selectedOrg?.Description"
       />
-      <EGCard v-else>
-        <EGFormGroup label="Organization name" name="Name">
-          <EGInput :placeholder="orgSettingsData.Name" disabled />
-        </EGFormGroup>
-        <EGFormGroup label="Organization description" name="Description">
-          <EGInput :placeholder="orgSettingsData.Description" disabled />
-        </EGFormGroup>
-      </EGCard>
     </template>
 
     <template #users>
@@ -386,7 +375,7 @@
             </template>
             <!-- TODO -->
             <template #labs-data="{ row }">
-              <span class="text-muted">{{ labsCount(row)}}</span>
+              <span class="text-muted">{{ labsCount(row) }}</span>
             </template>
             <template #actions-data="{ row, index }">
               <div class="flex justify-end">

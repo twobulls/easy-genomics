@@ -15,7 +15,7 @@ export default <Partial<Config>>{
           '200': '#d7d5ff',
           '300': '#b8b2ff',
           '400': '#9687fe',
-          '500': '#5524e0',
+          '500': '#5524e0', // 'primary'
           '600': '#6133f4',
           '700': '#5524e0',
           '800': '#451bbc',
@@ -27,6 +27,7 @@ export default <Partial<Config>>{
           '500': '#979797',
           '700': '#818181',
         },
+        'primary': '#5524e0',
         'primary-dark': '#451DB7',
         'primary-muted': '#eee9fc',
         'heading': '#12181f',

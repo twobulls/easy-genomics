@@ -9,6 +9,10 @@ export interface CognitoUserConstructProps {
   userPool: IUserPool;
 }
 
+/**
+ * This construct is only used by the data-provisioning-nested-stack to assist
+ * setting up the System Admin account for the Platform.
+ */
 export class CognitoUserConstruct extends Construct {
   readonly props: CognitoUserConstructProps;
 

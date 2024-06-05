@@ -1,11 +1,15 @@
 <script setup lang="ts">
-  import { useOrgsStore } from '~/stores/stores';
+  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+
+  // Use UI composable to determine if the UI is loading
+  import useUI from '~/composables/useUI';
+  const isMounted = ref(false);
+  const isLoading = computed(() => useUI().isUILoading(isMounted.value));
 
   const router = useRouter();
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
-  const isLoading = ref(true);
   const orgData = ref([]);
 
   const tableColumns = [
@@ -46,6 +50,21 @@
     ],
   ];
 
+  async function getOrgsData() {
+    try {
+      useUiStore().setRequestPending(true);
+      orgData.value = await $api.orgs.list();
+      if (!orgData.value.length) {
+        hasNoData.value = true;
+      }
+    } catch (error) {
+      console.error(error);
+      useToastStore().error('Failed to fetch Organizations data');
+    } finally {
+      useUiStore().setRequestPending(false);
+    }
+  }
+
   function viewOrg(org: Organization) {
     useOrgsStore().setSelectedOrg(org);
     router.push({
@@ -53,19 +72,9 @@
     });
   }
 
-  onBeforeMount(async () => {
-    try {
-      orgData.value = await $api.orgs.list();
-
-      if (!orgData.value.length) {
-        hasNoData.value = true;
-      }
-      isLoading.value = false;
-    } catch (error) {
-      isLoading.value = false;
-      console.error(error);
-      throw error;
-    }
+  onMounted(async () => {
+    await getOrgsData();
+    isMounted.value = true;
   });
 </script>
 
@@ -76,18 +85,18 @@
   </div>
 
   <EGEmptyDataCTA
-    v-if="hasNoData"
+    v-if="!isLoading && hasNoData"
     message="You don't have any Organization set up yet."
     :button-action="() => {}"
     button-label="Create a new Organization"
   />
 
   <EGTable
-    v-else-if="!isLoading"
+    v-if="!hasNoData"
     :table-data="orgData"
     :columns="tableColumns"
     :isLoading="isLoading"
     :action-items="actionItems"
-    :show-pagination="!isLoading && !hasNoData"
+    :show-pagination="!isLoading"
   />
 </template>

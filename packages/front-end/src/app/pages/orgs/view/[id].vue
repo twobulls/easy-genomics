@@ -112,8 +112,6 @@
 
   const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());
 
-  await fetchOrgData();
-
   async function handleRemoveOrgUser() {
     isOpen.value = false;
     isRemovingUser.value = true;
@@ -232,6 +230,10 @@
       useUiStore().setRequestPending(false);
     }
   }
+
+  onMounted(async () => {
+    await fetchOrgData();
+  });
 </script>
 
 <template>
@@ -281,7 +283,6 @@
   >
     <template #details>
       <EGFormOrgDetails
-        v-if="!isLoading"
         @submit-form-org-details="onSubmit($event)"
         :name="useOrgsStore().selectedOrg?.Name"
         :description="useOrgsStore().selectedOrg?.Description"
@@ -298,7 +299,12 @@
       />
 
       <template v-if="!hasNoData">
-        <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+        <EGSearchInput
+          @input-event="updateSearchOutput"
+          placeholder="Search user"
+          class="my-6 w-[408px]"
+          :disabled="isLoading"
+        />
 
         <EGDialog
           actionLabel="Remove User"
@@ -325,8 +331,7 @@
           :columns="tableColumns"
           :isLoading="isLoading"
           :action-items="actionItems"
-          :show-pagination="!hasNoData"
-          v-if="!isLoading"
+          :show-pagination="!isLoading"
         >
           <template #Name-data="{ row }">
             <div class="flex items-center">

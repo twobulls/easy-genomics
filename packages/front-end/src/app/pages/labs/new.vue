@@ -2,10 +2,13 @@
   import { z } from 'zod';
   import type { FormSubmitEvent } from '#ui/types';
   import { cleanText } from '~/utils/string-utils';
-
-  const { MOCK_ORG_ID } = useRuntimeConfig().public;
   import { useToastStore, useUiStore } from '~/stores/stores';
 
+  // Use UI composable to determine if the UI is loading
+  import useUI from '~/composables/useUI';
+  const isLoading = computed(() => useUI().isUILoading());
+
+  const { MOCK_ORG_ID } = useRuntimeConfig().public;
   const router = useRouter();
   const { $api } = useNuxtApp();
 
@@ -157,8 +160,8 @@
       </EGFormGroup>
     </EGCard>
     <EGButton
-      :disabled="state.isFormDisabled || useUiStore().isRequestPending"
-      :loading="useUiStore().isRequestPending"
+      :disabled="state.isFormDisabled || isLoading"
+      :loading="isLoading"
       type="submit"
       label="Create"
       class="mt-6"

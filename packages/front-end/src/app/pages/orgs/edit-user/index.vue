@@ -3,13 +3,18 @@
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 
+  // Use UI composable to determine if the UI is loading
+  import useUI from '~/composables/useUI';
+  const isMounted = ref(false);
+  const isLoading = computed(() => useUI().isUILoading(isMounted.value));
+
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const orgLabsData = ref([] as Laboratory[]);
   const selectedUserLabsData = ref([] as LaboratoryUserDetails[]);
-  const isLoading = ref(true);
   const hasNoData = ref(false);
   const searchOutput = ref('');
+
   const tableColumns = [
     {
       key: 'Name',
@@ -21,28 +26,27 @@
     },
   ];
 
-  await updateSelectedUser();
-  await fetchOrgLabs();
-  await fetchUserLabs();
-  isLoading.value = false;
-
   function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;
   }
 
   async function updateSelectedUser() {
     try {
+      useUiStore().setRequestPending(true);
       const user = await $api.orgs.usersDetailsByUserId($route.query.userId);
       if (user.length) {
         useOrgsStore().setSelectedUser(user[0]);
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 
   async function fetchOrgLabs() {
     try {
+      useUiStore().setRequestPending(true);
       orgLabsData.value = await $api.labs.list($route.query.orgId);
 
       if (!orgLabsData.value.length) {
@@ -51,6 +55,8 @@
     } catch (error) {
       console.error(error);
       throw error;
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 
@@ -59,6 +65,7 @@
    */
   async function fetchUserLabs() {
     try {
+      useUiStore().setRequestPending(true);
       selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(useOrgsStore().selectedUser?.UserId);
       if (!orgLabsData.value.length) {
         hasNoData.value = true;
@@ -66,6 +73,8 @@
     } catch (error) {
       console.error(error);
       throw error;
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 
@@ -142,6 +151,11 @@
       useUiStore().setRequestPending(false);
     }
   }
+
+  onMounted(async () => {
+    await Promise.allSettled([updateSelectedUser(), fetchOrgLabs(), fetchUserLabs()]);
+    isMounted.value = true;
+  });
 </script>
 
 <template>
@@ -170,23 +184,18 @@
   />
 
   <EGTable
-    v-else
+    v-if="!hasNoData"
     :table-data="filteredTableData"
     :columns="tableColumns"
     :isLoading="isLoading"
-    :show-pagination="!isLoading && !hasNoData"
+    :show-pagination="!isLoading"
   >
     <template #actions-data="{ row }">
       <div class="flex items-center" v-if="row.labAccessOptionsEnabled">
-        <EGUserRoleDropdown
-          :key="row"
-          :disabled="useUiStore().isRequestPending"
-          :user="row"
-          @assign-role="handleAssignRole($event)"
-        />
+        <EGUserRoleDropdown :key="row" :disabled="isLoading" :user="row" @assign-role="handleAssignRole($event)" />
       </div>
       <EGButton
-        :loading="useUiStore().isRequestPending"
+        :loading="isLoading"
         v-else-if="row.access"
         @click="
           handleAddUser({

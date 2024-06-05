@@ -3,6 +3,11 @@
   import { ButtonVariantEnum } from '~/types/buttons';
   import { useToastStore, useUiStore } from '~/stores/stores';
 
+  // Use UI composable to determine if the UI is loading
+  import useUI from '~/composables/useUI';
+  const isMounted = ref(false);
+  const isLoading = computed(() => useUI().isUILoading(isMounted.value));
+
   const { $api } = useNuxtApp();
   const router = useRouter();
   const hasNoData = ref(false);
@@ -112,6 +117,7 @@
 
   onMounted(async () => {
     await getLabs();
+    isMounted.value = true;
   });
 </script>
 
@@ -122,19 +128,19 @@
   </div>
 
   <EGEmptyDataCTA
-    v-if="hasNoData"
+    v-if="!isLoading && hasNoData"
     message="You don't have any Labs set up yet."
     :button-action="() => $router.push({ path: `/labs/new` })"
     button-label="Create a new Lab"
   />
 
   <EGTable
-    v-else
+    v-if="!hasNoData"
     :table-data="labData"
     :columns="tableColumns"
-    :isLoading="useUiStore().isRequestPending"
+    :isLoading="isLoading"
     :action-items="actionItems"
-    :show-pagination="!useUiStore().isRequestPending && !hasNoData"
+    :show-pagination="!isLoading"
   />
 
   <EGDialog

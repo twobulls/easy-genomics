@@ -20,7 +20,6 @@
       label: 'Lab Access',
     },
   ];
-  const $emit = defineEmits(['grant-access-clicked', 'lab-access-selected']);
 
   await updateSelectedUser();
   await fetchOrgLabs();
@@ -98,6 +97,7 @@
 
   async function handleAddUser(lab: { labId: string; name: string }) {
     try {
+      useUiStore().setRequestPending(true);
       const res = await $api.labs.addLabUser(lab.labId, useOrgsStore().selectedUser?.UserId);
 
       if (res?.Status === 'Success') {
@@ -113,6 +113,8 @@
         "Oops, we couldn't update the lab access. Please check your connection and try again later"
       );
       throw error;
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 
@@ -174,7 +176,6 @@
     :isLoading="isLoading"
     :show-pagination="!isLoading && !hasNoData"
     @grant-access-clicked="handleAddUser($event)"
-    @lab-access-selected="handleAssignRole($event)"
   >
     <template #actions-data="{ row }">
       <div class="flex items-center" v-if="row.labAccessOptionsEnabled">
@@ -186,9 +187,10 @@
         />
       </div>
       <EGButton
+        :loading="useUiStore().isRequestPending"
         v-else-if="row.access"
         @click="
-          $emit('grant-access-clicked', {
+          handleAddUser({
             labId: row.LaboratoryId,
             name: row.Name,
           })

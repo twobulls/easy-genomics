@@ -30,13 +30,7 @@
   const isRemovingUser = ref(false);
 
   // Table-related refs and computed props
-  const page = ref(1);
-  const pageCount = ref(10);
   const searchOutput = ref('');
-  const pageTotal = computed(() => orgUsersDetailsData.value.length);
-  const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
-  const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
-  const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
 
   const tableColumns = [
     {

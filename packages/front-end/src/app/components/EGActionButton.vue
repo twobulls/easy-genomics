@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  const props = defineProps({ items: { type: Array, required: true } });
+  defineProps({ items: { type: Array, required: true } });
   const isOpen = ref(false);
 </script>
 

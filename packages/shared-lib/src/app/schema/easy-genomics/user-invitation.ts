@@ -5,7 +5,7 @@ export const CreateUserInvitationRequestSchema = z.object({
   Email: z.string(),
 }).strict();
 
-export const UpdateUserInvitationRequestSchema = z.object({
+export const ConfirmUpdateUserInvitationRequestSchema = z.object({
   Token: z.string(),
   FirstName: z.string(),
   LastName: z.string(),

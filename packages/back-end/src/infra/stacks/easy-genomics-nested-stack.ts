@@ -42,6 +42,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
             JWT_SECRET_KEY: this.props.secretKey,
           },
         },
+        '/easy-genomics/user/confirm-user-invitation-request': {
+          environment: {
+            COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
+            JWT_SECRET_KEY: this.props.secretKey,
+          },
+        },
         '/easy-genomics/user/create-user-forgot-password-request': {
           environment: {
             COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient!.userPoolClientId,
@@ -584,6 +590,39 @@ export class EasyGenomicsNestedStack extends NestedStack {
               'ses:FromAddress': `no.reply@${this.props.applicationUrl}`,
             },
           },
+        }),
+      ],
+    );
+    // /easy-genomics/user/create-user-invitation-request
+    this.iam.addPolicyStatements(
+      '/easy-genomics/user/confirm-user-invitation-request',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query', 'dynamodb:PutItem', 'dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool?.userPoolId}`,
+          ],
+          actions: ['cognito-idp:AdminEnableUser', 'cognito-idp:AdminSetUserPassword', 'cognito-idp:AdminUpdateUserAttributes'],
+          effect: Effect.ALLOW,
         }),
       ],
     );

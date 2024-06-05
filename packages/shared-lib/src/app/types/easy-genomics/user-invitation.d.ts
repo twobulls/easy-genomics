@@ -15,9 +15,9 @@ export interface CreateUserInvitationRequest {
 
 /**
  * The following defines the DTO for the FE to submit requests to the
- * /easy-genomics/user/update-user-invitation-request API.
+ * /easy-genomics/user/confirm-user-invitation-request API.
  */
-export interface UpdateUserInvitationRequest {
+export interface ConfirmUserInvitationRequest {
   Token: string;
   FirstName: string;
   LastName: string;

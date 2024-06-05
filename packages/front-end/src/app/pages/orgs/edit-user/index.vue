@@ -1,14 +1,17 @@
 <script setup lang="ts">
-  import { useOrgsStore, useToastStore } from '~/stores/stores';
+  import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
-  import { LabAccessRolesEnum } from '~/types/labAccessRoles';
+
+  // Use UI composable to determine if the UI is loading
+  import useUI from '~/composables/useUI';
+  const isMounted = ref(false);
+  const isLoading = computed(() => useUI().isUILoading(isMounted.value));
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const orgLabsData = ref([] as Laboratory[]);
   const selectedUserLabsData = ref([] as LaboratoryUserDetails[]);
-  const isLoading = ref(true);
   const hasNoData = ref(false);
   const searchOutput = ref('');
 
@@ -23,28 +26,27 @@
     },
   ];
 
-  await updateSelectedUser();
-  await fetchOrgLabs();
-  await fetchLabsUserData();
-  isLoading.value = false;
-
   function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;
   }
 
   async function updateSelectedUser() {
     try {
+      useUiStore().setRequestPending(true);
       const user = await $api.orgs.usersDetailsByUserId($route.query.userId);
       if (user.length) {
         useOrgsStore().setSelectedUser(user[0]);
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 
   async function fetchOrgLabs() {
     try {
+      useUiStore().setRequestPending(true);
       orgLabsData.value = await $api.labs.list($route.query.orgId);
 
       if (!orgLabsData.value.length) {
@@ -53,22 +55,26 @@
     } catch (error) {
       console.error(error);
       throw error;
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 
   /**
    * Fetch the user's details for each lab
    */
-  async function fetchLabsUserData() {
+  async function fetchUserLabs() {
     try {
+      useUiStore().setRequestPending(true);
       selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(useOrgsStore().selectedUser?.UserId);
-
       if (!orgLabsData.value.length) {
         hasNoData.value = true;
       }
     } catch (error) {
       console.error(error);
       throw error;
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 
@@ -89,21 +95,18 @@
 
         return {
           labAccessOptionsEnabled: hasAccess,
-          labAccess: !hasAccess,
-          labManager: userLab?.LabManager || false,
-          labTechnician: userLab?.LabTechnician || false,
+          access: !hasAccess,
+          LabManager: userLab?.LabManager || false,
+          LabTechnician: userLab?.LabTechnician || false,
           Name: lab.Name,
           LaboratoryId: lab.LaboratoryId,
-          labRole: {
-            role: userLab?.LabManager ? LabAccessRolesEnum.enum.LabManager : LabAccessRolesEnum.enum.LabTechnician,
-            label: userLab?.LabManager ? 'Lab Manager' : 'Lab Technician',
-          },
         };
       });
   });
 
   async function handleAddUser(lab: { labId: string; name: string }) {
     try {
+      useUiStore().setRequestPending(true);
       const res = await $api.labs.addLabUser(lab.labId, useOrgsStore().selectedUser?.UserId);
 
       if (res?.Status === 'Success') {
@@ -119,18 +122,22 @@
         "Oops, we couldn't update the lab access. Please check your connection and try again later"
       );
       throw error;
+    } finally {
+      useUiStore().setRequestPending(false);
     }
   }
 
-  async function handleAssignRole(labRole: { labId: string; role: string; labName: string }) {
-    const isLabManager = labRole.role === 'LabManager';
-
+  async function handleAssignRole(userLabDetails: any) {
     try {
-      const res = await $api.labs.editUserLabAccess(labRole.labId, useOrgsStore().selectedUser?.UserId, isLabManager);
-
+      useUiStore().setRequestPending(true);
+      const res = await $api.labs.editUserLabAccess(
+        userLabDetails.LaboratoryId,
+        useOrgsStore().selectedUser?.UserId,
+        userLabDetails.LabManager
+      );
       if (res?.Status === 'Success') {
         useToastStore().success(
-          `${labRole.labName} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`
+          `${userLabDetails.Name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`
         );
       } else {
         throw new Error('Failed to update user role');
@@ -140,9 +147,15 @@
       throw error;
     } finally {
       // update UI with latest data
-      await fetchLabsUserData();
+      await fetchUserLabs();
+      useUiStore().setRequestPending(false);
     }
   }
+
+  onMounted(async () => {
+    await Promise.allSettled([updateSelectedUser(), fetchOrgLabs(), fetchUserLabs()]);
+    isMounted.value = true;
+  });
 </script>
 
 <template>
@@ -166,19 +179,37 @@
   <EGEmptyDataCTA
     v-if="!isLoading && hasNoData"
     message="There are no labs in your Organization"
-    :button-action="() => navigateTo('/labs/new')"
+    :button-action="() => $router.push({ path: '/labs/new' })"
     button-label="Create a Lab"
   />
 
   <EGTable
-    v-else
+    v-if="!hasNoData"
     :table-data="filteredTableData"
     :columns="tableColumns"
     :isLoading="isLoading"
-    :show-pagination="!isLoading && !hasNoData"
-    @grant-access-clicked="handleAddUser($event)"
-    @lab-access-selected="handleAssignRole($event)"
-  />
+    :show-pagination="!isLoading"
+  >
+    <template #actions-data="{ row }">
+      <div class="flex items-center" v-if="row.labAccessOptionsEnabled">
+        <EGUserRoleDropdown :key="row" :disabled="isLoading" :user="row" @assign-role="handleAssignRole($event)" />
+      </div>
+      <EGButton
+        :loading="isLoading"
+        v-else-if="row.access"
+        @click="
+          handleAddUser({
+            labId: row.LaboratoryId,
+            name: row.Name,
+          })
+        "
+        label="Grant access"
+        variant="secondary"
+        size="sm"
+      />
+      <EGActionButton v-else-if="actionItems" :items="actionItems(row)" />
+    </template>
+  </EGTable>
 </template>
 
 <style scoped></style>

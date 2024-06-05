@@ -2,9 +2,11 @@
   withDefaults(
     defineProps<{
       placeholder: string;
+      disabled?: boolean;
     }>(),
     {
       placeholder: 'Search',
+      disabled: false,
     }
   );
 
@@ -24,6 +26,7 @@
     v-model="searchTerm"
     name="searchTerm"
     :placeholder="placeholder"
+    :disabled="disabled"
     icon="i-heroicons-magnifying-glass-20-solid"
     autocomplete="off"
     :trailing="true"

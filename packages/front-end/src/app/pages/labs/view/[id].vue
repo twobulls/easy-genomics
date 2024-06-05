@@ -3,21 +3,19 @@
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse, EditUserResponse } from '~/types/api';
   import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
-  import EGUserRoleDropdown from '~/components/EGUserRoleDropdown.vue';
   import useUser from '~/composables/useUser';
+
+  // Use UI composable to determine if the UI is loading
+  import useUI from '~/composables/useUI';
+  const isMounted = ref(false);
+  const isLoading = computed(() => useUI().isUILoading(isMounted.value));
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const labName = $route.query.name;
   const hasNoData = ref(false);
   const labUsersDetailsData = ref<LaboratoryUserDetails[]>([]);
-  const page = ref(1);
-  const pageCount = ref(10);
   const searchOutput = ref('');
-  const pageTotal = computed(() => labUsersDetailsData.value.length);
-  const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
-  const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
-  const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
   const laboratoryId = $route.params.id;
   const $emit = defineEmits(['remove-user-from-lab', 'assign-role']);
 
@@ -35,13 +33,13 @@
   async function handleRemoveLabUser() {
     isOpen.value = false;
 
-    const userToRemove = labUsersDetailsData.value.find(user => user.UserId === selectedUserId.value);
+    const userToRemove = labUsersDetailsData.value.find((user) => user.UserId === selectedUserId.value);
     const displayName = useUser().displayName({
       preferredName: userToRemove?.PreferredName,
       firstName: userToRemove?.FirstName,
       lastName: userToRemove?.LastName,
       email: userToRemove?.UserEmail,
-    })
+    });
 
     try {
       if (!selectedUserId.value) {
@@ -157,6 +155,7 @@
 
   onMounted(async () => {
     await getLabUsers();
+    isMounted.value = true;
   });
 </script>
 
@@ -220,7 +219,7 @@
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGEmptyDataCTA
-          v-if="!useUiStore().isRequestPending && hasNoData"
+          v-if="!isLoading && hasNoData"
           message="You don't have any users in this lab yet."
           img-src="/images/empty-state-user.jpg"
           :button-action="() => {}"
@@ -228,7 +227,12 @@
         />
 
         <template v-if="!hasNoData">
-          <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+          <EGSearchInput
+            @input-event="updateSearchOutput"
+            placeholder="Search user"
+            class="my-6 w-[408px]"
+            :disabled="isLoading"
+          />
 
           <EGDialog
             actionLabel="Remove User"
@@ -240,123 +244,66 @@
             v-model="isOpen"
           />
 
-          <UCard
-            class="rounded-2xl border-none shadow-none"
-            :ui="{
-              body: 'p-0',
-            }"
+          <EGTable
+            :table-data="filteredTableData"
+            :columns="tableColumns"
+            :is-loading="isLoading"
+            :show-pagination="!isLoading"
           >
-            <UTable
-              :loading="useUiStore().isRequestPending"
-              class="LabsUsersTable rounded-2xl"
-              :loading-state="{ icon: '', label: '' }"
-              :rows="filteredTableData"
-              :columns="tableColumns"
-            >
-              <template #Name-data="{ row }">
-                <div class="flex items-center">
-                  <EGUserAvatar
-                    class="mr-4"
-                    :name="
-                      useUser().displayName({
-                        preferredName: row.PreferredName,
-                        firstName: row.FirstName,
-                        lastName: row.LastName,
-                        email: row.UserEmail,
-                      })
-                    "
-                    :email="row.UserEmail"
-                    :is-active="row.OrganizationUserStatus === 'Active'"
-                  />
-                  <div class="flex flex-col">
-                    <div>
-                      {{
-                        row.FirstName
-                          ? useUser().displayName({
-                              preferredName: row.PreferredName,
-                              firstName: row.FirstName,
-                              lastName: row.LastName,
-                              email: row.UserEmail,
-                            })
-                          : ''
-                      }}
-                    </div>
-                    <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
+            <template #Name-data="{ row }">
+              <div class="flex items-center">
+                <EGUserAvatar
+                  class="mr-4"
+                  :name="
+                    useUser().displayName({
+                      preferredName: row.PreferredName,
+                      firstName: row.FirstName,
+                      lastName: row.LastName,
+                      email: row.UserEmail,
+                    })
+                  "
+                  :email="row.UserEmail"
+                  :is-active="row.OrganizationUserStatus === 'Active'"
+                />
+                <div class="flex flex-col">
+                  <div>
+                    {{
+                      row.FirstName
+                        ? useUser().displayName({
+                            preferredName: row.PreferredName,
+                            firstName: row.FirstName,
+                            lastName: row.LastName,
+                            email: row.UserEmail,
+                          })
+                        : ''
+                    }}
                   </div>
+                  <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
                 </div>
-              </template>
-              <template #assignedRole-data="{ row: user }">
-                <span class="text-black">{{ user.assignedRole }}</span>
-              </template>
-              <template #actions-data="{ row: user }">
-                <div class="flex items-center">
-                  <EGUserRoleDropdown
-                    :key="user"
-                    :disabled="useUiStore().isRequestPending"
-                    :user="user"
-                    @assign-role="handleAssignRole($event)"
-                    @remove-user-from-lab="({ UserId, displayName }) => removeUserFromLab(UserId, displayName)"
-                  />
-                </div>
-              </template>
-              <template #empty-state>
-                <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
-              </template>
-            </UTable>
-          </UCard>
-
-          <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!searchOutput && !hasNoData">
-            <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
-            <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
-              <UPagination v-model="page" :page-count="10" :total="labUsersDetailsData.length" />
-            </div>
-          </div>
+              </div>
+            </template>
+            <template #assignedRole-data="{ row: user }">
+              <span class="text-black">{{ user.assignedRole }}</span>
+            </template>
+            <template #actions-data="{ row: user }">
+              <div class="flex items-center">
+                <EGUserRoleDropdown
+                  :show-remove-from-lab="true"
+                  :key="user"
+                  :disabled="isLoading"
+                  :user="user"
+                  @assign-role="handleAssignRole($event)"
+                  @remove-user-from-lab="({ UserId, displayName }) => removeUserFromLab(UserId, displayName)"
+                />
+              </div>
+            </template>
+            <template #empty-state>
+              <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
+            </template>
+          </EGTable>
         </template>
       </div>
       <div v-else-if="item.key === 'workflow'" class="space-y-3">Workflow TBD</div>
     </template>
   </UTabs>
 </template>
-
-<style>
-  .LabsUsersTable {
-    font-size: 14px;
-    width: 100%;
-    table-layout: auto;
-
-    thead {
-      button {
-        color: black;
-      }
-
-      tr {
-        background-color: #efefef;
-
-        th:first-child {
-          padding-left: 40px;
-          width: 400px;
-        }
-        th:last-child {
-          text-align: right;
-          padding-right: 40px;
-        }
-      }
-    }
-
-    tbody tr td:nth-child(1) {
-      color: black;
-      font-weight: 600;
-      padding-left: 40px;
-    }
-
-    tbody tr td:nth-child(2) {
-      font-size: 12px;
-      color: #818181;
-    }
-
-    tbody tr td:last-child {
-      width: 50px;
-      padding-right: 40px;
-    }
-  }
-</style>

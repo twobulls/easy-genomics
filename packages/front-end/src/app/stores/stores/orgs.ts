@@ -1,6 +1,6 @@
+import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { OrganizationAccessDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { defineStore } from 'pinia';
 import useUser from '~/composables/useUser';
 
@@ -42,7 +42,7 @@ const useOrgsStore = defineStore('orgsStore', {
           firstName: this.selectedUser?.FirstName || '',
           lastName: this.selectedUser?.LastName || '',
           email: this.selectedUser?.UserEmail,
-        })
+        }),
       );
     },
 

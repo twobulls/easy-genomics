@@ -1,7 +1,4 @@
-import {
-  EditLaboratoryUser,
-  RemoveLaboratoryUserSchema,
-} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
+import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { CreateLaboratory, Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
@@ -91,7 +88,7 @@ class LabsModule extends HttpFactory {
   async listLabUsersByLabId(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`
+      `/laboratory/user/list-laboratory-users?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -140,7 +137,7 @@ class LabsModule extends HttpFactory {
   async usersDetails(labId: string): Promise<LaboratoryUserDetails[]> {
     const res = await this.call<LaboratoryUserDetails[]>(
       'GET',
-      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`
+      `/laboratory/user/list-laboratory-users-details?laboratoryId=${labId}`,
     );
 
     if (!res) {

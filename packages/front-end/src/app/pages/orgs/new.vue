@@ -5,6 +5,7 @@
   import { OrgDetailsFormSchema } from '~/types/forms';
   import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
 
+  const router = useRouter();
   const { $api } = useNuxtApp();
 
   async function onSubmit(event: FormSubmitEvent<OrgDetailsFormSchema>) {
@@ -13,7 +14,7 @@
       const { Name, Description } = event.data;
       await $api.orgs.create({ Name, Description });
       useToastStore().success('Organization created');
-      await navigateTo('/orgs');
+      router.push({ path: '/orgs' });
     } catch (error) {
       useToastStore().error(ERRORS.network);
     } finally {

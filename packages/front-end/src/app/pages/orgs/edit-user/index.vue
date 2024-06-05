@@ -175,7 +175,6 @@
     :columns="tableColumns"
     :isLoading="isLoading"
     :show-pagination="!isLoading && !hasNoData"
-    @grant-access-clicked="handleAddUser($event)"
   >
     <template #actions-data="{ row }">
       <div class="flex items-center" v-if="row.labAccessOptionsEnabled">

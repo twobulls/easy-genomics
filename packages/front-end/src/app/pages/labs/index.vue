@@ -4,6 +4,7 @@
   import { useToastStore, useUiStore } from '~/stores/stores';
 
   const { $api } = useNuxtApp();
+  const router = useRouter();
   const hasNoData = ref(false);
   const labData = ref([] as Laboratory[]);
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
@@ -34,7 +35,7 @@
     [
       {
         label: 'View / Edit',
-        click: async () => await navigateTo({ path: `/labs/view/${row.LaboratoryId}`, query: { name: row.Name } }),
+        click: () => router.push({ path: `/labs/view/${row.LaboratoryId}`, query: { name: row.Name } }),
       },
     ],
     [
@@ -117,13 +118,13 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1" v-if="labData">Labs</EGText>
-    <EGButton label="Create a new Lab" class="self-end" @click="() => navigateTo({ path: `/labs/new` })" />
+    <EGButton label="Create a new Lab" class="self-end" @click="() => $router.push({ path: `/labs/new` })" />
   </div>
 
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Labs set up yet."
-    :button-action="() => navigateTo({ path: `/labs/new` })"
+    :button-action="() => $router.push({ path: `/labs/new` })"
     button-label="Create a new Lab"
   />
 

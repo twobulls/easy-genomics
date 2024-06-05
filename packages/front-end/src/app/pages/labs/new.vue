@@ -6,6 +6,7 @@
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
   import { useToastStore, useUiStore } from '~/stores/stores';
 
+  const router = useRouter();
   const { $api } = useNuxtApp();
 
   /*
@@ -115,7 +116,7 @@
 
       await $api.labs.create({ Name, Description, OrganizationId: MOCK_ORG_ID, Status: 'Active' });
       useToastStore().success('Laboratory created');
-      await navigateTo('/labs');
+      router.push({ path: '/labs' });
     } catch (error) {
       useToastStore().error('Failed to create lab');
     } finally {

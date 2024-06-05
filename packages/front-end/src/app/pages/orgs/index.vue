@@ -2,6 +2,7 @@
   import { useOrgsStore } from '~/stores/stores';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
+  const router = useRouter();
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
   const isLoading = ref(true);
@@ -47,7 +48,7 @@
 
   function viewOrg(org: Organization) {
     useOrgsStore().setSelectedOrg(org);
-    navigateTo({
+    router.push({
       path: `/orgs/view/${org.OrganizationId}`,
     });
   }

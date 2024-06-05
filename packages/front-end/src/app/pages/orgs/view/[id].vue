@@ -11,6 +11,7 @@
   import { ERRORS } from '~/constants/validation';
   import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
 
+  const router = useRouter();
   const $route = useRoute();
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
@@ -51,9 +52,9 @@
     },
   ];
 
-  async function editUser(user: OrganizationUserDetails) {
-    await navigateTo({
-      path: `/orgs/edit-user`,
+  function editUser(user: OrganizationUserDetails) {
+    router.push({
+      path: '/orgs/edit-user',
       query: {
         userId: user.UserId,
         orgId,

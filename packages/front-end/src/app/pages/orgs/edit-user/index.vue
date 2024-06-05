@@ -165,7 +165,7 @@
   <EGEmptyDataCTA
     v-if="!isLoading && hasNoData"
     message="There are no labs in your Organization"
-    :button-action="() => navigateTo('/labs/new')"
+    :button-action="() => $router.push({ path: '/labs/new' })"
     button-label="Create a Lab"
   />
 

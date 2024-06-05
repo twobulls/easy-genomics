@@ -9,6 +9,7 @@
   const props = defineProps<{
     user: LaboratoryUserDetailsWithRoles;
     disabled: boolean;
+    showRemoveFromLab: boolean;
   }>();
 
   const { PreferredName, FirstName, LastName, UserId, UserEmail } = props.user;
@@ -39,14 +40,17 @@
     ];
   });
 
-  items.push([
-    {
-      label: 'Remove From Lab',
-      click: () => {
-        emit('remove-user-from-lab', { UserId, displayName });
+  if (props.showRemoveFromLab) {
+    items.push([
+      {
+        label: 'Remove From Lab',
+        class: 'text-alert-danger-dark',
+        click: () => {
+          emit('remove-user-from-lab', { UserId, displayName });
+        },
       },
-    },
-  ]);
+    ]);
+  }
 
   function handleUpdateRole(role) {
     const LabManager = role === LaboratoryRolesEnumSchema.enum.LabManager;
@@ -56,6 +60,18 @@
 
     emit('assign-role', { labUser, displayName });
   }
+
+  watch(
+    () => props.user,
+    (newUser) => {
+      if (newUser.assignedRole === LaboratoryRolesEnumSchema.enum.LabManager) {
+        assignedRole.value = LaboratoryRolesEnumSchema.enum.LabManager;
+      } else {
+        assignedRole.value = LaboratoryRolesEnumSchema.enum.LabTechnician;
+      }
+    },
+    { immediate: true }
+  );
 </script>
 
 <template>
@@ -72,16 +88,6 @@
   .UDropdown {
     .p-1 {
       padding: 8px 12px;
-    }
-
-    .p-1:last-child {
-      button {
-        color: #ef5c45;
-      }
-
-      &:hover {
-        color: #ef5c45;
-      }
     }
 
     .active {

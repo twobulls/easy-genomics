@@ -117,7 +117,7 @@
 
   const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());
 
-  await getOrgData();
+  await fetchOrgData();
 
   async function handleRemoveOrgUser() {
     isOpen.value = false;
@@ -140,7 +140,7 @@
 
       if (res?.Status === 'Success') {
         useToastStore().success(`${displayName} has been removed from ${useOrgsStore().selectedOrg!.Name}`);
-        await getOrgData(false);
+        await fetchOrgData(false);
       } else {
         throw new Error('User not removed from Organization');
       }
@@ -162,7 +162,7 @@
    * Fetches Organization data - org users and (optionally) org settings
    * @param shouldGetOrgSettings
    */
-  async function getOrgData(shouldGetOrgSettings: boolean = true) {
+  async function fetchOrgData(shouldGetOrgSettings: boolean = true) {
     isLoading.value = true;
     try {
       if (shouldGetOrgSettings) {
@@ -229,7 +229,7 @@
       useUiStore().setRequestPending(true);
       const { Name, Description } = event.data;
       await $api.orgs.update(useOrgsStore().selectedOrg?.OrganizationId, { Name, Description });
-      await getOrgData();
+      await fetchOrgData();
       useToastStore().success('Organization updated');
     } catch (error) {
       useToastStore().error(ERRORS.network);
@@ -325,84 +325,68 @@
           v-model="isOpen"
         />
 
-        <UCard
-          class="rounded-2xl border-none shadow-none"
-          :ui="{
-            body: 'p-0',
-          }"
+        <EGTable
+          :table-data="filteredTableData"
+          :columns="tableColumns"
+          :isLoading="isLoading"
+          :action-items="actionItems"
+          :show-pagination="!hasNoData"
+          v-if="!isLoading"
         >
-          <UTable
-            :loading="isLoading"
-            class="OrgUsersTable rounded-xl"
-            :loading-state="{ icon: '', label: '' }"
-            :rows="filteredTableData"
-            :columns="tableColumns"
-          >
-            <template #Name-data="{ row }">
-              <div class="flex items-center">
-                <EGUserAvatar
-                  class="mr-4"
-                  :name="
-                    useUser().displayName({
-                      preferredName: row.PreferredName,
-                      firstName: row.FirstName,
-                      lastName: row.LastName,
-                      email: row.UserEmail,
-                    })
-                  "
-                  :email="row.UserEmail"
-                  :is-active="row.OrganizationUserStatus === 'Active'"
-                />
-                <div class="flex flex-col">
-                  <div>
-                    {{
-                      row.FirstName
-                        ? useUser().displayName({
-                            preferredName: row.PreferredName,
-                            firstName: row.FirstName,
-                            lastName: row.LastName,
-                            email: row.UserEmail,
-                          })
-                        : ''
-                    }}
-                  </div>
-                  <div class="text-muted text-xs font-normal">{{ row.UserEmail }}</div>
+          <template #Name-data="{ row }">
+            <div class="flex items-center">
+              <EGUserAvatar
+                class="mr-4"
+                :name="
+                  useUser().displayName({
+                    preferredName: row.PreferredName,
+                    firstName: row.FirstName,
+                    lastName: row.LastName,
+                    email: row.UserEmail,
+                  })
+                "
+                :email="row.UserEmail"
+                :is-active="row.OrganizationUserStatus === 'Active'"
+              />
+              <div class="flex flex-col">
+                <div>
+                  {{
+                    row.FirstName
+                      ? useUser().displayName({
+                          preferredName: row.PreferredName,
+                          firstName: row.FirstName,
+                          lastName: row.LastName,
+                          email: row.UserEmail,
+                        })
+                      : ''
+                  }}
                 </div>
+                <div class="text-muted text-xs font-normal">{{ (row as OrganizationUserDetails).UserEmail }}</div>
               </div>
-            </template>
-            <template #status-data="{ row }">
-              <span class="text-muted">{{ row.OrganizationUserStatus }}</span>
-            </template>
-            <!-- TODO -->
-            <template #labs-data="{ row }">
-              <span class="text-muted">{{ labsCount(row) }}</span>
-            </template>
-            <template #actions-data="{ row, index }">
-              <div class="flex justify-end">
-                <EGButton
-                  size="sm"
-                  variant="secondary"
-                  label="Resend Invite"
-                  v-if="isInvited(row.OrganizationUserStatus)"
-                  @click="resend(row, index)"
-                  :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
-                  :loading="isButtonRequestPending(index)"
-                />
-                <EGActionButton v-if="row.OrganizationUserStatus === 'Active'" :items="actionItems(row)" class="ml-2" />
-              </div>
-            </template>
-            <template #empty-state>
-              <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
-            </template>
-          </UTable>
-        </UCard>
+            </div>
+          </template>
+          <template #status-data="{ row }">
+            <span class="text-muted">{{ (row as OrganizationUserDetails).OrganizationUserStatus }}</span>
+          </template>
+          <template #labs-data="{ row }">
+            <span class="text-muted">{{ labsCount(row) }}</span>
+          </template>
+          <template #actions-data="{ row, index }">
+            <div class="flex justify-end">
+              <EGButton
+                size="sm"
+                variant="secondary"
+                label="Resend Invite"
+                v-if="isInvited((row as OrganizationUserDetails).OrganizationUserStatus)"
+                @click="resend(row as OrganizationUserDetails, index)"
+                :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
+                :loading="isButtonRequestPending(index)"
+              />
+              <EGActionButton v-if="row.OrganizationUserStatus === 'Active'" :items="actionItems(row)" class="ml-2" />
+            </div>
+          </template>
+        </EGTable>
 
-        <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="!searchOutput">
-          <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
-          <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
-            <UPagination v-model="page" :page-count="10" :total="orgUsersDetailsData.length" />
-          </div>
-        </div>
         <div class="text-muted my-6 text-center text-xs">
           This organisation can only be removed by contacting your System administrator at: [System admin email]
         </div>
@@ -410,46 +394,3 @@
     </template>
   </UTabs>
 </template>
-
-<style>
-  .OrgUsersTable {
-    font-size: 14px;
-    width: 100%;
-    table-layout: auto;
-
-    thead {
-      button {
-        color: black;
-      }
-
-      tr {
-        background-color: #efefef;
-
-        th:first-child {
-          padding-left: 40px;
-          width: 400px;
-        }
-        th:last-child {
-          text-align: right;
-          padding-right: 40px;
-        }
-      }
-    }
-
-    tbody tr td:nth-child(1) {
-      color: black;
-      font-weight: 600;
-      padding-left: 40px;
-    }
-
-    tbody tr td:nth-child(2) {
-      font-size: 12px;
-      color: #818181;
-    }
-
-    tbody tr td:last-child {
-      width: 50px;
-      padding-right: 40px;
-    }
-  }
-</style>

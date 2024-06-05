@@ -134,7 +134,39 @@
     :isLoading="useUiStore().isRequestPending"
     :action-items="actionItems"
     :show-pagination="!useUiStore().isRequestPending && !hasNoData"
-  />
+  >
+    <template #actions-data="{ row }">
+      <USelectMenu
+        v-if="row.labAccessOptionsEnabled"
+        v-model="row.labRole.role"
+        :options="labAccessItems"
+        value-attribute="role"
+        option-attribute="label"
+        @update:modelValue="
+          (newRole) => {
+            $emit('lab-access-selected', {
+              role: newRole,
+              labId: row.LaboratoryId,
+              labName: row.Name,
+            });
+          }
+        "
+      />
+      <EGButton
+        v-else-if="row.labAccess"
+        @click="
+          $emit('grant-access-clicked', {
+            labId: row.LaboratoryId,
+            name: row.Name,
+          })
+        "
+        label="Grant access"
+        variant="secondary"
+        size="sm"
+      />
+      <EGActionButton v-else-if="actionItems" :items="actionItems(row)" />
+    </template>
+  </EGTable>
 
   <EGDialog
     actionLabel="Remove Lab"

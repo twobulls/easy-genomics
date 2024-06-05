@@ -6,11 +6,17 @@
     assignedRole: LaboratoryRolesEnumSchema;
   }
 
-  const props = defineProps<{
-    user: LaboratoryUserDetailsWithRoles;
-    disabled: boolean;
-    showRemoveFromLab: boolean;
-  }>();
+  const props = withDefaults(
+    defineProps<{
+      user: LaboratoryUserDetailsWithRoles;
+      disabled?: boolean;
+      showRemoveFromLab?: boolean;
+    }>(),
+    {
+      disabled: false,
+      showRemoveFromLab: false,
+    }
+  );
 
   const { PreferredName, FirstName, LastName, UserId, UserEmail } = props.user;
   const displayName = useUser().displayName({

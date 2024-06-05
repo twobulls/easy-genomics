@@ -60,18 +60,6 @@
 
     emit('assign-role', { labUser, displayName });
   }
-
-  watch(
-    () => props.user,
-    (newUser) => {
-      if (newUser.assignedRole === LaboratoryRolesEnumSchema.enum.LabManager) {
-        assignedRole.value = LaboratoryRolesEnumSchema.enum.LabManager;
-      } else {
-        assignedRole.value = LaboratoryRolesEnumSchema.enum.LabTechnician;
-      }
-    },
-    { immediate: true }
-  );
 </script>
 
 <template>

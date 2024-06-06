@@ -13,7 +13,7 @@
       showPagination: boolean;
     }>(),
     {
-      isLoading: true,
+      isLoading: false,
     }
   );
 

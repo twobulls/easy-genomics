@@ -1,8 +1,10 @@
 import {
   BatchGetItemCommandOutput,
   GetItemCommandOutput,
+  PutItemCommandOutput,
   QueryCommandOutput,
   ScanCommandOutput,
+  TransactWriteItemsCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
@@ -145,8 +147,75 @@ export class UserService extends DynamoDBService implements Service {
     }
   };
 
-  async update(user: User, existing?: User): Promise<User> {
-    throw new Error('TBD');
+  async update(user: User, existing: User): Promise<User> {
+    const logRequestMessage = `Update User UserId=${user.UserId}, Email=${user.Email} request`;
+    console.info(logRequestMessage);
+
+    // Data validation safety check
+    if (!UserSchema.safeParse(user).success) throw new Error('Invalid request');
+
+    // Check if User Email is unchanged
+    if (user.Email.toLowerCase() === existing.Email.toLowerCase()) {
+      // Perform normal update request
+      const response: PutItemCommandOutput = await this.putItem({
+        TableName: this.USER_TABLE_NAME,
+        ConditionExpression: 'attribute_exists(#UserId)',
+        ExpressionAttributeNames: {
+          '#UserId': 'UserId',
+        },
+        Item: marshall(user),
+      });
+      if (response.$metadata.httpStatusCode === 200) {
+        return this.get(user.UserId);
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+      }
+    } else {
+      // Perform transaction update request to include updating the User Email and enforce uniqueness
+      const response: TransactWriteItemsCommandOutput = await this.transactWriteItems({
+        TransactItems: [
+          {
+            Put: {
+              TableName: this.USER_TABLE_NAME,
+              ConditionExpression: 'attribute_exists(#UserId)',
+              ExpressionAttributeNames: {
+                '#UserId': 'UserId',
+              },
+              Item: marshall(user),
+            },
+          },
+          {
+            Delete: {
+              TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+              Key: {
+                Value: { S: existing.Email.toLowerCase() },
+                Type: { S: 'user-email' },
+              },
+            },
+          },
+          {
+            Put: {
+              TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+              ConditionExpression: 'attribute_not_exists(#Value) AND attribute_not_exists(#Type)',
+              ExpressionAttributeNames: {
+                '#Value': 'Value',
+                '#Type': 'Type',
+              },
+              Item: marshall({
+                Value: user.Email.toLowerCase(),
+                Type: 'user-email',
+              }),
+            },
+          },
+        ],
+      });
+      if (response.$metadata.httpStatusCode === 200) {
+        // Transaction Updates do not return the updated User details, so explicitly retrieve it
+        return this.get(user.UserId);
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+      }
+    }
   }
 
   async delete(user: User): Promise<boolean> {

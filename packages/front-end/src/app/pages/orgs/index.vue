@@ -82,7 +82,6 @@
   />
 
   <EGTable
-    v-else-if="!isLoading"
     :table-data="orgData"
     :columns="tableColumns"
     :isLoading="isLoading"

@@ -23,7 +23,7 @@ export class SesService {
   public async sendUserInvitationEmail(
     toAddress: string,
     organizationName: string,
-    invitationJwt: string,
+    invitationJwt: string
   ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send User Invitation Email request: ${toAddress}`;
     console.info(logRequestMessage);
@@ -42,7 +42,7 @@ export class SesService {
         DOMAIN_NAME: this.props.domainName,
         INVITATION_JWT: invitationJwt,
         ORGANIZATION_NAME: organizationName,
-        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/easy-genomics-email.png`,
+        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/email/easy-genomics.png`,
       }),
     });
 
@@ -57,7 +57,7 @@ export class SesService {
 
   public async sendUserForgotPasswordEmail(
     toAddress: string,
-    forgotPasswordJwt: string,
+    forgotPasswordJwt: string
   ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send User Forgot Password Email request: ${toAddress}`;
     console.info(logRequestMessage);
@@ -75,7 +75,8 @@ export class SesService {
         COPYRIGHT_YEAR: `${new Date().getFullYear()}`,
         DOMAIN_NAME: this.props.domainName,
         FORGOT_PASSWORD_JWT: forgotPasswordJwt,
-        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/easy-genomics-email.png`,
+        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/email/easy-genomics.png`,
+        LOCK_IMAGE: `https://${this.props.domainName}/images/email/lock.png`,
       }),
     });
 

@@ -3,18 +3,13 @@
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 
-  // Use UI composable to determine if the UI is loading
-  import useUI from '~/composables/useUI';
-  const isMounted = ref(false);
-  const isLoading = computed(() => useUI().isUILoading(isMounted.value));
-
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const orgLabsData = ref([] as Laboratory[]);
   const selectedUserLabsData = ref([] as LaboratoryUserDetails[]);
+  const isLoading = ref(true);
   const hasNoData = ref(false);
   const searchOutput = ref('');
-
   const tableColumns = [
     {
       key: 'Name',
@@ -25,6 +20,12 @@
       label: 'Lab Access',
     },
   ];
+
+  // FIXME: beforemount? test..
+  await updateSelectedUser();
+  await fetchOrgLabs();
+  await fetchUserLabs();
+  isLoading.value = false;
 
   function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;
@@ -151,11 +152,6 @@
       useUiStore().setRequestPending(false);
     }
   }
-
-  onMounted(async () => {
-    await Promise.allSettled([updateSelectedUser(), fetchOrgLabs(), fetchUserLabs()]);
-    isMounted.value = true;
-  });
 </script>
 
 <template>

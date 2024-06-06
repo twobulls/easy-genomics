@@ -112,6 +112,10 @@
 
   const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());
 
+  onBeforeMount(async () => {
+    await fetchOrgData();
+  });
+
   async function handleRemoveOrgUser() {
     isOpen.value = false;
     isRemovingUser.value = true;
@@ -230,10 +234,6 @@
       useUiStore().setRequestPending(false);
     }
   }
-
-  onMounted(async () => {
-    await fetchOrgData();
-  });
 </script>
 
 <template>

@@ -34,7 +34,11 @@ export const handler: Handler = async (
     if (bucketLocation.$metadata.httpStatusCode !== 200) {
       throw new Error(`Unable to find Laboratory S3 Bucket: ${request.S3Bucket}`);
     }
-    if (bucketLocation.LocationConstraint !== process.env.REGION) {
+    /**
+     * S3 CLI/SDK get-bucket-location lookup will return LocationConstraint = null for the AWS region 'us-east-1'.
+     * This is the expected behaviour: https://github.com/aws/aws-cli/issues/3864
+     */
+    if ((!bucketLocation.LocationConstraint && process.env.REGION !== 'us-east-1') || (bucketLocation.LocationConstraint !== process.env.REGION)) {
       throw new Error(`Laboratory S3 Bucket does not belong to the same AWS Region: ${process.env.AWS_REGION}`);
     }
 

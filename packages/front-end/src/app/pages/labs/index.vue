@@ -132,7 +132,7 @@
     v-else
     :table-data="labData"
     :columns="tableColumns"
-    :isLoading="useUiStore().isRequestPending"
+    :is-loading="useUiStore().isRequestPending"
     :action-items="actionItems"
     :show-pagination="!useUiStore().isRequestPending && !hasNoData"
   />

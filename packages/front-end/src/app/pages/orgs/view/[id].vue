@@ -329,7 +329,7 @@
         <EGTable
           :table-data="filteredTableData"
           :columns="tableColumns"
-          :isLoading="isLoading"
+          :is-loading="isLoading"
           :action-items="actionItems"
           :show-pagination="!isLoading"
         >

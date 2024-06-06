@@ -84,7 +84,7 @@
   <EGTable
     :table-data="orgData"
     :columns="tableColumns"
-    :isLoading="isLoading"
+    :is-loading="isLoading"
     :action-items="actionItems"
     :show-pagination="!isLoading && !hasNoData"
   />

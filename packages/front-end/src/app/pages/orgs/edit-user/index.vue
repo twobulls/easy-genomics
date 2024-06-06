@@ -21,11 +21,12 @@
     },
   ];
 
-  // FIXME: beforemount? test..
-  await updateSelectedUser();
-  await fetchOrgLabs();
-  await fetchUserLabs();
-  isLoading.value = false;
+  onBeforeMount(async () => {
+    await updateSelectedUser();
+    await fetchOrgLabs();
+    await fetchUserLabs();
+    isLoading.value = false;
+  });
 
   function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;

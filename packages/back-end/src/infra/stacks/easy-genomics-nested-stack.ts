@@ -58,6 +58,16 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
+        '/easy-genomics/user/confirm-user-forgot-password-request': {
+          environment: {
+            COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
+            JWT_SECRET_KEY: this.props.secretKey,
+          },
+          methodOptions: {
+            apiKeyRequired: true,
+            authorizer: undefined, // Explicitly remove authorizer
+          },
+        },
       },
       environment: { // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
@@ -593,7 +603,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         }),
       ],
     );
-    // /easy-genomics/user/create-user-invitation-request
+    // /easy-genomics/user/confirm-user-invitation-request
     this.iam.addPolicyStatements(
       '/easy-genomics/user/confirm-user-invitation-request',
       [
@@ -643,6 +653,27 @@ export class EasyGenomicsNestedStack extends NestedStack {
             `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool!.userPoolId}`,
           ],
           actions: ['cognito-idp:AdminGetUser', 'cognito-idp:ForgotPassword'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/user/confirm-user-forgot-password-request
+    this.iam.addPolicyStatements(
+      '/easy-genomics/user/confirm-user-forgot-password-request',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool!.userPoolId}`,
+          ],
+          actions: ['cognito-idp:AdminGetUser', 'cognito-idp:AdminSetUserPassword'],
           effect: Effect.ALLOW,
         }),
       ],

@@ -202,7 +202,7 @@ function generateUserInvitationJwt(email: string, userId: string, organizationId
     Email: email,
     CreatedAt: createdAt,
   };
-  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '7 days');
+  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '1 h');
 }
 
 // Used for customising error messages by exception types

@@ -5,11 +5,6 @@
   import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
   import useUser from '~/composables/useUser';
 
-  // Use UI composable to determine if the UI is loading
-  import useUI from '~/composables/useUI';
-  const isMounted = ref(false);
-  const isLoading = computed(() => useUI().isUILoading(isMounted.value));
-
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const labName = $route.query.name;
@@ -155,7 +150,6 @@
 
   onMounted(async () => {
     await getLabUsers();
-    isMounted.value = true;
   });
 </script>
 
@@ -219,7 +213,7 @@
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGEmptyDataCTA
-          v-if="!isLoading && hasNoData"
+          v-if="!useUiStore().isRequestPending && hasNoData"
           message="You don't have any users in this lab yet."
           img-src="/images/empty-state-user.jpg"
           :button-action="() => {}"
@@ -227,12 +221,7 @@
         />
 
         <template v-if="!hasNoData">
-          <EGSearchInput
-            @input-event="updateSearchOutput"
-            placeholder="Search user"
-            class="my-6 w-[408px]"
-            :disabled="isLoading"
-          />
+          <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
           <EGDialog
             actionLabel="Remove User"
@@ -247,8 +236,8 @@
           <EGTable
             :table-data="filteredTableData"
             :columns="tableColumns"
-            :is-loading="isLoading"
-            :show-pagination="!isLoading"
+            :is-loading="useUiStore().isRequestPending"
+            :show-pagination="!useUiStore().isRequestPending"
           >
             <template #Name-data="{ row }">
               <div class="flex items-center">
@@ -290,7 +279,7 @@
                 <EGUserRoleDropdown
                   :show-remove-from-lab="true"
                   :key="user"
-                  :disabled="isLoading"
+                  :disabled="useUiStore().isRequestPending"
                   :user="user"
                   @assign-role="handleAssignRole($event)"
                   @remove-user-from-lab="({ UserId, displayName }) => removeUserFromLab(UserId, displayName)"

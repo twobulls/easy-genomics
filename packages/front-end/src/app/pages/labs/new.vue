@@ -4,13 +4,9 @@
   import { cleanText } from '~/utils/string-utils';
   import { useToastStore, useUiStore } from '~/stores/stores';
 
-  // Use UI composable to determine if the UI is loading
-  import useUI from '~/composables/useUI';
-  const isLoading = computed(() => useUI().isUILoading());
-
   const { MOCK_ORG_ID } = useRuntimeConfig().public;
-  const router = useRouter();
   const { $api } = useNuxtApp();
+  const router = useRouter();
 
   /*
     Laboratory Name

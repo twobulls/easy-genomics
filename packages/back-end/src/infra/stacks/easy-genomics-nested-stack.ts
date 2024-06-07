@@ -47,6 +47,10 @@ export class EasyGenomicsNestedStack extends NestedStack {
             COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
             JWT_SECRET_KEY: this.props.secretKey,
           },
+          methodOptions: {
+            apiKeyRequired: true,
+            authorizer: undefined, // Explicitly remove authorizer
+          },
         },
         '/easy-genomics/user/create-user-forgot-password-request': {
           environment: {

@@ -13,7 +13,7 @@
       showPagination: boolean;
     }>(),
     {
-      isLoading: true,
+      isLoading: false,
     }
   );
 
@@ -68,7 +68,6 @@
     </UTable>
   </UCard>
 
-  <!-- TODO: componentize Pagination -->
   <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="showPagination && !isLoading">
     <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
     <div class="flex justify-end px-3" v-if="pageTotal > pageCount">

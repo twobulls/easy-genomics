@@ -36,16 +36,36 @@ export class EasyGenomicsNestedStack extends NestedStack {
       lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
       lambdaFunctionsResources: { // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
-        '/easy-genomics/user/create-user-invite': {
+        '/easy-genomics/user/create-user-invitation-request': {
           environment: {
             COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
             JWT_SECRET_KEY: this.props.secretKey,
+          },
+        },
+        '/easy-genomics/user/confirm-user-invitation-request': {
+          environment: {
+            COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
+            JWT_SECRET_KEY: this.props.secretKey,
+          },
+          methodOptions: {
+            apiKeyRequired: true,
+            authorizer: undefined, // Explicitly remove authorizer
           },
         },
         '/easy-genomics/user/create-user-forgot-password-request': {
           environment: {
             COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient!.userPoolClientId,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
+          },
+          methodOptions: {
+            apiKeyRequired: true,
+            authorizer: undefined, // Explicitly remove authorizer
+          },
+        },
+        '/easy-genomics/user/confirm-user-forgot-password-request': {
+          environment: {
+            COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
+            JWT_SECRET_KEY: this.props.secretKey,
           },
           methodOptions: {
             apiKeyRequired: true,
@@ -534,9 +554,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
       ],
     );
 
-    // /easy-genomics/user/create-user-invite
+    // /easy-genomics/user/create-user-invitation-request
     this.iam.addPolicyStatements(
-      '/easy-genomics/user/create-user-invite',
+      '/easy-genomics/user/create-user-invitation-request',
       [
         new PolicyStatement({
           resources: [
@@ -587,6 +607,39 @@ export class EasyGenomicsNestedStack extends NestedStack {
         }),
       ],
     );
+    // /easy-genomics/user/confirm-user-invitation-request
+    this.iam.addPolicyStatements(
+      '/easy-genomics/user/confirm-user-invitation-request',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query', 'dynamodb:PutItem', 'dynamodb:GetItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`],
+          actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          ],
+          actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool?.userPoolId}`,
+          ],
+          actions: ['cognito-idp:AdminEnableUser', 'cognito-idp:AdminSetUserPassword', 'cognito-idp:AdminUpdateUserAttributes'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
     // /easy-genomics/user/create-user-forgot-password-request
     this.iam.addPolicyStatements(
       '/easy-genomics/user/create-user-forgot-password-request',
@@ -604,6 +657,27 @@ export class EasyGenomicsNestedStack extends NestedStack {
             `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool!.userPoolId}`,
           ],
           actions: ['cognito-idp:AdminGetUser', 'cognito-idp:ForgotPassword'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /easy-genomics/user/confirm-user-forgot-password-request
+    this.iam.addPolicyStatements(
+      '/easy-genomics/user/confirm-user-forgot-password-request',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool!.userPoolId}`,
+          ],
+          actions: ['cognito-idp:AdminGetUser', 'cognito-idp:AdminSetUserPassword'],
           effect: Effect.ALLOW,
         }),
       ],

@@ -1,4 +1,5 @@
 import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import { GetBucketLocationCommandOutput } from '@aws-sdk/client-s3';
 import { UpdateLaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
@@ -30,11 +31,16 @@ export const handler: Handler = async (
     if (!request.S3Bucket) {
       throw new Error('Laboratory S3 Bucket is required');
     }
-    const bucketLocation = await s3Service.getBucketLocation({ Bucket: request.S3Bucket });
+    const bucketLocation: GetBucketLocationCommandOutput = await s3Service.getBucketLocation({ Bucket: request.S3Bucket });
     if (bucketLocation.$metadata.httpStatusCode !== 200) {
       throw new Error(`Unable to find Laboratory S3 Bucket: ${request.S3Bucket}`);
     }
-    if (bucketLocation.LocationConstraint !== process.env.REGION) {
+    /**
+     * S3 CLI/SDK get-bucket-location lookup will return LocationConstraint = null for the AWS region 'us-east-1'.
+     * This is the expected behaviour: https://github.com/aws/aws-cli/issues/3864
+     */
+    if ((process.env.REGION === 'us-east-1' && bucketLocation.LocationConstraint != null) ||
+        (process.env.REGION !== 'us-east-1' && process.env.REGION !== bucketLocation.LocationConstraint)) {
       throw new Error(`Laboratory S3 Bucket does not belong to the same AWS Region: ${process.env.AWS_REGION}`);
     }
 

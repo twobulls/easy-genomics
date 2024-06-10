@@ -41,9 +41,10 @@ interface LambdaFunctionsResources {
   methodOptions?: MethodOptions;
 }
 
-// List of allowed Lambda Function operation with respective REST API command mapping
+// List of allowed "CRUD" Lambda Function operations with respective REST API command mapping
 const ALLOWED_LAMBDA_FUNCTION_OPERATIONS: AssociativeArray<HttpRequest> = {
   ['create']: 'POST',
+  ['confirm']: 'POST',
   ['list']: 'GET', // List multiple records
   ['read']: 'GET',
   ['update']: 'PUT',

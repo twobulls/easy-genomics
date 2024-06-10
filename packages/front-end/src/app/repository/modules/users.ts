@@ -10,7 +10,7 @@ class UsersModule extends HttpFactory {
   }
 
   async invite(orgId: string, email: string): Promise<User | undefined> {
-    return this.call<User>('POST', '/user/create-user-invite', {
+    return this.call<User>('POST', '/user/create-user-invitation-request', {
       Email: email,
       OrganizationId: orgId,
     });

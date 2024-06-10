@@ -15,5 +15,5 @@ export function generateJwt<T>(jwtPayload: T, jwtSecretKey: string, expiresIn?: 
  * @param jwtSecretKey
  */
 export function verifyJwt(token: string, jwtSecretKey: string): JwtPayload | string {
-  return verify(token, jwtSecretKey);
+  return verify(token, jwtSecretKey, { ignoreExpiration: false });
 };

@@ -3,18 +3,13 @@
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 
-  // Use UI composable to determine if the UI is loading
-  import useUI from '~/composables/useUI';
-  const isMounted = ref(false);
-  const isLoading = computed(() => useUI().isUILoading(isMounted.value));
-
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const orgLabsData = ref([] as Laboratory[]);
   const selectedUserLabsData = ref([] as LaboratoryUserDetails[]);
+  const isLoading = ref(true);
   const hasNoData = ref(false);
   const searchOutput = ref('');
-
   const tableColumns = [
     {
       key: 'Name',
@@ -25,6 +20,13 @@
       label: 'Lab Access',
     },
   ];
+
+  onBeforeMount(async () => {
+    await updateSelectedUser();
+    await fetchOrgLabs();
+    await fetchUserLabs();
+    isLoading.value = false;
+  });
 
   function updateSearchOutput(newVal: string) {
     searchOutput.value = newVal;
@@ -91,13 +93,14 @@
         const hasAccess =
           useOrgsStore().selectedUser?.OrganizationAccess?.[lab.OrganizationId]?.LaboratoryAccess?.[lab.LaboratoryId]
             ?.Status === 'Active';
-        const userLab = selectedUserLabsData.value.find((userLab) => userLab.LaboratoryId === lab.LaboratoryId);
+        const labUser = selectedUserLabsData.value.find((user) => user.LaboratoryId === lab.LaboratoryId);
 
         return {
           labAccessOptionsEnabled: hasAccess,
           access: !hasAccess,
-          LabManager: userLab?.LabManager || false,
-          LabTechnician: userLab?.LabTechnician || false,
+          assignedRole: labUser?.LabManager ? 'Lab Manager' : labUser?.LabTechnician ? 'Lab Technician' : 'Unknown',
+          LabManager: labUser?.LabManager || false,
+          LabTechnician: labUser?.LabTechnician || false,
           Name: lab.Name,
           LaboratoryId: lab.LaboratoryId,
         };
@@ -127,17 +130,18 @@
     }
   }
 
-  async function handleAssignRole(userLabDetails: any) {
+  async function handleAssignRole(user: LaboratoryUserDetails) {
     try {
       useUiStore().setRequestPending(true);
       const res = await $api.labs.editUserLabAccess(
-        userLabDetails.LaboratoryId,
+        user.LaboratoryId,
         useOrgsStore().selectedUser?.UserId,
-        userLabDetails.LabManager
+        user.LabManager
       );
       if (res?.Status === 'Success') {
+        await fetchUserLabs();
         useToastStore().success(
-          `${userLabDetails.Name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`
+          `${user.Name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`
         );
       } else {
         throw new Error('Failed to update user role');
@@ -147,15 +151,9 @@
       throw error;
     } finally {
       // update UI with latest data
-      await fetchUserLabs();
       useUiStore().setRequestPending(false);
     }
   }
-
-  onMounted(async () => {
-    await Promise.allSettled([updateSelectedUser(), fetchOrgLabs(), fetchUserLabs()]);
-    isMounted.value = true;
-  });
 </script>
 
 <template>
@@ -163,21 +161,21 @@
 
   <div class="mb-4">
     <EGUserOrgAdminToggle
-      :is-loading="isLoading"
+      :key="useOrgsStore().selectedUser?.UserId"
       :user="useOrgsStore().selectedUser"
       @update-user="updateSelectedUser($event)"
     />
   </div>
 
   <EGSearchInput
-    v-if="!isLoading && !hasNoData"
+    v-if="hasNoData"
     @input-event="updateSearchOutput"
     placeholder="Search All Labs"
     class="my-6 w-[408px]"
   />
 
   <EGEmptyDataCTA
-    v-if="!isLoading && hasNoData"
+    v-if="hasNoData"
     message="There are no labs in your Organization"
     :button-action="() => $router.push({ path: '/labs/new' })"
     button-label="Create a Lab"
@@ -187,15 +185,20 @@
     v-if="!hasNoData"
     :table-data="filteredTableData"
     :columns="tableColumns"
-    :isLoading="isLoading"
     :show-pagination="!isLoading"
+    :is-loading="isLoading"
   >
     <template #actions-data="{ row }">
       <div class="flex items-center" v-if="row.labAccessOptionsEnabled">
-        <EGUserRoleDropdown :key="row" :disabled="isLoading" :user="row" @assign-role="handleAssignRole($event)" />
+        <EGUserRoleDropdown
+          :key="row"
+          :disabled="useUiStore().isRequestPending"
+          :user="row"
+          @assign-role="handleAssignRole($event.labUser)"
+        />
       </div>
       <EGButton
-        :loading="isLoading"
+        :loading="useUiStore().isRequestPending"
         v-else-if="row.access"
         @click="
           handleAddUser({

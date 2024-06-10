@@ -2,10 +2,7 @@
   import { ButtonSizeEnum } from '~/types/buttons';
   import { cleanText } from '~/utils/string-utils';
   import { z } from 'zod';
-
-  // Use UI composable to determine if the UI is loading
-  import useUI from '~/composables/useUI';
-  const isLoading = computed(() => useUI().isUILoading());
+  import { useUiStore } from '~/stores/stores';
 
   const props = withDefaults(
     defineProps<{
@@ -134,7 +131,7 @@
           @input.prevent="handleNameInput"
           :placeholder="formState.Name ? '' : 'Enter organization name (required and must be unique)'"
           required
-          :disabled="isLoading"
+          :disabled="useUiStore().isRequestPending"
           autofocus
         />
         <EGCharacterCounter :value="orgNameCharCount" :max="ORG_NAME_MAX_LENGTH" />
@@ -145,18 +142,18 @@
           @blur="validateForm"
           @input.prevent="handleDescriptionInput"
           placeholder="Describe your organization and any relevant details"
-          :disabled="isLoading"
+          :disabled="useUiStore().isRequestPending"
         />
         <EGCharacterCounter :value="orgDescriptionCharCount" :max="ORG_DESCRIPTION_MAX_LENGTH" />
       </EGFormGroup>
     </EGCard>
     <EGButton
       :size="ButtonSizeEnum.enum.sm"
-      :disabled="isLoading || formState.isFormDisabled || !didFormStateChange"
+      :disabled="useUiStore().isRequestPending || formState.isFormDisabled || !didFormStateChange"
       type="submit"
       label="Save changes"
       class="mt-6"
-      :loading="isLoading"
+      :loading="useUiStore().isRequestPending"
     />
   </UForm>
 </template>

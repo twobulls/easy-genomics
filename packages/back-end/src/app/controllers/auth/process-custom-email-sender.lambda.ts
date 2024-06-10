@@ -1,4 +1,5 @@
 import { createHmac } from 'crypto';
+import { UserForgotPasswordJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { Handler } from 'aws-lambda';
 import { CustomEmailSenderTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/custom-email-sender';
 import { SesService } from '../../services/ses-service';
@@ -37,16 +38,16 @@ export const handler: Handler = async (
  * Helper function to generate User Forgot Password JWT to send in email
  * and used to verify User Forgot Password request.
  *
- * The JWT is set to expire in 1 hour.
- *
+ * The JWT is set to expire in 1 hour to match Cognito's ForgotPassword expiry.
  * @param email
  * @param username
  * @param code
  */
 function generateUserForgotPasswordJwt(email: string, username: string, code: string): string {
   const createdAt: number = Date.now(); // Salt
-  const userForgotPasswordJwt = {
-    ForgotPasswordCode: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
+  const userForgotPasswordJwt: UserForgotPasswordJwt = {
+    RequestType: 'UserForgotPassword',
+    Verification: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
       .update(username + code)
       .digest('hex'),
     Email: email,

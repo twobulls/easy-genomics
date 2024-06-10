@@ -1,6 +1,6 @@
-import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invite';
+import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
+import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { ERRORS } from '~/constants/validation';
 import { useToastStore } from '~/stores/stores';
 
@@ -31,8 +31,8 @@ export default function useUser() {
     }
   }
 
-  async function handleInvite(reqBody: CreateUserInvite, action: 'resend' | 'send') {
-    const result = CreateUserInviteSchema.safeParse(reqBody);
+  async function handleInvite(reqBody: CreateUserInvitationRequest, action: 'resend' | 'send') {
+    const result = CreateUserInvitationRequestSchema.safeParse(reqBody);
     if (!result.success) {
       console.error('Zod validation failed', result.error);
       return;
@@ -63,7 +63,7 @@ export default function useUser() {
     );
   }
 
-  async function invite(reqBody: CreateUserInvite) {
+  async function invite(reqBody: CreateUserInvitationRequest) {
     await handleInvite(reqBody, 'send');
   }
 

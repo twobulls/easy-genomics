@@ -3,12 +3,12 @@ import {
   ConditionalCheckFailedException,
   TransactionCanceledException,
 } from '@aws-sdk/client-dynamodb';
-import { CreateUserInviteSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invite';
+import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation-jwt';
-import { CreateUserInvite } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invite';
+import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
+import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { CognitoUserService } from '../../../services/easy-genomics/cognito-user-service';
@@ -37,12 +37,12 @@ export const handler: Handler = async (
   try {
     const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: CreateUserInvite = (
+    const request: CreateUserInvitationRequest = (
       event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
     );
 
     // Data validation safety check
-    if (!CreateUserInviteSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!CreateUserInvitationRequestSchema.safeParse(request).success) throw new Error('Invalid request');
 
     // Check if Organization & User records exists
     const organization: Organization = await organizationService.get(request.OrganizationId); // Throws error if not found
@@ -68,8 +68,11 @@ export const handler: Handler = async (
         };
         // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
         if (await platformUserService.addNewUserToOrganization(newUserDetails, newOrganizationUser)) {
-          const invitationJwt: string = generateUserInvitationJwt(newUserDetails, organization);
-          const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+          const response = await sesService.sendUserInvitationEmail(
+            request.Email,
+            organization.Name,
+            generateUserInvitationJwt(newUser.Email, newUser.UserId, organization.OrganizationId),
+          );
           console.log('Send Invitation Email Response: ', response);
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
         }
@@ -94,8 +97,11 @@ export const handler: Handler = async (
         // Check if existing Organization-User's Status is still Invited to resend invitation
         if (existingOrganizationUser) {
           if (existingOrganizationUser.Status === 'Invited') {
-            const invitationJwt: string = generateUserInvitationJwt(existingUser, organization);
-            const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+            const response = await sesService.sendUserInvitationEmail(
+              request.Email,
+              organization.Name,
+              generateUserInvitationJwt(existingUser.Email, existingUser.UserId, organization.OrganizationId),
+            );
             console.log('Send Invitation Email Response: ', response);
             return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
           } else {
@@ -121,8 +127,11 @@ export const handler: Handler = async (
 
           // Attempt to add the User to the Organization in one transaction
           if (await platformUserService.addExistingUserToOrganization(existingUserDetails, newOrganizationUser)) {
-            const invitationJwt: string = generateUserInvitationJwt(existingUserDetails, organization);
-            const response = await sesService.sendUserInvitationEmail(request.Email, organization.Name, invitationJwt);
+            const response = await sesService.sendUserInvitationEmail(
+              request.Email,
+              organization.Name,
+              generateUserInvitationJwt(existingUser.Email, existingUser.UserId, organization.OrganizationId),
+            );
             console.log('Send Invitation Email Response: ', response);
             return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
           }
@@ -176,24 +185,24 @@ function getNewOrganizationUser(organizationId, userId: string, createdBy: strin
 }
 
 /**
- * Helper function to generate User Invitation JWT to send in invitation email
- * and used to verify User invitation acceptance.
- * @organizationName
- * @param user
- * @param organization
+ * Helper function to generate a User Invitation JWT to send in invitation
+ * email and used to verify User Invitation acceptance.
+ * @param email
+ * @param userId
+ * @param organizationId
  */
-function generateUserInvitationJwt(user: User, organization: Organization): string {
+function generateUserInvitationJwt(email: string, userId: string, organizationId: string): string {
   const createdAt: number = Date.now(); // Salt
   const userInvitationJwt: UserInvitationJwt = {
-    InvitationCode: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
-      .update(user.UserId + organization.OrganizationId)
+    RequestType: 'UserInvitation',
+    Verification: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
+      .update(userId + organizationId)
       .digest('hex'),
-    OrganizationId: organization.OrganizationId,
-    OrganizationName: organization.Name,
-    Email: user.Email,
+    OrganizationId: organizationId,
+    Email: email,
     CreatedAt: createdAt,
   };
-  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '7 days');
+  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '1 h');
 }
 
 // Used for customising error messages by exception types

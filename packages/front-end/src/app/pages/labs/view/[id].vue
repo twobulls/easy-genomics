@@ -8,13 +8,19 @@ import useUser from '~/composables/useUser';
 import { z } from 'zod';
 
 const { $api } = useNuxtApp();
+
 const $route = useRoute();
+const orgId = useOrgsStore().selectedOrg?.OrganizationId;
+const labId = $route.params.id;
 const labName = $route.query.name;
-const hasNoData = ref(false);
+
 const labUsers = ref<LabUser[]>([]);
+const hasNoData = ref(false);
+
+const showAddUserModule = ref(false);
 const searchOutput = ref('');
-const laboratoryId = $route.params.id;
-const $emit = defineEmits(['remove-user-from-lab', 'assign-role']);
+
+// const $emit = defineEmits(['remove-user-from-lab', 'assign-role']);
 
 // Dynamic remove user dialog values
 const isOpen = ref(false);
@@ -40,7 +46,7 @@ async function handleRemoveLabUser() {
 
     useUiStore().setRequestPending(true);
 
-    const res: DeletedResponse = await $api.labs.removeUser(laboratoryId, selectedUserId.value);
+
 
     if (res?.Status === 'Success') {
       useToastStore().success(`${displayName} has been removed from ${labName}`);
@@ -63,13 +69,13 @@ async function handleAssignRole({
   labUser,
   displayName,
 }: {
-  labUser: { LaboratoryId: string; UserId: string; LabManager: boolean };
+
   displayName: string;
 }) {
-  const { LaboratoryId, UserId, LabManager } = labUser;
+
   try {
     useUiStore().setRequestPending(true);
-    const res: EditUserResponse = await $api.labs.editUserLabAccess(LaboratoryId, UserId, LabManager);
+
     if (res) {
       useToastStore().success(`${labName} access has been successfully updated for ${displayName}`);
     } else {
@@ -119,7 +125,7 @@ function getLabUser(labUserDetails: LaboratoryUserDetails, labUsers: LaboratoryU
 
   return {
     ...labUserDetails,
-    Status: labUser.Status,
+    status: labUser.Status,
     assignedRole,
     displayName,
   };
@@ -166,16 +172,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mb-11 flex flex-col justify-between">
-    <EGBack />
-    <div class="flex items-start justify-between">
-      <div>
-        <EGText tag="h1" class="mb-4">{{ labName }}</EGText>
-        <EGText tag="p" class="text-muted">Lab summary, statistics and its users</EGText>
-      </div>
-      <EGButton label="Add Lab Users" />
-    </div>
-  </div>
+  <EGPageHeader :title="labName" description="Lab summary, statistics and its users">
+    <EGButton label="Add Lab Users" @click="showAddUserModule = true" />
+    <EGAddLabUsersModule v-if="showAddUserModule" @add-lab-user-success="getLabUsers()" :org-id="orgId" :lab-id="labId"
+      :lab-users="labUsers" class="mt-2" />
+  </EGPageHeader>
 
   <UTabs :ui="{
     base: 'focus:outline-none',
@@ -235,14 +236,8 @@ onMounted(async () => {
             :show-pagination="!useUiStore().isRequestPending">
             <template #Name-data="{ row: labUser }">
               <div class="flex items-center">
-                <EGUserAvatar class="mr-4" :name="labUser.displayName" :email="labUser.UserEmail"
-                  :is-active="labUser.Status === 'Active'" />
-                <div class="flex flex-col">
-                  <div>{{ labUser.displayName }} </div>
-                  <div v-if="labUser.UserEmail !== labUser.displayName" class="text-muted text-xs font-normal">{{
-                    labUser.UserEmail }}
-                  </div>
-                </div>
+                <EGUserDisplay :display-name="labUser.displayName" :email="labUser.UserEmail" :status="labUser.status"
+                  :showAvatar="true" />
               </div>
             </template>
             <template #assignedRole-data="{ row: labUser }">

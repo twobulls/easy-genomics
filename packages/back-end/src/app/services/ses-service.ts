@@ -23,7 +23,7 @@ export class SesService {
   public async sendUserInvitationEmail(
     toAddress: string,
     organizationName: string,
-    invitationJwt: string
+    invitationJwt: string,
   ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send User Invitation Email request: ${toAddress}`;
     console.info(logRequestMessage);
@@ -57,7 +57,7 @@ export class SesService {
 
   public async sendUserForgotPasswordEmail(
     toAddress: string,
-    forgotPasswordJwt: string
+    forgotPasswordJwt: string,
   ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send User Forgot Password Email request: ${toAddress}`;
     console.info(logRequestMessage);

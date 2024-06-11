@@ -1,6 +1,7 @@
-import { NestedStack } from 'aws-cdk-lib';
+import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Key, KeySpec } from 'aws-cdk-lib/aws-kms';
 import { Construct } from 'constructs';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
@@ -11,6 +12,8 @@ import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 export class EasyGenomicsNestedStack extends NestedStack {
   readonly props: EasyGenomicsNestedStackProps;
   readonly dynamoDBTables: Map<string, Table> = new Map();
+  readonly easyGenomicsDynamoDBKmsKey: Key;
+
   dynamoDB: DynamoConstruct;
   iam: IamConstruct;
   lambda: LambdaConstruct;
@@ -19,6 +22,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
     super(scope, id, props);
     this.props = props;
+
+    // Create KMS symmetric encryption key to protect sensitive Easy Genomics DynamoDB data
+    this.easyGenomicsDynamoDBKmsKey = new Key(this, `${this.props.constructNamespace}-cognito-kms-key`, {
+      alias: `${this.props.constructNamespace}-easy-genomics-dynamodb-kms-key`,
+      keySpec: KeySpec.SYMMETRIC_DEFAULT,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
       ...<IamConstructProps>props, // Typecast to IamConstructProps
@@ -72,11 +82,22 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
+        '/easy-genomics/laboratory/create-laboratory': {
+          environment: {
+            EASY_GENOMICS_DYNAMODB_KMS_KEY: this.easyGenomicsDynamoDBKmsKey.keyArn,
+          },
+        },
+        '/easy-genomics/laboratory/update-laboratory': {
+          environment: {
+            EASY_GENOMICS_DYNAMODB_KMS_KEY: this.easyGenomicsDynamoDBKmsKey.keyArn,
+          },
+        },
       },
       environment: { // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
         REGION: this.props.env.region!,
         DOMAIN_NAME: this.props.applicationUrl,
+        ENV_TYPE: this.props.envType,
         NAME_PREFIX: this.props.namePrefix,
       },
     });
@@ -300,6 +321,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           actions: ['s3:CreateBucket'],
           effect: Effect.ALLOW,
         }),
+        new PolicyStatement({
+          resources: [
+            this.easyGenomicsDynamoDBKmsKey.keyArn,
+          ],
+          actions: ['kms:GenerateDataKey'],
+          effect: Effect.ALLOW,
+        }),
       ],
     );
     // /easy-genomics/laboratory/read-laboratory
@@ -363,6 +391,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
             'arn:aws:s3:::*',
           ],
           actions: ['s3:GetBucketLocation'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
+            this.easyGenomicsDynamoDBKmsKey.keyArn,
+          ],
+          actions: ['kms:GenerateDataKey'],
           effect: Effect.ALLOW,
         }),
       ],

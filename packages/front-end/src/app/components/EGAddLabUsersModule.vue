@@ -18,7 +18,7 @@ const otherOrgUsers = ref<OrgUser[]>([])
 const selectedUserId = ref()
 
 const pendingApiRequest = ref(true) // Whether this module is loading all org users, or adding a user to a lab
-const canAddUser = ref(false) // Whether the selected user can be added to the lab
+const canAddUser = ref(false) // Control the disabled state of the add button
 const isAddingUser = ref(false) // Control the loading state of the add button
 
 watchEffect(() => {

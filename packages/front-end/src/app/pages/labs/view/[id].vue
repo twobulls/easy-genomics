@@ -20,8 +20,6 @@ const hasNoData = ref(false);
 const showAddUserModule = ref(false);
 const searchOutput = ref('');
 
-// const $emit = defineEmits(['remove-user-from-lab', 'assign-role']);
-
 // Dynamic remove user dialog values
 const isOpen = ref(false);
 const primaryMessage = ref('');
@@ -112,6 +110,13 @@ function getLabUser(labUserDetails: LaboratoryUserDetails, labUsers: LaboratoryU
     lastName: labUserDetails.LastName,
     email: labUserDetails.UserEmail,
   });
+
+  const user = {
+    ...labUserDetails,
+    status: labUser.Status,
+    assignedRole,
+    displayName,
+  }
 
   return {
     ...labUserDetails,

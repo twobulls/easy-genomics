@@ -1,63 +1,121 @@
 <script setup lang="ts">
 import { LabUserSchema, LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/lab-user';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+import { useToastStore } from '~/stores/stores';
 
 const props = defineProps<{
   orgId: string;
   labId: string;
+  labName: string;
   labUsers: LabUser[];
 }>();
 
-// GET All Organiztion Users API
-// {{BASE_API_URL}}/easy-genomics/organization/user/list-organization-users-details?organizationId=61c86013-74f2-4d30-916a-70b03a97ba14
-// list-organisation-user-details (by organisationId) in Postman
+const emit = defineEmits(['added-user-to-lab']);
 
 const { $api } = useNuxtApp();
-const usersWithoutLabAccess = ref<OrganizationUserDetails[]>([])
-const selectedUser = ref()
-const isLoading = ref(false)
 
-function hasLabAccess(user: OrganizationUserDetails, labUsers: LabUser[]) {
+const otherOrgUsers = ref<OrgUser[]>([])
+const selectedUserId = ref()
+
+const pendingApiRequest = ref(true) // Whether this module is loading all org users, or adding a user to a lab
+const canAddUser = ref(false) // Whether the selected user can be added to the lab
+
+watchEffect(() => {
+  canAddUser.value = !!selectedUserId.value
+  console.log('canAddUser:', canAddUser.value)
+})
+
+async function handleAddSelectedUserToLab() {
+
+  const selectedUser = otherOrgUsers.value.find((user: OrganizationUserDetails) => user.UserId === selectedUserId.value)
+
+  console.log(`EGAddLabUsersModule; handleAddSelectedUserToLab; selectedUserId:`, selectedUserId.value)
+  console.log(`EGAddLabUsersModule; handleAddSelectedUserToLab; selectedUser:`, toRaw(selectedUser.value))
+
+  const { displayName, UserId } = selectedUser
+
+  pendingApiRequest.value = true
+
+  try {
+    const res = await $api.labs.addLabUser(props.labId, UserId) as EditUserResponse
+    console.log('res:', res)
+
+    if (!res) {
+      throw new Error('User not added to Lab')
+    }
+
+    useToastStore().success(`Successfully added ${displayName} to ${props.labName}`)
+    selectedUserId.value = undefined
+    selectedUser.value = undefined
+  } catch (error) {
+    useToastStore().error(`Failed to add ${displayName} to ${props.labName}`)
+    console.error(error)
+  } finally {
+    pendingApiRequest.value = false
+  }
+
+}
+
+function hasLabAccess(user: OrganizationUserDetails, labUsers: LabUser[] = []) {
   return labUsers.some((labUser: LabUser) => labUser.UserId === user.UserId)
 }
 
-async function getOrgUsersWithoutLabAccess({ orgId, labUsers }: { orgId: string, labUsers: LabUser[] }) {
+async function getOrgUsersWithoutLabAccess() {
   try {
-    isLoading.value = true
-    const orgUsers = await $api.orgs.usersDetailsByOrgId(orgId)
-    usersWithoutLabAccess.value = orgUsers.filter((user: OrganizationUserDetails) => !hasLabAccess(user, labUsers))
+    const orgUsers = await $api.orgs.usersDetailsByOrgId(props.orgId) as OrganizationUserDetails[]
+    const _otherOrgUsers = orgUsers.filter((user: OrganizationUserDetails) => !hasLabAccess(user, props.labUsers))
+    otherOrgUsers.value = _otherOrgUsers.map((user: OrganizationUserDetails) => {
+      const displayName = useUser().displayName({
+        preferredName: user.PreferredName,
+        firstName: user.FirstName,
+        lastName: user.LastName,
+        email: user.UserEmail,
+      });
+      return {
+        ...user,
+        displayName,
+      }
+    })
   } catch (error) {
     console.error(error)
   } finally {
-    isLoading.value = false
+    pendingApiRequest.value = false
   }
 }
 
 onMounted(async () => {
-  await getOrgUsersWithoutLabAccess({ orgId: props.orgId, labUsers: props.labUsers })
+  await getOrgUsersWithoutLabAccess()
 })
 </script>
 
 <template>
   <EGCard :padding="4">
     <div class="flex space-x-4">
-      <USelectMenu v-model="selectedUser" :options="usersWithoutLabAccess" option-attribute="UserEmail"
-        value-attribute="UserId" :disabled="false" :loading="false" placeholder="Select User" searchable
-        searchable-placeholder="Search all users..." :search-attributes="['UserEmail']" clear-search-on-close
-        class="grow" size="xl" :ui="{
+      <USelectMenu v-model="selectedUserId" :options="otherOrgUsers" option-attribute="displayName"
+        value-attribute="UserId" :disabled="pendingApiRequest" :loading="false" placeholder="Select User" searchable
+        searchable-placeholder="Search all users..." :search-attributes="['displayName', 'UserEmail']"
+        clear-search-on-close class="grow" size="xl" :ui="{
           base: 'h-[52px] min-w-96',
         }">
 
         <template #option="{ option: user }">
-          <EGUserDisplay :display-name="user.displayName" :email="user.UserEmail" :org-status="user.Status"
+          <EGUserDisplay :display-name="user.displayName" :email="user.UserEmail" :status="user.OrganizationUserStatus"
             :show-avatar="true" />
         </template>
 
         <template #option-empty="{ query }">
           <q>{{ query }}</q> not found
         </template>
+
+        <template #empty>
+          <div v-if="props.labUsers.length === 0 && otherOrgUsers.length === 0">The organization has no users
+          </div>
+          <div v-if="props.labUsers.length > 0 && otherOrgUsers.length === 0">All organization users already have
+            access to this lab</div>
+        </template>
       </USelectMenu>
-      <EGButton label="Add" type="submit" :disabled="false" icon="i-heroicons-plus" />
+      <EGButton label="Add" :disabled="!canAddUser || pendingApiRequest" icon="i-heroicons-plus"
+        @click="handleAddSelectedUserToLab" />
     </div>
   </EGCard>
 </template>

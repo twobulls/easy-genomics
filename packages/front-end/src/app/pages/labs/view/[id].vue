@@ -25,65 +25,64 @@ const searchOutput = ref('');
 // Dynamic remove user dialog values
 const isOpen = ref(false);
 const primaryMessage = ref('');
-const selectedUserId = ref('');
+const userToRemove = ref();
 
-async function removeUserFromLab(UserId, displayName) {
-  selectedUserId.value = UserId;
-  primaryMessage.value = `Are you sure you want to remove ${displayName} from ${labName}?`;
+function displayRemoveUserDialog(user: LabUser) {
+  console.log(`Lab [${labId}]; displayRemoveUserDialog; user:`, user)
+  console.log(`Lab [${labId}]; displayRemoveUserDialog; user.UserId:`, user.UserId)
+
+  userToRemove.value = user;
+  primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName}?`;
   isOpen.value = true;
 }
 
-async function handleRemoveLabUser() {
-  isOpen.value = false;
-
-  const userToRemove = labUsers.value.find((user) => user.UserId === selectedUserId.value);
-  const displayName = userToRemove?.displayName
+async function handleRemoveUserFromLab() {
+  console.log(`Lab [${labId}]; handleRemoveUserFromLab; userToRemove.value:`, userToRemove.value)
 
   try {
-    if (!selectedUserId.value) {
-      throw new Error('No selectedUserId');
-    }
-
+    isOpen.value = false;
     useUiStore().setRequestPending(true);
+    const { displayName, UserId } = userToRemove.value
 
+    const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
 
-
-    if (res?.Status === 'Success') {
-      useToastStore().success(`${displayName} has been removed from ${labName}`);
-      await getLabUsers();
-    } else {
-      throw new Error('User not removed from Lab');
+    if (!res) {
+      throw new Error(`Failed to remove ${displayName} from ${labName}`);
     }
+
+    useToastStore().success(`Successfully removed ${displayName} from ${labName}`);
   } catch (error) {
-    await getLabUsers();
     useToastStore().error(`Failed to remove ${displayName} from ${labName}`);
-    throw error;
   } finally {
     await getLabUsers();
-    selectedUserId.value = '';
+    userToRemove.value = undefined;
     useUiStore().setRequestPending(false);
   }
 }
 
-async function handleAssignRole({
-  labUser,
-  displayName,
-}: {
+async function handleAssignLabRole({ user, role }: { user: LabUser, role: LaboratoryRolesEnum }) {
 
-  displayName: string;
-}) {
+  console.log(`Lab [${labId}]; handleAssignLabRole; role: ${role}; user:`, user)
+
+  const { displayName, UserId } = user;
+  const isLabManager = role === LaboratoryRolesEnumSchema.enum.LabManager;
 
   try {
     useUiStore().setRequestPending(true);
 
-    if (res) {
-      useToastStore().success(`${labName} access has been successfully updated for ${displayName}`);
-    } else {
-      throw new Error('Failed to assign new role');
+    const res: EditUserResponse = await $api.labs.editUserLabAccess(
+      labId,
+      UserId,
+      isLabManager
+    );
+
+    if (!res) {
+      throw new Error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
     }
+
+    useToastStore().success(`Successfully assigned the ${role} role to ${displayName} in ${labName}`);
   } catch (error) {
-    useToastStore().error(`Failed to update ${useOrgsStore().getSelectedUserDisplayName}`);
-    throw error;
+    useToastStore().error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
   } finally {
     // update UI with latest data
     await getLabUsers();
@@ -132,6 +131,8 @@ function getLabUser(labUserDetails: LaboratoryUserDetails, labUsers: LaboratoryU
 }
 
 async function getLabUsers() {
+  console.log(`Lab [${labId}]; getLabUsers; STARTED`, toRaw(labUsers.value))
+
   try {
     useUiStore().setRequestPending(true);
     const _labUserDetails: LaboratoryUserDetails = await $api.labs.usersDetails($route.params.id);
@@ -147,6 +148,13 @@ async function getLabUsers() {
   } finally {
     useUiStore().setRequestPending(false);
   }
+  console.log(`Lab [${labId}]; getLabUsers; ENDED; labUsers.value:`, toRaw(labUsers.value))
+}
+
+async function handleAddedUserToLab() {
+  console.log(`Lab [${labId}]; handleAddedUserToLab; STARTED; labUsers.value:`, toRaw(labUsers.value))
+  await getLabUsers();
+  console.log(`Lab [${labId}]; handleAddedUserToLab; ENDED; labUsers.value:`, toRaw(labUsers.value))
 }
 
 function updateSearchOutput(newVal: any) {
@@ -173,9 +181,9 @@ onMounted(async () => {
 
 <template>
   <EGPageHeader :title="labName" description="Lab summary, statistics and its users">
-    <EGButton label="Add Lab Users" @click="showAddUserModule = true" />
-    <EGAddLabUsersModule v-if="showAddUserModule" @add-lab-user-success="getLabUsers()" :org-id="orgId" :lab-id="labId"
-      :lab-users="labUsers" class="mt-2" />
+    <EGButton label="Add Lab Users" :disabled="useUiStore().isRequestPending" @click="showAddUserModule = true" />
+    <EGAddLabUsersModule v-if="showAddUserModule" @added-user-to-lab="handleAddedUserToLab()" :org-id="orgId"
+      :lab-id="labId" :lab-name="labName" :lab-users="labUsers" class="mt-2" />
   </EGPageHeader>
 
   <UTabs :ui="{
@@ -229,7 +237,7 @@ onMounted(async () => {
           <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
 
           <EGDialog actionLabel="Remove User" :actionVariant="ButtonVariantEnum.enum.destructive" cancelLabel="Cancel"
-            :cancelVariant="ButtonVariantEnum.enum.secondary" @action-triggered="handleRemoveLabUser"
+            :cancelVariant="ButtonVariantEnum.enum.secondary" @action-triggered="handleRemoveUserFromLab"
             :primaryMessage="primaryMessage" v-model="isOpen" />
 
           <EGTable :table-data="filteredTableData" :columns="tableColumns" :is-loading="useUiStore().isRequestPending"
@@ -246,8 +254,9 @@ onMounted(async () => {
             <template #actions-data="{ row: labUser }">
               <div class="flex items-center">
                 <EGUserRoleDropdown :show-remove-from-lab="true" :key="labUser.UserId"
-                  :disabled="useUiStore().isRequestPending" :user="labUser" @assign-role="handleAssignRole($event)"
-                  @remove-user-from-lab="({ UserId, displayName }) => removeUserFromLab(UserId, displayName)" />
+                  :disabled="useUiStore().isRequestPending" :user="labUser"
+                  @assign-lab-role="handleAssignLabRole($event)"
+                  @remove-user-from-lab="displayRemoveUserDialog($event.user)" />
               </div>
             </template>
             <template #empty-state>

@@ -19,26 +19,20 @@ const selectedUserId = ref()
 
 const pendingApiRequest = ref(true) // Whether this module is loading all org users, or adding a user to a lab
 const canAddUser = ref(false) // Whether the selected user can be added to the lab
+const isAddingUser = ref(false) // Control the loading state of the add button
 
 watchEffect(() => {
   canAddUser.value = !!selectedUserId.value
-  console.log('canAddUser:', canAddUser.value)
 })
 
 async function handleAddSelectedUserToLab() {
-
   const selectedUser = otherOrgUsers.value.find((user: OrganizationUserDetails) => user.UserId === selectedUserId.value)
-
-  console.log(`EGAddLabUsersModule; handleAddSelectedUserToLab; selectedUserId:`, selectedUserId.value)
-  console.log(`EGAddLabUsersModule; handleAddSelectedUserToLab; selectedUser:`, toRaw(selectedUser.value))
-
   const { displayName, UserId } = selectedUser
-
   pendingApiRequest.value = true
+  isAddingUser.value = true
 
   try {
     const res = await $api.labs.addLabUser(props.labId, UserId) as EditUserResponse
-    console.log('res:', res)
 
     if (!res) {
       throw new Error('User not added to Lab')
@@ -47,11 +41,13 @@ async function handleAddSelectedUserToLab() {
     useToastStore().success(`Successfully added ${displayName} to ${props.labName}`)
     selectedUserId.value = undefined
     selectedUser.value = undefined
+    emit('added-user-to-lab')
   } catch (error) {
     useToastStore().error(`Failed to add ${displayName} to ${props.labName}`)
     console.error(error)
   } finally {
     pendingApiRequest.value = false
+    isAddingUser.value = false
   }
 
 }
@@ -114,7 +110,7 @@ onMounted(async () => {
             access to this lab</div>
         </template>
       </USelectMenu>
-      <EGButton label="Add" :disabled="!canAddUser || pendingApiRequest" icon="i-heroicons-plus"
+      <EGButton label="Add" :disabled="!canAddUser || pendingApiRequest" :loading="isAddingUser" icon="i-heroicons-plus"
         @click="handleAddSelectedUserToLab" />
     </div>
   </EGCard>

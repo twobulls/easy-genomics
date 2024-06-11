@@ -28,17 +28,12 @@ const primaryMessage = ref('');
 const userToRemove = ref();
 
 function displayRemoveUserDialog(user: LabUser) {
-  console.log(`Lab [${labId}]; displayRemoveUserDialog; user:`, user)
-  console.log(`Lab [${labId}]; displayRemoveUserDialog; user.UserId:`, user.UserId)
-
   userToRemove.value = user;
   primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName}?`;
   isOpen.value = true;
 }
 
 async function handleRemoveUserFromLab() {
-  console.log(`Lab [${labId}]; handleRemoveUserFromLab; userToRemove.value:`, userToRemove.value)
-
   try {
     isOpen.value = false;
     useUiStore().setRequestPending(true);
@@ -54,16 +49,13 @@ async function handleRemoveUserFromLab() {
   } catch (error) {
     useToastStore().error(`Failed to remove ${displayName} from ${labName}`);
   } finally {
-    await getLabUsers();
+    await refreshLabUsers();
     userToRemove.value = undefined;
     useUiStore().setRequestPending(false);
   }
 }
 
 async function handleAssignLabRole({ user, role }: { user: LabUser, role: LaboratoryRolesEnum }) {
-
-  console.log(`Lab [${labId}]; handleAssignLabRole; role: ${role}; user:`, user)
-
   const { displayName, UserId } = user;
   const isLabManager = role === LaboratoryRolesEnumSchema.enum.LabManager;
 
@@ -84,8 +76,7 @@ async function handleAssignLabRole({ user, role }: { user: LabUser, role: Labora
   } catch (error) {
     useToastStore().error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
   } finally {
-    // update UI with latest data
-    await getLabUsers();
+    await refreshLabUsers();
     useUiStore().setRequestPending(false);
   }
 }
@@ -131,8 +122,6 @@ function getLabUser(labUserDetails: LaboratoryUserDetails, labUsers: LaboratoryU
 }
 
 async function getLabUsers() {
-  console.log(`Lab [${labId}]; getLabUsers; STARTED`, toRaw(labUsers.value))
-
   try {
     useUiStore().setRequestPending(true);
     const _labUserDetails: LaboratoryUserDetails = await $api.labs.usersDetails($route.params.id);
@@ -148,13 +137,11 @@ async function getLabUsers() {
   } finally {
     useUiStore().setRequestPending(false);
   }
-  console.log(`Lab [${labId}]; getLabUsers; ENDED; labUsers.value:`, toRaw(labUsers.value))
 }
 
-async function handleAddedUserToLab() {
-  console.log(`Lab [${labId}]; handleAddedUserToLab; STARTED; labUsers.value:`, toRaw(labUsers.value))
+// update UI with latest list of lab users and their assigned role
+async function refreshLabUsers() {
   await getLabUsers();
-  console.log(`Lab [${labId}]; handleAddedUserToLab; ENDED; labUsers.value:`, toRaw(labUsers.value))
 }
 
 function updateSearchOutput(newVal: any) {
@@ -182,8 +169,8 @@ onMounted(async () => {
 <template>
   <EGPageHeader :title="labName" description="Lab summary, statistics and its users">
     <EGButton label="Add Lab Users" :disabled="useUiStore().isRequestPending" @click="showAddUserModule = true" />
-    <EGAddLabUsersModule v-if="showAddUserModule" @added-user-to-lab="handleAddedUserToLab()" :org-id="orgId"
-      :lab-id="labId" :lab-name="labName" :lab-users="labUsers" class="mt-2" />
+    <EGAddLabUsersModule v-if="showAddUserModule" @added-user-to-lab="refreshLabUsers()" :org-id="orgId" :lab-id="labId"
+      :lab-name="labName" :lab-users="labUsers" class="mt-2" />
   </EGPageHeader>
 
   <UTabs :ui="{
@@ -234,7 +221,8 @@ onMounted(async () => {
           :button-action="() => { }" button-label="Add Lab Users" />
 
         <template v-if="!hasNoData">
-          <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user" class="my-6 w-[408px]" />
+          <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user"
+            :disabled="useUiStore().isRequestPending" class="my-6 w-[408px]" />
 
           <EGDialog actionLabel="Remove User" :actionVariant="ButtonVariantEnum.enum.destructive" cancelLabel="Cancel"
             :cancelVariant="ButtonVariantEnum.enum.secondary" @action-triggered="handleRemoveUserFromLab"

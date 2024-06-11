@@ -24,7 +24,6 @@ const items: Array<Array<Object>> = roles.map((role: LaboratoryRolesEnum) => {
   return [
     {
       label: role,
-      // click: () => console.log(`emit 'assign-lab-role'`),
       click: () => emit('assign-lab-role', { user: props.user, role }),
     },
   ];
@@ -35,11 +34,7 @@ if (props.showRemoveFromLab) {
     {
       label: 'Remove From Lab',
       class: 'text-alert-danger-dark',
-      // click: () => console.log('emitl remove-user-from-lab; user: ', props.user),
-      click: () => {
-        console.log('emit remove-user-from-lab; user: ', props.user),
-          emit('remove-user-from-lab', { user: props.user })
-      },
+      click: () => emit('remove-user-from-lab', { user: props.user }),
     },
   ]);
 }

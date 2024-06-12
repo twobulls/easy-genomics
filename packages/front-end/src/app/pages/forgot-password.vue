@@ -5,7 +5,7 @@
 
   definePageMeta({ layout: 'forgot-password' });
 
-  const { login } = useAuth();
+  const { signIn } = useAuth();
 
   const formSchema = z.object({
     email: z.string().email(ERRORS.email),
@@ -24,7 +24,10 @@
   <div class="flex h-[60vh] items-center justify-center">
     <div>
       <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
-        <EGText tag="h2" class="mb-12">Forgot Password?</EGText>
+        <EGText tag="h2" class="mb-4">Forgot Password?</EGText>
+        <EGText tag="p" class="mb-12">
+          Enter in your email address below and we will send a link to your inbox to reset your password.
+        </EGText>
         <EGFormGroup label="Email address" name="email">
           <EGInput v-model="state.email" />
         </EGFormGroup>

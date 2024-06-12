@@ -13,7 +13,7 @@ export default function useAuth() {
     }
   }
 
-  async function login(username: string, password: string) {
+  async function signIn(username: string, password: string) {
     try {
       useUiStore().setRequestPending(true);
       const user = await Auth.signIn(username, password);
@@ -36,7 +36,7 @@ export default function useAuth() {
   async function logOut() {
     try {
       await Auth.signOut();
-      await navigateTo('/login');
+      await navigateTo('/sign-in');
     } catch (error) {
       console.error('Error occurred during sign out.', error);
       throw error;
@@ -44,7 +44,7 @@ export default function useAuth() {
   }
   return {
     hasAuth,
-    login,
+    signIn,
     logOut,
   };
 }

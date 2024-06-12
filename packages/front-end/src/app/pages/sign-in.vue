@@ -3,9 +3,9 @@
   import { useUiStore } from '~/stores/stores';
   import { ERRORS } from '~/constants/validation';
 
-  definePageMeta({ layout: 'login' });
+  definePageMeta({ layout: 'sign-in' });
 
-  const { login } = useAuth();
+  const { signIn } = useAuth();
 
   const formSchema = z.object({
     email: z.string().email(ERRORS.email),
@@ -33,7 +33,7 @@
         :disabled="isFormDisabled || useUiStore().isRequestPending"
         :loading="useUiStore().isRequestPending"
         label="Sign in"
-        @click="login(state.email, state.password)"
+        @click="signIn(state.email, state.password)"
       />
       <EGText href="/forgot-password" tag="a" color-class="text-primary">Forgot password?</EGText>
     </div>

@@ -9,6 +9,8 @@ export const LaboratorySchema = z.object({
   Status: z.enum(['Active', 'Inactive']),
   AwsHealthOmicsEnabled: z.boolean().optional(),
   NextFlowTowerEnabled: z.boolean().optional(),
+  NextFlowTowerApiToken: z.string().optional(), // Encrypted
+  NextFlowTowerWorkspaceId: z.string().optional(),
   CreatedAt: z.string().optional(),
   CreatedBy: z.string().optional(),
   ModifiedAt: z.string().optional(),
@@ -22,6 +24,8 @@ export const CreateLaboratorySchema = z.object({
   Status: z.enum(['Active', 'Inactive']),
   AwsHealthOmicsEnabled: z.boolean().optional(),
   NextFlowTowerEnabled: z.boolean().optional(),
+  NextFlowTowerApiToken: z.string().optional(),
+  NextFlowTowerWorkspaceId: z.string().optional(), // Encrypted
 }).strict();
 
 export const RequestLaboratorySchema = z.object({
@@ -36,4 +40,6 @@ export const UpdateLaboratorySchema = z.object({
   Status: z.enum(['Active', 'Inactive']),
   AwsHealthOmicsEnabled: z.boolean().optional(),
   NextFlowTowerEnabled: z.boolean().optional(),
+  NextFlowTowerApiToken: z.string().optional(),
+  NextFlowTowerWorkspaceId: z.string().optional(), // Encrypted
 }).strict();

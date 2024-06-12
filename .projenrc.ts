@@ -200,6 +200,9 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
   deps: [
+    '@aws-crypto/client-node',
+    '@aws-crypto/decrypt-node',
+    '@aws-crypto/encrypt-node',
     '@aws-sdk/client-cognito-identity-provider',
     '@aws-sdk/client-dynamodb',
     '@aws-sdk/client-ses',

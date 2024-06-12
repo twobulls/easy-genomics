@@ -50,7 +50,7 @@ export const handler: Handler = async (
     const updated: Laboratory = await laboratoryService.update({
       ...existing,
       ...request,
-      NextFlowTowerApiToken: await encrypt(request.NextFlowTowerApiToken),
+      NextFlowTowerAccessToken: await encrypt(request.NextFlowTowerAccessToken),
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: userId,
     }, existing);

@@ -134,9 +134,8 @@ async function getLabUsers() {
     const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId($route.params.id);
     labUsers.value = _labUserDetails.map((user) => getLabUser(user, _labUsers));
 
-    if (labUsers.value.length === 0) {
-      hasNoData.value = true;
-    }
+    // Ensure the has no data component is displayed when there are no lab users
+    hasNoData.value = labUsers.value.length === 0;
   } catch (error) {
     console.error('Error retrieving lab users', error);
     useToastStore().error('Failed to retrieve lab users');
@@ -247,7 +246,7 @@ onMounted(async () => {
             </template>
             <template #actions-data="{ row: labUser }">
               <div class="flex items-center">
-                <EGUserRoleDropdown :show-remove-from-lab="true" :key="labUser.UserId"
+                <EGUserRoleDropdownNew :show-remove-from-lab="true" :key="labUser.UserId"
                   :disabled="useUiStore().isRequestPending" :user="labUser"
                   @assign-lab-role="handleAssignLabRole($event)"
                   @remove-user-from-lab="displayRemoveUserDialog($event.user)" />

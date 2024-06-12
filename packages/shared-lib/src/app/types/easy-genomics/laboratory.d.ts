@@ -15,9 +15,11 @@
  *   Name: <string>,
  *   Description?: <string>,
  *   Status: <string>,
- *   S3Bucket?: <string>
+ *   S3Bucket?: <string>,
  *   AwsHealthOmicsEnabled?: <boolean>,
  *   NextFlowTowerEnabled?: <boolean>,
+ *   NextFlowTowerApiToken?: <string>, // Encrypted
+ *   NextFlowTowerWorkspaceId?: <string>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
  *   ModifiedAt?: <string>,
@@ -37,6 +39,8 @@ export interface Laboratory extends BaseAttributes {
   S3Bucket?: string;
   AwsHealthOmicsEnabled?: boolean;
   NextFlowTowerEnabled?: boolean;
+  NextFlowTowerApiToken?: string; // Encrypted
+  NextFlowTowerWorkspaceId?: string;
 }
 
 export type CreateLaboratory = z.infer<typeof CreateLaboratorySchema>;

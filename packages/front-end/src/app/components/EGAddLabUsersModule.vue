@@ -14,15 +14,24 @@ const emit = defineEmits(['added-user-to-lab']);
 
 const { $api } = useNuxtApp();
 
+const labUsers = ref<LabUser[]>(props.labUsers) // Ensure lab users are reactive
 const otherOrgUsers = ref<OrgUser[]>([])
 const selectedUserId = ref()
 
 const pendingApiRequest = ref(true) // Whether this module is loading all org users, or adding a user to a lab
+const loadingOrgUsers = ref(true) // Whether this module is loading all org users
 const canAddUser = ref(false) // Control the disabled state of the add button
 const isAddingUser = ref(false) // Control the loading state of the add button
 
-watchEffect(() => {
-  canAddUser.value = !!selectedUserId.value
+// Watch for changes in the labUsers prop
+watch(() => props.labUsers, (newLabUsers) => {
+  labUsers.value = newLabUsers
+  refreshOrgUsersWithoutLabAccess()
+})
+
+// Watch selectedUserId.value to enable/disable the add button
+watch(() => selectedUserId.value, (newSelectedUserId) => {
+  canAddUser.value = !!newSelectedUserId
 })
 
 async function handleAddSelectedUserToLab() {
@@ -42,7 +51,7 @@ async function handleAddSelectedUserToLab() {
     selectedUserId.value = undefined
     selectedUser.value = undefined
     emit('added-user-to-lab')
-    refreshOrgUsers()
+    refreshOrgUsersWithoutLabAccess()
   } catch (error) {
     useToastStore().error(`Failed to add ${displayName} to ${props.labName}`)
     console.error(error)
@@ -59,8 +68,9 @@ function hasLabAccess(user: OrganizationUserDetails, labUsers: LabUser[] = []) {
 
 async function getOrgUsersWithoutLabAccess() {
   try {
+    loadingOrgUsers.value = true
     const orgUsers = await $api.orgs.usersDetailsByOrgId(props.orgId) as OrganizationUserDetails[]
-    const _otherOrgUsers = orgUsers.filter((user: OrganizationUserDetails) => !hasLabAccess(user, props.labUsers))
+    const _otherOrgUsers = orgUsers.filter((user: OrganizationUserDetails) => !hasLabAccess(user, labUsers.value))
     otherOrgUsers.value = _otherOrgUsers.map((user: OrganizationUserDetails) => {
       const displayName = useUser().displayName({
         preferredName: user.PreferredName,
@@ -77,10 +87,11 @@ async function getOrgUsersWithoutLabAccess() {
     console.error(error)
   } finally {
     pendingApiRequest.value = false
+    loadingOrgUsers.value = false
   }
 }
 
-async function refreshOrgUsers() {
+async function refreshOrgUsersWithoutLabAccess() {
   pendingApiRequest.value = true
   await getOrgUsersWithoutLabAccess()
 }
@@ -94,8 +105,8 @@ onMounted(async () => {
   <EGCard :padding="4">
     <div class="flex space-x-4">
       <USelectMenu v-model="selectedUserId" :options="otherOrgUsers" option-attribute="displayName"
-        value-attribute="UserId" :disabled="pendingApiRequest" :loading="false" placeholder="Select User" searchable
-        searchable-placeholder="Search all users..." :search-attributes="['displayName', 'UserEmail']"
+        value-attribute="UserId" :disabled="pendingApiRequest" :loading="loadingOrgUsers" placeholder="Select User"
+        searchable searchable-placeholder="Search all users..." :search-attributes="['displayName', 'UserEmail']"
         clear-search-on-close class="grow" size="xl" :ui="{
           base: 'h-[52px] min-w-96',
         }">
@@ -110,9 +121,9 @@ onMounted(async () => {
         </template>
 
         <template #empty>
-          <div v-if="props.labUsers.length === 0 && otherOrgUsers.length === 0">The organization has no users
+          <div v-if="labUsers.length === 0 && otherOrgUsers.length === 0">The organization has no users
           </div>
-          <div v-if="props.labUsers.length > 0 && otherOrgUsers.length === 0">All organization users already have
+          <div v-if="labUsers.length > 0 && otherOrgUsers.length === 0">All organization users already have
             access to this lab</div>
         </template>
       </USelectMenu>

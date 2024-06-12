@@ -24,7 +24,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.props = props;
 
     // Create KMS symmetric encryption key to protect sensitive Easy Genomics DynamoDB data
-    this.easyGenomicsDynamoDBKmsKey = new Key(this, `${this.props.constructNamespace}-cognito-kms-key`, {
+    this.easyGenomicsDynamoDBKmsKey = new Key(this, `${this.props.constructNamespace}-easy-genomics-dynamodb-kms-key`, {
       alias: `${this.props.constructNamespace}-easy-genomics-dynamodb-kms-key`,
       keySpec: KeySpec.SYMMETRIC_DEFAULT,
       removalPolicy: RemovalPolicy.DESTROY,

@@ -21,10 +21,6 @@ const tableColumns = [
   },
 ];
 
-// TODO:
-// - Use new LabUser typw
-// - Update properties passed to and from EGUserRoleDropdown
-
 onBeforeMount(async () => {
   await updateSelectedUser();
   await fetchOrgLabs();

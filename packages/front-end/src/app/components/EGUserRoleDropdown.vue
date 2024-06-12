@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user-details';
 import { LaboratoryRolesEnumSchema, LaboratoryRolesEnum } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
-import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/lab-user';
+import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
 
 const props = withDefaults(
   defineProps<{

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LabUserSchema, LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/lab-user';
+import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
 import { LaboratoryRolesEnumSchema, LaboratoryRolesEnum } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
 import { ButtonVariantEnum } from '~/types/buttons';
 import { DeletedResponse, EditUserResponse } from '~/types/api';

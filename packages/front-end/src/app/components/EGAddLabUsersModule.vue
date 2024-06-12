@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LabUserSchema, LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/lab-user';
+import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { useToastStore } from '~/stores/stores';
 

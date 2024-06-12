@@ -1,15 +1,13 @@
 <script setup lang="ts">
-  const routeKey = ref(0);
-
-  watch(routeKey, () => {
-    routeKey.value++;
-  });
+  const router = useRouter();
 </script>
 
 <template>
   <EGToasts class="top-[70px]" />
-  <EGHeader :has-auth="true" key="routeKey" />
-  <main class="mx-auto mt-12 px-4">
+  <EGHeader />
+
+  <main class="mx-auto mt-12 flex flex-col justify-center px-4">
+    <EGBack label="Previous" @click="() => router.push({ path: '/' })" />
     <slot />
   </main>
 </template>

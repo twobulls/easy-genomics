@@ -35,7 +35,7 @@
         label="Sign in"
         @click="login(state.email, state.password)"
       />
-      <EGText href="#" tag="a" color-class="text-primary">Forgot password?</EGText>
+      <EGText href="/forgot-password" tag="a" color-class="text-primary">Forgot password?</EGText>
     </div>
   </UForm>
 </template>

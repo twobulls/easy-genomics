@@ -15,6 +15,12 @@ class UsersModule extends HttpFactory {
       OrganizationId: orgId,
     });
   }
+
+  async forgotPasswordRequest(email: string): Promise<User | undefined> {
+    return this.call<User>('POST', '/user/create-user-forgot-password-request', {
+      Email: email,
+    });
+  }
 }
 
 export default UsersModule;

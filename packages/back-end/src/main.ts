@@ -18,6 +18,8 @@ if (process.env.CI_CD === 'true') {
   const systemAdminEmail: string | undefined = process.env.SYSTEM_ADMIN_EMAIL;
   const systemAdminPassword: string | undefined = process.env.SYSTEM_ADMIN_PASSWORD;
   const secretKey: string | undefined = process.env.SECRET_KEY;
+  const testUserEmail: string | undefined = process.env.TEST_USER_EMAIL;
+  const testUserPassword: string | undefined = process.env.TEST_USER_PASSWORD;
 
   if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the CI/CD environment configuration');
   if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
@@ -32,6 +34,11 @@ if (process.env.CI_CD === 'true') {
   const devEnv: boolean = envType === 'dev';
   const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
   const constructNamespace: string = `${namePrefix}-easy-genomics`;
+
+  if (devEnv) {
+    if (!testUserEmail) throw new Error('TEST_USER_EMAIL undefined, please check the CI/CD environment configuration');
+    if (!testUserPassword) throw new Error('TEST_USER_PASSWORD undefined, please check the CI/CD environment configuration');
+  }
 
   // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
   new BackEndStack(app, `${envName}-main-back-end-stack`, {
@@ -48,6 +55,8 @@ if (process.env.CI_CD === 'true') {
     systemAdminEmail: systemAdminEmail,
     systemAdminPassword: systemAdminPassword,
     secretKey: secretKey,
+    testUserEmail: testUserEmail,
+    testUserPassword: testUserPassword,
   });
 } else {
   console.log('Loading Back-End easy-genomics.yaml settings...');
@@ -71,6 +80,8 @@ if (process.env.CI_CD === 'true') {
       const systemAdminEmail: string | undefined = configSettings['back-end']['system-admin-email'];
       const systemAdminPassword: string | undefined = configSettings['back-end']['system-admin-password'];
       const secretKey: string | undefined = configSettings['back-end']['secret-key'];
+      const testUserEmail: string | undefined = configSettings['back-end']['test-user-email'];
+      const testUserPassword: string | undefined = configSettings['back-end']['test-user-password'];
 
       if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the easy-genomics.yaml configuration');
       if (!awsRegion) throw new Error('AWS_REGION undefined, please check the easy-genomics.yaml configuration');
@@ -85,6 +96,11 @@ if (process.env.CI_CD === 'true') {
       const devEnv: boolean = envType === 'dev';
       const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
       const constructNamespace: string = `${namePrefix}-easy-genomics`;
+
+      if (devEnv) {
+        if (!testUserEmail) throw new Error('TEST_USER_EMAIL undefined, please check the easy-genomics.yaml configuration');
+        if (!testUserPassword) throw new Error('TEST_USER_PASSWORD undefined, please check the easy-genomics.yaml configuration');
+      }
 
       // Setups Back-End Stack which initiates the nested stacks for Auth, Easy Genomics, AWS HealthOmics and NextFlow Tower
       new BackEndStack(app, `${envName}-main-back-end-stack`, {
@@ -101,6 +117,8 @@ if (process.env.CI_CD === 'true') {
         systemAdminEmail: systemAdminEmail,
         systemAdminPassword: systemAdminPassword,
         secretKey: secretKey,
+        testUserEmail: testUserEmail,
+        testUserPassword: testUserPassword,
       });
     }
   });

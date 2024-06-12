@@ -42,6 +42,7 @@ async function handleAddSelectedUserToLab() {
     selectedUserId.value = undefined
     selectedUser.value = undefined
     emit('added-user-to-lab')
+    refreshOrgUsers()
   } catch (error) {
     useToastStore().error(`Failed to add ${displayName} to ${props.labName}`)
     console.error(error)
@@ -77,6 +78,11 @@ async function getOrgUsersWithoutLabAccess() {
   } finally {
     pendingApiRequest.value = false
   }
+}
+
+async function refreshOrgUsers() {
+  pendingApiRequest.value = true
+  await getOrgUsersWithoutLabAccess()
 }
 
 onMounted(async () => {

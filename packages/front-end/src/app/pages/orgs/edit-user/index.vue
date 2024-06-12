@@ -175,7 +175,7 @@ async function handleAssignRole(user: LaboratoryUserDetails) {
     <template #actions-data="{ row }">
       <div class="flex items-center" v-if="row.labAccessOptionsEnabled">
         <EGUserRoleDropdown :key="row" :disabled="useUiStore().isRequestPending" :user="row"
-          @assign-lab-role="handleAssignRole($event)" />
+          @assign-role="handleAssignRole($event.labUser)" />
       </div>
       <EGButton :loading="useUiStore().isRequestPending" v-else-if="row.access" @click="
         handleAddUser({

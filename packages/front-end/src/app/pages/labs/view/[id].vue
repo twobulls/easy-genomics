@@ -17,6 +17,7 @@ const labName = $route.query.name;
 const labUsers = ref<LabUser[]>([]);
 const hasNoData = ref(false);
 
+const canAddUsers = ref(false);
 const showAddUserModule = ref(false);
 const searchOutput = ref('');
 
@@ -168,12 +169,13 @@ const filteredTableData = computed(() => {
 
 onMounted(async () => {
   await getLabUsers();
+  canAddUsers.value = true;
 });
 </script>
 
 <template>
   <EGPageHeader :title="labName" description="Lab summary, statistics and its users">
-    <EGButton label="Add Lab Users" :disabled="useUiStore().isRequestPending" @click="showAddUserModule = true" />
+    <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = true" />
     <EGAddLabUsersModule v-if="showAddUserModule" @added-user-to-lab="refreshLabUsers()" :org-id="orgId" :lab-id="labId"
       :lab-name="labName" :lab-users="labUsers" class="mt-2" />
   </EGPageHeader>
@@ -222,8 +224,7 @@ onMounted(async () => {
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGEmptyDataCTA v-if="!useUiStore().isRequestPending && hasNoData"
-          message="You don't have any users in this lab yet." img-src="/images/empty-state-user.jpg"
-          :button-action="() => { }" button-label="Add Lab Users" />
+          message="You don't have any users in this lab yet." img-src="/images/empty-state-user.jpg" />
 
         <template v-if="!hasNoData">
           <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user"

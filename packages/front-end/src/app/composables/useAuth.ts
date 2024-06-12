@@ -33,7 +33,7 @@ export default function useAuth() {
     }
   }
 
-  async function logOut() {
+  async function signOut() {
     try {
       await Auth.signOut();
       await navigateTo('/sign-in');
@@ -45,6 +45,6 @@ export default function useAuth() {
   return {
     hasAuth,
     signIn,
-    logOut,
+    signOut,
   };
 }

@@ -10,7 +10,7 @@
     }
   );
 
-  const { logOut, hasAuth } = useAuth();
+  const { signOut, hasAuth } = useAuth();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
   const { currentRoute } = useRouter();
@@ -63,7 +63,13 @@
           >
             Organizations
           </ULink>
-          <EGButton :size="ButtonSizeEnum.enum.sm" v-if="hasAuth" @click="logOut()" class="ml-8 h-10" label="Log out" />
+          <EGButton
+            :size="ButtonSizeEnum.enum.sm"
+            v-if="hasAuth"
+            @click="signOut()"
+            class="ml-8 h-10"
+            label="Sign out"
+          />
         </div>
       </template>
       <template v-else>

@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user-details';
-import { LaboratoryRolesEnumSchema, LaboratoryRolesEnum } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
-import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
+import { LaboratoryRolesEnum, LaboratoryRolesEnumSchema } from '~/types/roles';
+
+interface LaboratoryUserDetailsWithRoles extends LaboratoryUserDetails {
+  assignedRole: LaboratoryRolesEnumSchema;
+}
 
 const props = withDefaults(
   defineProps<{
-    user: LabUser;
+    user: LaboratoryUserDetailsWithRoles;
     disabled?: boolean;
     showRemoveFromLab?: boolean;
   }>(),
@@ -15,16 +18,30 @@ const props = withDefaults(
   }
 );
 
-const emit = defineEmits(['remove-user-from-lab', 'assign-lab-role']);
-
-const { assignedRole, displayName, UserId } = props.user;
+const { PreferredName, FirstName, LastName, UserId, UserEmail } = props.user;
+const displayName = useUser().displayName({
+  preferredName: PreferredName,
+  firstName: FirstName,
+  lastName: LastName,
+  email: UserEmail,
+});
+const emit = defineEmits(['remove-user-from-lab', 'assign-role']);
+const assignedRole = ref<LaboratoryRolesEnum>(LaboratoryRolesEnumSchema.enum.LabTechnician);
 const roles = Object.values(LaboratoryRolesEnumSchema.enum).map((role) => role);
+
+if (props.user.assignedRole === LaboratoryRolesEnumSchema.enum.LabManager) {
+  assignedRole.value = LaboratoryRolesEnumSchema.enum.LabManager;
+} else {
+  assignedRole.value = LaboratoryRolesEnumSchema.enum.LabTechnician;
+}
 
 const items: Array<Array<Object>> = roles.map((role: LaboratoryRolesEnum) => {
   return [
     {
       label: role,
-      click: () => emit('assign-lab-role', { user: props.user, role }),
+      click: () => {
+        handleUpdateRole(role);
+      },
     },
   ];
 });
@@ -34,9 +51,20 @@ if (props.showRemoveFromLab) {
     {
       label: 'Remove From Lab',
       class: 'text-alert-danger-dark',
-      click: () => emit('remove-user-from-lab', { user: props.user }),
+      click: () => {
+        emit('remove-user-from-lab', { UserId, displayName });
+      },
     },
   ]);
+}
+
+function handleUpdateRole(role) {
+  const LabManager = role === LaboratoryRolesEnumSchema.enum.LabManager;
+  const LabTechnician = role === LaboratoryRolesEnumSchema.enum.LabTechnician;
+  const { assignedRole, ...cleanUser } = props.user;
+  const labUser = { ...cleanUser, LabManager, LabTechnician };
+
+  emit('assign-role', { labUser, displayName });
 }
 </script>
 

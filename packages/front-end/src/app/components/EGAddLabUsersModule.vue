@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
+import { LabUser, OrgUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-import { useToastStore } from '~/stores/stores';
+import { useToastStore, useUiStore } from '~/stores/stores';
+import { EditUserResponse } from '~/types/api';
 
 const props = defineProps<{
   orgId: string;
@@ -16,7 +17,7 @@ const { $api } = useNuxtApp();
 
 const labUsers = ref<LabUser[]>(props.labUsers) // Ensure lab users are reactive
 const otherOrgUsers = ref<OrgUser[]>([])
-const selectedUserId = ref()
+const selectedUserId = ref<string | undefined>(undefined)
 
 const pendingApiRequest = ref(true) // Whether this module is loading all org users, or adding a user to a lab
 const loadingOrgUsers = ref(true) // Whether this module is loading all org users
@@ -35,12 +36,23 @@ watch(() => selectedUserId.value, (newSelectedUserId) => {
 })
 
 async function handleAddSelectedUserToLab() {
-  const selectedUser = otherOrgUsers.value.find((user: OrganizationUserDetails) => user.UserId === selectedUserId.value)
-  const { displayName, UserId } = selectedUser
-  pendingApiRequest.value = true
-  isAddingUser.value = true
+  let maybeDisplayName = 'user'
 
   try {
+    const selectedUser = otherOrgUsers.value.find((user: OrgUser) => user.UserId === selectedUserId.value)
+
+    if (!selectedUser) {
+      throw new Error('Selected user not found')
+    }
+
+    const { displayName, UserId } = selectedUser
+    maybeDisplayName = displayName // Substute the word 'user' in the error toast message with the users display name
+
+    // Update the UI to reflect the pending request
+    useUiStore().setRequestPending(true)
+    pendingApiRequest.value = true
+    isAddingUser.value = true
+
     const res = await $api.labs.addLabUser(props.labId, UserId) as EditUserResponse
 
     if (!res) {
@@ -49,13 +61,14 @@ async function handleAddSelectedUserToLab() {
 
     useToastStore().success(`Successfully added ${displayName} to ${props.labName}`)
     selectedUserId.value = undefined
-    selectedUser.value = undefined
     emit('added-user-to-lab')
     refreshOrgUsersWithoutLabAccess()
   } catch (error) {
-    useToastStore().error(`Failed to add ${displayName} to ${props.labName}`)
+    useToastStore().error(`Failed to add ${maybeDisplayName} to ${props.labName}`)
     console.error(error)
   } finally {
+    // Reset the UI request state
+    useUiStore().setRequestPending(false)
     pendingApiRequest.value = false
     isAddingUser.value = false
   }
@@ -68,7 +81,10 @@ function hasLabAccess(user: OrganizationUserDetails, labUsers: LabUser[] = []) {
 
 async function getOrgUsersWithoutLabAccess() {
   try {
+    // Update the UI to reflect the pending request
+    useUiStore().setRequestPending(true)
     loadingOrgUsers.value = true
+
     const orgUsers = await $api.orgs.usersDetailsByOrgId(props.orgId) as OrganizationUserDetails[]
     const _otherOrgUsers = orgUsers.filter((user: OrganizationUserDetails) => !hasLabAccess(user, labUsers.value))
     otherOrgUsers.value = _otherOrgUsers.map((user: OrganizationUserDetails) => {
@@ -81,11 +97,13 @@ async function getOrgUsersWithoutLabAccess() {
       return {
         ...user,
         displayName,
-      }
+      } as OrgUser
     })
   } catch (error) {
     console.error(error)
   } finally {
+    // Reset the UI request state
+    useUiStore().setRequestPending(false)
     pendingApiRequest.value = false
     loadingOrgUsers.value = false
   }
@@ -131,4 +149,4 @@ onMounted(async () => {
         @click="handleAddSelectedUserToLab" />
     </div>
   </EGCard>
-</template>
+</template>, OrgUserimport { EditUserResponse } from '~/types/api';

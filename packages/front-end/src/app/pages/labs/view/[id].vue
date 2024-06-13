@@ -5,7 +5,8 @@ import { ButtonVariantEnum } from '~/types/buttons';
 import { DeletedResponse, EditUserResponse } from '~/types/api';
 import { useOrgsStore, useToastStore, useUiStore } from '~/stores/stores';
 import useUser from '~/composables/useUser';
-import { z } from 'zod';
+import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
+import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 
 const { $api } = useNuxtApp();
 
@@ -33,10 +34,12 @@ function displayRemoveUserDialog(user: LabUser) {
 }
 
 async function handleRemoveUserFromLab() {
+  let maybeDisplayName = 'user';
   try {
     isOpen.value = false;
     useUiStore().setRequestPending(true);
     const { displayName, UserId } = userToRemove.value
+    maybeDisplayName = displayName;
 
     const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
 
@@ -46,7 +49,7 @@ async function handleRemoveUserFromLab() {
 
     useToastStore().success(`Successfully removed ${displayName} from ${labName}`);
   } catch (error) {
-    useToastStore().error(`Failed to remove ${displayName} from ${labName}`);
+    useToastStore().error(`Failed to remove ${maybeDisplayName} from ${labName}`);
   } finally {
     await refreshLabUsers();
     userToRemove.value = undefined;
@@ -101,7 +104,7 @@ function getAssignedLabRole(labUserDetails: LaboratoryUserDetails): LaboratoryRo
 function getLabUser(labUserDetails: LaboratoryUserDetails, labUsers: LaboratoryUser[]): LabUser {
   const labUser = labUsers.find((labUser) => labUser.UserId === labUserDetails.UserId);
   if (!labUser) {
-    throw new Error(`Lab user not found for user ${user.UserId}`)
+    throw new Error(`Lab user not found for user ID: ${labUserDetails.UserId}`)
   }
   const assignedRole = getAssignedLabRole(labUserDetails);
 
@@ -112,24 +115,19 @@ function getLabUser(labUserDetails: LaboratoryUserDetails, labUsers: LaboratoryU
     email: labUserDetails.UserEmail,
   });
 
-  const user = {
-    ...labUserDetails,
-    status: labUser.Status,
-    assignedRole,
-    displayName,
-  }
-
   return {
     ...labUserDetails,
     status: labUser.Status,
     assignedRole,
     displayName,
-  };
+  } as LabUser;
 }
 
-async function getLabUsers() {
+async function getLabUsers(): Promise<void> {
   try {
     useUiStore().setRequestPending(true);
+    // HERE
+    // _labUserDetails is NOT an array
     const _labUserDetails: LaboratoryUserDetails = await $api.labs.usersDetails($route.params.id);
     const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId($route.params.id);
     labUsers.value = _labUserDetails.map((user) => getLabUser(user, _labUsers));

@@ -8,7 +8,7 @@ type UserNameOptions = {
   preferredName?: string | undefined;
   firstName?: string | undefined;
   lastName?: string | undefined;
-  email: string | undefined;
+  email: string;
 };
 
 /**
@@ -20,7 +20,7 @@ export default function useUser() {
   /**
    * Returns the display name of a user
    */
-  function displayName(nameOptions: UserNameOptions) {
+  function displayName(nameOptions: UserNameOptions): string {
     const { preferredName, firstName, lastName, email } = nameOptions;
     const preferredOrFirstName = preferredName || firstName;
 

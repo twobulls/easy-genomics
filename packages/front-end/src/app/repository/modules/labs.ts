@@ -10,7 +10,21 @@ class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();
 
   async create(lab: CreateLaboratory): Promise<Laboratory | undefined> {
-    const res = this.call<Laboratory>('POST', '/laboratory/create-laboratory', lab);
+    // TODO: Remove addition of extra property values to work around back-end optional property DynamoDB issue (2024/06/12)
+    const newLab = {
+      Description: '',
+      S3Bucket: '',
+      AwsHealthOmicsEnabled: false,
+      NextFlowTowerEnabled: false,
+      NextFlowTowerApiToken: 'nextflow-tower-secret-token-value',
+      NextFlowTowerWorkspaceId: '1234567890',
+      ...lab,
+    } as CreateLaboratory
+
+    console.log('Create lab original input; lab: ', lab)
+    console.log('Create lab new work around input; newLab: ', newLab)
+
+    const res = this.call<Laboratory>('POST', '/laboratory/create-laboratory', newLab);
 
     if (!res) {
       console.error('Error calling create Laboratory API');

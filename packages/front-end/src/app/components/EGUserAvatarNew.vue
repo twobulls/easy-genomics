@@ -1,3 +1,4 @@
+<!-- Supersedes the old EGUserAvatar.vue component - https://dept-au.atlassian.net/browse/EG-504 -->
 <script setup lang="ts">
 import { UserStatusSchema, UserStatus } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/status';
 

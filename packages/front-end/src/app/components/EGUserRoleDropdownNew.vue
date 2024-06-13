@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user-details';
 import { LaboratoryRolesEnumSchema, LaboratoryRolesEnum } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
 import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
 
@@ -17,7 +16,7 @@ const props = withDefaults(
 
 const emit = defineEmits(['remove-user-from-lab', 'assign-lab-role']);
 
-const { assignedRole, displayName, UserId } = props.user;
+const { assignedRole } = props.user;
 const roles = Object.values(LaboratoryRolesEnumSchema.enum).map((role) => role);
 
 const items: Array<Array<Object>> = roles.map((role: LaboratoryRolesEnum) => {

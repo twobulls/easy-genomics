@@ -36,6 +36,11 @@ watch(() => selectedUserId.value, (newSelectedUserId) => {
 })
 
 async function handleAddSelectedUserToLab() {
+  // Update the UI to reflect the pending request
+  useUiStore().setRequestPending(true)
+  pendingApiRequest.value = true
+  isAddingUser.value = true
+
   let maybeDisplayName = 'user'
 
   try {
@@ -47,11 +52,6 @@ async function handleAddSelectedUserToLab() {
 
     const { displayName, UserId } = selectedUser
     maybeDisplayName = displayName // Substute the word 'user' in the error toast message with the users display name
-
-    // Update the UI to reflect the pending request
-    useUiStore().setRequestPending(true)
-    pendingApiRequest.value = true
-    isAddingUser.value = true
 
     const res = await $api.labs.addLabUser(props.labId, UserId) as EditUserResponse
 
@@ -67,10 +67,7 @@ async function handleAddSelectedUserToLab() {
     useToastStore().error(`Failed to add ${maybeDisplayName} to ${props.labName}`)
     console.error(error)
   } finally {
-    // Reset the UI request state
-    useUiStore().setRequestPending(false)
-    pendingApiRequest.value = false
-    isAddingUser.value = false
+    resetUiLoadingState()
   }
 
 }
@@ -82,7 +79,7 @@ function hasLabAccess(user: OrganizationUserDetails, labUsers: LabUser[] = []) {
 async function getOrgUsersWithoutLabAccess() {
   try {
     // Update the UI to reflect the pending request
-    useUiStore().setRequestPending(true)
+    pendingApiRequest.value = true
     loadingOrgUsers.value = true
 
     const orgUsers = await $api.orgs.usersDetailsByOrgId(props.orgId) as OrganizationUserDetails[]
@@ -102,14 +99,21 @@ async function getOrgUsersWithoutLabAccess() {
   } catch (error) {
     console.error(error)
   } finally {
-    // Reset the UI request state
-    useUiStore().setRequestPending(false)
-    pendingApiRequest.value = false
-    loadingOrgUsers.value = false
+    resetUiLoadingState()
   }
 }
 
+// Reset the UI request pending and loading states
+function resetUiLoadingState() {
+  useUiStore().setRequestPending(false)
+  pendingApiRequest.value = false
+  loadingOrgUsers.value = false
+  isAddingUser.value = false
+}
+
 async function refreshOrgUsersWithoutLabAccess() {
+  // Enable components in the parent page to reflect the pending request
+  useUiStore().setRequestPending(true)
   pendingApiRequest.value = true
   await getOrgUsersWithoutLabAccess()
 }

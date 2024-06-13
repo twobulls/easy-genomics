@@ -17,7 +17,6 @@ const labName = $route.query.name;
 
 const labUsers = ref<LabUser[]>([]);
 const hasNoData = ref(false);
-
 const canAddUsers = ref(false);
 const showAddUserModule = ref(false);
 const searchOutput = ref('');
@@ -126,11 +125,11 @@ function getLabUser(labUserDetails: LaboratoryUserDetails, labUsers: LaboratoryU
 async function getLabUsers(): Promise<void> {
   try {
     useUiStore().setRequestPending(true);
-    // HERE
-    // _labUserDetails is NOT an array
-    const _labUserDetails: LaboratoryUserDetails = await $api.labs.usersDetails($route.params.id);
+    hasNoData.value = false; // prevent flash of call to action component rendering before data is fetched
+
+    const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails($route.params.id);
     const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId($route.params.id);
-    labUsers.value = _labUserDetails.map((user) => getLabUser(user, _labUsers));
+    labUsers.value = _labUsersDetails.map((user) => getLabUser(user, _labUsers));
 
     // Ensure the has no data component is displayed when there are no lab users
     hasNoData.value = labUsers.value.length === 0;
@@ -152,16 +151,18 @@ function updateSearchOutput(newVal: any) {
 }
 
 const filteredTableData = computed(() => {
-  if (!searchOutput.value && !hasNoData.value) {
-    return labUsers.value
+  let filteredLabUsers = labUsers.value;
+
+  if (searchOutput.value.trim()) {
+    filteredLabUsers = labUsers.value
+      .filter((labUser: LabUser) => {
+        const searchString = `${labUser.displayName} ${labUser.UserEmail}`.toLowerCase();
+        return searchString.includes(searchOutput.value.toLowerCase());
+      })
+      .map((labUser) => labUser);
   }
 
-  return labUsers.value
-    .filter((labUser: LabUser) => {
-      const searchString = `${labUser.displayName} ${labUser.UserEmail}`.toLowerCase();
-      return searchString.includes(searchOutput.value.toLowerCase());
-    })
-    .map((labUser) => labUser);
+  return filteredLabUsers
 });
 
 onMounted(async () => {

@@ -140,8 +140,13 @@ async function handleAssignRole(user: LaboratoryUserDetails) {
     );
     if (res?.Status === 'Success') {
       await fetchUserLabs();
+      let maybeLabName = 'Lab'
+      const lab = orgLabsData.value.find((lab) => lab.LaboratoryId === user.LaboratoryId);
+      if (lab) {
+        maybeLabName = lab.Name;
+      }
       useToastStore().success(
-        `${user.Name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`
+        `${maybeLabName} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`
       );
     } else {
       throw new Error('Failed to update user role');

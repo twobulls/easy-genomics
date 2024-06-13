@@ -6,6 +6,7 @@ import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 import { S3Service } from '../../../services/s3-service';
+import { encrypt } from '../../../utils/encryption-utils';
 
 const laboratoryService = new LaboratoryService();
 const s3Service = new S3Service();
@@ -49,6 +50,7 @@ export const handler: Handler = async (
     const updated: Laboratory = await laboratoryService.update({
       ...existing,
       ...request,
+      NextFlowTowerAccessToken: await encrypt(request.NextFlowTowerAccessToken),
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: userId,
     }, existing);

@@ -805,9 +805,12 @@ export class SesConstruct extends Construct {
                                     <td style="width: 600px" class="w560">
                                        <![endif]-->
                                        <div class="column" style="text-align: left;color: #787778;font-size: 16px;line-height: 24px;font-family: Helvetica,Arial,sans-serif;">
-                                          <div style="Margin-left: 20px;Margin-right: 20px;Margin-top: 24px;"> 
+                                          <div style="Margin-left: 20px;Margin-right: 20px;Margin-top: 24px;">  
                                              <div style="mso-line-height-rule: exactly;line-height: 20px;font-size: 1px;">&nbsp;</div> 
                                           </div>
+                                          <div style="font-size: 12px;font-style: normal;font-weight: normal;line-height: 19px;" align="center">
+          <img style="border: 0;display: block;height: auto;width: 100%;max-width: 48px;" alt="" width="48" src="{{LOCK_IMAGE}}">
+        </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div style="mso-line-height-rule: exactly;mso-text-raise: 11px;vertical-align: middle;">
                                                 <h1 class="size-32" style="Margin-top: 0;Margin-bottom: 0;font-style: normal;font-weight: normal;color: #565656;font-size: 28px;line-height: 36px;font-family: sans-serif;text-align: center;" lang="x-size-32"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #12181f;">Forgot your password?</span></span></h1>

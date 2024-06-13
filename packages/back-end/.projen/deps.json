@@ -95,6 +95,18 @@
       "type": "build"
     },
     {
+      "name": "@aws-crypto/client-node",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-crypto/decrypt-node",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-crypto/encrypt-node",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/client-cognito-identity-provider",
       "type": "runtime"
     },

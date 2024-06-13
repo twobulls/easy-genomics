@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 import { OrganizationService } from '../../../services/easy-genomics/organization-service';
 import { S3Service } from '../../../services/s3-service';
+import { encrypt } from '../../../utils/encryption-utils';
 
 const organizationService = new OrganizationService();
 const laboratoryService = new LaboratoryService();
@@ -45,6 +46,7 @@ export const handler: Handler = async (
 
     const response: Laboratory = await laboratoryService.add({
       ...request,
+      NextFlowTowerAccessToken: await encrypt(request.NextFlowTowerAccessToken),
       LaboratoryId: uuidv4(),
       AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
       NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,

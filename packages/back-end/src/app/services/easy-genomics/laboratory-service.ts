@@ -1,8 +1,8 @@
 import {
   GetItemCommandOutput,
+  PutItemCommandOutput,
   QueryCommandOutput,
   TransactWriteItemsCommandOutput,
-  UpdateItemCommandOutput,
 } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { LaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
@@ -35,7 +35,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
               '#OrganizationId': 'OrganizationId',
               '#LaboratoryId': 'LaboratoryId',
             },
-            Item: marshall(laboratory),
+            Item: marshall(laboratory, { removeUndefinedValues: true }),
           },
         },
         {
@@ -153,32 +153,20 @@ export class LaboratoryService extends DynamoDBService implements Service {
     // Data validation safety check
     if (!LaboratorySchema.safeParse(laboratory).success) throw new Error('Invalid request');
 
-    const updateExclusions: string[] = ['OrganizationId', 'LaboratoryId', 'CreatedAt', 'CreatedBy'];
-
-    const expressionAttributeNames: {[p: string]: string} = this.getExpressionAttributeNamesDefinition(laboratory, updateExclusions);
-    const expressionAttributeValues: {[p: string]: any} = this.getExpressionAttributeValuesDefinition(laboratory, updateExclusions);
-    const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
-
     // Check if Laboratory Name is unchanged
     if (laboratory.Name === existing.Name) {
       // Perform normal update request
-      const response: UpdateItemCommandOutput = await this.updateItem({
+      const response: PutItemCommandOutput = await this.putItem({
         TableName: this.LABORATORY_TABLE_NAME,
-        Key: {
-          OrganizationId: { S: laboratory.OrganizationId },
-          LaboratoryId: { S: laboratory.LaboratoryId },
+        ConditionExpression: 'attribute_exists(#OrganizationId) AND attribute_exists(#LaboratoryId)',
+        ExpressionAttributeNames: {
+          '#OrganizationId': 'OrganizationId',
+          '#LaboratoryId': 'LaboratoryId',
         },
-        ExpressionAttributeNames: expressionAttributeNames,
-        ExpressionAttributeValues: expressionAttributeValues,
-        UpdateExpression: updateExpression,
-        ReturnValues: 'ALL_NEW',
+        Item: marshall(laboratory, { removeUndefinedValues: true }),
       });
       if (response.$metadata.httpStatusCode === 200) {
-        if (response.Attributes) {
-          return <Laboratory>unmarshall(response.Attributes);
-        } else {
-          throw new Error(`${logRequestMessage} unsuccessful: Returned unexpected response`);
-        }
+        return this.queryByLaboratoryId(laboratory.LaboratoryId);
       } else {
         throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
       }
@@ -187,16 +175,14 @@ export class LaboratoryService extends DynamoDBService implements Service {
       const response: TransactWriteItemsCommandOutput = await this.transactWriteItems({
         TransactItems: [
           {
-            Update: {
+            Put: {
               TableName: this.LABORATORY_TABLE_NAME,
-              Key: {
-                OrganizationId: { S: laboratory.OrganizationId },
-                LaboratoryId: { S: laboratory.LaboratoryId },
+              ConditionExpression: 'attribute_exists(#OrganizationId) AND attribute_exists(#LaboratoryId)',
+              ExpressionAttributeNames: {
+                '#OrganizationId': 'OrganizationId',
+                '#LaboratoryId': 'LaboratoryId',
               },
-              ExpressionAttributeNames: expressionAttributeNames,
-              ExpressionAttributeValues: expressionAttributeValues,
-              UpdateExpression: updateExpression,
-              ReturnValues: 'ALL_NEW',
+              Item: marshall(laboratory, { removeUndefinedValues: true }),
             },
           },
           {

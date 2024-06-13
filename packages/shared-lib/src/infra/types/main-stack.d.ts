@@ -23,4 +23,6 @@ export interface BackEndStackProps extends BaseStackProps {
     systemAdminEmail: string;
     systemAdminPassword: string;
     secretKey: string;
+    testUserEmail?: string;
+    testUserPassword?: string;
 }

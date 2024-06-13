@@ -11,6 +11,8 @@ easy-genomics:
             system-admin-email:
             system-admin-password:
             secret-key:
+            test-user-email:
+            test-user-password:
 
         # Front-End specific settings
         front-end:

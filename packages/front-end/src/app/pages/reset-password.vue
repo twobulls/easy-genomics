@@ -11,7 +11,12 @@
   const { $api } = useNuxtApp();
   const { signIn } = useAuth();
   const formSchema = z.object({
-    password: z.string().min(1, ERRORS.password),
+    password: z
+      .string()
+      .min(8, ERRORS.passwordMinLength)
+      .refine((value) => /[a-zA-Z]/.test(value), ERRORS.passwordCharacter)
+      .refine((value) => /[0-9]/.test(value), ERRORS.passwordNumber)
+      .refine((value) => /[^a-zA-Z0-9]/.test(value), ERRORS.passwordSymbol),
   });
   const forgotPasswordToken = ref('');
 
@@ -38,7 +43,7 @@
   }
 
   /**
-   * @description Reset password using the token provided in the URL
+   * @description Reset password using the token provided as a query param in the URL
    * @param password
    */
   async function onSubmit(password: string) {
@@ -62,7 +67,7 @@
   <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
     <EGText tag="h2" class="mb-4">Reset my password</EGText>
     <EGFormGroup label="New password" name="password">
-      <EGPasswordInput v-model="state.password" :password="true" />
+      <EGPasswordInput v-model="state.password" :password="true" :disabled="useUiStore().isRequestPending" />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton

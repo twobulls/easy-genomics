@@ -2,7 +2,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import { laboratory, laboratoryUser, organization, organizationUser, uniqueReferences, user } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sample-data';
+import { laboratory, laboratoryUser, organization, organizationUser, user } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sample-data';
 import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/unique-reference';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
@@ -40,24 +40,46 @@ export class DataProvisioningNestedStack extends NestedStack {
     }
 
     if (this.props.devEnv) {
-      try {
-        // Add test user to Cognito User Pool
-        this.cognitoUserConstruct.addUser(
-          user.Email,
-          'P@ssw0rd',
-        );
-      } catch (err: unknown) {
-        console.error('Unable to create Test User Account: ', err);
-      }
+      const uniqueReferences: UniqueReference[] = [];
 
       // Add seed data to DynamoDB Tables
       this.addDynamoDBSeedData<Organization>(`${this.props.namePrefix}-organization-table`, organization);
-      this.addDynamoDBSeedData<Laboratory>(`${this.props.namePrefix}-laboratory-table`, laboratory);
-      this.addDynamoDBSeedData<User>(`${this.props.namePrefix}-user-table`, user);
+      uniqueReferences.push({
+        Value: organization.Name.toLowerCase(),
+        Type: 'organization-name',
+      });
 
-      // Add User mapping data to DynamoDB Tables
-      this.addDynamoDBSeedData<OrganizationUser>(`${this.props.namePrefix}-organization-user-table`, organizationUser);
-      this.addDynamoDBSeedData<LaboratoryUser>(`${this.props.namePrefix}-laboratory-user-table`, laboratoryUser);
+      this.addDynamoDBSeedData<Laboratory>(`${this.props.namePrefix}-laboratory-table`, laboratory);
+      uniqueReferences.push({
+        Value: laboratory.Name.toLowerCase(),
+        Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
+      });
+
+      if (this.props.testUserEmail && this.props.testUserPassword) {
+        try {
+          // Add test user to Cognito User Pool
+          this.cognitoUserConstruct.addUser(
+            this.props.testUserEmail,
+            this.props.testUserPassword,
+          );
+
+          this.addDynamoDBSeedData<User>(`${this.props.namePrefix}-user-table`, {
+            ...user,
+            Email: this.props.testUserEmail,
+          });
+
+          uniqueReferences.push({
+            Value: user.Email.toLowerCase(),
+            Type: 'user-email',
+          });
+        } catch (err: unknown) {
+          console.error('Unable to create Test User Account: ', err);
+        }
+
+        // Add User mapping data to DynamoDB Tables
+        this.addDynamoDBSeedData<OrganizationUser>(`${this.props.namePrefix}-organization-user-table`, organizationUser);
+        this.addDynamoDBSeedData<LaboratoryUser>(`${this.props.namePrefix}-laboratory-user-table`, laboratoryUser);
+      }
 
       // Bulk add unique references to UniqueReferences DynamoDB Table
       this.bulkAddDynamoDBSeedData<UniqueReference>(`${this.props.namePrefix}-unique-reference-table`, uniqueReferences);

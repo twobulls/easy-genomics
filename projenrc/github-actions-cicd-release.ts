@@ -113,6 +113,8 @@ export class GithubActionsCICDRelease extends Component {
       'SYSTEM_ADMIN_EMAIL': '${{ vars.SYSTEM_ADMIN_EMAIL }}',
       'SYSTEM_ADMIN_PASSWORD': '${{ secrets.SYSTEM_ADMIN_PASSWORD }}',
       'SECRET_KEY': '${{ secrets.SECRET_KEY }}',
+      'TEST_USER_EMAIL': '${{ vars.TEST_USER_EMAIL }}',
+      'TEST_USER_PASSWORD': '${{ secrets.TEST_USER_PASSWORD }}',
       // Front-End specific settings
       'AWS_HOSTED_ZONE_ID': '${{ secrets.AWS_HOSTED_ZONE_ID }}', // Must be pre-configured in AWS
       'AWS_HOSTED_ZONE_NAME': '${{ secrets.AWS_HOSTED_ZONE_NAME }}', // Must be pre-configured in AWS

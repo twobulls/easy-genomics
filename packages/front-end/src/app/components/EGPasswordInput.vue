@@ -20,6 +20,7 @@
 
 <template>
   <UInput
+    autocomplete="current-password"
     :disabled="disabled"
     :ui="{
       icon: { trailing: { pointer: '' } },

@@ -23,7 +23,7 @@
   <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
     <EGText tag="h2" class="mb-12">Sign in</EGText>
     <EGFormGroup label="Email" name="email">
-      <EGInput v-model="state.email" />
+      <EGInput v-model="state.email" autofocus />
     </EGFormGroup>
     <EGFormGroup label="Password" name="password">
       <EGPasswordInput v-model="state.password" :password="true" />

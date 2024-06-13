@@ -17,6 +17,12 @@
     isFormDisabled.value = !formSchema.safeParse(state.value).success;
   });
 
+  function handleSuccess(email: string) {
+    useToastStore().success(`Reset link has been sent to ${email}`);
+    state.value.email = '';
+    navigateTo('/sign-in');
+  }
+
   /**
    * Send a password reset link to the user's email address + displays toast message on success or error.
    * @param email
@@ -25,12 +31,16 @@
     try {
       useUiStore().setRequestPending(true);
       await $api.users.forgotPasswordRequest(email);
-      useToastStore().success(`Reset link has been sent to ${email}`);
-      state.value.email = '';
+      handleSuccess(email);
     } catch (error: any) {
-      useToastStore().error(ERRORS.network);
-      console.error('Error occurred during forgot password request.', error);
-      throw error;
+      // mask error message if email not found
+      if (error.message === 'Request error: Failed to fetch') {
+        handleSuccess(email);
+      } else {
+        useToastStore().error(ERRORS.network);
+        console.error('Error occurred during forgot password request.', error);
+        throw error;
+      }
     } finally {
       useUiStore().setRequestPending(false);
     }
@@ -44,7 +54,7 @@
       Enter in your email address below and we will send a link to your inbox to reset your password.
     </EGText>
     <EGFormGroup label="Email address" name="email">
-      <EGInput v-model="state.email" />
+      <EGInput v-model="state.email" :disabled="useUiStore().isRequestPending" />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton

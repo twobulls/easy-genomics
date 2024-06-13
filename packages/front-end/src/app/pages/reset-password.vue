@@ -2,6 +2,7 @@
   import { z } from 'zod';
   import { useToastStore, useUiStore } from '~/stores/stores';
   import { ERRORS } from '~/constants/validation';
+  import { getJwtPayload } from '~/utils/jwt';
 
   definePageMeta({ layout: 'password' });
 
@@ -15,16 +16,41 @@
   const forgotPasswordToken = ref('');
 
   onMounted(() => {
-    getResetToken();
+    const resetToken = getResetToken();
+    return checkResetTokenExpiry(resetToken) ? (forgotPasswordToken.value = resetToken) : redirectFromExpiredToken();
   });
 
   watchEffect(() => {
     isFormDisabled.value = !formSchema.safeParse(state.value).success;
   });
 
+  function redirectFromExpiredToken() {
+    useToastStore().error('Your invite link has been accepted or expired.');
+    navigateTo('/sign-in');
+  }
+
   function getResetToken() {
     const url = new URL(window.location.href);
-    forgotPasswordToken.value = url.searchParams.get('forgot-password');
+    return url.searchParams.get('forgot-password');
+  }
+
+  function checkResetTokenExpiry(jwt: string) {
+    const val = getJwtPayload(jwt);
+
+    if (!val.exp) {
+      console.warn('Missing "exp" field in JWT payload.');
+      return false;
+    }
+
+    const currentTime = Math.floor(Date.now() / 1000);
+    const isExpired = currentTime > val.exp;
+    debugger;
+    if (isExpired) {
+      console.warn('Token has expired.');
+      return false;
+    }
+
+    return true;
   }
 
   /**

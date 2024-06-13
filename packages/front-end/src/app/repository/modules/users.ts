@@ -11,6 +11,7 @@ import {
   ConfirmUserForgotPasswordRequestSchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-password';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+const MOCK_X_API_KEY = 'JuCb97YCiV3AdCRBNgnuU2Fd7gFSwqa318wpjZ9H'; // Quality env
 
 class UsersModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -36,9 +37,14 @@ class UsersModule extends HttpFactory {
       Email: email,
     });
 
-    return this.call<CreateUserForgotPasswordRequest>('POST', '/user/create-user-forgot-password-request', {
-      Email: email,
-    });
+    return this.call<CreateUserForgotPasswordRequest>(
+      'POST',
+      '/user/create-user-forgot-password-request',
+      {
+        Email: email,
+      },
+      MOCK_X_API_KEY
+    );
   }
 
   async confirmForgotPasswordRequest(
@@ -49,10 +55,15 @@ class UsersModule extends HttpFactory {
       Token: token,
       Password: password,
     });
-    return this.call<ConfirmUserForgotPasswordRequest>('POST', '/user/confirm-user-forgot-password-request', {
-      Token: token,
-      Password: password,
-    });
+    return this.call<ConfirmUserForgotPasswordRequest>(
+      'POST',
+      '/user/confirm-user-forgot-password-request',
+      {
+        Token: token,
+        Password: password,
+      },
+      MOCK_X_API_KEY
+    );
   }
 }
 

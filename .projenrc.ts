@@ -274,6 +274,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'aws-sdk',
     'class-variance-authority',
     'dotenv',
+    'jwt-decode',
     'nuxt',
     'pinia',
     '@pinia-plugin-persistedstate/nuxt',

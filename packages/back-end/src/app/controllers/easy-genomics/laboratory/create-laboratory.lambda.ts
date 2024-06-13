@@ -46,7 +46,7 @@ export const handler: Handler = async (
 
     const response: Laboratory = await laboratoryService.add({
       ...request,
-      NextFlowTowerApiToken: await encrypt(request.NextFlowTowerApiToken),
+      NextFlowTowerAccessToken: await encrypt(request.NextFlowTowerAccessToken),
       LaboratoryId: uuidv4(),
       AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
       NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,

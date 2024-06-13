@@ -35,7 +35,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
               '#OrganizationId': 'OrganizationId',
               '#LaboratoryId': 'LaboratoryId',
             },
-            Item: marshall(laboratory),
+            Item: marshall(laboratory, { removeUndefinedValues: true }),
           },
         },
         {
@@ -163,7 +163,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
           '#OrganizationId': 'OrganizationId',
           '#LaboratoryId': 'LaboratoryId',
         },
-        Item: marshall(laboratory),
+        Item: marshall(laboratory, { removeUndefinedValues: true }),
       });
       if (response.$metadata.httpStatusCode === 200) {
         return this.queryByLaboratoryId(laboratory.LaboratoryId);
@@ -182,7 +182,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
                 '#OrganizationId': 'OrganizationId',
                 '#LaboratoryId': 'LaboratoryId',
               },
-              Item: marshall(laboratory),
+              Item: marshall(laboratory, { removeUndefinedValues: true }),
             },
           },
           {

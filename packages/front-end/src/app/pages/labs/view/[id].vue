@@ -165,6 +165,11 @@ const filteredTableData = computed(() => {
   return filteredLabUsers
 });
 
+async function handleUserAddedToLab() {
+  showAddUserModule.value = false;
+  await refreshLabUsers();
+}
+
 onMounted(async () => {
   await getLabUsers();
   canAddUsers.value = true;
@@ -174,8 +179,8 @@ onMounted(async () => {
 <template>
   <EGPageHeader :title="labName" description="Lab summary, statistics and its users">
     <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = true" />
-    <EGAddLabUsersModule v-if="showAddUserModule" @added-user-to-lab="refreshLabUsers()" :org-id="orgId" :lab-id="labId"
-      :lab-name="labName" :lab-users="labUsers" class="mt-2" />
+    <EGAddLabUsersModule v-if="showAddUserModule" @added-user-to-lab="handleUserAddedToLab()" :org-id="orgId"
+      :lab-id="labId" :lab-name="labName" :lab-users="labUsers" class="mt-2" />
   </EGPageHeader>
 
   <UTabs :ui="{

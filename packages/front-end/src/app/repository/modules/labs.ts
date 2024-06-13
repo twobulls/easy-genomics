@@ -9,8 +9,9 @@ import { DeletedResponse, EditUserResponse } from '~/types/api';
 class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();
 
-  async create(org: CreateLaboratory): Promise<Laboratory | undefined> {
-    const res = this.call<Laboratory>('POST', '/laboratory/create-laboratory', org);
+  async create(lab: CreateLaboratory): Promise<Laboratory | undefined> {
+
+    const res = this.call<Laboratory>('POST', '/laboratory/create-laboratory', lab);
 
     if (!res) {
       console.error('Error calling create Laboratory API');

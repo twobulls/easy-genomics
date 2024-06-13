@@ -6,9 +6,9 @@ export const LaboratoryUserDetailsSchema = z
     UserId: z.string().uuid(),
     LabManager: z.boolean(),
     LabTechnician: z.boolean(),
-    PreferredName: z.string(),
-    FirstName: z.string(),
-    LastName: z.string(),
+    PreferredName: z.string().optional(),
+    FirstName: z.string().optional(),
+    LastName: z.string().optional(),
     UserEmail: z.string(),
   })
   .strict();

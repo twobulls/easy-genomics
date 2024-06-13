@@ -153,4 +153,4 @@ onMounted(async () => {
         @click="handleAddSelectedUserToLab" />
     </div>
   </EGCard>
-</template>, OrgUserimport { EditUserResponse } from '~/types/api';
+</template>

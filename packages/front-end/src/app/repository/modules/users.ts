@@ -11,7 +11,7 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-const MOCK_X_API_KEY = 'JuCb97YCiV3AdCRBNgnuU2Fd7gFSwqa318wpjZ9H'; // Quality env
+const TEST_X_MIS_KEY = 'N1qV5jexwp7bQ0F33AdJc8WihZ5fsGbS1LcaemE1'; // Quality env
 
 class UsersModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -43,13 +43,13 @@ class UsersModule extends HttpFactory {
       {
         Email: email,
       },
-      MOCK_X_API_KEY,
+      TEST_X_MIS_KEY
     );
   }
 
   async confirmForgotPasswordRequest(
     token: string,
-    password: string,
+    password: string
   ): Promise<ConfirmUserForgotPasswordRequest | undefined> {
     ConfirmUserForgotPasswordRequestSchema.parse({
       Token: token,
@@ -62,7 +62,7 @@ class UsersModule extends HttpFactory {
         Token: token,
         Password: password,
       },
-      MOCK_X_API_KEY,
+      TEST_X_MIS_KEY
     );
   }
 }

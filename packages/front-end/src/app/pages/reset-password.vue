@@ -2,7 +2,7 @@
   import { z } from 'zod';
   import { useToastStore, useUiStore } from '~/stores/stores';
   import { ERRORS } from '~/constants/validation';
-  import { getJwtPayload } from '~/utils/jwt';
+  import { checkResetTokenExpiry } from '~/utils/jwt';
 
   definePageMeta({ layout: 'password' });
 
@@ -15,16 +15,19 @@
   });
   const forgotPasswordToken = ref('');
 
+  /**
+   * @description Check if the reset token is valid and not expired, otherwise redirect to the sign-in page
+   */
   onMounted(() => {
     const resetToken = getResetToken();
-    return checkResetTokenExpiry(resetToken) ? (forgotPasswordToken.value = resetToken) : redirectFromExpiredToken();
+    return checkResetTokenExpiry(resetToken) ? (forgotPasswordToken.value = resetToken) : handleExpiredToken();
   });
 
   watchEffect(() => {
     isFormDisabled.value = !formSchema.safeParse(state.value).success;
   });
 
-  function redirectFromExpiredToken() {
+  function handleExpiredToken() {
     useToastStore().error('Your invite link has been accepted or expired.');
     navigateTo('/sign-in');
   }
@@ -32,25 +35,6 @@
   function getResetToken() {
     const url = new URL(window.location.href);
     return url.searchParams.get('forgot-password');
-  }
-
-  function checkResetTokenExpiry(jwt: string) {
-    const val = getJwtPayload(jwt);
-
-    if (!val.exp) {
-      console.warn('Missing "exp" field in JWT payload.');
-      return false;
-    }
-
-    const currentTime = Math.floor(Date.now() / 1000);
-    const isExpired = currentTime > val.exp;
-    debugger;
-    if (isExpired) {
-      console.warn('Token has expired.');
-      return false;
-    }
-
-    return true;
   }
 
   /**

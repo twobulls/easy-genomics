@@ -12,7 +12,7 @@ export function checkResetTokenExpiry(jwt: string) {
     return false;
   }
 
-  const currentTime = Math.floor(Date.now() / 1000);
+  const currentTime = Math.floor(Date.now() / 1000); // user's system current time in seconds
   const isExpired = currentTime > val.exp;
 
   if (isExpired) {

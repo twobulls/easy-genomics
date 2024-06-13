@@ -1,24 +1,26 @@
 import { defineNuxtRouteMiddleware } from '#app';
 import { Auth } from 'aws-amplify';
+const baseURL = window.location.origin;
 
 /**
  * @description Check auth status on every route change and redirect to signIn page if not authenticated
  */
 export default defineNuxtRouteMiddleware(async (context) => {
-  if (context.fullPath !== '/forgot-password') {
+  const url = new URL(context.fullPath, baseURL);
+
+  if (!['/forgot-password', '/reset-password'].includes(url.pathname)) {
     try {
       const user = await Auth.currentAuthenticatedUser();
 
-      if (user && context.fullPath === '/sign-in') {
+      if (user && url.pathname === '/signin') {
         return navigateTo('/labs');
       }
-      if (!user && context.fullPath !== '/sign-in') {
-        // if (!user && ['/sign-in', '/forgot-password'].includes(context.fullPath)) {
-        return navigateTo('/sign-in');
+      if (!user && context.fullPath !== '/signin') {
+        return navigateTo('/signin');
       }
     } catch (e) {
-      if (context.fullPath !== '/sign-in') {
-        return navigateTo('/sign-in');
+      if (context.fullPath !== '/signin') {
+        return navigateTo('/signin');
       }
     }
   }

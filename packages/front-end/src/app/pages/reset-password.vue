@@ -6,30 +6,41 @@
   definePageMeta({ layout: 'password' });
 
   const isFormDisabled = ref(true);
-  const state = ref({ email: '' });
+  const state = ref({ password: '' });
   const { $api } = useNuxtApp();
   const { signIn } = useAuth();
   const formSchema = z.object({
-    email: z.string().email(ERRORS.email),
+    password: z.string().min(1, ERRORS.password),
+  });
+  const forgotPasswordToken = ref('');
+
+  onMounted(() => {
+    getResetToken();
   });
 
   watchEffect(() => {
     isFormDisabled.value = !formSchema.safeParse(state.value).success;
   });
 
+  function getResetToken() {
+    const url = new URL(window.location.href);
+    forgotPasswordToken.value = url.searchParams.get('forgot-password');
+  }
+
   /**
-   * Send a password reset link to the user's email address + displays toast message on success or error.
-   * @param email
+   * @description Reset password using the token provided in the URL
+   * @param password
    */
-  async function onSubmit(email: string) {
+  async function onSubmit(password: string) {
     try {
       useUiStore().setRequestPending(true);
-      await $api.users.forgotPasswordRequest(email);
-      useToastStore().success(`Reset link has been sent to ${email}`);
-      state.value.email = '';
+      await $api.users.confirmForgotPasswordRequest(forgotPasswordToken.value, password);
+      useToastStore().success(`Password has been reset`);
+      state.value.password = '';
+      await navigateTo('/signin');
     } catch (error: any) {
       useToastStore().error(ERRORS.network);
-      console.error('Error occurred during forgot password request.', error);
+      console.error('Error occurred during password reset.', error);
       throw error;
     } finally {
       useUiStore().setRequestPending(false);
@@ -39,19 +50,16 @@
 
 <template>
   <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
-    <EGText tag="h2" class="mb-4">Forgot Password?</EGText>
-    <EGText tag="p" class="mb-12">
-      Enter in your email address below and we will send a link to your inbox to reset your password.
-    </EGText>
-    <EGFormGroup label="Email address" name="email">
-      <EGInput v-model="state.email" />
+    <EGText tag="h2" class="mb-4">Reset my password</EGText>
+    <EGFormGroup label="New password" name="password">
+      <EGPasswordInput v-model="state.password" :password="true" />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton
         :disabled="isFormDisabled || useUiStore().isRequestPending"
         :loading="useUiStore().isRequestPending"
-        label="Send password reset link"
-        @click="onSubmit(state.email)"
+        label="Reset password"
+        @click="onSubmit(state.password)"
       />
     </div>
   </UForm>

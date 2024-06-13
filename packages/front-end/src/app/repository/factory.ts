@@ -9,18 +9,14 @@ class HttpFactory {
    * @param method
    * @param url
    * @param data
-   * @param successMsg
    * @returns {Promise<T | undefined>}
    */
 
   async call<T>(method = 'GET', url: string, data?: unknown): Promise<T | undefined> {
     const requestUrl = `${this.baseRequestUrl}${url}`;
-
     try {
-      const token = await this.getToken();
       const headers = {
         headers: {
-          'Authorization': token,
           'Content-Type': 'application/json',
         },
       };
@@ -30,7 +26,6 @@ class HttpFactory {
         body: JSON.stringify(data),
       };
       const response = await fetch(requestUrl, settings);
-
       if (!response.ok) {
         await this.handleResponseError(response);
       }

@@ -36,7 +36,7 @@ export default function useAuth() {
   async function signOut() {
     try {
       await Auth.signOut();
-      await navigateTo('/sign-in');
+      await navigateTo('/signin');
     } catch (error) {
       console.error('Error occurred during sign out.', error);
       throw error;

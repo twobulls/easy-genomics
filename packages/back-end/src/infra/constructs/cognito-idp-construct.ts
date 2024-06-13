@@ -77,42 +77,42 @@ export class CognitoIdpConstruct extends Construct {
       // Authentication Events
       this.addCognitoLambdaTrigger(
         UserPoolOperation.PRE_AUTHENTICATION,
-        props.authLambdaFunctions.get('/auth/process-pre-authentication')
+        props.authLambdaFunctions.get('/auth/process-pre-authentication'),
       );
       this.addCognitoLambdaTrigger(
         UserPoolOperation.POST_AUTHENTICATION,
-        props.authLambdaFunctions.get('/auth/process-post-authentication')
+        props.authLambdaFunctions.get('/auth/process-post-authentication'),
       );
       this.addCognitoLambdaTrigger(
         UserPoolOperation.PRE_TOKEN_GENERATION,
-        props.authLambdaFunctions.get('/auth/process-pre-token-generation')
+        props.authLambdaFunctions.get('/auth/process-pre-token-generation'),
       );
       // Sign-Up
       this.addCognitoLambdaTrigger(
         UserPoolOperation.PRE_SIGN_UP,
-        props.authLambdaFunctions.get('/auth/process-pre-signup')
+        props.authLambdaFunctions.get('/auth/process-pre-signup'),
       );
       this.addCognitoLambdaTrigger(
         UserPoolOperation.POST_CONFIRMATION,
-        props.authLambdaFunctions.get('/auth/process-post-confirmation')
+        props.authLambdaFunctions.get('/auth/process-post-confirmation'),
       );
       this.addCognitoLambdaTrigger(
         UserPoolOperation.USER_MIGRATION,
-        props.authLambdaFunctions.get('/auth/process-user-migration')
+        props.authLambdaFunctions.get('/auth/process-user-migration'),
       );
       // Messages
       this.addCognitoLambdaTrigger(
         UserPoolOperation.CUSTOM_MESSAGE,
-        props.authLambdaFunctions.get('/auth/process-custom-message')
+        props.authLambdaFunctions.get('/auth/process-custom-message'),
       );
       // Email & SMS 3rd party providers
       this.addCognitoLambdaTrigger(
         UserPoolOperation.CUSTOM_EMAIL_SENDER,
-        props.authLambdaFunctions.get('/auth/process-custom-email-sender')
+        props.authLambdaFunctions.get('/auth/process-custom-email-sender'),
       );
       this.addCognitoLambdaTrigger(
         UserPoolOperation.CUSTOM_SMS_SENDER,
-        props.authLambdaFunctions.get('/auth/process-custom-sms-sender')
+        props.authLambdaFunctions.get('/auth/process-custom-sms-sender'),
       );
     }
   }

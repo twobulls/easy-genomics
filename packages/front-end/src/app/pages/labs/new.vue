@@ -162,8 +162,8 @@ async function onSubmit(event: FormSubmitEvent<FormSchema>) {
           placeholder="Describe your lab and what runs should be launched by Lab users." />
         <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />
       </EGFormGroup>
-      <EGFormGroup label="Personal Access Token" name="NextFlowTowerAccessToken" class="pt-8">
-        <EGInput v-model.trim="state.NextFlowTowerAccessToken" @blur="validateForm" />
+      <EGFormGroup label="Personal Access Token" name="NextFlowTowerAccessToken">
+        <EGPasswordInput v-model="state.NextFlowTowerAccessToken" :password="true" />
       </EGFormGroup>
       <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId">
         <EGInput v-model.trim="state.NextFlowTowerWorkspaceId" @blur="validateForm" />

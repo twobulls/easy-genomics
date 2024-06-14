@@ -27,9 +27,12 @@ export const handler: Handler = async (
     }
 
     const isDeleted: boolean = await laboratoryService.delete(existingLaboratory);
-    return buildResponse(200, JSON.stringify({
-      deleted: isDeleted,
-    }), event);
+
+    if (!isDeleted) {
+      throw new Error('Laboratory deletion failed');
+    }
+
+    return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {
     console.error(err);
     return {

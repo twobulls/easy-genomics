@@ -42,7 +42,7 @@ async function handleRemoveUserFromLab() {
 
     const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
 
-    if (!res) {
+    if (res?.Status !== 'Success') {
       throw new Error(`Failed to remove ${displayName} from ${labName}`);
     }
 
@@ -69,7 +69,7 @@ async function handleAssignLabRole({ user, role }: { user: LabUser, role: Labora
       isLabManager
     );
 
-    if (!res) {
+    if (res?.Status !== 'Success') {
       throw new Error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
     }
 

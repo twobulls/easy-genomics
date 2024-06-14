@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { z } from 'zod';
+import { CreateLaboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import type { FormSubmitEvent } from '#ui/types';
 import { cleanText } from '~/utils/string-utils';
 import { useToastStore, useUiStore } from '~/stores/stores';
+import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
 
 const { MOCK_ORG_ID } = useRuntimeConfig().public;
 const { $api } = useNuxtApp();
@@ -53,12 +55,16 @@ const descriptionSchema = z.string().max(DESCRIPTION_MAX_LENGTH, {
 const formSchema = z.object({
   Name: nameSchema,
   Description: descriptionSchema,
+  NextFlowTowerAccessToken: z.string(),
+  NextFlowTowerWorkspaceId: z.string(),
 });
 type FormSchema = z.infer<typeof formSchema>;
 
 const state = reactive({
   Name: '',
   Description: '',
+  NextFlowTowerAccessToken: '',
+  NextFlowTowerWorkspaceId: '',
   isFormValid: false,
   isFormDisabled: true,
 });
@@ -107,17 +113,29 @@ function validateForm({
 }
 
 async function onSubmit(event: FormSubmitEvent<FormSchema>) {
+  let maybeLabName = 'lab';
   try {
     state.isFormDisabled = true;
     useUiStore().setRequestPending(true);
 
-    const { Name, Description } = event.data;
 
-    await $api.labs.create({ Name, Description, OrganizationId: MOCK_ORG_ID, Status: 'Active' });
-    useToastStore().success('Laboratory created');
+    const { Name, Description, NextFlowTowerAccessToken, NextFlowTowerWorkspaceId } = event.data;
+
+    const lab = {
+      Name,
+      Description,
+      NextFlowTowerAccessToken,
+      NextFlowTowerWorkspaceId,
+      OrganizationId: MOCK_ORG_ID,
+      Status: 'Active'
+    } as CreateLaboratory
+
+    await $api.labs.create(lab);
+    maybeLabName = lab.Name;
+    useToastStore().success(`Successfully created ${maybeLabName}`);
     router.push({ path: '/labs' });
   } catch (error) {
-    useToastStore().error('Failed to create lab');
+    useToastStore().error(`Failed to create ${maybeLabName}`);
   } finally {
     state.isFormDisabled = false;
     useUiStore().setRequestPending(false);
@@ -144,8 +162,19 @@ async function onSubmit(event: FormSubmitEvent<FormSchema>) {
           placeholder="Describe your lab and what runs should be launched by Lab users." />
         <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />
       </EGFormGroup>
+      <EGFormGroup label="Personal Access Token" name="NextFlowTowerAccessToken" class="pt-8">
+        <EGInput v-model.trim="state.NextFlowTowerAccessToken" @blur="validateForm" />
+      </EGFormGroup>
+      <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId">
+        <EGInput v-model.trim="state.NextFlowTowerWorkspaceId" @blur="validateForm" />
+      </EGFormGroup>
     </EGCard>
-    <EGButton :disabled="state.isFormDisabled || useUiStore().isRequestPending" :loading="useUiStore().isRequestPending"
-      type="submit" label="Create" class="mt-6" />
+    <div class="flex space-x-2 mt-6">
+      <EGButton :disabled="state.isFormDisabled || useUiStore().isRequestPending"
+        :loading="useUiStore().isRequestPending" :size="ButtonSizeEnum.enum.sm" type="submit" label="Create Lab" />
+      <EGButton :size="ButtonSizeEnum.enum.sm" :variant="ButtonVariantEnum.enum.secondary"
+        :disabled="useUiStore().isRequestPending" label="Cancel" name="cancel" @click="$router.go(-1)" />
+    </div>
   </UForm>
 </template>
+NextFlowTowerAccessToken

@@ -153,6 +153,10 @@
       "type": "runtime"
     },
     {
+      "name": "base64-js",
+      "type": "runtime"
+    },
+    {
       "name": "constructs",
       "version": "^10.0.5",
       "type": "runtime"

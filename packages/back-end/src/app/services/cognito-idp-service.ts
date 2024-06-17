@@ -13,6 +13,9 @@ import {
   AdminUpdateUserAttributesCommandOutput,
   CognitoIdentityProviderClient,
   CognitoIdentityProviderServiceException,
+  ConfirmForgotPasswordCommand,
+  ConfirmForgotPasswordCommandInput,
+  ConfirmForgotPasswordCommandOutput,
   ForgotPasswordCommand,
   ForgotPasswordCommandInput,
   ForgotPasswordCommandOutput,
@@ -24,6 +27,7 @@ export enum CognitoIdpCommand {
   ADMIN_GET_USER = 'admin-get-user',
   ADMIN_SET_USER_PASSWORD = 'admin-set-user-password',
   ADMIN_UPDATE_USER_ATTRIBUTES = 'admin-update-user-attributes',
+  CONFIRM_FORGOT_PASSWORD = 'confirm-forgot-password',
   FORGOT_PASSWORD = 'forgot-password',
 };
 
@@ -185,6 +189,37 @@ export class CognitoIdpService {
     }
   };
 
+  /**
+   * Confirms a Cognito forgot password workflow request for the specified username.
+   * @param clientId
+   * @param username
+   * @param password
+   * @param confirmationCode
+   */
+  public confirmForgotPassword = async(
+    clientId: string,
+    username: string,
+    password: string,
+    confirmationCode: string,
+  ): Promise<ConfirmForgotPasswordCommandOutput> => {
+    console.log(`[cognito-idp-service : confirmForgotPassword] clientId: ${clientId}, username: ${username}`);
+    const response: ConfirmForgotPasswordCommandOutput =
+      await this.cognitoIdpRequest<ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommandOutput>(
+        CognitoIdpCommand.CONFIRM_FORGOT_PASSWORD,
+        {
+          ClientId: clientId,
+          Username: username,
+          Password: password,
+          ConfirmationCode: confirmationCode,
+        },
+      );
+    if (response.$metadata.httpStatusCode === 200) {
+      return response;
+    } else {
+      throw new Error(`Unable to confirm forgot password request: ${JSON.stringify(response)}`);
+    }
+  };
+
   private cognitoIdpRequest = async <RequestType, ResponseType>(command: CognitoIdpCommand, data?: RequestType): Promise<ResponseType> => {
     try {
       console.log(
@@ -225,6 +260,8 @@ export class CognitoIdpService {
         return new AdminSetUserPasswordCommand(data as AdminSetUserPasswordCommandInput);
       case CognitoIdpCommand.ADMIN_UPDATE_USER_ATTRIBUTES:
         return new AdminUpdateUserAttributesCommand(data as AdminUpdateUserAttributesCommandInput);
+      case CognitoIdpCommand.CONFIRM_FORGOT_PASSWORD:
+        return new ConfirmForgotPasswordCommand(data as ConfirmForgotPasswordCommandInput);
       case CognitoIdpCommand.FORGOT_PASSWORD:
         return new ForgotPasswordCommand(data as ForgotPasswordCommandInput);
       default:

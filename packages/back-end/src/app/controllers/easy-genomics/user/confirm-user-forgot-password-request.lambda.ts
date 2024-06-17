@@ -1,4 +1,5 @@
 import { createHmac } from 'crypto';
+import { buildClient, CommitmentPolicy, KmsKeyringNode } from '@aws-crypto/client-node';
 import { AdminGetUserCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { ConfirmUserForgotPasswordRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-password';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
@@ -10,10 +11,16 @@ import {
   APIGatewayProxyResult,
   Handler,
 } from 'aws-lambda';
+import { toByteArray } from 'base64-js';
 import { JwtPayload } from 'jsonwebtoken';
 import { CognitoIdpService } from '../../../services/cognito-idp-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
 import { verifyJwt } from '../../../utils/jwt-utils';
+
+const cryptoClient = buildClient(CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT);
+const generatorKeyId = process.env.COGNITO_KMS_KEY_ID;
+const keyIds = [process.env.COGNITO_KMS_KEY_ARN];
+const keyring = new KmsKeyringNode({ generatorKeyId, keyIds });
 
 const cognitoIdpService = new CognitoIdpService();
 const userService = new UserService();
@@ -64,8 +71,12 @@ export const handler: Handler = async (
           throw new Error('User has been deactivated. Please contact the System Administrator for assistance.');
         }
 
+        // Decrypt the confirmationCode
+        const { plaintext, messageHeader } = await cryptoClient.decrypt(keyring, toByteArray(payload.Code));
+        const confirmationCode: string = plaintext.toString();
+
         // Update User's Password
-        await cognitoIdpService.adminSetUserPassword(process.env.COGNITO_USER_POOL_ID, user.UserId, request.Password);
+        await cognitoIdpService.confirmForgotPassword(process.env.COGNITO_USER_POOL_CLIENT_ID, user.UserId, request.Password, confirmationCode);
         return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
       }
     } else {

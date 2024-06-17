@@ -320,7 +320,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           resources: [
             this.props.dynamoDbKmsKey?.keyArn!,
           ],
-          actions: ['kms:GenerateDataKey'],
+          actions: ['kms:GenerateDataKey', 'kms:Encrypt'],
           effect: Effect.ALLOW,
         }),
       ],

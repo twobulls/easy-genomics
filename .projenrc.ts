@@ -174,7 +174,7 @@ new typescript.TypeScriptProject({
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
   deps: ['@nestjs/config', 'aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'js-yaml', 'uuid', 'zod'],
-  devDeps: ['@types/aws-lambda', '@types/js-yaml', '@types/uuid', 'aws-cdk-lib'],
+  devDeps: ['@types/aws-lambda', '@types/js-yaml', '@types/uuid', 'aws-cdk-lib', 'openapi-typescript'],
 });
 
 // Defines the Easy Genomics 'back-end' subproject

@@ -118,4 +118,3 @@ async function onSubmit(event: FormSubmitEvent<Form>) {
     </div>
   </UForm>
 </template>
-NextFlowTowerAccessToken

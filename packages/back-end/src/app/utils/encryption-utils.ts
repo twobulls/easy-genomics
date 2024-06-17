@@ -9,8 +9,8 @@ const context = {
   origin: `${process.env.REGION}`,
 };
 const keyring = new KmsKeyringNode({
-  generatorKeyId: process.env.EASY_GENOMICS_DYNAMODB_KMS_KEY,
-  keyIds: [],
+  generatorKeyId: process.env.DYNAMODB_KMS_KEY_ID,
+  keyIds: [process.env.DYNAMODB_KMS_KEY_ARN],
 });
 
 export async function encrypt(plainText?: string): Promise<string | undefined> {

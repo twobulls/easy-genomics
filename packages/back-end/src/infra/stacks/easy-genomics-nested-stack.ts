@@ -78,7 +78,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/laboratory/create-laboratory': {
           environment: {
-            EASY_GENOMICS_DYNAMODB_KMS_KEY: this.props.dynamoDbKmsKey?.keyArn!,
+            DYNAMODB_KMS_KEY_ID: this.props.dynamoDbKmsKey?.keyId!,
+            DYNAMODB_KMS_KEY_ARN: this.props.dynamoDbKmsKey?.keyArn!,
           },
         },
         '/easy-genomics/laboratory/update-laboratory': {

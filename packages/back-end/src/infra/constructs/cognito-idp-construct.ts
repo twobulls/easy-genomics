@@ -50,7 +50,7 @@ export class CognitoIdpConstruct extends Construct {
       },
       customSenderKmsKey: props.customSenderKmsKey,
       removalPolicy: removalPolicy,
-      advancedSecurityMode: AdvancedSecurityMode.AUDIT,
+      advancedSecurityMode: AdvancedSecurityMode.OFF,
     });
 
     this.userPoolClient = this.userPool.addClient('client', {

@@ -14,9 +14,10 @@ export const LabDetailsFormSchema = z.object({
 
 export type LabDetailsForm = z.infer<typeof LabDetailsFormSchema>;
 
-export const FormModeEnum = z.nativeEnum({
+const FormModes = {
   Create: 'create',
   Edit: 'edit',
   ReadOnly: 'read-only',
-} as const)
+} as const;
+export const FormModeEnum = z.nativeEnum(FormModes)
 export type FormModeEnum = z.infer<typeof FormModeEnum>;

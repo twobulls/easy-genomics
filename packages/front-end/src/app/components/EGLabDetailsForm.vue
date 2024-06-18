@@ -7,9 +7,9 @@ import { useToastStore, useUiStore } from '~/stores/stores';
 import { Schema } from 'zod';
 
 const props = withDefaults(defineProps<{
-  mode?: FormModeEnum;
+  formMode?: FormModeEnum;
 }>(), {
-  mode: FormModeEnum.enum.ReadOnly,
+  formMode: FormModeEnum.enum.ReadOnly,
 })
 
 const { MOCK_ORG_ID } = useRuntimeConfig().public;
@@ -33,22 +33,37 @@ async function onSubmit(event: FormSubmitEvent<LabDetailsForm>) {
       throw new Error('Form data is invalid')
     }
 
-    useUiStore().setRequestPending(true);
-
-    const lab = {
-      ...formParseResult.data,
-      OrganizationId: MOCK_ORG_ID,
-      Status: 'Active'
-    } as CreateLaboratory
-
-    await $api.labs.create(lab);
-    useToastStore().success(`Successfully created lab: ${lab.Name}`);
-    router.push({ path: '/labs' });
+    if (props.formMode === FormModeEnum.enum.Create) {
+      await handleCreateLab(formParseResult.data);
+    } else if (props.formMode === FormModeEnum.enum.Edit) {
+      await handleUpdateLabDetails(formParseResult.data);
+    }
   } catch (error) {
-    useToastStore().error(`Failed to create lab: ${state.Name}`);
+    useToastStore().error(`Failed to ${props.formMode} lab: ${state.Name}`);
   } finally {
     useUiStore().setRequestPending(false);
   }
+}
+
+async function handleCreateLab(labDetails: LabDetailsForm) {
+  console.log(`handleCreateLab; labDetails:`, labDetails)
+
+  useUiStore().setRequestPending(true);
+
+  const lab = {
+    ...labDetails,
+    OrganizationId: MOCK_ORG_ID,
+    Status: 'Active'
+  } as CreateLaboratory
+
+  await $api.labs.create(lab);
+
+  useToastStore().success(`Successfully created lab: ${lab.Name}`);
+  router.push({ path: '/labs' });
+}
+
+async function handleUpdateLabDetails(labDetails: LabDetailsForm) {
+  console.log('TODO: implement handleUpdateLabDetails; labDetails:', labDetails)
 }
 
 /**
@@ -86,19 +101,19 @@ const validate = (state: LabDetailsForm): FormError[] => {
   <UForm :validate="validate" :schema="LabDetailsFormSchema" :state="state" @submit="onSubmit">
     <EGCard>
       <EGFormGroup label="Lab Name*" name="Name">
-        <EGInput v-model="state.Name" :disabled="props.mode === FormModeEnum.enum.ReadOnly"
+        <EGInput v-model="state.Name" :disabled="props.formMode === FormModeEnum.enum.ReadOnly"
           placeholder="Enter lab name (required and must be unique)" required autofocus />
       </EGFormGroup>
       <EGFormGroup label="Lab Description" name="Description">
-        <EGTextArea v-model="state.Description" :disabled="props.mode === FormModeEnum.enum.ReadOnly"
+        <EGTextArea v-model="state.Description" :disabled="props.formMode === FormModeEnum.enum.ReadOnly"
           placeholder="Describe your lab and what runs should be launched by Lab users." />
       </EGFormGroup>
       <EGFormGroup label="Personal Access Token" name="NextFlowTowerAccessToken">
         <EGPasswordInput v-model="state.NextFlowTowerAccessToken" :password="true"
-          :disabled="props.mode === FormModeEnum.enum.ReadOnly" />
+          :disabled="props.formMode === FormModeEnum.enum.ReadOnly" />
       </EGFormGroup>
       <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId">
-        <EGInput v-model="state.NextFlowTowerWorkspaceId" :disabled="props.mode === FormModeEnum.enum.ReadOnly" />
+        <EGInput v-model="state.NextFlowTowerWorkspaceId" :disabled="props.formMode === FormModeEnum.enum.ReadOnly" />
       </EGFormGroup>
     </EGCard>
     <div class="flex space-x-2 mt-6">

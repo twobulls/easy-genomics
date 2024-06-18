@@ -12,13 +12,14 @@ class HttpFactory {
    * @param xApiKey
    * @returns {Promise<T | undefined>}
    */
-
-  async call<T>(method = 'GET', url: string, data?: unknown = '', xApiKey?: string): Promise<T | undefined> {
+  async call<T>(method = 'GET', url: string, data: unknown = '', xApiKey?: string): Promise<T | undefined> {
     const requestUrl = `${this.baseRequestUrl}${url}`;
     try {
+      const token = await this.getToken();
       const headers = {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token,
           ...(xApiKey && { 'x-api-key': xApiKey }),
         },
       };

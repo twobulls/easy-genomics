@@ -94,27 +94,5 @@ async function onSubmit(event: FormSubmitEvent<Form>) {
     <EGText tag="h4" class="mb-4">Lab details</EGText>
   </div>
 
-  <UForm :validate="validate" :schema="formSchema" :state="state" @submit="onSubmit">
-    <EGCard>
-      <EGFormGroup label="Lab name*" name="Name">
-        <EGInput v-model="state.Name" placeholder="Enter lab name (required and must be unique)" required autofocus />
-      </EGFormGroup>
-      <EGFormGroup label="Lab description" name="Description">
-        <EGTextArea v-model="state.Description"
-          placeholder="Describe your lab and what runs should be launched by Lab users." />
-      </EGFormGroup>
-      <EGFormGroup label="Personal Access Token" name="NextFlowTowerAccessToken">
-        <EGPasswordInput v-model="state.NextFlowTowerAccessToken" :password="true" />
-      </EGFormGroup>
-      <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId">
-        <EGInput v-model="state.NextFlowTowerWorkspaceId" />
-      </EGFormGroup>
-    </EGCard>
-    <div class="flex space-x-2 mt-6">
-      <EGButton :disabled="!canSubmit || useUiStore().isRequestPending" :loading="useUiStore().isRequestPending"
-        :size="ButtonSizeEnum.enum.sm" type="submit" label="Create Lab" />
-      <EGButton :size="ButtonSizeEnum.enum.sm" :variant="ButtonVariantEnum.enum.secondary"
-        :disabled="useUiStore().isRequestPending" label="Cancel" name="cancel" @click="$router.go(-1)" />
-    </div>
-  </UForm>
+  <EGLabDetailsForm class="my-8" />
 </template>

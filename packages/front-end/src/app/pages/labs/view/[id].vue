@@ -224,7 +224,9 @@ onMounted(async () => {
 
   <UTabs :ui="tabsUi" :default-index="defaultTabIndex" :items="tabItems">
     <template #item="{ item }">
-      <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
+      <div v-if="item.key === 'details'" class="space-y-3">
+        <EGLabDetailsForm />
+      </div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user"
           :disabled="useUiStore().isRequestPending" class="my-6 w-[408px]" />

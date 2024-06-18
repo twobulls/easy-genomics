@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LabDetailsForm, LabDetailsFormSchema, LabNameSchema, LabDescriptionSchema, LabNextFlowTowerAccessTokenSchema, LabNextFlowTowerWorkspaceIdSchema, FormModeEnum } from '~/types/labs';
+import { LabDetailsForm, LabDetailsFormSchema, LabNameSchema, LabDescriptionSchema, LabNextFlowTowerAccessTokenSchema, LabNextFlowTowerWorkspaceIdSchema, FormModeEnum, LabDetailsSchema } from '~/types/labs';
 import { FormError, FormSubmitEvent } from '#ui/types';
 import { CreateLaboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
@@ -13,19 +13,59 @@ const props = withDefaults(defineProps<{
 })
 
 const { MOCK_ORG_ID } = useRuntimeConfig().public;
+
 const { $api } = useNuxtApp();
+const $route = useRoute();
 const router = useRouter();
 
+const isLoadingFormData = ref(false);
 const canSubmit = ref(false);
 
-const state: LabDetailsForm = reactive({
+const defaultState: LabDetailsForm = {
   Name: '',
   Description: '',
   NextFlowTowerAccessToken: '',
   NextFlowTowerWorkspaceId: '',
+}
+
+const state: LabDetailsForm = reactive(defaultState)
+
+onMounted(async () => {
+  if (props.formMode === FormModeEnum.enum.Edit || props.formMode === FormModeEnum.enum.ReadOnly) {
+    await getLabDetails();
+  }
 })
 
+async function getLabDetails() {
+  try {
+    isLoadingFormData.value = true;
+    const res = await $api.labs.getLabDetails($route.params.id);
+
+    // TODO: determine how to handle the encoded NextFlowTowerAccessToken from the server
+    // - it is longer than 128-characters, so fails parsing using the LabNextFlowTowerAccessTokenSchema
+    // - how to decode it?
+    // - what if anything to display in the form? e.g. show the last 4-characters like a credit card?
+    res.NextFlowTowerAccessToken = 'token-has-been-replaced';
+
+    const parseResult = LabDetailsSchema.safeParse(res);
+    if (parseResult.success) {
+      console.log('getLabDetails; parseResult.data:', parseResult.data);
+      Object.assign(state, parseResult.data);
+    } else {
+      console.error('getLabDetails; parseResult:', parseResult);
+      const fieldErrors = parseResult.error.issues.map(({ message }) => ({ message }))
+      console.log('getLabDetails; fieldErrors:', fieldErrors);
+    }
+  } catch (error) {
+    useToastStore().error(`Failed to retrieve lab details for lab: ${state.Name}`);
+  } finally {
+    isLoadingFormData.value = false;
+  }
+}
+
 async function onSubmit(event: FormSubmitEvent<LabDetailsForm>) {
+  if (props.formMode === FormModeEnum.enum.ReadOnly) return;
+
   try {
     const formParseResult = LabDetailsFormSchema.safeParse(event.data);
     if (!formParseResult.success) {
@@ -46,8 +86,6 @@ async function onSubmit(event: FormSubmitEvent<LabDetailsForm>) {
 }
 
 async function handleCreateLab(labDetails: LabDetailsForm) {
-  console.log(`handleCreateLab; labDetails:`, labDetails)
-
   useUiStore().setRequestPending(true);
 
   const lab = {
@@ -98,9 +136,10 @@ const validate = (state: LabDetailsForm): FormError[] => {
 </script>
 
 <template>
-  <UForm :validate="validate" :schema="LabDetailsFormSchema" :state="state" @submit="onSubmit">
+  <USkeleton v-if="isLoadingFormData" class="min-h-96 w-full" />
+  <UForm v-else :validate="validate" :schema="LabDetailsFormSchema" :state="state" @submit="onSubmit">
     <EGCard>
-      <EGFormGroup label="Lab Name*" name="Name">
+      <EGFormGroup label="Lab Name" name="Name">
         <EGInput v-model="state.Name" :disabled="props.formMode === FormModeEnum.enum.ReadOnly"
           placeholder="Enter lab name (required and must be unique)" required autofocus />
       </EGFormGroup>
@@ -116,7 +155,7 @@ const validate = (state: LabDetailsForm): FormError[] => {
         <EGInput v-model="state.NextFlowTowerWorkspaceId" :disabled="props.formMode === FormModeEnum.enum.ReadOnly" />
       </EGFormGroup>
     </EGCard>
-    <div class="flex space-x-2 mt-6">
+    <div v-if="props.formMode !== FormModeEnum.enum.ReadOnly" class="flex space-x-2 mt-6">
       <EGButton :disabled="!canSubmit" :loading="useUiStore().isRequestPending" :size="ButtonSizeEnum.enum.sm"
         type="submit" label="Create Lab" />
       <EGButton :size="ButtonSizeEnum.enum.sm" :variant="ButtonVariantEnum.enum.secondary"

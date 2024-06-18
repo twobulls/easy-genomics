@@ -5,12 +5,14 @@ export const LabDescriptionSchema = z.string().trim().max(500, 'Description must
 export const LabNextFlowTowerAccessTokenSchema = z.string().trim().max(128, 'Personal access token must be no more than 128 characters').optional();
 export const LabNextFlowTowerWorkspaceIdSchema = z.string().trim().max(128, 'Workspace ID must be no more than 128 characters').optional();
 
-export const LabDetailsFormSchema = z.object({
+export const LabDetailsSchema = z.object({
   Name: LabNameSchema,
   Description: LabDescriptionSchema,
   NextFlowTowerAccessToken: LabNextFlowTowerAccessTokenSchema,
   NextFlowTowerWorkspaceId: LabNextFlowTowerWorkspaceIdSchema,
-}).strict();
+});
+
+export const LabDetailsFormSchema = LabDetailsSchema.strict();
 
 export type LabDetailsForm = z.infer<typeof LabDetailsFormSchema>;
 

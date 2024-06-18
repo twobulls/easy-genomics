@@ -1,5 +1,6 @@
 import {
   AdminCreateUserCommand,
+  AdminCreateUserCommandInput,
   AdminCreateUserCommandOutput,
   AdminDeleteUserCommand,
   AdminDeleteUserCommandOutput,
@@ -20,17 +21,19 @@ export class CognitoUserService {
   }
 
   /**
-   * This function creates a new Cognito User account for the new User, and
-   * returns the Cognito Username.
-   *
+   * This function invites new User to the Platform by creating a new Cognito
+   * User account / resending invite, and returns the Cognito Username.
    * @param email
+   * @param organizationId
+   * @param organizationName
+   * @param resend
    */
-  async addNewUserToPlatform(email: string): Promise<string> {
+  async inviteNewUserToPlatform(email: string, organizationId: string, organizationName: string, resend?: boolean): Promise<string> {
     const logRequestMessage = `Add New User Email=${email} to Platform request`;
     console.info(logRequestMessage);
 
-    const adminCreateUserCommand: AdminCreateUserCommand = new AdminCreateUserCommand({
-      MessageAction: 'SUPPRESS',
+    const adminCreateUserCommandInput: AdminCreateUserCommandInput = {
+      ...(resend === true ?? { MessageAction: 'RESEND' }),
       DesiredDeliveryMediums: ['EMAIL'],
       Username: email,
       UserAttributes: [
@@ -38,7 +41,13 @@ export class CognitoUserService {
         { Name: 'email_verified', Value: 'false' },
       ],
       UserPoolId: this.props.userPoolId,
-    });
+      ClientMetadata: {
+        ['OrganizationId']: organizationId,
+        ['OrganizationName']: organizationName,
+      },
+    };
+
+    const adminCreateUserCommand: AdminCreateUserCommand = new AdminCreateUserCommand(adminCreateUserCommandInput);
     const response: AdminCreateUserCommandOutput = await this.cognitoClient.send<AdminCreateUserCommand>(adminCreateUserCommand);
 
     if (response.$metadata.httpStatusCode === 200 && response.User && response.User.Username) {

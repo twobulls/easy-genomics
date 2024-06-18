@@ -1,5 +1,8 @@
 import { createHmac } from 'crypto';
-import { UserForgotPasswordJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
+import {
+  UserForgotPasswordJwt,
+  UserInvitationJwt,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { Handler } from 'aws-lambda';
 import { CustomEmailSenderTriggerEvent } from 'aws-lambda/trigger/cognito-user-pool-trigger/custom-email-sender';
 import { SesService } from '../../services/ses-service';
@@ -22,7 +25,17 @@ export const handler: Handler = async (
 ): Promise<CustomEmailSenderTriggerEvent> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
 
-  if (event.triggerSource === 'CustomEmailSender_ForgotPassword') {
+  if (event.triggerSource === 'CustomEmailSender_AdminCreateUser' || event.triggerSource === 'CustomEmailSender_ResendCode') {
+    const email: string = event.request.userAttributes.email;
+    const userId: string = event.userName;
+    const temporaryPassword: string = event.request.code || ''; // Auto encrypted by Cognito
+    const organizationId: string = (event.request.clientMetadata) ? event.request.clientMetadata.OrganizationId : '';
+    const organizationName: string = (event.request.clientMetadata) ? event.request.clientMetadata.OrganizationName : '';
+    const resend: boolean = event.triggerSource === 'CustomEmailSender_ResendCode';
+
+    const newUserInvitationJwt: string = generateNewUserInvitationJwt(email, userId, organizationId, temporaryPassword, resend);
+    await sesService.sendUserInvitationEmail(email, organizationName, newUserInvitationJwt);
+  } else if (event.triggerSource === 'CustomEmailSender_ForgotPassword') {
     const email: string = event.request.userAttributes.email;
     const userId: string = event.userName;
     const code: string = event.request.code || ''; // Auto encrypted by Cognito
@@ -35,10 +48,44 @@ export const handler: Handler = async (
 };
 
 /**
+ * Helper function to generate a new User Invitation JWT to send in an
+ * invitation email and used to verify User Invitation acceptance.
+ *
+ * The JWT is set to expire in 1 day to match Cognito's AdminCreateUser
+ * confirmation expiry.
+ * @param email
+ * @param userId
+ * @param organizationId
+ * @param resend
+ */
+function generateNewUserInvitationJwt(
+  email: string,
+  userId: string,
+  organizationId: string,
+  temporaryPassword: string,
+  resend: boolean,
+): string {
+  const createdAt: number = Date.now(); // Salt
+  const userInvitationJwt: UserInvitationJwt = {
+    RequestType: resend ? 'ResendNewUserInvitation' : 'NewUserInvitation',
+    Verification: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
+      .update(userId + organizationId)
+      .digest('hex'),
+    Email: email,
+    OrganizationId: organizationId,
+    TemporaryPassword: temporaryPassword, // Encrypted
+    CreatedAt: createdAt,
+  };
+  console.log('DEBUG: userInvitationJwt = ', userInvitationJwt);
+  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '1 d');
+}
+
+/**
  * Helper function to generate User Forgot Password JWT to send in email
  * and used to verify User Forgot Password request.
  *
- * The JWT is set to expire in 1 hour to match Cognito's ForgotPassword expiry.
+ * The JWT is set to expire in 1 hour to match Cognito's ForgotPassword
+ * confirmation expiry.
  * @param email
  * @param username
  * @param code
@@ -51,7 +98,7 @@ function generateUserForgotPasswordJwt(email: string, username: string, code: st
       .update(username + code)
       .digest('hex'),
     Email: email,
-    Code: code,
+    Code: code, // Encrypted
     CreatedAt: createdAt,
   };
   return generateJwt(userForgotPasswordJwt, process.env.JWT_SECRET_KEY, '1 h');

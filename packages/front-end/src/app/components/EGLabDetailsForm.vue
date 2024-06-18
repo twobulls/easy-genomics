@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import { LabDetailsForm, LabDetailsFormSchema, LabNameSchema, LabDescriptionSchema, LabNextFlowTowerAccessTokenSchema, LabNextFlowTowerWorkspaceIdSchema, FormModeEnum } from '~/types/labs';
 import { FormError, FormSubmitEvent } from '#ui/types';
-import { LabDescriptionSchema, LabDetailsForm, LabDetailsFormSchema, LabNameSchema, LabNextFlowTowerAccessTokenSchema, LabNextFlowTowerWorkspaceIdSchema } from '~/types/labs';
 import { CreateLaboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
 import { useToastStore, useUiStore } from '~/stores/stores';
 import { Schema } from 'zod';
+
+const props = withDefaults(defineProps<{
+  mode?: FormModeEnum;
+}>(), {
+  mode: FormModeEnum.enum.ReadOnly,
+})
 
 const { MOCK_ORG_ID } = useRuntimeConfig().public;
 const { $api } = useNuxtApp();
@@ -80,17 +86,19 @@ const validate = (state: LabDetailsForm): FormError[] => {
   <UForm :validate="validate" :schema="LabDetailsFormSchema" :state="state" @submit="onSubmit">
     <EGCard>
       <EGFormGroup label="Lab Name*" name="Name">
-        <EGInput v-model="state.Name" placeholder="Enter lab name (required and must be unique)" required autofocus />
+        <EGInput v-model="state.Name" :disabled="props.mode === FormModeEnum.enum.ReadOnly"
+          placeholder="Enter lab name (required and must be unique)" required autofocus />
       </EGFormGroup>
       <EGFormGroup label="Lab Description" name="Description">
-        <EGTextArea v-model="state.Description"
+        <EGTextArea v-model="state.Description" :disabled="props.mode === FormModeEnum.enum.ReadOnly"
           placeholder="Describe your lab and what runs should be launched by Lab users." />
       </EGFormGroup>
       <EGFormGroup label="Personal Access Token" name="NextFlowTowerAccessToken">
-        <EGPasswordInput v-model="state.NextFlowTowerAccessToken" :password="true" />
+        <EGPasswordInput v-model="state.NextFlowTowerAccessToken" :password="true"
+          :disabled="props.mode === FormModeEnum.enum.ReadOnly" />
       </EGFormGroup>
       <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId">
-        <EGInput v-model="state.NextFlowTowerWorkspaceId" />
+        <EGInput v-model="state.NextFlowTowerWorkspaceId" :disabled="props.mode === FormModeEnum.enum.ReadOnly" />
       </EGFormGroup>
     </EGCard>
     <div class="flex space-x-2 mt-6">

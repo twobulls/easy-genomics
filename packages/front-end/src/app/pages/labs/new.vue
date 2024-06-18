@@ -2,8 +2,8 @@
 import { z } from 'zod';
 import { CreateLaboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import type { FormError, FormSubmitEvent } from '#ui/types';
+import { FormModeEnum } from '~/types/labs';
 import { useToastStore, useUiStore } from '~/stores/stores';
-import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
 
 const { MOCK_ORG_ID } = useRuntimeConfig().public;
 const { $api } = useNuxtApp();
@@ -94,5 +94,5 @@ async function onSubmit(event: FormSubmitEvent<Form>) {
     <EGText tag="h4" class="mb-4">Lab details</EGText>
   </div>
 
-  <EGLabDetailsForm class="my-8" />
+  <EGLabDetailsForm mode="FormModeEnum.enum.Create" />
 </template>

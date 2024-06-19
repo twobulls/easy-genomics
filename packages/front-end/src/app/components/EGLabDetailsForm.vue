@@ -28,7 +28,7 @@ const defaultState: LabDetailsForm = {
   NextFlowTowerWorkspaceId: '',
 }
 
-const state: LabDetailsForm = reactive(defaultState)
+const state = ref({ ...defaultState })
 
 onMounted(async () => {
   if (props.formMode === FormModeEnum.enum.Edit || props.formMode === FormModeEnum.enum.ReadOnly) {
@@ -49,12 +49,9 @@ async function getLabDetails() {
 
     const parseResult = LabDetailsSchema.safeParse(res);
     if (parseResult.success) {
-      console.log('getLabDetails; parseResult.data:', parseResult.data);
       Object.assign(state, parseResult.data);
     } else {
-      console.error('getLabDetails; parseResult:', parseResult);
-      const fieldErrors = parseResult.error.issues.map(({ message }) => ({ message }))
-      console.log('getLabDetails; fieldErrors:', fieldErrors);
+      throw new Error('Failed to parse lab details');
     }
   } catch (error) {
     useToastStore().error(`Failed to retrieve lab details for lab: ${state.Name}`);
@@ -69,7 +66,6 @@ async function onSubmit(event: FormSubmitEvent<LabDetailsForm>) {
   try {
     const formParseResult = LabDetailsFormSchema.safeParse(event.data);
     if (!formParseResult.success) {
-      console.error('Form data is invalid; formParseResult', formParseResult);
       throw new Error('Form data is invalid')
     }
 
@@ -129,6 +125,7 @@ const validate = (state: LabDetailsForm): FormError[] => {
   maybeAddFieldValidationErrors(errors, LabNextFlowTowerAccessTokenSchema, 'NextFlowTowerAccessToken', state.NextFlowTowerAccessToken)
   maybeAddFieldValidationErrors(errors, LabNextFlowTowerWorkspaceIdSchema, 'NextFlowTowerWorkspaceId', state.NextFlowTowerWorkspaceId)
 
+  // Update the canSubmit flag based on the number of errors
   canSubmit.value = errors.length === 0
 
   return errors
@@ -139,7 +136,7 @@ const validate = (state: LabDetailsForm): FormError[] => {
   <USkeleton v-if="isLoadingFormData" class="min-h-96 w-full" />
   <UForm v-else :validate="validate" :schema="LabDetailsFormSchema" :state="state" @submit="onSubmit">
     <EGCard>
-      <EGFormGroup label="Lab Name" name="Name">
+      <EGFormGroup label="Lab Name" name="Name" eager-validation>
         <EGInput v-model="state.Name" :disabled="props.formMode === FormModeEnum.enum.ReadOnly"
           placeholder="Enter lab name (required and must be unique)" required autofocus />
       </EGFormGroup>

@@ -132,6 +132,10 @@
       "type": "runtime"
     },
     {
+      "name": "jwt-decode",
+      "type": "runtime"
+    },
+    {
       "name": "nuxt",
       "type": "runtime"
     },

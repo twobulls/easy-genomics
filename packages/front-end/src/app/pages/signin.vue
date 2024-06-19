@@ -3,9 +3,9 @@
   import { useUiStore } from '~/stores/stores';
   import { ERRORS } from '~/constants/validation';
 
-  definePageMeta({ layout: 'login' });
+  definePageMeta({ layout: 'signin' });
 
-  const { login } = useAuth();
+  const { signIn } = useAuth();
 
   const formSchema = z.object({
     email: z.string().email(ERRORS.email),
@@ -23,19 +23,19 @@
   <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
     <EGText tag="h2" class="mb-12">Sign in</EGText>
     <EGFormGroup label="Email" name="email">
-      <EGInput v-model="state.email" />
+      <EGInput v-model="state.email" autofocus autocomplete="username" />
     </EGFormGroup>
     <EGFormGroup label="Password" name="password">
-      <EGPasswordInput v-model="state.password" :password="true" />
+      <EGPasswordInput v-model="state.password" />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton
         :disabled="isFormDisabled || useUiStore().isRequestPending"
         :loading="useUiStore().isRequestPending"
         label="Sign in"
-        @click="login(state.email, state.password)"
+        @click="signIn(state.email, state.password)"
       />
-      <EGText href="#" tag="a" color-class="text-primary">Forgot password?</EGText>
+      <EGText href="/forgot-password" tag="a" color-class="text-primary">Forgot password?</EGText>
     </div>
   </UForm>
 </template>

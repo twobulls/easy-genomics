@@ -1,11 +1,12 @@
 <script setup lang="ts">
   const props = withDefaults(
     defineProps<{
-      password: boolean;
+      password?: boolean;
       placeholder?: string;
       disabled?: boolean;
     }>(),
     {
+      password: true,
       placeholder: '',
       disabled: false,
     }
@@ -20,6 +21,7 @@
 
 <template>
   <UInput
+    autocomplete="current-password"
     :disabled="disabled"
     :ui="{
       icon: { trailing: { pointer: '' } },

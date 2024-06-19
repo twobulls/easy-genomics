@@ -3,7 +3,7 @@ import { ERRORS } from '~/constants/validation';
 import { useToastStore, useUiStore } from '~/stores/stores';
 
 export default function useAuth() {
-  async function hasAuth() {
+  async function isAuthed() {
     try {
       const authenticatedUser = await Auth.currentAuthenticatedUser();
       return !!authenticatedUser;
@@ -13,7 +13,7 @@ export default function useAuth() {
     }
   }
 
-  async function login(username: string, password: string) {
+  async function signIn(username: string, password: string) {
     try {
       useUiStore().setRequestPending(true);
       const user = await Auth.signIn(username, password);
@@ -33,18 +33,18 @@ export default function useAuth() {
     }
   }
 
-  async function logOut() {
+  async function signOut() {
     try {
       await Auth.signOut();
-      await navigateTo('/login');
+      await navigateTo('/signin');
     } catch (error) {
       console.error('Error occurred during sign out.', error);
       throw error;
     }
   }
   return {
-    hasAuth,
-    login,
-    logOut,
+    isAuthed,
+    signIn,
+    signOut,
   };
 }

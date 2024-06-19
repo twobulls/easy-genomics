@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { FormModeEnum } from '~/types/labs';
+import { LabDetailsFormModeEnum } from '~/types/labs';
 </script>
 
 <template>
@@ -9,5 +9,5 @@ import { FormModeEnum } from '~/types/labs';
     <EGText tag="h4" class="mb-4">Lab details</EGText>
   </div>
 
-  <EGLabDetailsForm :form-mode="FormModeEnum.enum.Create" />
+  <EGLabDetailsForm :form-mode="LabDetailsFormModeEnum.enum.Create" />
 </template>

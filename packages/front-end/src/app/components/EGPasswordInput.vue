@@ -6,6 +6,7 @@
       disabled?: boolean;
     }>(),
     {
+      password: true,
       placeholder: '',
       disabled: false,
     }

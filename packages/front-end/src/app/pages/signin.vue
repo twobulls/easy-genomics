@@ -26,7 +26,7 @@
       <EGInput v-model="state.email" autofocus autocomplete="username" />
     </EGFormGroup>
     <EGFormGroup label="Password" name="password">
-      <EGPasswordInput v-model="state.password" :password="true" />
+      <EGPasswordInput v-model="state.password" />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton

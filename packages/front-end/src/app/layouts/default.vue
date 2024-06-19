@@ -8,7 +8,7 @@
 
 <template>
   <EGToasts class="top-[70px]" />
-  <EGHeader :has-auth="true" key="routeKey" />
+  <EGHeader :is-authed="true" key="routeKey" />
   <main class="mx-auto mt-12 px-4">
     <slot />
   </main>

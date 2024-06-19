@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LabDetailsForm, LabDetailsFormSchema, LabNameSchema, LabDescriptionSchema, LabNextFlowTowerAccessTokenSchema, LabNextFlowTowerWorkspaceIdSchema, FormModeEnum, LabDetailsSchema } from '~/types/labs';
+import { LabDetailsInput, LabDetailsInputSchema, LabNameSchema, LabDescriptionSchema, NextFlowTowerAccessTokenInputSchema, NextFlowTowerWorkspaceIdInputSchema, LabDetailsFormModeEnum, LabDetailsSchema } from '~/types/labs';
 import { FormError, FormSubmitEvent } from '#ui/types';
 import { CreateLaboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
@@ -7,10 +7,12 @@ import { useToastStore, useUiStore } from '~/stores/stores';
 import { Schema } from 'zod';
 
 const props = withDefaults(defineProps<{
-  formMode?: FormModeEnum;
+  formMode?: LabDetailsFormModeEnum;
 }>(), {
-  formMode: FormModeEnum.enum.ReadOnly,
+  formMode: LabDetailsFormModeEnum.enum.ReadOnly,
 })
+
+const formMode = ref(props.formMode);
 
 const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
@@ -21,7 +23,15 @@ const router = useRouter();
 const isLoadingFormData = ref(false);
 const canSubmit = ref(false);
 
-const defaultState: LabDetailsForm = {
+// Enable/disable fields default
+const isNameFieldDisabled = ref(true);
+const isDescriptionFieldDisabled = ref(true);
+const isNextFlowTowerWorkspaceIdFieldDisabled = ref(true);
+
+// Hide/show fields default
+const isNextFlowTowerAccessTokenFieldHidden = ref(true);
+
+const defaultState: LabDetailsInput = {
   Name: '',
   Description: '',
   NextFlowTowerAccessToken: '',
@@ -30,26 +40,38 @@ const defaultState: LabDetailsForm = {
 
 const state = ref({ ...defaultState })
 
+
+/**
+ * Switches the form input fields disabled/hidden states based on the form mode.
+ */
+function switchToFormMode(newFormMode: LabDetailsFormModeEnum) {
+  if (formMode.value !== newFormMode) {
+    formMode.value = newFormMode;
+  }
+
+  if (newFormMode === LabDetailsFormModeEnum.enum.Create || newFormMode === LabDetailsFormModeEnum.enum.Edit) {
+    isNameFieldDisabled.value = false
+    isDescriptionFieldDisabled.value = false
+    isNextFlowTowerWorkspaceIdFieldDisabled.value = false
+    isNextFlowTowerAccessTokenFieldHidden.value = false
+  }
+}
+
 onMounted(async () => {
-  if (props.formMode === FormModeEnum.enum.Edit || props.formMode === FormModeEnum.enum.ReadOnly) {
+  if (formMode.value !== LabDetailsFormModeEnum.enum.Create) {
     await getLabDetails();
   }
+  switchToFormMode(formMode.value);
 })
 
 async function getLabDetails() {
   try {
     isLoadingFormData.value = true;
     const res = await $api.labs.getLabDetails($route.params.id);
-
-    // TODO: determine how to handle the encoded NextFlowTowerAccessToken from the server
-    // - it is longer than 128-characters, so fails parsing using the LabNextFlowTowerAccessTokenSchema
-    // - how to decode it?
-    // - what if anything to display in the form? e.g. show the last 4-characters like a credit card?
-    res.NextFlowTowerAccessToken = 'token-has-been-replaced';
-
     const parseResult = LabDetailsSchema.safeParse(res);
+
     if (parseResult.success) {
-      Object.assign(state, parseResult.data);
+      state.value = { ...state.value, ...parseResult.data };
     } else {
       throw new Error('Failed to parse lab details');
     }
@@ -60,28 +82,28 @@ async function getLabDetails() {
   }
 }
 
-async function onSubmit(event: FormSubmitEvent<LabDetailsForm>) {
-  if (props.formMode === FormModeEnum.enum.ReadOnly) return;
+async function onSubmit(event: FormSubmitEvent<LabDetailsInput>) {
+  if (formMode.value === LabDetailsFormModeEnum.enum.ReadOnly) return;
 
   try {
-    const formParseResult = LabDetailsFormSchema.safeParse(event.data);
+    const formParseResult = LabDetailsInputSchema.safeParse(event.data);
     if (!formParseResult.success) {
       throw new Error('Form data is invalid')
     }
 
-    if (props.formMode === FormModeEnum.enum.Create) {
+    if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
       await handleCreateLab(formParseResult.data);
-    } else if (props.formMode === FormModeEnum.enum.Edit) {
+    } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
       await handleUpdateLabDetails(formParseResult.data);
     }
   } catch (error) {
-    useToastStore().error(`Failed to ${props.formMode} lab: ${state.Name}`);
+    useToastStore().error(`Failed to ${formMode.value} lab: ${state.Name}`);
   } finally {
     useUiStore().setRequestPending(false);
   }
 }
 
-async function handleCreateLab(labDetails: LabDetailsForm) {
+async function handleCreateLab(labDetails: LabDetailsInput) {
   useUiStore().setRequestPending(true);
 
   const lab = {
@@ -96,7 +118,8 @@ async function handleCreateLab(labDetails: LabDetailsForm) {
   router.push({ path: '/labs' });
 }
 
-async function handleUpdateLabDetails(labDetails: LabDetailsForm) {
+// TODO: EG-506: [FE] Editing Lab Details
+async function handleUpdateLabDetails(labDetails: LabDetailsInput) {
   console.log('TODO: implement handleUpdateLabDetails; labDetails:', labDetails)
 }
 
@@ -117,13 +140,13 @@ function maybeAddFieldValidationErrors(errors: FormError[], schema: Schema, fiel
   }
 }
 
-const validate = (state: LabDetailsForm): FormError[] => {
+const validate = (state: LabDetailsInput): FormError[] => {
   const errors: FormError[] = []
 
   maybeAddFieldValidationErrors(errors, LabNameSchema, 'Name', state.Name)
   maybeAddFieldValidationErrors(errors, LabDescriptionSchema, 'Description', state.Description)
-  maybeAddFieldValidationErrors(errors, LabNextFlowTowerAccessTokenSchema, 'NextFlowTowerAccessToken', state.NextFlowTowerAccessToken)
-  maybeAddFieldValidationErrors(errors, LabNextFlowTowerWorkspaceIdSchema, 'NextFlowTowerWorkspaceId', state.NextFlowTowerWorkspaceId)
+  maybeAddFieldValidationErrors(errors, NextFlowTowerAccessTokenInputSchema, 'NextFlowTowerAccessToken', state.NextFlowTowerAccessToken)
+  maybeAddFieldValidationErrors(errors, NextFlowTowerWorkspaceIdInputSchema, 'NextFlowTowerWorkspaceId', state.NextFlowTowerWorkspaceId)
 
   // Update the canSubmit flag based on the number of errors
   canSubmit.value = errors.length === 0
@@ -134,25 +157,26 @@ const validate = (state: LabDetailsForm): FormError[] => {
 
 <template>
   <USkeleton v-if="isLoadingFormData" class="min-h-96 w-full" />
-  <UForm v-else :validate="validate" :schema="LabDetailsFormSchema" :state="state" @submit="onSubmit">
+  <UForm v-else :validate="validate" :schema="LabDetailsInputSchema" :state="state" @submit="onSubmit">
     <EGCard>
       <EGFormGroup label="Lab Name" name="Name" eager-validation>
-        <EGInput v-model="state.Name" :disabled="props.formMode === FormModeEnum.enum.ReadOnly"
+        <EGInput v-model="state.Name" :disabled="isNameFieldDisabled"
           placeholder="Enter lab name (required and must be unique)" required autofocus />
       </EGFormGroup>
       <EGFormGroup label="Lab Description" name="Description">
-        <EGTextArea v-model="state.Description" :disabled="props.formMode === FormModeEnum.enum.ReadOnly"
+        <EGTextArea v-model="state.Description" :disabled="isDescriptionFieldDisabled"
           placeholder="Describe your lab and what runs should be launched by Lab users." />
       </EGFormGroup>
-      <EGFormGroup label="Personal Access Token" name="NextFlowTowerAccessToken">
+      <EGFormGroup v-if="!isNextFlowTowerAccessTokenFieldHidden" label="Personal Access Token"
+        name="NextFlowTowerAccessToken">
         <EGPasswordInput v-model="state.NextFlowTowerAccessToken" :password="true"
-          :disabled="props.formMode === FormModeEnum.enum.ReadOnly" />
+          :disabled="formMode === LabDetailsFormModeEnum.enum.ReadOnly" />
       </EGFormGroup>
       <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId">
-        <EGInput v-model="state.NextFlowTowerWorkspaceId" :disabled="props.formMode === FormModeEnum.enum.ReadOnly" />
+        <EGInput v-model="state.NextFlowTowerWorkspaceId" :disabled="isNextFlowTowerWorkspaceIdFieldDisabled" />
       </EGFormGroup>
     </EGCard>
-    <div v-if="props.formMode !== FormModeEnum.enum.ReadOnly" class="flex space-x-2 mt-6">
+    <div v-if="formMode !== LabDetailsFormModeEnum.enum.ReadOnly" class="flex space-x-2 mt-6">
       <EGButton :disabled="!canSubmit" :loading="useUiStore().isRequestPending" :size="ButtonSizeEnum.enum.sm"
         type="submit" label="Create Lab" />
       <EGButton :size="ButtonSizeEnum.enum.sm" :variant="ButtonVariantEnum.enum.secondary"

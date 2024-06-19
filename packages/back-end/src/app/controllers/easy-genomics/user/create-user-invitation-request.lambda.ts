@@ -13,7 +13,7 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { CognitoUserService } from '../../../services/easy-genomics/cognito-user-service';
+import { CognitoIdpService } from '../../../services/cognito-idp-service';
 import { OrganizationService } from '../../../services/easy-genomics/organization-service';
 import { OrganizationUserService } from '../../../services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
@@ -21,7 +21,7 @@ import { UserService } from '../../../services/easy-genomics/user-service';
 import { SesService } from '../../../services/ses-service';
 import { generateJwt } from '../../../utils/jwt-utils';
 
-const cognitoUserService = new CognitoUserService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
+const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const organizationService = new OrganizationService();
 const organizationUserService = new OrganizationUserService();
 const platformUserService = new PlatformUserService();
@@ -52,7 +52,7 @@ export const handler: Handler = async (
 
     if (!existingUser) {
       // Attempt to create new Cognito User account - will trigger Cognito process-custom-email-sender to send SES email template
-      const newUserId: string = await cognitoUserService.inviteNewUserToPlatform(
+      const newUserId: string = await cognitoIdpService.adminCreateUser(
         request.Email,
         organization.OrganizationId,
         organization.Name);
@@ -101,7 +101,7 @@ export const handler: Handler = async (
           }
 
           // Attempt to resend new Cognito User account - will trigger Cognito process-custom-email-sender to send SES email template
-          await cognitoUserService.inviteNewUserToPlatform(
+          await cognitoIdpService.adminCreateUser(
             request.Email,
             organization.OrganizationId,
             organization.Name,

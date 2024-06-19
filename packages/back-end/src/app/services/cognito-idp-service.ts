@@ -1,4 +1,7 @@
 import {
+  AdminCreateUserCommand,
+  AdminCreateUserCommandInput,
+  AdminCreateUserCommandOutput,
   AdminEnableUserCommand,
   AdminEnableUserCommandInput,
   AdminEnableUserCommandOutput,
@@ -23,6 +26,7 @@ import {
 } from '@aws-sdk/client-cognito-identity-provider';
 
 export enum CognitoIdpCommand {
+  ADMIN_CREATE_USER = 'admin-create-user',
   ADMIN_ENABLE_USER = 'admin-enable-user',
   ADMIN_GET_USER = 'admin-get-user',
   ADMIN_SET_USER_PASSWORD = 'admin-set-user-password',
@@ -31,11 +35,56 @@ export enum CognitoIdpCommand {
   FORGOT_PASSWORD = 'forgot-password',
 };
 
-export class CognitoIdpService {
-  readonly cognitoIdpClient;
+export interface CognitoIdpServiceProps {
+  userPoolId: string;
+}
 
-  public constructor() {
+export class CognitoIdpService {
+  private readonly props: CognitoIdpServiceProps;
+  private readonly cognitoIdpClient;
+
+  public constructor(props: CognitoIdpServiceProps) {
+    this.props = props;
     this.cognitoIdpClient = new CognitoIdentityProviderClient();
+  }
+
+  /**
+   * This function invites new User to the Platform by creating a new Cognito
+   * User account / resending invite, and returns the Cognito Username.
+   * @param email
+   * @param organizationId
+   * @param organizationName
+   * @param resend
+   */
+  async adminCreateUser(email: string, organizationId: string, organizationName: string, resend?: boolean): Promise<string> {
+    console.log(`[cognito-idp-service : adminCreateUser] organizationName: ${organizationName}, email: ${email}`);
+
+    const logRequestMessage = `Add New User Email=${email} to Platform request`;
+    console.info(logRequestMessage);
+
+    const adminCreateUserCommandInput: AdminCreateUserCommandInput = {
+      ...(resend === true ?? { MessageAction: 'RESEND' }),
+      DesiredDeliveryMediums: ['EMAIL'],
+      Username: email,
+      UserAttributes: [
+        { Name: 'email', Value: email },
+        { Name: 'email_verified', Value: 'false' },
+      ],
+      UserPoolId: this.props.userPoolId,
+      ClientMetadata: {
+        ['OrganizationId']: organizationId,
+        ['OrganizationName']: organizationName,
+      },
+    };
+
+    const adminCreateUserCommand: AdminCreateUserCommand = new AdminCreateUserCommand(adminCreateUserCommandInput);
+    const response: AdminCreateUserCommandOutput = await this.cognitoIdpClient.send<AdminCreateUserCommand>(adminCreateUserCommand);
+
+    if (response.$metadata.httpStatusCode === 200 && response.User && response.User.Username) {
+      return response.User.Username;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   }
 
   /**
@@ -84,7 +133,6 @@ export class CognitoIdpService {
 
   /**
    * Updates a Cognito User account password for the specified username.
-   * @param userPoolId
    * @param username
    */
   public adminSetUserPassword = async(userPoolId: string, username: string, password: string): Promise<AdminSetUserPasswordCommandOutput> => {
@@ -252,6 +300,8 @@ export class CognitoIdpService {
    */
   private getCognitoIdpCommand = (command: CognitoIdpCommand, data: any): any => {
     switch (command) {
+      case CognitoIdpCommand.ADMIN_CREATE_USER:
+        return new AdminCreateUserCommand(data as AdminCreateUserCommandInput);
       case CognitoIdpCommand.ADMIN_ENABLE_USER:
         return new AdminEnableUserCommand(data as AdminEnableUserCommandInput);
       case CognitoIdpCommand.ADMIN_GET_USER:

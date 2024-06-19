@@ -9,7 +9,7 @@
   <UFormGroup
     :label="label"
     :name="name"
-    class="[&_label]:text-heading !mt-0 mb-4 [&_label]:mb-0 [&_label]:text-sm [&_label]:font-normal [&_label]:leading-tight [&_p]:mt-[2px]"
+    class="[&_label]:text-heading !mt-0 mb-4 [&_label]:mb-1 [&_label]:text-sm [&_label]:font-normal [&_label]:leading-tight [&_p]:mt-[2px]"
     :ui="{
       error: 'text-alert-danger',
     }"

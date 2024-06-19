@@ -5,10 +5,12 @@
       placeholder?: string;
       disabled?: boolean;
       clearable?: boolean;
+      autocomplete?: string;
     }>(),
     {
       placeholder: '',
       disabled: false,
+      autocomplete: '',
     }
   );
 
@@ -21,6 +23,7 @@
 
 <template>
   <UInput
+    :autocomplete="autocomplete"
     :value="modelValue"
     @input="emit('update:modelValue', $event.target.value)"
     name="q"

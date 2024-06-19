@@ -59,7 +59,7 @@ export class CognitoIdpConstruct extends Construct {
       authFlows: {
         userSrp: true,
         // TODO: `userPassword` is enabled for testing purposes only; remove this in future after
-        //       enabling alternative login for testing
+        //       enabling alternative signin for testing
         userPassword: true,
       },
     });
@@ -75,18 +75,45 @@ export class CognitoIdpConstruct extends Construct {
     if (props.authLambdaFunctions) {
       /** AWS Reference: https://docs.aws.amazon.com/cognito/latest/developerguide/cognito-user-identity-pools-working-with-aws-lambda-triggers.html **/
       // Authentication Events
-      this.addCognitoLambdaTrigger(UserPoolOperation.PRE_AUTHENTICATION, props.authLambdaFunctions.get('/auth/process-pre-authentication'));
-      this.addCognitoLambdaTrigger(UserPoolOperation.POST_AUTHENTICATION, props.authLambdaFunctions.get('/auth/process-post-authentication'));
-      this.addCognitoLambdaTrigger(UserPoolOperation.PRE_TOKEN_GENERATION, props.authLambdaFunctions.get('/auth/process-pre-token-generation'));
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.PRE_AUTHENTICATION,
+        props.authLambdaFunctions.get('/auth/process-pre-authentication'),
+      );
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.POST_AUTHENTICATION,
+        props.authLambdaFunctions.get('/auth/process-post-authentication'),
+      );
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.PRE_TOKEN_GENERATION,
+        props.authLambdaFunctions.get('/auth/process-pre-token-generation'),
+      );
       // Sign-Up
-      this.addCognitoLambdaTrigger(UserPoolOperation.PRE_SIGN_UP, props.authLambdaFunctions.get('/auth/process-pre-signup'));
-      this.addCognitoLambdaTrigger(UserPoolOperation.POST_CONFIRMATION, props.authLambdaFunctions.get('/auth/process-post-confirmation'));
-      this.addCognitoLambdaTrigger(UserPoolOperation.USER_MIGRATION, props.authLambdaFunctions.get('/auth/process-user-migration'));
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.PRE_SIGN_UP,
+        props.authLambdaFunctions.get('/auth/process-pre-signup'),
+      );
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.POST_CONFIRMATION,
+        props.authLambdaFunctions.get('/auth/process-post-confirmation'),
+      );
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.USER_MIGRATION,
+        props.authLambdaFunctions.get('/auth/process-user-migration'),
+      );
       // Messages
-      this.addCognitoLambdaTrigger(UserPoolOperation.CUSTOM_MESSAGE, props.authLambdaFunctions.get('/auth/process-custom-message'));
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.CUSTOM_MESSAGE,
+        props.authLambdaFunctions.get('/auth/process-custom-message'),
+      );
       // Email & SMS 3rd party providers
-      this.addCognitoLambdaTrigger(UserPoolOperation.CUSTOM_EMAIL_SENDER, props.authLambdaFunctions.get('/auth/process-custom-email-sender'));
-      this.addCognitoLambdaTrigger(UserPoolOperation.CUSTOM_SMS_SENDER, props.authLambdaFunctions.get('/auth/process-custom-sms-sender'));
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.CUSTOM_EMAIL_SENDER,
+        props.authLambdaFunctions.get('/auth/process-custom-email-sender'),
+      );
+      this.addCognitoLambdaTrigger(
+        UserPoolOperation.CUSTOM_SMS_SENDER,
+        props.authLambdaFunctions.get('/auth/process-custom-sms-sender'),
+      );
     }
   }
 

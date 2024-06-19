@@ -14,6 +14,7 @@
     password: z
       .string()
       .min(8, ERRORS.passwordMinLength)
+      .max(256, ERRORS.passwordMaxLength)
       .refine((value) => /[a-zA-Z]/.test(value), ERRORS.passwordCharacter)
       .refine((value) => /[0-9]/.test(value), ERRORS.passwordNumber)
       .refine((value) => /[^a-zA-Z0-9]/.test(value), ERRORS.passwordSymbol),

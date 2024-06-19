@@ -3,14 +3,14 @@
 
   const props = withDefaults(
     defineProps<{
-      hasAuth?: boolean;
+      isAuthed?: boolean;
     }>(),
     {
-      hasAuth: false,
+      isAuthed: false,
     }
   );
 
-  const { signOut, hasAuth } = useAuth();
+  const { signOut, isAuthed } = useAuth();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
   const { currentRoute } = useRouter();
@@ -22,8 +22,8 @@
 
 <template>
   <header class="lh flex flex-row items-center justify-center px-4">
-    <div class="header-container" :class="{ 'flex w-full flex-row items-center justify-between': props.hasAuth }">
-      <template v-if="props.hasAuth">
+    <div class="header-container" :class="{ 'flex w-full flex-row items-center justify-between': props.isAuthed }">
+      <template v-if="props.isAuthed">
         <div class="flex">
           <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
         </div>
@@ -65,7 +65,7 @@
           </ULink>
           <EGButton
             :size="ButtonSizeEnum.enum.sm"
-            v-if="hasAuth"
+            v-if="isAuthed"
             @click="signOut()"
             class="ml-8 h-10"
             label="Sign out"

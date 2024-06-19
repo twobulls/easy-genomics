@@ -3,7 +3,7 @@ import { ERRORS } from '~/constants/validation';
 import { useToastStore, useUiStore } from '~/stores/stores';
 
 export default function useAuth() {
-  async function hasAuth() {
+  async function isAuthed() {
     try {
       const authenticatedUser = await Auth.currentAuthenticatedUser();
       return !!authenticatedUser;
@@ -43,7 +43,7 @@ export default function useAuth() {
     }
   }
   return {
-    hasAuth,
+    isAuthed,
     signIn,
     signOut,
   };

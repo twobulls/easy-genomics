@@ -89,16 +89,15 @@ export class CognitoIdpService {
 
   /**
    * Enables a Cognito User account for the specified username.
-   * @param userPoolId
    * @param username
    */
-  public adminEnableUser = async(userPoolId: string, username: string): Promise<AdminEnableUserCommandOutput> => {
-    console.log(`[cognito-idp-service : adminEnableUser] userPoolId: ${userPoolId}, username: ${username}`);
+  public adminEnableUser = async(username: string): Promise<AdminEnableUserCommandOutput> => {
+    console.log(`[cognito-idp-service : adminEnableUser] username: ${username}`);
     const response: AdminEnableUserCommandOutput =
       await this.cognitoIdpRequest<AdminEnableUserCommandInput, AdminEnableUserCommandOutput>(
         CognitoIdpCommand.ADMIN_ENABLE_USER,
         {
-          UserPoolId: userPoolId,
+          UserPoolId: this.props.userPoolId,
           Username: username,
         },
       );
@@ -111,16 +110,15 @@ export class CognitoIdpService {
 
   /**
    * Looks up a Cognito User account for the specified username.
-   * @param userPoolId
    * @param username
    */
-  public adminGetUser = async(userPoolId: string, username: string): Promise<AdminGetUserCommandOutput> => {
-    console.log(`[cognito-idp-service : adminGetUser] userPoolId: ${userPoolId}, username: ${username}`);
+  public adminGetUser = async(username: string): Promise<AdminGetUserCommandOutput> => {
+    console.log(`[cognito-idp-service : adminGetUser] username: ${username}`);
     const response: AdminGetUserCommandOutput =
       await this.cognitoIdpRequest<AdminGetUserCommandInput, AdminGetUserCommandOutput>(
         CognitoIdpCommand.ADMIN_GET_USER,
         {
-          UserPoolId: userPoolId,
+          UserPoolId: this.props.userPoolId,
           Username: username,
         },
       );
@@ -135,13 +133,13 @@ export class CognitoIdpService {
    * Updates a Cognito User account password for the specified username.
    * @param username
    */
-  public adminSetUserPassword = async(userPoolId: string, username: string, password: string): Promise<AdminSetUserPasswordCommandOutput> => {
-    console.log(`[cognito-idp-service : adminSetUserPassword] userPoolId: ${userPoolId}, username: ${username}`);
+  public adminSetUserPassword = async(username: string, password: string): Promise<AdminSetUserPasswordCommandOutput> => {
+    console.log(`[cognito-idp-service : adminSetUserPassword] username: ${username}`);
     const response: AdminSetUserPasswordCommandOutput =
       await this.cognitoIdpRequest<AdminSetUserPasswordCommandInput, AdminSetUserPasswordCommandOutput>(
         CognitoIdpCommand.ADMIN_SET_USER_PASSWORD,
         {
-          UserPoolId: userPoolId,
+          UserPoolId: this.props.userPoolId,
           Username: username,
           Password: password,
           Permanent: true,
@@ -156,21 +154,19 @@ export class CognitoIdpService {
 
   /**
    * Updates a Cognito User email and email_verified attributes to support switching the email for the specified username.
-   * @param userPoolId
    * @param username
    * @param email
    */
   public adminUpdateUserEmail = async(
-    userPoolId: string,
     username: string,
     email: string,
   ): Promise<AdminUpdateUserAttributesCommandOutput> => {
-    console.log(`[cognito-idp-service : adminUpdateUserEmail] userPoolId: ${userPoolId}, username: ${username}`);
+    console.log(`[cognito-idp-service : adminUpdateUserEmail] username: ${username}`);
     const response: AdminUpdateUserAttributesCommandOutput =
       await this.cognitoIdpRequest<AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput>(
         CognitoIdpCommand.ADMIN_UPDATE_USER_ATTRIBUTES,
         {
-          UserPoolId: userPoolId,
+          UserPoolId: this.props.userPoolId,
           Username: username,
           UserAttributes: [
             { Name: 'email', Value: email },
@@ -187,21 +183,19 @@ export class CognitoIdpService {
 
   /**
    * Updates a Cognito User email_verified attribute for the specified username.
-   * @param userPoolId
    * @param username
    * @param emailVerified
    */
   public adminUpdateUserEmailVerified = async(
-    userPoolId: string,
     username: string,
     emailVerified: boolean,
   ): Promise<AdminUpdateUserAttributesCommandOutput> => {
-    console.log(`[cognito-idp-service : adminUpdateUserEmailVerified] userPoolId: ${userPoolId}, username: ${username}`);
+    console.log(`[cognito-idp-service : adminUpdateUserEmailVerified] username: ${username}`);
     const response: AdminUpdateUserAttributesCommandOutput =
       await this.cognitoIdpRequest<AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput>(
         CognitoIdpCommand.ADMIN_UPDATE_USER_ATTRIBUTES,
         {
-          UserPoolId: userPoolId,
+          UserPoolId: this.props.userPoolId,
           Username: username,
           UserAttributes: [
             { Name: 'email_verified', Value: `${emailVerified.toString()}` },

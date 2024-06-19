@@ -11,7 +11,7 @@ import {
 import { CognitoIdpService } from '../../../services/cognito-idp-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
 
-const cognitoIdpService: CognitoIdpService = new CognitoIdpService();
+const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const userService: UserService = new UserService();
 
 export const handler: Handler = async (
@@ -38,7 +38,7 @@ export const handler: Handler = async (
     }
 
     // Retrieve Cognito User Account and initiate Cognito's forgot password workflow
-    const cognitoUser: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(process.env.COGNITO_USER_POOL_ID, request.Email);
+    const cognitoUser: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(request.Email);
 
     if (!cognitoUser.Enabled) {
       throw new Error('Bad request');

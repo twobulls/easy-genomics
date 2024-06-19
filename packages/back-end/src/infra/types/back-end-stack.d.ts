@@ -4,9 +4,11 @@ import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Table } from "aws-cdk-lib/aws-dynamodb";
+import { Key } from "aws-cdk-lib/aws-kms";
 
 // Defined the Auth specific props
 export interface AuthNestedStackProps extends BackEndStackProps, NestedStackProps {
+    cognitoIdpKmsKey?: Key,
 }
 
 // Defines the Easy Genomics specific props
@@ -15,6 +17,8 @@ export interface EasyGenomicsNestedStackProps extends BackEndStackProps, NestedS
     userPool?: UserPool,
     userPoolClient?: UserPoolClient,
     iamPolicyStatements?: Map<string, PolicyStatement[]>,
+    cognitoIdpKmsKey?: Key,
+    dynamoDbKmsKey?: Key,
 }
 
 // Defines the AWS HealthOmics specific props

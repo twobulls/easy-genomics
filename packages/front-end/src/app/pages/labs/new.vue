@@ -1,128 +1,90 @@
 <script setup lang="ts">
-  import { z } from 'zod';
-  import type { FormSubmitEvent } from '#ui/types';
-  import { cleanText } from '~/utils/string-utils';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+import { z } from 'zod';
+import { CreateLaboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import type { FormError, FormSubmitEvent } from '#ui/types';
+import { useToastStore, useUiStore } from '~/stores/stores';
+import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
 
-  const { MOCK_ORG_ID } = useRuntimeConfig().public;
-  const { $api } = useNuxtApp();
-  const router = useRouter();
+const { MOCK_ORG_ID } = useRuntimeConfig().public;
+const { $api } = useNuxtApp();
+const router = useRouter();
 
-  /*
-    Laboratory Name
-    - Minimum of 1 character
-    - Maximum of 50 characters
-    - Accepts alphanumeric characters
-    - Accepts UPPERCASE and lowercase characters
-    - Does not accept special characters except for hyphen, comma, apostrophe, period, underscore, space and parenthesis (-,'._ )
-    - Should not start with special character
-    - If user leaves the field blank, an error message will be displayed in the page
-    - User will not be able to type in additional characters if the maximum (50) was reached
-    - Accepts value from copy and paste
-    - If a user attempts to paste values above 50 characters, these characters will be filtered out and only the first 50 characters will be pasted
-    - If a user attempts to paste invalid special characters, these characters will be filtered out and only the valid characters will be pasted
-  */
-  const NAME_MIN_LENGTH = 1;
-  const NAME_MAX_LENGTH = 50;
+const canSubmit = ref(false);
 
-  const nameSchema = z
-    .string()
-    .min(NAME_MIN_LENGTH, { message: `Name must be at least ${NAME_MIN_LENGTH} ${getCharacterText(NAME_MIN_LENGTH)}` })
-    .max(NAME_MAX_LENGTH, { message: `${NAME_MAX_LENGTH} ${getCharacterText(NAME_MAX_LENGTH)} max` });
+const nameSchema = z.string().trim().min(1, 'Lab name is required').max(128, 'Lab name must be no more than 128 characters');
+const descriptionSchema = z.string().trim().max(500, 'Description must be no longer than 500 characters').optional();
+const nextFlowTowerAccessTokenSchema = z.string().trim().max(128, 'Personal access token must be no more than 128 characters').optional();
+const nextFlowTowerWorkspaceIdSchema = z.string().trim().max(128, 'Workspace ID must be no more than 128 characters').optional();
 
-  /*
-    Laboratory Description
-    - Maximum of 500 characters
-    - Accepts alphanumeric characters
-    - Accepts UPPERCASE and lowercase characters
-    - Does not accept special characters except for hyphen, comma, apostrophe, period, underscore, space and parenthesis (-,'._ )
-    - Should not start with special character
-    - User will not be able to type in additional characters if the maximum (500) was reached
-    - Accepts value from copy and paste
-    - If a user attempts to paste values above 500 characters, these characters will be filtered out and only the first 500 characters will be pasted
-    - If a user attempts to paste invalid special characters, these characters will be filtered out and only the valid characters will be pasted
-  */
+const formSchema = z.object({
+  Name: nameSchema,
+  Description: descriptionSchema,
+  NextFlowTowerAccessToken: nextFlowTowerAccessTokenSchema,
+  NextFlowTowerWorkspaceId: nextFlowTowerWorkspaceIdSchema,
+}).strict();
 
-  const DESCRIPTION_MAX_LENGTH = 500;
+type Form = z.infer<typeof formSchema>;
 
-  const descriptionSchema = z.string().max(DESCRIPTION_MAX_LENGTH, {
-    message: `${DESCRIPTION_MAX_LENGTH} ${getCharacterText(DESCRIPTION_MAX_LENGTH)} max`,
-  });
+const state: Form = reactive({
+  Name: '',
+  Description: '',
+  NextFlowTowerAccessToken: '',
+  NextFlowTowerWorkspaceId: '',
+});
 
-  // Keys use Title case to match the Laboratory schema
-  const formSchema = z.object({
-    Name: nameSchema,
-    Description: descriptionSchema,
-  });
-  type FormSchema = z.infer<typeof formSchema>;
+const validate = (state: Form): FormError[] => {
+  const errors: FormError[] = []
 
-  const state = reactive({
-    Name: '',
-    Description: '',
-    isFormValid: false,
-    isFormDisabled: true,
-  });
-
-  const nameCharCount = computed(() => state.Name.length);
-  const descriptionCharCount = computed(() => state.Description.length);
-
-  function getCharacterText(count: number) {
-    return count === 1 ? 'character' : 'characters';
+  const nameParseResult = nameSchema.safeParse(state.Name)
+  if (!nameParseResult.success) {
+    nameParseResult.error.issues.forEach(({ message }) => errors.push({ path: 'Name', message }))
   }
 
-  function handleNameInput(event: InputEvent) {
-    const target: HTMLInputElement = event.target;
-    const name = target.value;
-    const cleanedName = cleanText(name, NAME_MAX_LENGTH);
-    if (name !== cleanedName) {
-      state.Name = cleanedName;
-      target.value = cleanedName;
+  const descriptionParseResult = descriptionSchema.safeParse(state.Description)
+  if (!descriptionParseResult.success) {
+    descriptionParseResult.error.issues.forEach(({ message }) => errors.push({ path: 'Description', message }))
+  }
+
+  const nextFlowTowerAccessTokenParseResult = nextFlowTowerAccessTokenSchema.safeParse(state.NextFlowTowerAccessToken)
+  if (!nextFlowTowerAccessTokenParseResult.success) {
+    nextFlowTowerAccessTokenParseResult.error.issues.forEach(({ message }) => errors.push({ path: 'NextFlowTowerAccessToken', message }))
+  }
+
+  const nextFlowTowerWorkspaceIdParseResult = nextFlowTowerWorkspaceIdSchema.safeParse(state.NextFlowTowerWorkspaceId)
+  if (!nextFlowTowerWorkspaceIdParseResult.success) {
+    nextFlowTowerWorkspaceIdParseResult.error.issues.forEach(({ message }) => errors.push({ path: 'NextFlowTowerWorkspaceId', message }))
+  }
+
+  canSubmit.value = errors.length === 0
+
+  return errors
+}
+
+async function onSubmit(event: FormSubmitEvent<Form>) {
+  try {
+    const formParseResult = formSchema.safeParse(event.data);
+    if (!formParseResult.success) {
+      console.error('Form data is invalid; formParseResult', formParseResult);
+      throw new Error('Form data is invalid')
     }
-    validateForm({ name: cleanedName });
+
+    useUiStore().setRequestPending(true);
+
+    const lab = {
+      ...formParseResult.data,
+      OrganizationId: MOCK_ORG_ID,
+      Status: 'Active'
+    } as CreateLaboratory
+
+    await $api.labs.create(lab);
+    useToastStore().success(`Successfully created lab ${lab.Name}`);
+    router.push({ path: '/labs' });
+  } catch (error) {
+    useToastStore().error(`Failed to create lab ${state.Name}`);
+  } finally {
+    useUiStore().setRequestPending(false);
   }
-
-  function handleDescriptionInput(event: InputEvent) {
-    const target: HTMLInputElement = event.target;
-    const description = target.value;
-    const cleanedDescription = cleanText(description, DESCRIPTION_MAX_LENGTH);
-    if (description !== cleanedDescription) {
-      state.Description = cleanedDescription;
-      target.value = cleanedDescription;
-    }
-    validateForm({ description: cleanedDescription });
-  }
-
-  function validateForm({
-    name = state.Name,
-    description = state.Description,
-  }: {
-    name: string | undefined;
-    description: string | undefined;
-  }) {
-    const isNameValid = nameSchema.safeParse(name).success;
-    const isDescriptionValid = descriptionSchema.safeParse(description).success;
-    const isFormValid = isNameValid && isDescriptionValid;
-    state.isFormValid = isFormValid;
-    state.isFormDisabled = !isFormValid;
-  }
-
-  async function onSubmit(event: FormSubmitEvent<FormSchema>) {
-    try {
-      state.isFormDisabled = true;
-      useUiStore().setRequestPending(true);
-
-      const { Name, Description } = event.data;
-
-      await $api.labs.create({ Name, Description, OrganizationId: MOCK_ORG_ID, Status: 'Active' });
-      useToastStore().success('Laboratory created');
-      router.push({ path: '/labs' });
-    } catch (error) {
-      useToastStore().error('Failed to create lab');
-    } finally {
-      state.isFormDisabled = false;
-      useUiStore().setRequestPending(false);
-    }
-  }
+}
 </script>
 
 <template>
@@ -132,35 +94,27 @@
     <EGText tag="h4" class="mb-4">Lab details</EGText>
   </div>
 
-  <UForm :schema="formSchema" :state="state" @submit="onSubmit">
+  <UForm :validate="validate" :schema="formSchema" :state="state" @submit="onSubmit">
     <EGCard>
       <EGFormGroup label="Lab name*" name="Name">
-        <EGInput
-          v-model.trim="state.Name"
-          @blur="validateForm"
-          @input.prevent="handleNameInput"
-          placeholder="Enter lab name (required and must be unique)"
-          required
-          autofocus
-        />
-        <EGCharacterCounter :value="nameCharCount" :max="NAME_MAX_LENGTH" />
+        <EGInput v-model="state.Name" placeholder="Enter lab name (required and must be unique)" required autofocus />
       </EGFormGroup>
       <EGFormGroup label="Lab description" name="Description">
-        <EGTextArea
-          v-model.trim="state.Description"
-          @blur="validateForm"
-          @input.prevent="handleDescriptionInput"
-          placeholder="Describe your lab and what runs should be launched by Lab users."
-        />
-        <EGCharacterCounter :value="descriptionCharCount" :max="DESCRIPTION_MAX_LENGTH" />
+        <EGTextArea v-model="state.Description"
+          placeholder="Describe your lab and what runs should be launched by Lab users." />
+      </EGFormGroup>
+      <EGFormGroup label="Personal Access Token" name="NextFlowTowerAccessToken">
+        <EGPasswordInput v-model="state.NextFlowTowerAccessToken" :password="true" />
+      </EGFormGroup>
+      <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId">
+        <EGInput v-model="state.NextFlowTowerWorkspaceId" />
       </EGFormGroup>
     </EGCard>
-    <EGButton
-      :disabled="state.isFormDisabled || isLoading"
-      :loading="isLoading"
-      type="submit"
-      label="Create"
-      class="mt-6"
-    />
+    <div class="flex space-x-2 mt-6">
+      <EGButton :disabled="!canSubmit || useUiStore().isRequestPending" :loading="useUiStore().isRequestPending"
+        :size="ButtonSizeEnum.enum.sm" type="submit" label="Create Lab" />
+      <EGButton :size="ButtonSizeEnum.enum.sm" :variant="ButtonVariantEnum.enum.secondary"
+        :disabled="useUiStore().isRequestPending" label="Cancel" name="cancel" @click="$router.go(-1)" />
+    </div>
   </UForm>
 </template>

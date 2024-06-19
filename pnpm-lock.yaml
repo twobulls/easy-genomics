@@ -149,6 +149,9 @@ importers:
       aws-sdk:
         specifier: ^2.1549.0
         version: 2.1549.0
+      base64-js:
+        specifier: ^1.5.1
+        version: 1.5.1
       constructs:
         specifier: ^10.0.5
         version: 10.3.0
@@ -16449,7 +16452,7 @@ packages:
       pretty-format: 29.7.0
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.2(@types/node@18.19.26)(typescript@5.3.3)
+      ts-node: 10.9.2(@types/node@18.19.26)(typescript@5.4.3)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color

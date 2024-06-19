@@ -1,7 +1,6 @@
-import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
+import { NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { Key, KeySpec } from 'aws-cdk-lib/aws-kms';
 import { Construct } from 'constructs';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
@@ -12,7 +11,6 @@ import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 export class EasyGenomicsNestedStack extends NestedStack {
   readonly props: EasyGenomicsNestedStackProps;
   readonly dynamoDBTables: Map<string, Table> = new Map();
-  readonly easyGenomicsDynamoDBKmsKey: Key;
 
   dynamoDB: DynamoConstruct;
   iam: IamConstruct;
@@ -22,13 +20,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
     super(scope, id, props);
     this.props = props;
-
-    // Create KMS symmetric encryption key to protect sensitive Easy Genomics DynamoDB data
-    this.easyGenomicsDynamoDBKmsKey = new Key(this, `${this.props.constructNamespace}-easy-genomics-dynamodb-kms-key`, {
-      alias: `${this.props.constructNamespace}-easy-genomics-dynamodb-kms-key`,
-      keySpec: KeySpec.SYMMETRIC_DEFAULT,
-      removalPolicy: RemovalPolicy.DESTROY,
-    });
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
       ...<IamConstructProps>props, // Typecast to IamConstructProps
@@ -64,7 +55,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/user/create-user-forgot-password-request': {
           environment: {
-            COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient!.userPoolClientId,
+            COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
           },
           methodOptions: {
@@ -74,6 +65,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/user/confirm-user-forgot-password-request': {
           environment: {
+            COGNITO_KMS_KEY_ID: this.props.cognitoIdpKmsKey?.keyId!,
+            COGNITO_KMS_KEY_ARN: this.props.cognitoIdpKmsKey?.keyArn!,
+            COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
             JWT_SECRET_KEY: this.props.secretKey,
           },
@@ -84,12 +78,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/laboratory/create-laboratory': {
           environment: {
-            EASY_GENOMICS_DYNAMODB_KMS_KEY: this.easyGenomicsDynamoDBKmsKey.keyArn,
+            DYNAMODB_KMS_KEY_ID: this.props.dynamoDbKmsKey?.keyId!,
+            DYNAMODB_KMS_KEY_ARN: this.props.dynamoDbKmsKey?.keyArn!,
           },
         },
         '/easy-genomics/laboratory/update-laboratory': {
           environment: {
-            EASY_GENOMICS_DYNAMODB_KMS_KEY: this.easyGenomicsDynamoDBKmsKey.keyArn,
+            EASY_GENOMICS_DYNAMODB_KMS_KEY: this.props.dynamoDbKmsKey?.keyArn!,
           },
         },
       },
@@ -323,9 +318,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
         }),
         new PolicyStatement({
           resources: [
-            this.easyGenomicsDynamoDBKmsKey.keyArn,
+            this.props.dynamoDbKmsKey?.keyArn!,
           ],
-          actions: ['kms:GenerateDataKey'],
+          actions: ['kms:GenerateDataKey', 'kms:Encrypt'],
           effect: Effect.ALLOW,
         }),
       ],
@@ -395,7 +390,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         }),
         new PolicyStatement({
           resources: [
-            this.easyGenomicsDynamoDBKmsKey.keyArn,
+            this.props.dynamoDbKmsKey?.keyArn!,
           ],
           actions: ['kms:GenerateDataKey'],
           effect: Effect.ALLOW,
@@ -710,9 +705,16 @@ export class EasyGenomicsNestedStack extends NestedStack {
         }),
         new PolicyStatement({
           resources: [
+            this.props.cognitoIdpKmsKey?.keyArn!,
+          ],
+          actions: ['kms:Decrypt'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: [
             `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool!.userPoolId}`,
           ],
-          actions: ['cognito-idp:AdminGetUser', 'cognito-idp:AdminSetUserPassword'],
+          actions: ['cognito-idp:AdminGetUser', 'cognito-idp:ConfirmForgotPassword'],
           effect: Effect.ALLOW,
         }),
       ],

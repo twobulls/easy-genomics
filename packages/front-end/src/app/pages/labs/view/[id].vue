@@ -16,7 +16,6 @@ const labId = $route.params.id;
 const labName = $route.query.name;
 
 const labUsers = ref<LabUser[]>([]);
-const hasNoData = ref(false);
 const canAddUsers = ref(false);
 const showAddUserModule = ref(false);
 const searchOutput = ref('');
@@ -42,7 +41,7 @@ async function handleRemoveUserFromLab() {
 
     const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
 
-    if (!res) {
+    if (res?.Status !== 'Success') {
       throw new Error(`Failed to remove ${displayName} from ${labName}`);
     }
 
@@ -69,7 +68,7 @@ async function handleAssignLabRole({ user, role }: { user: LabUser, role: Labora
       isLabManager
     );
 
-    if (!res) {
+    if (res?.Status !== 'Success') {
       throw new Error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
     }
 
@@ -125,14 +124,10 @@ function getLabUser(labUserDetails: LaboratoryUserDetails, labUsers: LaboratoryU
 async function getLabUsers(): Promise<void> {
   try {
     useUiStore().setRequestPending(true);
-    hasNoData.value = false; // prevent flash of call to action component rendering before data is fetched
 
     const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails($route.params.id);
     const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId($route.params.id);
     labUsers.value = _labUsersDetails.map((user) => getLabUser(user, _labUsers));
-
-    // Ensure the has no data component is displayed when there are no lab users
-    hasNoData.value = labUsers.value.length === 0;
   } catch (error) {
     console.error('Error retrieving lab users', error);
     useToastStore().error('Failed to retrieve lab users');
@@ -226,41 +221,39 @@ onMounted(async () => {
     <template #item="{ item }">
       <div v-if="item.key === 'details'" class="space-y-3">Details TBD</div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
-        <EGEmptyDataCTA v-if="!useUiStore().isRequestPending && hasNoData"
-          message="You don't have any users in this lab yet." img-src="/images/empty-state-user.jpg" />
+        <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user"
+          :disabled="useUiStore().isRequestPending" class="my-6 w-[408px]" />
 
-        <template v-if="!hasNoData">
-          <EGSearchInput @input-event="updateSearchOutput" placeholder="Search user"
-            :disabled="useUiStore().isRequestPending" class="my-6 w-[408px]" />
+        <EGDialog actionLabel="Remove User" :actionVariant="ButtonVariantEnum.enum.destructive" cancelLabel="Cancel"
+          :cancelVariant="ButtonVariantEnum.enum.secondary" @action-triggered="handleRemoveUserFromLab"
+          :primaryMessage="primaryMessage" v-model="isOpen" />
 
-          <EGDialog actionLabel="Remove User" :actionVariant="ButtonVariantEnum.enum.destructive" cancelLabel="Cancel"
-            :cancelVariant="ButtonVariantEnum.enum.secondary" @action-triggered="handleRemoveUserFromLab"
-            :primaryMessage="primaryMessage" v-model="isOpen" />
+        <EGTable :table-data="filteredTableData" :columns="tableColumns" :is-loading="useUiStore().isRequestPending"
+          :show-pagination="!useUiStore().isRequestPending">
+          <template #Name-data="{ row: labUser }">
+            <div class="flex items-center">
+              <EGUserDisplay :display-name="labUser.displayName" :email="labUser.UserEmail" :status="labUser.status"
+                :showAvatar="true" />
+            </div>
+          </template>
 
-          <EGTable :table-data="filteredTableData" :columns="tableColumns" :is-loading="useUiStore().isRequestPending"
-            :show-pagination="!useUiStore().isRequestPending">
-            <template #Name-data="{ row: labUser }">
-              <div class="flex items-center">
-                <EGUserDisplay :display-name="labUser.displayName" :email="labUser.UserEmail" :status="labUser.status"
-                  :showAvatar="true" />
-              </div>
-            </template>
-            <template #assignedRole-data="{ row: labUser }">
-              <span class="text-black">{{ labUser.assignedRole }}</span>
-            </template>
-            <template #actions-data="{ row: labUser }">
-              <div class="flex items-center">
-                <EGUserRoleDropdownNew :show-remove-from-lab="true" :key="labUser.UserId"
-                  :disabled="useUiStore().isRequestPending" :user="labUser"
-                  @assign-lab-role="handleAssignLabRole($event)"
-                  @remove-user-from-lab="displayRemoveUserDialog($event.user)" />
-              </div>
-            </template>
-            <template #empty-state>
-              <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
-            </template>
-          </EGTable>
-        </template>
+          <template #assignedRole-data="{ row: labUser }">
+            <span class="text-black">{{ labUser.assignedRole }}</span>
+          </template>
+
+          <template #actions-data="{ row: labUser }">
+            <div class="flex items-center">
+              <EGUserRoleDropdownNew :show-remove-from-lab="true" :key="labUser.UserId"
+                :disabled="useUiStore().isRequestPending" :user="labUser" @assign-lab-role="handleAssignLabRole($event)"
+                @remove-user-from-lab="displayRemoveUserDialog($event.user)" />
+            </div>
+          </template>
+
+          <template #empty-state>
+            <div class="text-muted flex h-24 items-center justify-center font-normal">There are no users in your Lab
+            </div>
+          </template>
+        </EGTable>
       </div>
       <div v-else-if="item.key === 'workflow'" class="space-y-3">Workflow TBD</div>
     </template>

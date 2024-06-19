@@ -213,6 +213,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@easy-genomics/shared-lib@workspace:*',
     'aws-lambda',
     'aws-sdk',
+    'base64-js',
     'dotenv',
     'jsonwebtoken',
     'uuid',

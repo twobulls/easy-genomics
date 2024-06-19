@@ -34,6 +34,12 @@ export const handler: Handler = async (
       throw new Error(`Laboratory creation error, OrganizationId '${request.OrganizationId}' not found`);
     }
 
+    // START Temporary S3 Bucket Creation Limit Workaround
+    // Stop trying to create S3 buckets when creating a new lab until we have a solution to the max S3 buckets limit issue
+    // This error can be seen in the logs of the create-laboratory lambda function e.g, In quality,
+    // 2024-06-18T03:37:46.136Z	f371f96d-bb72-476f-8d79-763f43e9047a	ERROR	[s3-service : s3Request] accountId: 851725267090, region: us-east-1, command: create-bucket exception encountered: TooManyBuckets: You have attempted to create more buckets than allowed
+
+    /*
     const s3BucketId: string = `${crypto.randomBytes(16).toString('hex')}`;
     const s3Bucket: string = `${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketId}`;
 
@@ -43,6 +49,10 @@ export const handler: Handler = async (
     }
     // Create S3 Bucket for Laboratory
     await s3Service.createBucket({ Bucket: s3Bucket });
+    */
+
+    const s3Bucket: string = 'fake-bucket-name';
+    // END Temporary S3 Bucket Creation Limit Workaround
 
     const response: Laboratory = await laboratoryService.add({
       ...request,

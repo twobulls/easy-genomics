@@ -32,7 +32,7 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
-  async delete(labId: string) {
+  async delete(labId: string): Promise<DeletedResponse> {
     const res = await this.call<DeletedResponse>('DELETE', `/laboratory/delete-laboratory/${labId}`);
 
     if (!res) {

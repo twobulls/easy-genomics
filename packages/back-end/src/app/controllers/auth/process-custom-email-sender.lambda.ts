@@ -25,7 +25,7 @@ export const handler: Handler = async (
   if (event.triggerSource === 'CustomEmailSender_ForgotPassword') {
     const email: string = event.request.userAttributes.email;
     const userId: string = event.userName;
-    const code: string = event.request.code || '';
+    const code: string = event.request.code || ''; // Auto encrypted by Cognito
 
     const forgotPasswordJwt: string = generateUserForgotPasswordJwt(email, userId, code);
     await sesService.sendUserForgotPasswordEmail(email, forgotPasswordJwt);

@@ -17,9 +17,12 @@ export const handler: Handler = async (
     // Lookup by GSI Id for convenience to confirm existence before deletion
     const existing: PrivateWorkflow = await privateWorkflowService.query(id);
     const isDeleted: boolean = await privateWorkflowService.delete(existing);
-    return buildResponse(200, JSON.stringify({
-      deleted: isDeleted,
-    }), event);
+
+    if (!isDeleted) {
+      throw new Error('Private Workflow deletion failed');
+    }
+
+    return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {
     console.error(err);
     return {

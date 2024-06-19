@@ -1,5 +1,6 @@
 import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
-import { CfnOutput, Stack } from 'aws-cdk-lib';
+import { CfnOutput, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { Key, KeySpec } from 'aws-cdk-lib/aws-kms';
 import { Construct } from 'constructs';
 import { AuthNestedStack } from './auth-nested-stack';
 import { AwsHealthOmicsNestedStack } from './aws-healthomics-nested-stack';
@@ -32,12 +33,31 @@ import {
  * and extend.
  */
 export class BackEndStack extends Stack {
+  readonly kmsKeys: Map<string, Key> = new Map();
   readonly props: BackEndStackProps;
   protected apiGateway!: ApiGatewayConstruct;
 
   constructor(scope: Construct, id: string, props: BackEndStackProps) {
     super(scope, id, props);
     this.props = props;
+
+    // Create KMS symmetric encryption key for Cognito to generate secrets - temporary passwords, verification codes, confirmation codes
+    this.kmsKeys.set('cognito-idp-kms-key',
+      new Key(this, `${this.props.constructNamespace}-cognito-idp-kms-key`, {
+        alias: `${this.props.constructNamespace}-cognito-idp-kms-key`,
+        keySpec: KeySpec.SYMMETRIC_DEFAULT,
+        removalPolicy: RemovalPolicy.DESTROY,
+      }),
+    );
+
+    // Create KMS symmetric encryption key to protect sensitive Easy Genomics DynamoDB data
+    this.kmsKeys.set('dynamo-db-kms-key',
+      new Key(this, `${this.props.constructNamespace}-dynamo-db-kms-key`, {
+        alias: `${this.props.constructNamespace}-dynamo-db-kms-key`,
+        keySpec: KeySpec.SYMMETRIC_DEFAULT,
+        removalPolicy: RemovalPolicy.DESTROY,
+      }),
+    );
 
     // API Gateway for REST APIs
     this.apiGateway = new ApiGatewayConstruct(this, `${this.props.constructNamespace}-apigw`, {
@@ -52,6 +72,7 @@ export class BackEndStack extends Stack {
     const authNestedStackProps: AuthNestedStackProps = {
       ...this.props,
       constructNamespace: `${this.props.constructNamespace}-auth`, // Overriding value
+      cognitoIdpKmsKey: this.kmsKeys.get('cognito-idp-kms-key'),
     };
     const authNestedStack = new AuthNestedStack(this, `${this.props.envName}-auth-nested-stack`, authNestedStackProps);
 
@@ -61,6 +82,8 @@ export class BackEndStack extends Stack {
       restApi: this.apiGateway.restApi,
       userPool: authNestedStack.cognito.userPool,
       userPoolClient: authNestedStack.cognito.userPoolClient,
+      cognitoIdpKmsKey: this.kmsKeys.get('cognito-idp-kms-key'),
+      dynamoDbKmsKey: this.kmsKeys.get('dynamo-db-kms-key'),
     };
     const easyGenomicsNestedStack = new EasyGenomicsNestedStack(this, `${this.props.envName}-easy-genomics-nested-stack`, easyGenomicsNestedStackProps);
 

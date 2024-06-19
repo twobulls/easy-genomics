@@ -10,30 +10,36 @@ class HttpFactory {
    * @param url
    * @param data
    * @param xApiKey
-   * @returns {Promise<T | undefined>}
+   * @returns Promise<T | undefined>
    */
-  async call<T>(method = 'GET', url: string, data: unknown = '', xApiKey?: string): Promise<T | undefined> {
+  async call<T>(
+    method = 'GET',
+    url: string,
+    data: unknown = '',
+    xApiKey: string = '',
+  ): Promise<T | undefined> {
     const requestUrl = `${this.baseRequestUrl}${url}`;
     try {
-      const token = await this.getToken();
-      const headers = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token,
-          ...(xApiKey && { 'x-api-key': xApiKey }),
-        },
-      };
-      const settings = {
+      const token: string | undefined = xApiKey ? undefined : await this.getToken();
+      const headers: HeadersInit = new Headers();
+      headers.append('Content-Type', 'application/json');
+      if (token) {
+        headers.append('Authorization', token);
+      } else if (xApiKey) {
+        headers.append('x-api-key', xApiKey);
+      }
+      const settings: RequestInit = {
         method,
-        ...headers,
-        body: JSON.stringify(data),
+        headers,
       };
+      if (data) {
+        settings.body = JSON.stringify(data);
+      }
       const response = await fetch(requestUrl, settings);
       if (!response.ok) {
         await this.handleResponseError(response);
       }
-
-      return await ((await response.json()) as Promise<T>);
+      return (await response.json()) as Promise<T>;
     } catch (error: any) {
       throw new Error(`Request error: ${error.message}`);
     }

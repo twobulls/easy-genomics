@@ -11,7 +11,7 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-const TEST_X_MIS_KEY = 'N1qV5jexwp7bQ0F33AdJc8WihZ5fsGbS1LcaemE1'; // Quality env
+const TEST_X_API_KEY = 'N1qV5jexwp7bQ0F33AdJc8WihZ5fsGbS1LcaemE1'; // Quality env
 
 class UsersModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -43,7 +43,7 @@ class UsersModule extends HttpFactory {
       {
         Email: email,
       },
-      TEST_X_MIS_KEY
+      TEST_X_API_KEY
     );
   }
 
@@ -62,7 +62,7 @@ class UsersModule extends HttpFactory {
         Token: token,
         Password: password,
       },
-      TEST_X_MIS_KEY
+      TEST_X_API_KEY
     );
   }
 }

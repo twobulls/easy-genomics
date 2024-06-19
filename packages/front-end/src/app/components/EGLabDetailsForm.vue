@@ -6,10 +6,12 @@ import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
 import { useToastStore, useUiStore } from '~/stores/stores';
 import { Schema } from 'zod';
 
-const props = withDefaults(defineProps<{
+type InputProps = {
   formMode?: FormModeEnum;
-}>(), {
-  formMode: FormModeEnum.enum.ReadOnly,
+}
+
+const props: InputProps = withDefaults(defineProps(), {
+  formMode: FormModeEnum.enum.Create,
 })
 
 const { MOCK_ORG_ID } = useRuntimeConfig().public;

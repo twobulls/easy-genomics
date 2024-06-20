@@ -25,15 +25,14 @@ export const handler: Handler = async (
 ): Promise<CustomEmailSenderTriggerEvent> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
 
-  if (event.triggerSource === 'CustomEmailSender_AdminCreateUser' || event.triggerSource === 'CustomEmailSender_ResendCode') {
+  if (event.triggerSource === 'CustomEmailSender_AdminCreateUser') {
     const email: string = event.request.userAttributes.email;
     const userId: string = event.request.userAttributes.sub;
     const temporaryPassword: string = event.request.code || ''; // Auto encrypted by Cognito
     const organizationId: string = (event.request.clientMetadata) ? event.request.clientMetadata.OrganizationId : '';
     const organizationName: string = (event.request.clientMetadata) ? event.request.clientMetadata.OrganizationName : '';
-    const resend: boolean = event.triggerSource === 'CustomEmailSender_ResendCode';
 
-    const newUserInvitationJwt: string = generateNewUserInvitationJwt(email, userId, organizationId, temporaryPassword, resend);
+    const newUserInvitationJwt: string = generateNewUserInvitationJwt(email, userId, organizationId, temporaryPassword);
     await sesService.sendUserInvitationEmail(email, organizationName, newUserInvitationJwt);
   } else if (event.triggerSource === 'CustomEmailSender_ForgotPassword') {
     const email: string = event.request.userAttributes.email;
@@ -56,18 +55,16 @@ export const handler: Handler = async (
  * @param email
  * @param userId
  * @param organizationId
- * @param resend
  */
 function generateNewUserInvitationJwt(
   email: string,
   userId: string,
   organizationId: string,
   temporaryPassword: string,
-  resend: boolean,
 ): string {
   const createdAt: number = Date.now(); // Salt
   const userInvitationJwt: UserInvitationJwt = {
-    RequestType: resend ? 'ResendNewUserInvitation' : 'NewUserInvitation',
+    RequestType: 'NewUserInvitation',
     Verification: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
       .update(userId + organizationId)
       .digest('hex'),
@@ -76,7 +73,6 @@ function generateNewUserInvitationJwt(
     TemporaryPassword: temporaryPassword, // Encrypted
     CreatedAt: createdAt,
   };
-  console.log('DEBUG: userInvitationJwt = ', userInvitationJwt);
   return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '1 d');
 }
 

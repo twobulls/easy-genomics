@@ -3,7 +3,7 @@
  * Invitation / Forgot Password JWT to send to user to verify their request.
  */
 export interface UserInvitationJwt {
-  RequestType: 'NewUserInvitation' | 'ResendNewUserInvitation' | 'ExistingUserInvitation';
+  RequestType: 'NewUserInvitation' | 'ExistingUserInvitation';
   Verification: string;
   Email: string;
   OrganizationId: string;

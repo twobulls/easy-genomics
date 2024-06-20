@@ -71,7 +71,7 @@ export class CognitoIdpService {
     console.info(logRequestMessage);
 
     const adminCreateUserCommandInput: AdminCreateUserCommandInput = {
-      ...(resend === true ?? { MessageAction: 'RESEND' }),
+      ...(resend === true ? { MessageAction: 'RESEND' } : {}),
       DesiredDeliveryMediums: ['EMAIL'],
       Username: email,
       UserAttributes: [

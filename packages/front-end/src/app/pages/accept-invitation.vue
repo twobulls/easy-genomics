@@ -3,7 +3,6 @@
   import { useToastStore, useUiStore } from '~/stores/stores';
   import { ERRORS } from '~/constants/validation';
   import { checkTokenExpiry, decodeJwt } from '~/utils/jwt';
-  import EGText from '~/components/EGText.vue';
 
   definePageMeta({ layout: 'signin' });
 
@@ -34,8 +33,6 @@
       .refine((value) => /[0-9]/.test(value), ERRORS.passwordNumber)
       .refine((value) => /[^a-zA-Z0-9]/.test(value), ERRORS.passwordSymbol),
   });
-
-  // TODO: need to save or can be transient?
   const inviteToken = ref();
 
   /**
@@ -43,10 +40,14 @@
    */
   onMounted(() => {
     const token = getAcceptInviteToken();
-
     if (checkTokenExpiry(token)) {
       inviteToken.value = token;
-      state.value.email = decodeJwt(token).Email;
+      const decodedToken = decodeJwt(token);
+      if (decodedToken && 'Email' in decodedToken) {
+        state.value.email = decodedToken.Email;
+      } else {
+        console.error('Email property not found in decoded token');
+      }
     } else {
       handleExpiredToken();
     }

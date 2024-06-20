@@ -3,7 +3,7 @@
  */
 export const ERRORS = {
   email: 'Must be a valid email address',
-  empty: 'Must not be empty',
+  notEmpty: 'Must not be empty',
   invalidChar: 'Invalid characters entered',
   nameMaxLength: 'Must not be greater than 50 characters',
   nameMultiSpaces: 'Name cannot contain multiple spaces',

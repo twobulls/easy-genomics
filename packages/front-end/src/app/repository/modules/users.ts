@@ -13,8 +13,7 @@ import {
 import { ConfirmUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-// const TEST_X_API_KEY = 'N1qV5jexwp7bQ0F33AdJc8WihZ5fsGbS1LcaemE1'; // Quality env
-const TEST_X_API_KEY = '5g0KzVtpc19FEZwWPVfmo9ok1qfTUSdc1rDYTuVg'; // Build env
+const TEST_X_API_KEY = 'N1qV5jexwp7bQ0F33AdJc8WihZ5fsGbS1LcaemE1'; // Quality env
 
 class UsersModule extends HttpFactory {
   $config = useRuntimeConfig();

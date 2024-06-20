@@ -3,15 +3,18 @@ import {
   CreateUserForgotPasswordRequestSchema,
   ConfirmUserForgotPasswordRequestSchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-password';
+import { ConfirmUpdateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import {
   ConfirmUserForgotPasswordRequest,
   CreateUserForgotPasswordRequest,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
+import { ConfirmUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-const TEST_X_API_KEY = 'N1qV5jexwp7bQ0F33AdJc8WihZ5fsGbS1LcaemE1'; // Quality env
+// const TEST_X_API_KEY = 'N1qV5jexwp7bQ0F33AdJc8WihZ5fsGbS1LcaemE1'; // Quality env
+const TEST_X_API_KEY = '5g0KzVtpc19FEZwWPVfmo9ok1qfTUSdc1rDYTuVg'; // Build env
 
 class UsersModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -64,6 +67,38 @@ class UsersModule extends HttpFactory {
       },
       TEST_X_API_KEY
     );
+  }
+
+  async confirmUserInviteRequest(
+    token: string,
+    firstName: string,
+    lastName: string,
+    password: string
+  ): Promise<ConfirmUserInvitationRequest> {
+    ConfirmUpdateUserInvitationRequestSchema.parse({
+      Token: token,
+      Password: password,
+      FirstName: firstName,
+      LastName: lastName,
+    });
+
+    const res = await this.call<ConfirmUserInvitationRequest>(
+      'POST',
+      '/user/confirm-user-invitation-request',
+      {
+        Token: token,
+        Password: password,
+        FirstName: firstName,
+        LastName: lastName,
+      },
+      TEST_X_API_KEY
+    );
+
+    if (!res) {
+      throw new Error('Error creating user account from invite');
+    }
+
+    return res;
   }
 }
 

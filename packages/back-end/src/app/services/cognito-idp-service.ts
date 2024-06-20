@@ -25,6 +25,9 @@ import {
   InitiateAuthCommand,
   InitiateAuthCommandInput,
   InitiateAuthCommandOutput,
+  RespondToAuthChallengeCommand,
+  RespondToAuthChallengeCommandInput,
+  RespondToAuthChallengeCommandOutput,
   UserNotFoundException,
 } from '@aws-sdk/client-cognito-identity-provider';
 
@@ -37,6 +40,7 @@ export enum CognitoIdpCommand {
   CONFIRM_FORGOT_PASSWORD = 'confirm-forgot-password',
   FORGOT_PASSWORD = 'forgot-password',
   INITIATE_AUTH = 'initiate-auth',
+  RESPOND_TO_AUTH_CHALLENGE = 'respond-to-auth-challenge',
 };
 
 export interface CognitoIdpServiceProps {
@@ -214,28 +218,6 @@ export class CognitoIdpService {
   };
 
   /**
-   * Initiates a Cognito forgot password workflow request for the specified username.
-   * @param clientId
-   * @param username
-   */
-  public forgotPassword = async(clientId: string, username: string): Promise<ForgotPasswordCommandOutput> => {
-    console.log(`[cognito-idp-service : forgotPassword] clientId: ${clientId}, username: ${username}`);
-    const response: ForgotPasswordCommandOutput =
-      await this.cognitoIdpRequest<ForgotPasswordCommandInput, ForgotPasswordCommandOutput>(
-        CognitoIdpCommand.FORGOT_PASSWORD,
-        {
-          ClientId: clientId,
-          Username: username,
-        },
-      );
-    if (response.$metadata.httpStatusCode === 200) {
-      return response;
-    } else {
-      throw new Error(`Unable to initiate forgot password request: ${JSON.stringify(response)}`);
-    }
-  };
-
-  /**
    * Confirms a Cognito forgot password workflow request for the specified username.
    * @param clientId
    * @param username
@@ -297,6 +279,67 @@ export class CognitoIdpService {
     }
   };
 
+  /**
+   * Initiates a Cognito forgot password workflow request for the specified username.
+   * @param clientId
+   * @param username
+   */
+  public forgotPassword = async(clientId: string, username: string): Promise<ForgotPasswordCommandOutput> => {
+    console.log(`[cognito-idp-service : forgotPassword] clientId: ${clientId}, username: ${username}`);
+    const response: ForgotPasswordCommandOutput =
+      await this.cognitoIdpRequest<ForgotPasswordCommandInput, ForgotPasswordCommandOutput>(
+        CognitoIdpCommand.FORGOT_PASSWORD,
+        {
+          ClientId: clientId,
+          Username: username,
+        },
+      );
+    if (response.$metadata.httpStatusCode === 200) {
+      return response;
+    } else {
+      throw new Error(`Unable to initiate forgot password request: ${JSON.stringify(response)}`);
+    }
+  };
+
+  /**
+   * Completes the Cognito Auth Challenge workflow for an authenticated user.
+   *
+   * This is required to complete NEW_PASSWORD_REQUIRED challenge which is
+   * received from the initiateAuth() workflow when logging in with the
+   * temporaryPassword generated from the adminCreateUser() workflow.
+   *
+   * @param clientId
+   * @param accessToken
+   * @param username
+   * @param newPassword
+   */
+  public respondToAuthChallenge = async(
+    clientId: string,
+    accessToken: string,
+    username: string,
+    newPassword: string,
+  ): Promise<RespondToAuthChallengeCommandOutput> => {
+    console.log(`[cognito-idp-service : respondToAuthChallenge] username: ${username}`);
+    const response: RespondToAuthChallengeCommandOutput =
+      await this.cognitoIdpRequest<RespondToAuthChallengeCommandInput, RespondToAuthChallengeCommandOutput>(
+        CognitoIdpCommand.RESPOND_TO_AUTH_CHALLENGE,
+        {
+          ChallengeName: 'NEW_PASSWORD_REQUIRED',
+          ChallengeResponses: {
+            ['USERNAME']: username,
+            ['NEW_PASSWORD']: newPassword,
+          },
+          ClientId: clientId,
+          Session: accessToken,
+        },
+      );
+    if (response.$metadata.httpStatusCode === 200) {
+      return response;
+    } else {
+      throw new Error(`Unable to respond to auth challenge request: ${JSON.stringify(response)}`);
+    }
+  };
+
   private cognitoIdpRequest = async <RequestType, ResponseType>(command: CognitoIdpCommand, data?: RequestType): Promise<ResponseType> => {
     try {
       console.log(
@@ -345,6 +388,8 @@ export class CognitoIdpService {
         return new ForgotPasswordCommand(data as ForgotPasswordCommandInput);
       case CognitoIdpCommand.INITIATE_AUTH:
         return new InitiateAuthCommand(data as InitiateAuthCommandInput);
+      case CognitoIdpCommand.RESPOND_TO_AUTH_CHALLENGE:
+        return new RespondToAuthChallengeCommand(data as RespondToAuthChallengeCommandInput);
       default:
         throw new Error(`Unsupported Cognito IDP Command '${command}'`);
     }

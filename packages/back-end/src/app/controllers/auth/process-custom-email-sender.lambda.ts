@@ -27,7 +27,7 @@ export const handler: Handler = async (
 
   if (event.triggerSource === 'CustomEmailSender_AdminCreateUser' || event.triggerSource === 'CustomEmailSender_ResendCode') {
     const email: string = event.request.userAttributes.email;
-    const userId: string = event.userName;
+    const userId: string = event.request.userAttributes.sub;
     const temporaryPassword: string = event.request.code || ''; // Auto encrypted by Cognito
     const organizationId: string = (event.request.clientMetadata) ? event.request.clientMetadata.OrganizationId : '';
     const organizationName: string = (event.request.clientMetadata) ? event.request.clientMetadata.OrganizationName : '';
@@ -37,7 +37,7 @@ export const handler: Handler = async (
     await sesService.sendUserInvitationEmail(email, organizationName, newUserInvitationJwt);
   } else if (event.triggerSource === 'CustomEmailSender_ForgotPassword') {
     const email: string = event.request.userAttributes.email;
-    const userId: string = event.userName;
+    const userId: string = event.request.userAttributes.sub;
     const code: string = event.request.code || ''; // Auto encrypted by Cognito
 
     const forgotPasswordJwt: string = generateUserForgotPasswordJwt(email, userId, code);

@@ -22,6 +22,9 @@ import {
   ForgotPasswordCommand,
   ForgotPasswordCommandInput,
   ForgotPasswordCommandOutput,
+  InitiateAuthCommand,
+  InitiateAuthCommandInput,
+  InitiateAuthCommandOutput,
   UserNotFoundException,
 } from '@aws-sdk/client-cognito-identity-provider';
 
@@ -33,6 +36,7 @@ export enum CognitoIdpCommand {
   ADMIN_UPDATE_USER_ATTRIBUTES = 'admin-update-user-attributes',
   CONFIRM_FORGOT_PASSWORD = 'confirm-forgot-password',
   FORGOT_PASSWORD = 'forgot-password',
+  INITIATE_AUTH = 'initiate-auth',
 };
 
 export interface CognitoIdpServiceProps {
@@ -262,6 +266,37 @@ export class CognitoIdpService {
     }
   };
 
+  /**
+   * Initiates a Cognito authentication workflow request for the specified username.
+   * @param clientId
+   * @param username
+   * @param password
+   */
+  public initiateAuth = async(
+    clientId: string,
+    username: string,
+    password: string,
+  ): Promise<InitiateAuthCommandOutput> => {
+    console.log(`[cognito-idp-service : initiateAuth] clientId: ${clientId}, username: ${username}`);
+    const response: InitiateAuthCommandOutput =
+      await this.cognitoIdpRequest<InitiateAuthCommandInput, InitiateAuthCommandOutput>(
+        CognitoIdpCommand.INITIATE_AUTH,
+        {
+          AuthFlow: 'USER_PASSWORD_AUTH',
+          AuthParameters: {
+            ['USERNAME']: username,
+            ['PASSWORD']: password,
+          },
+          ClientId: clientId,
+        },
+      );
+    if (response.$metadata.httpStatusCode === 200) {
+      return response;
+    } else {
+      throw new Error(`Unable to initiate auth request: ${JSON.stringify(response)}`);
+    }
+  };
+
   private cognitoIdpRequest = async <RequestType, ResponseType>(command: CognitoIdpCommand, data?: RequestType): Promise<ResponseType> => {
     try {
       console.log(
@@ -308,6 +343,8 @@ export class CognitoIdpService {
         return new ConfirmForgotPasswordCommand(data as ConfirmForgotPasswordCommandInput);
       case CognitoIdpCommand.FORGOT_PASSWORD:
         return new ForgotPasswordCommand(data as ForgotPasswordCommandInput);
+      case CognitoIdpCommand.INITIATE_AUTH:
+        return new InitiateAuthCommand(data as InitiateAuthCommandInput);
       default:
         throw new Error(`Unsupported Cognito IDP Command '${command}'`);
     }

@@ -32,6 +32,17 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  async getLabDetails(labId: string): Promise<Laboratory> {
+    const res = await this.call<Laboratory>('GET', `/laboratory/read-laboratory/${labId}`);
+
+    if (!res) {
+      console.error('Error calling get Laboratory Details API');
+      throw new Error('Failed to retrieve Laboratory Details');
+    }
+
+    return res;
+  }
+
   async delete(labId: string): Promise<DeletedResponse> {
     const res = await this.call<DeletedResponse>('DELETE', `/laboratory/delete-laboratory/${labId}`);
 

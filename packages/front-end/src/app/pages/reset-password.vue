@@ -2,19 +2,21 @@
   import { z } from 'zod';
   import { useToastStore, useUiStore } from '~/stores/stores';
   import { ERRORS } from '~/constants/validation';
-  import { checkResetTokenExpiry } from '~/utils/jwt';
+  import { checkTokenExpiry } from '~/utils/jwt';
 
   definePageMeta({ layout: 'password' });
 
   const isFormDisabled = ref(true);
-  const state = ref({ password: '' });
+  const state = ref({ firstName: '', lastName: '', password: '' });
   const { $api } = useNuxtApp();
   const { signIn } = useAuth();
   const formSchema = z.object({
     password: z
       .string()
+      .nonempty(ERRORS.notEmpty)
       .min(8, ERRORS.passwordMinLength)
       .max(256, ERRORS.passwordMaxLength)
+      .refine((value) => !/\s/.test(value), ERRORS.notSpaces)
       .refine((value) => /[a-zA-Z]/.test(value), ERRORS.passwordCharacter)
       .refine((value) => /[0-9]/.test(value), ERRORS.passwordNumber)
       .refine((value) => /[^a-zA-Z0-9]/.test(value), ERRORS.passwordSymbol),
@@ -26,7 +28,7 @@
    */
   onMounted(() => {
     const resetToken = getResetToken();
-    return checkResetTokenExpiry(resetToken) ? (forgotPasswordToken.value = resetToken) : handleExpiredToken();
+    return checkTokenExpiry(resetToken) ? (forgotPasswordToken.value = resetToken) : handleExpiredToken();
   });
 
   watchEffect(() => {

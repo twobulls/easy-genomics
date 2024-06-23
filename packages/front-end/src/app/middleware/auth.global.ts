@@ -8,6 +8,16 @@ const baseURL = window.location.origin;
 export default defineNuxtRouteMiddleware(async (context) => {
   const url = new URL(context.fullPath, baseURL);
 
+  if (url.pathname === '/accept-invitation') {
+    const token = url.searchParams.get('invite');
+
+    // If the 'accept-password' query parameter is missing or empty, redirect to '/'
+    if (!token) {
+      alert(token);
+      return navigateTo('/');
+    }
+  }
+
   if (url.pathname === '/reset-password') {
     const token = url.searchParams.get('forgot-password');
 
@@ -17,7 +27,7 @@ export default defineNuxtRouteMiddleware(async (context) => {
     }
   }
 
-  if (!['/forgot-password', '/reset-password'].includes(url.pathname)) {
+  if (!['/accept-invitation', '/forgot-password', '/reset-password'].includes(url.pathname)) {
     try {
       const user = await Auth.currentAuthenticatedUser();
 

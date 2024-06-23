@@ -85,9 +85,11 @@ export class CognitoIdpService {
       },
     };
 
-    const adminCreateUserCommand: AdminCreateUserCommand = new AdminCreateUserCommand(adminCreateUserCommandInput);
-    const response: AdminCreateUserCommandOutput = await this.cognitoIdpClient.send<AdminCreateUserCommand>(adminCreateUserCommand);
-
+    const response: AdminCreateUserCommandOutput =
+      await this.cognitoIdpRequest<AdminCreateUserCommandInput, AdminCreateUserCommandOutput>(
+        CognitoIdpCommand.ADMIN_CREATE_USER,
+        adminCreateUserCommandInput,
+      );
     if (response.$metadata.httpStatusCode === 200 && response.User && response.User.Username) {
       return response.User.Username;
     } else {

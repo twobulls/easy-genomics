@@ -15,9 +15,10 @@
       .string()
       .nonempty(ERRORS.notEmpty)
       .min(8, ERRORS.passwordMinLength)
-      .max(256, ERRORS.passwordMaxLength)
+      .max(50, ERRORS.passwordMaxLength)
       .refine((value) => !/\s/.test(value), ERRORS.notSpaces)
-      .refine((value) => /[a-zA-Z]/.test(value), ERRORS.passwordCharacter)
+      .refine((value) => /[A-Z]/.test(value), ERRORS.passwordUppercase)
+      .refine((value) => /[a-z]/.test(value), ERRORS.passwordLowercase)
       .refine((value) => /[0-9]/.test(value), ERRORS.passwordNumber)
       .refine((value) => /[^a-zA-Z0-9]/.test(value), ERRORS.passwordSymbol),
   });

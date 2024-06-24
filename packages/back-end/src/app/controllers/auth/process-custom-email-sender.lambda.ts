@@ -73,7 +73,7 @@ function generateNewUserInvitationJwt(
     TemporaryPassword: temporaryPassword, // Encrypted
     CreatedAt: createdAt,
   };
-  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '1 d');
+  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '7 d');
 }
 
 /**

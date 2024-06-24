@@ -3300,7 +3300,7 @@ packages:
       - case
       - chalk
       - comment-json
-      - conventional-changelog-config-spec
+      - conventional-changelog-helpers-spec
       - fast-json-patch
       - glob
       - ini

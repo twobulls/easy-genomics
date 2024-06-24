@@ -282,6 +282,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'nuxt',
     'pinia',
     '@pinia-plugin-persistedstate/nuxt',
+    'playwright',
+    'playwright-core',
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
@@ -304,6 +306,10 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
+  ['test-e2e-local']: 'npx playwright test --project=e2e-local --reporter=html',
+  ['test-e2e-local:headed']: 'npx playwright test --project=e2e-local --ui --reporter=html',
+  ['test-e2e']: 'npx playwright test --project=e2e-qe --reporter=html',
+  ['test-e2e:headed']: 'npx playwright test --project=e2e-qe --ui --reporter=html',
 });
 
 new PnpmWorkspace(root);
@@ -328,6 +334,8 @@ root.gitignore.addPatterns(
   '.output',
   'dist',
   'config/easy-genomics.yaml',
-  'packages/back-end/cdk.context.json'
+  'packages/back-end/cdk.context.json',
+  '*/front-end/playwright-report/*',
+  '*/front-end/test-results/*'
 );
 root.synth();

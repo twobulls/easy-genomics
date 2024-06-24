@@ -87,4 +87,6 @@ test-reports/*
 dist
 config/easy-genomics.yaml
 packages/back-end/cdk.context.json
+*/front-end/playwright-report/*
+*/front-end/test-results/*
 !/.projenrc.ts

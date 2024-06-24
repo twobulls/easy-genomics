@@ -26,8 +26,8 @@ if (process.env.CI_CD === 'true') {
   if (!envName) throw new Error('ENV_NAME undefined, please check the CI/CD environment configuration');
   if (!envType) throw new Error('ENV_TYPE undefined, please check the CI/CD environment configuration');
   if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the CI/CD environment configuration');
-  if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the CI/CD environment configuration');
-  if (!systemAdminPassword) throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the CI/CD environment configuration');
+  if (!systemAdminEmail) {throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the CI/CD environment configuration');}
+  if (!systemAdminPassword) {throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the CI/CD environment configuration');}
   if (!secretKey) throw new Error('SECRET_KEY undefined, please check the CI/CD environment configuration');
 
   // AWS infrastructure resources can be destroyed only when devEnv is true
@@ -67,7 +67,7 @@ if (process.env.CI_CD === 'true') {
   }
 
   // Iterate through valid configurations to synthesize CloudFormation stacks
-  configurations.map((configuration: {[p: string]: ConfigurationSettings}) => {
+  configurations.map((configuration: { [p: string]: ConfigurationSettings }) => {
     const envName: string | undefined = Object.keys(configuration).shift();
     const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift();
 
@@ -87,9 +87,9 @@ if (process.env.CI_CD === 'true') {
       if (!awsRegion) throw new Error('AWS_REGION undefined, please check the easy-genomics.yaml configuration');
       if (!envName) throw new Error('ENV_NAME undefined, please check the easy-genomics.yaml configuration');
       if (!envType) throw new Error('ENV_TYPE undefined, please check the easy-genomics.yaml configuration');
-      if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the easy-genomics.yaml configuration');
-      if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the easy-genomics.yaml configuration');
-      if (!systemAdminPassword) throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the easy-genomics.yaml configuration');
+      if (!applicationUrl) {throw new Error('APPLICATION_URL undefined, please check the easy-genomics.yaml configuration');}
+      if (!systemAdminEmail) {throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the easy-genomics.yaml configuration');}
+      if (!systemAdminPassword) {throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the easy-genomics.yaml configuration');}
       if (!secretKey) throw new Error('SECRET_KEY undefined, please check the easy-genomics.yaml configuration');
 
       // AWS infrastructure resources can be destroyed only when devEnv is true

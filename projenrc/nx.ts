@@ -33,7 +33,7 @@ export class Nx extends Component {
 
             // Inputs tell nx which files can invalidate the cache should they updated.
             // We only want the build target cache to be invalidated if there
-            // are changes to source files so the config below ignores output files.
+            // are changes to source files so the helpers below ignores output files.
             inputs: [
               '!{projectRoot}/test-reports/**/*',
               '!{projectRoot}/coverage/**/*',

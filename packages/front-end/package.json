@@ -29,7 +29,11 @@
     "nuxt-generate": "nuxt generate",
     "nuxt-prepare": "nuxt prepare",
     "nuxt-preview": "nuxt preview",
-    "nuxt-postinstall": "nuxt prepare"
+    "nuxt-postinstall": "nuxt prepare",
+    "test-e2e-local": "npx playwright test --project=e2e-local --reporter=html",
+    "test-e2e-local:headed": "npx playwright test --project=e2e-local --ui --reporter=html",
+    "test-e2e": "npx playwright test --project=e2e-qe --reporter=html",
+    "test-e2e:headed": "npx playwright test --project=e2e-qe --ui --reporter=html"
   },
   "author": {
     "name": "DEPT Agency",
@@ -71,6 +75,8 @@
     "jwt-decode": "^4.0.0",
     "nuxt": "^3.10.1",
     "pinia": "^2.1.7",
+    "playwright": "^1.44.1",
+    "playwright-core": "^1.44.1",
     "prettier-plugin-tailwindcss": "^0.5.12",
     "sass": "^1.72.0",
     "tailwindcss": "^3.4.1",

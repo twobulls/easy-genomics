@@ -267,6 +267,12 @@ importers:
       pinia:
         specifier: ^2.1.7
         version: 2.1.7(typescript@5.4.3)(vue@3.4.24)
+      playwright:
+        specifier: ^1.44.1
+        version: 1.44.1
+      playwright-core:
+        specifier: ^1.44.1
+        version: 1.44.1
       prettier-plugin-tailwindcss:
         specifier: ^0.5.12
         version: 0.5.12(prettier@3.2.5)
@@ -351,7 +357,7 @@ importers:
     dependencies:
       '@nestjs/config':
         specifier: ^3.2.2
-        version: 3.2.2(@nestjs/common@10.3.8)(rxjs@7.8.1)
+        version: 3.2.2(@nestjs/common@10.3.9)(rxjs@7.8.1)
       aws-cdk:
         specifier: ^2.125.0
         version: 2.125.0
@@ -7732,8 +7738,8 @@ packages:
       - supports-color
     dev: false
 
-  /@nestjs/common@10.3.8(reflect-metadata@0.2.2)(rxjs@7.8.1):
-    resolution: {integrity: sha512-P+vPEIvqx2e+fonsYVlFXKvoChyJ8Tq+lfpqdVFqblovHbFr3kZ/nYX0cPs+XuW6bnRT8tz0SSR9XBGU43kJhw==}
+  /@nestjs/common@10.3.9(reflect-metadata@0.2.2)(rxjs@7.8.1):
+    resolution: {integrity: sha512-JAQONPagMa+sy/fcIqh/Hn3rkYQ9pQM51vXCFNOM5ujefxUVqn3gwFRMN8Y1+MxdUHipV+8daEj2jEm0IqJzOA==}
     peerDependencies:
       class-transformer: '*'
       class-validator: '*'
@@ -7752,13 +7758,13 @@ packages:
       uid: 2.0.2
     dev: false
 
-  /@nestjs/config@3.2.2(@nestjs/common@10.3.8)(rxjs@7.8.1):
+  /@nestjs/config@3.2.2(@nestjs/common@10.3.9)(rxjs@7.8.1):
     resolution: {integrity: sha512-vGICPOui5vE6kPz1iwQ7oCnp3qWgqxldPmBQ9onkVoKlBtyc83KJCr7CjuVtf4OdovMAVcux1d8Q6jglU2ZphA==}
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0
       rxjs: ^7.1.0
     dependencies:
-      '@nestjs/common': 10.3.8(reflect-metadata@0.2.2)(rxjs@7.8.1)
+      '@nestjs/common': 10.3.9(reflect-metadata@0.2.2)(rxjs@7.8.1)
       dotenv: 16.4.5
       dotenv-expand: 10.0.0
       lodash: 4.17.21
@@ -19011,6 +19017,22 @@ packages:
       jsonc-parser: 3.2.0
       mlly: 1.6.1
       pathe: 1.1.2
+    dev: false
+
+  /playwright-core@1.44.1:
+    resolution: {integrity: sha512-wh0JWtYTrhv1+OSsLPgFzGzt67Y7BE/ZS3jEqgGBlp2ppp1ZDj8c+9IARNW4dwf1poq5MgHreEM2KV/GuR4cFA==}
+    engines: {node: '>=16'}
+    hasBin: true
+    dev: false
+
+  /playwright@1.44.1:
+    resolution: {integrity: sha512-qr/0UJ5CFAtloI3avF95Y0L1xQo6r3LQArLIg/z/PoGJ6xa+EwzrwO5lpNr/09STxdHuUoP2mvuELJS+hLdtgg==}
+    engines: {node: '>=16'}
+    hasBin: true
+    dependencies:
+      playwright-core: 1.44.1
+    optionalDependencies:
+      fsevents: 2.3.2
     dev: false
 
   /pngjs@5.0.0:

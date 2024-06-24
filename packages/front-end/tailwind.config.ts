@@ -8,7 +8,7 @@ export default <Partial<Config>>{
     },
     extend: {
       colors: {
-        // `primaryCol` used by NuxtUI for the global `base` color: see `app.config.ts`
+        // `primaryCol` used by NuxtUI for the global `base` color: see `app.helpers.ts`
         primaryCol: {
           '50': '#f3f3ff',
           '100': '#eae8ff',

@@ -21,9 +21,9 @@ if (process.env.CI_CD === 'true') {
 
   if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the CI/CD environment configuration');
   if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
-  if (!awsHostedZoneId) throw new Error('AWS_HOSTED_ZONE_ID undefined, please check the CI/CD environment configuration');
-  if (!awsHostedZoneName) throw new Error('AWS_HOSTED_ZONE_NAME undefined, please check the CI/CD environment configuration');
-  if (!awsCertificateArn) throw new Error('AWS_CERTIFICATE_ARN undefined, please check the CI/CD environment configuration');
+  if (!awsHostedZoneId) {throw new Error('AWS_HOSTED_ZONE_ID undefined, please check the CI/CD environment configuration');}
+  if (!awsHostedZoneName) {throw new Error('AWS_HOSTED_ZONE_NAME undefined, please check the CI/CD environment configuration');}
+  if (!awsCertificateArn) {throw new Error('AWS_CERTIFICATE_ARN undefined, please check the CI/CD environment configuration');}
   if (!envName) throw new Error('ENV_NAME undefined, please check the CI/CD environment configuration');
   if (!envType) throw new Error('ENV_TYPE undefined, please check the CI/CD environment configuration');
   if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the CI/CD environment configuration');
@@ -50,7 +50,9 @@ if (process.env.CI_CD === 'true') {
 } else {
   console.log('Loading Front-End easy-genomics.yaml settings...');
 
-  const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));
+  const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
+    join(__dirname, '../../../config/easy-genomics.yaml'),
+  );
   if (configurations.length === 0) {
     throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
   }

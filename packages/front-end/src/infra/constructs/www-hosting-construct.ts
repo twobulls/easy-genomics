@@ -37,7 +37,7 @@ export type SecurityHeaders = ResponseSecurityHeadersBehavior & {
  * Default Security Headers for Static Web App Hosting.
  *
  * NOTES:
- * 1. Content Security Policy should be manually configured and applied. They can be hard to get right but are the most effective frontend security control. Add your own and merge with this config!
+ * 1. Content Security Policy should be manually configured and applied. They can be hard to get right but are the most effective frontend security control. Add your own and merge with this helpers!
  * 2. The XSS Protections is not configured due to low support and CSP being a better protection.
  */
 export const DefaultSecurityHeaders: SecurityHeaders = {

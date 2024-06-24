@@ -182,7 +182,7 @@ function generateExistingUserInvitationJwt(email: string, userId: string, organi
     Email: email,
     CreatedAt: createdAt,
   };
-  return generateJwt(existingUserInvitationJwt, process.env.JWT_SECRET_KEY, '1 h');
+  return generateJwt(existingUserInvitationJwt, process.env.JWT_SECRET_KEY, '7 d');
 }
 
 /**

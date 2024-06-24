@@ -11,7 +11,7 @@ import {
 import { CognitoIdpService } from '../../../services/cognito-idp-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
 
-const cognitoService: CognitoIdpService = new CognitoIdpService();
+const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const userService: UserService = new UserService();
 
 export const handler: Handler = async (
@@ -38,13 +38,13 @@ export const handler: Handler = async (
     }
 
     // Retrieve Cognito User Account and initiate Cognito's forgot password workflow
-    const cognitoUser: AdminGetUserCommandOutput = await cognitoService.adminGetUser(process.env.COGNITO_USER_POOL_ID, request.Email);
+    const cognitoUser: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(request.Email);
 
     if (!cognitoUser.Enabled) {
       throw new Error(`User ${request.Email} Cognito Account disabled`);
     }
 
-    await cognitoService.forgotPassword(process.env.COGNITO_USER_POOL_CLIENT_ID, request.Email);
+    await cognitoIdpService.forgotPassword(process.env.COGNITO_USER_POOL_CLIENT_ID, request.Email);
     return buildResponse(200, JSON.stringify({ Status: 'success' }), event);
   } catch (err: any) {
     console.error(err);

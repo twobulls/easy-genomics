@@ -22,7 +22,7 @@ const generatorKeyId = process.env.COGNITO_KMS_KEY_ID;
 const keyIds = [process.env.COGNITO_KMS_KEY_ARN];
 const keyring = new KmsKeyringNode({ generatorKeyId, keyIds });
 
-const cognitoIdpService = new CognitoIdpService();
+const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const userService = new UserService();
 
 export const handler: Handler = async (
@@ -63,7 +63,7 @@ export const handler: Handler = async (
       if (payload.Verification !== verification) {
         throw new Error('User Forgot Password Verification invalid');
       } else {
-        const response: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(process.env.COGNITO_USER_POOL_ID, user.UserId);
+        const response: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(user.UserId);
         if (response.$metadata.httpStatusCode !== 200) {
           throw new Error(`Unable to find User record: '${payload.Email}'`);
         }

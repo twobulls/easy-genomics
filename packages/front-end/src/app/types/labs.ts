@@ -27,5 +27,5 @@ const LabDetailsFormModes = {
   Edit: 'edit',
   ReadOnly: 'read-only',
 } as const;
-export const LabDetailsFormModeEnum = z.nativeEnum(LabDetailsFormModes)
+export const LabDetailsFormModeEnum = z.nativeEnum(LabDetailsFormModes);
 export type LabDetailsFormModeEnum = z.infer<typeof LabDetailsFormModeEnum>;

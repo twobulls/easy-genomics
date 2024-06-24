@@ -41,6 +41,11 @@ export class AuthNestedStack extends NestedStack {
             JWT_SECRET_KEY: this.props.secretKey,
           },
         },
+        '/auth/process-pre-token-generation': {
+          environment: {
+            SYSTEM_ADMIN_EMAIL: this.props.systemAdminEmail,
+          },
+        },
       },
       environment: { // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
@@ -62,19 +67,7 @@ export class AuthNestedStack extends NestedStack {
 
   // Auth specific IAM policies
   private setupIamPolicies = () => {
-    // /auth/process-post-authentication
-    this.iam.addPolicyStatements(
-      '/auth/process-post-authentication',
-      [
-        new PolicyStatement({
-          resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-authentication-log-table`,
-          ],
-          actions: ['dynamodb:PutItem'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    // /auth/process-custom-email-sender
     this.iam.addPolicyStatements(
       '/auth/process-custom-email-sender',
       [
@@ -102,6 +95,33 @@ export class AuthNestedStack extends NestedStack {
               'ses:FromAddress': `no.reply@${this.props.applicationUrl}`,
             },
           },
+        }),
+      ],
+    );
+    // /auth/process-post-authentication
+    this.iam.addPolicyStatements(
+      '/auth/process-post-authentication',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-authentication-log-table`,
+          ],
+          actions: ['dynamodb:PutItem'],
+          effect: Effect.ALLOW,
+        }),
+      ],
+    );
+    // /auth/process-pre-token-generation
+    this.iam.addPolicyStatements(
+      '/auth/process-pre-token-generation',
+      [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+          ],
+          actions: ['dynamodb:Query'],
+          effect: Effect.ALLOW,
         }),
       ],
     );

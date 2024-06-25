@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores';
   import { ERRORS } from '~/constants/validation';
   import { checkTokenExpiry, decodeJwt } from '~/utils/jwt';
 

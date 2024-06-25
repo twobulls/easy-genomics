@@ -1,6 +1,20 @@
 <script setup lang="ts">
   const routeKey = ref(0);
 
+  const { $api } = useNuxtApp();
+  const { setUserOrg } = useAuth($api);
+
+  onBeforeMount(async () => {
+    await init();
+  });
+
+  /**
+   * @description Initialize the app for authed users
+   */
+  async function init() {
+    await setUserOrg();
+  }
+
   watch(routeKey, () => {
     routeKey.value++;
   });

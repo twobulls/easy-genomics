@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { useUiStore } from '~/stores/stores';
+  import { useUiStore } from '~/stores';
   import { ERRORS } from '~/constants/validation';
 
   definePageMeta({ layout: 'signin' });

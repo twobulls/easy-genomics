@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useToastStore } from '~/stores/stores';
+  import { useToastStore } from '~/stores';
   const toastStore = useToastStore();
 </script>
 

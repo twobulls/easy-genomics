@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useOrgsStore } from '~/stores/stores';
+  import { useOrgsStore } from '~/stores';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
   const { $api } = useNuxtApp();

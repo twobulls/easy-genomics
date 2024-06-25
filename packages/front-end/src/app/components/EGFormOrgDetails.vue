@@ -2,7 +2,7 @@
   import { ButtonSizeEnum } from '~/types/buttons';
   import { cleanText } from '~/utils/string-utils';
   import { z } from 'zod';
-  import { useUiStore } from '~/stores/stores';
+  import { useUiStore } from '~/stores';
 
   const props = withDefaults(
     defineProps<{

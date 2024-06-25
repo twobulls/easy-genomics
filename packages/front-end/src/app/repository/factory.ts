@@ -1,5 +1,5 @@
-import { Auth } from 'aws-amplify';
 import { useRuntimeConfig } from 'nuxt/app';
+const { getToken } = useAuth();
 
 class HttpFactory {
   private baseRequestUrl = `${useRuntimeConfig().public.BASE_API_URL}/easy-genomics`;
@@ -15,7 +15,7 @@ class HttpFactory {
   async call<T>(method = 'GET', url: string, data: unknown = '', xApiKey: string = ''): Promise<T | undefined> {
     const requestUrl = `${this.baseRequestUrl}${url}`;
     try {
-      const token: string | undefined = xApiKey ? undefined : await this.getToken();
+      const token: string | undefined = xApiKey ? undefined : `Bearer ${await getToken()}`;
       const headers: HeadersInit = new Headers();
       headers.append('Content-Type', 'application/json');
       if (token) {
@@ -49,12 +49,6 @@ class HttpFactory {
       console.error('Error parsing response body', error);
     }
     throw new Error(errorMessage);
-  }
-
-  private async getToken(): Promise<string> {
-    const session = await Auth.currentSession();
-    const idToken = session.getIdToken().getJwtToken();
-    return `Bearer ${idToken}`;
   }
 }
 

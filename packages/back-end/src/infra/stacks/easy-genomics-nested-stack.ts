@@ -690,7 +690,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv
+      this.props.devEnv,
     );
     this.dynamoDBTables.set(organizationTableName, organizationTable);
 
@@ -717,7 +717,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv
+      this.props.devEnv,
     );
     this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
 
@@ -740,7 +740,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv
+      this.props.devEnv,
     );
     this.dynamoDBTables.set(userTableName, userTable);
 
@@ -767,7 +767,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv
+      this.props.devEnv,
     );
     this.dynamoDBTables.set(organizationUserTableName, organizationUserTable);
 
@@ -794,7 +794,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv
+      this.props.devEnv,
     );
     this.dynamoDBTables.set(laboratoryUserTableName, laboratoryUserTable);
 
@@ -812,7 +812,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           type: AttributeType.STRING,
         },
       },
-      this.props.devEnv
+      this.props.devEnv,
     );
     this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
   };

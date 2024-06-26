@@ -1,10 +1,16 @@
-import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
+import {
+  ConfirmUpdateUserInvitationRequestSchema,
+  CreateUserInvitationRequestSchema,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import {
   CreateUserForgotPasswordRequestSchema,
   ConfirmUserForgotPasswordRequestSchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-password';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
+import {
+  ConfirmUserInvitationRequest,
+  CreateUserInvitationRequest,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import {
   ConfirmUserForgotPasswordRequest,
   CreateUserForgotPasswordRequest,
@@ -64,6 +70,38 @@ class UsersModule extends HttpFactory {
       },
       TEST_X_API_KEY,
     );
+  }
+
+  async confirmUserInviteRequest(
+    token: string,
+    firstName: string,
+    lastName: string,
+    password: string,
+  ): Promise<ConfirmUserInvitationRequest> {
+    ConfirmUpdateUserInvitationRequestSchema.parse({
+      Token: token,
+      Password: password,
+      FirstName: firstName,
+      LastName: lastName,
+    });
+
+    const res = await this.call<ConfirmUserInvitationRequest>(
+      'POST',
+      '/user/confirm-user-invitation-request',
+      {
+        Token: token,
+        Password: password,
+        FirstName: firstName,
+        LastName: lastName,
+      },
+      TEST_X_API_KEY,
+    );
+
+    if (!res) {
+      throw new Error('Error creating user account from invite');
+    }
+
+    return res;
   }
 }
 

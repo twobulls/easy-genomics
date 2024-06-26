@@ -3,11 +3,19 @@
  */
 export const ERRORS = {
   email: 'Must be a valid email address',
+  notEmpty: 'Must not be empty',
+  invalidChar: 'Invalid characters entered',
+  nameMaxLength: 'Must not be greater than 50 characters',
+  nameMultiSpaces: 'Name cannot contain multiple spaces',
+  network: 'Huh, something went wrong. Please check your connection and try again',
+  notSpaces: 'Must not contain spaces',
   password: 'Enter a password',
+  passwordCharacter: 'Must contain at least 1 letter',
+  passwordLowercase: 'Must contain at least 1 lower case letter',
+  passwordUppercase: 'Must contain at least 1 upper case letter',
+  passwordMaxLength: 'Must not be greater than 50 characters',
   passwordMinLength: 'Must be at least 8 characters',
-  passwordMaxLength: 'Must not be greater than 256 characters',
-  passwordCharacter: 'Must contain at least 1 letter (upper or lower case)',
   passwordNumber: 'Must contain at least 1 number',
   passwordSymbol: 'Must contain at least 1 special character',
-  network: 'Huh, something went wrong. Please check your connection and try again',
+  startSymbol: 'Must not start with a special character',
 };

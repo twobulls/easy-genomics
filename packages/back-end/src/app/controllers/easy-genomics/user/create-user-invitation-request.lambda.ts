@@ -8,10 +8,12 @@ import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genom
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
-import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
+import {
+  UserInvitationJwt,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { CognitoUserService } from '../../../services/easy-genomics/cognito-user-service';
+import { CognitoIdpService } from '../../../services/cognito-idp-service';
 import { OrganizationService } from '../../../services/easy-genomics/organization-service';
 import { OrganizationUserService } from '../../../services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
@@ -19,7 +21,7 @@ import { UserService } from '../../../services/easy-genomics/user-service';
 import { SesService } from '../../../services/ses-service';
 import { generateJwt } from '../../../utils/jwt-utils';
 
-const cognitoUserService = new CognitoUserService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
+const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const organizationService = new OrganizationService();
 const organizationUserService = new OrganizationUserService();
 const platformUserService = new PlatformUserService();
@@ -49,8 +51,11 @@ export const handler: Handler = async (
     const existingUser: User | undefined = (await userService.queryByEmail(request.Email)).shift();
 
     if (!existingUser) {
-      // Attempt to create new Cognito User account
-      const newUserId: string = await cognitoUserService.addNewUserToPlatform(request.Email);
+      // Attempt to create new Cognito User account - will trigger Cognito process-custom-email-sender to send SES email template
+      const newUserId: string = await cognitoIdpService.adminCreateUser(
+        request.Email,
+        organization.OrganizationId,
+        organization.Name);
 
       // Create new User and invite to the Organization and Platform
       const newUser: User = getNewUser(request.Email, newUserId, currentUserId);
@@ -68,12 +73,6 @@ export const handler: Handler = async (
         };
         // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
         if (await platformUserService.addNewUserToOrganization(newUserDetails, newOrganizationUser)) {
-          const response = await sesService.sendUserInvitationEmail(
-            request.Email,
-            organization.Name,
-            generateUserInvitationJwt(newUser.Email, newUser.UserId, organization.OrganizationId),
-          );
-          console.log('Send Invitation Email Response: ', response);
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
         }
       } catch (error: unknown) {
@@ -96,18 +95,18 @@ export const handler: Handler = async (
 
         // Check if existing Organization-User's Status is still Invited to resend invitation
         if (existingOrganizationUser) {
-          if (existingOrganizationUser.Status === 'Invited') {
-            const response = await sesService.sendUserInvitationEmail(
-              request.Email,
-              organization.Name,
-              generateUserInvitationJwt(existingUser.Email, existingUser.UserId, organization.OrganizationId),
-            );
-            console.log('Send Invitation Email Response: ', response);
-            return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
-          } else {
+          if (existingOrganizationUser.Status !== 'Invited') {
             // Existing Organization-User's Status is either Inactive or Active
             throw new Error(`Unable to re-invite User to Organization "${organization.Name}": User Organization Status is "${existingOrganizationUser.Status}"`);
           }
+
+          // Attempt to resend new Cognito User account - will trigger Cognito process-custom-email-sender to send SES email template
+          await cognitoIdpService.adminCreateUser(
+            request.Email,
+            organization.OrganizationId,
+            organization.Name,
+            true); // Resend
+          return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
         } else {
           // Create new Organization-User access mapping record
           const newOrganizationUser = getNewOrganizationUser(organization.OrganizationId, existingUser.UserId, currentUserId);
@@ -127,12 +126,11 @@ export const handler: Handler = async (
 
           // Attempt to add the User to the Organization in one transaction
           if (await platformUserService.addExistingUserToOrganization(existingUserDetails, newOrganizationUser)) {
-            const response = await sesService.sendUserInvitationEmail(
+            await sesService.sendUserInvitationEmail(
               request.Email,
               organization.Name,
-              generateUserInvitationJwt(existingUser.Email, existingUser.UserId, organization.OrganizationId),
+              generateExistingUserInvitationJwt(existingUser.Email, existingUser.UserId, organization.OrganizationId),
             );
-            console.log('Send Invitation Email Response: ', response);
             return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
           }
         }
@@ -167,6 +165,27 @@ function getNewUser(email: string, userId: string, createdBy?: string): User {
 }
 
 /**
+ * Helper function to generate an Existing User Invitation JWT to send in an
+ * invitation email and used to verify User Invitation acceptance.
+ * @param email
+ * @param userId
+ * @param organizationId
+ */
+function generateExistingUserInvitationJwt(email: string, userId: string, organizationId: string): string {
+  const createdAt: number = Date.now(); // Salt
+  const existingUserInvitationJwt: UserInvitationJwt = {
+    RequestType: 'ExistingUserInvitation',
+    Verification: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
+      .update(userId + organizationId)
+      .digest('hex'),
+    OrganizationId: organizationId,
+    Email: email,
+    CreatedAt: createdAt,
+  };
+  return generateJwt(existingUserInvitationJwt, process.env.JWT_SECRET_KEY, '7 d');
+}
+
+/**
  * Helper function to create a new Organization-User access mapping record.
  * @param organizationId
  * @param userId
@@ -182,27 +201,6 @@ function getNewOrganizationUser(organizationId, userId: string, createdBy: strin
     CreatedBy: createdBy,
   };
   return organizationUser;
-}
-
-/**
- * Helper function to generate a User Invitation JWT to send in invitation
- * email and used to verify User Invitation acceptance.
- * @param email
- * @param userId
- * @param organizationId
- */
-function generateUserInvitationJwt(email: string, userId: string, organizationId: string): string {
-  const createdAt: number = Date.now(); // Salt
-  const userInvitationJwt: UserInvitationJwt = {
-    RequestType: 'UserInvitation',
-    Verification: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
-      .update(userId + organizationId)
-      .digest('hex'),
-    OrganizationId: organizationId,
-    Email: email,
-    CreatedAt: createdAt,
-  };
-  return generateJwt(userInvitationJwt, process.env.JWT_SECRET_KEY, '1 h');
 }
 
 // Used for customising error messages by exception types

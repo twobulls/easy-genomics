@@ -40,13 +40,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
         // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
         '/easy-genomics/user/create-user-invitation-request': {
           environment: {
-            COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
+            COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
+            COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
             JWT_SECRET_KEY: this.props.secretKey,
           },
         },
         '/easy-genomics/user/confirm-user-invitation-request': {
           environment: {
-            COGNITO_USER_POOL_ID: this.props.userPool!.userPoolId,
+            COGNITO_KMS_KEY_ID: this.props.cognitoIdpKmsKey?.keyId!,
+            COGNITO_KMS_KEY_ARN: this.props.cognitoIdpKmsKey?.keyArn!,
+            COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
+            COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
             JWT_SECRET_KEY: this.props.secretKey,
           },
           methodOptions: {
@@ -565,7 +569,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         resources: [
           `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool?.userPoolId}`,
         ],
-        actions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminDeleteUser'],
+        actions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminUpdateUserAttributes'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -605,7 +609,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
         ],
-        actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
+        actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -686,7 +690,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.devEnv
     );
     this.dynamoDBTables.set(organizationTableName, organizationTable);
 
@@ -713,7 +717,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.devEnv
     );
     this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
 
@@ -736,7 +740,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.devEnv
     );
     this.dynamoDBTables.set(userTableName, userTable);
 
@@ -763,7 +767,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.devEnv
     );
     this.dynamoDBTables.set(organizationUserTableName, organizationUserTable);
 
@@ -790,7 +794,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.devEnv
     );
     this.dynamoDBTables.set(laboratoryUserTableName, laboratoryUserTable);
 
@@ -808,7 +812,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           type: AttributeType.STRING,
         },
       },
-      this.props.devEnv,
+      this.props.devEnv
     );
     this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
   };

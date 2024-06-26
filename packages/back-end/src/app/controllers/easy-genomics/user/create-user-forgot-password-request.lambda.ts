@@ -11,7 +11,7 @@ import {
 import { CognitoIdpService } from '../../../services/cognito-idp-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
 
-const cognitoService: CognitoIdpService = new CognitoIdpService();
+const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const userService: UserService = new UserService();
 
 export const handler: Handler = async (
@@ -30,34 +30,29 @@ export const handler: Handler = async (
     const user: User | undefined = (await userService.queryByEmail(request.Email)).shift();
 
     if (!user) {
-      throw new Error('Bad request');
+      throw new Error(`User ${request.Email} not found`);
     }
 
     if (user.Status === 'Inactive') {
-      throw new Error('Bad request');
+      throw new Error(`User ${request.Email} Status 'Inactive'`);
     }
 
     // Retrieve Cognito User Account and initiate Cognito's forgot password workflow
-    const cognitoUser: AdminGetUserCommandOutput = await cognitoService.adminGetUser(process.env.COGNITO_USER_POOL_ID, request.Email);
+    const cognitoUser: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(request.Email);
 
     if (!cognitoUser.Enabled) {
-      throw new Error('Bad request');
+      throw new Error(`User ${request.Email} Cognito Account disabled`);
     }
 
-    const response = await cognitoService.forgotPassword(process.env.COGNITO_USER_POOL_CLIENT_ID, request.Email);
-    return buildResponse(200, JSON.stringify(response), event);
+    await cognitoIdpService.forgotPassword(process.env.COGNITO_USER_POOL_CLIENT_ID, request.Email);
+    return buildResponse(200, JSON.stringify({ Status: 'success' }), event);
   } catch (err: any) {
     console.error(err);
     return {
       statusCode: 400,
       body: JSON.stringify({
-        Error: getErrorMessage(err),
+        Status: 'success', // Return false positive to prevent snooping
       }),
     };
   }
-};
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
 };

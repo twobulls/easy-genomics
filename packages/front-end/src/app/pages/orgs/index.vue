@@ -46,7 +46,6 @@
   ];
 
   function viewOrg(org: Organization) {
-    debugger;
     useOrgsStore().setSelectedOrg(org);
     navigateTo(`/orgs/view/${org.OrganizationId}`);
   }

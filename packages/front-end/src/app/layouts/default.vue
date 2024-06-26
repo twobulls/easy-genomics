@@ -3,6 +3,7 @@
 
   const { $api } = useNuxtApp();
   const { setCurrentUserOrg } = useUser($api);
+  const hasInit = ref(false);
 
   onBeforeMount(async () => {
     await init();
@@ -14,6 +15,7 @@
    */
   async function init() {
     await setCurrentUserOrg();
+    hasInit.value = true;
   }
 
   watch(routeKey, () => {
@@ -25,7 +27,7 @@
   <EGToasts class="top-[70px]" />
   <EGHeader :is-authed="true" key="routeKey" />
   <main class="mx-auto mt-12 px-4">
-    <slot />
+    <slot v-if="hasInit" />
   </main>
 </template>
 

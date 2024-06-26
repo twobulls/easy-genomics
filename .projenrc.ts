@@ -122,8 +122,21 @@ const root = new typescript.TypeScriptProject({
     'husky',
     'lint-staged',
     'validate-branch-name',
+    'prettier',
   ],
 });
+if (root.eslint) {
+  root.eslint.addRules({
+    'no-console': 'warn',
+    'quotes': ['error', 'single'],
+    'no-unused-vars': 'error',
+    '@typescript-eslint/no-unused-vars': ['error'],
+    'semi': ['error', 'always'],
+  });
+
+  root.eslint.addPlugins('prettier');
+  root.eslint.addExtends('plugin:prettier/recommended');
+}
 root.removeScript('build');
 root.removeScript('deploy');
 root.addScripts({
@@ -304,6 +317,7 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
+  ['prettier:fix']: 'pnpm prettier',
 });
 
 new PnpmWorkspace(root);

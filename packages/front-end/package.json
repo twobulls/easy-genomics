@@ -29,7 +29,8 @@
     "nuxt-generate": "nuxt generate",
     "nuxt-prepare": "nuxt prepare",
     "nuxt-preview": "nuxt preview",
-    "nuxt-postinstall": "nuxt prepare"
+    "nuxt-postinstall": "nuxt prepare",
+    "prettier:fix": "pnpm prettier"
   },
   "author": {
     "name": "DEPT Agency",

@@ -43,13 +43,13 @@ class UsersModule extends HttpFactory {
       {
         Email: email,
       },
-      TEST_X_API_KEY
+      TEST_X_API_KEY,
     );
   }
 
   async confirmForgotPasswordRequest(
     token: string,
-    password: string
+    password: string,
   ): Promise<ConfirmUserForgotPasswordRequest | undefined> {
     ConfirmUserForgotPasswordRequestSchema.parse({
       Token: token,
@@ -62,7 +62,7 @@ class UsersModule extends HttpFactory {
         Token: token,
         Password: password,
       },
-      TEST_X_API_KEY
+      TEST_X_API_KEY,
     );
   }
 }

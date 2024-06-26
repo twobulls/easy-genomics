@@ -49,7 +49,9 @@ export type OrganizationAccessDetails = {
 export type LaboratoryAccess = Record<string, LaboratoryAccessDetails>;
 
 export type LaboratoryAccessDetails = {
-  Status: Status
+  Status: Status,
+  LabManager?: Boolean,
+  LabTechnician?: Boolean,
 };
 
 export type UserTitle = 'Prof' | 'Dr' | 'Mr' | 'Mrs' | 'Ms';

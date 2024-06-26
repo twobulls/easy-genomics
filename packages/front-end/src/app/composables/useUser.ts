@@ -1,6 +1,7 @@
 import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
+import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { ERRORS } from '~/constants/validation';
 import { useToastStore } from '~/stores';
 import { decodeJwt } from '~/utils/jwt';
@@ -15,7 +16,7 @@ type UserNameOptions = {
 /**
  * Composables for any User related functionality
  */
-export default function useUser($api: any) {
+export default function useUser($api?: any) {
   /**
    * Returns the display name of a user
    */
@@ -87,7 +88,7 @@ export default function useUser($api: any) {
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
       const currentOrgId = Object.keys(parsedOrgAccess)[0];
       const orgs = await $api.orgs.list();
-      const currentOrg = orgs.find((org) => org.OrganizationId === currentOrgId);
+      const currentOrg = orgs.find((org: Organization) => org.OrganizationId === currentOrgId);
       useUserStore().setOrgAccess(currentOrg);
     } catch (error) {
       console.error('Error occurred setting the current organisation.', error);

@@ -24,7 +24,6 @@ if (process.env.CI_CD === 'true') {
   awsCognitoUserPoolId = process.env.AWS_COGNITO_USER_POOL_ID;
   awsCognitoUserPoolClientId = process.env.AWS_COGNITO_CLIENT_ID;
   awsBaseApiUrl = process.env.AWS_BASE_API_URL;
-  mockOrgId = process.env.MOCK_ORG_ID; // TODO: Remove once custom User Authorization logic retrieves OrgIds
 } else {
   console.log('Loading Front-End Nuxt easy-genomics.yaml settings...');
 
@@ -88,7 +87,6 @@ export default defineNuxtConfig({
       BASE_API_URL: awsBaseApiUrl,
       ENV_TYPE: process.env.envType || 'dev',
       GITHUB_RUN_NUMBER: process.env.GITHUB_RUN_NUMBER || 'Unknown',
-      MOCK_ORG_ID: mockOrgId, // TODO: Remove once custom User Authorization logic retrieves OrgIds
     },
   },
 

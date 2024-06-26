@@ -20,7 +20,7 @@
   function handleSuccess(email: string) {
     useToastStore().success(`Reset link has been sent to ${email}`);
     state.value.email = '';
-    navigateTo('/sign-in');
+    navigateTo('/signin');
   }
 
   /**

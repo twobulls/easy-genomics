@@ -1,9 +1,8 @@
 import { Auth } from 'aws-amplify';
 import { ERRORS } from '~/constants/validation';
-import { useToastStore, useUiStore } from '~/stores';
-import { decodeJwt } from '~/utils/jwt';
+import { useToastStore, useUiStore, resetStores } from '~/stores';
 
-export default function useAuth($api) {
+export default function useAuth() {
   async function isAuthed() {
     try {
       const authenticatedUser = await Auth.currentAuthenticatedUser();
@@ -39,27 +38,11 @@ export default function useAuth($api) {
     return session.getIdToken().getJwtToken();
   }
 
-  /**
-   * @description Obtains the user's current org id from the auth JWT then sets it as the current org in the user store
-   */
-  async function setUserOrg() {
-    try {
-      const token = await getToken();
-      const decodedToken = decodeJwt(token);
-      const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
-      const currentOrgId = Object.keys(parsedOrgAccess)[0];
-      const orgs = await $api.orgs.list();
-      const currentOrg = orgs.find((org) => org.OrganizationId === currentOrgId);
-      useUserStore().setOrgAccess(currentOrg);
-    } catch (error) {
-      console.error('Error occurred setting the current organisation.', error);
-      throw error;
-    }
-  }
-
   async function signOut() {
     try {
       await Auth.signOut();
+      resetStores();
+
       await navigateTo('/signin');
     } catch (error) {
       console.error('Error occurred during sign out.', error);
@@ -69,7 +52,6 @@ export default function useAuth($api) {
   return {
     getToken,
     isAuthed,
-    setUserOrg,
     signIn,
     signOut,
   };

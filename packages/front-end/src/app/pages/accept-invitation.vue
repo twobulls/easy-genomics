@@ -37,7 +37,7 @@
   const inviteToken = ref();
 
   /**
-   * @description Check accept invite token is valid, otherwise redirect to the sign-in page
+   * @description Check accept invite token is valid, otherwise redirect to the signin page
    */
   onMounted(() => {
     const token = getAcceptInviteToken();
@@ -56,7 +56,7 @@
 
   function handleExpiredToken() {
     useToastStore().error('Your invite link has been accepted or expired.');
-    navigateTo('/sign-in');
+    navigateTo('/signin');
   }
 
   function getAcceptInviteToken() {

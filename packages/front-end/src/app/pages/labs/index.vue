@@ -8,7 +8,6 @@
   const router = useRouter();
   const hasNoData = ref(false);
   const labData = ref([] as Laboratory[]);
-  const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
   const tableColumns = [
     {
@@ -96,7 +95,7 @@
   async function getLabs() {
     try {
       useUiStore().setRequestPending(true);
-      labData.value = await $api.labs.list(MOCK_ORG_ID);
+      labData.value = await $api.labs.list(useUserStore().currentOrgId);
 
       if (!labData.value.length) {
         hasNoData.value = true;

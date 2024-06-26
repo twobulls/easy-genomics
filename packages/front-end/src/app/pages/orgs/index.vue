@@ -46,10 +46,9 @@
   ];
 
   function viewOrg(org: Organization) {
+    debugger;
     useOrgsStore().setSelectedOrg(org);
-    navigateTo({
-      path: `/orgs/view/${org.OrganizationId}`,
-    });
+    navigateTo(`/orgs/view/${org.OrganizationId}`);
   }
 
   onBeforeMount(async () => {

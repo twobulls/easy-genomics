@@ -25,7 +25,7 @@
   const forgotPasswordToken = ref('');
 
   /**
-   * @description Check if the reset token is valid and not expired, otherwise redirect to the sign-in page
+   * @description Check if the reset token is valid and not expired, otherwise redirect to the signin page
    */
   onMounted(() => {
     const resetToken = getResetToken();
@@ -38,7 +38,7 @@
 
   function handleExpiredToken() {
     useToastStore().error('Your invite link has been accepted or expired.');
-    navigateTo('/sign-in');
+    navigateTo('/signin');
   }
 
   function getResetToken() {

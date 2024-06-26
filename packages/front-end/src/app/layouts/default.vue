@@ -2,17 +2,18 @@
   const routeKey = ref(0);
 
   const { $api } = useNuxtApp();
-  const { setUserOrg } = useAuth($api);
+  const { setCurrentUserOrg } = useUser($api);
 
   onBeforeMount(async () => {
     await init();
   });
 
   /**
-   * @description Initialize the app for authed users
+   * @description Initialize the app for authed users; set the current user's organization with
+   * future scope to add user display details (name, email, etc.)
    */
   async function init() {
-    await setUserOrg();
+    await setCurrentUserOrg();
   }
 
   watch(routeKey, () => {

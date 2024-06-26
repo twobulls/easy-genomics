@@ -54,6 +54,7 @@ export const handler: Handler = async (
           ...organizationAccess,
           [request.OrganizationId]: <OrganizationAccessDetails>{
             Status: request.Status,
+            OrganizationAdmin: request.OrganizationAdmin,
             LaboratoryAccess: <LaboratoryAccessDetails>{
               ...(laboratoryAccess) ? laboratoryAccess : {},
             },

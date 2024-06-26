@@ -65,6 +65,8 @@ export const handler: Handler = async (
               ...(laboratoryAccess) ? laboratoryAccess : {},
               [laboratory.LaboratoryId]: {
                 Status: status,
+                LabManager: request.LabManager,
+                LabTechnician: request.LabTechnician,
               },
             },
           },

@@ -42,6 +42,7 @@ export type OrganizationAccess = Record<string, OrganizationAccessDetails>;
 
 export type OrganizationAccessDetails = {
   Status: OrgUserStatus,
+  OrganizationAdmin?: Boolean,
   LaboratoryAccess?: LaboratoryAccess
 };
 

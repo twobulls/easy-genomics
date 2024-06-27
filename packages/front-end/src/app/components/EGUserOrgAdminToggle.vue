@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-  import { useToastStore } from '~/stores/stores';
+  import { useToastStore } from '~/stores';
   import useUser from '~/composables/useUser';
   import { ERRORS } from '~/constants/validation';
 

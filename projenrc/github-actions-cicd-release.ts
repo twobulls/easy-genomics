@@ -122,7 +122,6 @@ export class GithubActionsCICDRelease extends Component {
       'AWS_COGNITO_USER_POOL_ID': '${{ secrets.AWS_COGNITO_USER_POOL_ID }}', // Sourced from Back-End deployment
       'AWS_COGNITO_CLIENT_ID': '${{ secrets.AWS_COGNITO_CLIENT_ID }}', // Sourced from Back-End deployment
       'AWS_BASE_API_URL': '${{ secrets.AWS_BASE_API_URL }}', // Sourced from Back-End deployment
-      'MOCK_ORG_ID': '${{ vars.MOCK_ORG_ID }}', // TODO: Remove once custom User Authorization logic retrieves OrgIds
     };
   }
 

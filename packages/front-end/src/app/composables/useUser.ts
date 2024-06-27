@@ -1,8 +1,10 @@
 import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
+import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { ERRORS } from '~/constants/validation';
-import { useToastStore } from '~/stores/stores';
+import { useToastStore } from '~/stores';
+import { decodeJwt } from '~/utils/jwt';
 
 type UserNameOptions = {
   preferredName?: string | undefined;
@@ -12,11 +14,9 @@ type UserNameOptions = {
 };
 
 /**
- * Composables for any User related functions
+ * Composables for any User related functionality
  */
-export default function useUser() {
-  const { $api } = useNuxtApp();
-
+export default function useUser($api?: any) {
   /**
    * Returns the display name of a user
    */
@@ -78,10 +78,29 @@ export default function useUser() {
     return labsAccess.filter((labAccess) => labAccess.Status === 'Active').length;
   }
 
+  /**
+   * @description Obtains the user's current org id from the auth JWT then sets it as the current org in the user store
+   */
+  async function setCurrentUserOrg() {
+    try {
+      const token = await useAuth().getToken();
+      const decodedToken: any = decodeJwt(token);
+      const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
+      const currentOrgId = Object.keys(parsedOrgAccess)[0];
+      const orgs = await $api.orgs.list();
+      const currentOrg = orgs.find((org: Organization) => org.OrganizationId === currentOrgId);
+      useUserStore().setOrgAccess(currentOrg);
+    } catch (error) {
+      console.error('Error occurred setting the current organisation.', error);
+      throw error;
+    }
+  }
+
   return {
     displayName,
     labsCount,
     invite,
     resendInvite,
+    setCurrentUserOrg,
   };
 }

@@ -13,6 +13,7 @@ easy-genomics:
             secret-key:
             test-user-email:
             test-user-password:
+            seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; defaults to 'https://api.cloud.seqera.io'
 
         # Front-End specific settings
         front-end:

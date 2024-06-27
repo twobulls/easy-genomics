@@ -29,6 +29,7 @@ export class NFTowerNestedStack extends NestedStack {
         REGION: this.props.env.region!,
         DOMAIN_NAME: this.props.applicationUrl,
         NAME_PREFIX: this.props.namePrefix,
+        SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
       },
     });
   }

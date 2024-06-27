@@ -59,7 +59,7 @@ export default function useUser() {
         OrganizationId: orgId,
         Email: email,
       },
-      'resend',
+      'resend'
     );
   }
 
@@ -73,7 +73,7 @@ export default function useUser() {
    */
   function labsCount(user: OrganizationUserDetails) {
     const labsAccess = Object.values(user?.OrganizationAccess || {}).flatMap((orgAccess) =>
-      Object.values(orgAccess?.LaboratoryAccess || {}),
+      Object.values(orgAccess?.LaboratoryAccess || {})
     );
     return labsAccess.filter((labAccess) => labAccess.Status === 'Active').length;
   }

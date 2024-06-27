@@ -43,8 +43,8 @@ class HttpFactory {
   private async handleResponseError(response: Response): Promise<void> {
     let errorMessage = `HTTP error! status: ${response.status}`;
     try {
-      const errorBody: any = await response.json();
-      errorMessage = errorBody.message || errorMessage;
+      const errorBody: { Error: string } = await response.json();
+      errorMessage = errorBody.Error || errorMessage;
     } catch (error) {
       console.error('Error parsing response body', error);
     }

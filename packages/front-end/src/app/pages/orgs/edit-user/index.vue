@@ -166,6 +166,8 @@
 
   <div class="mb-4">
     <EGUserOrgAdminToggle
+      v-if="useOrgsStore().selectedUser"
+      :is-loading="isLoading"
       :key="useOrgsStore().selectedUser?.UserId"
       :user="useOrgsStore().selectedUser"
       @update-user="updateSelectedUser($event)"

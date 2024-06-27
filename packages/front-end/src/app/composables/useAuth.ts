@@ -41,9 +41,8 @@ export default function useAuth() {
   async function signOut() {
     try {
       await Auth.signOut();
-      resetStores();
-
       await navigateTo('/signin');
+      useToastStore().success('You have been signed out.');
     } catch (error) {
       console.error('Error occurred during sign out.', error);
       throw error;

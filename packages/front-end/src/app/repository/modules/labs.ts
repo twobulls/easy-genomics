@@ -1,5 +1,6 @@
+import { CreateLaboratory, UpdateLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
-import { CreateLaboratory, Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 import { useRuntimeConfig } from 'nuxt/app';
@@ -10,8 +11,7 @@ class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();
 
   async create(lab: CreateLaboratory): Promise<Laboratory | undefined> {
-
-    const res = this.call<Laboratory>('POST', '/laboratory/create-laboratory', lab);
+    const res = await this.call<Laboratory>('POST', '/laboratory/create-laboratory', lab);
 
     if (!res) {
       console.error('Error calling create Laboratory API');
@@ -38,6 +38,17 @@ class LabsModule extends HttpFactory {
     if (!res) {
       console.error('Error calling get Laboratory Details API');
       throw new Error('Failed to retrieve Laboratory Details');
+    }
+
+    return res;
+  }
+
+  async update(lab: UpdateLaboratory): Promise<Laboratory> {
+    const res = await this.call<Laboratory>('PUT', `/laboratory/update-laboratory/${lab.LaboratoryId}`, lab);
+
+    if (!res) {
+      console.error('Error calling update Laboratory API');
+      throw new Error('Failed to update Laboratory');
     }
 
     return res;

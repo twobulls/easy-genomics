@@ -10,6 +10,7 @@
   import { OrgDetailsFormSchema } from '~/types/forms';
   import { ERRORS } from '~/constants/validation';
   import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
+  import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
 
   const router = useRouter();
   const $route = useRoute();
@@ -32,6 +33,17 @@
 
   // Table-related refs and computed props
   const searchOutput = ref('');
+
+  const tabItems = [
+    {
+      slot: 'users',
+      label: 'All users',
+    },
+    {
+      slot: 'details',
+      label: 'Details',
+    },
+  ];
 
   const tableColumns = [
     {
@@ -244,43 +256,7 @@
     </div>
   </EGPageHeader>
 
-  <UTabs
-    :ui="{
-      base: 'focus:outline-none',
-      list: {
-        base: 'border-b-2 rounded-none mb-4 mt-0',
-        padding: 'p-0',
-        height: 'h-14',
-        marker: {
-          wrapper: 'duration-200 ease-out focus:outline-none',
-          base: 'absolute bottom-[0px] h-[2px]',
-          background: 'bg-primary',
-          shadow: 'shadow-none',
-        },
-        size: {
-          sm: 'text-lg',
-        },
-        tab: {
-          base: '!text-base w-auto inline-flex font-heading justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out',
-          active: 'text-primary h-14',
-          inactive: 'text-heading',
-          height: 'h-14',
-          padding: 'p-0',
-        },
-      },
-    }"
-    :default-index="0"
-    :items="[
-      {
-        slot: 'users',
-        label: 'All users',
-      },
-      {
-        slot: 'details',
-        label: 'Details',
-      },
-    ]"
-  >
+  <UTabs :ui="EGTabsStyles" :default-index="0" :items="tabItems">
     <template #details>
       <EGFormOrgDetails
         @submit-form-org-details="onSubmit($event)"

@@ -13,11 +13,7 @@ import {
 import { ConfirmUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-  Handler,
-} from 'aws-lambda';
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { toByteArray } from 'base64-js';
 import { JwtPayload } from 'jsonwebtoken';
 import { CognitoIdpService } from '../../../services/cognito-idp-service';
@@ -36,15 +32,13 @@ const organizationUserService = new OrganizationUserService();
 const platformUserService = new PlatformUserService();
 const userService = new UserService();
 
-export const handler: Handler = async (
-  event: APIGatewayProxyEvent,
-): Promise<APIGatewayProxyResult> => {
+export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     // Post Request Body
-    const request: ConfirmUserInvitationRequest = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: ConfirmUserInvitationRequest = event.isBase64Encoded
+      ? JSON.parse(atob(event.body!))
+      : JSON.parse(event.body!);
 
     // Data validation safety check
     if (!ConfirmUpdateUserInvitationRequestSchema.safeParse(request).success) throw new Error('Invalid request');
@@ -83,7 +77,9 @@ export const handler: Handler = async (
     if (organizationUser.Status === 'Active') {
       throw new Error('User invitation to access Organization is already activated.');
     } else if (organizationUser.Status === 'Inactive') {
-      throw new Error('User access to Organization has been deactivated. Please contact the System Administrator for assistance.');
+      throw new Error(
+        'User access to Organization has been deactivated. Please contact the System Administrator for assistance.',
+      );
     }
 
     if (payload.RequestType === 'ExistingUserInvitation') {
@@ -104,40 +100,41 @@ export const handler: Handler = async (
         const response: InitiateAuthCommandOutput = await cognitoIdpService.initiateAuth(
           process.env.COGNITO_USER_POOL_CLIENT_ID,
           user.Email,
-          plaintext.toString());
+          plaintext.toString(),
+        );
         if (!response.Session) {
           throw new Error('Unable to obtain authentication access token');
         }
 
-        await cognitoIdpService.respondToAuthChallenge(
-          process.env.COGNITO_USER_POOL_CLIENT_ID,
-          response.Session,
-          user.Email,
-          request.Password,
-        ).then(async() => {
-          await Promise.all([
-            // Update Cognito User's email to verified
-            cognitoIdpService.adminUpdateUserEmailVerified(user.UserId, true),
-            // Update User's Status to 'Active' and set the supplied names
-            updatePlatformUserOrganizationAccess({
-              ...user,
-              FirstName: request.FirstName,
-              LastName: request.LastName,
-            }, organizationUser),
-          ]);
-        });
+        await cognitoIdpService
+          .respondToAuthChallenge(
+            process.env.COGNITO_USER_POOL_CLIENT_ID,
+            response.Session,
+            user.Email,
+            request.Password,
+          )
+          .then(async () => {
+            await Promise.all([
+              // Update Cognito User's email to verified
+              cognitoIdpService.adminUpdateUserEmailVerified(user.UserId, true),
+              // Update User's Status to 'Active' and set the supplied names
+              updatePlatformUserOrganizationAccess(
+                {
+                  ...user,
+                  FirstName: request.FirstName,
+                  LastName: request.LastName,
+                },
+                organizationUser,
+              ),
+            ]);
+          });
       }
     }
 
     return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        Error: getErrorMessage(err),
-      }),
-    };
+    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
   }
 };
 
@@ -152,33 +149,36 @@ function updatePlatformUserOrganizationAccess(user: User, organizationUser: Orga
   // Retrieve the User's OrganizationAccess metadata to update
   const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
   const laboratoryAccess: LaboratoryAccess | undefined =
-    (organizationAccess && organizationAccess[organizationUser.OrganizationId])
+    organizationAccess && organizationAccess[organizationUser.OrganizationId]
       ? organizationAccess[organizationUser.OrganizationId].LaboratoryAccess
       : undefined;
 
-  return platformUserService.editExistingUserAccessToOrganization({
-    ...user,
-    Status: 'Active',
-    OrganizationAccess: {
-      ...organizationAccess,
-      [organizationUser.OrganizationId]: <OrganizationAccessDetails>{
-        Status: 'Active',
-        LaboratoryAccess: <LaboratoryAccessDetails>{
-          ...(laboratoryAccess) ? laboratoryAccess : {},
+  return platformUserService.editExistingUserAccessToOrganization(
+    {
+      ...user,
+      Status: 'Active',
+      OrganizationAccess: {
+        ...organizationAccess,
+        [organizationUser.OrganizationId]: <OrganizationAccessDetails>{
+          Status: 'Active',
+          LaboratoryAccess: <LaboratoryAccessDetails>{
+            ...(laboratoryAccess ? laboratoryAccess : {}),
+          },
         },
       },
+      ModifiedAt: new Date().toISOString(),
+      ModifiedBy: user.UserId,
     },
-    ModifiedAt: new Date().toISOString(),
-    ModifiedBy: user.UserId,
-  }, {
-    ...organizationUser,
-    Status: 'Active',
-    ModifiedAt: new Date().toISOString(),
-    ModifiedBy: user.UserId,
-  });
+    {
+      ...organizationUser,
+      Status: 'Active',
+      ModifiedAt: new Date().toISOString(),
+      ModifiedBy: user.UserId,
+    },
+  );
 }
 
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

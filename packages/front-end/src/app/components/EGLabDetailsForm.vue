@@ -1,186 +1,411 @@
 <script setup lang="ts">
-import { LabDetailsInput, LabDetailsInputSchema, LabNameSchema, LabDescriptionSchema, NextFlowTowerAccessTokenInputSchema, NextFlowTowerWorkspaceIdInputSchema, LabDetailsFormModeEnum, LabDetailsSchema } from '~/types/labs';
-import { FormError, FormSubmitEvent } from '#ui/types';
-import { CreateLaboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
-import { useToastStore, useUiStore } from '~/stores/stores';
-import { Schema } from 'zod';
+  import {
+    LabDetails,
+    LabDetailsSchema,
+    LabNameSchema,
+    LabDescriptionSchema,
+    NextFlowTowerAccessTokenSchema,
+    NextFlowTowerWorkspaceIdSchema,
+    LabDetailsFormModeEnum,
+    LabDetailsFormMode,
+    S3BucketSchema,
+  } from '~/types/labs';
+  import { AutoCompleteOptionsEnum } from '~/types/forms';
+  import { FormError } from '#ui/types';
+  import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
+  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { Schema } from 'zod';
+  import {
+    CreateLaboratory,
+    CreateLaboratorySchema,
+    LaboratorySchema,
+    UpdateLaboratory,
+    UpdateLaboratorySchema,
+  } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 
-const props = withDefaults(defineProps<{
-  formMode?: LabDetailsFormModeEnum;
-}>(), {
-  formMode: LabDetailsFormModeEnum.enum.ReadOnly,
-})
+  const props = withDefaults(
+    defineProps<{
+      formMode?: LabDetailsFormMode;
+    }>(),
+    {
+      formMode: LabDetailsFormModeEnum.enum.ReadOnly,
+    }
+  );
 
-const formMode = ref(props.formMode);
+  const formMode = ref(props.formMode);
 
-const { MOCK_ORG_ID } = useRuntimeConfig().public;
+  const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
-const { $api } = useNuxtApp();
-const $route = useRoute();
-const router = useRouter();
+  const { $api } = useNuxtApp();
+  const $route = useRoute();
+  const router = useRouter();
 
-const isLoadingFormData = ref(false);
-const canSubmit = ref(false);
+  const isLoadingFormData = ref(false);
+  const canSubmit = ref(false);
+  const isSubmittingFormData = ref(false);
 
-// Enable/disable fields default
-const isNameFieldDisabled = ref(true);
-const isDescriptionFieldDisabled = ref(true);
-const isNextFlowTowerWorkspaceIdFieldDisabled = ref(true);
+  // Enable/disable fields default
+  const isNameFieldDisabled = ref(true);
+  const isDescriptionFieldDisabled = ref(true);
+  const isNextFlowTowerWorkspaceIdFieldDisabled = ref(true);
 
-// Hide/show fields default
-const isNextFlowTowerAccessTokenFieldHidden = ref(true);
+  // Hide/show fields default
+  const isNextFlowTowerAccessTokenFieldHidden = ref(true);
+  const isS3BucketFieldHidden = ref(true);
 
-const defaultState: LabDetailsInput = {
-  Name: '',
-  Description: '',
-  NextFlowTowerAccessToken: '',
-  NextFlowTowerWorkspaceId: '',
-}
+  const defaultState: LabDetails = {
+    Name: '',
+    Description: '',
+    NextFlowTowerAccessToken: '',
+    NextFlowTowerWorkspaceId: '',
+  };
 
-const state = ref({ ...defaultState })
+  const state = ref({ ...defaultState } as Laboratory);
 
+  /**
+   * Edit Mode and Next Flow Tower Access Token Field
+   *
+   * Custom logic is required for managing the possible states of the Next Flow Tower Access Token field
+   * when in Edit Mode.
+   *
+   * This is due to the value from the database being the encrypted token. The user should not be able
+   * to toggle the password visibility of the field unless they have made a change to the field. This is
+   * because they user will not be able to compare the encrypted value with the value previously set.
+   */
 
-/**
- * Switches the form input fields disabled/hidden states based on the form mode.
- */
-function switchToFormMode(newFormMode: LabDetailsFormModeEnum) {
-  if (formMode.value !== newFormMode) {
-    formMode.value = newFormMode;
+  // Edit Mode
+  // Store the lab details from the server to support the cancel button in Edit mode
+  const uneditedLabDetails: Ref<Laboratory | undefined> = ref(undefined);
+
+  // Edit Mode
+  // Determine if the NextFlowTowerAccessToken field is being edited to assist with
+  // the password field display state
+  const isEditingNextFlowTowerAccessToken = ref(false);
+
+  /**
+   * Switches the form input fields disabled/hidden states based on the form mode.
+   */
+  function switchToFormMode(newFormMode: LabDetailsFormMode) {
+    if (formMode.value !== newFormMode) {
+      formMode.value = newFormMode;
+    }
+
+    if (newFormMode === LabDetailsFormModeEnum.enum.ReadOnly) {
+      // disable fields
+      isNameFieldDisabled.value = true;
+      isDescriptionFieldDisabled.value = true;
+      isNextFlowTowerWorkspaceIdFieldDisabled.value = true;
+
+      // hide fields
+      isNextFlowTowerAccessTokenFieldHidden.value = true;
+      isS3BucketFieldHidden.value = true;
+    } else if (newFormMode === LabDetailsFormModeEnum.enum.Create || newFormMode === LabDetailsFormModeEnum.enum.Edit) {
+      // enable fields
+      isNameFieldDisabled.value = false;
+      isDescriptionFieldDisabled.value = false;
+      isNextFlowTowerWorkspaceIdFieldDisabled.value = false;
+
+      // show fields
+      isNextFlowTowerAccessTokenFieldHidden.value = false;
+      isS3BucketFieldHidden.value = false;
+    }
   }
 
-  if (newFormMode === LabDetailsFormModeEnum.enum.Create || newFormMode === LabDetailsFormModeEnum.enum.Edit) {
-    isNameFieldDisabled.value = false
-    isDescriptionFieldDisabled.value = false
-    isNextFlowTowerWorkspaceIdFieldDisabled.value = false
-    isNextFlowTowerAccessTokenFieldHidden.value = false
-  }
-}
+  onMounted(async () => {
+    if (formMode.value !== LabDetailsFormModeEnum.enum.Create) {
+      await getLabDetails();
+    }
+    switchToFormMode(formMode.value);
+  });
 
-onMounted(async () => {
-  if (formMode.value !== LabDetailsFormModeEnum.enum.Create) {
+  async function getLabDetails() {
+    try {
+      isLoadingFormData.value = true;
+      const res = await $api.labs.getLabDetails($route.params.id);
+      const parseResult = LaboratorySchema.safeParse(res);
+
+      if (parseResult.success) {
+        const labDetails = parseResult.data as Laboratory;
+        state.value = { ...state.value, ...labDetails };
+        // Store the unedited lab details to support the cancel button in Edit mode
+        uneditedLabDetails.value = { ...labDetails };
+      } else {
+        throw new Error('Failed to parse lab details');
+      }
+    } catch (error) {
+      useToastStore().error(`Failed to retrieve lab details for lab: ${state.value.Name}`);
+    } finally {
+      isLoadingFormData.value = false;
+    }
+  }
+
+  function handleCancelEdit() {
+    state.value = { ...uneditedLabDetails.value! };
+    isEditingNextFlowTowerAccessToken.value = false;
+    canSubmit.value = false;
+    switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
+  }
+
+  async function onSubmit() {
+    if (formMode.value === LabDetailsFormModeEnum.enum.ReadOnly) return;
+
+    try {
+      isSubmittingFormData.value = true;
+
+      if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
+        await handleCreateLab();
+      } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
+        await handleUpdateLabDetails();
+      }
+    } catch (error) {
+      useToastStore().error(`Failed to ${formMode.value} lab: ${state.value.Name}`);
+    } finally {
+      isSubmittingFormData.value = false;
+      useUiStore().setRequestPending(false);
+    }
+  }
+
+  async function handleCreateLab() {
+    useUiStore().setRequestPending(true);
+
+    const lab = {
+      ...state.value,
+      OrganizationId: MOCK_ORG_ID,
+      Status: 'Active',
+    };
+
+    const parseResult = CreateLaboratorySchema.safeParse(lab);
+    if (!parseResult.success) {
+      const message = 'Create lab failed to parse lab details';
+      console.error(`${message}; parseResult: `, parseResult);
+      throw new Error(message);
+    }
+
+    const newLab = parseResult.data as CreateLaboratory;
+
+    await $api.labs.create(newLab);
+
+    useToastStore().success(`Successfully created lab: ${newLab.Name}`);
+    router.push({ path: '/labs' });
+  }
+
+  // Submits the values from state instead of the form event values to align create
+  // and edit data types with those expected by and validated in the backend. The
+  // types can have more properties than the form fields.
+  // e.g, LaboratoryId or CreatedAt
+  async function handleUpdateLabDetails() {
+    useUiStore().setRequestPending(true);
+
+    const parseResult = UpdateLaboratorySchema.safeParse(state.value);
+
+    if (!parseResult.success) {
+      const message = 'Update lab failed to parse lab details';
+      console.error(`${message}; parseResult: `, parseResult);
+      throw new Error(message);
+    }
+
+    const lab = parseResult.data as UpdateLaboratory;
+
+    await $api.labs.update(lab);
+    isEditingNextFlowTowerAccessToken.value = false;
+    switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
     await getLabDetails();
+
+    useToastStore().success(`Successfully updated lab: ${lab.Name}`);
   }
-  switchToFormMode(formMode.value);
-})
 
-async function getLabDetails() {
-  try {
-    isLoadingFormData.value = true;
-    const res = await $api.labs.getLabDetails($route.params.id);
-    const parseResult = LabDetailsSchema.safeParse(res);
-
-    if (parseResult.success) {
-      state.value = { ...state.value, ...parseResult.data };
-    } else {
-      throw new Error('Failed to parse lab details');
+  /**
+   * Validates a single field value against a given schema and adds any resulting validation errors to the provided errors array.
+   * This function is used to validate individual fields in the form, allowing for custom validation logic per field.
+   *
+   * @param errors - The array to which any discovered validation errors will be added.
+   * @param schema - The Zod schema against which the field value will be validated.
+   * @param fieldName - The name of the field being validated. Used to associate errors with specific form fields.
+   * @param fieldValue - The value of the field being validated. Can be undefined, in which case the schema determines validity.
+   */
+  function maybeAddFieldValidationErrors(
+    errors: FormError[],
+    schema: Schema,
+    fieldName: string,
+    fieldValue: string | undefined
+  ): void {
+    const parseResult = schema.safeParse(fieldValue);
+    if (!parseResult.success) {
+      const fieldErrors = parseResult.error.issues.map(({ message }) => ({ path: fieldName, message }));
+      fieldErrors.forEach((error) => errors.push(error));
     }
-  } catch (error) {
-    useToastStore().error(`Failed to retrieve lab details for lab: ${state.Name}`);
-  } finally {
-    isLoadingFormData.value = false;
   }
-}
 
-async function onSubmit(event: FormSubmitEvent<LabDetailsInput>) {
-  if (formMode.value === LabDetailsFormModeEnum.enum.ReadOnly) return;
+  const validate = (state: LabDetails): FormError[] => {
+    const errors: FormError[] = [];
 
-  try {
-    const formParseResult = LabDetailsInputSchema.safeParse(event.data);
-    if (!formParseResult.success) {
-      throw new Error('Form data is invalid')
+    maybeAddFieldValidationErrors(errors, LabNameSchema, 'Name', state.Name);
+    maybeAddFieldValidationErrors(errors, LabDescriptionSchema, 'Description', state.Description);
+
+    maybeAddFieldValidationErrors(
+      errors,
+      NextFlowTowerAccessTokenSchema,
+      'NextFlowTowerAccessToken',
+      state.NextFlowTowerAccessToken
+    );
+
+    maybeAddFieldValidationErrors(
+      errors,
+      NextFlowTowerWorkspaceIdSchema,
+      'NextFlowTowerWorkspaceId',
+      state.NextFlowTowerWorkspaceId
+    );
+
+    if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
+      maybeAddFieldValidationErrors(errors, S3BucketSchema, 'S3Bucket', state.S3Bucket);
     }
 
+    // Check if the form can be submitted based on the number of validation errors
+    checkCanSubmitFormData(errors.length);
+
+    return errors;
+  };
+
+  function checkCanSubmitFormData(validationErrorCount: number = 0) {
+    const noValidationErrors = validationErrorCount === 0;
     if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
-      await handleCreateLab(formParseResult.data);
+      // In Create mode, the form can be submitted if there are no validation errors
+      canSubmit.value = noValidationErrors;
     } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
-      await handleUpdateLabDetails(formParseResult.data);
+      // In Edit mode, the form can be submitted if there are no validation errors and the form data has changed
+      const dataChanged = formDataChanged();
+      canSubmit.value = noValidationErrors && dataChanged;
     }
-  } catch (error) {
-    useToastStore().error(`Failed to ${formMode.value} lab: ${state.Name}`);
-  } finally {
-    useUiStore().setRequestPending(false);
   }
-}
 
-async function handleCreateLab(labDetails: LabDetailsInput) {
-  useUiStore().setRequestPending(true);
-
-  const lab = {
-    ...labDetails,
-    OrganizationId: MOCK_ORG_ID,
-    Status: 'Active'
-  } as CreateLaboratory
-
-  await $api.labs.create(lab);
-
-  useToastStore().success(`Successfully created lab: ${lab.Name}`);
-  router.push({ path: '/labs' });
-}
-
-// TODO: EG-506: [FE] Editing Lab Details
-async function handleUpdateLabDetails(labDetails: LabDetailsInput) {
-  console.log('TODO: implement handleUpdateLabDetails; labDetails:', labDetails)
-}
-
-/**
- * Validates a single field value against a given schema and adds any resulting validation errors to the provided errors array.
- * This function is used to validate individual fields in the form, allowing for custom validation logic per field.
- * 
- * @param errors - The array to which any discovered validation errors will be added.
- * @param schema - The Zod schema against which the field value will be validated.
- * @param fieldName - The name of the field being validated. Used to associate errors with specific form fields.
- * @param fieldValue - The value of the field being validated. Can be undefined, in which case the schema determines validity.
- */
-function maybeAddFieldValidationErrors(errors: FormError[], schema: Schema, fieldName: string, fieldValue: string | undefined): void {
-  const parseResult = schema.safeParse(fieldValue)
-  if (!parseResult.success) {
-    const fieldErrors = parseResult.error.issues.map(({ message }) => ({ path: fieldName, message }))
-    fieldErrors.forEach(error => errors.push(error))
+  // Edit Mode: iterate over the keys of the state object and compare the value with the uneditedLabDetails
+  // from the database. Returns true if there is a change, otherwise returns false.
+  function formDataChanged(): boolean {
+    if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
+      const keys = Object.keys(state.value);
+      for (const key of keys) {
+        const valuesMatch = state.value[key] === uneditedLabDetails.value[key];
+        // Special handling for NextFlowTowerAccessToken field to assist with the password field display state
+        if (key === 'NextFlowTowerAccessToken') {
+          isEditingNextFlowTowerAccessToken.value = !valuesMatch;
+        }
+        if (!valuesMatch) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
-}
-
-const validate = (state: LabDetailsInput): FormError[] => {
-  const errors: FormError[] = []
-
-  maybeAddFieldValidationErrors(errors, LabNameSchema, 'Name', state.Name)
-  maybeAddFieldValidationErrors(errors, LabDescriptionSchema, 'Description', state.Description)
-  maybeAddFieldValidationErrors(errors, NextFlowTowerAccessTokenInputSchema, 'NextFlowTowerAccessToken', state.NextFlowTowerAccessToken)
-  maybeAddFieldValidationErrors(errors, NextFlowTowerWorkspaceIdInputSchema, 'NextFlowTowerWorkspaceId', state.NextFlowTowerWorkspaceId)
-
-  // Update the canSubmit flag based on the number of errors
-  canSubmit.value = errors.length === 0
-
-  return errors
-}
 </script>
 
 <template>
   <USkeleton v-if="isLoadingFormData" class="min-h-96 w-full" />
-  <UForm v-else :validate="validate" :schema="LabDetailsInputSchema" :state="state" @submit="onSubmit">
+  <UForm v-else :validate="validate" :schema="LabDetailsSchema" :state="state" @submit="onSubmit">
     <EGCard>
+      <!-- Lab Name -->
       <EGFormGroup label="Lab Name" name="Name" eager-validation>
-        <EGInput v-model="state.Name" :disabled="isNameFieldDisabled"
-          placeholder="Enter lab name (required and must be unique)" required autofocus />
+        <EGInput
+          v-model="state.Name"
+          :disabled="isNameFieldDisabled"
+          placeholder="Enter lab name (required and must be unique)"
+          required
+          autofocus
+        />
       </EGFormGroup>
-      <EGFormGroup label="Lab Description" name="Description">
-        <EGTextArea v-model="state.Description" :disabled="isDescriptionFieldDisabled"
-          placeholder="Describe your lab and what runs should be launched by Lab users." />
+
+      <!-- Lab Description -->
+      <EGFormGroup label="Lab Description" name="Description" eager-validation>
+        <EGTextArea
+          v-model="state.Description"
+          :disabled="isDescriptionFieldDisabled"
+          placeholder="Describe your lab and what runs should be launched by Lab users."
+        />
       </EGFormGroup>
-      <EGFormGroup v-if="!isNextFlowTowerAccessTokenFieldHidden" label="Personal Access Token"
-        name="NextFlowTowerAccessToken">
-        <EGPasswordInput v-model="state.NextFlowTowerAccessToken" :password="true"
-          :disabled="formMode === LabDetailsFormModeEnum.enum.ReadOnly" />
-      </EGFormGroup>
-      <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId">
+
+      <!-- Next Flow Tower Workspace ID -->
+      <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId" eager-validation>
         <EGInput v-model="state.NextFlowTowerWorkspaceId" :disabled="isNextFlowTowerWorkspaceIdFieldDisabled" />
       </EGFormGroup>
+
+      <!-- Next Flow Tower Access Token -->
+      <EGFormGroup
+        v-if="!isNextFlowTowerAccessTokenFieldHidden"
+        label="Personal Access Token"
+        name="NextFlowTowerAccessToken"
+        eager-validation
+      >
+        <!-- Next Flow Tower Access Token: Create  Mode -->
+        <EGPasswordInput
+          v-if="formMode === LabDetailsFormModeEnum.enum.Create"
+          v-model="state.NextFlowTowerAccessToken"
+          :password="true"
+          :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+        />
+        <!-- Next Flow Tower Access Token: Edit  Mode -->
+        <EGPasswordInput
+          v-if="formMode === LabDetailsFormModeEnum.enum.Edit"
+          v-model="state.NextFlowTowerAccessToken"
+          :select-on-focus="true"
+          :password="true"
+          :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
+          :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+          eager-validation
+        />
+      </EGFormGroup>
+
+      <!-- S3 Bucket -->
+      <EGFormGroup v-if="!isS3BucketFieldHidden" label="S3 Bucket" name="S3Bucket" eager-validation>
+        <EGInput v-model="state.S3Bucket" />
+      </EGFormGroup>
     </EGCard>
-    <div v-if="formMode !== LabDetailsFormModeEnum.enum.ReadOnly" class="flex space-x-2 mt-6">
-      <EGButton :disabled="!canSubmit" :loading="useUiStore().isRequestPending" :size="ButtonSizeEnum.enum.sm"
-        type="submit" label="Create Lab" />
-      <EGButton :size="ButtonSizeEnum.enum.sm" :variant="ButtonVariantEnum.enum.secondary"
-        :disabled="useUiStore().isRequestPending" label="Cancel" name="cancel" @click="$router.go(-1)" />
+
+    <!-- Form Buttons: Create Mode -->
+    <div v-if="formMode === LabDetailsFormModeEnum.enum.Create" class="mt-6 flex space-x-2">
+      <EGButton
+        :disabled="!canSubmit"
+        :loading="isSubmittingFormData"
+        :size="ButtonSizeEnum.enum.sm"
+        type="submit"
+        label="Create Lab"
+      />
+      <EGButton
+        :size="ButtonSizeEnum.enum.sm"
+        :variant="ButtonVariantEnum.enum.secondary"
+        :disabled="useUiStore().isRequestPending"
+        label="Cancel"
+        name="cancel"
+        @click="$router.go(-1)"
+      />
+    </div>
+
+    <!-- Form Buttons: Read Mode -->
+    <div v-if="formMode === LabDetailsFormModeEnum.enum.ReadOnly" class="mt-6 flex space-x-2">
+      <EGButton
+        :size="ButtonSizeEnum.enum.sm"
+        type="submit"
+        label="Edit"
+        @click="switchToFormMode(LabDetailsFormModeEnum.enum.Edit)"
+      />
+    </div>
+
+    <!-- Form Buttons: Edit Mode -->
+    <div v-if="formMode === LabDetailsFormModeEnum.enum.Edit" class="mt-6 flex space-x-2">
+      <EGButton
+        :disabled="!canSubmit"
+        :loading="isSubmittingFormData"
+        :size="ButtonSizeEnum.enum.sm"
+        type="submit"
+        label="Save Changes"
+      />
+      <EGButton
+        :size="ButtonSizeEnum.enum.sm"
+        :variant="ButtonVariantEnum.enum.secondary"
+        :disabled="isSubmittingFormData"
+        label="Cancel"
+        name="cancel"
+        @click="handleCancelEdit"
+      />
     </div>
   </UForm>
 </template>

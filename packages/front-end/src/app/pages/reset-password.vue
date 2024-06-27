@@ -71,7 +71,11 @@
   <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
     <EGText tag="h2" class="mb-4">Reset my password</EGText>
     <EGFormGroup label="New password" name="password">
-      <EGPasswordInput v-model="state.password" :disabled="useUiStore().isRequestPending" />
+      <EGPasswordInput
+        v-model="state.password"
+        :disabled="useUiStore().isRequestPending"
+        :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
+      />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton

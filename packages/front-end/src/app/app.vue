@@ -1,9 +1,10 @@
 <script setup lang="ts">
   import tailwindConfig from '../../tailwind.config.js';
-  const primaryColHex = tailwindConfig.theme.extend.colors.primary;
 
+  const primaryColHex = tailwindConfig.theme.extend.colors.primary;
   const { ENV_TYPE } = useRuntimeConfig().public;
 </script>
+
 <template>
   <NuxtLoadingIndicator :color="primaryColHex" />
   <NuxtLayout>

@@ -15,6 +15,9 @@ const useUiStore = defineStore('uiStore', {
     setRequestPending(val: boolean) {
       this.isRequestPending = val;
     },
+    reset() {
+      Object.assign(this, initialState());
+    },
   },
 });
 

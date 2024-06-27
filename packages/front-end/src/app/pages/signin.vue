@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { useUiStore } from '~/stores/stores';
+  import { resetStores, useUiStore } from '~/stores';
   import { ERRORS } from '~/constants/validation';
+  import { onBeforeMount } from '#imports';
 
   definePageMeta({ layout: 'signin' });
 
@@ -13,6 +14,13 @@
   });
   const state = ref({ email: '', password: '' });
   const isFormDisabled = ref(true);
+
+  /**
+   * @description Reset the stores to ensure app is in a clean state prior to sign in
+   */
+  onBeforeMount(() => {
+    resetStores();
+  });
 
   watchEffect(() => {
     isFormDisabled.value = !formSchema.safeParse(state.value).success;

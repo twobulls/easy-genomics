@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '#ui/types';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores';
   import { ERRORS } from '~/constants/validation';
   import { OrgDetailsFormSchema } from '~/types/forms';
   import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';

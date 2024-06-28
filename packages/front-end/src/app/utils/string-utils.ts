@@ -42,3 +42,7 @@ export function maxLengthText(input: string, maxLength: number | undefined) {
   }
   return input;
 }
+
+export function getCharacterText(count: number) {
+  return count === 1 ? 'character' : 'characters';
+}

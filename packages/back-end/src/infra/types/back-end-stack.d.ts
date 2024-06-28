@@ -18,7 +18,6 @@ export interface EasyGenomicsNestedStackProps extends BackEndStackProps, NestedS
     userPoolClient?: UserPoolClient,
     iamPolicyStatements?: Map<string, PolicyStatement[]>,
     cognitoIdpKmsKey?: Key,
-    dynamoDbKmsKey?: Key,
 }
 
 // Defines the AWS HealthOmics specific props

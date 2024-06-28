@@ -1,5 +1,6 @@
 import {
-  LaboratoryAccess, LaboratoryAccessDetails,
+  LaboratoryAccess,
+  LaboratoryAccessDetails,
   OrganizationAccess,
   OrganizationAccessDetails,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';

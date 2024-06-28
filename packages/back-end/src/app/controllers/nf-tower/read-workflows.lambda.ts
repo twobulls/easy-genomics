@@ -1,6 +1,4 @@
-import { NextFlowTowerApiRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/nf-tower/nextflow-tower-api-request';
 import { ListWorkflowsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-import { NextflowTowerApiRequest } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api-request';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   APIGatewayProxyResult,
@@ -9,14 +7,14 @@ import {
 } from 'aws-lambda';
 import { LaboratoryService } from '../../services/easy-genomics/laboratory-service';
 import { decrypt } from '../../utils/encryption-utils';
-import { getApiParameters, httpGet } from '../../utils/rest-api-utils';
+import { getApiParameters, httpGet, validateOrganizationAccess } from '../../utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 
 /**
- * This POST /nf-tower/request-list-workflows API queries the /workflow API for
+ * This GET /nf-tower/read-workflows/{LaboratoryId} API queries the /workflow API for
  * a list of NextFlow Tower Workflows, and it expects:
- *  - Required POST Body containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
+ *  - Required Path Parameter containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
  *  - Optional Query Parameters:
  *    - max: pagination number of results
  *    - offset: pagination results offset index
@@ -28,14 +26,16 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Post Request Body
-    const request: NextflowTowerApiRequest = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
-    // Data validation safety check
-    if (!NextFlowTowerApiRequestSchema.safeParse(request).success) throw new Error('Invalid request');
+    // Get Path Parameter
+    const id: string = event.pathParameters?.id || '';
+    if (id === '') throw new Error('Required id is missing');
 
-    const laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
+    const laboratory = await laboratoryService.queryByLaboratoryId(id);
+
+    if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
+      throw new Error('Unauthorized');
+    }
+
     if (!laboratory.NextFlowTowerWorkspaceId) {
       throw new Error('Laboratory Workspace Id unavailable');
     }

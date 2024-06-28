@@ -25,7 +25,7 @@ export class NFTowerNestedStack extends NestedStack {
       lambdaFunctionsDir: 'src/app/controllers/nf-tower',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
       lambdaFunctionsResources: {
-        '/nf-tower/request-list-workflows': {
+        '/nf-tower/read-workflows': {
           environment: {
             DYNAMODB_KMS_KEY_ID: this.props.dynamoDbKmsKey?.keyId!,
             DYNAMODB_KMS_KEY_ARN: this.props.dynamoDbKmsKey?.keyArn!,
@@ -46,8 +46,8 @@ export class NFTowerNestedStack extends NestedStack {
 
   // NF-Tower specific IAM policies
   private setupIamPolicies = () => {
-    // /nf-tower/request-list-workflows
-    this.iam.addPolicyStatements('/nf-tower/request-list-workflows', [
+    // /nf-tower/read-workflows
+    this.iam.addPolicyStatements('/nf-tower/read-workflows', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,

@@ -7,7 +7,7 @@
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse } from '~/types/api';
   import type { FormSubmitEvent } from '#ui/types';
-  import { OrgDetailsFormSchema } from '~/types/forms';
+  import { OrgDetailsForm } from '~/types/forms';
   import { ERRORS } from '~/constants/validation';
   import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
@@ -233,7 +233,7 @@
     searchOutput.value = newVal;
   }
 
-  async function onSubmit(event: FormSubmitEvent<OrgDetailsFormSchema>) {
+  async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
       useUiStore().setRequestPending(true);
       const { Name, Description } = event.data;

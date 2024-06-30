@@ -1,4 +1,7 @@
 import {
+  DeleteParameterCommand,
+  DeleteParameterCommandInput,
+  DeleteParameterCommandOutput,
   GetParameterCommand,
   GetParameterCommandInput,
   GetParameterCommandOutput,
@@ -10,6 +13,7 @@ import {
 } from '@aws-sdk/client-ssm';
 
 export enum SsmCommand {
+  DELETE_PARAMETER = 'delete-parameter',
   GET_PARAMETER = 'get-parameter',
   PUT_PARAMETER = 'put-parameter',
 }
@@ -20,6 +24,13 @@ export class SsmService {
   public constructor() {
     this.ssmClient = new SSMClient();
   }
+
+  public deleteParameter = async (deleteParameterCommandInput: DeleteParameterCommandInput): Promise<DeleteParameterCommandOutput> => {
+    return this.ssmRequest<DeleteParameterCommandInput, DeleteParameterCommandOutput>(
+      SsmCommand.DELETE_PARAMETER,
+      deleteParameterCommandInput,
+    );
+  };
 
   public getParameter = async (getParameterCommandInput: GetParameterCommandInput): Promise<GetParameterCommandOutput> => {
     return this.ssmRequest<GetParameterCommandInput, GetParameterCommandOutput>(
@@ -60,6 +71,8 @@ export class SsmService {
 
   private getSsmCommand = <SsmCommandInput>(command: SsmCommand, data: SsmCommandInput): any => {
     switch (command) {
+      case SsmCommand.DELETE_PARAMETER:
+        return new DeleteParameterCommand(data);
       case SsmCommand.GET_PARAMETER:
         return new GetParameterCommand(data);
       case SsmCommand.PUT_PARAMETER:

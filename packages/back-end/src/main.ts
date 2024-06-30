@@ -4,6 +4,8 @@ import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/conf
 import { App } from 'aws-cdk-lib';
 import { BackEndStack } from './infra/stacks/back-end-stack';
 
+const SEQERA_API_BASE_URL = 'https://api.cloud.seqera.io';
+
 const app = new App();
 
 if (process.env.CI_CD === 'true') {
@@ -20,15 +22,16 @@ if (process.env.CI_CD === 'true') {
   const secretKey: string | undefined = process.env.SECRET_KEY;
   const testUserEmail: string | undefined = process.env.TEST_USER_EMAIL;
   const testUserPassword: string | undefined = process.env.TEST_USER_PASSWORD;
+  const seqeraApiBaseUrl: string = process.env.SEQERA_API_BASE_URL || SEQERA_API_BASE_URL;
 
-  if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the CI/CD environment configuration');
-  if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
-  if (!envName) throw new Error('ENV_NAME undefined, please check the CI/CD environment configuration');
-  if (!envType) throw new Error('ENV_TYPE undefined, please check the CI/CD environment configuration');
-  if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the CI/CD environment configuration');
-  if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the CI/CD environment configuration');
-  if (!systemAdminPassword) throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the CI/CD environment configuration');
-  if (!secretKey) throw new Error('SECRET_KEY undefined, please check the CI/CD environment configuration');
+  if (!awsAccountId) throw new Error('"AWS_ACCOUNT_ID" undefined, please check the CI/CD environment configuration');
+  if (!awsRegion) throw new Error('"AWS_REGION" undefined, please check the CI/CD environment configuration');
+  if (!envName) throw new Error('"ENV_NAME" undefined, please check the CI/CD environment configuration');
+  if (!envType) throw new Error('"ENV_TYPE" undefined, please check the CI/CD environment configuration');
+  if (!applicationUrl) throw new Error('"APPLICATION_URL" undefined, please check the CI/CD environment configuration');
+  if (!systemAdminEmail) throw new Error('"SYSTEM_ADMIN_EMAIL" undefined, please check the CI/CD environment configuration');
+  if (!systemAdminPassword) throw new Error('"SYSTEM_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
+  if (!secretKey) throw new Error('"SECRET_KEY" undefined, please check the CI/CD environment configuration');
 
   // AWS infrastructure resources can be destroyed only when devEnv is true
   const devEnv: boolean = envType === 'dev';
@@ -36,8 +39,8 @@ if (process.env.CI_CD === 'true') {
   const constructNamespace: string = `${namePrefix}-easy-genomics`;
 
   if (devEnv) {
-    if (!testUserEmail) throw new Error('TEST_USER_EMAIL undefined, please check the CI/CD environment configuration');
-    if (!testUserPassword) throw new Error('TEST_USER_PASSWORD undefined, please check the CI/CD environment configuration');
+    if (!testUserEmail) throw new Error('"TEST_USER_EMAIL" undefined, please check the CI/CD environment configuration');
+    if (!testUserPassword) throw new Error('"TEST_USER_PASSWORD" undefined, please check the CI/CD environment configuration');
   }
 
   // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
@@ -57,6 +60,7 @@ if (process.env.CI_CD === 'true') {
     secretKey: secretKey,
     testUserEmail: testUserEmail,
     testUserPassword: testUserPassword,
+    seqeraApiBaseUrl: seqeraApiBaseUrl,
   });
 } else {
   console.log('Loading Back-End easy-genomics.yaml settings...');
@@ -82,15 +86,16 @@ if (process.env.CI_CD === 'true') {
       const secretKey: string | undefined = configSettings['back-end']['secret-key'];
       const testUserEmail: string | undefined = configSettings['back-end']['test-user-email'];
       const testUserPassword: string | undefined = configSettings['back-end']['test-user-password'];
+      const seqeraApiBaseUrl: string = configSettings['back-end']['seqera-api-base-url'] || SEQERA_API_BASE_URL;
 
-      if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the easy-genomics.yaml configuration');
-      if (!awsRegion) throw new Error('AWS_REGION undefined, please check the easy-genomics.yaml configuration');
-      if (!envName) throw new Error('ENV_NAME undefined, please check the easy-genomics.yaml configuration');
-      if (!envType) throw new Error('ENV_TYPE undefined, please check the easy-genomics.yaml configuration');
-      if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the easy-genomics.yaml configuration');
-      if (!systemAdminEmail) throw new Error('SYSTEM_ADMIN_EMAIL undefined, please check the easy-genomics.yaml configuration');
-      if (!systemAdminPassword) throw new Error('SYSTEM_ADMIN_PASSWORD undefined, please check the easy-genomics.yaml configuration');
-      if (!secretKey) throw new Error('SECRET_KEY undefined, please check the easy-genomics.yaml configuration');
+      if (!awsAccountId) throw new Error('"aws-account-id" undefined, please check the easy-genomics.yaml configuration');
+      if (!awsRegion) throw new Error('"aws-region" undefined, please check the easy-genomics.yaml configuration');
+      if (!envName) throw new Error('"env-name" undefined, please check the easy-genomics.yaml configuration');
+      if (!envType) throw new Error('"env-type" undefined, please check the easy-genomics.yaml configuration');
+      if (!applicationUrl) throw new Error('"application-url" undefined, please check the easy-genomics.yaml configuration');
+      if (!systemAdminEmail) throw new Error('"system-admin-email" undefined, please check the easy-genomics.yaml configuration');
+      if (!systemAdminPassword) throw new Error('"system-admin-password" undefined, please check the easy-genomics.yaml configuration');
+      if (!secretKey) throw new Error('"secret-key" undefined, please check the easy-genomics.yaml configuration');
 
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
@@ -98,8 +103,8 @@ if (process.env.CI_CD === 'true') {
       const constructNamespace: string = `${namePrefix}-easy-genomics`;
 
       if (devEnv) {
-        if (!testUserEmail) throw new Error('TEST_USER_EMAIL undefined, please check the easy-genomics.yaml configuration');
-        if (!testUserPassword) throw new Error('TEST_USER_PASSWORD undefined, please check the easy-genomics.yaml configuration');
+        if (!testUserEmail) throw new Error('"test-user-email" undefined, please check the easy-genomics.yaml configuration');
+        if (!testUserPassword) throw new Error('"test-user-password" undefined, please check the easy-genomics.yaml configuration');
       }
 
       // Setups Back-End Stack which initiates the nested stacks for Auth, Easy Genomics, AWS HealthOmics and NextFlow Tower
@@ -119,6 +124,7 @@ if (process.env.CI_CD === 'true') {
         secretKey: secretKey,
         testUserEmail: testUserEmail,
         testUserPassword: testUserPassword,
+        seqeraApiBaseUrl: seqeraApiBaseUrl,
       });
     }
   });

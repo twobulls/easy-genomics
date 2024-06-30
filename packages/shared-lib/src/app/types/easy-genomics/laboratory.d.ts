@@ -28,7 +28,6 @@
  */
 import { BaseAttributes, Status } from '../base-entity';
 import { z } from 'zod';
-import { CreateLaboratorySchema } from '../../schema/easy-genomics/laboratory';
 
 export interface Laboratory extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
@@ -42,5 +41,3 @@ export interface Laboratory extends BaseAttributes {
   NextFlowTowerAccessToken?: string; // Encrypted
   NextFlowTowerWorkspaceId?: string;
 }
-
-export type CreateLaboratory = z.infer<typeof CreateLaboratorySchema>;

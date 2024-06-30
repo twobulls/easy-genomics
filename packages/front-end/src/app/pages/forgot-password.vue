@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores';
   import { ERRORS } from '~/constants/validation';
 
   definePageMeta({ layout: 'password' });
@@ -20,7 +20,7 @@
   function handleSuccess(email: string) {
     useToastStore().success(`Reset link has been sent to ${email}`);
     state.value.email = '';
-    navigateTo('/sign-in');
+    navigateTo('/signin');
   }
 
   /**

@@ -1,6 +1,9 @@
 import * as crypto from 'crypto';
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
-import { CreateLaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+import {
+  CreateLaboratory,
+  CreateLaboratorySchema,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
@@ -22,16 +25,21 @@ export const handler: Handler = async (
   try {
     const currentUserId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: Laboratory = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: CreateLaboratory = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!CreateLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
+    const parseResult = CreateLaboratorySchema.safeParse(request);
+    if (!parseResult.success) {
+      console.error('Invalid request:', JSON.stringify(request, null, 2));
+      console.error('Invalid request; CreateLaboratorySchema; parseResult:', JSON.stringify(parseResult, null, 2));
+      throw new Error('Invalid request');
+    }
+
+    const newLab = parseResult.data as CreateLaboratory;
 
     // Validate OrganizationId exists before creating Laboratory
-    const organization: Organization = await organizationService.get(request.OrganizationId);
+    const organization: Organization = await organizationService.get(newLab.OrganizationId);
     if (!organization) {
-      throw new Error(`Laboratory creation error, OrganizationId '${request.OrganizationId}' not found`);
+      throw new Error(`Laboratory creation error, OrganizationId '${newLab.OrganizationId}' not found`);
     }
 
     // START Temporary S3 Bucket Creation Limit Workaround
@@ -55,11 +63,11 @@ export const handler: Handler = async (
     // END Temporary S3 Bucket Creation Limit Workaround
 
     const response: Laboratory = await laboratoryService.add({
-      ...request,
-      NextFlowTowerAccessToken: await encrypt(request.NextFlowTowerAccessToken),
+      ...newLab,
+      NextFlowTowerAccessToken: await encrypt(newLab.NextFlowTowerAccessToken),
       LaboratoryId: uuidv4(),
-      AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
-      NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,
+      AwsHealthOmicsEnabled: newLab.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
+      NextFlowTowerEnabled: newLab.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,
       S3Bucket: s3Bucket,
       CreatedAt: new Date().toISOString(),
       CreatedBy: currentUserId,
@@ -85,4 +93,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

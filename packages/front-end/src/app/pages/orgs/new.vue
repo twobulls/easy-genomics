@@ -1,14 +1,14 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '#ui/types';
-  import { useToastStore, useUiStore } from '~/stores/stores';
+  import { useToastStore, useUiStore } from '~/stores';
   import { ERRORS } from '~/constants/validation';
-  import { OrgDetailsFormSchema } from '~/types/forms';
+  import { OrgDetailsForm } from '~/types/forms';
   import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
 
   const router = useRouter();
   const { $api } = useNuxtApp();
 
-  async function onSubmit(event: FormSubmitEvent<OrgDetailsFormSchema>) {
+  async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
       useUiStore().setRequestPending(true);
       const { Name, Description } = event.data;

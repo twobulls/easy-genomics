@@ -25,4 +25,5 @@ export interface BackEndStackProps extends BaseStackProps {
     secretKey: string;
     testUserEmail?: string;
     testUserPassword?: string;
+    seqeraApiBaseUrl: string;
 }

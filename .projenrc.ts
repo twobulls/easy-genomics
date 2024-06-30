@@ -302,6 +302,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'unplugin-vue-components',
     'uuid',
     'zod',
+    'lint-staged',
   ],
   devDeps: ['@aws-sdk/types', '@nuxt/types', '@types/node', '@types/uuid', 'kill-port'],
 });
@@ -317,7 +318,16 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
-  ['prettier:fix']: 'pnpm prettier',
+  ['prettier:fix']: 'pnpm prettier -c -l',
+  ['pre-commit']: 'lint-staged',
+});
+
+frontEndApp.addDevDeps('lint-staged');
+frontEndApp.addFields({
+  'lint-staged': {
+    '{**/*,*}.{js,ts,vue}': ['eslint src tests --fix'],
+    '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
+  },
 });
 
 new PnpmWorkspace(root);

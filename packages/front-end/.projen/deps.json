@@ -67,6 +67,10 @@
       "type": "build"
     },
     {
+      "name": "lint-staged",
+      "type": "build"
+    },
+    {
       "name": "projen",
       "type": "build"
     },
@@ -133,6 +137,10 @@
     },
     {
       "name": "jwt-decode",
+      "type": "runtime"
+    },
+    {
+      "name": "lint-staged",
       "type": "runtime"
     },
     {

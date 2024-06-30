@@ -133,7 +133,7 @@
     }
   },
   "lint-staged": {
-    "{**/*,*}.{js,ts,vue}": [
+    "{**/*,*}.{js,ts}": [
       "eslint --fix"
     ],
     "{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}": [

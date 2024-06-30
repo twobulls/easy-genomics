@@ -342,7 +342,7 @@ frontEndApp.addScripts({
 });
 frontEndApp.addFields({
   'lint-staged': {
-    '{**/*,*}.{js,ts,vue}': ['eslint --fix'],
+    '{**/*,*}.{js,ts}': ['eslint --fix'],
     '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
   },
 });

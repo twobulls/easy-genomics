@@ -27,5 +27,4 @@ export class FrontEndStack extends Stack {
       description: 'Easy Genomics WWW Static Hosting',
     });
   };
-
 }

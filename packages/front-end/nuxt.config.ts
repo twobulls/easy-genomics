@@ -29,7 +29,7 @@ if (process.env.CI_CD === 'true') {
 
   // Load configuration settings for each environment
   const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
-    join(__dirname, '../../config/easy-genomics.yaml')
+    join(__dirname, '../../config/easy-genomics.yaml'),
   );
   if (configurations.length === 0) {
     throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');

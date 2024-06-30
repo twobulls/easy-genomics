@@ -30,7 +30,6 @@
     "nuxt-prepare": "nuxt prepare",
     "nuxt-preview": "nuxt preview",
     "nuxt-postinstall": "nuxt prepare",
-    "prettier:fix": "pnpm prettier --write",
     "pre-commit": "lint-staged"
   },
   "author": {

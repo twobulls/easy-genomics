@@ -32,7 +32,7 @@ const prettierOptions: PrettierOptions = {
     tabWidth: 2,
     singleQuote: true,
     semi: true,
-    trailingComma: TrailingComma.ES5,
+    trailingComma: TrailingComma.ALL,
     arrowParens: ArrowParens.ALWAYS,
     bracketSpacing: true,
     htmlWhitespaceSensitivity: HTMLWhitespaceSensitivity.IGNORE,
@@ -337,7 +337,6 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
-  ['prettier:fix']: 'pnpm prettier --write',
   ['pre-commit']: 'lint-staged',
 });
 frontEndApp.addFields({

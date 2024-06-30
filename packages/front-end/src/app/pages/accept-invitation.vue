@@ -7,6 +7,7 @@
   definePageMeta({ layout: 'signin' });
 
   const isFormDisabled = ref(true);
+  const router = useRouter();
   const state = ref({ email: '', firstName: '', lastName: '' });
   const { $api } = useNuxtApp();
   const { signIn } = useAuth();
@@ -55,7 +56,7 @@
   });
 
   function handleExpiredToken() {
-    useToastStore().error('Your invite link has been accepted or expired.');
+    useToastStore().error(ERRORS.inviteAcceptedOrExpired);
     navigateTo('/signin');
   }
 
@@ -80,9 +81,9 @@
       await signIn(state.value.email, password);
       handleSuccess();
     } catch (error: any) {
-      // TODO: mask error message if email not found temporarily until backend change made to return false positive response
-      if (error.message === 'Request error: Failed to fetch') {
-        handleSuccess();
+      if (error.message === 'Request error: User invitation to access Organization is already activated.') {
+        await router.push({ path: `/signin`, query: { email: state.value.email } });
+        useToastStore().error(ERRORS.inviteAcceptedOrExpired);
       } else {
         useToastStore().error(ERRORS.network);
         console.error('Error occurred during forgot password request.', error);

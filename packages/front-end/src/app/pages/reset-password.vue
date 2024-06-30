@@ -37,7 +37,7 @@
   });
 
   function handleExpiredToken() {
-    useToastStore().error('Your invite link has been accepted or expired.');
+    useToastStore().error(ERRORS.inviteAcceptedOrExpired);
     navigateTo('/signin');
   }
 

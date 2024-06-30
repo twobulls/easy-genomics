@@ -34,6 +34,16 @@
       "type": "build"
     },
     {
+      "name": "@typescript-eslint/eslint-plugin",
+      "version": "^6",
+      "type": "build"
+    },
+    {
+      "name": "@typescript-eslint/parser",
+      "version": "^6",
+      "type": "build"
+    },
+    {
       "name": "aws-cdk",
       "version": "^2.124.0",
       "type": "build"
@@ -44,6 +54,19 @@
     },
     {
       "name": "esbuild",
+      "type": "build"
+    },
+    {
+      "name": "eslint-import-resolver-typescript",
+      "type": "build"
+    },
+    {
+      "name": "eslint-plugin-import",
+      "type": "build"
+    },
+    {
+      "name": "eslint",
+      "version": "^8",
       "type": "build"
     },
     {

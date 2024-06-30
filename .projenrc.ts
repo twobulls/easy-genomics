@@ -77,6 +77,14 @@ const jestOptions: JestOptions = {
   extraCliOptions: ['--detectOpenHandles'],
 };
 
+const eslintGlobalRules = {
+  'no-console': 'warn',
+  'quotes': ['error', 'single'],
+  'no-unused-vars': 'error',
+  '@typescript-eslint/no-unused-vars': ['error'],
+  'semi': ['error', 'always'],
+};
+
 const root = new typescript.TypeScriptProject({
   authorName: authorName,
   authorOrganization: true,
@@ -127,15 +135,7 @@ const root = new typescript.TypeScriptProject({
 });
 if (root.eslint) {
   root.eslint.addRules({
-    'no-console': 'warn',
-    'quotes': ['error', 'single'],
-    'no-unused-vars': 'error',
-    '@typescript-eslint/no-unused-vars': ['error'],
-    'semi': ['error', 'always'],
-  });
-
-  root.eslint.addOverride({
-    files: ['*.vue'],
+    eslintGlobalRules,
   });
 
   root.eslint.addPlugins('prettier');
@@ -202,7 +202,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
-  eslint: false,
+  eslint: true,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -253,7 +253,10 @@ backEndApp.addScripts({
   ['cicd-bootstrap-back-end']: 'export CI_CD=true; pnpm cdk bootstrap',
   ['cicd-build-deploy-back-end']: 'export CI_CD=true; pnpm cdk bootstrap; pnpm run build; pnpm run deploy',
 });
-
+if (backEndApp.eslint) {
+  backEndApp.eslint.addRules(eslintGlobalRules);
+  // add any BE-specific rules here...
+}
 // Defines the Easy Genomics 'front-end' subproject
 const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   parent: root,
@@ -262,7 +265,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
-  eslint: false,
+  eslint: true,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -310,7 +313,17 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'zod',
     'lint-staged',
   ],
-  devDeps: ['@aws-sdk/types', '@nuxt/types', '@types/node', '@types/uuid', 'kill-port'],
+  devDeps: [
+    '@aws-sdk/types',
+    '@nuxt/types',
+    '@types/node',
+    '@types/uuid',
+    'kill-port',
+    'lint-staged',
+    '@nuxtjs/eslint-config-typescript',
+    'vue-eslint-parser',
+    '@typescript-eslint/parser',
+  ],
 });
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
@@ -327,14 +340,21 @@ frontEndApp.addScripts({
   ['prettier:fix']: 'pnpm prettier --write',
   ['pre-commit']: 'lint-staged',
 });
-
-frontEndApp.addDevDeps('lint-staged');
 frontEndApp.addFields({
   'lint-staged': {
     '{**/*,*}.{js,ts,vue}': ['eslint --fix'],
     '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
   },
 });
+if (frontEndApp.eslint) {
+  frontEndApp.eslint.addRules({ ...eslintGlobalRules });
+  frontEndApp.eslint.addExtends(
+    'plugin:prettier/recommended',
+    '@nuxtjs/eslint-config-typescript',
+    'plugin:vue/vue3-recommended'
+  );
+  frontEndApp.eslint.addPlugins('prettier', 'vue');
+}
 
 new PnpmWorkspace(root);
 new VscodeSettings(root);

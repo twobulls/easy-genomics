@@ -134,6 +134,10 @@ if (root.eslint) {
     'semi': ['error', 'always'],
   });
 
+  root.eslint.addOverride({
+    files: ['*.vue'],
+  });
+
   root.eslint.addPlugins('prettier');
   root.eslint.addExtends('plugin:prettier/recommended');
 }
@@ -198,6 +202,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
+  eslint: false,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -257,6 +262,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
+  eslint: false,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -318,14 +324,14 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
-  ['prettier:fix']: 'pnpm prettier -c -l',
+  ['prettier:fix']: 'pnpm prettier --write',
   ['pre-commit']: 'lint-staged',
 });
 
 frontEndApp.addDevDeps('lint-staged');
 frontEndApp.addFields({
   'lint-staged': {
-    '{**/*,*}.{js,ts,vue}': ['eslint src tests --fix'],
+    '{**/*,*}.{js,ts,vue}': ['eslint --fix'],
     '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
   },
 });

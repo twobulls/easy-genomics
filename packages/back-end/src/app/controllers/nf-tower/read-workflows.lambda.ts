@@ -2,10 +2,11 @@ import { ListWorkflowsResponse } from '@easy-genomics/shared-lib/src/app/types/n
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../services/easy-genomics/laboratory-service';
-import { decrypt } from '../../utils/encryption-utils';
+import { SsmService } from '../../services/ssm-service';
 import { getApiParameters, httpGet, validateOrganizationAccess } from '../../utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
+const ssmService = new SsmService();
 
 /**
  * This GET /nf-tower/read-workflows/{LaboratoryId} API queries the /workflow API for
@@ -27,21 +28,24 @@ export const handler: Handler = async (
     if (id === '') throw new Error('Required id is missing');
 
     const laboratory = await laboratoryService.queryByLaboratoryId(id);
-
     if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
       throw new Error('Unauthorized');
     }
-
     if (!laboratory.NextFlowTowerWorkspaceId) {
       throw new Error('Laboratory Workspace Id unavailable');
     }
-    if (!laboratory.NextFlowTowerAccessToken) {
+
+    // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
+    const accessToken: string | undefined = (await ssmService.getParameter({
+      Name: `/easy-genomics/laboratory/${id}/access-token`,
+      WithDecryption: true,
+    })).Parameter?.Value;
+    if (!accessToken) {
       throw new Error('Laboratory Access Token unavailable');
     }
-    const accessToken: string | undefined = await decrypt(laboratory.NextFlowTowerAccessToken);
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiParameters = getApiParameters(event);
+    const apiParameters: URLSearchParams = getApiParameters(event);
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
     const response: ListWorkflowsResponse = await httpGet<ListWorkflowsResponse>(

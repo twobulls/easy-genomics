@@ -18,16 +18,16 @@ const useToastStore = defineStore('toastStore', {
     },
 
     info(title: string) {
-      this.toasts.push({ id: `toast-${uuidv4()}`, title: title, variant: 'info' });
+      this.toasts.push({ id: `toast-${uuidv4()}`, title, variant: 'info' });
     },
     success(title: string) {
-      this.toasts.push({ id: `toast-${uuidv4()}`, title: title, variant: 'success' });
+      this.toasts.push({ id: `toast-${uuidv4()}`, title, variant: 'success' });
     },
     warning(title: string) {
-      this.toasts.push({ id: `toast-${uuidv4()}`, title: title, variant: 'warning' });
+      this.toasts.push({ id: `toast-${uuidv4()}`, title, variant: 'warning' });
     },
     error(title: string) {
-      this.toasts.push({ id: `toast-${uuidv4()}`, title: title, variant: 'error' });
+      this.toasts.push({ id: `toast-${uuidv4()}`, title, variant: 'error' });
     },
   },
 });

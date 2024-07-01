@@ -50,10 +50,7 @@
     ],
     "quotes": [
       "error",
-      "single",
-      {
-        "avoidEscape": true
-      }
+      "single"
     ],
     "comma-dangle": [
       "error",
@@ -215,6 +212,11 @@
           "method"
         ]
       }
+    ],
+    "no-console": "warn",
+    "no-unused-vars": "error",
+    "@typescript-eslint/no-unused-vars": [
+      "error"
     ]
   },
   "overrides": []

@@ -9,6 +9,10 @@
       "type": "build"
     },
     {
+      "name": "@nuxtjs/eslint-config-typescript",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -67,6 +71,10 @@
       "type": "build"
     },
     {
+      "name": "lint-staged",
+      "type": "build"
+    },
+    {
       "name": "projen",
       "type": "build"
     },
@@ -80,6 +88,10 @@
     },
     {
       "name": "typescript",
+      "type": "build"
+    },
+    {
+      "name": "vue-eslint-parser",
       "type": "build"
     },
     {
@@ -133,6 +145,10 @@
     },
     {
       "name": "jwt-decode",
+      "type": "runtime"
+    },
+    {
+      "name": "lint-staged",
       "type": "runtime"
     },
     {

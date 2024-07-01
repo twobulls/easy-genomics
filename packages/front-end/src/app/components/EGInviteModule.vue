@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '~/constants/validation';
 
   const props = withDefaults(
     defineProps<{
@@ -11,12 +11,12 @@
     {
       placeholder: 'Enter Email',
       disabled: false,
-    }
+    },
   );
 
   const $emit = defineEmits(['invite-success']);
   const formSchema = z.object({
-    email: z.string().email(ERRORS.email),
+    email: z.string().email(VALIDATION_MESSAGES.email),
   });
   const isFormDisabled = ref(true);
   const isRequestPending = ref(false);

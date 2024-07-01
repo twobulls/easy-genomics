@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { z } from 'zod';
   import { resetStores, useUiStore } from '~/stores';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { onBeforeMount } from '#imports';
 
   definePageMeta({ layout: 'signin' });
@@ -15,8 +15,8 @@
     password: '',
   });
   const formSchema = z.object({
-    email: z.string().email(ERRORS.email),
-    password: z.string().min(1, ERRORS.password),
+    email: z.string().email(VALIDATION_MESSAGES.email),
+    password: z.string().min(1, VALIDATION_MESSAGES.password),
   });
 
   /**

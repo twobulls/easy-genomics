@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { z } from 'zod';
   import { useToastStore, useUiStore } from '~/stores';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
   import { checkTokenExpiry, decodeJwt } from '~/utils/jwt';
 
@@ -15,26 +15,26 @@
   const formSchema = z.object({
     firstName: z
       .string()
-      .min(1, ERRORS.notEmpty)
-      .max(50, ERRORS.nameMaxLength)
-      .refine((name) => /^[a-zA-Z0-9\s'.-]*$/.test(name), ERRORS.invalidChar)
-      .refine((name) => !/\s{2,}/.test(name), ERRORS.nameMultiSpaces),
+      .min(1, VALIDATION_MESSAGES.notEmpty)
+      .max(50, VALIDATION_MESSAGES.nameMaxLength)
+      .refine((name) => /^[a-zA-Z0-9\s'.-]*$/.test(name), VALIDATION_MESSAGES.invalidChar)
+      .refine((name) => !/\s{2,}/.test(name), VALIDATION_MESSAGES.nameMultiSpaces),
     lastName: z
       .string()
-      .min(1, ERRORS.notEmpty)
-      .max(50, ERRORS.nameMaxLength)
-      .refine((name) => /^[a-zA-Z0-9\s'.-]*$/.test(name), ERRORS.invalidChar)
-      .refine((name) => !/\s{2,}/.test(name), ERRORS.nameMultiSpaces),
+      .min(1, VALIDATION_MESSAGES.notEmpty)
+      .max(50, VALIDATION_MESSAGES.nameMaxLength)
+      .refine((name) => /^[a-zA-Z0-9\s'.-]*$/.test(name), VALIDATION_MESSAGES.invalidChar)
+      .refine((name) => !/\s{2,}/.test(name), VALIDATION_MESSAGES.nameMultiSpaces),
     password: z
       .string()
-      .nonempty(ERRORS.notEmpty)
-      .min(8, ERRORS.passwordMinLength)
-      .max(50, ERRORS.passwordMaxLength)
-      .refine((value) => !/\s/.test(value), ERRORS.notSpaces)
-      .refine((value) => /[A-Z]/.test(value), ERRORS.passwordUppercase)
-      .refine((value) => /[a-z]/.test(value), ERRORS.passwordLowercase)
-      .refine((value) => /[0-9]/.test(value), ERRORS.passwordNumber)
-      .refine((value) => /[^a-zA-Z0-9]/.test(value), ERRORS.passwordSymbol),
+      .nonempty(VALIDATION_MESSAGES.notEmpty)
+      .min(8, VALIDATION_MESSAGES.passwordMinLength)
+      .max(50, VALIDATION_MESSAGES.passwordMaxLength)
+      .refine((value) => !/\s/.test(value), VALIDATION_MESSAGES.notSpaces)
+      .refine((value) => /[A-Z]/.test(value), VALIDATION_MESSAGES.passwordUppercase)
+      .refine((value) => /[a-z]/.test(value), VALIDATION_MESSAGES.passwordLowercase)
+      .refine((value) => /[0-9]/.test(value), VALIDATION_MESSAGES.passwordNumber)
+      .refine((value) => /[^a-zA-Z0-9]/.test(value), VALIDATION_MESSAGES.passwordSymbol),
   });
   const inviteToken = ref();
 
@@ -57,7 +57,7 @@
   });
 
   function handleExpiredToken() {
-    useToastStore().error(ERRORS.inviteAcceptedOrExpired);
+    useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
     navigateTo('/signin');
   }
 
@@ -84,9 +84,9 @@
     } catch (error: any) {
       if (error.message === `Request error: ${ERROR_MESSAGES.invitationAlreadyActivated}`) {
         await router.push({ path: `/signin`, query: { email: state.value.email } });
-        useToastStore().error(ERRORS.inviteAcceptedOrExpired);
+        useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
       } else {
-        useToastStore().error(ERRORS.network);
+        useToastStore().error(VALIDATION_MESSAGES.network);
         console.error('Error occurred during forgot password request.', error);
         throw error;
       }

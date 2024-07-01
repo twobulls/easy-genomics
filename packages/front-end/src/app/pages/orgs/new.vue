@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '#ui/types';
   import { useToastStore, useUiStore } from '~/stores';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { OrgDetailsForm } from '~/types/forms';
   import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
 
@@ -16,7 +16,7 @@
       useToastStore().success('Organization created');
       router.push({ path: '/orgs' });
     } catch (error) {
-      useToastStore().error(ERRORS.network);
+      useToastStore().error(VALIDATION_MESSAGES.network);
     } finally {
       useUiStore().setRequestPending(false);
     }

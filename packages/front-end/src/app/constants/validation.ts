@@ -1,7 +1,7 @@
 /**
  * Form validation error messages
  */
-export const ERRORS = {
+export const VALIDATION_MESSAGES = {
   email: 'Must be a valid email address',
   invalidChar: 'Invalid characters entered',
   inviteAcceptedOrExpired: 'Your invite link has been accepted or expired',

@@ -25,21 +25,27 @@ export class SsmService {
     this.ssmClient = new SSMClient();
   }
 
-  public deleteParameter = async (deleteParameterCommandInput: DeleteParameterCommandInput): Promise<DeleteParameterCommandOutput> => {
+  public deleteParameter = async (
+    deleteParameterCommandInput: DeleteParameterCommandInput,
+  ): Promise<DeleteParameterCommandOutput> => {
     return this.ssmRequest<DeleteParameterCommandInput, DeleteParameterCommandOutput>(
       SsmCommand.DELETE_PARAMETER,
       deleteParameterCommandInput,
     );
   };
 
-  public getParameter = async (getParameterCommandInput: GetParameterCommandInput): Promise<GetParameterCommandOutput> => {
+  public getParameter = async (
+    getParameterCommandInput: GetParameterCommandInput,
+  ): Promise<GetParameterCommandOutput> => {
     return this.ssmRequest<GetParameterCommandInput, GetParameterCommandOutput>(
       SsmCommand.GET_PARAMETER,
       getParameterCommandInput,
     );
   };
 
-  public putParameter = async (putParameterCommandInput: PutParameterCommandInput): Promise<PutParameterCommandOutput> => {
+  public putParameter = async (
+    putParameterCommandInput: PutParameterCommandInput,
+  ): Promise<PutParameterCommandOutput> => {
     return this.ssmRequest<PutParameterCommandInput, PutParameterCommandOutput>(
       SsmCommand.PUT_PARAMETER,
       putParameterCommandInput,
@@ -55,7 +61,7 @@ export class SsmService {
         `[ssm-service : ssmRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
       );
 
-      return (await this.ssmClient.send(this.getSsmCommand(command, data)));
+      return await this.ssmClient.send(this.getSsmCommand(command, data));
     } catch (error: any) {
       console.error(
         `[ssm-service : ssmRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,

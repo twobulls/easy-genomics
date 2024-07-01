@@ -36,9 +36,11 @@ export const handler: Handler = async (
       throw new Error('Laboratory deletion failed');
     }
 
-    await ssmService.deleteParameter({
-      Name: `/easy-genomics/laboratory/${id}/access-token`,
-    }).catch((_) => {});
+    await ssmService
+      .deleteParameter({
+        Name: `/easy-genomics/laboratory/${id}/access-token`,
+      })
+      .catch((_) => {});
 
     return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {

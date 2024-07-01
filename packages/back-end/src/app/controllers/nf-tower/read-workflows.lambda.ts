@@ -36,10 +36,12 @@ export const handler: Handler = async (
     }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-    const accessToken: string | undefined = (await ssmService.getParameter({
-      Name: `/easy-genomics/laboratory/${id}/access-token`,
-      WithDecryption: true,
-    })).Parameter?.Value;
+    const accessToken: string | undefined = (
+      await ssmService.getParameter({
+        Name: `/easy-genomics/laboratory/${id}/access-token`,
+        WithDecryption: true,
+      })
+    ).Parameter?.Value;
     if (!accessToken) {
       throw new Error('Laboratory Access Token unavailable');
     }

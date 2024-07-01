@@ -287,7 +287,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`arn:aws:ssm:${this.props.env.region}:${this.props.env.account!}:parameter/easy-genomics/laboratory/*`],
+        resources: [
+          `arn:aws:ssm:${this.props.env.region}:${this.props.env.account!}:parameter/easy-genomics/laboratory/*`,
+        ],
         actions: ['ssm:PutParameter'],
         effect: Effect.ALLOW,
       }),
@@ -347,7 +349,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/laboratory/*`],
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/laboratory/*`,
+        ],
         actions: ['ssm:PutParameter'],
         effect: Effect.ALLOW,
       }),
@@ -378,7 +382,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/laboratory/*`],
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/laboratory/*`,
+        ],
         actions: ['ssm:DeleteParameter'],
         effect: Effect.ALLOW,
       }),

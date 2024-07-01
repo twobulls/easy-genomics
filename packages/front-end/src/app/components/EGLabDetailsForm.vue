@@ -35,8 +35,6 @@
 
   const formMode = ref(props.formMode);
 
-  const { MOCK_ORG_ID } = useRuntimeConfig().public;
-
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const router = useRouter();
@@ -169,9 +167,9 @@
   async function handleCreateLab() {
     useUiStore().setRequestPending(true);
 
-    const lab = {
+    const lab: CreateLaboratory = {
       ...state.value,
-      OrganizationId: MOCK_ORG_ID,
+      OrganizationId: useUserStore().currentOrgId,
       Status: 'Active',
     };
 

@@ -23,6 +23,7 @@ export const CreateLaboratorySchema = z
     OrganizationId: z.string().uuid(),
     Name: z.string(),
     Description: z.string().optional(),
+    S3Bucket: z.string().optional(),
     Status: z.enum(['Active', 'Inactive']),
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),

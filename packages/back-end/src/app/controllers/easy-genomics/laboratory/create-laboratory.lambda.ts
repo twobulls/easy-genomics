@@ -1,10 +1,8 @@
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
-import { PutParameterCommandOutput } from '@aws-sdk/client-ssm';
 import {
   CreateLaboratory,
   CreateLaboratorySchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
-import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -37,7 +35,6 @@ export const handler: Handler = async (
     }
 
     const laboratoryId: string = uuidv4();
-    const s3Bucket: string = 'fake-bucket-name';
 
     const response = await laboratoryService.add({
       OrganizationId: request.OrganizationId,
@@ -45,7 +42,7 @@ export const handler: Handler = async (
       Name: request.Name,
       Description: request.Description,
       Status: 'Active',
-      S3Bucket: s3Bucket,
+      S3Bucket: request.S3Bucket,
       AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
       NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,
       NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,

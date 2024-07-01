@@ -42,7 +42,8 @@ export class BackEndStack extends Stack {
     this.props = props;
 
     // Create KMS symmetric encryption key for Cognito to generate secrets - temporary passwords, verification codes, confirmation codes
-    this.kmsKeys.set('cognito-idp-kms-key',
+    this.kmsKeys.set(
+      'cognito-idp-kms-key',
       new Key(this, `${this.props.constructNamespace}-cognito-idp-kms-key`, {
         alias: `${this.props.constructNamespace}-cognito-idp-kms-key`,
         keySpec: KeySpec.SYMMETRIC_DEFAULT,
@@ -51,7 +52,8 @@ export class BackEndStack extends Stack {
     );
 
     // Create KMS symmetric encryption key to protect sensitive Easy Genomics DynamoDB data
-    this.kmsKeys.set('dynamo-db-kms-key',
+    this.kmsKeys.set(
+      'dynamo-db-kms-key',
       new Key(this, `${this.props.constructNamespace}-dynamo-db-kms-key`, {
         alias: `${this.props.constructNamespace}-dynamo-db-kms-key`,
         keySpec: KeySpec.SYMMETRIC_DEFAULT,
@@ -85,7 +87,11 @@ export class BackEndStack extends Stack {
       cognitoIdpKmsKey: this.kmsKeys.get('cognito-idp-kms-key'),
       dynamoDbKmsKey: this.kmsKeys.get('dynamo-db-kms-key'),
     };
-    const easyGenomicsNestedStack = new EasyGenomicsNestedStack(this, `${this.props.envName}-easy-genomics-nested-stack`, easyGenomicsNestedStackProps);
+    const easyGenomicsNestedStack = new EasyGenomicsNestedStack(
+      this,
+      `${this.props.envName}-easy-genomics-nested-stack`,
+      easyGenomicsNestedStackProps,
+    );
 
     const awsHealthOmicsNestedStackProps: AwsHealthOmicsNestedStackProps = {
       ...easyGenomicsNestedStackProps,
@@ -93,7 +99,9 @@ export class BackEndStack extends Stack {
       restApi: this.apiGateway.restApi,
     };
     new AwsHealthOmicsNestedStack(
-      this, `${this.props.envName}-aws-healthomics-nested-stack`, awsHealthOmicsNestedStackProps,
+      this,
+      `${this.props.envName}-aws-healthomics-nested-stack`,
+      awsHealthOmicsNestedStackProps,
     );
 
     const nfTowerNestedStackProps: NFTowerNestedStackProps = {
@@ -112,8 +120,14 @@ export class BackEndStack extends Stack {
     };
     new DataProvisioningNestedStack(this, 'data-provisioning-nested-stack', dataProvisioningNestedStackProps);
 
-    new CfnOutput(this, 'CognitoUserPoolId', { key: 'CognitoUserPoolId', value: authNestedStack.cognito.userPool.userPoolId });
-    new CfnOutput(this, 'CognitoUserPoolClientId', { key: 'CognitoUserPoolClientId', value: authNestedStack.cognito.userPoolClient.userPoolClientId });
+    new CfnOutput(this, 'CognitoUserPoolId', {
+      key: 'CognitoUserPoolId',
+      value: authNestedStack.cognito.userPool.userPoolId,
+    });
+    new CfnOutput(this, 'CognitoUserPoolClientId', {
+      key: 'CognitoUserPoolClientId',
+      value: authNestedStack.cognito.userPoolClient.userPoolClientId,
+    });
     new CfnOutput(this, 'ApiGatewayRestApiUrl', { key: 'ApiGatewayRestApiUrl', value: this.apiGateway.restApi.url });
   };
 }

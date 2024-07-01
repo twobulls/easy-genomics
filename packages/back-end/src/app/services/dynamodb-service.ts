@@ -69,14 +69,18 @@ export class DynamoDBService {
     );
   };
 
-  protected transactWriteItems = async (transactWriteItemsCommandInput: TransactWriteItemsCommandInput): Promise<TransactWriteItemsCommandOutput> => {
+  protected transactWriteItems = async (
+    transactWriteItemsCommandInput: TransactWriteItemsCommandInput,
+  ): Promise<TransactWriteItemsCommandOutput> => {
     return this.dynamoDBRequest<TransactWriteItemsCommandInput, TransactWriteItemsCommandOutput>(
       DynamoDBCommand.TRANSACT_WRITE,
       transactWriteItemsCommandInput,
     );
   };
 
-  protected batchGetItem = async (batchGetItemCommandInput: BatchGetItemCommandInput): Promise<BatchGetItemCommandOutput> => {
+  protected batchGetItem = async (
+    batchGetItemCommandInput: BatchGetItemCommandInput,
+  ): Promise<BatchGetItemCommandOutput> => {
     return this.dynamoDBRequest<BatchGetItemCommandInput, BatchGetItemCommandOutput>(
       DynamoDBCommand.BATCH_GET_ITEM,
       batchGetItemCommandInput,
@@ -91,10 +95,7 @@ export class DynamoDBService {
   };
 
   protected queryItems = async (queryCommandInput: QueryCommandInput): Promise<QueryCommandOutput> => {
-    return this.dynamoDBRequest<QueryCommandInput, QueryCommandOutput>(
-      DynamoDBCommand.QUERY_ITEMS,
-      queryCommandInput,
-    );
+    return this.dynamoDBRequest<QueryCommandInput, QueryCommandOutput>(DynamoDBCommand.QUERY_ITEMS, queryCommandInput);
   };
 
   protected findAll = async (scanCommandInput: ScanCommandInput): Promise<ScanCommandOutput> => {
@@ -172,8 +173,8 @@ export class DynamoDBService {
    * ExpressionAttributeNames from an object's property names.
    * @param object
    */
-  public getExpressionAttributeNamesDefinition = <T>(object: T, exclusions?: string[]): {[p: string]: string} => {
-    const objectExpressionAttributeNames: {[p: string]: string}[] = Object.keys(object)
+  public getExpressionAttributeNamesDefinition = <T>(object: T, exclusions?: string[]): { [p: string]: string } => {
+    const objectExpressionAttributeNames: { [p: string]: string }[] = Object.keys(object)
       .filter((key: string) => !exclusions?.includes(key))
       .map((key: string) => {
         return { [`#${key}`]: key };
@@ -194,8 +195,8 @@ export class DynamoDBService {
    *
    * @param object
    */
-  public getExpressionAttributeValuesDefinition = <T>(object: T, exclusions?: string[]): {[p: string]: any} => {
-    const objectExpressionAttributeValues: {[p: string]: any}[] = Object.keys(object)
+  public getExpressionAttributeValuesDefinition = <T>(object: T, exclusions?: string[]): { [p: string]: any } => {
+    const objectExpressionAttributeValues: { [p: string]: any }[] = Object.keys(object)
       .filter((key: string) => !exclusions?.includes(key))
       .map((key: string) => {
         const attributeId = `${key.charAt(0).toLowerCase() + key.slice(1)}`; // Camel Case
@@ -224,7 +225,8 @@ export class DynamoDBService {
               return {
                 [`:${attributeId}`]: { SS: attributeValue }, // String Set
               };
-            } else { // Array of objects
+            } else {
+              // Array of objects
               return {
                 [`:${attributeId}`]: { L: attributeValue }, // List
               };
@@ -253,8 +255,13 @@ export class DynamoDBService {
     const attributeNameKeys = Object.keys(attributeNames);
     const attributeValueKeys = Object.keys(attributeValues);
 
-    return 'SET ' + attributeNameKeys.map((value: string, index: number) => {
-      return `${value} = ${attributeValueKeys[index]}`;
-    }).join(', ');
+    return (
+      'SET ' +
+      attributeNameKeys
+        .map((value: string, index: number) => {
+          return `${value} = ${attributeValueKeys[index]}`;
+        })
+        .join(', ')
+    );
   };
 }

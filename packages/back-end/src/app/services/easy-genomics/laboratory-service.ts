@@ -137,7 +137,7 @@ export class LaboratoryService extends DynamoDBService implements Service {
 
     if (response.$metadata.httpStatusCode === 200) {
       if (response.Items) {
-        return response.Items.map(item => <Laboratory>unmarshall(item));
+        return response.Items.map((item) => <Laboratory>unmarshall(item));
       } else {
         throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
       }

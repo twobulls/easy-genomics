@@ -19,7 +19,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
     this.props = props;
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
-      ...<IamConstructProps>props, // Typecast to IamConstructProps
+      ...(<IamConstructProps>props), // Typecast to IamConstructProps
     });
     this.setupIamPolicies();
 
@@ -34,7 +34,8 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       lambdaFunctionsDir: 'src/app/controllers/aws-healthomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
       lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
-      environment: { // Defines the common environment settings for all lambda functions
+      environment: {
+        // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
         REGION: this.props.env.region!,
         DOMAIN_NAME: this.props.applicationUrl,
@@ -46,80 +47,68 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
   // AWS HealthOmics specific IAM policies
   private setupIamPolicies = () => {
     // /aws-healthomics/private-workflow/create-private-workflow
-    this.iam.addPolicyStatements(
-      '/aws-healthomics/private-workflow/create-private-workflow',
-      [
-        new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`],
-          actions: ['dynamodb:PutItem'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    this.iam.addPolicyStatements('/aws-healthomics/private-workflow/create-private-workflow', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+        ],
+        actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /aws-healthomics/private-workflow/list-private-workflows
-    this.iam.addPolicyStatements(
-      '/aws-healthomics/private-workflow/list-private-workflows',
-      [
-        new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`],
-          actions: ['dynamodb:Scan'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    this.iam.addPolicyStatements('/aws-healthomics/private-workflow/list-private-workflows', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+        ],
+        actions: ['dynamodb:Scan'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /aws-healthomics/private-workflow/request-private-workflow
-    this.iam.addPolicyStatements(
-      '/aws-healthomics/private-workflow/request-private-workflow',
-      [
-        new PolicyStatement({
-          resources: [`arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`],
-          actions: ['dynamodb:GetItem'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    this.iam.addPolicyStatements('/aws-healthomics/private-workflow/request-private-workflow', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+        ],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /aws-healthomics/private-workflow/read-private-workflow
-    this.iam.addPolicyStatements(
-      '/aws-healthomics/private-workflow/read-private-workflow',
-      [
-        new PolicyStatement({
-          resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
-          ],
-          actions: ['dynamodb:Query'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    this.iam.addPolicyStatements('/aws-healthomics/private-workflow/read-private-workflow', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /aws-healthomics/private-workflow/update-private-workflow
-    this.iam.addPolicyStatements(
-      '/aws-healthomics/private-workflow/update-private-workflow',
-      [
-        new PolicyStatement({
-          resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
-          ],
-          actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    this.iam.addPolicyStatements('/aws-healthomics/private-workflow/update-private-workflow', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /aws-healthomics/private-workflow/delete-private-workflow
-    this.iam.addPolicyStatements(
-      '/aws-healthomics/private-workflow/delete-private-workflow',
-      [
-        new PolicyStatement({
-          resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
-          ],
-          actions: ['dynamodb:DeleteItem', 'dynamodb:Query'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    this.iam.addPolicyStatements('/aws-healthomics/private-workflow/delete-private-workflow', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-healthomics-private-workflow-table/index/*`,
+        ],
+        actions: ['dynamodb:DeleteItem', 'dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
   };
 
   // AWS HealthOmics specific DynamoDB tables
@@ -138,12 +127,14 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
           name: 'Version', // Workflow Release Version
           type: AttributeType.STRING,
         },
-        gsi: [{
-          partitionKey: {
-            name: 'PrivateWorkflowId', // Global Secondary Index to support REST API get / update / delete requests
-            type: AttributeType.STRING,
+        gsi: [
+          {
+            partitionKey: {
+              name: 'PrivateWorkflowId', // Global Secondary Index to support REST API get / update / delete requests
+              type: AttributeType.STRING,
+            },
           },
-        }],
+        ],
         lsi: baseLSIAttributes,
       },
       this.props.devEnv,

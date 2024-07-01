@@ -12,10 +12,7 @@ import { APIGatewayProxyEvent } from 'aws-lambda/trigger/api-gateway-proxy';
  * @param url
  * @param headers
  */
-export async function httpGet<T>(
-  url: string,
-  headers?: Record<string, string>,
-): Promise<T> {
+export async function httpGet<T>(url: string, headers?: Record<string, string>): Promise<T> {
   try {
     return await fetch(url, {
       method: 'GET',
@@ -25,7 +22,8 @@ export async function httpGet<T>(
         'cache-control': 'no-cache',
         ...headers,
       },
-    }).then(async (response) => response.json())
+    })
+      .then(async (response) => response.json())
       .then((json) => <T>json);
   } catch (error: any) {
     console.error(error.message);
@@ -64,7 +62,11 @@ export function getApiParameters(event: APIGatewayProxyEvent): URLSearchParams {
  * @param organizationId
  * @param laboratoryId
  */
-export function validateOrganizationAccess(event: APIGatewayProxyEvent, organizationId: string, laboratoryId?: string): Boolean {
+export function validateOrganizationAccess(
+  event: APIGatewayProxyEvent,
+  organizationId: string,
+  laboratoryId?: string,
+): Boolean {
   try {
     const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims.OrganizationAccess;
     if (!orgAccessMetadata) {

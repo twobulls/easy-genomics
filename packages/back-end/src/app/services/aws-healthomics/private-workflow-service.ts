@@ -110,7 +110,7 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
     });
 
     if (response.$metadata.httpStatusCode === 200) {
-      return <PrivateWorkflow[]>response.Items?.map(item => unmarshall(item));
+      return <PrivateWorkflow[]>response.Items?.map((item) => unmarshall(item));
     } else {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
@@ -125,8 +125,14 @@ export class PrivateWorkflowService extends DynamoDBService implements Service {
 
     const updateExclusions: string[] = ['Url', 'Version', 'PrivateWorkflowId', 'CreatedAt', 'CreatedBy'];
 
-    const expressionAttributeNames: {[p: string]: string} = this.getExpressionAttributeNamesDefinition(privateWorkflow, updateExclusions);
-    const expressionAttributeValues: {[p: string]: any} = this.getExpressionAttributeValuesDefinition(privateWorkflow, updateExclusions);
+    const expressionAttributeNames: { [p: string]: string } = this.getExpressionAttributeNamesDefinition(
+      privateWorkflow,
+      updateExclusions,
+    );
+    const expressionAttributeValues: { [p: string]: any } = this.getExpressionAttributeValuesDefinition(
+      privateWorkflow,
+      updateExclusions,
+    );
     const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
 
     const response: UpdateItemCommandOutput = await this.updateItem({

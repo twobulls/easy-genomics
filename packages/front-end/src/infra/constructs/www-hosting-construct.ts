@@ -131,9 +131,7 @@ export class WwwHostingConstruct extends Construct {
       new PolicyStatement({
         actions: ['s3:GetObject'],
         resources: [wwwBucket.arnForObjects('*')],
-        principals: [
-          new CanonicalUserPrincipal(originAccessIdentity.cloudFrontOriginAccessIdentityS3CanonicalUserId),
-        ],
+        principals: [new CanonicalUserPrincipal(originAccessIdentity.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
       }),
     );
     new CfnOutput(this, 'HostingBucketName', { key: 'HostingBucketName', value: wwwBucket.bucketName });
@@ -165,12 +163,12 @@ export class WwwHostingConstruct extends Construct {
     );
     new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
 
-    const s3Origin: S3Origin = new S3Origin(wwwBucket, { originAccessIdentity: originAccessIdentity });
+    const s3Origin: S3Origin = new S3Origin(wwwBucket, { originAccessIdentity });
     const indexPath: string = `/${this.props.webSiteIndexDocument}`;
 
     // CloudFront distribution
     const distribution: Distribution = new Distribution(this, 'SiteDistribution', {
-      certificate: certificate,
+      certificate,
       defaultRootObject: this.props.webSiteIndexDocument,
       domainNames: [applicationUrl],
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
@@ -181,13 +179,13 @@ export class WwwHostingConstruct extends Construct {
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS, // HEAD, GET, OPTIONS
         viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
-        responseHeadersPolicy: responseHeadersPolicy,
+        responseHeadersPolicy,
       },
       additionalBehaviors: {
         [indexPath]: {
           origin: s3Origin,
           cachePolicy: indexCachePolicy,
-          responseHeadersPolicy: responseHeadersPolicy,
+          responseHeadersPolicy,
         },
       },
       errorResponses: [
@@ -230,6 +228,8 @@ export class WwwHostingConstruct extends Construct {
       return new ResponseHeadersPolicy(this, 'ResponseHeadersPolicy', {
         securityHeadersBehavior: this.props.securityHeaders,
       });
-    } else {return;}
+    } else {
+      return undefined;
+    }
   };
 }

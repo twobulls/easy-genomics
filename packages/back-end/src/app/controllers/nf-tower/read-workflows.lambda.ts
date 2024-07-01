@@ -1,10 +1,6 @@
 import { ListWorkflowsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import {
-  APIGatewayProxyResult,
-  APIGatewayProxyWithCognitoAuthorizerEvent,
-  Handler,
-} from 'aws-lambda';
+import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../services/easy-genomics/laboratory-service';
 import { decrypt } from '../../utils/encryption-utils';
 import { getApiParameters, httpGet, validateOrganizationAccess } from '../../utils/rest-api-utils';

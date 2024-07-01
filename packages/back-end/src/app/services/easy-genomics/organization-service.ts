@@ -92,7 +92,7 @@ export class OrganizationService extends DynamoDBService implements Service {
     });
 
     if (response.$metadata.httpStatusCode === 200) {
-      return <Organization[]>response.Items?.map(item => unmarshall(item));
+      return <Organization[]>response.Items?.map((item) => unmarshall(item));
     } else {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
@@ -107,8 +107,14 @@ export class OrganizationService extends DynamoDBService implements Service {
 
     const updateExclusions: string[] = ['OrganizationId', 'CreatedAt', 'CreatedBy'];
 
-    const expressionAttributeNames: {[p: string]: string} = this.getExpressionAttributeNamesDefinition(organization, updateExclusions);
-    const expressionAttributeValues: {[p: string]: any} = this.getExpressionAttributeValuesDefinition(organization, updateExclusions);
+    const expressionAttributeNames: { [p: string]: string } = this.getExpressionAttributeNamesDefinition(
+      organization,
+      updateExclusions,
+    );
+    const expressionAttributeValues: { [p: string]: any } = this.getExpressionAttributeValuesDefinition(
+      organization,
+      updateExclusions,
+    );
     const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
 
     // Check if Organization Name is unchanged
@@ -215,5 +221,4 @@ export class OrganizationService extends DynamoDBService implements Service {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
   };
-
 }

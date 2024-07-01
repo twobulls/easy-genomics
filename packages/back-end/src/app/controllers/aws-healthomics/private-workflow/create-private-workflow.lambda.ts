@@ -15,9 +15,7 @@ export const handler: Handler = async (
   try {
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: PrivateWorkflow = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: PrivateWorkflow = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!CreatePrivateWorkflowSchema.safeParse(request).success) throw new Error('Invalid request');
 
@@ -47,4 +45,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

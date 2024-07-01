@@ -26,21 +26,20 @@ For example from packages/front-end/src/app/pages/orgs/view/[id].vue:
   </div>
 </div> -->
 
-
 <script setup lang="ts">
-import { UserStatus } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/status';
+  import { UserStatus } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/status';
 
-withDefaults(
-  defineProps<{
-    displayName: string;
-    email: string;
-    status: UserStatus;
-    showAvatar?: boolean;
-  }>(),
-  {
-    showAvatar: false,
-  }
-);
+  withDefaults(
+    defineProps<{
+      displayName: string;
+      email: string;
+      status: UserStatus;
+      showAvatar?: boolean;
+    }>(),
+    {
+      showAvatar: false,
+    }
+  );
 </script>
 
 <template>

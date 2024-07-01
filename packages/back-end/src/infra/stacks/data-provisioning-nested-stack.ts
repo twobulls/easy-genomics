@@ -2,7 +2,13 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import { laboratory, laboratoryUser, organization, organizationUser, user } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sample-data';
+import {
+  laboratory,
+  laboratoryUser,
+  organization,
+  organizationUser,
+  user,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sample-data';
 import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/unique-reference';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
@@ -58,10 +64,7 @@ export class DataProvisioningNestedStack extends NestedStack {
       if (this.props.testUserEmail && this.props.testUserPassword) {
         try {
           // Add test user to Cognito User Pool
-          this.cognitoUserConstruct.addUser(
-            this.props.testUserEmail,
-            this.props.testUserPassword,
-          );
+          this.cognitoUserConstruct.addUser(this.props.testUserEmail, this.props.testUserPassword);
 
           this.addDynamoDBSeedData<User>(`${this.props.namePrefix}-user-table`, {
             ...user,
@@ -77,12 +80,18 @@ export class DataProvisioningNestedStack extends NestedStack {
         }
 
         // Add User mapping data to DynamoDB Tables
-        this.addDynamoDBSeedData<OrganizationUser>(`${this.props.namePrefix}-organization-user-table`, organizationUser);
+        this.addDynamoDBSeedData<OrganizationUser>(
+          `${this.props.namePrefix}-organization-user-table`,
+          organizationUser,
+        );
         this.addDynamoDBSeedData<LaboratoryUser>(`${this.props.namePrefix}-laboratory-user-table`, laboratoryUser);
       }
 
       // Bulk add unique references to UniqueReferences DynamoDB Table
-      this.bulkAddDynamoDBSeedData<UniqueReference>(`${this.props.namePrefix}-unique-reference-table`, uniqueReferences);
+      this.bulkAddDynamoDBSeedData<UniqueReference>(
+        `${this.props.namePrefix}-unique-reference-table`,
+        uniqueReferences,
+      );
     }
   }
 
@@ -115,7 +124,7 @@ export class DataProvisioningNestedStack extends NestedStack {
     const table: Table | undefined = this.props.dynamoDBTables.get(tableName);
 
     if (table) {
-      const batchItems = testRecords.map(testRecord => {
+      const batchItems = testRecords.map((testRecord) => {
         return { PutRequest: { Item: DynamoDB.Converter.input(testRecord).M } };
       });
 

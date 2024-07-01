@@ -15,7 +15,9 @@ const keyring = new KmsKeyringNode({
 
 export async function encrypt(plainText?: string): Promise<string | undefined> {
   if (plainText && plainText !== '') {
-    const encrypted: EncryptOutput = await cryptoClient.encrypt(keyring, plainText, <EncryptInput>{ encryptionContext: context });
+    const encrypted: EncryptOutput = await cryptoClient.encrypt(keyring, plainText, <EncryptInput>{
+      encryptionContext: context,
+    });
     return encrypted.result.toString('hex');
   } else {
     return undefined;
@@ -24,7 +26,9 @@ export async function encrypt(plainText?: string): Promise<string | undefined> {
 
 export async function decrypt(cipherText?: string): Promise<string | undefined> {
   if (cipherText) {
-    const decrypted: DecryptOutput = await cryptoClient.decrypt(keyring, cipherText, <DecryptOptions>{ encoding: 'hex' });
+    const decrypted: DecryptOutput = await cryptoClient.decrypt(keyring, cipherText, <DecryptOptions>{
+      encoding: 'hex',
+    });
     return decrypted.plaintext.toString();
   } else {
     return undefined;

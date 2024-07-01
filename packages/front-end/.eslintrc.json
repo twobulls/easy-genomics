@@ -7,7 +7,9 @@
   "root": true,
   "plugins": [
     "@typescript-eslint",
-    "import"
+    "import",
+    "prettier",
+    "vue"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -16,7 +18,10 @@
     "project": "./tsconfig.dev.json"
   },
   "extends": [
-    "plugin:import/typescript"
+    "plugin:import/typescript",
+    "plugin:prettier/recommended",
+    "@nuxtjs/eslint-config-typescript",
+    "plugin:vue/vue3-recommended"
   ],
   "settings": {
     "import/parsers": {
@@ -56,7 +61,7 @@
       }
     ],
     "comma-dangle": [
-      "error",
+      "warn",
       "always-multiline"
     ],
     "comma-spacing": [
@@ -119,7 +124,7 @@
       "error"
     ],
     "semi": [
-      "error",
+      "warn",
       "always"
     ],
     "max-len": [
@@ -215,7 +220,19 @@
           "method"
         ]
       }
-    ]
+    ],
+    "no-unused-vars": "warn",
+    "@typescript-eslint/no-unused-vars": [
+      "warn"
+    ],
+    "space-before-function-paren": "off",
+    "no-console": "warn",
+    "arrow-parens": "warn",
+    "no-new": "warn",
+    "no-empty": "warn",
+    "prettier/prettier": "warn",
+    "require-await": "warn",
+    "array-callback-return": "warn"
   },
   "overrides": []
 }

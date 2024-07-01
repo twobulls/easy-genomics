@@ -3,7 +3,7 @@ import { NestedStackProps } from 'aws-cdk-lib';
 import { Policy, PolicyDocument, PolicyStatement, Role } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
-export interface IamConstructProps extends BackEndStackProps, NestedStackProps { }
+export interface IamConstructProps extends BackEndStackProps, NestedStackProps {}
 
 /**
  * This IAM Construct defines the EasyGenomics IAM Policy Statements, Roles.
@@ -93,5 +93,4 @@ export class IamConstruct extends Construct {
     }
     return policy;
   }
-
 }

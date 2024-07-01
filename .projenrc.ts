@@ -32,7 +32,7 @@ const prettierOptions: PrettierOptions = {
     tabWidth: 2,
     singleQuote: true,
     semi: true,
-    trailingComma: TrailingComma.ES5,
+    trailingComma: TrailingComma.ALL,
     arrowParens: ArrowParens.ALWAYS,
     bracketSpacing: true,
     htmlWhitespaceSensitivity: HTMLWhitespaceSensitivity.IGNORE,
@@ -75,6 +75,22 @@ const jestOptions: JestOptions = {
   },
   junitReporting: false,
   extraCliOptions: ['--detectOpenHandles'],
+};
+
+const eslintGlobalRules = {
+  // below rules are downgraded or disabled so as not to conflict with equivalent Prettier rules
+  'no-unused-vars': 'warn',
+  '@typescript-eslint/no-unused-vars': ['warn'],
+  'semi': ['warn', 'always'],
+  'comma-dangle': ['warn', 'always-multiline'],
+  'space-before-function-paren': 'off',
+  'no-console': 'warn',
+  'arrow-parens': 'warn',
+  'no-new': 'warn',
+  'no-empty': 'warn',
+  'prettier/prettier': 'warn',
+  'require-await': 'warn',
+  'array-callback-return': 'warn',
 };
 
 const root = new typescript.TypeScriptProject({
@@ -122,8 +138,17 @@ const root = new typescript.TypeScriptProject({
     'husky',
     'lint-staged',
     'validate-branch-name',
+    'prettier',
+    'eslint-plugin-prettier',
   ],
 });
+if (root.eslint) {
+  root.eslint.addRules({
+    eslintGlobalRules,
+  });
+  root.eslint.addPlugins('prettier');
+  root.eslint.addExtends('plugin:prettier/recommended');
+}
 root.removeScript('build');
 root.removeScript('deploy');
 root.addScripts({
@@ -146,7 +171,7 @@ root.addScripts({
   ['cicd-build-deploy-back-end']:
     'pnpm nx run-many --targets=cicd-build-deploy-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
   ['cicd-test-front-end']:
-    'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+    'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/front-end --verbose',
   ['cicd-bootstrap-front-end']:
     'pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/front-end --verbose',
   ['cicd-build-deploy-front-end']:
@@ -185,6 +210,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
+  eslint: true,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -227,6 +253,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@types/node',
     '@types/uuid',
     'aws-sdk-client-mock',
+    'prettier',
+    'eslint-plugin-prettier',
   ],
 });
 backEndApp.addScripts({
@@ -235,7 +263,11 @@ backEndApp.addScripts({
   ['cicd-bootstrap-back-end']: 'export CI_CD=true; pnpm cdk bootstrap',
   ['cicd-build-deploy-back-end']: 'export CI_CD=true; pnpm cdk bootstrap; pnpm run build; pnpm run deploy',
 });
-
+if (backEndApp.eslint) {
+  backEndApp.eslint.addRules(eslintGlobalRules);
+  backEndApp.eslint.addExtends('plugin:prettier/recommended');
+  backEndApp.eslint.addPlugins('prettier');
+}
 // Defines the Easy Genomics 'front-end' subproject
 const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   parent: root,
@@ -244,6 +276,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
+  eslint: true,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -289,8 +322,21 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'unplugin-vue-components',
     'uuid',
     'zod',
+    'lint-staged',
   ],
-  devDeps: ['@aws-sdk/types', '@nuxt/types', '@types/node', '@types/uuid', 'kill-port'],
+  devDeps: [
+    '@aws-sdk/types',
+    '@nuxt/types',
+    '@types/node',
+    '@types/uuid',
+    'kill-port',
+    'lint-staged',
+    '@nuxtjs/eslint-config-typescript',
+    'vue-eslint-parser',
+    '@typescript-eslint/parser',
+    'prettier',
+    'eslint-plugin-prettier',
+  ],
 });
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
@@ -304,7 +350,23 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
+  ['pre-commit']: 'lint-staged',
 });
+frontEndApp.addFields({
+  'lint-staged': {
+    '{**/*,*}.{js,ts}': ['eslint --fix'],
+    '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
+  },
+});
+if (frontEndApp.eslint) {
+  frontEndApp.eslint.addRules({ ...eslintGlobalRules });
+  frontEndApp.eslint.addExtends(
+    'plugin:prettier/recommended',
+    '@nuxtjs/eslint-config-typescript',
+    'plugin:vue/vue3-recommended',
+  );
+  frontEndApp.eslint.addPlugins('prettier', 'vue');
+}
 
 new PnpmWorkspace(root);
 new VscodeSettings(root);
@@ -328,6 +390,6 @@ root.gitignore.addPatterns(
   '.output',
   'dist',
   'config/easy-genomics.yaml',
-  'packages/back-end/cdk.context.json'
+  'packages/back-end/cdk.context.json',
 );
 root.synth();

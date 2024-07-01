@@ -28,13 +28,11 @@ export const handler: Handler = async (
   try {
     const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: LaboratoryUser = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: LaboratoryUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!EditLaboratoryUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
-    const status: Status = (request.Status === 'Inactive') ? 'Inactive' : 'Active';
+    const status: Status = request.Status === 'Inactive' ? 'Inactive' : 'Active';
 
     // Verify User has access to the Laboratory - throws error if not found
     const laboratoryUser: LaboratoryUser = await laboratoryUserService.get(request.LaboratoryId, request.UserId);
@@ -45,12 +43,13 @@ export const handler: Handler = async (
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    const organizationStatus = (organizationAccess && organizationAccess[laboratory.OrganizationId])
-      ? organizationAccess[laboratory.OrganizationId].Status
-      : 'Inactive'; // Fallback default
+    const organizationStatus =
+      organizationAccess && organizationAccess[laboratory.OrganizationId]
+        ? organizationAccess[laboratory.OrganizationId].Status
+        : 'Inactive'; // Fallback default
 
     const laboratoryAccess: LaboratoryAccess | undefined =
-      (user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId])
+      user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId]
         ? user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess
         : undefined;
 
@@ -62,7 +61,7 @@ export const handler: Handler = async (
           [laboratory.OrganizationId]: <OrganizationAccessDetails>{
             Status: organizationStatus,
             LaboratoryAccess: <LaboratoryAccessDetails>{
-              ...(laboratoryAccess) ? laboratoryAccess : {},
+              ...(laboratoryAccess ? laboratoryAccess : {}),
               [laboratory.LaboratoryId]: {
                 Status: status,
                 LabManager: request.LabManager,
@@ -73,7 +72,8 @@ export const handler: Handler = async (
         },
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
-      }, {
+      },
+      {
         ...laboratoryUser,
         ...request,
         Status: status,
@@ -99,4 +99,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

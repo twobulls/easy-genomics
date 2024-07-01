@@ -9,6 +9,10 @@
       "type": "build"
     },
     {
+      "name": "@nuxtjs/eslint-config-typescript",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -49,6 +53,10 @@
       "type": "build"
     },
     {
+      "name": "eslint-plugin-prettier",
+      "type": "build"
+    },
+    {
       "name": "eslint",
       "version": "^8",
       "type": "build"
@@ -67,6 +75,14 @@
       "type": "build"
     },
     {
+      "name": "lint-staged",
+      "type": "build"
+    },
+    {
+      "name": "prettier",
+      "type": "build"
+    },
+    {
       "name": "projen",
       "type": "build"
     },
@@ -80,6 +96,10 @@
     },
     {
       "name": "typescript",
+      "type": "build"
+    },
+    {
+      "name": "vue-eslint-parser",
       "type": "build"
     },
     {
@@ -133,6 +153,10 @@
     },
     {
       "name": "jwt-decode",
+      "type": "runtime"
+    },
+    {
+      "name": "lint-staged",
       "type": "runtime"
     },
     {

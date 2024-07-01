@@ -39,8 +39,8 @@ export class NFTowerNestedStack extends NestedStack {
 
   // NF-Tower specific IAM policies
   private setupIamPolicies = () => {
-    // /nf-tower/read-workflows
-    this.iam.addPolicyStatements('/nf-tower/read-workflows', [
+    // /nf-tower/list-workflows
+    this.iam.addPolicyStatements('/nf-tower/list-workflows', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,

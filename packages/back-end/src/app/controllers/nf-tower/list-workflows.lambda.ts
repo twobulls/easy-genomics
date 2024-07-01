@@ -9,13 +9,15 @@ const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 
 /**
- * This GET /nf-tower/read-workflows/{LaboratoryId} API queries the /workflow API for
- * a list of NextFlow Tower Workflows, and it expects:
- *  - Required Path Parameter containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
+ * This GET /nf-tower/list-workflows?laboratoryId={LaboratoryId} API queries the
+ * NextFlow Tower /workflow?workspaceId={WorkspaceId} API for a list of Workflows
+ * (aka Pipeline Runs), and it expects:
+ *  - Required Query Parameter:
+ *    - 'laboratoryId': containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
  *  - Optional Query Parameters:
- *    - max: pagination number of results
- *    - offset: pagination results offset index
- *    - search: string to search by the Workflows projectName attribute (e.g. nf-core/viralrecon)
+ *    - 'max': pagination number of results
+ *    - 'offset': pagination results offset index
+ *    - 'search': string to search by the Workflows projectName attribute (e.g. nf-core/viralrecon)
  * @param event
  */
 export const handler: Handler = async (
@@ -23,11 +25,11 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Get Path Parameter
-    const id: string = event.pathParameters?.id || '';
-    if (id === '') throw new Error('Required id is missing');
+    // Get required query parameter
+    const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
+    if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
 
-    const laboratory = await laboratoryService.queryByLaboratoryId(id);
+    const laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
       throw new Error('Unauthorized');
     }
@@ -38,7 +40,7 @@ export const handler: Handler = async (
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
     const accessToken: string | undefined = (
       await ssmService.getParameter({
-        Name: `/easy-genomics/laboratory/${id}/access-token`,
+        Name: `/easy-genomics/laboratory/${laboratoryId}/access-token`,
         WithDecryption: true,
       })
     ).Parameter?.Value;

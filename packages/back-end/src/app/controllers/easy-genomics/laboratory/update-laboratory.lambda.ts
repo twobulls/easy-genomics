@@ -31,14 +31,13 @@ export const handler: Handler = async (
 
     // Lookup by LaboratoryId to confirm existence before updating
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
-    const s3Bucket: string = 'fake-bucket-name';
 
     const response: Laboratory = await laboratoryService.update(
       {
         ...existing,
         Name: request.Name,
         Description: request.Description,
-        S3Bucket: s3Bucket,
+        S3Bucket: request.S3Bucket,
         Status: 'Active',
         AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled,
         NextFlowTowerEnabled: request.NextFlowTowerEnabled,

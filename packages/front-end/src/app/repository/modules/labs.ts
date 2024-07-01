@@ -43,8 +43,8 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
-  async update(lab: UpdateLaboratory): Promise<Laboratory> {
-    const res = await this.call<Laboratory>('PUT', `/laboratory/update-laboratory/${lab.LaboratoryId}`, lab);
+  async update(labId: string, lab: UpdateLaboratory): Promise<Laboratory> {
+    const res = await this.call<Laboratory>('PUT', `/laboratory/update-laboratory/${labId}`, lab);
 
     if (!res) {
       console.error('Error calling update Laboratory API');

@@ -203,9 +203,10 @@
       throw new Error(message);
     }
 
-    const lab = parseResult.data as UpdateLaboratory;
+    const labId: string = $route.params.id;
+    const lab: UpdateLaboratory = parseResult.data;
 
-    await $api.labs.update(lab);
+    await $api.labs.update(labId, lab);
     isEditingNextFlowTowerAccessToken.value = false;
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
     await getLabDetails();

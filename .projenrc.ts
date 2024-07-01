@@ -253,6 +253,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@types/node',
     '@types/uuid',
     'aws-sdk-client-mock',
+    'prettier',
+    'eslint-plugin-prettier',
   ],
 });
 backEndApp.addScripts({
@@ -332,6 +334,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@nuxtjs/eslint-config-typescript',
     'vue-eslint-parser',
     '@typescript-eslint/parser',
+    'prettier',
+    'eslint-plugin-prettier',
   ],
 });
 frontEndApp.addScripts({

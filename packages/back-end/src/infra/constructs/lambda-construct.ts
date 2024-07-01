@@ -3,12 +3,7 @@ import path from 'path';
 import { AssociativeArray, HttpRequest } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { toPascalCase } from '@easy-genomics/shared-lib/src/app/utils/string-utils';
 import { aws_lambda, aws_lambda_nodejs, Duration } from 'aws-cdk-lib';
-import {
-  JsonSchema,
-  LambdaIntegration,
-  Resource,
-  CognitoUserPoolsAuthorizer,
-} from 'aws-cdk-lib/aws-apigateway';
+import { JsonSchema, LambdaIntegration, Resource, CognitoUserPoolsAuthorizer } from 'aws-cdk-lib/aws-apigateway';
 import { MethodOptions } from 'aws-cdk-lib/aws-apigateway/lib/method';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { IEventSource, IFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -141,7 +136,9 @@ export class LambdaConstruct extends Construct {
     // Attach relevant IAM policies to Lambda Function matching specific API Endpoint
     const iamPolicyStatements: PolicyStatement[] | undefined = this.props.iamPolicyStatements?.get(lambdaApiEndpoint);
     if (iamPolicyStatements) {
-      console.debug(`Attaching IAM Policy to REST API Endpoint: ${lambdaApiEndpoint}\n${JSON.stringify(iamPolicyStatements, null, 2)}`);
+      console.debug(
+        `Attaching IAM Policy to REST API Endpoint: ${lambdaApiEndpoint}\n${JSON.stringify(iamPolicyStatements, null, 2)}`,
+      );
       iamPolicyStatements.map((iamPolicyStatement: PolicyStatement) => {
         lambdaHandler.addToRolePolicy(iamPolicyStatement);
       });
@@ -172,7 +169,8 @@ export class LambdaConstruct extends Construct {
             {
               authorizer: this.authorizer,
               ...lambdaMethodOptions,
-            });
+            },
+          );
         } else {
           pathResource.addMethod(
             ALLOWED_LAMBDA_FUNCTION_OPERATIONS[lambdaFunction.command],
@@ -180,7 +178,8 @@ export class LambdaConstruct extends Construct {
             {
               authorizer: this.authorizer,
               ...lambdaMethodOptions,
-            });
+            },
+          );
         }
       }
     }

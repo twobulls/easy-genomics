@@ -29,8 +29,8 @@ export const handler: Handler = async (
     const email: string = event.request.userAttributes.email;
     const userId: string = event.request.userAttributes.sub;
     const temporaryPassword: string = event.request.code || ''; // Auto encrypted by Cognito
-    const organizationId: string = (event.request.clientMetadata) ? event.request.clientMetadata.OrganizationId : '';
-    const organizationName: string = (event.request.clientMetadata) ? event.request.clientMetadata.OrganizationName : '';
+    const organizationId: string = event.request.clientMetadata ? event.request.clientMetadata.OrganizationId : '';
+    const organizationName: string = event.request.clientMetadata ? event.request.clientMetadata.OrganizationName : '';
 
     const newUserInvitationJwt: string = generateNewUserInvitationJwt(email, userId, organizationId, temporaryPassword);
     await sesService.sendUserInvitationEmail(email, organizationName, newUserInvitationJwt);

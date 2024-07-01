@@ -39,11 +39,13 @@ const listOrganizationUsers = async (organizationId?: string, userId?: string): 
   } else if (!organizationId && userId) {
     return organizationUserService.queryByUserId(userId);
   } else {
-    throw new Error('Specify either organizationId or userId query parameter to retrieve the list of organization-users');
+    throw new Error(
+      'Specify either organizationId or userId query parameter to retrieve the list of organization-users',
+    );
   }
 };
 
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

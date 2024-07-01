@@ -30,5 +30,4 @@ export class AuthenticationLogService extends DynamoDBService {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
   };
-
 }

@@ -18,20 +18,21 @@ export const handler: Handler = async (
 
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Put Request Body
-    const request: Organization = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: Organization = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!UpdateOrganizationSchema.safeParse(request).success) throw new Error('Invalid request');
 
     // Lookup by OrganizationId to confirm existence before updating
     const existing: Organization = await organizationService.get(id);
-    const updated: Organization = await organizationService.update({
-      ...existing,
-      ...request,
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: userId,
-    }, existing);
+    const updated: Organization = await organizationService.update(
+      {
+        ...existing,
+        ...request,
+        ModifiedAt: new Date().toISOString(),
+        ModifiedBy: userId,
+      },
+      existing,
+    );
     return buildResponse(200, JSON.stringify(updated), event);
   } catch (err: any) {
     console.error(err);
@@ -51,4 +52,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

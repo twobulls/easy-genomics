@@ -15,7 +15,7 @@ export class NFTowerNestedStack extends NestedStack {
     this.props = props;
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
-      ...<IamConstructProps>props, // Typecast to IamConstructProps
+      ...(<IamConstructProps>props), // Typecast to IamConstructProps
     });
     this.setupIamPolicies();
 
@@ -63,5 +63,4 @@ export class NFTowerNestedStack extends NestedStack {
       }),
     ]);
   };
-
 }

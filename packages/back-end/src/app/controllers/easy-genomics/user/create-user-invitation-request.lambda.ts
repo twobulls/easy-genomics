@@ -1,16 +1,11 @@
 import { createHmac } from 'crypto';
-import {
-  ConditionalCheckFailedException,
-  TransactionCanceledException,
-} from '@aws-sdk/client-dynamodb';
+import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
 import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
-import {
-  UserInvitationJwt,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
+import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { CognitoIdpService } from '../../../services/cognito-idp-service';
@@ -39,9 +34,9 @@ export const handler: Handler = async (
   try {
     const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: CreateUserInvitationRequest = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: CreateUserInvitationRequest = event.isBase64Encoded
+      ? JSON.parse(atob(event.body!))
+      : JSON.parse(event.body!);
 
     // Data validation safety check
     if (!CreateUserInvitationRequestSchema.safeParse(request).success) throw new Error('Invalid request');
@@ -55,11 +50,16 @@ export const handler: Handler = async (
       const newUserId: string = await cognitoIdpService.adminCreateUser(
         request.Email,
         organization.OrganizationId,
-        organization.Name);
+        organization.Name,
+      );
 
       // Create new User and invite to the Organization and Platform
       const newUser: User = getNewUser(request.Email, newUserId, currentUserId);
-      const newOrganizationUser: OrganizationUser = getNewOrganizationUser(organization.OrganizationId, newUser.UserId, currentUserId);
+      const newOrganizationUser: OrganizationUser = getNewOrganizationUser(
+        organization.OrganizationId,
+        newUser.UserId,
+        currentUserId,
+      );
 
       try {
         const newUserDetails: User = {
@@ -84,9 +84,11 @@ export const handler: Handler = async (
       if (existingUser.Status === 'Inactive') {
         throw new Error(`Unable to invite User to Organization "${organization.Name}": User Status is "Inactive"`);
       } else {
-        const existingOrganizationUser: OrganizationUser | void =
-          await organizationUserService.get(organization.OrganizationId, existingUser.UserId).catch((error: any) => {
-            if (error.message.endsWith('Resource not found')) { // TODO - improve error to handle ResourceNotFoundException instead of checking error message
+        const existingOrganizationUser: OrganizationUser | void = await organizationUserService
+          .get(organization.OrganizationId, existingUser.UserId)
+          .catch((error: any) => {
+            if (error.message.endsWith('Resource not found')) {
+              // TODO - improve error to handle ResourceNotFoundException instead of checking error message
               // Do nothing - allow new Organization-User access mapping to proceed.
             } else {
               throw error;
@@ -97,19 +99,21 @@ export const handler: Handler = async (
         if (existingOrganizationUser) {
           if (existingOrganizationUser.Status !== 'Invited') {
             // Existing Organization-User's Status is either Inactive or Active
-            throw new Error(`Unable to re-invite User to Organization "${organization.Name}": User Organization Status is "${existingOrganizationUser.Status}"`);
+            throw new Error(
+              `Unable to re-invite User to Organization "${organization.Name}": User Organization Status is "${existingOrganizationUser.Status}"`,
+            );
           }
 
           // Attempt to resend new Cognito User account - will trigger Cognito process-custom-email-sender to send SES email template
-          await cognitoIdpService.adminCreateUser(
-            request.Email,
-            organization.OrganizationId,
-            organization.Name,
-            true); // Resend
+          await cognitoIdpService.adminCreateUser(request.Email, organization.OrganizationId, organization.Name, true); // Resend
           return buildResponse(200, JSON.stringify({ Status: 'Re-inviting' }), event);
         } else {
           // Create new Organization-User access mapping record
-          const newOrganizationUser = getNewOrganizationUser(organization.OrganizationId, existingUser.UserId, currentUserId);
+          const newOrganizationUser = getNewOrganizationUser(
+            organization.OrganizationId,
+            existingUser.UserId,
+            currentUserId,
+          );
 
           const existingUserDetails: User = {
             ...existingUser,
@@ -212,4 +216,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

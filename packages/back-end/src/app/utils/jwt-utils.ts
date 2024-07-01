@@ -7,7 +7,7 @@ export function generateJwt<T>(jwtPayload: T, jwtSecretKey: string, expiresIn?: 
   return sign(<T>jwtPayload, process.env.JWT_SECRET_KEY, {
     expiresIn: expiresIn || '7 days',
   });
-};
+}
 
 /**
  * Helper utility function to verify JWT
@@ -16,4 +16,4 @@ export function generateJwt<T>(jwtPayload: T, jwtSecretKey: string, expiresIn?: 
  */
 export function verifyJwt(token: string, jwtSecretKey: string): JwtPayload | string {
   return verify(token, jwtSecretKey, { ignoreExpiration: false });
-};
+}

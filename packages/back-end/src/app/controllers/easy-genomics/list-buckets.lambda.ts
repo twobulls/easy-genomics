@@ -20,11 +20,11 @@ export const handler: Handler = async (
     const response: ListBucketsCommandOutput = await s3Service.listBuckets({});
     if (response.Buckets) {
       // Exclude CDK, Amplify, and FE Hosting/CloudFront S3 Buckets
-      const buckets: S3Bucket[] = response.Buckets.filter((bucket: Bucket) =>
-        (!bucket.Name?.startsWith('cdk') &&
-         !bucket.Name?.startsWith('amplify') &&
-         !bucket.Name?.startsWith(process.env.DOMAIN_NAME)
-        ),
+      const buckets: S3Bucket[] = response.Buckets.filter(
+        (bucket: Bucket) =>
+          !bucket.Name?.startsWith('cdk') &&
+          !bucket.Name?.startsWith('amplify') &&
+          !bucket.Name?.startsWith(process.env.DOMAIN_NAME),
       ).flatMap((bucket: Bucket) => {
         return <S3Bucket>{ Name: bucket.Name };
       });

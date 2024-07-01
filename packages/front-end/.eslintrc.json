@@ -46,7 +46,9 @@
     "coverage"
   ],
   "rules": {
-    "indent": "warn",
+    "indent": [
+      "off"
+    ],
     "@typescript-eslint/indent": [
       "error",
       2
@@ -229,7 +231,8 @@
     "no-new": "warn",
     "no-empty": "warn",
     "prettier/prettier": "warn",
-    "require-await": "warn"
+    "require-await": "warn",
+    "array-callback-return": "warn"
   },
   "overrides": []
 }

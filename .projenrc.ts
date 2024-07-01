@@ -79,7 +79,6 @@ const jestOptions: JestOptions = {
 
 const eslintGlobalRules = {
   // below rules are downgraded or disabled so as not to conflict with equivalent Prettier rules
-  'indent': 'warn',
   'no-unused-vars': 'warn',
   '@typescript-eslint/no-unused-vars': ['warn'],
   'semi': ['warn', 'always'],
@@ -91,6 +90,7 @@ const eslintGlobalRules = {
   'no-empty': 'warn',
   'prettier/prettier': 'warn',
   'require-await': 'warn',
+  'array-callback-return': 'warn',
 };
 
 const root = new typescript.TypeScriptProject({
@@ -139,13 +139,13 @@ const root = new typescript.TypeScriptProject({
     'lint-staged',
     'validate-branch-name',
     'prettier',
+    'eslint-plugin-prettier',
   ],
 });
 if (root.eslint) {
   root.eslint.addRules({
     eslintGlobalRules,
   });
-
   root.eslint.addPlugins('prettier');
   root.eslint.addExtends('plugin:prettier/recommended');
 }
@@ -263,7 +263,8 @@ backEndApp.addScripts({
 });
 if (backEndApp.eslint) {
   backEndApp.eslint.addRules(eslintGlobalRules);
-  // add any BE-specific rules here...
+  backEndApp.eslint.addExtends('plugin:prettier/recommended');
+  backEndApp.eslint.addPlugins('prettier');
 }
 // Defines the Easy Genomics 'front-end' subproject
 const frontEndApp = new awscdk.AwsCdkTypeScriptApp({

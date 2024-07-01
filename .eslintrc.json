@@ -127,7 +127,6 @@
       }
     ],
     "eslintGlobalRules": {
-      "indent": "warn",
       "no-unused-vars": "warn",
       "@typescript-eslint/no-unused-vars": [
         "warn"
@@ -146,7 +145,8 @@
       "no-new": "warn",
       "no-empty": "warn",
       "prettier/prettier": "warn",
-      "require-await": "warn"
+      "require-await": "warn",
+      "array-callback-return": "warn"
     }
   },
   "overrides": [

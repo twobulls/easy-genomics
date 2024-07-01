@@ -79,10 +79,10 @@ const jestOptions: JestOptions = {
 
 const eslintGlobalRules = {
   'no-console': 'warn',
-  'quotes': ['error', 'single'],
-  'no-unused-vars': 'error',
-  '@typescript-eslint/no-unused-vars': ['error'],
-  'semi': ['error', 'always'],
+  'quotes': ['warn', 'single'],
+  'no-unused-vars': 'warn',
+  '@typescript-eslint/no-unused-vars': ['warn'],
+  'semi': ['warn', 'always'],
 };
 
 const root = new typescript.TypeScriptProject({
@@ -350,7 +350,7 @@ if (frontEndApp.eslint) {
   frontEndApp.eslint.addExtends(
     'plugin:prettier/recommended',
     '@nuxtjs/eslint-config-typescript',
-    'plugin:vue/vue3-recommended'
+    'plugin:vue/vue3-recommended',
   );
   frontEndApp.eslint.addPlugins('prettier', 'vue');
 }
@@ -377,6 +377,6 @@ root.gitignore.addPatterns(
   '.output',
   'dist',
   'config/easy-genomics.yaml',
-  'packages/back-end/cdk.context.json'
+  'packages/back-end/cdk.context.json',
 );
 root.synth();

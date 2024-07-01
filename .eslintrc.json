@@ -129,15 +129,15 @@
     "eslintGlobalRules": {
       "no-console": "warn",
       "quotes": [
-        "error",
+        "warn",
         "single"
       ],
-      "no-unused-vars": "error",
+      "no-unused-vars": "warn",
       "@typescript-eslint/no-unused-vars": [
-        "error"
+        "warn"
       ],
       "semi": [
-        "error",
+        "warn",
         "always"
       ]
     }

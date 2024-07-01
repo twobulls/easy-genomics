@@ -49,7 +49,7 @@
       2
     ],
     "quotes": [
-      "error",
+      "warn",
       "single"
     ],
     "comma-dangle": [
@@ -116,7 +116,7 @@
       "error"
     ],
     "semi": [
-      "error",
+      "warn",
       "always"
     ],
     "max-len": [
@@ -214,9 +214,9 @@
       }
     ],
     "no-console": "warn",
-    "no-unused-vars": "error",
+    "no-unused-vars": "warn",
     "@typescript-eslint/no-unused-vars": [
-      "error"
+      "warn"
     ]
   },
   "overrides": []

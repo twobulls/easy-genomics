@@ -41,7 +41,7 @@ export enum CognitoIdpCommand {
   FORGOT_PASSWORD = 'forgot-password',
   INITIATE_AUTH = 'initiate-auth',
   RESPOND_TO_AUTH_CHALLENGE = 'respond-to-auth-challenge',
-};
+}
 
 export interface CognitoIdpServiceProps {
   userPoolId: string;
@@ -64,7 +64,12 @@ export class CognitoIdpService {
    * @param organizationName
    * @param resend
    */
-  async adminCreateUser(email: string, organizationId: string, organizationName: string, resend?: boolean): Promise<string> {
+  async adminCreateUser(
+    email: string,
+    organizationId: string,
+    organizationName: string,
+    resend?: boolean,
+  ): Promise<string> {
     console.log(`[cognito-idp-service : adminCreateUser] organizationName: ${organizationName}, email: ${email}`);
 
     const logRequestMessage = `Add New User Email=${email} to Platform request`;
@@ -85,11 +90,10 @@ export class CognitoIdpService {
       },
     };
 
-    const response: AdminCreateUserCommandOutput =
-      await this.cognitoIdpRequest<AdminCreateUserCommandInput, AdminCreateUserCommandOutput>(
-        CognitoIdpCommand.ADMIN_CREATE_USER,
-        adminCreateUserCommandInput,
-      );
+    const response: AdminCreateUserCommandOutput = await this.cognitoIdpRequest<
+    AdminCreateUserCommandInput,
+    AdminCreateUserCommandOutput
+    >(CognitoIdpCommand.ADMIN_CREATE_USER, adminCreateUserCommandInput);
     if (response.$metadata.httpStatusCode === 200 && response.User && response.User.Username) {
       return response.User.Username;
     } else {
@@ -101,16 +105,15 @@ export class CognitoIdpService {
    * Enables a Cognito User account for the specified username.
    * @param username
    */
-  public adminEnableUser = async(username: string): Promise<AdminEnableUserCommandOutput> => {
+  public adminEnableUser = async (username: string): Promise<AdminEnableUserCommandOutput> => {
     console.log(`[cognito-idp-service : adminEnableUser] username: ${username}`);
-    const response: AdminEnableUserCommandOutput =
-      await this.cognitoIdpRequest<AdminEnableUserCommandInput, AdminEnableUserCommandOutput>(
-        CognitoIdpCommand.ADMIN_ENABLE_USER,
-        {
-          UserPoolId: this.props.userPoolId,
-          Username: username,
-        },
-      );
+    const response: AdminEnableUserCommandOutput = await this.cognitoIdpRequest<
+    AdminEnableUserCommandInput,
+    AdminEnableUserCommandOutput
+    >(CognitoIdpCommand.ADMIN_ENABLE_USER, {
+      UserPoolId: this.props.userPoolId,
+      Username: username,
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -122,16 +125,15 @@ export class CognitoIdpService {
    * Looks up a Cognito User account for the specified username.
    * @param username
    */
-  public adminGetUser = async(username: string): Promise<AdminGetUserCommandOutput> => {
+  public adminGetUser = async (username: string): Promise<AdminGetUserCommandOutput> => {
     console.log(`[cognito-idp-service : adminGetUser] username: ${username}`);
-    const response: AdminGetUserCommandOutput =
-      await this.cognitoIdpRequest<AdminGetUserCommandInput, AdminGetUserCommandOutput>(
-        CognitoIdpCommand.ADMIN_GET_USER,
-        {
-          UserPoolId: this.props.userPoolId,
-          Username: username,
-        },
-      );
+    const response: AdminGetUserCommandOutput = await this.cognitoIdpRequest<
+    AdminGetUserCommandInput,
+    AdminGetUserCommandOutput
+    >(CognitoIdpCommand.ADMIN_GET_USER, {
+      UserPoolId: this.props.userPoolId,
+      Username: username,
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -143,18 +145,20 @@ export class CognitoIdpService {
    * Updates a Cognito User account password for the specified username.
    * @param username
    */
-  public adminSetUserPassword = async(username: string, password: string): Promise<AdminSetUserPasswordCommandOutput> => {
+  public adminSetUserPassword = async (
+    username: string,
+    password: string,
+  ): Promise<AdminSetUserPasswordCommandOutput> => {
     console.log(`[cognito-idp-service : adminSetUserPassword] username: ${username}`);
-    const response: AdminSetUserPasswordCommandOutput =
-      await this.cognitoIdpRequest<AdminSetUserPasswordCommandInput, AdminSetUserPasswordCommandOutput>(
-        CognitoIdpCommand.ADMIN_SET_USER_PASSWORD,
-        {
-          UserPoolId: this.props.userPoolId,
-          Username: username,
-          Password: password,
-          Permanent: true,
-        },
-      );
+    const response: AdminSetUserPasswordCommandOutput = await this.cognitoIdpRequest<
+    AdminSetUserPasswordCommandInput,
+    AdminSetUserPasswordCommandOutput
+    >(CognitoIdpCommand.ADMIN_SET_USER_PASSWORD, {
+      UserPoolId: this.props.userPoolId,
+      Username: username,
+      Password: password,
+      Permanent: true,
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -167,23 +171,22 @@ export class CognitoIdpService {
    * @param username
    * @param email
    */
-  public adminUpdateUserEmail = async(
+  public adminUpdateUserEmail = async (
     username: string,
     email: string,
   ): Promise<AdminUpdateUserAttributesCommandOutput> => {
     console.log(`[cognito-idp-service : adminUpdateUserEmail] username: ${username}`);
-    const response: AdminUpdateUserAttributesCommandOutput =
-      await this.cognitoIdpRequest<AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput>(
-        CognitoIdpCommand.ADMIN_UPDATE_USER_ATTRIBUTES,
-        {
-          UserPoolId: this.props.userPoolId,
-          Username: username,
-          UserAttributes: [
-            { Name: 'email', Value: email },
-            { Name: 'email_verified', Value: 'false' }, // Require email change to re-verify account
-          ],
-        },
-      );
+    const response: AdminUpdateUserAttributesCommandOutput = await this.cognitoIdpRequest<
+    AdminUpdateUserAttributesCommandInput,
+    AdminUpdateUserAttributesCommandOutput
+    >(CognitoIdpCommand.ADMIN_UPDATE_USER_ATTRIBUTES, {
+      UserPoolId: this.props.userPoolId,
+      Username: username,
+      UserAttributes: [
+        { Name: 'email', Value: email },
+        { Name: 'email_verified', Value: 'false' }, // Require email change to re-verify account
+      ],
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -196,22 +199,19 @@ export class CognitoIdpService {
    * @param username
    * @param emailVerified
    */
-  public adminUpdateUserEmailVerified = async(
+  public adminUpdateUserEmailVerified = async (
     username: string,
     emailVerified: boolean,
   ): Promise<AdminUpdateUserAttributesCommandOutput> => {
     console.log(`[cognito-idp-service : adminUpdateUserEmailVerified] username: ${username}`);
-    const response: AdminUpdateUserAttributesCommandOutput =
-      await this.cognitoIdpRequest<AdminUpdateUserAttributesCommandInput, AdminUpdateUserAttributesCommandOutput>(
-        CognitoIdpCommand.ADMIN_UPDATE_USER_ATTRIBUTES,
-        {
-          UserPoolId: this.props.userPoolId,
-          Username: username,
-          UserAttributes: [
-            { Name: 'email_verified', Value: `${emailVerified.toString()}` },
-          ],
-        },
-      );
+    const response: AdminUpdateUserAttributesCommandOutput = await this.cognitoIdpRequest<
+    AdminUpdateUserAttributesCommandInput,
+    AdminUpdateUserAttributesCommandOutput
+    >(CognitoIdpCommand.ADMIN_UPDATE_USER_ATTRIBUTES, {
+      UserPoolId: this.props.userPoolId,
+      Username: username,
+      UserAttributes: [{ Name: 'email_verified', Value: `${emailVerified.toString()}` }],
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -226,23 +226,22 @@ export class CognitoIdpService {
    * @param password
    * @param confirmationCode
    */
-  public confirmForgotPassword = async(
+  public confirmForgotPassword = async (
     clientId: string,
     username: string,
     password: string,
     confirmationCode: string,
   ): Promise<ConfirmForgotPasswordCommandOutput> => {
     console.log(`[cognito-idp-service : confirmForgotPassword] clientId: ${clientId}, username: ${username}`);
-    const response: ConfirmForgotPasswordCommandOutput =
-      await this.cognitoIdpRequest<ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommandOutput>(
-        CognitoIdpCommand.CONFIRM_FORGOT_PASSWORD,
-        {
-          ClientId: clientId,
-          Username: username,
-          Password: password,
-          ConfirmationCode: confirmationCode,
-        },
-      );
+    const response: ConfirmForgotPasswordCommandOutput = await this.cognitoIdpRequest<
+    ConfirmForgotPasswordCommandInput,
+    ConfirmForgotPasswordCommandOutput
+    >(CognitoIdpCommand.CONFIRM_FORGOT_PASSWORD, {
+      ClientId: clientId,
+      Username: username,
+      Password: password,
+      ConfirmationCode: confirmationCode,
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -256,24 +255,23 @@ export class CognitoIdpService {
    * @param username
    * @param password
    */
-  public initiateAuth = async(
+  public initiateAuth = async (
     clientId: string,
     username: string,
     password: string,
   ): Promise<InitiateAuthCommandOutput> => {
     console.log(`[cognito-idp-service : initiateAuth] clientId: ${clientId}, username: ${username}`);
-    const response: InitiateAuthCommandOutput =
-      await this.cognitoIdpRequest<InitiateAuthCommandInput, InitiateAuthCommandOutput>(
-        CognitoIdpCommand.INITIATE_AUTH,
-        {
-          AuthFlow: 'USER_PASSWORD_AUTH',
-          AuthParameters: {
-            ['USERNAME']: username,
-            ['PASSWORD']: password,
-          },
-          ClientId: clientId,
-        },
-      );
+    const response: InitiateAuthCommandOutput = await this.cognitoIdpRequest<
+    InitiateAuthCommandInput,
+    InitiateAuthCommandOutput
+    >(CognitoIdpCommand.INITIATE_AUTH, {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      AuthParameters: {
+        ['USERNAME']: username,
+        ['PASSWORD']: password,
+      },
+      ClientId: clientId,
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -286,16 +284,15 @@ export class CognitoIdpService {
    * @param clientId
    * @param username
    */
-  public forgotPassword = async(clientId: string, username: string): Promise<ForgotPasswordCommandOutput> => {
+  public forgotPassword = async (clientId: string, username: string): Promise<ForgotPasswordCommandOutput> => {
     console.log(`[cognito-idp-service : forgotPassword] clientId: ${clientId}, username: ${username}`);
-    const response: ForgotPasswordCommandOutput =
-      await this.cognitoIdpRequest<ForgotPasswordCommandInput, ForgotPasswordCommandOutput>(
-        CognitoIdpCommand.FORGOT_PASSWORD,
-        {
-          ClientId: clientId,
-          Username: username,
-        },
-      );
+    const response: ForgotPasswordCommandOutput = await this.cognitoIdpRequest<
+    ForgotPasswordCommandInput,
+    ForgotPasswordCommandOutput
+    >(CognitoIdpCommand.FORGOT_PASSWORD, {
+      ClientId: clientId,
+      Username: username,
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -315,26 +312,25 @@ export class CognitoIdpService {
    * @param username
    * @param newPassword
    */
-  public respondToAuthChallenge = async(
+  public respondToAuthChallenge = async (
     clientId: string,
     accessToken: string,
     username: string,
     newPassword: string,
   ): Promise<RespondToAuthChallengeCommandOutput> => {
     console.log(`[cognito-idp-service : respondToAuthChallenge] username: ${username}`);
-    const response: RespondToAuthChallengeCommandOutput =
-      await this.cognitoIdpRequest<RespondToAuthChallengeCommandInput, RespondToAuthChallengeCommandOutput>(
-        CognitoIdpCommand.RESPOND_TO_AUTH_CHALLENGE,
-        {
-          ChallengeName: 'NEW_PASSWORD_REQUIRED',
-          ChallengeResponses: {
-            ['USERNAME']: username,
-            ['NEW_PASSWORD']: newPassword,
-          },
-          ClientId: clientId,
-          Session: accessToken,
-        },
-      );
+    const response: RespondToAuthChallengeCommandOutput = await this.cognitoIdpRequest<
+    RespondToAuthChallengeCommandInput,
+    RespondToAuthChallengeCommandOutput
+    >(CognitoIdpCommand.RESPOND_TO_AUTH_CHALLENGE, {
+      ChallengeName: 'NEW_PASSWORD_REQUIRED',
+      ChallengeResponses: {
+        ['USERNAME']: username,
+        ['NEW_PASSWORD']: newPassword,
+      },
+      ClientId: clientId,
+      Session: accessToken,
+    });
     if (response.$metadata.httpStatusCode === 200) {
       return response;
     } else {
@@ -342,13 +338,16 @@ export class CognitoIdpService {
     }
   };
 
-  private cognitoIdpRequest = async <RequestType, ResponseType>(command: CognitoIdpCommand, data?: RequestType): Promise<ResponseType> => {
+  private cognitoIdpRequest = async <RequestType, ResponseType>(
+    command: CognitoIdpCommand,
+    data?: RequestType,
+  ): Promise<ResponseType> => {
     try {
       console.log(
         `[cognito-idp-service : cognitoIdpRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
       );
 
-      return (await this.cognitoIdpClient.send(this.getCognitoIdpCommand(command, data)));
+      return await this.cognitoIdpClient.send(this.getCognitoIdpCommand(command, data));
     } catch (error: any) {
       console.error(
         `[cognitoIdp-service : cognitoIdpRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,

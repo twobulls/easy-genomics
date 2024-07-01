@@ -45,4 +45,4 @@ const listLaboratoryUsers = async (laboratoryId?: string, userId?: string): Prom
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

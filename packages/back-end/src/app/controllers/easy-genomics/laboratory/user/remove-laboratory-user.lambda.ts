@@ -27,9 +27,7 @@ export const handler: Handler = async (
   try {
     const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: LaboratoryUser = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: LaboratoryUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!RemoveLaboratoryUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
@@ -42,30 +40,34 @@ export const handler: Handler = async (
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    const organizationStatus = (organizationAccess && organizationAccess[laboratory.OrganizationId])
-      ? organizationAccess[laboratory.OrganizationId].Status
-      : 'Inactive'; // Fallback default
+    const organizationStatus =
+      organizationAccess && organizationAccess[laboratory.OrganizationId]
+        ? organizationAccess[laboratory.OrganizationId].Status
+        : 'Inactive'; // Fallback default
 
     const laboratoryAccess: LaboratoryAccess | undefined =
-      (user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId])
+      user.OrganizationAccess && user.OrganizationAccess[laboratory.OrganizationId]
         ? user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess
         : undefined;
-    (laboratoryAccess) ? delete laboratoryAccess[laboratory.LaboratoryId] : false;
+    laboratoryAccess ? delete laboratoryAccess[laboratory.LaboratoryId] : false;
 
-    const response: boolean = await platformUserService.removeExistingUserFromLaboratory({
-      ...user,
-      OrganizationAccess: {
-        ...organizationAccess,
-        [laboratory.OrganizationId]: <OrganizationAccessDetails>{
-          Status: organizationStatus,
-          LaboratoryAccess: <LaboratoryAccessDetails>{
-            ...(laboratoryAccess) ? laboratoryAccess : {},
+    const response: boolean = await platformUserService.removeExistingUserFromLaboratory(
+      {
+        ...user,
+        OrganizationAccess: {
+          ...organizationAccess,
+          [laboratory.OrganizationId]: <OrganizationAccessDetails>{
+            Status: organizationStatus,
+            LaboratoryAccess: <LaboratoryAccessDetails>{
+              ...(laboratoryAccess ? laboratoryAccess : {}),
+            },
           },
         },
+        ModifiedAt: new Date().toISOString(),
+        ModifiedBy: currentUserId,
       },
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: currentUserId,
-    }, request);
+      request,
+    );
 
     if (response) {
       return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
@@ -84,4 +86,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

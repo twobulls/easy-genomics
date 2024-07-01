@@ -75,15 +75,18 @@ export class CognitoUserConstruct extends Construct {
 
     // If a Group Name is provided, also add the user to this Cognito UserPool Group
     if (groupName) {
-      const userToAdminsGroupAttachment = new CfnUserPoolUserToGroupAttachment(this, `AttachAdminToAdminsGroup-${username}`, {
-        userPoolId: this.props.userPool.userPoolId,
-        groupName: groupName,
-        username: username,
-      });
+      const userToAdminsGroupAttachment = new CfnUserPoolUserToGroupAttachment(
+        this,
+        `AttachAdminToAdminsGroup-${username}`,
+        {
+          userPoolId: this.props.userPool.userPoolId,
+          groupName: groupName,
+          username: username,
+        },
+      );
       userToAdminsGroupAttachment.node.addDependency(adminCreateUser);
       userToAdminsGroupAttachment.node.addDependency(adminSetUserPassword);
       userToAdminsGroupAttachment.node.addDependency(this.props.userPool);
     }
   }
-
 }

@@ -24,15 +24,15 @@ export const handler: Handler = async (
   try {
     const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: OrganizationUser = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: OrganizationUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!AddOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
-    const organizationUser: OrganizationUser | void =
-      await organizationUserService.get(request.OrganizationId, request.UserId).catch((error: any) => {
-        if (error.message.endsWith('Resource not found')) { // TODO - improve error to handle ResourceNotFoundException instead of checking error message
+    const organizationUser: OrganizationUser | void = await organizationUserService
+      .get(request.OrganizationId, request.UserId)
+      .catch((error: any) => {
+        if (error.message.endsWith('Resource not found')) {
+          // TODO - improve error to handle ResourceNotFoundException instead of checking error message
           // Do nothing - allow new Organization-User access mapping to proceed.
         } else {
           throw error;
@@ -48,22 +48,27 @@ export const handler: Handler = async (
     const user: User = await userService.get(request.UserId);
 
     // Attempt to add the User to the Organization in one transaction
-    if (await platformUserService.addExistingUserToOrganization({
-      ...user,
-      OrganizationAccess: {
-        ...user.OrganizationAccess,
-        [organization.OrganizationId]: {
-          Status: request.Status,
-          LaboratoryAccess: {},
+    if (
+      await platformUserService.addExistingUserToOrganization(
+        {
+          ...user,
+          OrganizationAccess: {
+            ...user.OrganizationAccess,
+            [organization.OrganizationId]: {
+              Status: request.Status,
+              LaboratoryAccess: {},
+            },
+          },
+          ModifiedAt: new Date().toISOString(),
+          ModifiedBy: currentUserId,
         },
-      },
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: currentUserId,
-    }, {
-      ...request,
-      CreatedAt: new Date().toISOString(),
-      CreatedBy: currentUserId,
-    })) {
+        {
+          ...request,
+          CreatedAt: new Date().toISOString(),
+          CreatedBy: currentUserId,
+        },
+      )
+    ) {
       return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
     }
   } catch (err: any) {
@@ -84,4 +89,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

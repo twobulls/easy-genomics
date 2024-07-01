@@ -77,26 +77,28 @@ export class S3Service {
   };
 
   public listBuckets = async (listBucketsInput: ListBucketsCommandInput): Promise<ListBucketsCommandOutput> => {
-    return this.s3Request<ListBucketsCommandInput, ListBucketsCommandOutput>(
-      S3Command.LIST_BUCKETS,
-      listBucketsInput,
-    );
+    return this.s3Request<ListBucketsCommandInput, ListBucketsCommandOutput>(S3Command.LIST_BUCKETS, listBucketsInput);
   };
 
-  public getBucketLocation = async (getBucketLocationInput: GetBucketLocationCommandInput): Promise<GetBucketLocationCommandOutput> => {
+  public getBucketLocation = async (
+    getBucketLocationInput: GetBucketLocationCommandInput,
+  ): Promise<GetBucketLocationCommandOutput> => {
     return this.s3Request<GetBucketLocationCommandInput, GetBucketLocationCommandOutput>(
       S3Command.GET_BUCKET_LOCATION,
       getBucketLocationInput,
     );
   };
 
-  private s3Request = async <RequestType, ResponseType>(command: S3Command, data?: RequestType): Promise<ResponseType> => {
+  private s3Request = async <RequestType, ResponseType>(
+    command: S3Command,
+    data?: RequestType,
+  ): Promise<ResponseType> => {
     try {
       console.log(
         `[s3-service : s3Request] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
       );
 
-      return (await this.s3Client.send(this.getS3Command(command, data)));
+      return await this.s3Client.send(this.getS3Command(command, data));
     } catch (error: any) {
       console.error(
         `[s3-service : s3Request] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,

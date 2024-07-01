@@ -21,7 +21,7 @@ export class AuthNestedStack extends NestedStack {
     this.props = props;
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
-      ...<IamConstructProps>props, // Typecast to IamConstructProps
+      ...(<IamConstructProps>props), // Typecast to IamConstructProps
     });
     this.setupIamPolicies();
 
@@ -35,7 +35,8 @@ export class AuthNestedStack extends NestedStack {
       iamPolicyStatements: this.iam.policyStatements, // Pass declared Auth IAM policies for attaching to respective Lambda function
       lambdaFunctionsDir: 'src/app/controllers/auth',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-      lambdaFunctionsResources: { // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      lambdaFunctionsResources: {
+        // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
         '/auth/process-custom-email-sender': {
           environment: {
             JWT_SECRET_KEY: this.props.secretKey,
@@ -47,7 +48,8 @@ export class AuthNestedStack extends NestedStack {
           },
         },
       },
-      environment: { // Defines the common environment settings for all lambda functions
+      environment: {
+        // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
         REGION: this.props.env.region!,
         DOMAIN_NAME: this.props.applicationUrl,
@@ -68,63 +70,54 @@ export class AuthNestedStack extends NestedStack {
   // Auth specific IAM policies
   private setupIamPolicies = () => {
     // /auth/process-custom-email-sender
-    this.iam.addPolicyStatements(
-      '/auth/process-custom-email-sender',
-      [
-        new PolicyStatement({
-          resources: [this.props.cognitoIdpKmsKey?.keyArn!],
-          actions: ['kms:CreateGrant', 'kms:Encrypt'],
-          effect: Effect.ALLOW,
-          conditions: {
-            StringEquals: {
-              'aws:SourceAccount': `${this.props.env.account!}`,
-            },
+    this.iam.addPolicyStatements('/auth/process-custom-email-sender', [
+      new PolicyStatement({
+        resources: [this.props.cognitoIdpKmsKey?.keyArn!],
+        actions: ['kms:CreateGrant', 'kms:Encrypt'],
+        effect: Effect.ALLOW,
+        conditions: {
+          StringEquals: {
+            'aws:SourceAccount': `${this.props.env.account!}`,
           },
-        }),
-        new PolicyStatement({
-          resources: [
-            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.applicationUrl}`,
-            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@twobulls.com`, // TODO: remove (only for Dev/Quality testing purposes)
-            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@deptagency.com`, // TODO: remove (only for Dev/Quality testing purposes)
-            `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
-          ],
-          actions: ['ses:SendTemplatedEmail'],
-          effect: Effect.ALLOW,
-          conditions: {
-            StringEquals: {
-              'ses:FromAddress': `no.reply@${this.props.applicationUrl}`,
-            },
+        },
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.applicationUrl}`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@twobulls.com`, // TODO: remove (only for Dev/Quality testing purposes)
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@deptagency.com`, // TODO: remove (only for Dev/Quality testing purposes)
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
+        ],
+        actions: ['ses:SendTemplatedEmail'],
+        effect: Effect.ALLOW,
+        conditions: {
+          StringEquals: {
+            'ses:FromAddress': `no.reply@${this.props.applicationUrl}`,
           },
-        }),
-      ],
-    );
+        },
+      }),
+    ]);
     // /auth/process-post-authentication
-    this.iam.addPolicyStatements(
-      '/auth/process-post-authentication',
-      [
-        new PolicyStatement({
-          resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-authentication-log-table`,
-          ],
-          actions: ['dynamodb:PutItem'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    this.iam.addPolicyStatements('/auth/process-post-authentication', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-authentication-log-table`,
+        ],
+        actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /auth/process-pre-token-generation
-    this.iam.addPolicyStatements(
-      '/auth/process-pre-token-generation',
-      [
-        new PolicyStatement({
-          resources: [
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
-            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
-          ],
-          actions: ['dynamodb:Query'],
-          effect: Effect.ALLOW,
-        }),
-      ],
-    );
+    this.iam.addPolicyStatements('/auth/process-pre-token-generation', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
   };
 
   // Auth specific DynamoDB tables
@@ -148,5 +141,4 @@ export class AuthNestedStack extends NestedStack {
     );
     this.dynamoDBTables.set(authenticationLogTableName, authenticationLogTable);
   };
-
 }

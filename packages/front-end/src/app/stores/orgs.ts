@@ -42,7 +42,7 @@ const useOrgsStore = defineStore('orgsStore', {
           firstName: this.selectedUser?.FirstName || '',
           lastName: this.selectedUser?.LastName || '',
           email: this.selectedUser?.UserEmail || '',
-        })
+        }),
       );
     },
 

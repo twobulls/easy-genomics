@@ -12,9 +12,7 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     // Post Request Body
-    const request: LaboratoryUser = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: LaboratoryUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!RequestLaboratoryUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
@@ -34,4 +32,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

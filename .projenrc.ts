@@ -78,11 +78,19 @@ const jestOptions: JestOptions = {
 };
 
 const eslintGlobalRules = {
+  // below rules are downgraded or disabled so as not to conflict with equivalent Prettier rules
+  'no-unused-vars': 'warn',
+  '@typescript-eslint/no-unused-vars': ['warn'],
+  'semi': ['warn', 'always'],
+  'comma-dangle': ['warn', 'always-multiline'],
+  'space-before-function-paren': 'off',
   'no-console': 'warn',
-  'quotes': ['error', 'single'],
-  'no-unused-vars': 'error',
-  '@typescript-eslint/no-unused-vars': ['error'],
-  'semi': ['error', 'always'],
+  'arrow-parens': 'warn',
+  'no-new': 'warn',
+  'no-empty': 'warn',
+  'prettier/prettier': 'warn',
+  'require-await': 'warn',
+  'array-callback-return': 'warn',
 };
 
 const root = new typescript.TypeScriptProject({
@@ -93,7 +101,7 @@ const root = new typescript.TypeScriptProject({
   defaultReleaseBranch: defaultReleaseBranch,
   description:
     'Easy Genomics web application to help simplify genomic analysis of sequenced genetic data for bioinformaticians utilizing AWS HealthOmics & NextFlow Tower',
-  eslint: false,
+  eslint: true,
   jest: true,
   jestOptions: jestOptions,
   homepage: 'https://github.com/twobulls/easy-genomics',
@@ -131,13 +139,13 @@ const root = new typescript.TypeScriptProject({
     'lint-staged',
     'validate-branch-name',
     'prettier',
+    'eslint-plugin-prettier',
   ],
 });
 if (root.eslint) {
   root.eslint.addRules({
     eslintGlobalRules,
   });
-
   root.eslint.addPlugins('prettier');
   root.eslint.addExtends('plugin:prettier/recommended');
 }
@@ -163,7 +171,7 @@ root.addScripts({
   ['cicd-build-deploy-back-end']:
     'pnpm nx run-many --targets=cicd-build-deploy-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
   ['cicd-test-front-end']:
-    'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+    'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/front-end --verbose',
   ['cicd-bootstrap-front-end']:
     'pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/front-end --verbose',
   ['cicd-build-deploy-front-end']:
@@ -202,7 +210,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
-  eslint: false,
+  eslint: true,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -245,6 +253,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@types/node',
     '@types/uuid',
     'aws-sdk-client-mock',
+    'prettier',
+    'eslint-plugin-prettier',
   ],
 });
 backEndApp.addScripts({
@@ -255,7 +265,8 @@ backEndApp.addScripts({
 });
 if (backEndApp.eslint) {
   backEndApp.eslint.addRules(eslintGlobalRules);
-  // add any BE-specific rules here...
+  backEndApp.eslint.addExtends('plugin:prettier/recommended');
+  backEndApp.eslint.addPlugins('prettier');
 }
 // Defines the Easy Genomics 'front-end' subproject
 const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
@@ -265,7 +276,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
-  eslint: false,
+  eslint: true,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -323,6 +334,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@nuxtjs/eslint-config-typescript',
     'vue-eslint-parser',
     '@typescript-eslint/parser',
+    'prettier',
+    'eslint-plugin-prettier',
   ],
 });
 frontEndApp.addScripts({

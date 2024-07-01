@@ -25,24 +25,26 @@ export const handler: Handler = async (
     }
 
     // Retrieve User Details for the list of LaboratoryUsers for display
-    const userIds: string[] = laboratoryUsers.map(labUser => labUser.UserId);
+    const userIds: string[] = laboratoryUsers.map((labUser) => labUser.UserId);
     const users: User[] = await userService.listUsers(userIds);
 
-    const response: LaboratoryUserDetails[] = laboratoryUsers.map(labUser => {
-      const user: User | undefined = users.filter(u => u.UserId === labUser.UserId).shift();
-      if (user) {
-        return <LaboratoryUserDetails>{
-          UserId: labUser.UserId,
-          LaboratoryId: labUser.LaboratoryId,
-          LabManager: labUser.LabManager,
-          LabTechnician: labUser.LabTechnician,
-          PreferredName: user.PreferredName,
-          FirstName: user.FirstName,
-          LastName: user.LastName,
-          UserEmail: user.Email,
-        };
-      }
-    }).flat();
+    const response: LaboratoryUserDetails[] = laboratoryUsers
+      .map((labUser) => {
+        const user: User | undefined = users.filter((u) => u.UserId === labUser.UserId).shift();
+        if (user) {
+          return <LaboratoryUserDetails>{
+            UserId: labUser.UserId,
+            LaboratoryId: labUser.LaboratoryId,
+            LabManager: labUser.LabManager,
+            LabTechnician: labUser.LabTechnician,
+            PreferredName: user.PreferredName,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            UserEmail: user.Email,
+          };
+        }
+      })
+      .flat();
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
@@ -69,4 +71,4 @@ const listLaboratoryUsers = async (laboratoryId?: string, userId?: string): Prom
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

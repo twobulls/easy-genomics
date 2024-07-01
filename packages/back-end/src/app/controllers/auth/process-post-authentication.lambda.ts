@@ -22,12 +22,14 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyWithCognitoAuthorizerEvent> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   // @ts-ignore
-  await authenticationLogService.add(<AuthenticationLogEvent>{
-    UserName: event.userName,
-    DateTime: Date.now(), // UNIX timestamp
-    Event: JSON.stringify(event),
-  }).catch(err => {
-    console.error(err);
-  });
+  await authenticationLogService
+    .add(<AuthenticationLogEvent>{
+      UserName: event.userName,
+      DateTime: Date.now(), // UNIX timestamp
+      Event: JSON.stringify(event),
+    })
+    .catch((err) => {
+      console.error(err);
+    });
   return event;
 };

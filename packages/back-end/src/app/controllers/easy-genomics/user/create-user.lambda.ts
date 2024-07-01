@@ -16,9 +16,7 @@ export const handler: Handler = async (
   try {
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: User = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: User = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     console.log('DEBUG: request = ', request);
 
     // Data validation safety check
@@ -56,4 +54,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

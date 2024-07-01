@@ -21,7 +21,9 @@ export const handler: Handler = async (
     const existingLaboratory: Laboratory = await laboratoryService.queryByLaboratoryId(id);
 
     // Check LaboratoryUsers are empty before deletion
-    const existingLaboratoryUsers: LaboratoryUser[] = await laboratoryUserService.queryByLaboratoryId(existingLaboratory.LaboratoryId);
+    const existingLaboratoryUsers: LaboratoryUser[] = await laboratoryUserService.queryByLaboratoryId(
+      existingLaboratory.LaboratoryId,
+    );
     if (existingLaboratoryUsers.length > 0) {
       throw new Error(`Laboratory deletion error, ${existingLaboratoryUsers.length} Users exists.`);
     }
@@ -47,4 +49,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

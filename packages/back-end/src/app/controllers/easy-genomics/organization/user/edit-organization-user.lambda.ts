@@ -25,25 +25,28 @@ export const handler: Handler = async (
   try {
     const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: OrganizationUser = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: OrganizationUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!EditOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
     // Lookup by OrganizationId & UserId to confirm existence before updating
-    const organizationUser: OrganizationUser = await organizationUserService.get(request.OrganizationId, request.UserId);
+    const organizationUser: OrganizationUser = await organizationUserService.get(
+      request.OrganizationId,
+      request.UserId,
+    );
     const user: User = await userService.get(request.UserId);
 
     // Prevent reverting OrganizationUser Status to 'Invited' if already 'Active' or 'Inactive'
     if (organizationUser.Status !== 'Invited' && request.Status === 'Invited') {
-      throw new Error(`User Organization Status already '${organizationUser.Status}', cannot update Status to 'Invited'`);
+      throw new Error(
+        `User Organization Status already '${organizationUser.Status}', cannot update Status to 'Invited'`,
+      );
     }
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
     const laboratoryAccess: LaboratoryAccess | undefined =
-      (organizationAccess && organizationAccess[request.OrganizationId])
+      organizationAccess && organizationAccess[request.OrganizationId]
         ? organizationAccess[request.OrganizationId].LaboratoryAccess
         : undefined;
 
@@ -56,19 +59,21 @@ export const handler: Handler = async (
             Status: request.Status,
             OrganizationAdmin: request.OrganizationAdmin,
             LaboratoryAccess: <LaboratoryAccessDetails>{
-              ...(laboratoryAccess) ? laboratoryAccess : {},
+              ...(laboratoryAccess ? laboratoryAccess : {}),
             },
           },
         },
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
-      }, {
+      },
+      {
         ...organizationUser,
         ...request,
         Status: request.Status,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
-      });
+      },
+    );
 
     if (response) {
       return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
@@ -87,4 +92,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

@@ -76,7 +76,7 @@ export class UserService extends DynamoDBService implements Service {
   };
 
   public listUsers = async (userIds: string[]): Promise<User[]> => {
-    const requestItemKeys: {UserId: {S: string}}[] = userIds.map(userId => {
+    const requestItemKeys: { UserId: { S: string } }[] = userIds.map((userId) => {
       return {
         ['UserId']: { S: userId },
       };
@@ -138,7 +138,7 @@ export class UserService extends DynamoDBService implements Service {
 
     if (response.$metadata.httpStatusCode === 200) {
       if (response.Items) {
-        return response.Items.map(item => <User>unmarshall(item));
+        return response.Items.map((item) => <User>unmarshall(item));
       } else {
         throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
       }

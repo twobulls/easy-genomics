@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto';
 import { buildClient, CommitmentPolicy, KmsKeyringNode } from '@aws-crypto/client-node';
 import { InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 import { ConfirmUpdateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import {
@@ -21,7 +22,6 @@ import { OrganizationUserService } from '../../../services/easy-genomics/organiz
 import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
 import { verifyJwt } from '../../../utils/jwt-utils';
-import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 
 const cryptoClient = buildClient(CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT);
 const generatorKeyId = process.env.COGNITO_KMS_KEY_ID;

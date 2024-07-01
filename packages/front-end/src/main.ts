@@ -21,12 +21,9 @@ if (process.env.CI_CD === 'true') {
 
   if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the CI/CD environment configuration');
   if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
-  if (!awsHostedZoneId) {
-  { throw new Error('AWS_HOSTED_ZONE_ID undefined, please check the CI/CD environment configuration'); }
-  if (!awsHostedZoneName) {
-  { throw new Error('AWS_HOSTED_ZONE_NAME undefined, please check the CI/CD environment configuration'); }
-  if (!awsCertificateArn) {
-  { throw new Error('AWS_CERTIFICATE_ARN undefined, please check the CI/CD environment configuration'); }
+  if (!awsHostedZoneId) { throw new Error('AWS_HOSTED_ZONE_ID undefined, please check the CI/CD environment configuration'); }
+  if (!awsHostedZoneName) { throw new Error('AWS_HOSTED_ZONE_NAME undefined, please check the CI/CD environment configuration'); }
+  if (!awsCertificateArn) { throw new Error('AWS_CERTIFICATE_ARN undefined, please check the CI/CD environment configuration'); }
   if (!envName) throw new Error('ENV_NAME undefined, please check the CI/CD environment configuration');
   if (!envType) throw new Error('ENV_TYPE undefined, please check the CI/CD environment configuration');
   if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the CI/CD environment configuration');
@@ -41,11 +38,11 @@ if (process.env.CI_CD === 'true') {
       account: awsAccountId,
       region: awsRegion,
     },
-    constructNamespace,
-    devEnv,
-    envName,
-    envType,
-    applicationUrl,
+    constructNamespace: constructNamespace,
+    devEnv: devEnv,
+    envName: envName,
+    envType: envType,
+    applicationUrl: applicationUrl,
     certificateArn: awsCertificateArn,
     hostedZoneId: awsHostedZoneId,
     hostedZoneName: awsHostedZoneName,

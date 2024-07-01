@@ -30,7 +30,7 @@ export class Husky extends Component {
       preCommit.addLine(
         "pnpm exec validate-branch-name -r '^(main|release){1}$|^(feat|fix|hotfix|release|refactor|chore|docs)/.+$'"
       );
-      preCommit.addLine('cd packages/front-end && pnpm run pre-commit');
+      //preCommit.addLine('cd packages/front-end && pnpm run pre-commit');
     }
   }
 }

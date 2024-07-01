@@ -41,6 +41,7 @@ jspm_packages/
 !/src/
 /lib
 /dist/
+!/.eslintrc.json
 !/pnpm-workspace.yaml
 !/.vscode/settings.json
 !/nx.json

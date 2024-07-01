@@ -78,11 +78,19 @@ const jestOptions: JestOptions = {
 };
 
 const eslintGlobalRules = {
-  'no-console': 'warn',
-  'quotes': ['warn', 'single'],
+  // below rules are downgraded or disabled so as not to conflict with equivalent Prettier rules
+  'indent': 'warn',
   'no-unused-vars': 'warn',
   '@typescript-eslint/no-unused-vars': ['warn'],
   'semi': ['warn', 'always'],
+  'comma-dangle': ['warn', 'always-multiline'],
+  'space-before-function-paren': 'off',
+  'no-console': 'warn',
+  'arrow-parens': 'warn',
+  'no-new': 'warn',
+  'no-empty': 'warn',
+  'prettier/prettier': 'warn',
+  'require-await': 'warn',
 };
 
 const root = new typescript.TypeScriptProject({
@@ -163,7 +171,7 @@ root.addScripts({
   ['cicd-build-deploy-back-end']:
     'pnpm nx run-many --targets=cicd-build-deploy-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
   ['cicd-test-front-end']:
-    'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
+    'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/front-end --verbose',
   ['cicd-bootstrap-front-end']:
     'pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/front-end --verbose',
   ['cicd-build-deploy-front-end']:

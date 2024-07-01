@@ -127,11 +127,7 @@
       }
     ],
     "eslintGlobalRules": {
-      "no-console": "warn",
-      "quotes": [
-        "warn",
-        "single"
-      ],
+      "indent": "warn",
       "no-unused-vars": "warn",
       "@typescript-eslint/no-unused-vars": [
         "warn"
@@ -139,7 +135,18 @@
       "semi": [
         "warn",
         "always"
-      ]
+      ],
+      "comma-dangle": [
+        "warn",
+        "always-multiline"
+      ],
+      "space-before-function-paren": "off",
+      "no-console": "warn",
+      "arrow-parens": "warn",
+      "no-new": "warn",
+      "no-empty": "warn",
+      "prettier/prettier": "warn",
+      "require-await": "warn"
     }
   },
   "overrides": [

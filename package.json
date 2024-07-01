@@ -26,7 +26,7 @@
     "cicd-test-back-end": "pnpm nx run-many --targets=cicd-test-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose",
     "cicd-bootstrap-back-end": "pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/back-end --verbose",
     "cicd-build-deploy-back-end": "pnpm nx run-many --targets=cicd-build-deploy-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose",
-    "cicd-test-front-end": "pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose",
+    "cicd-test-front-end": "pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/front-end --verbose",
     "cicd-bootstrap-front-end": "pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/front-end --verbose",
     "cicd-build-deploy-front-end": "pnpm nx run-many --targets=cicd-build-deploy-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose",
     "prepare": "husky || true"

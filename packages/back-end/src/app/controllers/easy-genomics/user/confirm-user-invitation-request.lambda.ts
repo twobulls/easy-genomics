@@ -21,6 +21,7 @@ import { OrganizationUserService } from '../../../services/easy-genomics/organiz
 import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
 import { UserService } from '../../../services/easy-genomics/user-service';
 import { verifyJwt } from '../../../utils/jwt-utils';
+import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 
 const cryptoClient = buildClient(CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT);
 const generatorKeyId = process.env.COGNITO_KMS_KEY_ID;
@@ -75,7 +76,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     // Lookup OrganizationUser access mapping to check invitation has not already been activated / restricted.
     const organizationUser: OrganizationUser = await organizationUserService.get(payload.OrganizationId, user.UserId);
     if (organizationUser.Status === 'Active') {
-      throw new Error('User invitation to access Organization is already activated.');
+      throw new Error(ERROR_MESSAGES.invitationAlreadyActivated);
     } else if (organizationUser.Status === 'Inactive') {
       throw new Error(
         'User access to Organization has been deactivated. Please contact the System Administrator for assistance.',

@@ -2,6 +2,7 @@
   import { z } from 'zod';
   import { useToastStore, useUiStore } from '~/stores';
   import { ERRORS } from '~/constants/validation';
+  import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
   import { checkTokenExpiry, decodeJwt } from '~/utils/jwt';
 
   definePageMeta({ layout: 'signin' });
@@ -81,7 +82,7 @@
       await signIn(state.value.email, password);
       handleSuccess();
     } catch (error: any) {
-      if (error.message === 'Request error: User invitation to access Organization is already activated.') {
+      if (error.message === `Request error: ${ERROR_MESSAGES.invitationAlreadyActivated}`) {
         await router.push({ path: `/signin`, query: { email: state.value.email } });
         useToastStore().error(ERRORS.inviteAcceptedOrExpired);
       } else {

@@ -50,23 +50,21 @@ export const handler: Handler = async (
       CreatedBy: currentUserId,
     });
 
-    await ssmService.putParameter({
-      Name: `/easy-genomics/laboratory/${laboratoryId}/access-token`,
-      Description: `Easy Genomics Laboratory ${laboratoryId} NF AccessToken`,
-      Value: request.NextFlowTowerAccessToken,
-      Type: 'SecureString',
-      Overwrite: false,
-    });
+    // Store NextFlow AccessToken in SSM if value supplied
+    if (request.NextFlowTowerAccessToken) {
+      await ssmService.putParameter({
+        Name: `/easy-genomics/laboratory/${laboratoryId}/access-token`,
+        Description: `Easy Genomics Laboratory ${laboratoryId} NF AccessToken`,
+        Value: request.NextFlowTowerAccessToken,
+        Type: 'SecureString',
+        Overwrite: false,
+      });
+    }
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        Error: getErrorMessage(err),
-      }),
-    };
+    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
   }
 };
 

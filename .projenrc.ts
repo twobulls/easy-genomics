@@ -93,7 +93,7 @@ const root = new typescript.TypeScriptProject({
   defaultReleaseBranch: defaultReleaseBranch,
   description:
     'Easy Genomics web application to help simplify genomic analysis of sequenced genetic data for bioinformaticians utilizing AWS HealthOmics & NextFlow Tower',
-  eslint: false,
+  eslint: true,
   jest: true,
   jestOptions: jestOptions,
   homepage: 'https://github.com/twobulls/easy-genomics',
@@ -202,7 +202,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
-  eslint: false,
+  eslint: true,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -265,7 +265,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: cdkVersion,
   defaultReleaseBranch: defaultReleaseBranch,
   docgen: false,
-  eslint: false,
+  eslint: true,
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
@@ -350,7 +350,7 @@ if (frontEndApp.eslint) {
   frontEndApp.eslint.addExtends(
     'plugin:prettier/recommended',
     '@nuxtjs/eslint-config-typescript',
-    'plugin:vue/vue3-recommended',
+    'plugin:vue/vue3-recommended'
   );
   frontEndApp.eslint.addPlugins('prettier', 'vue');
 }
@@ -377,6 +377,6 @@ root.gitignore.addPatterns(
   '.output',
   'dist',
   'config/easy-genomics.yaml',
-  'packages/back-end/cdk.context.json',
+  'packages/back-end/cdk.context.json'
 );
 root.synth();

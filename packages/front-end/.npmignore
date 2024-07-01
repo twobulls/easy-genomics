@@ -16,6 +16,7 @@ dist
 /.idea/
 /.projenrc.js
 tsconfig.tsbuildinfo
+/.eslintrc.json
 !/assets/
 cdk.out/
 .cdk.staging/

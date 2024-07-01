@@ -228,7 +228,7 @@ export class WwwHostingConstruct extends Construct {
       return new ResponseHeadersPolicy(this, 'ResponseHeadersPolicy', {
         securityHeadersBehavior: this.props.securityHeaders,
       });
-    } else {
     }
+    return;
   };
 }

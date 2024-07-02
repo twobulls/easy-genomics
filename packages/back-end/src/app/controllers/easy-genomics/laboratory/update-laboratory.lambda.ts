@@ -51,7 +51,7 @@ export const handler: Handler = async (
     // Update NextFlow AccessToken in SSM if new value supplied
     if (request.NextFlowTowerAccessToken) {
       await ssmService.putParameter({
-        Name: `/easy-genomics/laboratory/${existing.LaboratoryId}/access-token`,
+        Name: `/easy-genomics/organization/${existing.OrganizationId}/laboratory/${existing.LaboratoryId}/nf-access-token`,
         Description: `Easy Genomics Laboratory ${existing.LaboratoryId} NF AccessToken`,
         Value: request.NextFlowTowerAccessToken,
         Type: 'SecureString',

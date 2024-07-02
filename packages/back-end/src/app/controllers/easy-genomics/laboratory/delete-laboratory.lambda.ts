@@ -38,7 +38,7 @@ export const handler: Handler = async (
 
     await ssmService
       .deleteParameter({
-        Name: `/easy-genomics/laboratory/${id}/access-token`,
+        Name: `/easy-genomics/organization/${existingLaboratory.OrganizationId}/laboratory/${existingLaboratory.LaboratoryId}/nf-access-token`,
       })
       .catch((_) => {});
 

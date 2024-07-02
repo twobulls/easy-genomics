@@ -51,7 +51,7 @@ export class NFTowerNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [
-          `arn:aws:ssm:${this.props.env.region}:${this.props.env.account!}:parameter/easy-genomics/laboratory/*`,
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
         ],
         actions: ['ssm:GetParameter'],
         effect: Effect.ALLOW,

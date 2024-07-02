@@ -58,8 +58,8 @@ export class NFTowerNestedStack extends NestedStack {
       }),
     ]);
 
-    // /nf-tower/list-workflows
-    this.iam.addPolicyStatements('/nf-tower/list-workflows', [
+    // /nf-tower/list-pipelines
+    this.iam.addPolicyStatements('/nf-tower/list-pipelines', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
@@ -77,8 +77,8 @@ export class NFTowerNestedStack extends NestedStack {
       }),
     ]);
 
-    // /nf-tower/list-pipelines
-    this.iam.addPolicyStatements('/nf-tower/list-pipelines', [
+    // /nf-tower/workflow/list-workflows
+    this.iam.addPolicyStatements('/nf-tower/workflow/list-workflows', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,

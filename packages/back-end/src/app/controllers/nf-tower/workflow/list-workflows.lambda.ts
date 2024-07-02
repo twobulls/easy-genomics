@@ -1,17 +1,17 @@
-import { ListWorkflowsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { ListWorkflowsResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+import { buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../services/easy-genomics/laboratory-service';
-import { SsmService } from '../../services/ssm-service';
-import { getApiParameters, httpGet, validateOrganizationAccess } from '../../utils/rest-api-utils';
+import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
+import { SsmService } from '../../../services/ssm-service';
+import { getApiParameters, httpGet, validateOrganizationAccess } from '../../../utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 
 /**
- * This GET /nf-tower/list-workflows?laboratoryId={LaboratoryId} API queries the
- * NextFlow Tower /workflow?workspaceId={WorkspaceId} API for a list of Workflows
- * (aka Pipeline Runs), and it expects:
+ * This GET /nf-tower/workflow/list-workflows?laboratoryId={LaboratoryId} API
+ *  queries the NextFlow Tower /workflow?workspaceId={WorkspaceId} API for a
+ *  list of Workflows (aka Pipeline Runs), and it expects:
  *  - Required Query Parameter:
  *    - 'laboratoryId': containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
  *  - Optional Query Parameters:

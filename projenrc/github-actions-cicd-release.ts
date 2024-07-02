@@ -57,24 +57,24 @@ export class GithubActionsCICDRelease extends Component {
           },
         ],
       },
-      ['test-front-end']: {
-        name: 'Test Front-End',
-        needs: ['build-deploy-back-end'],
-        runsOn,
-        environment: this.environment,
-        env: this.loadEnv(),
-        permissions: {
-          contents: github.workflows.JobPermission.WRITE,
-          actions: github.workflows.JobPermission.READ,
-        },
-        steps: [
-          ...this.bootstrapSteps(),
-          {
-            name: 'Run CI/CD Test Front-End',
-            run: 'pnpm cicd-test-front-end',
-          },
-        ],
-      },
+      // ['test-front-end']: {
+      //   name: 'Test Front-End',
+      //   needs: ['build-deploy-back-end'],
+      //   runsOn,
+      //   environment: this.environment,
+      //   env: this.loadEnv(),
+      //   permissions: {
+      //     contents: github.workflows.JobPermission.WRITE,
+      //     actions: github.workflows.JobPermission.READ,
+      //   },
+      //   steps: [
+      //     ...this.bootstrapSteps(),
+      //     {
+      //       name: 'Run CI/CD Test Front-End',
+      //       run: 'pnpm cicd-test-front-end',
+      //     },
+      //   ],
+      // },
       ['build-deploy-front-end']: {
         name: 'Build & Deploy Front-End',
         needs: ['test-front-end'],

@@ -30,7 +30,7 @@
     }>(),
     {
       formMode: LabDetailsFormModeEnum.enum.ReadOnly,
-    }
+    },
   );
 
   const formMode = ref(props.formMode);
@@ -228,7 +228,7 @@
     errors: FormError[],
     schema: Schema,
     fieldName: string,
-    fieldValue: string | undefined
+    fieldValue: string | undefined,
   ): void {
     const parseResult = schema.safeParse(fieldValue);
     if (!parseResult.success) {
@@ -247,14 +247,14 @@
       errors,
       NextFlowTowerAccessTokenSchema,
       'NextFlowTowerAccessToken',
-      state.NextFlowTowerAccessToken
+      state.NextFlowTowerAccessToken,
     );
 
     maybeAddFieldValidationErrors(
       errors,
       NextFlowTowerWorkspaceIdSchema,
       'NextFlowTowerWorkspaceId',
-      state.NextFlowTowerWorkspaceId
+      state.NextFlowTowerWorkspaceId,
     );
 
     if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {

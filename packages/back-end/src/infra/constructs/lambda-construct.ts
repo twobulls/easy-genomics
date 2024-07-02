@@ -114,6 +114,7 @@ export class LambdaConstruct extends Construct {
     const lambdaHandler: IFunction = new aws_lambda_nodejs.NodejsFunction(this, `${lambdaId}`, {
       runtime: Runtime.NODEJS_18_X,
       timeout: Duration.seconds(30),
+      memorySize: 1024,
       functionName: `${this.props.lambdaFunctionsNamespace}-${lambdaName}`.slice(0, 64),
       entry: `${lambdaFunction.path}`,
       handler: 'handler',

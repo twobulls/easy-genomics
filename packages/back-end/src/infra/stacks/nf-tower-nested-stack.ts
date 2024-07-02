@@ -24,14 +24,7 @@ export class NFTowerNestedStack extends NestedStack {
       iamPolicyStatements: this.iam.policyStatements, // Pass declared Auth IAM policies for attaching to respective Lambda function
       lambdaFunctionsDir: 'src/app/controllers/nf-tower',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-      lambdaFunctionsResources: {
-        '/nf-tower/read-workflows': {
-          environment: {
-            DYNAMODB_KMS_KEY_ID: this.props.dynamoDbKmsKey?.keyId!,
-            DYNAMODB_KMS_KEY_ARN: this.props.dynamoDbKmsKey?.keyArn!,
-          },
-        },
-      }, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
       environment: {
         // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
@@ -46,8 +39,8 @@ export class NFTowerNestedStack extends NestedStack {
 
   // NF-Tower specific IAM policies
   private setupIamPolicies = () => {
-    // /nf-tower/read-workflows
-    this.iam.addPolicyStatements('/nf-tower/read-workflows', [
+    // /nf-tower/list-workflows
+    this.iam.addPolicyStatements('/nf-tower/list-workflows', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
@@ -57,8 +50,10 @@ export class NFTowerNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [this.props.dynamoDbKmsKey?.keyArn!],
-        actions: ['kms:GenerateDataKey', 'kms:Decrypt'],
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+        ],
+        actions: ['ssm:GetParameter'],
         effect: Effect.ALLOW,
       }),
     ]);

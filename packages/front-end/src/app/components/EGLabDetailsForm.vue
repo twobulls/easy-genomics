@@ -19,7 +19,7 @@
   import {
     CreateLaboratory,
     CreateLaboratorySchema,
-    LaboratorySchema,
+    ReadLaboratorySchema,
     UpdateLaboratory,
     UpdateLaboratorySchema,
   } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
@@ -30,12 +30,10 @@
     }>(),
     {
       formMode: LabDetailsFormModeEnum.enum.ReadOnly,
-    }
+    },
   );
 
   const formMode = ref(props.formMode);
-
-  const { MOCK_ORG_ID } = useRuntimeConfig().public;
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -123,7 +121,7 @@
     try {
       isLoadingFormData.value = true;
       const res = await $api.labs.getLabDetails($route.params.id);
-      const parseResult = LaboratorySchema.safeParse(res);
+      const parseResult = ReadLaboratorySchema.safeParse(res);
 
       if (parseResult.success) {
         const labDetails = parseResult.data as Laboratory;
@@ -169,9 +167,9 @@
   async function handleCreateLab() {
     useUiStore().setRequestPending(true);
 
-    const lab = {
+    const lab: CreateLaboratory = {
       ...state.value,
-      OrganizationId: MOCK_ORG_ID,
+      OrganizationId: useUserStore().currentOrgId,
       Status: 'Active',
     };
 
@@ -205,9 +203,10 @@
       throw new Error(message);
     }
 
-    const lab = parseResult.data as UpdateLaboratory;
+    const labId: string = $route.params.id;
+    const lab: UpdateLaboratory = parseResult.data;
 
-    await $api.labs.update(lab);
+    await $api.labs.update(labId, lab);
     isEditingNextFlowTowerAccessToken.value = false;
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
     await getLabDetails();
@@ -228,7 +227,7 @@
     errors: FormError[],
     schema: Schema,
     fieldName: string,
-    fieldValue: string | undefined
+    fieldValue: string | undefined,
   ): void {
     const parseResult = schema.safeParse(fieldValue);
     if (!parseResult.success) {
@@ -247,14 +246,14 @@
       errors,
       NextFlowTowerAccessTokenSchema,
       'NextFlowTowerAccessToken',
-      state.NextFlowTowerAccessToken
+      state.NextFlowTowerAccessToken,
     );
 
     maybeAddFieldValidationErrors(
       errors,
       NextFlowTowerWorkspaceIdSchema,
       'NextFlowTowerWorkspaceId',
-      state.NextFlowTowerWorkspaceId
+      state.NextFlowTowerWorkspaceId,
     );
 
     if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {

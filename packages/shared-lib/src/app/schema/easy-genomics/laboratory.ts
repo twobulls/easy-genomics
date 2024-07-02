@@ -33,6 +33,26 @@ export const CreateLaboratorySchema = z
   .strict();
 export type CreateLaboratory = z.infer<typeof CreateLaboratorySchema>;
 
+export const ReadLaboratorySchema = z
+  .object({
+    OrganizationId: z.string().uuid(),
+    LaboratoryId: z.string().uuid(),
+    Name: z.string(),
+    Description: z.string().optional(),
+    S3Bucket: z.string().optional(),
+    Status: z.enum(['Active', 'Inactive']),
+    AwsHealthOmicsEnabled: z.boolean().optional(),
+    NextFlowTowerEnabled: z.boolean().optional(),
+    NextFlowTowerWorkspaceId: z.string().optional(),
+    HasNextFlowTowerAccessToken: z.boolean().optional(), // Return boolean indicator instead of actual NextFlowTowerAccessToken
+    CreatedAt: z.string().optional(),
+    CreatedBy: z.string().optional(),
+    ModifiedAt: z.string().optional(),
+    ModifiedBy: z.string().optional(),
+  })
+  .strict();
+export type ReadLaboratory = z.infer<typeof ReadLaboratorySchema>;
+
 export const RequestLaboratorySchema = z
   .object({
     OrganizationId: z.string().uuid(),

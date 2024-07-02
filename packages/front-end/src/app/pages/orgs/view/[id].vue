@@ -23,7 +23,7 @@
   const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
-  const { resendInvite, labsCount } = useUser();
+  const { resendInvite, labsCount } = useUser($api);
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);

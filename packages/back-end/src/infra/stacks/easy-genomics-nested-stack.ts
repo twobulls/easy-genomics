@@ -619,6 +619,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
+        resources: [this.props.cognitoIdpKmsKey?.keyArn!],
+        actions: ['kms:GenerateDataKey', 'kms:Decrypt'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
         resources: [
           `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool?.userPoolId}`,
         ],
@@ -660,7 +665,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [this.props.cognitoIdpKmsKey?.keyArn!],
-        actions: ['kms:Decrypt'],
+        actions: ['kms:GenerateDataKey', 'kms:Decrypt'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({

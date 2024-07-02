@@ -19,7 +19,7 @@
   import {
     CreateLaboratory,
     CreateLaboratorySchema,
-    LaboratorySchema,
+    ReadLaboratorySchema,
     UpdateLaboratory,
     UpdateLaboratorySchema,
   } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
@@ -30,7 +30,7 @@
     }>(),
     {
       formMode: LabDetailsFormModeEnum.enum.ReadOnly,
-    }
+    },
   );
 
   const formMode = ref(props.formMode);
@@ -121,7 +121,7 @@
     try {
       isLoadingFormData.value = true;
       const res = await $api.labs.getLabDetails($route.params.id);
-      const parseResult = LaboratorySchema.safeParse(res);
+      const parseResult = ReadLaboratorySchema.safeParse(res);
 
       if (parseResult.success) {
         const labDetails = parseResult.data as Laboratory;
@@ -227,7 +227,7 @@
     errors: FormError[],
     schema: Schema,
     fieldName: string,
-    fieldValue: string | undefined
+    fieldValue: string | undefined,
   ): void {
     const parseResult = schema.safeParse(fieldValue);
     if (!parseResult.success) {
@@ -246,14 +246,14 @@
       errors,
       NextFlowTowerAccessTokenSchema,
       'NextFlowTowerAccessToken',
-      state.NextFlowTowerAccessToken
+      state.NextFlowTowerAccessToken,
     );
 
     maybeAddFieldValidationErrors(
       errors,
       NextFlowTowerWorkspaceIdSchema,
       'NextFlowTowerWorkspaceId',
-      state.NextFlowTowerWorkspaceId
+      state.NextFlowTowerWorkspaceId,
     );
 
     if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {

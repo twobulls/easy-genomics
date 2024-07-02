@@ -1,10 +1,11 @@
 /**
  * Form validation error messages
  */
-export const ERRORS = {
+export const VALIDATION_MESSAGES = {
   email: 'Must be a valid email address',
-  notEmpty: 'Must not be empty',
   invalidChar: 'Invalid characters entered',
+  inviteAcceptedOrExpired: 'Your invite link has been accepted or expired',
+  notEmpty: 'Must not be empty',
   nameMaxLength: 'Must not be greater than 50 characters',
   nameMultiSpaces: 'Name cannot contain multiple spaces',
   network: 'Huh, something went wrong. Please check your connection and try again',

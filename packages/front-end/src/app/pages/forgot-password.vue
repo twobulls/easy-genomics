@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { z } from 'zod';
   import { useToastStore, useUiStore } from '~/stores';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '~/constants/validation';
 
   definePageMeta({ layout: 'password' });
 
@@ -10,7 +10,7 @@
   const { $api } = useNuxtApp();
   const { signIn } = useAuth();
   const formSchema = z.object({
-    email: z.string().email(ERRORS.email),
+    email: z.string().email(VALIDATION_MESSAGES.email),
   });
 
   watchEffect(() => {
@@ -37,7 +37,7 @@
       if (error.message === 'Request error: Failed to fetch') {
         handleSuccess(email);
       } else {
-        useToastStore().error(ERRORS.network);
+        useToastStore().error(VALIDATION_MESSAGES.network);
         console.error('Error occurred during forgot password request.', error);
         throw error;
       }

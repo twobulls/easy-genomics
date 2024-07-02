@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { z } from 'zod';
   import { useToastStore, useUiStore } from '~/stores';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { checkTokenExpiry } from '~/utils/jwt';
 
   definePageMeta({ layout: 'password' });
@@ -13,14 +13,14 @@
   const formSchema = z.object({
     password: z
       .string()
-      .nonempty(ERRORS.notEmpty)
-      .min(8, ERRORS.passwordMinLength)
-      .max(50, ERRORS.passwordMaxLength)
-      .refine((value) => !/\s/.test(value), ERRORS.notSpaces)
-      .refine((value) => /[A-Z]/.test(value), ERRORS.passwordUppercase)
-      .refine((value) => /[a-z]/.test(value), ERRORS.passwordLowercase)
-      .refine((value) => /[0-9]/.test(value), ERRORS.passwordNumber)
-      .refine((value) => /[^a-zA-Z0-9]/.test(value), ERRORS.passwordSymbol),
+      .nonempty(VALIDATION_MESSAGES.notEmpty)
+      .min(8, VALIDATION_MESSAGES.passwordMinLength)
+      .max(50, VALIDATION_MESSAGES.passwordMaxLength)
+      .refine((value) => !/\s/.test(value), VALIDATION_MESSAGES.notSpaces)
+      .refine((value) => /[A-Z]/.test(value), VALIDATION_MESSAGES.passwordUppercase)
+      .refine((value) => /[a-z]/.test(value), VALIDATION_MESSAGES.passwordLowercase)
+      .refine((value) => /[0-9]/.test(value), VALIDATION_MESSAGES.passwordNumber)
+      .refine((value) => /[^a-zA-Z0-9]/.test(value), VALIDATION_MESSAGES.passwordSymbol),
   });
   const forgotPasswordToken = ref('');
 
@@ -37,7 +37,7 @@
   });
 
   function handleExpiredToken() {
-    useToastStore().error('Your invite link has been accepted or expired.');
+    useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
     navigateTo('/signin');
   }
 
@@ -58,7 +58,7 @@
       state.value.password = '';
       await navigateTo('/signin');
     } catch (error: any) {
-      useToastStore().error(ERRORS.network);
+      useToastStore().error(VALIDATION_MESSAGES.network);
       console.error('Error occurred during password reset.', error);
       throw error;
     } finally {

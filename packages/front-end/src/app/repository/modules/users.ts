@@ -17,6 +17,9 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
+
+// IMPORTANT - Sending Emails requires an API key from API Gateway
+// TODO: Replace hardcoded API key with a dynamic one
 const TEST_X_API_KEY = 'N1qV5jexwp7bQ0F33AdJc8WihZ5fsGbS1LcaemE1'; // Quality env
 
 class UsersModule extends HttpFactory {

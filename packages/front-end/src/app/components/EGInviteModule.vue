@@ -11,9 +11,10 @@
     {
       placeholder: 'Enter Email',
       disabled: false,
-    }
+    },
   );
 
+  const { $api } = useNuxtApp();
   const $emit = defineEmits(['invite-success']);
   const formSchema = z.object({
     email: z.string().email(ERRORS.email),
@@ -21,7 +22,7 @@
   const isFormDisabled = ref(true);
   const isRequestPending = ref(false);
   const state = ref({ email: '' });
-  const { invite } = useUser();
+  const { invite } = useUser($api);
 
   async function onSubmit() {
     try {

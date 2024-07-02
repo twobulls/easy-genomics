@@ -7,7 +7,7 @@
   definePageMeta({ layout: 'signin' });
 
   const isFormDisabled = ref(true);
-  const state = ref({ email: '', firstName: '', lastName: '' });
+  const state = ref({ email: '', firstName: '', lastName: '', password: '' });
   const { $api } = useNuxtApp();
   const { signIn } = useAuth();
   const formSchema = z.object({

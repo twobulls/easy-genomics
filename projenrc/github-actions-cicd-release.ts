@@ -77,7 +77,7 @@ export class GithubActionsCICDRelease extends Component {
       // },
       ['build-deploy-front-end']: {
         name: 'Build & Deploy Front-End',
-        needs: ['test-front-end'],
+        // needs: ['test-front-end'],
         runsOn,
         environment: this.environment,
         env: this.loadEnv(),

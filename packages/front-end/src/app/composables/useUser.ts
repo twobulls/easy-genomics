@@ -2,7 +2,7 @@ import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
-import { ERRORS } from '~/constants/validation';
+import { VALIDATION_MESSAGES } from '~/constants/validation';
 import { useToastStore } from '~/stores';
 import { decodeJwt } from '~/utils/jwt';
 
@@ -41,7 +41,7 @@ export default function useUser($api?: any) {
     const { OrganizationId: orgId, Email: email } = result.data;
     const toastSuccessMessage =
       action === 'send' ? `${email} has been sent an invite` : `${email} has been resent an invite`;
-    const toastErrorMessage = ERRORS.network;
+    const toastErrorMessage = VALIDATION_MESSAGES.network;
 
     try {
       await $api.users.invite(orgId, email);

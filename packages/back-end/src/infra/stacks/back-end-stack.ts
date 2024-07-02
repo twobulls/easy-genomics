@@ -51,16 +51,6 @@ export class BackEndStack extends Stack {
       }),
     );
 
-    // Create KMS symmetric encryption key to protect sensitive Easy Genomics DynamoDB data
-    this.kmsKeys.set(
-      'dynamo-db-kms-key',
-      new Key(this, `${this.props.constructNamespace}-dynamo-db-kms-key`, {
-        alias: `${this.props.constructNamespace}-dynamo-db-kms-key`,
-        keySpec: KeySpec.SYMMETRIC_DEFAULT,
-        removalPolicy: RemovalPolicy.DESTROY,
-      }),
-    );
-
     // API Gateway for REST APIs
     this.apiGateway = new ApiGatewayConstruct(this, `${this.props.constructNamespace}-apigw`, {
       description: 'Easy Genomics API Gateway',
@@ -85,7 +75,6 @@ export class BackEndStack extends Stack {
       userPool: authNestedStack.cognito.userPool,
       userPoolClient: authNestedStack.cognito.userPoolClient,
       cognitoIdpKmsKey: this.kmsKeys.get('cognito-idp-kms-key'),
-      dynamoDbKmsKey: this.kmsKeys.get('dynamo-db-kms-key'),
     };
     const easyGenomicsNestedStack = new EasyGenomicsNestedStack(
       this,

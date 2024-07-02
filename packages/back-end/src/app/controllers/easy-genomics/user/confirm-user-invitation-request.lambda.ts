@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto';
 import { buildClient, CommitmentPolicy, KmsKeyringNode } from '@aws-crypto/client-node';
 import { InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 import { ConfirmUpdateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import {
@@ -75,7 +76,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     // Lookup OrganizationUser access mapping to check invitation has not already been activated / restricted.
     const organizationUser: OrganizationUser = await organizationUserService.get(payload.OrganizationId, user.UserId);
     if (organizationUser.Status === 'Active') {
-      throw new Error('User invitation to access Organization is already activated.');
+      throw new Error(ERROR_MESSAGES.invitationAlreadyActivated);
     } else if (organizationUser.Status === 'Inactive') {
       throw new Error(
         'User access to Organization has been deactivated. Please contact the System Administrator for assistance.',
@@ -134,12 +135,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        Error: getErrorMessage(err),
-      }),
-    };
+    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
   }
 };
 

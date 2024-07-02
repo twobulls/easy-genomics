@@ -81,18 +81,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
-        '/easy-genomics/laboratory/create-laboratory': {
-          environment: {
-            DYNAMODB_KMS_KEY_ID: this.props.dynamoDbKmsKey?.keyId!,
-            DYNAMODB_KMS_KEY_ARN: this.props.dynamoDbKmsKey?.keyArn!,
-          },
-        },
-        '/easy-genomics/laboratory/update-laboratory': {
-          environment: {
-            DYNAMODB_KMS_KEY_ID: this.props.dynamoDbKmsKey?.keyId!,
-            DYNAMODB_KMS_KEY_ARN: this.props.dynamoDbKmsKey?.keyArn!,
-          },
-        },
       },
       environment: {
         // Defines the common environment settings for all lambda functions
@@ -299,8 +287,10 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [this.props.dynamoDbKmsKey?.keyArn!],
-        actions: ['kms:GenerateDataKey', 'kms:Encrypt'],
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+        ],
+        actions: ['ssm:PutParameter'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -312,6 +302,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
         ],
         actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+        ],
+        actions: ['ssm:GetParameter'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -359,8 +356,10 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [this.props.dynamoDbKmsKey?.keyArn!],
-        actions: ['kms:GenerateDataKey', 'kms:Encrypt'],
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+        ],
+        actions: ['ssm:PutParameter'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -387,6 +386,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
         ],
         actions: ['dynamodb:DeleteItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+        ],
+        actions: ['ssm:DeleteParameter'],
         effect: Effect.ALLOW,
       }),
     ]);

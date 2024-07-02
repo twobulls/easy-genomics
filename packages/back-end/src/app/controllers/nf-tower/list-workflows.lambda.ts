@@ -2,19 +2,22 @@ import { ListWorkflowsResponse } from '@easy-genomics/shared-lib/src/app/types/n
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../services/easy-genomics/laboratory-service';
-import { decrypt } from '../../utils/encryption-utils';
+import { SsmService } from '../../services/ssm-service';
 import { getApiParameters, httpGet, validateOrganizationAccess } from '../../utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
+const ssmService = new SsmService();
 
 /**
- * This GET /nf-tower/read-workflows/{LaboratoryId} API queries the /workflow API for
- * a list of NextFlow Tower Workflows, and it expects:
- *  - Required Path Parameter containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
+ * This GET /nf-tower/list-workflows?laboratoryId={LaboratoryId} API queries the
+ * NextFlow Tower /workflow?workspaceId={WorkspaceId} API for a list of Workflows
+ * (aka Pipeline Runs), and it expects:
+ *  - Required Query Parameter:
+ *    - 'laboratoryId': containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
  *  - Optional Query Parameters:
- *    - max: pagination number of results
- *    - offset: pagination results offset index
- *    - search: string to search by the Workflows projectName attribute (e.g. nf-core/viralrecon)
+ *    - 'max': pagination number of results
+ *    - 'offset': pagination results offset index
+ *    - 'search': string to search by the Workflows projectName attribute (e.g. nf-core/viralrecon)
  * @param event
  */
 export const handler: Handler = async (
@@ -22,26 +25,31 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Get Path Parameter
-    const id: string = event.pathParameters?.id || '';
-    if (id === '') throw new Error('Required id is missing');
+    // Get required query parameter
+    const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
+    if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
 
-    const laboratory = await laboratoryService.queryByLaboratoryId(id);
-
+    const laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
       throw new Error('Unauthorized');
     }
-
     if (!laboratory.NextFlowTowerWorkspaceId) {
       throw new Error('Laboratory Workspace Id unavailable');
     }
-    if (!laboratory.NextFlowTowerAccessToken) {
+
+    // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
+    const accessToken: string | undefined = (
+      await ssmService.getParameter({
+        Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
+        WithDecryption: true,
+      })
+    ).Parameter?.Value;
+    if (!accessToken) {
       throw new Error('Laboratory Access Token unavailable');
     }
-    const accessToken: string | undefined = await decrypt(laboratory.NextFlowTowerAccessToken);
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiParameters = getApiParameters(event);
+    const apiParameters: URLSearchParams = getApiParameters(event);
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
     const response: ListWorkflowsResponse = await httpGet<ListWorkflowsResponse>(

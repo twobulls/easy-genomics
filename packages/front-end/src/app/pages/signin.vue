@@ -1,19 +1,23 @@
 <script setup lang="ts">
   import { z } from 'zod';
   import { resetStores, useUiStore } from '~/stores';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { onBeforeMount } from '#imports';
 
   definePageMeta({ layout: 'signin' });
 
   const { signIn } = useAuth();
-
-  const formSchema = z.object({
-    email: z.string().email(ERRORS.email),
-    password: z.string().min(1, ERRORS.password),
-  });
-  const state = ref({ email: '', password: '' });
+  const route = useRoute();
   const isFormDisabled = ref(true);
+  const isAcceptingInvite = !!route.query.email;
+  const state = ref({
+    email: route.query.email ? route.query.email.toString() : '',
+    password: '',
+  });
+  const formSchema = z.object({
+    email: z.string().email(VALIDATION_MESSAGES.email),
+    password: z.string().min(1, VALIDATION_MESSAGES.password),
+  });
 
   /**
    * @description Reset the stores to ensure app is in a clean state prior to sign in
@@ -31,10 +35,10 @@
   <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
     <EGText tag="h2" class="mb-12">Sign in</EGText>
     <EGFormGroup label="Email" name="email">
-      <EGInput v-model="state.email" autofocus autocomplete="username" />
+      <EGInput v-model="state.email" :autofocus="isAcceptingInvite" autocomplete="username" />
     </EGFormGroup>
     <EGFormGroup label="Password" name="password">
-      <EGPasswordInput v-model="state.password" />
+      <EGPasswordInput v-model="state.password" :autofocus="isAcceptingInvite" />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton

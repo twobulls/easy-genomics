@@ -8,7 +8,7 @@
   import { DeletedResponse } from '~/types/api';
   import type { FormSubmitEvent } from '#ui/types';
   import { OrgDetailsForm } from '~/types/forms';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '~/constants/validation';
   import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
 
@@ -241,7 +241,7 @@
       await fetchOrgData();
       useToastStore().success('Organization updated');
     } catch (error) {
-      useToastStore().error(ERRORS.network);
+      useToastStore().error(VALIDATION_MESSAGES.network);
     } finally {
       useUiStore().setRequestPending(false);
     }

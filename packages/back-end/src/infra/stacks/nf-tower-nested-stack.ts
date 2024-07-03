@@ -39,8 +39,8 @@ export class NFTowerNestedStack extends NestedStack {
 
   // NF-Tower specific IAM policies
   private setupIamPolicies = () => {
-    // /nf-tower/list-compute-envs
-    this.iam.addPolicyStatements('/nf-tower/list-compute-envs', [
+    // /nf-tower/compute-env/list-compute-envs
+    this.iam.addPolicyStatements('/nf-tower/compute-env/list-compute-envs', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
@@ -58,8 +58,8 @@ export class NFTowerNestedStack extends NestedStack {
       }),
     ]);
 
-    // /nf-tower/list-workflows
-    this.iam.addPolicyStatements('/nf-tower/list-workflows', [
+    // /nf-tower/pipeline/list-pipelines
+    this.iam.addPolicyStatements('/nf-tower/pipeline/list-pipelines', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
@@ -77,8 +77,27 @@ export class NFTowerNestedStack extends NestedStack {
       }),
     ]);
 
-    // /nf-tower/list-pipelines
-    this.iam.addPolicyStatements('/nf-tower/list-pipelines', [
+    // /nf-tower/workflow/list-workflows
+    this.iam.addPolicyStatements('/nf-tower/workflow/list-workflows', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+        ],
+        actions: ['ssm:GetParameter'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /nf-tower/workflow/read-workflow
+    this.iam.addPolicyStatements('/nf-tower/workflow/read-workflow', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,

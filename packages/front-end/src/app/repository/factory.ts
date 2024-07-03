@@ -9,20 +9,32 @@ class HttpFactory {
    * @param method
    * @param url
    * @param data
-   * @param xApiKey
    * @returns Promise<T | undefined>
    */
-  async call<T>(method = 'GET', url: string, data: unknown = '', xApiKey: string = ''): Promise<T | undefined> {
+  async call<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
     const requestUrl = `${this.baseRequestUrl}${url}`;
     try {
-      const token: string | undefined = xApiKey ? undefined : `Bearer ${await getToken()}`;
       const headers: HeadersInit = new Headers();
       headers.append('Content-Type', 'application/json');
+
+      // TODO: Consider adding a custom JWT Authorizer to the Public API Gateway for Public APIs
+      // The invite/reset password token will be passed as the Bearer token
+      // A dedicated custom Lambda authorizer will be run by the API Gateway to validate the token
+      // enabling single responsibility and separation of concerns.
+      // Possibly further upsides as API Gateway may execute the authorizer for free or cheaply,
+      // either way the Lambda resource allocation can be much lower than those that require more complex logic
+      // and access to various services and large response payloads.
+      let token: string | undefined;
+      try {
+        token = await getToken();
+      } catch (tokenError) {
+        console.warn(`Failed to get token; reason: ${tokenError}; continuing without Bearer or X-API header`);
+      }
+
       if (token) {
         headers.append('Authorization', token);
-      } else if (xApiKey) {
-        headers.append('x-api-key', xApiKey);
       }
+
       const settings: RequestInit = {
         method,
         headers,

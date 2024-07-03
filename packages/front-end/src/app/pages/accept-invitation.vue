@@ -3,7 +3,9 @@
   import { useToastStore, useUiStore } from '~/stores';
   import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
-  import { checkTokenExpiry, decodeJwt } from '~/utils/jwt';
+  import { checkIsTokenExpired, decodeJwt } from '~/utils/jwt';
+  import { EmailSchema, NonEmptyStringSchema } from '@easy-genomics/shared-lib/src/app/types/base-unified';
+  import { getUrlParamValue } from '~/utils/string-utils';
 
   definePageMeta({ layout: 'signin' });
 
@@ -42,32 +44,58 @@
    * @description Check accept invite token is valid, otherwise redirect to the signin page
    */
   onMounted(() => {
-    const token = getAcceptInviteToken();
-    if (checkTokenExpiry(token)) {
-      inviteToken.value = token;
-      const decodedToken = decodeJwt(token);
-      if (decodedToken && 'Email' in decodedToken) {
-        state.value.email = decodedToken.Email;
-      } else {
-        console.error('Email property not found in decoded token');
-      }
-    } else {
-      handleExpiredToken();
-    }
+    processToken();
   });
+
+  function processToken() {
+    try {
+      const token = getUrlToken();
+      const isTokenExpired = checkIsTokenExpired(token);
+
+      if (isTokenExpired) {
+        handleExpiredToken();
+        return;
+      } else {
+        extractTokenValues(token);
+      }
+    } catch (error) {
+      console.error('Error processing token; error:', error);
+    }
+  }
+
+  function extractTokenValues(token: string) {
+    const email = getEmailFromToken(token);
+    state.value.email = email;
+    inviteToken.value = token;
+  }
 
   function handleExpiredToken() {
     useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
     navigateTo('/signin');
   }
 
-  function getAcceptInviteToken() {
-    const url = new URL(window.location.href);
-    return url.searchParams.get('invite');
+  function getUrlToken(): string {
+    const token = getUrlParamValue('invite');
+    const parseResult = NonEmptyStringSchema.safeParse(token);
+    if (!parseResult.success) {
+      throw new Error('Invalid invite token');
+    }
+    return parseResult.data;
+  }
+
+  function getEmailFromToken(token: string): string {
+    const decodedToken = decodeJwt(token);
+    const parseResult = EmailSchema.safeParse(decodedToken.Email);
+
+    if (!parseResult.success) {
+      console.error('Invalid email in token; parseResult', parseResult);
+      throw new Error('Invalid email in token');
+    }
+
+    return parseResult.data;
   }
 
   function handleSuccess() {
-    state.value.email = '';
     useToastStore().success(`Welcome to Easy Genomics!`);
   }
 
@@ -75,11 +103,11 @@
    * @description Create a new user account and sign user in
    */
   async function onSubmit() {
-    const { firstName, lastName, password } = state.value;
+    const { email, firstName, lastName, password } = state.value;
     try {
       useUiStore().setRequestPending(true);
       await $api.users.confirmUserInviteRequest(inviteToken.value, firstName, lastName, password);
-      await signIn(state.value.email, password);
+      await signIn(email, password);
       handleSuccess();
     } catch (error: any) {
       if (error.message === `Request error: ${ERROR_MESSAGES.invitationAlreadyActivated}`) {

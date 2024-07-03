@@ -54,7 +54,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             JWT_SECRET_KEY: this.props.secretKey,
           },
           methodOptions: {
-            apiKeyRequired: true,
+            // apiKeyRequired: true,
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
@@ -64,7 +64,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
           },
           methodOptions: {
-            apiKeyRequired: true,
+            // apiKeyRequired: true,
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
@@ -77,7 +77,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             JWT_SECRET_KEY: this.props.secretKey,
           },
           methodOptions: {
-            apiKeyRequired: true,
+            // apiKeyRequired: true,
             authorizer: undefined, // Explicitly remove authorizer
           },
         },

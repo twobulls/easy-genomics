@@ -8,21 +8,21 @@ export function decodeJwt(token: string) {
  * Check if a JWT has expired
  * @param token
  */
-export function checkTokenExpiry(token: string): boolean {
+export function checkIsTokenExpired(token: string): boolean {
   const decoded = decodeJwt(token);
   const currentTime = Math.floor(Date.now() / 1000); // user's system current time in seconds
 
   // Check if 'exp' field exists in the token
   if (!decoded.exp) {
     console.warn('Missing "exp" field in JWT payload.');
-    return false;
+    return true;
   }
 
   // Check if the token has expired
   if (currentTime > decoded.exp) {
     console.warn('Token has expired.');
-    return false;
+    return true;
   }
 
-  return true;
+  return false;
 }

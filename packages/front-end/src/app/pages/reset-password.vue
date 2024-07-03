@@ -2,14 +2,15 @@
   import { z } from 'zod';
   import { useToastStore, useUiStore } from '~/stores';
   import { VALIDATION_MESSAGES } from '~/constants/validation';
-  import { checkTokenExpiry } from '~/utils/jwt';
+  import { checkIsTokenExpired } from '~/utils/jwt';
+  import { getUrlParamValue } from '~/utils/string-utils';
+  import { NonEmptyStringSchema } from '@easy-genomics/shared-lib/src/app/types/base-unified';
 
   definePageMeta({ layout: 'password' });
 
   const isFormDisabled = ref(true);
   const state = ref({ firstName: '', lastName: '', password: '' });
   const { $api } = useNuxtApp();
-  const { signIn } = useAuth();
   const formSchema = z.object({
     password: z
       .string()
@@ -28,22 +29,40 @@
    * @description Check if the reset token is valid and not expired, otherwise redirect to the signin page
    */
   onMounted(() => {
-    const resetToken = getResetToken();
-    return checkTokenExpiry(resetToken) ? (forgotPasswordToken.value = resetToken) : handleExpiredToken();
+    processToken();
   });
 
   watchEffect(() => {
     isFormDisabled.value = !formSchema.safeParse(state.value).success;
   });
 
+  function processToken() {
+    try {
+      const token = getUrlToken();
+      const isTokenExpired = checkIsTokenExpired(token);
+      if (isTokenExpired) {
+        handleExpiredToken();
+        return;
+      } else {
+        forgotPasswordToken.value = token;
+      }
+    } catch (error) {
+      console.error('Error processing token; error:', error);
+    }
+  }
+
+  function getUrlToken(): string {
+    const token = getUrlParamValue('forgot-password');
+    const parseResult = NonEmptyStringSchema.safeParse(token);
+    if (!parseResult.success) {
+      throw new Error('Invalid invite token');
+    }
+    return parseResult.data;
+  }
+
   function handleExpiredToken() {
     useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
     navigateTo('/signin');
-  }
-
-  function getResetToken() {
-    const url = new URL(window.location.href);
-    return url.searchParams.get('forgot-password');
   }
 
   /**

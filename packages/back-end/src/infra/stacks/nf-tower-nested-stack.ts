@@ -39,7 +39,7 @@ export class NFTowerNestedStack extends NestedStack {
 
   // NF-Tower specific IAM policies
   private setupIamPolicies = () => {
-    // /nf-tower/list-compute-envs
+    // /nf-tower/compute-env/list-compute-envs
     this.iam.addPolicyStatements('/nf-tower/compute-env/list-compute-envs', [
       new PolicyStatement({
         resources: [
@@ -58,7 +58,7 @@ export class NFTowerNestedStack extends NestedStack {
       }),
     ]);
 
-    // /nf-tower/list-pipelines
+    // /nf-tower/pipeline/list-pipelines
     this.iam.addPolicyStatements('/nf-tower/pipeline/list-pipelines', [
       new PolicyStatement({
         resources: [

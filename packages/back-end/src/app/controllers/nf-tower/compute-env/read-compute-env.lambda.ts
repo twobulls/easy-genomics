@@ -1,5 +1,5 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
-import { DescribePipelinesResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { DescribeComputeEnvsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
@@ -58,7 +58,7 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: DescribePipelinesResponse = await httpGet<DescribePipelinesResponse>(
+    const response: DescribeComputeEnvsResponse = await httpGet<DescribeComputeEnvsResponse>(
       `${process.env.SEQERA_API_BASE_URL}/compute-envs/${id}?${apiParameters.toString()}`,
       { Authorization: `Bearer ${accessToken}` },
     );

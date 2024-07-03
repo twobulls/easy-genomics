@@ -76,6 +76,11 @@ export class NFTowerNestedStack extends NestedStack {
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
     ]);
+    // /nf-tower/pipeline/read-pipeline-launch-details
+    this.iam.addPolicyStatements('/nf-tower/pipeline/read-pipeline-launch-details', [
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+    ]);
     // /nf-tower/pipeline/read-pipeline-schema
     this.iam.addPolicyStatements('/nf-tower/pipeline/read-pipeline-schema', [
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),

@@ -1,6 +1,6 @@
 import { ACCESS_CONTROL_ALLOW_HEADERS } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { aws_apigateway, StackProps } from 'aws-cdk-lib';
-import { EndpointType, IApiKey, Period, RestApi, UsagePlan } from 'aws-cdk-lib/aws-apigateway';
+import { EndpointType, Period, RestApi, UsagePlan } from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
 
 export interface ApiGatewayConstructProps extends StackProps {
@@ -30,7 +30,7 @@ export class ApiGatewayConstruct extends Construct {
         allowHeaders: ACCESS_CONTROL_ALLOW_HEADERS,
       },
     });
-    const apiKey: IApiKey = this.restApi.addApiKey(`${id}-apikey`);
+    // const apiKey: IApiKey = this.restApi.addApiKey(`${id}-apikey`);
     const usagePlan: UsagePlan = this.restApi.addUsagePlan(`${id}-usageplan`, {
       name: `${props.description} Usage Plan`,
       description: `${props.description} Usage Plan`,
@@ -43,7 +43,7 @@ export class ApiGatewayConstruct extends Construct {
         period: Period.DAY,
       },
     });
-    usagePlan.addApiKey(apiKey);
+    // usagePlan.addApiKey(apiKey);
     usagePlan.addApiStage({
       stage: this.restApi.deploymentStage,
     });

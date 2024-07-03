@@ -1,23 +1,23 @@
-import { ListPipelinesResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { ListComputeEnvsResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+import { buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../services/easy-genomics/laboratory-service';
-import { SsmService } from '../../services/ssm-service';
-import { getApiParameters, httpGet, validateOrganizationAccess } from '../../utils/rest-api-utils';
+import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
+import { SsmService } from '../../../services/ssm-service';
+import { getApiParameters, httpGet, validateOrganizationAccess } from '../../../utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 
 /**
- * This GET /nf-tower/list-pipelines?laboratoryId={LaboratoryId} API queries the
- * NextFlow Tower /pipelines?workspaceId={WorkspaceId} API for a list of
- * Pipelines, and it expects:
+ * This GET /nf-tower/compute-env/list-compute-envs?laboratoryId={LaboratoryId} API queries
+ * the NextFlow Tower /compute-envs?workspaceId={WorkspaceId} API for a list of
+ * available Compute Environments, and it expects:
  *  - Required Query Parameter:
  *    - 'laboratoryId': containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
  *  - Optional Query Parameters:
  *    - 'max': pagination number of results
  *    - 'offset': pagination results offset index
- *    - 'search': string to search by the Pipelines name attribute (e.g. nf-core-viralrecon)
+ *    - 'search': string to search by the Compute-Env name attribute (e.g. ABC)
  * @param event
  */
 export const handler: Handler = async (
@@ -52,8 +52,8 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = getApiParameters(event);
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: ListPipelinesResponse = await httpGet<ListPipelinesResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/pipelines?${apiParameters.toString()}`,
+    const response: ListComputeEnvsResponse = await httpGet<ListComputeEnvsResponse>(
+      `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiParameters.toString()}`,
       { Authorization: `Bearer ${accessToken}` },
     );
     return buildResponse(200, JSON.stringify(response), event);

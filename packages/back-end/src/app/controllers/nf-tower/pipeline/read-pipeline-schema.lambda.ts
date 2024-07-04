@@ -1,5 +1,6 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
-import { DescribePipelinesResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { DescribePipelineSchemaResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
@@ -33,7 +34,7 @@ export const handler: Handler = async (
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
     if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
 
-    const laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
+    const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
       throw new Error('Unauthorized');
     }
@@ -42,14 +43,11 @@ export const handler: Handler = async (
     }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-    const accessToken: string | undefined = await ssmService
-      .getParameter({
-        Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
-        WithDecryption: true,
-      })
-      .then(async (value: GetParameterCommandOutput) => {
-        return value.Parameter?.Value;
-      });
+    const getParameterResponse: GetParameterCommandOutput = await ssmService.getParameter({
+      Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
+      WithDecryption: true,
+    });
+    const accessToken: string | undefined = getParameterResponse.Parameter?.Value;
     if (!accessToken) {
       throw new Error('Laboratory Access Token unavailable');
     }
@@ -58,7 +56,7 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: DescribePipelinesResponse = await httpGet<DescribePipelinesResponse>(
+    const response: DescribePipelineSchemaResponse = await httpGet<DescribePipelineSchemaResponse>(
       `${process.env.SEQERA_API_BASE_URL}/pipelines/${id}/schema?${apiParameters.toString()}`,
       { Authorization: `Bearer ${accessToken}` },
     );

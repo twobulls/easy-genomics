@@ -1,6 +1,6 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { DescribePipelineSchemaResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { DescribePipelineLaunchResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
@@ -11,9 +11,9 @@ const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 
 /**
- * This GET /nf-tower/pipeline/read-pipeline-schema/{:id}?laboratoryId={LaboratoryId}
- * API queries the NextFlow Tower /pipelines/{pipelineId}/schema?workspaceId={WorkspaceId} API
- * for a specific Pipeline's Schema details, and it expects:
+ * This GET /nf-tower/pipeline/read-pipeline-launch-details/{:id}?laboratoryId={LaboratoryId}
+ * API queries the NextFlow Tower GET /pipelines/{pipelineId}/launch?workspaceId={WorkspaceId}
+ * API for a specific Pipeline's Launch details, and it expects:
  *  - Required Path Parameter:
  *    - 'id': NextFlow Tower Pipeline Id
  *  - Required Query Parameter:
@@ -56,8 +56,8 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: DescribePipelineSchemaResponse = await httpGet<DescribePipelineSchemaResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/pipelines/${id}/schema?${apiParameters.toString()}`,
+    const response: DescribePipelineLaunchResponse = await httpGet<DescribePipelineLaunchResponse>(
+      `${process.env.SEQERA_API_BASE_URL}/pipelines/${id}/launch?${apiParameters.toString()}`,
       { Authorization: `Bearer ${accessToken}` },
     );
     return buildResponse(200, JSON.stringify(response), event);

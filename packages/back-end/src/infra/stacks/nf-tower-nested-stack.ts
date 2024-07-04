@@ -39,8 +39,8 @@ export class NFTowerNestedStack extends NestedStack {
 
   // NF-Tower specific IAM policies
   private setupIamPolicies = () => {
-    // /nf-tower/compute-env/list-compute-envs
-    this.iam.addPolicyStatements('/nf-tower/compute-env/list-compute-envs', [
+    // Define common IAM policies for reuse
+    this.iam.addPolicyStatements('laboratory-id-query-policy', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
@@ -49,6 +49,8 @@ export class NFTowerNestedStack extends NestedStack {
         actions: ['dynamodb:Query'],
         effect: Effect.ALLOW,
       }),
+    ]);
+    this.iam.addPolicyStatements('laboratory-get-ssm-access-token-policy', [
       new PolicyStatement({
         resources: [
           `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
@@ -58,23 +60,26 @@ export class NFTowerNestedStack extends NestedStack {
       }),
     ]);
 
+    // /nf-tower/compute-env/list-compute-envs
+    this.iam.addPolicyStatements('/nf-tower/compute-env/list-compute-envs', [
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+    ]);
+
     // /nf-tower/pipeline/list-pipelines
     this.iam.addPolicyStatements('/nf-tower/pipeline/list-pipelines', [
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
-        ],
-        actions: ['dynamodb:Query'],
-        effect: Effect.ALLOW,
-      }),
-      new PolicyStatement({
-        resources: [
-          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
-        ],
-        actions: ['ssm:GetParameter'],
-        effect: Effect.ALLOW,
-      }),
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+    ]);
+    // /nf-tower/pipeline/read-pipeline
+    this.iam.addPolicyStatements('/nf-tower/pipeline/read-pipeline', [
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+    ]);
+    // /nf-tower/pipeline/read-pipeline-schema
+    this.iam.addPolicyStatements('/nf-tower/pipeline/read-pipeline-schema', [
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
     ]);
     // /nf-tower/pipeline/read-pipeline
     this.iam.addPolicyStatements('/nf-tower/pipeline/read-pipeline', [
@@ -97,40 +102,14 @@ export class NFTowerNestedStack extends NestedStack {
 
     // /nf-tower/workflow/list-workflows
     this.iam.addPolicyStatements('/nf-tower/workflow/list-workflows', [
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
-        ],
-        actions: ['dynamodb:Query'],
-        effect: Effect.ALLOW,
-      }),
-      new PolicyStatement({
-        resources: [
-          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
-        ],
-        actions: ['ssm:GetParameter'],
-        effect: Effect.ALLOW,
-      }),
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
     ]);
 
     // /nf-tower/workflow/read-workflow
     this.iam.addPolicyStatements('/nf-tower/workflow/read-workflow', [
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
-        ],
-        actions: ['dynamodb:Query'],
-        effect: Effect.ALLOW,
-      }),
-      new PolicyStatement({
-        resources: [
-          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
-        ],
-        actions: ['ssm:GetParameter'],
-        effect: Effect.ALLOW,
-      }),
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
     ]);
   };
 }

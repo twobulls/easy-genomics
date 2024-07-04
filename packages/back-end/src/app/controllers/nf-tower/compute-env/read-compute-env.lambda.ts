@@ -1,4 +1,5 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
+import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { DescribeComputeEnvsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -11,8 +12,8 @@ const ssmService = new SsmService();
 
 /**
  * This GET /nf-tower/compute-env/read-compute-env/{:id}?laboratoryId={LaboratoryId}
- * API queries the NextFlow Tower /compute-envs/{:id}?workspaceId={WorkspaceId} API
- * for a specific Compute Environment's details, and it expects:
+ * API queries the NextFlow Tower GET /compute-envs/{:id}?workspaceId={WorkspaceId}
+ * API for a specific Compute Environment's details, and it expects:
  *  - Required Path Parameter:
  *    - 'id': NextFlow Tower Compute-Env Id
  *  - Required Query Parameter:
@@ -33,7 +34,7 @@ export const handler: Handler = async (
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
     if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
 
-    const laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
+    const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
       throw new Error('Unauthorized');
     }
@@ -42,14 +43,11 @@ export const handler: Handler = async (
     }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-    const accessToken: string | undefined = await ssmService
-      .getParameter({
-        Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
-        WithDecryption: true,
-      })
-      .then(async (value: GetParameterCommandOutput) => {
-        return value.Parameter?.Value;
-      });
+    const getParameterResponse: GetParameterCommandOutput = await ssmService.getParameter({
+      Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
+      WithDecryption: true,
+    });
+    const accessToken: string | undefined = getParameterResponse.Parameter?.Value;
     if (!accessToken) {
       throw new Error('Laboratory Access Token unavailable');
     }

@@ -12,8 +12,8 @@ const ssmService = new SsmService();
 
 /**
  * This GET /nf-tower/pipeline/read-pipeline-schema/{:id}?laboratoryId={LaboratoryId}
- * API queries the NextFlow Tower /pipelines/{pipelineId}/schema?workspaceId={WorkspaceId} API
- * for a specific Pipeline's Schema details, and it expects:
+ * API queries the NextFlow Tower GET /pipelines/{pipelineId}/schema?workspaceId={WorkspaceId}
+ * API for a specific Pipeline's Schema details, and it expects:
  *  - Required Path Parameter:
  *    - 'id': NextFlow Tower Pipeline Id
  *  - Required Query Parameter:

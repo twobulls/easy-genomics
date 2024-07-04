@@ -1,6 +1,6 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { DescribePipelineSchemaResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { DescribeComputeEnvsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
@@ -11,11 +11,11 @@ const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 
 /**
- * This GET /nf-tower/pipeline/read-pipeline-schema/{:id}?laboratoryId={LaboratoryId}
- * API queries the NextFlow Tower GET /pipelines/{pipelineId}/schema?workspaceId={WorkspaceId}
- * API for a specific Pipeline's Schema details, and it expects:
+ * This GET /nf-tower/compute-env/read-compute-env/{:id}?laboratoryId={LaboratoryId}
+ * API queries the NextFlow Tower GET /compute-envs/{:id}?workspaceId={WorkspaceId}
+ * API for a specific Compute Environment's details, and it expects:
  *  - Required Path Parameter:
- *    - 'id': NextFlow Tower Pipeline Id
+ *    - 'id': NextFlow Tower Compute-Env Id
  *  - Required Query Parameter:
  *    - 'laboratoryId': containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
  *
@@ -56,8 +56,8 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: DescribePipelineSchemaResponse = await httpGet<DescribePipelineSchemaResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/pipelines/${id}/schema?${apiParameters.toString()}`,
+    const response: DescribeComputeEnvsResponse = await httpGet<DescribeComputeEnvsResponse>(
+      `${process.env.SEQERA_API_BASE_URL}/compute-envs/${id}?${apiParameters.toString()}`,
       { Authorization: `Bearer ${accessToken}` },
     );
     return buildResponse(200, JSON.stringify(response), event);

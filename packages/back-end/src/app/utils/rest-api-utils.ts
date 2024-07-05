@@ -19,13 +19,15 @@ export const enum REST_API_METHOD {
  * Helper utility function to perform HTTP REST API requests and return the
  * expected JSON response object type.
  * @param url
+ * @param method
  * @param headers
+ * @param body
  */
 export async function httpRequest<T>(
   url: string,
   method: string,
   headers?: Record<string, string>,
-  body?: string,
+  body?: object | {},
 ): Promise<T> {
   try {
     const request: RequestInit = {
@@ -37,7 +39,7 @@ export async function httpRequest<T>(
         ...headers,
       },
       ...(method === REST_API_METHOD.POST || method === REST_API_METHOD.PUT || method === REST_API_METHOD.PATCH
-        ? { body: body }
+        ? { body: JSON.stringify(body) }
         : {}),
     };
 

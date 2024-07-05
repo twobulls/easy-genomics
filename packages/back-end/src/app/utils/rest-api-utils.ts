@@ -6,23 +6,42 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { APIGatewayProxyEvent } from 'aws-lambda/trigger/api-gateway-proxy';
 
+export const enum REST_API_METHOD {
+  // CRUD operations
+  POST = 'POST',
+  GET = 'GET',
+  PUT = 'PUT',
+  PATCH = 'PATCH',
+  DELETE = 'DELETE',
+}
+
 /**
- * Helper utility function to perform HTTP GET REST API requests and return the
- * JSON response object type.
+ * Helper utility function to perform HTTP REST API requests and return the
+ * expected JSON response object type.
  * @param url
  * @param headers
  */
-export async function httpGet<T>(url: string, headers?: Record<string, string>): Promise<T> {
+export async function httpRequest<T>(
+  url: string,
+  method: string,
+  headers?: Record<string, string>,
+  body?: string,
+): Promise<T> {
   try {
-    return await fetch(url, {
-      method: 'GET',
+    const request: RequestInit = {
+      method: method,
       headers: {
         'accept': 'application/json',
         'content-type': 'application/json',
         'cache-control': 'no-cache',
         ...headers,
       },
-    })
+      ...(method === REST_API_METHOD.POST || method === REST_API_METHOD.PUT || method === REST_API_METHOD.PATCH
+        ? { body: body }
+        : {}),
+    };
+
+    return await fetch(url, request)
       .then(async (response) => response.json())
       .then((json) => <T>json);
   } catch (error: any) {

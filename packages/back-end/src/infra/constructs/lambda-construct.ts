@@ -112,7 +112,7 @@ export class LambdaConstruct extends Construct {
     const lambdaMethodOptions = this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.methodOptions || undefined;
 
     const lambdaHandler: IFunction = new aws_lambda_nodejs.NodejsFunction(this, `${lambdaId}`, {
-      runtime: Runtime.NODEJS_18_X,
+      runtime: Runtime.NODEJS_20_X,
       timeout: Duration.seconds(30),
       memorySize: 1024,
       functionName: `${this.props.lambdaFunctionsNamespace}-${lambdaName}`.slice(0, 64),

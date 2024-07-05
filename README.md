@@ -156,16 +156,18 @@ The following steps provide a quick start local development guide:
       [easy-genomics/packages/back-end]$ pnpm run build
       ```
    3. Run `pnpm run deploy {env-name}-main-back-end-stack`.
+
       ```
       e.g. where {env-name} = prod
 
       [easy-genomics/packages/back-end]$ pnpm run deploy prod-main-back-end-stack
       ```
+
    4. Change directory to the `/packages/front-end` directory.
       ```
       [easy-genomics/packages/front-end]$ cd ../front-end
       ```
-   5. Run `pnpm run nuxt-prepare`.
+   5. Run `pnpm run nuxt-prepare --stack {env-name}`.
       ```
       [easy-genomics/packages/front-end]$ pnpm run nuxt-prepare
       ```
@@ -182,6 +184,7 @@ The following steps provide a quick start local development guide:
       ```
 
    8. Run `pnpm run deploy {env-name}-main-front-end-stack`.
+
       ```
       e.g. where {env-name} = prod
 

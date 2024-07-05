@@ -5,7 +5,7 @@ import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 import { SsmService } from '../../../services/ssm-service';
-import { httpGet, validateOrganizationAccess } from '../../../utils/rest-api-utils';
+import { httpRequest, REST_API_METHOD, validateOrganizationAccess } from '../../../utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -56,8 +56,9 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: DescribePipelinesResponse = await httpGet<DescribePipelinesResponse>(
+    const response: DescribePipelinesResponse = await httpRequest<DescribePipelinesResponse>(
       `${process.env.SEQERA_API_BASE_URL}/pipelines/${id}?${apiParameters.toString()}`,
+      REST_API_METHOD.GET,
       { Authorization: `Bearer ${accessToken}` },
     );
     return buildResponse(200, JSON.stringify(response), event);

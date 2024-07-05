@@ -130,17 +130,17 @@ export class GithubActionsCICDRelease extends Component {
     return [
       {
         name: 'Checkout',
-        uses: 'actions/checkout@v3',
+        uses: 'actions/checkout@v4',
         with: { 'fetch-depth': 0 },
       },
       {
         name: 'Install pnpm',
-        uses: 'pnpm/action-setup@v2.2.1',
+        uses: 'pnpm/action-setup@v4',
         with: { version: this.pnpmVersion },
       },
       {
         name: 'Setup node',
-        uses: 'actions/setup-node@v3',
+        uses: 'actions/setup-node@v4',
         with: {
           'node-version': project.minNodeVersion,
           cache: 'pnpm',
@@ -155,7 +155,7 @@ export class GithubActionsCICDRelease extends Component {
       // end of the job so that subsequent jobs get the updated cache.
       {
         name: 'Nx cache',
-        uses: 'actions/cache@v3',
+        uses: 'actions/cache@v4',
         with: {
           path: 'node_modules/.cache/nx',
           'fail-on-cache-miss': false,
@@ -174,7 +174,7 @@ export class GithubActionsCICDRelease extends Component {
       // against those packages.
       {
         name: 'Derive SHAs for nx affected commands',
-        uses: 'nrwl/nx-set-shas@v2',
+        uses: 'nrwl/nx-set-shas@v4',
         with: { 'main-branch-name': 'main' },
       },
     ];
@@ -185,7 +185,7 @@ export class GithubActionsCICDRelease extends Component {
       {
         name: 'Configure AWS Credentials',
         id: 'configure_iam_credentials',
-        uses: 'aws-actions/configure-aws-credentials@v1',
+        uses: 'aws-actions/configure-aws-credentials@v4',
         with: {
           'role-to-assume': 'arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC',
           'role-session-name': 'GitHub_to_AWS_via_FederatedOIDC',

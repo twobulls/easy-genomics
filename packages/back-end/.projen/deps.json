@@ -1,15 +1,7 @@
 {
   "dependencies": [
     {
-      "name": "@aws-sdk/client-cognito-identity-provider",
-      "type": "build"
-    },
-    {
       "name": "@aws-sdk/types",
-      "type": "build"
-    },
-    {
-      "name": "@aws-sdk/util-dynamodb",
       "type": "build"
     },
     {
@@ -26,7 +18,7 @@
     },
     {
       "name": "@types/node",
-      "version": "^18",
+      "version": "^20",
       "type": "build"
     },
     {
@@ -132,6 +124,14 @@
     },
     {
       "name": "@aws-sdk/client-ssm",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/client-sso-oidc",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/client-sts",
       "type": "runtime"
     },
     {

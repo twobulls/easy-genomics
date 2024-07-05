@@ -38,11 +38,11 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2.2.1
         with:
-          version: 8.6.0
+          version: 9.4.0
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18.16.0
+          node-version: 20.15.0
           cache: pnpm
       - name: Nx cache
         uses: actions/cache@v3
@@ -92,11 +92,11 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2.2.1
         with:
-          version: 8.6.0
+          version: 9.4.0
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18.16.0
+          node-version: 20.15.0
           cache: pnpm
       - name: Nx cache
         uses: actions/cache@v3
@@ -156,11 +156,11 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2.2.1
         with:
-          version: 8.6.0
+          version: 9.4.0
       - name: Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 18.16.0
+          node-version: 20.15.0
           cache: pnpm
       - name: Nx cache
         uses: actions/cache@v3

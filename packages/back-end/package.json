@@ -30,13 +30,11 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/client-cognito-identity-provider": "^3.556.0",
     "@aws-sdk/types": "^3.502.0",
-    "@aws-sdk/util-dynamodb": "^3.506.0",
     "@types/aws-lambda": "^8.10.133",
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^18",
+    "@types/node": "^20",
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^6",
     "@typescript-eslint/parser": "^6",
@@ -64,6 +62,8 @@
     "@aws-sdk/client-s3": "^3.583.0",
     "@aws-sdk/client-ses": "^3.574.0",
     "@aws-sdk/client-ssm": "^3.603.0",
+    "@aws-sdk/client-sso-oidc": "^3.600.0",
+    "@aws-sdk/client-sts": "^3.600.0",
     "@aws-sdk/lib-dynamodb": "^3.506.0",
     "@aws-sdk/types": "^3.502.0",
     "@aws-sdk/util-dynamodb": "^3.506.0",
@@ -78,7 +78,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": ">= 18.16.0"
+    "node": ">= 20.15.0"
   },
   "license": "Apache-2.0",
   "version": "0.0.0",

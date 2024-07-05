@@ -20,8 +20,8 @@ import { VscodeSettings } from './projenrc/vscode';
 
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.124.0';
-const nodeVersion = '18.16.0';
-const pnpmVersion = '8.6.0';
+const nodeVersion = '20.15.0';
+const pnpmVersion = '9.4.0';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
@@ -233,6 +233,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/client-dynamodb',
     '@aws-sdk/client-ses',
     '@aws-sdk/client-ssm',
+    '@aws-sdk/client-sso-oidc',
+    '@aws-sdk/client-sts',
     '@aws-sdk/client-s3',
     '@aws-sdk/lib-dynamodb',
     '@aws-sdk/types',
@@ -246,8 +248,6 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     'uuid',
   ],
   devDeps: [
-    '@aws-sdk/client-cognito-identity-provider',
-    '@aws-sdk/util-dynamodb',
     '@aws-sdk/types',
     '@types/aws-lambda',
     '@types/jsonwebtoken',

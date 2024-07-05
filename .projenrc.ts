@@ -327,14 +327,15 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
   devDeps: [
     '@aws-sdk/types',
+    '@nuxtjs/eslint-config-typescript',
+    '@typescript-eslint/parser',
     '@nuxt/types',
     '@types/node',
     '@types/uuid',
+    'eslint-plugin-vue',
     'kill-port',
     'lint-staged',
-    '@nuxtjs/eslint-config-typescript',
     'vue-eslint-parser',
-    '@typescript-eslint/parser',
     'prettier',
     'eslint-plugin-prettier',
   ],
@@ -362,11 +363,12 @@ frontEndApp.addFields({
 if (frontEndApp.eslint) {
   frontEndApp.eslint.addRules({ ...eslintGlobalRules });
   frontEndApp.eslint.addExtends(
-    'plugin:prettier/recommended',
     '@nuxtjs/eslint-config-typescript',
+    'plugin:eslint-plugin-vue',
+    'plugin:prettier/recommended',
     'plugin:vue/vue3-recommended',
   );
-  frontEndApp.eslint.addPlugins('prettier', 'vue');
+  frontEndApp.eslint.addPlugins('eslint-plugin-vue', 'prettier', 'vue');
 }
 
 new PnpmWorkspace(root);

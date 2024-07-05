@@ -15,7 +15,6 @@
   "extends": [
     "plugin:import/typescript",
     "@nuxtjs/eslint-config-typescript",
-    "plugin:eslint-plugin-vue",
     "plugin:prettier/recommended",
     "plugin:vue/vue3-recommended"
   ],
@@ -146,6 +145,7 @@
     "no-unused-vars": "warn",
     "@typescript-eslint/no-unused-vars": ["warn"],
     "space-before-function-paren": "off",
+    "no-console": "off",
     "arrow-parens": "warn",
     "no-new": "warn",
     "no-empty": "warn",

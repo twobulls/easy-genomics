@@ -84,7 +84,7 @@ const eslintGlobalRules = {
   'semi': ['warn', 'always'],
   'comma-dangle': ['warn', 'always-multiline'],
   'space-before-function-paren': 'off',
-  // 'no-console': 'warn',
+  'no-console': 'off',
   'arrow-parens': 'warn',
   'no-new': 'warn',
   'no-empty': 'warn',
@@ -128,18 +128,18 @@ const root = new typescript.TypeScriptProject({
     '@commitlint/cz-commitlint',
     '@types/aws-lambda',
     '@types/uuid',
-    '@typescript-eslint/eslint-plugin',
-    '@typescript-eslint/parser',
+    '@typescript-eslint/eslint-plugin@^7',
+    '@typescript-eslint/parser@^7',
     'aws-cdk-lib',
     'aws-sdk-client-mock',
     'aws-sdk-client-mock-jest',
     'cz-conventional-changelog',
     'eslint',
+    'eslint-plugin-prettier',
     'husky',
     'lint-staged',
     'validate-branch-name',
     'prettier',
-    'eslint-plugin-prettier',
   ],
 });
 if (root.eslint) {
@@ -364,7 +364,6 @@ if (frontEndApp.eslint) {
   frontEndApp.eslint.addRules({ ...eslintGlobalRules });
   frontEndApp.eslint.addExtends(
     '@nuxtjs/eslint-config-typescript',
-    'plugin:eslint-plugin-vue',
     'plugin:prettier/recommended',
     'plugin:vue/vue3-recommended',
   );

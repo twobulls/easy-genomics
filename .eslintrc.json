@@ -140,7 +140,6 @@
         "always-multiline"
       ],
       "space-before-function-paren": "off",
-      "no-console": "warn",
       "arrow-parens": "warn",
       "no-new": "warn",
       "no-empty": "warn",

@@ -84,7 +84,7 @@ const eslintGlobalRules = {
   'semi': ['warn', 'always'],
   'comma-dangle': ['warn', 'always-multiline'],
   'space-before-function-paren': 'off',
-  'no-console': 'warn',
+  // 'no-console': 'warn',
   'arrow-parens': 'warn',
   'no-new': 'warn',
   'no-empty': 'warn',

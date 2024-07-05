@@ -12,7 +12,7 @@ const ssmService = new SsmService();
 
 /**
  * This GET /nf-tower/pipeline/read-pipeline-schema/{:id}?laboratoryId={LaboratoryId}
- * API queries the NextFlow Tower GET /pipelines/{pipelineId}/schema?workspaceId={WorkspaceId}
+ * API queries the NextFlow Tower GET /pipelines/{:id}/schema?workspaceId={WorkspaceId}
  * API for a specific Pipeline's Schema details, and it expects:
  *  - Required Path Parameter:
  *    - 'id': NextFlow Tower Pipeline Id
@@ -26,7 +26,7 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Get Path Parameter
+    // Get required path parameter
     const id: string = event.pathParameters?.id || '';
     if (id === '') throw new Error('Required id is missing');
 

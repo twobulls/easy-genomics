@@ -1,25 +1,23 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { ListComputeEnvsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { WorkflowProgressResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 import { SsmService } from '../../../services/ssm-service';
-import { getApiParameters, httpGet, validateOrganizationAccess } from '../../../utils/rest-api-utils';
+import { httpGet, validateOrganizationAccess } from '../../../utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 
 /**
- * This GET /nf-tower/compute-env/list-compute-envs?laboratoryId={LaboratoryId}
- * API queries the NextFlow Tower GET /compute-envs?workspaceId={WorkspaceId}
- * API for a list of available Compute Environments, and it expects:
+ * This GET /nf-tower/workflow/read-workflow-progress/{:id}?laboratoryId={LaboratoryId}
+ * API queries the NextFlow Tower GET /workflow/{:id}/progress?workspaceId={WorkspaceId}
+ * API for a specific Workflow's Progress details, and it expects:
+ *  - Required Path Parameter:
+ *    - 'id': NextFlow Tower Workflow Id
  *  - Required Query Parameter:
  *    - 'laboratoryId': containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
- *  - Optional Query Parameters:
- *    - 'max': pagination number of results
- *    - 'offset': pagination results offset index
- *    - 'search': string to search by the Compute-Env name attribute (e.g. ABC)
  *
  * @param event
  */
@@ -28,6 +26,10 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
+    // Get required path parameter
+    const id: string = event.pathParameters?.id || '';
+    if (id === '') throw new Error('Required id is missing');
+
     // Get required query parameter
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
     if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
@@ -51,11 +53,11 @@ export const handler: Handler = async (
     }
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiParameters: URLSearchParams = getApiParameters(event);
+    const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: ListComputeEnvsResponse = await httpGet<ListComputeEnvsResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiParameters.toString()}`,
+    const response: WorkflowProgressResponse = await httpGet<WorkflowProgressResponse>(
+      `${process.env.SEQERA_API_BASE_URL}/workflow/${id}/progress?${apiParameters.toString()}`,
       { Authorization: `Bearer ${accessToken}` },
     );
     return buildResponse(200, JSON.stringify(response), event);

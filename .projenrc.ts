@@ -84,7 +84,7 @@ const eslintGlobalRules = {
   'semi': ['warn', 'always'],
   'comma-dangle': ['warn', 'always-multiline'],
   'space-before-function-paren': 'off',
-  'no-console': 'warn',
+  'no-console': 'off',
   'arrow-parens': 'warn',
   'no-new': 'warn',
   'no-empty': 'warn',
@@ -128,18 +128,18 @@ const root = new typescript.TypeScriptProject({
     '@commitlint/cz-commitlint',
     '@types/aws-lambda',
     '@types/uuid',
-    '@typescript-eslint/eslint-plugin',
-    '@typescript-eslint/parser',
+    '@typescript-eslint/eslint-plugin@^7',
+    '@typescript-eslint/parser@^7',
     'aws-cdk-lib',
     'aws-sdk-client-mock',
     'aws-sdk-client-mock-jest',
     'cz-conventional-changelog',
     'eslint',
+    'eslint-plugin-prettier',
     'husky',
     'lint-staged',
     'validate-branch-name',
     'prettier',
-    'eslint-plugin-prettier',
   ],
 });
 if (root.eslint) {
@@ -327,14 +327,15 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
   devDeps: [
     '@aws-sdk/types',
+    '@nuxtjs/eslint-config-typescript',
+    '@typescript-eslint/parser',
     '@nuxt/types',
     '@types/node',
     '@types/uuid',
+    'eslint-plugin-vue',
     'kill-port',
     'lint-staged',
-    '@nuxtjs/eslint-config-typescript',
     'vue-eslint-parser',
-    '@typescript-eslint/parser',
     'prettier',
     'eslint-plugin-prettier',
   ],
@@ -362,11 +363,11 @@ frontEndApp.addFields({
 if (frontEndApp.eslint) {
   frontEndApp.eslint.addRules({ ...eslintGlobalRules });
   frontEndApp.eslint.addExtends(
-    'plugin:prettier/recommended',
     '@nuxtjs/eslint-config-typescript',
+    'plugin:prettier/recommended',
     'plugin:vue/vue3-recommended',
   );
-  frontEndApp.eslint.addPlugins('prettier', 'vue');
+  frontEndApp.eslint.addPlugins('eslint-plugin-vue', 'prettier', 'vue');
 }
 
 new PnpmWorkspace(root);

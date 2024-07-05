@@ -26,7 +26,7 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Get Path Parameter
+    // Get required path parameter
     const id: string = event.pathParameters?.id || '';
     if (id === '') throw new Error('Required id is missing');
 

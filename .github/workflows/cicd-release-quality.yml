@@ -32,20 +32,20 @@ jobs:
       AWS_BASE_API_URL: ${{ secrets.AWS_BASE_API_URL }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install pnpm
-        uses: pnpm/action-setup@v2.2.1
+        uses: pnpm/action-setup@v4
         with:
           version: 9.4.0
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20.15.0
           cache: pnpm
       - name: Nx cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules/.cache/nx
           fail-on-cache-miss: false
@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Derive SHAs for nx affected commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@v4
         with:
           main-branch-name: main
       - name: Run CI/CD Test Back-End
@@ -86,20 +86,20 @@ jobs:
       AWS_BASE_API_URL: ${{ secrets.AWS_BASE_API_URL }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install pnpm
-        uses: pnpm/action-setup@v2.2.1
+        uses: pnpm/action-setup@v4
         with:
           version: 9.4.0
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20.15.0
           cache: pnpm
       - name: Nx cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules/.cache/nx
           fail-on-cache-miss: false
@@ -107,12 +107,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Derive SHAs for nx affected commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@v4
         with:
           main-branch-name: main
       - name: Configure AWS Credentials
         id: configure_iam_credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
@@ -150,20 +150,20 @@ jobs:
       AWS_BASE_API_URL: ${{ secrets.AWS_BASE_API_URL }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install pnpm
-        uses: pnpm/action-setup@v2.2.1
+        uses: pnpm/action-setup@v4
         with:
           version: 9.4.0
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20.15.0
           cache: pnpm
       - name: Nx cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules/.cache/nx
           fail-on-cache-miss: false
@@ -171,12 +171,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Derive SHAs for nx affected commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@v4
         with:
           main-branch-name: main
       - name: Configure AWS Credentials
         id: configure_iam_credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
           role-session-name: GitHub_to_AWS_via_FederatedOIDC

@@ -1,6 +1,9 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { DescribePipelineLaunchResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import {
+  CreateWorkflowLaunchRequest,
+  CreateWorkflowLaunchResponse,
+} from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
@@ -11,14 +14,15 @@ const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 
 /**
- * This GET /nf-tower/pipeline/read-pipeline-launch-details/{:id}?laboratoryId={LaboratoryId}
- * API queries the NextFlow Tower GET /pipelines/{:id}/launch?workspaceId={WorkspaceId}
- * API for a specific Pipeline's Launch details, and it expects:
- *  - Required Path Parameter:
- *    - 'id': NextFlow Tower Pipeline Id
+ * This POST /nf-tower/workflow/request-workflow-launch?laboratoryId={LaboratoryId}
+ * API calls the NextFlow Tower POST /workflow/launch?workspaceId={WorkspaceId}
+ * API to launch a specific Workflow (aka Pipeline Run), and it expects:
  *  - Required Query Parameter:
  *    - 'laboratoryId': containing the LaboratoryId to retrieve the WorkspaceId & AccessToken
- *
+ *  - Required Body JSON Payload:
+ *    - this must match the CreateWorkflowLaunchRequest type definition and can
+ *      be obtained for each respective Pipeline by calling the
+ *      GET /nf-tower/pipeline/read-pipeline-launch-details/{Pipeline Id} API
  * @param event
  */
 export const handler: Handler = async (
@@ -26,13 +30,14 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Get required path parameter
-    const id: string = event.pathParameters?.id || '';
-    if (id === '') throw new Error('Required id is missing');
-
     // Get required query parameter
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
     if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
+
+    // Get post body - delegate to Seqera Cloud / NextFlow Tower to validate and process
+    const request: CreateWorkflowLaunchRequest = event.isBase64Encoded
+      ? JSON.parse(atob(event.body!))
+      : JSON.parse(event.body!);
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
@@ -56,10 +61,11 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: DescribePipelineLaunchResponse = await httpRequest<DescribePipelineLaunchResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/pipelines/${id}/launch?${apiParameters.toString()}`,
-      REST_API_METHOD.GET,
+    const response: CreateWorkflowLaunchResponse = await httpRequest<CreateWorkflowLaunchResponse>(
+      `${process.env.SEQERA_API_BASE_URL}/workflow/launch?${apiParameters.toString()}`,
+      REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },
+      request, // Delegate request body validation to Seqera Cloud / NextFlow Tower
     );
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

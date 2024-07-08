@@ -18,7 +18,7 @@ export type DescribeWorkflowMetricsResponse = components['schemas']['GetWorkflow
 
 /** POST /workflow/launch **/
 export type CreateWorkflowLaunchQuery = operations['CreateWorkflowLaunch']['parameters']['query'];
-export type CreateWorkflowLaunchRequest = components['schemas']['WorkflowLaunchRequest'];
+export type CreateWorkflowLaunchRequest = components['schemas']['SubmitWorkflowLaunchRequest'];
 export type CreateWorkflowLaunchResponse = components['schemas']['SubmitWorkflowLaunchResponse'];
 
 /** POST /workflow/{workflowId}/cancel **/

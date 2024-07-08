@@ -112,8 +112,8 @@ export class NFTowerNestedStack extends NestedStack {
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
     ]);
-    // /nf-tower/workflow/request-workflow-launch
-    this.iam.addPolicyStatements('/nf-tower/workflow/request-workflow-launch', [
+    // /nf-tower/workflow/create-workflow-execution
+    this.iam.addPolicyStatements('/nf-tower/workflow/create-workflow-execution', [
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
     ]);

@@ -14,7 +14,7 @@ const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 
 /**
- * This POST /nf-tower/workflow/request-workflow-launch?laboratoryId={LaboratoryId}
+ * This POST /nf-tower/workflow/create-workflow-execution?laboratoryId={LaboratoryId}
  * API calls the NextFlow Tower POST /workflow/launch?workspaceId={WorkspaceId}
  * API to launch a specific Workflow (aka Pipeline Run), and it expects:
  *  - Required Query Parameter:

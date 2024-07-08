@@ -92,6 +92,16 @@ export class NFTowerNestedStack extends NestedStack {
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
     ]);
 
+    // /nf-tower/workflow/cancel-workflow-execution
+    this.iam.addPolicyStatements('/nf-tower/workflow/cancel-workflow-execution', [
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+    ]);
+    // /nf-tower/workflow/create-workflow-execution
+    this.iam.addPolicyStatements('/nf-tower/workflow/create-workflow-execution', [
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+    ]);
     // /nf-tower/workflow/list-workflows
     this.iam.addPolicyStatements('/nf-tower/workflow/list-workflows', [
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
@@ -109,11 +119,6 @@ export class NFTowerNestedStack extends NestedStack {
     ]);
     // /nf-tower/workflow/read-workflow-progress
     this.iam.addPolicyStatements('/nf-tower/workflow/read-workflow-progress', [
-      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
-      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
-    ]);
-    // /nf-tower/workflow/request-workflow-launch
-    this.iam.addPolicyStatements('/nf-tower/workflow/request-workflow-launch', [
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
     ]);

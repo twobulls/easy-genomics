@@ -61,7 +61,7 @@ export const handler: Handler = async (
       REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },
     );
-    return buildResponse(200, JSON.stringify(response), event);
+    return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {
     console.error(err);
     return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);

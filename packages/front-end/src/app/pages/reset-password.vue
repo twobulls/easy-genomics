@@ -5,6 +5,7 @@
   import { checkIsTokenExpired } from '~/utils/jwt';
   import { getUrlParamValue } from '~/utils/string-utils';
   import { NonEmptyStringSchema } from '@easy-genomics/shared-lib/src/app/types/base-unified';
+  import { AutoCompleteOptionsEnum } from '~/types/forms';
 
   definePageMeta({ layout: 'password' });
 

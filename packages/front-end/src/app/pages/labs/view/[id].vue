@@ -11,6 +11,8 @@
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
+  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
   const { $api } = useNuxtApp();
 
@@ -21,18 +23,22 @@
 
   const tabItems = [
     {
-      key: 'details',
-      label: 'Details',
+      key: 'pipelines',
+
+      label: 'Pipelines',
+    },
+    {
+      key: 'runs',
+      label: 'Runs',
+      disabled: true,
     },
     {
       key: 'users',
-      label: 'Users',
+      label: 'Lab Users',
     },
     {
-      key: 'workflow',
-
-      label: 'Workflow',
-      disabled: true,
+      key: 'details',
+      label: 'Details',
     },
   ];
 
@@ -100,15 +106,53 @@
     }
   }
 
-  const tableColumns = [
+  const usersTableColumns = [
     {
       key: 'Name',
       label: 'Name',
+      sortable: true,
     },
     {
       key: 'actions',
       label: 'Lab Access',
     },
+  ];
+
+  const pipelinesTableColumns = [
+    {
+      key: 'Name',
+      label: 'Name',
+    },
+    {
+      key: 'description',
+      label: 'Description',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
+
+  const pipelinesActionItems = (row: any) => [
+    [
+      {
+        label: 'Launch Workflow Run',
+        click: () => {},
+      },
+    ],
+    [
+      {
+        label: 'View Workflow Parameters',
+        click: () => {},
+      },
+    ],
+    [
+      {
+        label: 'Remove',
+        class: 'text-alert-danger-dark',
+        click: () => {},
+      },
+    ],
   ];
 
   function getAssignedLabRole(labUserDetails: LaboratoryUserDetails): LaboratoryRolesEnum {
@@ -191,7 +235,7 @@
 </script>
 
 <template>
-  <EGPageHeader :title="labName" description="Lab summary, statistics and its users">
+  <EGPageHeader :title="labName" description="View your Lab users, details and workflows">
     <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = true" />
     <EGAddLabUsersModule
       v-if="showAddUserModule"
@@ -206,30 +250,10 @@
 
   <UTabs :ui="EGTabsStyles" :default-index="defaultTabIndex" :items="tabItems">
     <template #item="{ item }">
-      <div v-if="item.key === 'details'" class="space-y-3">
-        <EGLabDetailsForm />
-      </div>
-      <div v-else-if="item.key === 'users'" class="space-y-3">
-        <EGSearchInput
-          @input-event="updateSearchOutput"
-          placeholder="Search user"
-          :disabled="useUiStore().isRequestPending"
-          class="my-6 w-[408px]"
-        />
-
-        <EGDialog
-          actionLabel="Remove User"
-          :actionVariant="ButtonVariantEnum.enum.destructive"
-          cancelLabel="Cancel"
-          :cancelVariant="ButtonVariantEnum.enum.secondary"
-          @action-triggered="handleRemoveUserFromLab"
-          :primaryMessage="primaryMessage"
-          v-model="isOpen"
-        />
-
+      <div v-if="item.key === 'pipelines'" class="space-y-3">
         <EGTable
           :table-data="filteredTableData"
-          :columns="tableColumns"
+          :columns="pipelinesTableColumns"
           :is-loading="useUiStore().isRequestPending"
           :show-pagination="!useUiStore().isRequestPending"
         >
@@ -244,8 +268,9 @@
             </div>
           </template>
 
-          <template #assignedRole-data="{ row: labUser }">
-            <span class="text-black">{{ labUser.assignedRole }}</span>
+          <template #description-data="{ row: labUser }">
+            Description
+            <!--            <span class="text-black">{{ labUser.assignedRole }}</span>-->
           </template>
 
           <template #actions-data="{ row: labUser }">
@@ -268,7 +293,73 @@
           </template>
         </EGTable>
       </div>
-      <div v-else-if="item.key === 'workflow'" class="space-y-3">Workflow TBD</div>
+      <div v-else-if="item.key === 'runs'" class="space-y-3">Runs TBD</div>
+      <div v-else-if="item.key === 'users'" class="space-y-3">
+        <EGSearchInput
+          @input-event="updateSearchOutput"
+          placeholder="Search user"
+          :disabled="useUiStore().isRequestPending"
+          class="my-6 w-[408px]"
+        />
+
+        <EGDialog
+          actionLabel="Remove User"
+          :actionVariant="ButtonVariantEnum.enum.destructive"
+          cancelLabel="Cancel"
+          :cancelVariant="ButtonVariantEnum.enum.secondary"
+          @action-triggered="handleRemoveUserFromLab"
+          :primaryMessage="primaryMessage"
+          v-model="isOpen"
+        />
+
+        <EGTable
+          :table-data="filteredTableData"
+          :columns="usersTableColumns"
+          :is-loading="useUiStore().isRequestPending"
+          :show-pagination="!useUiStore().isRequestPending"
+        >
+          <template #Name-data="{ row: labUser }">
+            <div class="flex items-center">
+              <EGUserDisplay
+                :display-name="labUser.displayName"
+                :email="labUser.UserEmail"
+                :status="labUser.status"
+                :showAvatar="true"
+              />
+            </div>
+          </template>
+
+          <template #assignedRole-data="{ row: labUser }">
+            <span class="text-black">{{ labUser.assignedRole }}</span>
+          </template>
+
+          <template #actions-data="{ row }">
+            <div class="flex justify-end">
+              <EGActionButton :items="pipelinesActionItems(row)" class="ml-2" />
+            </div>
+
+            <!--            <div class="flex items-center">-->
+            <!--              <EGUserRoleDropdownNew-->
+            <!--                :show-remove-from-lab="true"-->
+            <!--                :key="labUser.UserId"-->
+            <!--                :disabled="useUiStore().isRequestPending"-->
+            <!--                :user="labUser"-->
+            <!--                @assign-lab-role="handleAssignLabRole($event)"-->
+            <!--                @remove-user-from-lab="displayRemoveUserDialog($event.user)"-->
+            <!--              />-->
+            <!--            </div>-->
+          </template>
+
+          <template #empty-state>
+            <div class="text-muted flex h-24 items-center justify-center font-normal">
+              There are no users in your Lab
+            </div>
+          </template>
+        </EGTable>
+      </div>
+      <div v-else-if="item.key === 'details'" class="space-y-3">
+        <EGLabDetailsForm />
+      </div>
     </template>
   </UTabs>
 </template>

@@ -2,17 +2,19 @@ import { useRuntimeConfig } from 'nuxt/app';
 const { getToken } = useAuth();
 
 class HttpFactory {
-  private baseRequestUrl = `${useRuntimeConfig().public.BASE_API_URL}/easy-genomics`;
+  private baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
+  private defaultApiUrl = `${this.baseApiUrl}/easy-genomics`;
+  private nfTowerApiUrl = `${this.baseApiUrl}/nf-tower`;
 
-  /**
-   * @description Call API with token and handle response errors
-   * @param method
-   * @param url
-   * @param data
-   * @returns Promise<T | undefined>
-   */
-  async call<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
-    const requestUrl = `${this.baseRequestUrl}${url}`;
+  call<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
+    return this.performRequest<T>(method, this.defaultApiUrl + url, data);
+  }
+
+  callNfTower<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
+    return this.performRequest<T>(method, this.nfTowerApiUrl + url, data);
+  }
+
+  private async performRequest<T>(method: string, url: string, data: unknown = ''): Promise<T | undefined> {
     try {
       const headers: HeadersInit = new Headers();
       headers.append('Content-Type', 'application/json');
@@ -30,11 +32,9 @@ class HttpFactory {
       } catch (tokenError) {
         console.warn(`Failed to get token; reason: ${tokenError}; continuing without Bearer or X-API header`);
       }
-
       if (token) {
         headers.append('Authorization', token);
       }
-
       const settings: RequestInit = {
         method,
         headers,
@@ -42,10 +42,11 @@ class HttpFactory {
       if (data) {
         settings.body = JSON.stringify(data);
       }
-      const response = await fetch(requestUrl, settings);
+      const response = await fetch(url, settings);
       if (!response.ok) {
         await this.handleResponseError(response);
       }
+
       return await ((await response.json()) as Promise<T>);
     } catch (error: any) {
       throw new Error(`Request error: ${error.message}`);

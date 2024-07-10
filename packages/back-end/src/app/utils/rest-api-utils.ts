@@ -43,9 +43,15 @@ export async function httpRequest<T>(
         : {}),
     };
 
-    return await fetch(url, request)
-      .then(async (response) => response.json())
-      .then((json) => <T>json);
+    const response = await fetch(url, request);
+    switch (response.status) {
+      case 200:
+        return await response.json().then((data) => <T>data);
+      case 204: // No Content
+        return <T>{};
+      default:
+        throw new Error(`${response.status} ${response.body?.toString()}`.trim());
+    }
   } catch (error: any) {
     console.error(error.message);
     throw error;

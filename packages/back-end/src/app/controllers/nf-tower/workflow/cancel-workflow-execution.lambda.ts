@@ -56,7 +56,7 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
-    const response: CancelWorkflowResponse = await httpRequest<CancelWorkflowResponse>(
+    await httpRequest<CancelWorkflowResponse>(
       `${process.env.SEQERA_API_BASE_URL}/workflow/${id}/cancel?${apiParameters.toString()}`,
       REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },

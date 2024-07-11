@@ -27,7 +27,6 @@
     {
       key: 'runs',
       label: 'Runs',
-      disabled: true,
     },
     {
       key: 'users',
@@ -202,6 +201,15 @@
     }
   }
 
+  async function getWorkflows(): Promise<void> {
+    try {
+      const res = await $api.workflows.list($route.params.id);
+      pipelines.value = res.pipelines;
+    } catch (error) {
+      console.error('Error retrieving pipelines', error);
+    }
+  }
+
   // update UI with latest list of lab users and their assigned role
   async function refreshLabUsers() {
     useUiStore().setRequestPending(true);
@@ -236,6 +244,7 @@
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
     await getPipelines();
+    await getWorkflows();
     await getLabUsers();
     canAddUsers.value = true;
     useUiStore().setRequestPending(false);

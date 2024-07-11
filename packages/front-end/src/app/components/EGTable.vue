@@ -77,6 +77,9 @@
 </template>
 
 <style lang="scss">
+  /**
+   * Table styles are quite granular so styled here via SCSS instead of the UTable's :ui prop config object
+   */
   .EGTable {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
@@ -99,6 +102,12 @@
           text-align: right;
           padding-right: 40px;
         }
+      }
+    }
+
+    tbody tr {
+      td {
+        padding: 22px;
       }
     }
 

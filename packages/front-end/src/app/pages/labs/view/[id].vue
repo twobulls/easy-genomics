@@ -11,7 +11,6 @@
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
-  import { onBeforeMount } from '#imports';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -185,33 +184,29 @@
 
   async function getLabUsers(): Promise<void> {
     try {
-      useUiStore().setRequestPending(true);
-
       const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails($route.params.id);
       const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId($route.params.id);
       labUsers.value = _labUsersDetails.map((user) => getLabUser(user, _labUsers));
     } catch (error) {
       console.error('Error retrieving lab users', error);
       useToastStore().error('Failed to retrieve lab users');
-    } finally {
-      useUiStore().setRequestPending(false);
     }
   }
 
   async function getPipelines(): Promise<void> {
     try {
-      useUiStore().setRequestPending(true);
-      pipelines.value = await $api.pipelines.list($route.params.id);
+      const res = await $api.pipelines.list($route.params.id);
+      pipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
-    } finally {
-      useUiStore().setRequestPending(false);
     }
   }
 
   // update UI with latest list of lab users and their assigned role
   async function refreshLabUsers() {
+    useUiStore().setRequestPending(true);
     await getLabUsers();
+    useUiStore().setRequestPending(false);
   }
 
   function updateSearchOutput(newVal: any) {
@@ -239,10 +234,11 @@
   }
 
   onBeforeMount(async () => {
+    useUiStore().setRequestPending(true);
     await getPipelines();
-    // TODO - getLabUsers on tab change instead
     await getLabUsers();
     canAddUsers.value = true;
+    useUiStore().setRequestPending(false);
   });
 </script>
 
@@ -264,20 +260,19 @@
     <template #item="{ item }">
       <div v-if="item.key === 'pipelines'" class="space-y-3">
         <EGTable
-          v-if="!useUiStore().isRequestPending"
-          :table-data="pipelines.pipelines"
+          :table-data="pipelines"
           :columns="pipelinesTableColumns"
           :is-loading="useUiStore().isRequestPending"
           :show-pagination="!useUiStore().isRequestPending"
         >
           <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
-              {{ pipeline.name }}
+              {{ pipeline?.name }}
             </div>
           </template>
 
-          <template #description-data="{ row: pipeline }" class="asdasdasdsd">
-            {{ pipeline.description }}
+          <template #description-data="{ row: pipeline }">
+            {{ pipeline?.description }}
           </template>
 
           <template #actions-data="{ row }">
@@ -321,23 +316,23 @@
           <template #Name-data="{ row: labUser }">
             <div class="flex items-center">
               <EGUserDisplay
-                :display-name="labUser.displayName"
-                :email="labUser.UserEmail"
-                :status="labUser.status"
+                :display-name="labUser?.displayName"
+                :email="labUser?.UserEmail"
+                :status="labUser?.status"
                 :showAvatar="true"
               />
             </div>
           </template>
 
           <template #assignedRole-data="{ row: labUser }">
-            <span class="text-black">{{ labUser.assignedRole }}</span>
+            <span class="text-black">{{ labUser?.assignedRole }}</span>
           </template>
 
           <template #actions-data="{ row: labUser }">
             <div class="flex items-center">
               <EGUserRoleDropdownNew
                 :show-remove-from-lab="true"
-                :key="labUser.UserId"
+                :key="labUser?.UserId"
                 :disabled="useUiStore().isRequestPending"
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

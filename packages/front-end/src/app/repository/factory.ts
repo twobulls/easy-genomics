@@ -16,7 +16,7 @@ class HttpFactory {
   /**
    * @description NF Tower API request handler
    */
-  callNfTower<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
+  callNextflowTower<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
     return this.performRequest<T>(method, this.nfTowerApiUrl + url, data);
   }
 

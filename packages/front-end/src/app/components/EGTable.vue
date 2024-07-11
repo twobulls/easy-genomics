@@ -14,7 +14,7 @@
     }>(),
     {
       isLoading: false,
-    }
+    },
   );
 
   const localProps = reactive({
@@ -36,7 +36,7 @@
     () => props.tableData,
     (newTableData: any) => {
       localProps.tableData = newTableData;
-    }
+    },
   );
 </script>
 
@@ -77,6 +77,9 @@
 </template>
 
 <style lang="scss">
+  /**
+   * Table styles are quite granular so styled here via SCSS instead of the UTable's :ui prop config object
+   */
   .EGTable {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
@@ -93,7 +96,7 @@
 
         th:first-child {
           padding-left: 40px;
-          width: 400px;
+          width: 320px;
         }
         th:last-child {
           text-align: right;
@@ -102,10 +105,21 @@
       }
     }
 
+    tbody tr {
+      td {
+        padding: 22px;
+      }
+    }
+
     tbody tr td:nth-child(1) {
       color: black;
       font-weight: 600;
       padding-left: 40px;
+      white-space: normal;
+    }
+
+    tbody tr td:nth-child(2) {
+      white-space: normal;
     }
 
     tbody tr td:nth-child(2) {

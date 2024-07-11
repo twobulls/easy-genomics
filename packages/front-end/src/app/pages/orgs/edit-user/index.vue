@@ -115,14 +115,14 @@
       if (res?.Status === 'Success') {
         await updateSelectedUser();
         useToastStore().success(
-          `${lab.name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`
+          `${lab.name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`,
         );
       } else {
         throw new Error('Failed to update lab access');
       }
     } catch (error) {
       useToastStore().error(
-        "Oops, we couldn't update the lab access. Please check your connection and try again later"
+        "Oops, we couldn't update the lab access. Please check your connection and try again later",
       );
       throw error;
     } finally {
@@ -136,7 +136,7 @@
       const res = await $api.labs.editUserLabAccess(
         user.LaboratoryId,
         useOrgsStore().selectedUser?.UserId,
-        user.LabManager
+        user.LabManager,
       );
       if (res?.Status === 'Success') {
         await fetchUserLabs();
@@ -146,7 +146,7 @@
           maybeLabName = lab.Name;
         }
         useToastStore().success(
-          `${maybeLabName} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`
+          `${maybeLabName} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`,
         );
       } else {
         throw new Error('Failed to update user role');
@@ -184,7 +184,7 @@
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="There are no labs in your Organization"
-    :button-action="() => $router.push({ path: '/labs/new' })"
+    :button-action="() => $router.push({ path: '/labs/create' })"
     button-label="Create a Lab"
   />
 

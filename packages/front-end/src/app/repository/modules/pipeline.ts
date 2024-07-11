@@ -1,12 +1,13 @@
-import { ListPipelinesQuery } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { ListPipelinesResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
 
 class PipelinesModule extends HttpFactory {
   $config = useRuntimeConfig();
 
-  async list(labId: string): Promise<ListPipelinesQuery[]> {
-    const res = await this.callNextflowTower<ListPipelinesQuery[]>(
+  // TODO: replace return types with Zod schemas generated Nextflow Tower's OpenAPI schema
+  async list(labId: string): Promise<ListPipelinesResponse[]> {
+    const res = await this.callNextflowTower<ListPipelinesResponse[]>(
       'GET',
       `/pipeline/list-pipelines?laboratoryId=${labId}`,
     );

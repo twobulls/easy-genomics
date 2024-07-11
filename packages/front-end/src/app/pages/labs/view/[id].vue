@@ -134,13 +134,13 @@
   const pipelinesActionItems = (row: any) => [
     [
       {
-        label: 'Launch Workflow Run',
+        label: 'Run',
         click: () => {},
       },
     ],
     [
       {
-        label: 'View Workflow Parameters',
+        label: 'View Parameters',
         click: () => {},
       },
     ],
@@ -243,7 +243,7 @@
 </script>
 
 <template>
-  <EGPageHeader :title="labName" description="View your Lab users, details and workflows">
+  <EGPageHeader :title="labName" description="View your Lab users, details and pipelines">
     <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = true" />
     <EGAddLabUsersModule
       v-if="showAddUserModule"

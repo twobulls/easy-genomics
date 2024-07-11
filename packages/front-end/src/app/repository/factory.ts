@@ -6,14 +6,27 @@ class HttpFactory {
   private defaultApiUrl = `${this.baseApiUrl}/easy-genomics`;
   private nfTowerApiUrl = `${this.baseApiUrl}/nf-tower`;
 
+  /**
+   * @description Default API request handler
+   */
   call<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
     return this.performRequest<T>(method, this.defaultApiUrl + url, data);
   }
 
+  /**
+   * @description NF Tower API request handler
+   */
   callNfTower<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
     return this.performRequest<T>(method, this.nfTowerApiUrl + url, data);
   }
 
+  /**
+   * @description Call API with token and handle response errors
+   * @param method
+   * @param url
+   * @param data
+   * @returns Promise<T | undefined>
+   */
   private async performRequest<T>(method: string, url: string, data: unknown = ''): Promise<T | undefined> {
     try {
       const headers: HeadersInit = new Headers();

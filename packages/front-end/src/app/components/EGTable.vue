@@ -14,7 +14,7 @@
     }>(),
     {
       isLoading: false,
-    }
+    },
   );
 
   const localProps = reactive({
@@ -36,7 +36,7 @@
     () => props.tableData,
     (newTableData: any) => {
       localProps.tableData = newTableData;
-    }
+    },
   );
 </script>
 
@@ -93,7 +93,7 @@
 
         th:first-child {
           padding-left: 40px;
-          width: 400px;
+          width: 320px;
         }
         th:last-child {
           text-align: right;
@@ -106,6 +106,11 @@
       color: black;
       font-weight: 600;
       padding-left: 40px;
+      white-space: normal;
+    }
+
+    tbody tr td:nth-child(2) {
+      white-space: normal;
     }
 
     tbody tr td:nth-child(2) {

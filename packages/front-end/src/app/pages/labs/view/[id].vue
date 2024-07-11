@@ -11,11 +11,9 @@
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
-  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import { onBeforeMount } from '#imports';
 
   const { $api } = useNuxtApp();
-
   const $route = useRoute();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const labId = $route.params.id;
@@ -48,6 +46,7 @@
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
+  const pipelines = ref<[]>([]);
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -199,6 +198,17 @@
     }
   }
 
+  async function getPipelines(): Promise<void> {
+    try {
+      useUiStore().setRequestPending(true);
+      pipelines.value = await $api.pipelines.list($route.params.id);
+    } catch (error) {
+      console.error('Error retrieving pipelines', error);
+    } finally {
+      useUiStore().setRequestPending(false);
+    }
+  }
+
   // update UI with latest list of lab users and their assigned role
   async function refreshLabUsers() {
     await getLabUsers();
@@ -228,7 +238,9 @@
     await refreshLabUsers();
   }
 
-  onMounted(async () => {
+  onBeforeMount(async () => {
+    await getPipelines();
+    // TODO - getLabUsers on tab change instead
     await getLabUsers();
     canAddUsers.value = true;
   });
@@ -252,37 +264,25 @@
     <template #item="{ item }">
       <div v-if="item.key === 'pipelines'" class="space-y-3">
         <EGTable
-          :table-data="filteredTableData"
+          v-if="!useUiStore().isRequestPending"
+          :table-data="pipelines.pipelines"
           :columns="pipelinesTableColumns"
           :is-loading="useUiStore().isRequestPending"
           :show-pagination="!useUiStore().isRequestPending"
         >
-          <template #Name-data="{ row: labUser }">
+          <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
-              <EGUserDisplay
-                :display-name="labUser.displayName"
-                :email="labUser.UserEmail"
-                :status="labUser.status"
-                :showAvatar="true"
-              />
+              {{ pipeline.name }}
             </div>
           </template>
 
-          <template #description-data="{ row: labUser }">
-            Description
-            <!--            <span class="text-black">{{ labUser.assignedRole }}</span>-->
+          <template #description-data="{ row: pipeline }" class="asdasdasdsd">
+            {{ pipeline.description }}
           </template>
 
-          <template #actions-data="{ row: labUser }">
-            <div class="flex items-center">
-              <EGUserRoleDropdownNew
-                :show-remove-from-lab="true"
-                :key="labUser.UserId"
-                :disabled="useUiStore().isRequestPending"
-                :user="labUser"
-                @assign-lab-role="handleAssignLabRole($event)"
-                @remove-user-from-lab="displayRemoveUserDialog($event.user)"
-              />
+          <template #actions-data="{ row }">
+            <div class="flex justify-end">
+              <EGActionButton :items="pipelinesActionItems(row)" class="ml-2" />
             </div>
           </template>
 
@@ -333,21 +333,17 @@
             <span class="text-black">{{ labUser.assignedRole }}</span>
           </template>
 
-          <template #actions-data="{ row }">
-            <div class="flex justify-end">
-              <EGActionButton :items="pipelinesActionItems(row)" class="ml-2" />
+          <template #actions-data="{ row: labUser }">
+            <div class="flex items-center">
+              <EGUserRoleDropdownNew
+                :show-remove-from-lab="true"
+                :key="labUser.UserId"
+                :disabled="useUiStore().isRequestPending"
+                :user="labUser"
+                @assign-lab-role="handleAssignLabRole($event)"
+                @remove-user-from-lab="displayRemoveUserDialog($event.user)"
+              />
             </div>
-
-            <!--            <div class="flex items-center">-->
-            <!--              <EGUserRoleDropdownNew-->
-            <!--                :show-remove-from-lab="true"-->
-            <!--                :key="labUser.UserId"-->
-            <!--                :disabled="useUiStore().isRequestPending"-->
-            <!--                :user="labUser"-->
-            <!--                @assign-lab-role="handleAssignLabRole($event)"-->
-            <!--                @remove-user-from-lab="displayRemoveUserDialog($event.user)"-->
-            <!--              />-->
-            <!--            </div>-->
           </template>
 
           <template #empty-state>

@@ -2,11 +2,10 @@
   const $route = useRoute();
   const router = useRouter();
 
-  // http://localhost:3000/labs/view/pipeline/run?labName=Test+Laboratory&tab=Run+Details
+  // http://localhost:3000/labs/bbac4190-0446-4db4-a084-cfdbc8102297/run-pipeline?labName=Test+Laboratory
 
   const labId = $route.params.id;
   const labName = $route.query.labName;
-  console.log('labName:', labName);
 
   const items = [
     {
@@ -42,7 +41,12 @@
       return index;
     },
     set(value) {
-      router.replace({ query: { tab: items[value].label } });
+      // Update the URL query when the selected tab changes.
+      // Adding/overwriting the tab query parameter with the selected tab label.
+      // e.g. tab=Edit+Parameters
+      // http://localhost:3000/labs/bbac4190-0446-4db4-a084-cfdbc8102297/run-pipeline?labName=Test+Laboratory&tab=Edit+Parameters
+      const query = { ...$route.query, tab: items[value].label };
+      router.replace({ query });
     },
   });
 
@@ -98,6 +102,7 @@
         <div class="grid gap-4">
           <div>
             <div>labName: {{ labName }}</div>
+            <div>labId: {{ labId }}</div>
           </div>
           <div>
             <div>Item:</div>

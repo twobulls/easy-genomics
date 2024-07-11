@@ -47,7 +47,7 @@
 
   function viewOrg(org: Organization) {
     useOrgsStore().setSelectedOrg(org);
-    navigateTo(`/orgs/view/${org.OrganizationId}`);
+    navigateTo(`/orgs/${org.OrganizationId}`);
   }
 
   onBeforeMount(async () => {
@@ -69,7 +69,7 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1">Organizations</EGText>
-    <EGButton label="Create a new Organization" to="/orgs/new" />
+    <EGButton label="Create a new Organization" to="/orgs/create" />
   </div>
 
   <EGEmptyDataCTA

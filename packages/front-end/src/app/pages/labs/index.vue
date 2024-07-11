@@ -35,7 +35,7 @@
     [
       {
         label: 'View / Edit',
-        click: () => router.push({ path: `/labs/view/${row.LaboratoryId}`, query: { name: row.Name } }),
+        click: () => router.push({ path: `/labs/${row.LaboratoryId}`, query: { name: row.Name } }),
       },
     ],
     [
@@ -116,13 +116,13 @@
 <template>
   <div class="mb-11 flex items-center justify-between">
     <EGText tag="h1" v-if="labData">Labs</EGText>
-    <EGButton label="Create a new Lab" class="self-end" @click="() => $router.push({ path: `/labs/new` })" />
+    <EGButton label="Create a new Lab" class="self-end" @click="() => $router.push({ path: `/labs/create` })" />
   </div>
 
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Labs set up yet."
-    :button-action="() => $router.push({ path: `/labs/new` })"
+    :button-action="() => $router.push({ path: `/labs/create` })"
     button-label="Create a new Lab"
   />
 

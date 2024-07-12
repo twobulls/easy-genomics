@@ -293,7 +293,7 @@
 
           <template #empty-state>
             <div class="text-muted flex h-24 items-center justify-center font-normal">
-              There are no users in your Lab
+              There are no Pipelines assigned to this Lab
             </div>
           </template>
         </EGTable>

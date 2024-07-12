@@ -14,6 +14,7 @@
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
+  const router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const labId = $route.params.id;
   const labName = $route.query.name;
@@ -131,11 +132,20 @@
     },
   ];
 
-  const pipelinesActionItems = (row: any) => [
+  const pipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',
-        click: () => {},
+        click: () =>
+          router.push({
+            path: `/labs/${labId}/run-pipeline`,
+            query: {
+              labName: labName,
+              piplelineId: pipeline.pipelineId,
+              pipelineName: pipeline.name,
+              pipelineDescription: pipeline.description,
+            },
+          }),
       },
     ],
     [

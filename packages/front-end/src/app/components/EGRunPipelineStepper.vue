@@ -1,12 +1,21 @@
 <script setup lang="ts">
+  import EGRunPipelineFormRunDetails from './EGRunPipelineFormRunDetails.vue';
+
   const $route = useRoute();
   const router = useRouter();
 
-  // http://localhost:3000/labs/bbac4190-0446-4db4-a084-cfdbc8102297/run-pipeline?labName=Test+Laboratory
+  // http://localhost:3000/labs/bbac4190-0446-4db4-a084-cfdbc8102297/run-pipeline?labName=Test+Laboratory&pipelineId=228412645122841&pipelineName=nf-core-viralrecon
 
   const labId = $route.params.id;
   const labName = $route.query.labName;
+  const pipelineId = $route.query.pipelineId || '';
+  const pipelineName = $route.query.pipelineName || '';
+  const pipelineDescription = $route.query.pipelineDescription || '';
 
+  // TODO: create usePipeline store to manage pipeline state and actions outside of URL query params
+  // with the values in the store (if any) taking precedence over the URL query params
+
+  // TODO: create RunPipelineStep Type using enums etc. to define the steps and make it easier to know which step is prev/next
   const items = [
     {
       key: 'details',
@@ -15,17 +24,17 @@
     {
       key: 'upload',
       label: 'Upload Data',
-      //   disabled: true,
+      disabled: true,
     },
     {
       key: 'parameters',
       label: 'Edit Parameters',
-      //   disabled: true,
+      disabled: true,
     },
     {
       key: 'review',
       label: 'Review Pipeline',
-      //   disabled: true,
+      disabled: true,
     },
   ];
 
@@ -97,26 +106,21 @@
       </div>
     </template>
 
-    <template #item="{ item, index, selected }">
+    <template #item="{ item, index }">
       <EGCard>
-        <div class="grid gap-4">
-          <div>
-            <div>labName: {{ labName }}</div>
-            <div>labId: {{ labId }}</div>
-          </div>
-          <div>
-            <div>Item:</div>
-            <pre>{{ item }}</pre>
-          </div>
-          <div>
-            <div>Index:</div>
-            <pre>{{ index }}</pre>
-          </div>
-          <div>
-            <div>Selected:</div>
-            <pre>{{ selected }}</pre>
-          </div>
+        <div class="font-['Inter'] text-xs font-normal leading-none text-zinc-900">Step 0{{ index + 1 }}</div>
+        <div class="font-['Plus Jakarta Sans'] text-lg font-semibold leading-snug text-zinc-900">
+          {{ item.label }}
         </div>
+        <UDivider class="py-4" />
+        <EGRunPipelineFormRunDetails
+          v-if="index === 0"
+          :labId="labId"
+          :labName="labName"
+          :pipelineId="pipelineId"
+          :pipelineName="pipelineName"
+          :pipelineDescription="pipelineDescription"
+        />
       </EGCard>
     </template>
   </UTabs>

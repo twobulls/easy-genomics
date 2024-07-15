@@ -152,6 +152,10 @@
       "type": "runtime"
     },
     {
+      "name": "date-fns",
+      "type": "runtime"
+    },
+    {
       "name": "dotenv",
       "type": "runtime"
     },

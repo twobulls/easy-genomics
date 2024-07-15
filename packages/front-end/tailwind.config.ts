@@ -9,23 +9,24 @@ export default <Partial<Config>>{
     extend: {
       colors: {
         // `primaryCol` used by NuxtUI for the global `base` color: see `app.config.ts`
-        primaryCol: {
-          '50': '#f3f3ff',
-          '100': '#eae8ff',
-          '200': '#d7d5ff',
-          '300': '#b8b2ff',
-          '400': '#9687fe',
-          '500': '#5524e0', // 'primary'
-          '600': '#6133f4',
-          '700': '#5524e0',
-          '800': '#451bbc',
-          '900': '#3a1999',
-          '950': '#210d68',
+        'primaryCol': {
+          50: '#f3f3ff',
+          100: '#eae8ff',
+          200: '#d7d5ff',
+          300: '#b8b2ff',
+          400: '#9687fe',
+          500: '#5524e0', // 'primary'
+          600: '#6133f4',
+          700: '#5524e0',
+          800: '#451bbc',
+          900: '#3a1999',
+          950: '#210d68',
         },
-        neutral: {
-          '300': '#c2c2c2',
-          '500': '#979797',
-          '700': '#818181',
+        'neutral': {
+          100: '#e5e5e5',
+          300: '#c2c2c2',
+          500: '#979797',
+          700: '#818181',
         },
         'primary': '#5524e0',
         'primary-dark': '#451DB7',

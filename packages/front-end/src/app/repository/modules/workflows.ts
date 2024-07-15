@@ -9,7 +9,7 @@ class PipelinesModule extends HttpFactory {
   async list(labId: string): Promise<ListWorkflowsResponse[]> {
     const res = await this.callNextflowTower<ListWorkflowsResponse[]>(
       'GET',
-      `/workflow/read-workflow/:id?laboratoryId=${labId}`,
+      `/workflow/list-workflows?laboratoryId=${labId}`,
     );
 
     if (!res) {

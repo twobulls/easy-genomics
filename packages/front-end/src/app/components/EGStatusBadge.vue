@@ -15,16 +15,19 @@
     },
   };
 
+  /**
+   * Translate Nextflow Tower's api enums to UI labels
+   */
   const STATUS_LABEL_MAP = {
     [StatusEnum.enum.CANCELLED]: 'Failed',
     [StatusEnum.enum.FAILED]: 'Failed',
     [StatusEnum.enum.SUCCEEDED]: 'Completed',
     [StatusEnum.enum.RUNNING]: 'Running',
     [StatusEnum.enum.SUBMITTED]: 'Submitted',
-    [StatusEnum.enum.UNKNOWN]: 'Unknown3',
+    [StatusEnum.enum.UNKNOWN]: 'Unknown',
   };
 
-  const label = computed(() => STATUS_LABEL_MAP[props.status] ?? 'Unknown2');
+  const label = computed(() => STATUS_LABEL_MAP[props.status] ?? 'Unknown');
 
   const STATUS_STYLE_MAP = {
     [StatusEnum.enum.SUCCEEDED]: {
@@ -47,12 +50,12 @@
     },
   };
 
-  const getConfig = computed(() => ({
+  const uiConfig = computed(() => ({
     ...baseConfig,
-    variant: STATUS_STYLE_MAP[props.status] || 'background-dark-grey text-body',
+    variant: STATUS_STYLE_MAP[props.status] ?? 'background-dark-grey text-body',
   }));
 </script>
 <template>
-  <UBadge :ui="getConfig">{{ label }} {{ getConfig }}</UBadge>
+  <UBadge :ui="uiConfig">{{ label }}</UBadge>
 </template>
 <style lang="scss"></style>

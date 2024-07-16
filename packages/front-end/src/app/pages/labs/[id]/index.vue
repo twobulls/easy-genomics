@@ -152,7 +152,7 @@
     },
   ];
 
-  const pipelinesActionItems = (row: any) => [
+  const pipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',

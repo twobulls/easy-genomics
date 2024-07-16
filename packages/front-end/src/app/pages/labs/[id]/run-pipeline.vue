@@ -1,6 +1,6 @@
 <script setup lang="ts">
-  const $route = useRoute();
-  const labName = $route.query.labName;
+  import { usePipelineRunStore } from '~/stores';
+  const labName = usePipelineRunStore().getLabName;
 </script>
 
 <template>

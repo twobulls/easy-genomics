@@ -9,6 +9,8 @@
     pipelineDescription: string;
   }>();
 
+  const emit = defineEmits(['next-tab']);
+
   /**
    * Seqera API spec
    * https://cloud.seqera.io/openapi/seqera-api-latest.yml
@@ -22,7 +24,7 @@
    * + A 15-character random hexadecimal string (15-characters)
    * + Each part separated by an underscore (2-characters)
    * With the final pipeline run name being a max of 80-characters
-   * e.g.
+   * e.g. User enters 'community-showcase' and the following name is generated,
    * viralrecon-illumina_community-showcase_20240712_5686910e783b4b2
    */
   const MAX_TOTAL_LENGTH = 80;
@@ -66,7 +68,8 @@
   }
 
   function onSubmit() {
-    console.log('TODO: implement save run details into run details store, or in run-pipeline parent page');
+    usePipelineRunStore().setUserPipelineRunName(formState.runName);
+    emit('next-tab');
   }
 </script>
 
@@ -76,8 +79,8 @@
       <EGInput v-model="formState.pipelineName" :disabled="true" />
     </EGFormGroup>
 
-    <EGFormGroup label="Unique Run Name" name="runName" eager-validation>
-      <EGInput v-model="formState.runName" placeholder="Enter a unique name to identify this pipeline run" autofocus />
+    <EGFormGroup label="Run Name" name="runName" eager-validation>
+      <EGInput v-model="formState.runName" placeholder="Enter a name to identify this pipeline run" autofocus />
       <EGCharacterCounter :value="runNameCharCount" :max="maxRunNameLength" />
     </EGFormGroup>
 

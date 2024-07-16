@@ -1,74 +1,100 @@
 <script setup lang="ts">
+  import { usePipelineRunStore } from '~/stores';
   import EGRunPipelineFormRunDetails from './EGRunPipelineFormRunDetails.vue';
 
   const $route = useRoute();
   const router = useRouter();
 
-  // http://localhost:3000/labs/bbac4190-0446-4db4-a084-cfdbc8102297/run-pipeline?labName=Test+Laboratory&pipelineId=228412645122841&pipelineName=nf-core-viralrecon
+  const labId = usePipelineRunStore().getLabId;
+  const labName = usePipelineRunStore().getLabName;
+  const pipelineId = usePipelineRunStore().getPipelineId;
+  const pipelineName = usePipelineRunStore().getPipelineName;
+  const pipelineDescription = usePipelineRunStore().getPipelineDescription;
 
-  const labId = $route.params.id;
-  const labName = $route.query.labName;
-  const pipelineId = $route.query.pipelineId || '';
-  const pipelineName = $route.query.pipelineName || '';
-  const pipelineDescription = $route.query.pipelineDescription || '';
-
-  // TODO: create usePipeline store to manage pipeline state and actions outside of URL query params
-  // with the values in the store (if any) taking precedence over the URL query params
-
-  // TODO: create RunPipelineStep Type using enums etc. to define the steps and make it easier to know which step is prev/next
   const items = [
     {
+      disabled: false,
       key: 'details',
       label: 'Run Details',
     },
     {
+      disabled: true,
       key: 'upload',
       label: 'Upload Data',
-      disabled: true,
     },
     {
+      disabled: true,
       key: 'parameters',
       label: 'Edit Parameters',
-      disabled: true,
     },
     {
+      disabled: true,
       key: 'review',
       label: 'Review Pipeline',
-      disabled: true,
     },
   ];
 
   const selectedIndex = ref(0);
 
+  function enableSelectedItem(index: number) {
+    const selectedItem = items.find((_, i) => i === index);
+    if (selectedItem && selectedItem.disabled) {
+      selectedItem.disabled = false;
+    }
+  }
+
   const selected = computed({
     get() {
       const index = items.findIndex((item) => item.label === $route.query.tab);
-      if (index === -1) {
-        return 0;
-      }
-
-      return index;
+      const clampedIndex = clampIndex(index);
+      return clampedIndex;
     },
-    set(value) {
-      // Update the URL query when the selected tab changes.
-      // Adding/overwriting the tab query parameter with the selected tab label.
-      // e.g. tab=Edit+Parameters
-      // http://localhost:3000/labs/bbac4190-0446-4db4-a084-cfdbc8102297/run-pipeline?labName=Test+Laboratory&tab=Edit+Parameters
-      const query = { ...$route.query, tab: items[value].label };
-      router.replace({ query });
+    set(index) {
+      enableSelectedItem(index);
+      setTabQueryParam(index);
+      selectedIndex.value = index;
+      console.log('SET selected:', index);
     },
   });
+
+  function clampIndex(index: number) {
+    return Math.min(items.length - 1, Math.max(0, index));
+  }
+
+  function nextTab() {
+    const clampedIndex = clampIndex(selected.value + 1);
+    console.log('nextTab; setting selected to:', clampedIndex);
+    selected.value = clampedIndex;
+  }
+
+  function previousTab() {
+    const clampedIndex = clampIndex(selected.value - 1);
+    selected.value = clampedIndex;
+  }
 
   function onChange(index: number) {
     const item = items[index];
-
-    console.log(`Item ${index} with label ${item.label} was clicked!`);
+    console.log(`UTabs called onChange; Item ${index} with label ${item.label} was clicked`);
+    // selected.value = index;
   }
 
-  // Use watchEffect to update selectedIndex when $route.query.tab changes
-  watchEffect(() => {
-    selectedIndex.value = selected.value;
-  });
+  // Update the URL query when the selected tab changes.
+  // Adding/overwriting the tab query parameter with the selected tab label.
+  // e.g. tab=Edit+Parameters
+  // http://localhost:3000/labs/bbac4190-0446-4db4-a084-cfdbc8102297/run-pipeline?tab=Edit+Parameters
+  function setTabQueryParam(index: number) {
+    const clampedIndex = clampIndex(index);
+    const item = items.find((_, i) => i === clampedIndex);
+    if (item) {
+      const query = { ...$route.query, tab: items[clampedIndex].label };
+      router.replace({ query });
+    } else {
+      console.error(
+        `Item not found for index: ${index}; clampedIndex: ${clampedIndex}; items.length: ${items.length}; items:`,
+        items,
+      );
+    }
+  }
 
   const EGStepperTabsStyles = {
     base: 'focus:outline-none',
@@ -108,19 +134,33 @@
 
     <template #item="{ item, index }">
       <EGCard>
-        <div class="font-['Inter'] text-xs font-normal leading-none text-zinc-900">Step 0{{ index + 1 }}</div>
+        <!-- Header -->
+        <div class="font-['Inter'] text-xs font-normal leading-none text-zinc-900">Item 0{{ index + 1 }}</div>
         <div class="font-['Plus Jakarta Sans'] text-lg font-semibold leading-snug text-zinc-900">
           {{ item.label }}
         </div>
         <UDivider class="py-4" />
-        <EGRunPipelineFormRunDetails
-          v-if="index === 0"
-          :labId="labId"
-          :labName="labName"
-          :pipelineId="pipelineId"
-          :pipelineName="pipelineName"
-          :pipelineDescription="pipelineDescription"
-        />
+
+        <!-- Run Details -->
+        <template v-if="item.key === 'details'">
+          <EGRunPipelineFormRunDetails
+            :labId="labId"
+            :labName="labName"
+            :pipelineId="pipelineId"
+            :pipelineName="pipelineName"
+            :pipelineDescription="pipelineDescription"
+            @next-tab="() => nextTab()"
+          />
+        </template>
+
+        <!-- Upload Data -->
+        <template v-if="item.key === 'upload'">Upload Placeholder</template>
+
+        <!-- Edit Parameters -->
+        <template v-if="item.key === 'parameters'">Edit Parameters Placeholder</template>
+
+        <!-- Review Pipeline -->
+        <template v-if="item.key === 'review'">Review Pipeline Placeholder</template>
       </EGCard>
     </template>
   </UTabs>

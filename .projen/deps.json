@@ -54,6 +54,10 @@
       "type": "build"
     },
     {
+      "name": "@zodios/core",
+      "type": "build"
+    },
+    {
       "name": "aws-cdk-lib",
       "type": "build"
     },

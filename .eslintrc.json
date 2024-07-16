@@ -147,6 +147,14 @@
       "prettier/prettier": "warn",
       "require-await": "warn",
       "array-callback-return": "warn"
+    },
+    "overrides": {
+      "files": [
+        "packages/shared-lib/**"
+      ],
+      "rules": {
+        "import/no-extraneous-dependencies": "off"
+      }
     }
   },
   "overrides": [

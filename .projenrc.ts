@@ -140,11 +140,18 @@ const root = new typescript.TypeScriptProject({
     'lint-staged',
     'validate-branch-name',
     'prettier',
+    '@zodios/core',
   ],
 });
 if (root.eslint) {
   root.eslint.addRules({
     eslintGlobalRules,
+    overrides: {
+      'files': ['packages/shared-lib/**'],
+      'rules': {
+        'import/no-extraneous-dependencies': 'off',
+      },
+    },
   });
   root.eslint.addPlugins('prettier');
   root.eslint.addExtends('plugin:prettier/recommended');
@@ -198,7 +205,7 @@ new typescript.TypeScriptProject({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
-  deps: ['@nestjs/config', 'aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'js-yaml', 'uuid', 'zod'],
+  deps: ['@nestjs/config', 'aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'js-yaml', 'uuid', 'zod', '@zodios/core'],
   devDeps: ['@types/aws-lambda', '@types/js-yaml', '@types/uuid', 'aws-cdk-lib', 'openapi-typescript'],
 });
 
@@ -307,15 +314,17 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-amplify/ui-vue@3.1.30',
     '@easy-genomics/shared-lib@workspace:*',
     '@nuxt/ui',
+    '@pinia-plugin-persistedstate/nuxt',
     '@pinia/nuxt',
     'aws-amplify@5.3.18',
     'aws-sdk',
     'class-variance-authority',
     'dotenv',
     'jwt-decode',
+    'lint-staged',
     'nuxt',
+    'openapi-zod-client',
     'pinia',
-    '@pinia-plugin-persistedstate/nuxt',
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
@@ -323,7 +332,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'unplugin-vue-components',
     'uuid',
     'zod',
-    'lint-staged',
   ],
   devDeps: [
     '@aws-sdk/types',
@@ -353,6 +361,8 @@ frontEndApp.addScripts({
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
   ['pre-commit']: 'lint-staged',
+  ['nftower-spec-to-zod']:
+    'pnpm openapi-zod-client ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -o ../shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.ts',
 });
 frontEndApp.addFields({
   'lint-staged': {

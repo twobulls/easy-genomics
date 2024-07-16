@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@nestjs/config": "^3.2.2",
+    "@zodios/core": "^10.9.6",
     "aws-cdk": "^2.125.0",
     "aws-cdk-lib": "^2.125.0",
     "aws-lambda": "^1.0.7",

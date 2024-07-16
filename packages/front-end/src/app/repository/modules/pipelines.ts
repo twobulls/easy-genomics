@@ -5,7 +5,7 @@ import HttpFactory from '../factory';
 class PipelinesModule extends HttpFactory {
   $config = useRuntimeConfig();
 
-  // TODO: replace return types with Zod schemas generated Nextflow Tower's OpenAPI schema
+  // TODO: replace return types with Zod schemas generated from Nextflow Tower's OpenAPI schema
   async list(labId: string): Promise<ListPipelinesResponse[]> {
     const res = await this.callNextflowTower<ListPipelinesResponse[]>(
       'GET',

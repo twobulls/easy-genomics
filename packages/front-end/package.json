@@ -74,6 +74,7 @@
     "aws-sdk": "^2.1549.0",
     "class-variance-authority": "^0.7.0",
     "constructs": "^10.0.5",
+    "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
     "jwt-decode": "^4.0.0",
     "lint-staged": "^15.2.2",

@@ -107,7 +107,8 @@
 
     tbody tr {
       td {
-        padding: 22px;
+        padding-top: 22px;
+        padding-bottom: 22px;
       }
     }
 

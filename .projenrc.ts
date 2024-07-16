@@ -362,7 +362,7 @@ frontEndApp.addScripts({
   ['nuxt-postinstall']: 'nuxt prepare',
   ['pre-commit']: 'lint-staged',
   ['nftower-spec-to-zod']:
-    'pnpm openapi-zod-client ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -o ../shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.ts',
+    'pnpm openapi-zod-client ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -o ../shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client.ts',
 });
 frontEndApp.addFields({
   'lint-staged': {

@@ -133,8 +133,8 @@
     </template>
 
     <template #item="{ item, index }">
-      <div class="mb-4 text-xs">
-        <!-- Debug logging -->
+      <!-- Debug logging -->
+      <!-- <div class="mb-4 text-xs">
         <strong>item:</strong>
         {{ item }}
         <br />
@@ -149,7 +149,7 @@
         <br />
         <strong>selectedIndex:</strong>
         {{ selectedIndex }}
-      </div>
+      </div> -->
 
       <EGCard>
         <!-- Header -->

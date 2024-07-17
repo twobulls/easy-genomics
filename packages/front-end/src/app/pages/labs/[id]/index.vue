@@ -152,11 +152,23 @@
     },
   ];
 
-  const pipelinesActionItems = (row: any) => [
+  const pipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',
-        click: () => {},
+        click: () => {
+          usePipelineRunStore().reset();
+          const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
+          usePipelineRunStore().setLabId(labId);
+          usePipelineRunStore().setLabName(labName);
+          usePipelineRunStore().setPipelineId(pipelineId);
+          usePipelineRunStore().setPipelineName(pipelineName);
+          usePipelineRunStore().setPipelineDescription(pipelineDescription);
+          router.push({
+            path: `/labs/${labId}/run-pipeline`,
+            query: { tab: 'Run Details' },
+          });
+        },
       },
     ],
     [

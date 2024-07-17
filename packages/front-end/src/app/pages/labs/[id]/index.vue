@@ -6,7 +6,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse, EditUserResponse } from '~/types/api';
-  import { useOrgsStore, useToastStore, useUiStore } from '~/stores';
+  import { useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '~/stores';
   import useUser from '~/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -15,6 +15,7 @@
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
+  const router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const labId = $route.params.id;
   const labName = $route.query.name;
@@ -151,11 +152,23 @@
     },
   ];
 
-  const pipelinesActionItems = (row: any) => [
+  const pipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',
-        click: () => {},
+        click: () => {
+          usePipelineRunStore().reset();
+          const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
+          usePipelineRunStore().setLabId(labId);
+          usePipelineRunStore().setLabName(labName);
+          usePipelineRunStore().setPipelineId(pipelineId);
+          usePipelineRunStore().setPipelineName(pipelineName);
+          usePipelineRunStore().setPipelineDescription(pipelineDescription);
+          router.push({
+            path: `/labs/${labId}/run-pipeline`,
+            query: { tab: 'Run Details' },
+          });
+        },
       },
     ],
     [

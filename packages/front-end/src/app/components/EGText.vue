@@ -28,7 +28,7 @@
     :is="tag"
     :class="[
       `${colorClass}`,
-      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `font-heading ${colorClass}` : '',
+      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `font-serif ${colorClass}` : '',
       ['a'].includes(<string>tag) ? `hover:underline ${colorClass}` : '',
     ]"
   >
@@ -44,7 +44,6 @@
   h3,
   h4,
   h5 {
-    font-family: 'PlusJakartaSans', sans-serif;
     font-weight: 600;
   }
   h1 {
@@ -89,7 +88,6 @@
   div,
   span,
   small {
-    font-family: 'Inter', sans-serif;
     line-height: toRem(24px);
     font-weight: 400;
     letter-spacing: 0;

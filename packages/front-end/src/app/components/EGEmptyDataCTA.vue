@@ -12,7 +12,7 @@
 </script>
 
 <template>
-  <section class="rounded-2xl border border-solid border-neutral-200 bg-white px-12 py-9 max-md:px-5">
+  <section class="stroke-light rounded-2xl border border-solid bg-white px-12 py-9 max-md:px-5">
     <div class="flex justify-between gap-5 max-md:flex-col max-md:gap-0">
       <div class="flex w-6/12 flex-col max-md:ml-0 max-md:w-full">
         <div class="my-auto flex flex-col self-stretch font-medium max-md:mt-10">

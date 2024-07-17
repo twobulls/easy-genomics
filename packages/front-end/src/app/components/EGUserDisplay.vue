@@ -1,5 +1,5 @@
 <!-- TODO: replace all code for displaying combinations of a user avatar, display name, and email with this EGUserDisplay component - https://dept-au.atlassian.net/browse/EG-504
-For example from packages/front-end/src/app/pages/orgs/[id]/index.vue:
+For example from packages/front-end/src/app/pages/orgs/[id]/run-overview.vue:
 
 <div class="flex items-center">
   <EGUserAvatar class="mr-4" :name="useUser().displayName({

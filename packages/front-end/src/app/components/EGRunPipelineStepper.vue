@@ -133,16 +133,34 @@
     </template>
 
     <template #item="{ item, index }">
+      <div class="mb-4 text-xs">
+        <!-- Debug logging -->
+        <strong>item:</strong>
+        {{ item }}
+        <br />
+        <strong>items[selectedIndex]:</strong>
+        {{ items[selectedIndex] }}
+        <br />
+        <strong>index:</strong>
+        {{ index }}
+        <br />
+        <strong>selected:</strong>
+        {{ selected }}
+        <br />
+        <strong>selectedIndex:</strong>
+        {{ selectedIndex }}
+      </div>
+
       <EGCard>
         <!-- Header -->
-        <div class="font-['Inter'] text-xs font-normal leading-none text-zinc-900">Item 0{{ index + 1 }}</div>
+        <div class="font-['Inter'] text-xs font-normal leading-none text-zinc-900">Item 0{{ selectedIndex + 1 }}</div>
         <div class="font-['Plus Jakarta Sans'] text-lg font-semibold leading-snug text-zinc-900">
-          {{ item.label }}
+          {{ items[selectedIndex].label }}
         </div>
         <UDivider class="py-4" />
 
         <!-- Run Details -->
-        <template v-if="item.key === 'details'">
+        <template v-if="items[selectedIndex].key === 'details'">
           <EGRunPipelineFormRunDetails
             :labId="labId"
             :labName="labName"
@@ -154,13 +172,13 @@
         </template>
 
         <!-- Upload Data -->
-        <template v-if="item.key === 'upload'">Upload Placeholder</template>
+        <template v-if="items[selectedIndex].key === 'upload'">Upload Placeholder</template>
 
         <!-- Edit Parameters -->
-        <template v-if="item.key === 'parameters'">Edit Parameters Placeholder</template>
+        <template v-if="items[selectedIndex].key === 'parameters'">Edit Parameters Placeholder</template>
 
         <!-- Review Pipeline -->
-        <template v-if="item.key === 'review'">Review Pipeline Placeholder</template>
+        <template v-if="items[selectedIndex].key === 'review'">Review Pipeline Placeholder</template>
       </EGCard>
     </template>
   </UTabs>

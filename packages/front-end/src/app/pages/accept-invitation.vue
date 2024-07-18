@@ -3,7 +3,7 @@
   import { useToastStore, useUiStore } from '~/stores';
   import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
-  import { checkIsTokenExpired, decodeJwt } from '~/utils/jwt';
+  import { checkIsTokenExpired, decodeJwt } from '~/utils/jwt-utils';
   import { EmailSchema, NonEmptyStringSchema } from '@easy-genomics/shared-lib/src/app/types/base-unified';
   import { getUrlParamValue } from '~/utils/string-utils';
 

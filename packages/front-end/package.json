@@ -30,7 +30,8 @@
     "nuxt-prepare": "nuxt prepare",
     "nuxt-preview": "nuxt preview",
     "nuxt-postinstall": "nuxt prepare",
-    "pre-commit": "lint-staged"
+    "pre-commit": "lint-staged",
+    "nftower-spec-to-zod": "pnpm openapi-zod-client ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml --export-schemas -o ../shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client.ts --template ../shared-lib/src/app/types/nf-tower/openapi-zod-client-template.hbs"
   },
   "author": {
     "name": "DEPT Agency",
@@ -79,6 +80,7 @@
     "jwt-decode": "^4.0.0",
     "lint-staged": "^15.2.2",
     "nuxt": "^3.10.1",
+    "openapi-zod-client": "^1.18.1",
     "pinia": "^2.1.7",
     "prettier-plugin-tailwindcss": "^0.5.12",
     "sass": "^1.72.0",

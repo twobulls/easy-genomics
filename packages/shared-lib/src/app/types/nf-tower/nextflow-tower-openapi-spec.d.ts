@@ -3,612 +3,611 @@
  * Do not make direct changes to the file.
  */
 
-
 export interface paths {
-  "/actions": {
+  '/actions': {
     /**
      * List actions
      * @description Lists all available actions in a user context, enriched by `attributes`. Append `?workspaceId` to list actions in a workspace context.
      */
-    get: operations["ListActions"];
+    get: operations['ListActions'];
     /**
      * Create action
      * @description Creates a new pipeline action. Append `?workspaceId` to associate the action with the given workspace.
      */
-    post: operations["CreateAction"];
+    post: operations['CreateAction'];
   };
-  "/actions/labels/add": {
+  '/actions/labels/add': {
     /**
      * Add labels to actions
      * @description Adds the given list of labels to the given pipeline actions. Existing labels are preserved.
      */
-    post: operations["AddLabelsToActions"];
+    post: operations['AddLabelsToActions'];
   };
-  "/actions/labels/apply": {
+  '/actions/labels/apply': {
     /**
      * Replace action labels
      * @description Applies the given list of labels to the given pipeline actions. Existing labels are replaced — include labels to be preserved in `labelIds`.
      */
-    post: operations["ApplyLabelsToActions"];
+    post: operations['ApplyLabelsToActions'];
   };
-  "/actions/labels/remove": {
+  '/actions/labels/remove': {
     /**
      * Remove labels from actions
      * @description Removes the given list of labels from the given pipeline actions.
      */
-    post: operations["RemoveLabelsFromActions"];
+    post: operations['RemoveLabelsFromActions'];
   };
-  "/actions/types": {
+  '/actions/types': {
     /**
      * List action event types
      * @description Lists the supported event types that trigger a pipeline action. Append `?workspaceId` to list event types in a workspace context.
      */
-    get: operations["ListActionTypes"];
+    get: operations['ListActionTypes'];
   };
-  "/actions/validate": {
+  '/actions/validate': {
     /**
      * Validate action name
      * @description Confirms the validity of the given action name. Append `?name=<your_action_name>`.
      */
-    get: operations["ValidateActionName"];
+    get: operations['ValidateActionName'];
   };
-  "/actions/{actionId}": {
+  '/actions/{actionId}': {
     /**
      * Describe action
      * @description Retrieves the details of the pipeline action identified by the given `actionId`.
      */
-    get: operations["DescribeAction"];
+    get: operations['DescribeAction'];
     /**
      * Update action
      * @description Updates the details of the action identified by the given `actionId`. The `source` of an existing action cannot be changed.
      */
-    put: operations["UpdateAction"];
+    put: operations['UpdateAction'];
     /**
      * Delete action
      * @description Deletes the pipeline action identified by the given `actionId`.
      */
-    delete: operations["DeleteAction"];
+    delete: operations['DeleteAction'];
   };
-  "/actions/{actionId}/launch": {
+  '/actions/{actionId}/launch': {
     /**
      * Trigger Tower Launch action
      * @description Triggers the execution of the Tower Launch action identified by the given `actionId`.
      */
-    post: operations["LaunchAction"];
+    post: operations['LaunchAction'];
   };
-  "/actions/{actionId}/pause": {
+  '/actions/{actionId}/pause': {
     /**
      * Pause or resume action
      * @description Pauses or resumes the pipeline action identified by the given `actionId`.
      */
-    post: operations["PauseAction"];
+    post: operations['PauseAction'];
   };
-  "/avatars": {
+  '/avatars': {
     /** Create the avatar image */
-    post: operations["CreateAvatar"];
+    post: operations['CreateAvatar'];
   };
-  "/avatars/{avatarId}": {
+  '/avatars/{avatarId}': {
     /** Download the avatar image */
-    get: operations["DownloadAvatar"];
+    get: operations['DownloadAvatar'];
   };
-  "/compute-envs": {
+  '/compute-envs': {
     /**
      * List compute environments
      * @description Lists all available Tower compute environments in a user context. Append `?workspaceId` to list compute environments in a workspace context, and `?status` to filter by compute environment status.
      */
-    get: operations["ListComputeEnvs"];
+    get: operations['ListComputeEnvs'];
     /**
      * Create compute environment
      * @description Creates a new Tower compute environment. Append `?workspaceId` to create the environment in a workspace context.
      */
-    post: operations["CreateComputeEnv"];
+    post: operations['CreateComputeEnv'];
   };
-  "/compute-envs/validate": {
+  '/compute-envs/validate': {
     /**
      * Validate compute environment name
      * @description Confirms the validity of the given compute environment name in a user context. Append `?name=<your_ce_name>`.
      */
-    get: operations["ValidateComputeEnvName"];
+    get: operations['ValidateComputeEnvName'];
   };
-  "/compute-envs/{computeEnvId}": {
+  '/compute-envs/{computeEnvId}': {
     /**
      * Describe compute environment
      * @description Retrieves the details of the Tower compute environment identified by the given `computeEnvId`.
      */
-    get: operations["DescribeComputeEnv"];
+    get: operations['DescribeComputeEnv'];
     /**
      * Update compute environment
      * @description Updates the details of the compute environment identified by the given `computeEnvId`.
      */
-    put: operations["UpdateComputeEnv"];
+    put: operations['UpdateComputeEnv'];
     /**
      * Delete compute environment
      * @description Deletes the Tower compute environment identified by the given `computeEnvId`.
      */
-    delete: operations["DeleteComputeEnv"];
+    delete: operations['DeleteComputeEnv'];
   };
-  "/compute-envs/{computeEnvId}/primary": {
+  '/compute-envs/{computeEnvId}/primary': {
     /**
      * Define primary compute environment
      * @description Selects the compute environment identified by the given `computeEnvId` as the primary compute environment in the given workspace context.
      */
-    post: operations["UpdateComputeEnvPrimary"];
+    post: operations['UpdateComputeEnvPrimary'];
   };
-  "/credentials": {
+  '/credentials': {
     /**
      * List credentials
      * @description Lists all available Tower credentials in a user context. Append `?workspaceId` to list credentials in a workspace context, and `?platformId` to filter credentials by computing platform.
      */
-    get: operations["ListCredentials"];
+    get: operations['ListCredentials'];
     /**
      * Create credentials
      * @description Creates new Tower credentials in a user context. Append `?workspaceId` to create the credentials in a workspace context.
      */
-    post: operations["CreateCredentials"];
+    post: operations['CreateCredentials'];
   };
-  "/credentials/validate": {
+  '/credentials/validate': {
     /**
      * Validate credential name
      * @description Validates the given credentials name. Append `?name=<your_credential_name>`.
      */
-    get: operations["ValidateCredentialsName"];
+    get: operations['ValidateCredentialsName'];
   };
-  "/credentials/{credentialsId}": {
+  '/credentials/{credentialsId}': {
     /**
      * Describe credentials
      * @description Retrieves the details of the credentials identified by the given `credentialsId`.
      */
-    get: operations["DescribeCredentials"];
+    get: operations['DescribeCredentials'];
     /**
      * Update credentials
      * @description Updates the details of the credentials identified by the given `credentialsId`.
      */
-    put: operations["UpdateCredentials"];
+    put: operations['UpdateCredentials'];
     /**
      * Delete credentials
      * @description Deletes the credentials identified by the given `credentialsId`.
      */
-    delete: operations["DeleteCredentials"];
+    delete: operations['DeleteCredentials'];
   };
-  "/datasets": {
+  '/datasets': {
     /**
      * List available datasets
      * @description Lists all available datasets in the user context. Append `?workspaceId` to list datasets in a workspace context
      */
-    get: operations["ListDatasets"];
+    get: operations['ListDatasets'];
     /**
      * Create dataset
      * @description Creates a new Tower dataset in the user context. Include the dataset file and details in your request body. Append `?workspaceId` to create the dataset in a workspace context.
      */
-    post: operations["CreateDataset"];
+    post: operations['CreateDataset'];
   };
-  "/datasets/versions": {
+  '/datasets/versions': {
     /**
      * List latest dataset versions
      * @description Lists the latest version of each dataset in the user context. Append `?workspaceId` to list latest versions in a workspace context.
      */
-    get: operations["ListWorkspaceDatasetVersions"];
+    get: operations['ListWorkspaceDatasetVersions'];
   };
-  "/datasets/{datasetId}": {
+  '/datasets/{datasetId}': {
     /**
      * Update dataset
      * @description Updates the details of the dataset identified by the given `datasetId`.
      */
-    put: operations["UpdateDataset"];
+    put: operations['UpdateDataset'];
     /**
      * Delete dataset
      * @description Deletes the dataset identified by the given `datasetId`.
      */
-    delete: operations["DeleteDataset"];
+    delete: operations['DeleteDataset'];
   };
-  "/datasets/{datasetId}/metadata": {
+  '/datasets/{datasetId}/metadata': {
     /**
      * Describe dataset
      * @description Retrieves the metadata of the dataset identified by the given `datasetId`.
      */
-    get: operations["DescribeDataset"];
+    get: operations['DescribeDataset'];
   };
-  "/datasets/{datasetId}/upload": {
+  '/datasets/{datasetId}/upload': {
     /**
      * Upload new dataset version
      * @description Uploads the CSV or TSV content to create a new version of the dataset identified by the given `datasetId`.
      */
-    post: operations["UploadDataset"];
+    post: operations['UploadDataset'];
   };
-  "/datasets/{datasetId}/v/{version}/n/{fileName}": {
+  '/datasets/{datasetId}/v/{version}/n/{fileName}': {
     /**
      * Download dataset content
      * @description Downloads the content of the dataset identified by the given `datasetId` and `version`.
      */
-    get: operations["DownloadDataset"];
+    get: operations['DownloadDataset'];
   };
-  "/datasets/{datasetId}/versions": {
+  '/datasets/{datasetId}/versions': {
     /**
      * List all dataset versions
      * @description Lists all versions of the given `datasetId`.
      */
-    get: operations["ListDatasetVersions"];
+    get: operations['ListDatasetVersions'];
   };
-  "/ga4gh/wes/v1/runs": {
+  '/ga4gh/wes/v1/runs': {
     /**
      * GA4GH: List runs
      * @description Uses the GA4GH workflow execution service API to list all run records.
      */
-    get: operations["GaRunList"];
+    get: operations['GaRunList'];
     /**
      * GA4GH: Launch run
      * @description Uses the GA4GH workflow execution service API to launch a new run. Runs are launched in the user workspace context by default. To launch in an organization workspace context, include the `workspaceId` in `workflow_engine_parameters`. Runs are launched with the workspace primary compute environment by default. To launch with a different compute environment, include the `computeEnvId` in `workflow_engine_parameters`.
      */
-    post: operations["GaRunCreate"];
+    post: operations['GaRunCreate'];
   };
-  "/ga4gh/wes/v1/runs/{run_id}": {
+  '/ga4gh/wes/v1/runs/{run_id}': {
     /**
      * GA4GH: Describe run
      * @description Uses the GA4GH workflow execution service API to retrieve the details of the run assoiated with the given `run_id`.
      */
-    get: operations["GaRunDescribe"];
+    get: operations['GaRunDescribe'];
   };
-  "/ga4gh/wes/v1/runs/{run_id}/cancel": {
+  '/ga4gh/wes/v1/runs/{run_id}/cancel': {
     /**
      * GA4GH: Cancel run
      * @description Uses the GA4GH workflow execution service API to cancel the run associated with the given `run_id`.
      */
-    post: operations["GaRunCancel"];
+    post: operations['GaRunCancel'];
   };
-  "/ga4gh/wes/v1/runs/{run_id}/status": {
+  '/ga4gh/wes/v1/runs/{run_id}/status': {
     /**
      * GA4GH: Retrieve run status
      * @description Uses the GA4GH workflow execution service API to retrieve the status of the run associated with the given `run_id`.
      */
-    get: operations["GaRunStatus"];
+    get: operations['GaRunStatus'];
   };
-  "/ga4gh/wes/v1/service-info": {
+  '/ga4gh/wes/v1/service-info': {
     /** GA4GH workflow execution service API info */
-    get: operations["GaServiceInfo"];
+    get: operations['GaServiceInfo'];
   };
-  "/labels": {
+  '/labels': {
     /**
      * List labels
      * @description Lists all available labels in a user context. Append `?workspaceId` to list labels in a workspace context.
      */
-    get: operations["ListLabels"];
+    get: operations['ListLabels'];
     /**
      * Create label
      * @description Creates a new label or returns an existing label based on name/value. By default the operation works in a user context, append `?workspaceId` to create/retrieve a label in a workspace context. Resource labels include `resource: true` and a `value`.
      */
-    post: operations["CreateLabel"];
+    post: operations['CreateLabel'];
   };
-  "/labels/{labelId}": {
+  '/labels/{labelId}': {
     /**
      * Update label
      * @description Updates the label identified by the given `labelId`.
      */
-    put: operations["UpdateLabel"];
+    put: operations['UpdateLabel'];
     /**
      * Delete label
      * @description Deletes the label identified by the given `labelId`.
      */
-    delete: operations["DeleteLabel"];
+    delete: operations['DeleteLabel'];
   };
-  "/launch/{launchId}": {
+  '/launch/{launchId}': {
     /**
      * Describe Launch record
      * @description Retrieves the details of the launch identified by the given `launchId`.
      */
-    get: operations["DescribeLaunch"];
+    get: operations['DescribeLaunch'];
   };
-  "/launch/{launchId}/datasets": {
+  '/launch/{launchId}/datasets': {
     /**
      * Describe launch datasets
      * @description Retrieves the details of the datasets used in the launch identified by the given `launchId`.
      */
-    get: operations["ListLaunchDatasetVersions"];
+    get: operations['ListLaunchDatasetVersions'];
   };
-  "/orgs": {
+  '/orgs': {
     /**
      * List organizations
      * @description Lists all available organizations in a user context.
      */
-    get: operations["ListOrganizations"];
+    get: operations['ListOrganizations'];
     /**
      * Create organization
      * @description Creates a new organization.
      */
-    post: operations["CreateOrganization"];
+    post: operations['CreateOrganization'];
   };
-  "/orgs/validate": {
+  '/orgs/validate': {
     /**
      * Validate organization name
      * @description Confirms the validity of the given organization name. Append `?name=<your_org_name>`.
      */
-    get: operations["ValidateOrganizationName"];
+    get: operations['ValidateOrganizationName'];
   };
-  "/orgs/{orgId}": {
+  '/orgs/{orgId}': {
     /**
      * Describe organization
      * @description Retrieves the details of the organization identified by the given `orgId`.
      */
-    get: operations["DescribeOrganization"];
+    get: operations['DescribeOrganization'];
     /**
      * Update organization
      * @description Updates the details of the organization identified by the given `orgId`.
      */
-    put: operations["UpdateOrganization"];
+    put: operations['UpdateOrganization'];
     /**
      * Delete organization
      * @description Deletes the organization identified by the given `orgId`.
      */
-    delete: operations["DeleteOrganization"];
+    delete: operations['DeleteOrganization'];
   };
-  "/orgs/{orgId}/collaborators": {
+  '/orgs/{orgId}/collaborators': {
     /**
      * List organization collaborators
      * @description Lists the collaborators of the organization identified by the given `orgId`.
      */
-    get: operations["ListOrganizationCollaborators"];
+    get: operations['ListOrganizationCollaborators'];
   };
-  "/orgs/{orgId}/members": {
+  '/orgs/{orgId}/members': {
     /**
      * List organization members
      * @description Lists the members of the organization identified by the given `orgId`.
      */
-    get: operations["ListOrganizationMembers"];
+    get: operations['ListOrganizationMembers'];
   };
-  "/orgs/{orgId}/members/add": {
+  '/orgs/{orgId}/members/add': {
     /**
      * Add organization member
      * @description Adds a new member to the organization identified by the given `orgId`.
      */
-    put: operations["CreateOrganizationMember"];
+    put: operations['CreateOrganizationMember'];
   };
-  "/orgs/{orgId}/members/leave": {
+  '/orgs/{orgId}/members/leave': {
     /**
      * Leave organization
      * @description Removes the requesting user from the organization identified by the given `orgId`.
      */
-    delete: operations["LeaveOrganization"];
+    delete: operations['LeaveOrganization'];
   };
-  "/orgs/{orgId}/members/{memberId}": {
+  '/orgs/{orgId}/members/{memberId}': {
     /**
      * Delete member
      * @description Deletes the member identified by the given `memberId`.
      */
-    delete: operations["DeleteOrganizationMember"];
+    delete: operations['DeleteOrganizationMember'];
   };
-  "/orgs/{orgId}/members/{memberId}/role": {
+  '/orgs/{orgId}/members/{memberId}/role': {
     /**
      * Update member role
      * @description Updates the role of the member identified by the given `memberId`.
      */
-    put: operations["UpdateOrganizationMemberRole"];
+    put: operations['UpdateOrganizationMemberRole'];
   };
-  "/orgs/{orgId}/teams": {
+  '/orgs/{orgId}/teams': {
     /**
      * List organization teams
      * @description Lists all teams in the organization identified by the given `orgId`.
      */
-    get: operations["ListOrganizationTeams"];
+    get: operations['ListOrganizationTeams'];
     /**
      * Create team
      * @description Creates a new team in the organization identified by the given `orgId`.
      */
-    post: operations["CreateOrganizationTeam"];
+    post: operations['CreateOrganizationTeam'];
   };
-  "/orgs/{orgId}/teams/validate": {
+  '/orgs/{orgId}/teams/validate': {
     /**
      * Validate team name
      * @description Confirms the validity of the given team name. Append `?name=<your_team_name>`.
      */
-    get: operations["ValidateTeamName"];
+    get: operations['ValidateTeamName'];
   };
-  "/orgs/{orgId}/teams/{teamId}": {
+  '/orgs/{orgId}/teams/{teamId}': {
     /**
      * Describe team
      * @description Retrieves the details of the team identified by the given `teamId`.
      */
-    get: operations["DescribeOrganizationTeam"];
+    get: operations['DescribeOrganizationTeam'];
     /**
      * Update team
      * @description Updates the details of the team identified by the given `teamId`.
      */
-    put: operations["UpdateOrganizationTeam"];
+    put: operations['UpdateOrganizationTeam'];
     /**
      * Delete team
      * @description Deletes the team identified by the given `teamId`.
      */
-    delete: operations["DeleteOrganizationTeam"];
+    delete: operations['DeleteOrganizationTeam'];
   };
-  "/orgs/{orgId}/teams/{teamId}/members": {
+  '/orgs/{orgId}/teams/{teamId}/members': {
     /**
      * List team members
      * @description Lists the team members associated with the given `teamId`.
      */
-    get: operations["ListOrganizationTeamMembers"];
+    get: operations['ListOrganizationTeamMembers'];
     /**
      * Create team member
      * @description Adds a new member to the team identified by the given `teamId`.
      */
-    post: operations["CreateOrganizationTeamMember"];
+    post: operations['CreateOrganizationTeamMember'];
   };
-  "/orgs/{orgId}/teams/{teamId}/members/{memberId}/delete": {
+  '/orgs/{orgId}/teams/{teamId}/members/{memberId}/delete': {
     /**
      * Delete team member
      * @description Deletes the team member identified by the given `memberId`.
      */
-    delete: operations["DeleteOrganizationTeamMember"];
+    delete: operations['DeleteOrganizationTeamMember'];
   };
-  "/orgs/{orgId}/teams/{teamId}/workspaces": {
+  '/orgs/{orgId}/teams/{teamId}/workspaces': {
     /**
      * List team workspaces
      * @description Lists all the workspaces of which the given `teamId` is a participant.
      */
-    get: operations["ListWorkspacesByTeam"];
+    get: operations['ListWorkspacesByTeam'];
   };
-  "/orgs/{orgId}/workspaces": {
+  '/orgs/{orgId}/workspaces': {
     /**
      * List organization workspaces
      * @description Lists the organization workspaces in `orgId` to which the requesting user belongs.
      */
-    get: operations["ListWorkspaces"];
+    get: operations['ListWorkspaces'];
     /**
      * Create workspace
      * @description Creates a new organization workspace.
      */
-    post: operations["CreateWorkspace"];
+    post: operations['CreateWorkspace'];
   };
-  "/orgs/{orgId}/workspaces/validate": {
+  '/orgs/{orgId}/workspaces/validate': {
     /**
      * Validate workspace name
      * @description Confirms the validity of the given workspace name. Append `?name=<your_workspace_name>`.
      */
-    get: operations["WorkspaceValidate"];
+    get: operations['WorkspaceValidate'];
   };
-  "/orgs/{orgId}/workspaces/{workspaceId}": {
+  '/orgs/{orgId}/workspaces/{workspaceId}': {
     /**
      * Describe workspace
      * @description Retrieves the details of the workspace identified by the given `workspaceId`.
      */
-    get: operations["DescribeWorkspace"];
+    get: operations['DescribeWorkspace'];
     /**
      * Update workspace
      * @description Updates the details of the workspace identified by the given `workspaceId`.
      */
-    put: operations["UpdateWorkspace"];
+    put: operations['UpdateWorkspace'];
     /**
      * Delete workspace
      * @description Deletes the workspace identified by the given `workspaceId`.
      */
-    delete: operations["DeleteWorkspace"];
+    delete: operations['DeleteWorkspace'];
   };
-  "/orgs/{orgId}/workspaces/{workspaceId}/participants": {
+  '/orgs/{orgId}/workspaces/{workspaceId}/participants': {
     /**
      * List workspace participants
      * @description Lists the participants of the workspace identified by the given `workspaceId`.
      */
-    get: operations["ListWorkspaceParticipants"];
+    get: operations['ListWorkspaceParticipants'];
     /**
      * Leave workspace
      * @description Removes the requesting user from the given workspace.
      */
-    delete: operations["LeaveWorkspaceParticipant"];
+    delete: operations['LeaveWorkspaceParticipant'];
   };
-  "/orgs/{orgId}/workspaces/{workspaceId}/participants/add": {
+  '/orgs/{orgId}/workspaces/{workspaceId}/participants/add': {
     /**
      * Create workspace participant
      * @description Adds a new participant to the workspace identified by the given `workspaceId`.
      */
-    put: operations["CreateWorkspaceParticipant"];
+    put: operations['CreateWorkspaceParticipant'];
   };
-  "/orgs/{orgId}/workspaces/{workspaceId}/participants/{participantId}": {
+  '/orgs/{orgId}/workspaces/{workspaceId}/participants/{participantId}': {
     /**
      * Delete workspace participant
      * @description Deletes the given participant from the given workspace.
      */
-    delete: operations["DeleteWorkspaceParticipant"];
+    delete: operations['DeleteWorkspaceParticipant'];
   };
-  "/orgs/{orgId}/workspaces/{workspaceId}/participants/{participantId}/role": {
+  '/orgs/{orgId}/workspaces/{workspaceId}/participants/{participantId}/role': {
     /**
      * Update participant role
      * @description Updates the role of the given participant in the given workspace.
      */
-    put: operations["UpdateWorkspaceParticipantRole"];
+    put: operations['UpdateWorkspaceParticipantRole'];
   };
-  "/pipeline-secrets": {
+  '/pipeline-secrets': {
     /**
      * List pipeline secrets
      * @description Lists all available pipeline secrets in a user context. Append `?workspaceId` to list secrets in a workspace context.
      */
-    get: operations["ListPipelineSecrets"];
+    get: operations['ListPipelineSecrets'];
     /**
      * Create pipeline secret
      * @description Creates a new pipeline secret in the user context. Append `?workspaceId` to create the secret in a workspace context.
      */
-    post: operations["CreatePipelineSecret"];
+    post: operations['CreatePipelineSecret'];
   };
-  "/pipeline-secrets/validate": {
+  '/pipeline-secrets/validate': {
     /**
      * Validate secret name
      * @description Confirms the validity of the given pipeline secret name in a user context. Append `?name=<your_secret_name>`. Append `?workspaceId` to validate the name in a workspace context.
      */
-    get: operations["ValidatePipelineSecretName"];
+    get: operations['ValidatePipelineSecretName'];
   };
-  "/pipeline-secrets/{secretId}": {
+  '/pipeline-secrets/{secretId}': {
     /**
      * Describe pipeline secret
      * @description Retrieves the details of the pipeline secret identified by the given `secretId`.
      */
-    get: operations["DescribePipelineSecret"];
+    get: operations['DescribePipelineSecret'];
     /**
      * Update secret
      * @description Updates the pipeline secret identified by the given `secretId`.
      */
-    put: operations["UpdatePipelineSecret"];
+    put: operations['UpdatePipelineSecret'];
     /**
      * Delete secret
      * @description Deletes the pipeline secret identified by the given `secretId`.
      */
-    delete: operations["DeletePipelineSecret"];
+    delete: operations['DeletePipelineSecret'];
   };
-  "/pipelines": {
+  '/pipelines': {
     /**
      * List pipelines
      * @description Lists all available pipelines in a user context, enriched by `attributes`. Append `workspaceId` to list pipelines in a workspace context.
      */
-    get: operations["ListPipelines"];
+    get: operations['ListPipelines'];
     /**
      * Create pipeline
      * @description Creates a new pipeline in a user context. Append `?workspaceId` to create the pipeline in a workspace context.
      */
-    post: operations["CreatePipeline"];
+    post: operations['CreatePipeline'];
   };
-  "/pipelines/info": {
+  '/pipelines/info': {
     /**
      * Describe remote pipeline repository
      * @description Retrieves the details of a remote Nextflow pipeline Git repository. Append the repository name or full URL with `?name`.
      */
-    get: operations["DescribePipelineRepository"];
+    get: operations['DescribePipelineRepository'];
   };
-  "/pipelines/labels/add": {
+  '/pipelines/labels/add': {
     /**
      * Add labels to pipelines
      * @description Adds the given list of labels to the given pipelines. Existing labels are preserved.
      */
-    post: operations["AddLabelsToPipelines"];
+    post: operations['AddLabelsToPipelines'];
   };
-  "/pipelines/labels/apply": {
+  '/pipelines/labels/apply': {
     /**
      * Replace pipeline labels
      * @description Applies the given list of labels to the given pipelines. Existing labels are replaced — include labels to be preserved in `labelIds`.
      */
-    post: operations["ApplyLabelsToPipelines"];
+    post: operations['ApplyLabelsToPipelines'];
   };
-  "/pipelines/labels/remove": {
+  '/pipelines/labels/remove': {
     /**
      * Remove labels from pipelines
      * @description Removes the given list of labels from the given pipelines.
      */
-    post: operations["RemoveLabelsFromPipelines"];
+    post: operations['RemoveLabelsFromPipelines'];
   };
-  "/pipelines/repositories": {
+  '/pipelines/repositories': {
     /**
      * List user pipeline repositories
      * @description Lists known Nextflow pipeline Git repositories, extracted from existing runs. Append `?workspaceId` to list repositories in a workspace context.
      */
-    get: operations["ListPipelineRepositories"];
+    get: operations['ListPipelineRepositories'];
   };
-  "/pipelines/validate": {
+  '/pipelines/validate': {
     /**
      * Validate pipeline name
      * @description Confirms the validity of the given pipeline `name` in a user context. Append `?name=<your_pipeline_name>`. Append `?workspaceId` to validate the name in a workspace context.
      */
-    get: operations["ValidatePipelineName"];
+    get: operations['ValidatePipelineName'];
   };
-  "/pipelines/{pipelineId}": {
+  '/pipelines/{pipelineId}': {
     /**
      * Describe pipeline
      * @description Retrieves the details of the pipeline identified by the given `pipelineId`, enriched by `attributes`.
      */
-    get: operations["DescribePipeline"];
+    get: operations['DescribePipeline'];
     /**
      * Update pipeline
      * @description Updates the details of the pipeline identified by the given `pipelineId`.
@@ -616,309 +615,309 @@ export interface paths {
      *             Include `labelIds: [<label-id-1>,<label-id-2>]` to override existing labels. Labels to be preserved must be included.
      *             To append a list of labels to multiple pipelines, use `/pipelines/labels/add`.
      */
-    put: operations["UpdatePipeline"];
+    put: operations['UpdatePipeline'];
     /**
      * Delete pipeline
      * @description Deletes the pipeline identified by the given `pipelineId`.
      */
-    delete: operations["DeletePipeline"];
+    delete: operations['DeletePipeline'];
   };
-  "/pipelines/{pipelineId}/launch": {
+  '/pipelines/{pipelineId}/launch': {
     /**
      * Describe pipeline launch
      * @description Retrieves the launch details of the pipeline identified by the given `pipelineId`.
      */
-    get: operations["DescribePipelineLaunch"];
+    get: operations['DescribePipelineLaunch'];
   };
-  "/pipelines/{pipelineId}/schema": {
+  '/pipelines/{pipelineId}/schema': {
     /**
      * Describe pipeline schema
      * @description Retrieves the pipeline schema of the pipeline identified by the given `pipelineId`, enriched by `attributes`.
      */
-    get: operations["DescribePipelineSchema"];
+    get: operations['DescribePipelineSchema'];
   };
-  "/platforms": {
+  '/platforms': {
     /**
      * List platforms
      * @description Lists all available computing platforms in a user context. Append `?workspaceId` to list platforms in a workspace context.
      */
-    get: operations["ListPlatforms"];
+    get: operations['ListPlatforms'];
   };
-  "/platforms/{platformId}": {
+  '/platforms/{platformId}': {
     /**
      * Describe platform
      * @description Retrieves the details of the computing platform identified by the given `platformId`.
      */
-    get: operations["DescribePlatform"];
+    get: operations['DescribePlatform'];
   };
-  "/platforms/{platformId}/regions": {
+  '/platforms/{platformId}/regions': {
     /**
      * List platform regions
      * @description Lists the available regions for the computing platform identified by the given `platformId`.
      */
-    get: operations["ListPlatformRegions"];
+    get: operations['ListPlatformRegions'];
   };
-  "/service-info": {
+  '/service-info': {
     /** General Tower service features and version */
-    get: operations["Info"];
+    get: operations['Info'];
   };
-  "/tokens": {
+  '/tokens': {
     /** List all available API tokens */
-    get: operations["TokenList"];
+    get: operations['TokenList'];
     /** Create an API token */
-    post: operations["CreateToken"];
+    post: operations['CreateToken'];
   };
-  "/tokens/delete-all": {
+  '/tokens/delete-all': {
     /** Delete all user API tokens */
-    delete: operations["DeleteAllTokens"];
+    delete: operations['DeleteAllTokens'];
   };
-  "/tokens/{tokenId}": {
+  '/tokens/{tokenId}': {
     /** Delete an API token */
-    delete: operations["DeleteToken"];
+    delete: operations['DeleteToken'];
   };
-  "/trace/create": {
+  '/trace/create': {
     /** Create a new Workflow execution trace */
-    post: operations["CreateTrace"];
+    post: operations['CreateTrace'];
   };
-  "/trace/{workflowId}/begin": {
+  '/trace/{workflowId}/begin': {
     /** Signal the Workflow execution has started */
-    put: operations["UpdateTraceBegin"];
+    put: operations['UpdateTraceBegin'];
   };
-  "/trace/{workflowId}/complete": {
+  '/trace/{workflowId}/complete': {
     /** Signal the Workflow execution has completed */
-    put: operations["UpdateTraceComplete"];
+    put: operations['UpdateTraceComplete'];
   };
-  "/trace/{workflowId}/heartbeat": {
+  '/trace/{workflowId}/heartbeat': {
     /** Period request to signal the execution is still on-going */
-    put: operations["UpdateTraceHeartbeat"];
+    put: operations['UpdateTraceHeartbeat'];
   };
-  "/trace/{workflowId}/progress": {
+  '/trace/{workflowId}/progress': {
     /** Store one or more task executions metadata for the specified Workflow */
-    put: operations["UpdateTraceProgress"];
+    put: operations['UpdateTraceProgress'];
   };
-  "/user-info": {
+  '/user-info': {
     /** Describe current user */
-    get: operations["UserInfo"];
+    get: operations['UserInfo'];
   };
-  "/user/{userId}/workspaces": {
+  '/user/{userId}/workspaces': {
     /**
      * List user workspaces and organizations
      * @description Lists the workspaces and organizations to which the user identified by the given `userId` belongs.
      */
-    get: operations["ListWorkspacesUser"];
+    get: operations['ListWorkspacesUser'];
   };
-  "/users/validate": {
+  '/users/validate': {
     /** Check that the user name is valid */
-    get: operations["ValidateUserName"];
+    get: operations['ValidateUserName'];
   };
-  "/users/{userId}": {
+  '/users/{userId}': {
     /** Describe a user entity */
-    get: operations["DescribeUser"];
+    get: operations['DescribeUser'];
     /** Update an user entity */
-    post: operations["UpdateUser"];
+    post: operations['UpdateUser'];
     /** Delete a user entity */
-    delete: operations["DeleteUser"];
+    delete: operations['DeleteUser'];
   };
-  "/workflow": {
+  '/workflow': {
     /**
      * List workflows
      * @description Lists all workflow records, enriched with `attributes`. Append `?workspaceId` to list workflow records in a workspace context.
      */
-    get: operations["ListWorkflows"];
+    get: operations['ListWorkflows'];
   };
-  "/workflow/delete": {
+  '/workflow/delete': {
     /**
      * Delete workflows
      * @description Deletes the workflow records identified by the given list of `workflowIds`.
      */
-    post: operations["DeleteWorkflowMany"];
+    post: operations['DeleteWorkflowMany'];
   };
-  "/workflow/labels/add": {
+  '/workflow/labels/add': {
     /**
      * Add labels to workflows
      * @description Adds the given list of labels to the given workflows. Existing labels are preserved.
      */
-    post: operations["AddLabelsToWorkflows"];
+    post: operations['AddLabelsToWorkflows'];
   };
-  "/workflow/labels/apply": {
+  '/workflow/labels/apply': {
     /**
      * Replace workflow labels
      * @description Applies the given list of labels to the given workflows. Existing labels are replaced — include labels to be preserved in `labelIds`.
      */
-    post: operations["ApplyLabelsToWorkflows"];
+    post: operations['ApplyLabelsToWorkflows'];
   };
-  "/workflow/labels/remove": {
+  '/workflow/labels/remove': {
     /**
      * Remove labels from workflows
      * @description Removes the given list of labels from the given workflows.
      */
-    post: operations["RemoveLabelsFromWorkflows"];
+    post: operations['RemoveLabelsFromWorkflows'];
   };
-  "/workflow/launch": {
+  '/workflow/launch': {
     /**
      * Launch workflow
      * @description Submits a workflow execution.
      */
-    post: operations["CreateWorkflowLaunch"];
+    post: operations['CreateWorkflowLaunch'];
   };
-  "/workflow/random-name": {
+  '/workflow/random-name': {
     /** Generates a random name */
-    get: operations["GenerateRandomWorkflowName"];
+    get: operations['GenerateRandomWorkflowName'];
   };
-  "/workflow/validate": {
+  '/workflow/validate': {
     /** Check that the given run name of a workflow has a valid format. When the session ID is given: check that no other workflow in the system exists with the combination of both elements */
-    get: operations["ValidateWorkflowConstraints"];
+    get: operations['ValidateWorkflowConstraints'];
   };
-  "/workflow/{workflowId}": {
+  '/workflow/{workflowId}': {
     /**
      * Describe workflow
      * @description Retrieves the details of the workflow record associated with the given `workflowId`.
      */
-    get: operations["DescribeWorkflow"];
+    get: operations['DescribeWorkflow'];
     /** Delete the Workflow entity with the given ID */
-    delete: operations["DeleteWorkflow"];
+    delete: operations['DeleteWorkflow'];
   };
-  "/workflow/{workflowId}/cancel": {
+  '/workflow/{workflowId}/cancel': {
     /**
      * Cancel workflow
      * @description Cancels the workflow execution identified by the given `workflowId`.
      */
-    post: operations["CancelWorkflow"];
+    post: operations['CancelWorkflow'];
   };
-  "/workflow/{workflowId}/download": {
+  '/workflow/{workflowId}/download': {
     /**
      * Download workflow files
      * @description Downloads the workflow files for the Nextflow main job associated with the given `workflowId`.
      */
-    get: operations["DownloadWorkflowLog"];
+    get: operations['DownloadWorkflowLog'];
   };
-  "/workflow/{workflowId}/download/{taskId}": {
+  '/workflow/{workflowId}/download/{taskId}': {
     /**
      * Download workflow task files
      * @description Downloads the workflow files of the task identified by the given `taskId`.
      */
-    get: operations["DownloadWorkflowTaskLog"];
+    get: operations['DownloadWorkflowTaskLog'];
   };
-  "/workflow/{workflowId}/launch": {
+  '/workflow/{workflowId}/launch': {
     /**
      * Describe workflow launch
      * @description Retrieves the details of the workflow launch associated with the given `workflowId`.
      */
-    get: operations["DescribeWorkflowLaunch"];
+    get: operations['DescribeWorkflowLaunch'];
   };
-  "/workflow/{workflowId}/log": {
+  '/workflow/{workflowId}/log': {
     /**
      * Get workflow logs
      * @description Retrieves the output logs for the Nextflow main job of the workflow identified by the given `workflowId`.
      */
-    get: operations["WorkflowLogs"];
+    get: operations['WorkflowLogs'];
   };
-  "/workflow/{workflowId}/log/{taskId}": {
+  '/workflow/{workflowId}/log/{taskId}': {
     /**
      * Get workflow task logs
      * @description Retrieves the output logs for the workflow task identified by the given `taskId`.
      */
-    get: operations["GetWorkflowTaskLog"];
+    get: operations['GetWorkflowTaskLog'];
   };
-  "/workflow/{workflowId}/metrics": {
+  '/workflow/{workflowId}/metrics': {
     /** Get the execution metrics for the given Workflow ID */
-    get: operations["DescribeWorkflowMetrics"];
+    get: operations['DescribeWorkflowMetrics'];
   };
-  "/workflow/{workflowId}/progress": {
+  '/workflow/{workflowId}/progress': {
     /** Retrieve the execution progress for the given Workflow ID */
-    get: operations["DescribeWorkflowProgress"];
+    get: operations['DescribeWorkflowProgress'];
   };
-  "/workflow/{workflowId}/star": {
+  '/workflow/{workflowId}/star': {
     /**
      * Check workflow star status
      * @description Confirms whether the given `workflowId` is starred.
      */
-    get: operations["DescribeWorkflowStar"];
+    get: operations['DescribeWorkflowStar'];
     /**
      * Star workflow
      * @description Adds the workflow identified by the given `workflowId` to your list of starred workflows.
      */
-    post: operations["CreateWorkflowStar"];
+    post: operations['CreateWorkflowStar'];
     /**
      * Unstar workflow
      * @description Removes the workflow identified by the given `workflowId` from your list of starred workflows.
      */
-    delete: operations["DeleteWorkflowStar"];
+    delete: operations['DeleteWorkflowStar'];
   };
-  "/workflow/{workflowId}/task/{taskId}": {
+  '/workflow/{workflowId}/task/{taskId}': {
     /** Describe a task entity with the given ID */
-    get: operations["DescribeWorkflowTask"];
+    get: operations['DescribeWorkflowTask'];
   };
-  "/workflow/{workflowId}/tasks": {
+  '/workflow/{workflowId}/tasks': {
     /** List the tasks for the given Workflow ID and filter parameters */
-    get: operations["ListWorkflowTasks"];
+    get: operations['ListWorkflowTasks'];
   };
-  "/workspaces/{workspaceId}/datasets": {
+  '/workspaces/{workspaceId}/datasets': {
     /**
      * List available datasets
      * @deprecated
      * @description Lists all available datasets in the workspace context identified by the given `workspaceId`.
      */
-    get: operations["ListDatasets_1"];
+    get: operations['ListDatasets_1'];
     /**
      * Create dataset
      * @deprecated
      * @description Creates a new Tower dataset in the given workspace context. Include the dataset file and details in your request body.
      */
-    post: operations["CreateDataset_1"];
+    post: operations['CreateDataset_1'];
   };
-  "/workspaces/{workspaceId}/datasets/versions": {
+  '/workspaces/{workspaceId}/datasets/versions': {
     /**
      * List latest dataset versions
      * @deprecated
      * @description Lists the latest version of each dataset associated with the given `workspaceId`.
      */
-    get: operations["ListWorkspaceDatasetVersions_1"];
+    get: operations['ListWorkspaceDatasetVersions_1'];
   };
-  "/workspaces/{workspaceId}/datasets/{datasetId}": {
+  '/workspaces/{workspaceId}/datasets/{datasetId}': {
     /**
      * Update dataset
      * @deprecated
      * @description Updates the details of the dataset identified by the given `datasetId`.
      */
-    put: operations["UpdateDataset_1"];
+    put: operations['UpdateDataset_1'];
     /**
      * Delete dataset
      * @deprecated
      * @description Deletes the dataset identified by the given `datasetId`.
      */
-    delete: operations["DeleteDataset_1"];
+    delete: operations['DeleteDataset_1'];
   };
-  "/workspaces/{workspaceId}/datasets/{datasetId}/metadata": {
+  '/workspaces/{workspaceId}/datasets/{datasetId}/metadata': {
     /**
      * Describe dataset
      * @deprecated
      * @description Retrieves the metadata of the dataset identified by the given `datasetId`.
      */
-    get: operations["DescribeDataset_1"];
+    get: operations['DescribeDataset_1'];
   };
-  "/workspaces/{workspaceId}/datasets/{datasetId}/upload": {
+  '/workspaces/{workspaceId}/datasets/{datasetId}/upload': {
     /**
      * Upload new dataset version
      * @deprecated
      * @description Uploads the CSV or TSV content to create a new version of the dataset identified by the given `datasetId`.
      */
-    post: operations["UploadDataset_1"];
+    post: operations['UploadDataset_1'];
   };
-  "/workspaces/{workspaceId}/datasets/{datasetId}/v/{version}/n/{fileName}": {
+  '/workspaces/{workspaceId}/datasets/{datasetId}/v/{version}/n/{fileName}': {
     /**
      * Download dataset content
      * @description Downloads the content of the dataset identified by the given `datasetId` and `version`.
      */
-    get: operations["DownloadDataset_1"];
+    get: operations['DownloadDataset_1'];
   };
-  "/workspaces/{workspaceId}/datasets/{datasetId}/versions": {
+  '/workspaces/{workspaceId}/datasets/{datasetId}/versions': {
     /**
      * List all dataset versions
      * @deprecated
      * @description Lists all versions of the given `datasetId`.
      */
-    get: operations["ListDatasetVersions_1"];
+    get: operations['ListDatasetVersions_1'];
   };
 }
 
@@ -953,53 +952,53 @@ export interface components {
       /** Format: date-time */
       dateCreated?: string;
     };
-    "Action.ConfigType": {
+    'Action.ConfigType': {
       discriminator?: string;
-    } & (components["schemas"]["Action.TowerActionConfig"] | components["schemas"]["GithubActionConfig"]);
-    "Action.EventType": {
+    } & (components['schemas']['Action.TowerActionConfig'] | components['schemas']['GithubActionConfig']);
+    'Action.EventType': {
       discriminator?: string;
       /** Format: date-time */
       timestamp?: string;
-    } & (components["schemas"]["GithubActionEvent"] | components["schemas"]["Action.TowerActionEvent"]);
+    } & (components['schemas']['GithubActionEvent'] | components['schemas']['Action.TowerActionEvent']);
     /** @enum {string} */
-    "Action.Source": "github" | "tower";
+    'Action.Source': 'github' | 'tower';
     /** @enum {string} */
-    "Action.Status": "CREATING" | "ACTIVE" | "ERROR" | "PAUSED";
-    "Action.TowerActionConfig": {
+    'Action.Status': 'CREATING' | 'ACTIVE' | 'ERROR' | 'PAUSED';
+    'Action.TowerActionConfig': {
       discriminator?: string;
     };
-    "Action.TowerActionEvent": {
+    'Action.TowerActionEvent': {
       /** Format: date-time */
       timestamp?: string;
       workflowId?: string;
       discriminator?: string;
     };
     /** @enum {string} */
-    ActionQueryAttribute: "labels";
+    ActionQueryAttribute: 'labels';
     ActionResponseDto: {
       id?: string;
-      launch?: components["schemas"]["Launch"];
+      launch?: components['schemas']['Launch'];
       name?: string;
       hookId?: string;
       hookUrl?: string;
       message?: string;
-      source?: components["schemas"]["Action.Source"];
-      status?: components["schemas"]["Action.Status"];
-      config?: components["schemas"]["Action.ConfigType"];
-      event?: components["schemas"]["Action.EventType"];
+      source?: components['schemas']['Action.Source'];
+      status?: components['schemas']['Action.Status'];
+      config?: components['schemas']['Action.ConfigType'];
+      event?: components['schemas']['Action.EventType'];
       /** Format: date-time */
       lastSeen?: string;
       /** Format: date-time */
       dateCreated?: string;
       /** Format: date-time */
       lastUpdated?: string;
-      labels?: components["schemas"]["LabelDbDto"][];
+      labels?: components['schemas']['LabelDbDto'][];
     };
     AddMemberRequest: {
       user?: string;
     };
     AddMemberResponse: {
-      member?: components["schemas"]["MemberDbDto"];
+      member?: components['schemas']['MemberDbDto'];
     };
     AddParticipantRequest: {
       /** Format: int64 */
@@ -1009,10 +1008,10 @@ export interface components {
       memberId?: number;
     };
     AddParticipantResponse: {
-      participant?: components["schemas"]["ParticipantDbDto"];
+      participant?: components['schemas']['ParticipantDbDto'];
     };
     AddTeamMemberResponse: {
-      member?: components["schemas"]["MemberDbDto"];
+      member?: components['schemas']['MemberDbDto'];
     };
     AgentSecurityKeys: {
       connectionId?: string;
@@ -1021,8 +1020,8 @@ export interface components {
       discriminator?: string;
     };
     /** Altair PBS configuration */
-    AltairPbsComputeConfig: components["schemas"]["AbstractGridConfig"] & {
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+    AltairPbsComputeConfig: components['schemas']['AbstractGridConfig'] & {
+      environment?: components['schemas']['ConfigEnvVariable'][];
       /** @description property to select the compute config platform */
       discriminator?: string;
     };
@@ -1069,63 +1068,63 @@ export interface components {
       headJobCpus?: number;
       /** Format: int32 */
       headJobMemoryMb?: number;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       waveEnabled?: boolean;
       fusion2Enabled?: boolean;
       nvnmeStorageEnabled?: boolean;
       logGroup?: string;
-      forge?: components["schemas"]["ForgeConfig"];
+      forge?: components['schemas']['ForgeConfig'];
       forgedResources?: {
-          [key: string]: unknown;
-        }[];
+        [key: string]: unknown;
+      }[];
       /** @description property to select the compute config platform */
       discriminator?: string;
     };
     AwsBatchPlatformMetainfo: {
       warnings?: string[];
-      jobQueues?: components["schemas"]["AwsBatchPlatformMetainfo.JobQueue"][];
-      buckets?: components["schemas"]["AwsBatchPlatformMetainfo.Bucket"][];
-      fileSystems?: components["schemas"]["AwsBatchPlatformMetainfo.FsxFileSystem"][];
-      efsFileSystems?: components["schemas"]["AwsBatchPlatformMetainfo.EfsFileSystem"][];
+      jobQueues?: components['schemas']['AwsBatchPlatformMetainfo.JobQueue'][];
+      buckets?: components['schemas']['AwsBatchPlatformMetainfo.Bucket'][];
+      fileSystems?: components['schemas']['AwsBatchPlatformMetainfo.FsxFileSystem'][];
+      efsFileSystems?: components['schemas']['AwsBatchPlatformMetainfo.EfsFileSystem'][];
       keyPairs?: string[];
-      vpcs?: components["schemas"]["AwsBatchPlatformMetainfo.Vpc"][];
-      images?: components["schemas"]["AwsBatchPlatformMetainfo.Image"][];
-      securityGroups?: components["schemas"]["AwsBatchPlatformMetainfo.SecurityGroup"][];
-      subnets?: components["schemas"]["AwsBatchPlatformMetainfo.Subnet"][];
+      vpcs?: components['schemas']['AwsBatchPlatformMetainfo.Vpc'][];
+      images?: components['schemas']['AwsBatchPlatformMetainfo.Image'][];
+      securityGroups?: components['schemas']['AwsBatchPlatformMetainfo.SecurityGroup'][];
+      subnets?: components['schemas']['AwsBatchPlatformMetainfo.Subnet'][];
       instanceFamilies?: string[];
       allocStrategy?: string[];
     };
-    "AwsBatchPlatformMetainfo.Bucket": {
+    'AwsBatchPlatformMetainfo.Bucket': {
       path?: string;
     };
-    "AwsBatchPlatformMetainfo.EfsFileSystem": {
+    'AwsBatchPlatformMetainfo.EfsFileSystem': {
       id?: string;
     };
-    "AwsBatchPlatformMetainfo.FsxFileSystem": {
+    'AwsBatchPlatformMetainfo.FsxFileSystem': {
       id?: string;
       dns?: string;
       mount?: string;
     };
-    "AwsBatchPlatformMetainfo.Image": {
+    'AwsBatchPlatformMetainfo.Image': {
       id?: string;
       name?: string;
       description?: string;
     };
-    "AwsBatchPlatformMetainfo.JobQueue": {
+    'AwsBatchPlatformMetainfo.JobQueue': {
       name: string;
       state: string;
     };
-    "AwsBatchPlatformMetainfo.SecurityGroup": {
+    'AwsBatchPlatformMetainfo.SecurityGroup': {
       id?: string;
       name?: string;
       vpcId?: string;
     };
-    "AwsBatchPlatformMetainfo.Subnet": {
+    'AwsBatchPlatformMetainfo.Subnet': {
       id?: string;
       zone?: string;
       vpcId?: string;
     };
-    "AwsBatchPlatformMetainfo.Vpc": {
+    'AwsBatchPlatformMetainfo.Vpc': {
       id?: string;
       isDefault?: boolean;
     };
@@ -1144,11 +1143,11 @@ export interface components {
       headPool?: string;
       /** @deprecated */
       autoPoolMode?: boolean;
-      forge?: components["schemas"]["AzBatchForgeConfig"];
+      forge?: components['schemas']['AzBatchForgeConfig'];
       tokenDuration?: string;
-      deleteJobsOnCompletion?: components["schemas"]["JobCleanupPolicy"];
+      deleteJobsOnCompletion?: components['schemas']['JobCleanupPolicy'];
       deletePoolsOnCompletion?: boolean;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       waveEnabled?: boolean;
       fusion2Enabled?: boolean;
       /** @description property to select the compute config platform */
@@ -1180,7 +1179,7 @@ export interface components {
       discriminator?: string;
     };
     /** @enum {string} */
-    CloudPriceModel: "standard" | "spot";
+    CloudPriceModel: 'standard' | 'spot';
     CodeCommitSecurityKeys: {
       username?: string;
       password?: string;
@@ -1190,17 +1189,43 @@ export interface components {
       workDir?: string;
       preRunScript?: string;
       postRunScript?: string;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       /** @description property to select the compute config platform */
       discriminator?: string;
-    } & (components["schemas"]["AwsBatchConfig"] | components["schemas"]["GoogleLifeSciencesConfig"] | components["schemas"]["GoogleBatchConfig"] | components["schemas"]["AzBatchConfig"] | components["schemas"]["LsfComputeConfig"] | components["schemas"]["SlurmComputeConfig"] | components["schemas"]["K8sComputeConfig"] | components["schemas"]["EksComputeConfig"] | components["schemas"]["GkeComputeConfig"] | components["schemas"]["UnivaComputeConfig"] | components["schemas"]["AltairPbsComputeConfig"] | components["schemas"]["MoabComputeConfig"]);
+    } & (
+      | components['schemas']['AwsBatchConfig']
+      | components['schemas']['GoogleLifeSciencesConfig']
+      | components['schemas']['GoogleBatchConfig']
+      | components['schemas']['AzBatchConfig']
+      | components['schemas']['LsfComputeConfig']
+      | components['schemas']['SlurmComputeConfig']
+      | components['schemas']['K8sComputeConfig']
+      | components['schemas']['EksComputeConfig']
+      | components['schemas']['GkeComputeConfig']
+      | components['schemas']['UnivaComputeConfig']
+      | components['schemas']['AltairPbsComputeConfig']
+      | components['schemas']['MoabComputeConfig']
+    );
     ComputeEnv: {
       id?: string;
       name: string;
       description?: string;
       /** @enum {string} */
-      platform: "aws-batch" | "google-lifesciences" | "google-batch" | "azure-batch" | "k8s-platform" | "eks-platform" | "gke-platform" | "uge-platform" | "slurm-platform" | "lsf-platform" | "altair-platform" | "moab-platform" | "local-platform";
-      config: components["schemas"]["ComputeConfig"];
+      platform:
+        | 'aws-batch'
+        | 'google-lifesciences'
+        | 'google-batch'
+        | 'azure-batch'
+        | 'k8s-platform'
+        | 'eks-platform'
+        | 'gke-platform'
+        | 'uge-platform'
+        | 'slurm-platform'
+        | 'lsf-platform'
+        | 'altair-platform'
+        | 'moab-platform'
+        | 'local-platform';
+      config: components['schemas']['ComputeConfig'];
       /** Format: date-time */
       dateCreated?: string;
       /** Format: date-time */
@@ -1208,7 +1233,7 @@ export interface components {
       /** Format: date-time */
       lastUsed?: string;
       deleted?: boolean;
-      status?: components["schemas"]["ComputeEnv.Status"] & string;
+      status?: components['schemas']['ComputeEnv.Status'] & string;
       message?: string;
       primary?: boolean;
       credentialsId?: string;
@@ -1218,7 +1243,7 @@ export interface components {
       workspaceId?: number;
     };
     /** @enum {string} */
-    readonly "ComputeEnv.Status": "CREATING" | "AVAILABLE" | "ERRORED" | "INVALID";
+    readonly 'ComputeEnv.Status': 'CREATING' | 'AVAILABLE' | 'ERRORED' | 'INVALID';
     ComputeEnvDbDto: {
       id?: string;
       name?: string;
@@ -1226,14 +1251,25 @@ export interface components {
       region?: string;
     };
     /** @enum {string} */
-    ComputeEnvQueryAttribute: "labels";
+    ComputeEnvQueryAttribute: 'labels';
     ComputeEnvResponseDto: {
       id?: string;
       name?: string;
       description?: string;
       /** @enum {string} */
-      platform?: "aws-batch" | "google-lifesciences" | "google-batch" | "azure-batch" | "k8s-platform" | "eks-platform" | "gke-platform" | "uge-platform" | "slurm-platform" | "lsf-platform" | "altair-platform";
-      config?: components["schemas"]["ComputeConfig"];
+      platform?:
+        | 'aws-batch'
+        | 'google-lifesciences'
+        | 'google-batch'
+        | 'azure-batch'
+        | 'k8s-platform'
+        | 'eks-platform'
+        | 'gke-platform'
+        | 'uge-platform'
+        | 'slurm-platform'
+        | 'lsf-platform'
+        | 'altair-platform';
+      config?: components['schemas']['ComputeConfig'];
       /** Format: date-time */
       dateCreated?: string;
       /** Format: date-time */
@@ -1241,7 +1277,7 @@ export interface components {
       /** Format: date-time */
       lastUsed?: string;
       deleted?: boolean;
-      status?: components["schemas"]["ComputeEnv.Status"];
+      status?: components['schemas']['ComputeEnv.Status'];
       message?: string;
       primary?: boolean;
       credentialsId?: string;
@@ -1249,7 +1285,7 @@ export interface components {
       orgId?: number;
       /** Format: int64 */
       workspaceId?: number;
-      labels?: components["schemas"]["LabelDbDto"][];
+      labels?: components['schemas']['LabelDbDto'][];
     };
     ComputePlatform: {
       id?: string;
@@ -1282,29 +1318,29 @@ export interface components {
     };
     CreateAccessTokenResponse: {
       accessKey?: string;
-      token?: components["schemas"]["AccessToken"];
+      token?: components['schemas']['AccessToken'];
     };
     CreateActionRequest: {
       name?: string;
-      source?: components["schemas"]["Action.Source"];
-      launch?: components["schemas"]["WorkflowLaunchRequest"];
+      source?: components['schemas']['Action.Source'];
+      launch?: components['schemas']['WorkflowLaunchRequest'];
     };
     CreateActionResponse: {
       actionId?: string;
     };
     CreateAvatarResponse: {
-      avatar?: components["schemas"]["Avatar"];
+      avatar?: components['schemas']['Avatar'];
       url?: string;
     };
     CreateComputeEnvRequest: {
-      computeEnv?: components["schemas"]["ComputeEnv"];
+      computeEnv?: components['schemas']['ComputeEnv'];
       labelIds?: number[];
     };
     CreateComputeEnvResponse: {
       computeEnvId?: string;
     };
     CreateCredentialsRequest: {
-      credentials?: components["schemas"]["Credentials"];
+      credentials?: components['schemas']['Credentials'];
     };
     CreateCredentialsResponse: {
       credentialsId?: string;
@@ -1314,7 +1350,7 @@ export interface components {
       description?: string;
     };
     CreateDatasetResponse: {
-      dataset?: components["schemas"]["Dataset"];
+      dataset?: components['schemas']['Dataset'];
     };
     CreateLabelRequest: {
       name?: string;
@@ -1331,21 +1367,21 @@ export interface components {
       isDefault?: boolean;
     };
     CreateOrganizationRequest: {
-      organization?: components["schemas"]["Organization"];
+      organization?: components['schemas']['Organization'];
       logoId?: string;
     };
     CreateOrganizationResponse: {
-      organization?: components["schemas"]["OrganizationDbDto"];
+      organization?: components['schemas']['OrganizationDbDto'];
     };
     CreatePipelineRequest: {
       name?: string;
       description?: string;
       icon?: string;
-      launch?: components["schemas"]["WorkflowLaunchRequest"];
+      launch?: components['schemas']['WorkflowLaunchRequest'];
       labelIds?: number[];
     };
     CreatePipelineResponse: {
-      pipeline?: components["schemas"]["PipelineDbDto"];
+      pipeline?: components['schemas']['PipelineDbDto'];
     };
     CreatePipelineSecretRequest: {
       name?: string;
@@ -1359,27 +1395,40 @@ export interface components {
       userNameOrEmail?: string;
     };
     CreateTeamRequest: {
-      team?: components["schemas"]["Team"];
+      team?: components['schemas']['Team'];
       avatarId?: string;
     };
     CreateTeamResponse: {
-      team?: components["schemas"]["TeamDbDto"];
+      team?: components['schemas']['TeamDbDto'];
     };
     CreateWorkflowStarResponse: {
       workflowId?: string;
     };
     CreateWorkspaceRequest: {
-      workspace?: components["schemas"]["Workspace"];
+      workspace?: components['schemas']['Workspace'];
     };
     CreateWorkspaceResponse: {
-      workspace?: components["schemas"]["Workspace"];
+      workspace?: components['schemas']['Workspace'];
     };
     Credentials: {
       id?: string;
       name: string;
       description?: string;
       /** @enum {string} */
-      provider: "aws" | "azure" | "google" | "github" | "gitlab" | "bitbucket" | "ssh" | "k8s" | "container-reg" | "tw-agent" | "codecommit" | "gitea" | "azurerepos";
+      provider:
+        | 'aws'
+        | 'azure'
+        | 'google'
+        | 'github'
+        | 'gitlab'
+        | 'bitbucket'
+        | 'ssh'
+        | 'k8s'
+        | 'container-reg'
+        | 'tw-agent'
+        | 'codecommit'
+        | 'gitea'
+        | 'azurerepos';
       baseUrl?: string;
       category?: string;
       deleted?: boolean;
@@ -1389,7 +1438,7 @@ export interface components {
       dateCreated?: string;
       /** Format: date-time */
       lastUpdated?: string;
-      keys?: components["schemas"]["SecurityKeys"];
+      keys?: components['schemas']['SecurityKeys'];
     };
     Dataset: {
       id?: string;
@@ -1415,11 +1464,11 @@ export interface components {
       mediaType?: string;
       url?: string;
     };
-    DeleteCredentialsConflictException: components["schemas"]["ConflictException"] & {
+    DeleteCredentialsConflictException: components['schemas']['ConflictException'] & {
       credentialsId: string;
-      conflicts: components["schemas"]["DeleteCredentialsConflictException.Conflict"][];
+      conflicts: components['schemas']['DeleteCredentialsConflictException.Conflict'][];
     };
-    "DeleteCredentialsConflictException.Conflict": {
+    'DeleteCredentialsConflictException.Conflict': {
       type?: string;
       id?: string;
       name?: string;
@@ -1432,74 +1481,74 @@ export interface components {
       failedWorkflowIds?: string[];
     };
     DescribeActionResponse: {
-      action?: components["schemas"]["ActionResponseDto"];
+      action?: components['schemas']['ActionResponseDto'];
     };
     DescribeComputeEnvResponse: {
-      computeEnv?: components["schemas"]["ComputeEnvResponseDto"];
+      computeEnv?: components['schemas']['ComputeEnvResponseDto'];
     };
     DescribeCredentialsResponse: {
-      credentials?: components["schemas"]["Credentials"];
+      credentials?: components['schemas']['Credentials'];
     };
     DescribeDatasetResponse: {
-      dataset?: components["schemas"]["Dataset"];
+      dataset?: components['schemas']['Dataset'];
     };
     DescribeLaunchResponse: {
-      launch?: components["schemas"]["Launch"];
+      launch?: components['schemas']['Launch'];
     };
     DescribeOrganizationResponse: {
-      organization?: components["schemas"]["OrganizationDbDto"];
+      organization?: components['schemas']['OrganizationDbDto'];
     };
     DescribePipelineInfoResponse: {
-      pipelineInfo?: components["schemas"]["PipelineInfo"];
+      pipelineInfo?: components['schemas']['PipelineInfo'];
     };
     DescribePipelineResponse: {
-      pipeline?: components["schemas"]["PipelineDbDto"];
+      pipeline?: components['schemas']['PipelineDbDto'];
     };
     DescribePipelineSecretResponse: {
-      pipelineSecret?: components["schemas"]["PipelineSecret"];
+      pipelineSecret?: components['schemas']['PipelineSecret'];
     };
     DescribePlatformResponse: {
-      metainfo?: components["schemas"]["PlatformMetainfo"];
+      metainfo?: components['schemas']['PlatformMetainfo'];
     };
     DescribeTaskResponse: {
-      task?: components["schemas"]["Task"];
+      task?: components['schemas']['Task'];
     };
     DescribeTeamResponse: {
-      team?: components["schemas"]["TeamDbDto"];
+      team?: components['schemas']['TeamDbDto'];
     };
     DescribeUserResponse: {
-      user?: components["schemas"]["UserDbDto"];
+      user?: components['schemas']['UserDbDto'];
       needConsent?: boolean;
       /** Format: int64 */
       defaultWorkspaceId?: number;
     };
     DescribeWorkflowLaunchResponse: {
-      launch?: components["schemas"]["WorkflowLaunchResponse"];
+      launch?: components['schemas']['WorkflowLaunchResponse'];
     };
     DescribeWorkflowResponse: {
       orgName?: string;
       workspaceName?: string;
       optimized?: boolean;
-      progress?: components["schemas"]["ProgressData"];
-      labels?: components["schemas"]["LabelDbDto"][];
-      platform?: components["schemas"]["ComputePlatformDto"];
-      jobInfo?: components["schemas"]["JobInfoDto"];
+      progress?: components['schemas']['ProgressData'];
+      labels?: components['schemas']['LabelDbDto'][];
+      platform?: components['schemas']['ComputePlatformDto'];
+      jobInfo?: components['schemas']['JobInfoDto'];
       /** Format: int64 */
       orgId?: number;
-      workflow?: components["schemas"]["Workflow"];
+      workflow?: components['schemas']['Workflow'];
       /** Format: int64 */
       workspaceId?: number;
     };
     DescribeWorkspaceResponse: {
-      workspace?: components["schemas"]["Workspace"];
+      workspace?: components['schemas']['Workspace'];
     };
     /** Amazon EKS cluster configuration */
-    EksComputeConfig: components["schemas"]["K8sComputeConfig"] & {
+    EksComputeConfig: components['schemas']['K8sComputeConfig'] & {
       /** @description AWS region */
       region?: string;
       /** @description The AWS EKS cluster name */
       clusterName?: string;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       waveEnabled?: boolean;
       fusion2Enabled?: boolean;
       /** @description property to select the compute config platform */
@@ -1517,7 +1566,7 @@ export interface components {
     };
     ForgeConfig: {
       /** @enum {string} */
-      type?: "SPOT" | "EC2";
+      type?: 'SPOT' | 'EC2';
       /** Format: int32 */
       minCpus?: number;
       /** Format: int32 */
@@ -1526,7 +1575,7 @@ export interface components {
       ebsAutoScale?: boolean;
       instanceTypes?: string[];
       /** @enum {string} */
-      allocStrategy?: "BEST_FIT" | "BEST_FIT_PROGRESSIVE" | "SPOT_CAPACITY_OPTIMIZED" | "SPOT_PRICE_CAPACITY_OPTIMIZED";
+      allocStrategy?: 'BEST_FIT' | 'BEST_FIT_PROGRESSIVE' | 'SPOT_CAPACITY_OPTIMIZED' | 'SPOT_PRICE_CAPACITY_OPTIMIZED';
       imageId?: string;
       vpcId?: string;
       subnets?: string[];
@@ -1556,10 +1605,10 @@ export interface components {
       dragenInstanceType?: string;
     };
     GetProgressResponse: {
-      progress?: components["schemas"]["ProgressData"];
+      progress?: components['schemas']['ProgressData'];
     };
     GetWorkflowMetricsResponse: {
-      metrics?: components["schemas"]["WorkflowMetrics"][];
+      metrics?: components['schemas']['WorkflowMetrics'][];
     };
     GitHubSecurityKeys: {
       username?: string;
@@ -1592,12 +1641,12 @@ export interface components {
       discriminator?: string;
     };
     /** Google GKE cluster configuration */
-    GkeComputeConfig: components["schemas"]["K8sComputeConfig"] & {
+    GkeComputeConfig: components['schemas']['K8sComputeConfig'] & {
       /** @description The GKE cluster region - or - zone */
       region?: string;
       /** @description The GKE cluster name */
       clusterName?: string;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       fusion2Enabled?: boolean;
       waveEnabled?: boolean;
       /** @description property to select the compute config platform */
@@ -1630,7 +1679,7 @@ export interface components {
       headJobMemoryMb?: number;
       nfsTarget?: string;
       nfsMount?: string;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       waveEnabled?: boolean;
       fusion2Enabled?: boolean;
       serviceAccount?: string;
@@ -1668,7 +1717,7 @@ export interface components {
       headJobMemoryMb?: number;
       nfsTarget?: string;
       nfsMount?: string;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       /** @description property to select the compute config platform */
       discriminator?: string;
     };
@@ -1676,13 +1725,13 @@ export interface components {
       warnings?: string[];
       zones?: string[];
       locations?: string[];
-      buckets?: components["schemas"]["GooglePlatformMetainfo.Bucket"][];
-      filestores?: components["schemas"]["GooglePlatformMetainfo.Filestore"][];
+      buckets?: components['schemas']['GooglePlatformMetainfo.Bucket'][];
+      filestores?: components['schemas']['GooglePlatformMetainfo.Filestore'][];
     };
-    "GooglePlatformMetainfo.Bucket": {
+    'GooglePlatformMetainfo.Bucket': {
       path?: string;
     };
-    "GooglePlatformMetainfo.Filestore": {
+    'GooglePlatformMetainfo.Filestore': {
       name?: string;
       location?: string;
       target?: string;
@@ -1693,7 +1742,7 @@ export interface components {
     };
     Iterator_String_: Record<string, never>;
     /** @enum {string} */
-    JobCleanupPolicy: "on_success" | "always" | "never";
+    JobCleanupPolicy: 'on_success' | 'always' | 'never';
     JobInfoDto: {
       /** Format: int32 */
       exitCode?: number;
@@ -1715,10 +1764,10 @@ export interface components {
       headServiceAccount?: string;
       storageClaimName?: string;
       storageMountPath?: string;
-      podCleanup?: components["schemas"]["PodCleanupPolicy"];
+      podCleanup?: components['schemas']['PodCleanupPolicy'];
       headPodSpec?: string;
       servicePodSpec?: string;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       /** Format: int32 */
       headJobCpus?: number;
       /** Format: int32 */
@@ -1741,10 +1790,10 @@ export interface components {
       isDefault?: boolean;
     };
     /** @enum {string} */
-    LabelType: "simple" | "resource" | "all";
+    LabelType: 'simple' | 'resource' | 'all';
     Launch: {
       id?: string;
-      computeEnv?: components["schemas"]["ComputeEnv"] | null;
+      computeEnv?: components['schemas']['ComputeEnv'] | null;
       pipeline: string;
       workDir?: string;
       revision?: string;
@@ -1785,34 +1834,34 @@ export interface components {
       workflowId?: string;
     };
     ListAccessTokensResponse: {
-      tokens?: components["schemas"]["AccessToken"][];
+      tokens?: components['schemas']['AccessToken'][];
     };
     ListActionsResponse: {
-      actions?: components["schemas"]["ListActionsResponse.ActionInfo"][];
+      actions?: components['schemas']['ListActionsResponse.ActionInfo'][];
     };
-    "ListActionsResponse.ActionInfo": {
+    'ListActionsResponse.ActionInfo': {
       id?: string;
       name?: string;
       pipeline?: string;
-      source?: components["schemas"]["Action.Source"];
-      status?: components["schemas"]["Action.Status"];
+      source?: components['schemas']['Action.Source'];
+      status?: components['schemas']['Action.Status'];
       /** Format: date-time */
       lastSeen?: string;
       /** Format: date-time */
       dateCreated?: string;
-      event?: components["schemas"]["Action.EventType"];
+      event?: components['schemas']['Action.EventType'];
       endpoint?: string;
-      labels?: components["schemas"]["LabelDbDto"][];
+      labels?: components['schemas']['LabelDbDto'][];
       usageCmd?: string;
     };
     ListComputeEnvsResponse: {
-      computeEnvs?: components["schemas"]["ListComputeEnvsResponse.Entry"][];
+      computeEnvs?: components['schemas']['ListComputeEnvsResponse.Entry'][];
     };
-    "ListComputeEnvsResponse.Entry": {
+    'ListComputeEnvsResponse.Entry': {
       id?: string;
       name?: string;
       platform?: string;
-      status?: components["schemas"]["ComputeEnv.Status"];
+      status?: components['schemas']['ComputeEnv.Status'];
       message?: string;
       /** Format: date-time */
       lastUsed?: string;
@@ -1824,34 +1873,34 @@ export interface components {
       region?: string;
     };
     ListCredentialsResponse: {
-      credentials?: components["schemas"]["Credentials"][];
+      credentials?: components['schemas']['Credentials'][];
     };
     ListDatasetVersionsResponse: {
-      versions?: components["schemas"]["DatasetVersionDbDto"][];
+      versions?: components['schemas']['DatasetVersionDbDto'][];
     };
     ListDatasetsResponse: {
-      datasets?: components["schemas"]["Dataset"][];
+      datasets?: components['schemas']['Dataset'][];
     };
     ListEventTypesResponse: {
-      eventTypes?: components["schemas"]["EventType"][];
+      eventTypes?: components['schemas']['EventType'][];
     };
     ListLabelsResponse: {
-      labels?: components["schemas"]["LabelDbDto"][];
+      labels?: components['schemas']['LabelDbDto'][];
       /** Format: int64 */
       totalSize?: number;
     };
     ListMembersResponse: {
       /** Format: int64 */
       totalSize?: number;
-      members?: components["schemas"]["MemberDbDto"][];
+      members?: components['schemas']['MemberDbDto'][];
     };
     ListOrganizationsResponse: {
-      organizations?: components["schemas"]["OrganizationDbDto"][];
+      organizations?: components['schemas']['OrganizationDbDto'][];
       /** Format: int32 */
       totalSize?: number;
     };
     ListParticipantsResponse: {
-      participants?: components["schemas"]["ParticipantDbDto"][];
+      participants?: components['schemas']['ParticipantDbDto'][];
       /** Format: int64 */
       totalSize?: number;
     };
@@ -1859,54 +1908,54 @@ export interface components {
       pipelines?: string[];
     };
     ListPipelineSecretsResponse: {
-      pipelineSecrets?: components["schemas"]["PipelineSecret"][];
+      pipelineSecrets?: components['schemas']['PipelineSecret'][];
       /** Format: int64 */
       totalSize?: number;
     };
     ListPipelinesResponse: {
-      pipelines?: components["schemas"]["PipelineDbDto"][];
+      pipelines?: components['schemas']['PipelineDbDto'][];
       /** Format: int64 */
       totalSize?: number;
     };
     ListPlatformsResponse: {
-      platforms?: components["schemas"]["ComputePlatform"][];
+      platforms?: components['schemas']['ComputePlatform'][];
     };
     ListRegionsResponse: {
-      regions?: components["schemas"]["ComputeRegion"][];
+      regions?: components['schemas']['ComputeRegion'][];
     };
     ListTasksResponse: {
-      tasks?: components["schemas"]["DescribeTaskResponse"][];
+      tasks?: components['schemas']['DescribeTaskResponse'][];
       /** Format: int64 */
       total?: number;
     };
     ListTeamResponse: {
-      teams?: components["schemas"]["TeamDbDto"][];
+      teams?: components['schemas']['TeamDbDto'][];
       /** Format: int64 */
       totalSize?: number;
     };
     ListWorkflowsResponse: {
-      workflows?: components["schemas"]["ListWorkflowsResponse.ListWorkflowsElement"][];
+      workflows?: components['schemas']['ListWorkflowsResponse.ListWorkflowsElement'][];
       /** Format: int64 */
       totalSize?: number;
     };
-    "ListWorkflowsResponse.ListWorkflowsElement": {
+    'ListWorkflowsResponse.ListWorkflowsElement': {
       orgName?: string;
       workspaceName?: string;
       optimized?: boolean;
       starred?: boolean;
-      progress?: components["schemas"]["ProgressData"];
-      labels?: components["schemas"]["LabelDbDto"][];
+      progress?: components['schemas']['ProgressData'];
+      labels?: components['schemas']['LabelDbDto'][];
       /** Format: int64 */
       orgId?: number;
-      workflow?: components["schemas"]["WorkflowDbDto"];
+      workflow?: components['schemas']['WorkflowDbDto'];
       /** Format: int64 */
       workspaceId?: number;
     };
     ListWorkspacesAndOrgResponse: {
-      orgsAndWorkspaces?: components["schemas"]["OrgAndWorkspaceDto"][];
+      orgsAndWorkspaces?: components['schemas']['OrgAndWorkspaceDto'][];
     };
     ListWorkspacesResponse: {
-      workspaces?: components["schemas"]["WorkspaceDbDto"][];
+      workspaces?: components['schemas']['WorkspaceDbDto'][];
     };
     Log: {
       name?: string;
@@ -1919,25 +1968,25 @@ export interface components {
       exit_code?: number;
     };
     LogPage: {
-      entries?: components["schemas"]["Iterator_String_"];
+      entries?: components['schemas']['Iterator_String_'];
       rewindToken?: string;
       forwardToken?: string;
       pending?: boolean;
       message?: string;
-      downloads?: components["schemas"]["LogPage.Download"][];
+      downloads?: components['schemas']['LogPage.Download'][];
       truncated?: boolean;
     };
-    "LogPage.Download": {
+    'LogPage.Download': {
       fileName?: string;
       displayText?: string;
       saveName?: string;
     };
     /** IBM LSF configuration */
-    LsfComputeConfig: components["schemas"]["AbstractGridConfig"] & {
+    LsfComputeConfig: components['schemas']['AbstractGridConfig'] & {
       unitForLimits?: string;
       perJobMemLimit?: boolean;
       perTaskReserve?: boolean;
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+      environment?: components['schemas']['ConfigEnvVariable'][];
       /** @description property to select the compute config platform */
       discriminator?: string;
     };
@@ -1949,13 +1998,13 @@ export interface components {
       userName?: string;
       /** Format: int64 */
       memberId?: number;
-      role?: components["schemas"]["OrgRole"];
+      role?: components['schemas']['OrgRole'];
       firstName?: string;
       lastName?: string;
     };
     /** Moab configuration */
-    MoabComputeConfig: components["schemas"]["AbstractGridConfig"] & {
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+    MoabComputeConfig: components['schemas']['AbstractGridConfig'] & {
+      environment?: components['schemas']['ConfigEnvVariable'][];
       /** @description property to select the compute config platform */
       discriminator?: string;
     };
@@ -1964,9 +2013,9 @@ export interface components {
       file?: string;
     };
     NavbarConfig: {
-      menus?: components["schemas"]["NavbarConfig.NavbarMenu"][];
+      menus?: components['schemas']['NavbarConfig.NavbarMenu'][];
     };
-    "NavbarConfig.NavbarMenu": {
+    'NavbarConfig.NavbarMenu': {
       label?: string;
       url?: string;
     };
@@ -1979,11 +2028,11 @@ export interface components {
       workspaceId?: number;
       workspaceName?: string;
       workspaceFullName?: string;
-      visibility?: components["schemas"]["Visibility"];
+      visibility?: components['schemas']['Visibility'];
       roles?: string[];
     };
     /** @enum {string} */
-    OrgRole: "owner" | "member" | "collaborator";
+    OrgRole: 'owner' | 'member' | 'collaborator';
     Organization: {
       /** Format: int64 */
       id?: number | null;
@@ -2009,7 +2058,7 @@ export interface components {
       logoUrl?: string;
       /** Format: int64 */
       memberId?: number;
-      memberRole?: components["schemas"]["OrgRole"];
+      memberRole?: components['schemas']['OrgRole'];
       paying?: boolean;
     };
     ParticipantDbDto: {
@@ -2017,8 +2066,8 @@ export interface components {
       teamId?: number;
       /** Format: int64 */
       participantId?: number;
-      wspRole?: components["schemas"]["WspRole"];
-      orgRole?: components["schemas"]["OrgRole"];
+      wspRole?: components['schemas']['WspRole'];
+      orgRole?: components['schemas']['OrgRole'];
       teamName?: string;
       teamAvatarUrl?: string;
       userAvatarUrl?: string;
@@ -2028,10 +2077,10 @@ export interface components {
       memberId?: number;
       firstName?: string;
       lastName?: string;
-      type?: components["schemas"]["ParticipantType"];
+      type?: components['schemas']['ParticipantType'];
     };
     /** @enum {string} */
-    ParticipantType: "MEMBER" | "TEAM" | "COLLABORATOR";
+    ParticipantType: 'MEMBER' | 'TEAM' | 'COLLABORATOR';
     PipelineDbDto: {
       /** Format: int64 */
       pipelineId?: number;
@@ -2056,9 +2105,9 @@ export interface components {
       lastUpdated?: string;
       optimizationId?: string;
       optimizationTargets?: string;
-      optimizationStatus?: components["schemas"]["PipelineOptimizationStatus"];
-      labels?: components["schemas"]["LabelDbDto"][];
-      computeEnv?: components["schemas"]["ComputeEnvDbDto"];
+      optimizationStatus?: components['schemas']['PipelineOptimizationStatus'];
+      labels?: components['schemas']['LabelDbDto'][];
+      computeEnv?: components['schemas']['ComputeEnvDbDto'];
     };
     PipelineInfo: {
       projectName?: string;
@@ -2070,15 +2119,15 @@ export interface components {
       workDirs?: string[];
       revisions?: string[];
       profiles?: string[];
-      manifest?: components["schemas"]["WfManifest"];
+      manifest?: components['schemas']['WfManifest'];
       warnings?: string[];
     };
     /** @enum {string} */
-    PipelineOptimizationStatus: "OPTIMIZED" | "OPTIMIZABLE" | "UNAVAILABLE";
+    PipelineOptimizationStatus: 'OPTIMIZED' | 'OPTIMIZABLE' | 'UNAVAILABLE';
     /** @enum {string} */
-    PipelineQueryAttribute: "optimized" | "labels" | "computeEnv";
+    PipelineQueryAttribute: 'optimized' | 'labels' | 'computeEnv';
     /** @enum {string} */
-    PipelineSchemaAttributes: "schema" | "params";
+    PipelineSchemaAttributes: 'schema' | 'params';
     PipelineSchemaResponse: {
       schema: string;
       params?: string;
@@ -2094,9 +2143,11 @@ export interface components {
       /** Format: date-time */
       lastUpdated?: string;
     };
-    PlatformMetainfo: components["schemas"]["AwsBatchPlatformMetainfo"] | components["schemas"]["GooglePlatformMetainfo"];
+    PlatformMetainfo:
+      | components['schemas']['AwsBatchPlatformMetainfo']
+      | components['schemas']['GooglePlatformMetainfo'];
     /** @enum {string} */
-    PodCleanupPolicy: "on_success" | "always" | "never";
+    PodCleanupPolicy: 'on_success' | 'always' | 'never';
     ProcessLoad: {
       /** Format: int64 */
       pending: number;
@@ -2181,8 +2232,8 @@ export interface components {
       lastUpdated?: string;
     };
     ProgressData: {
-      workflowProgress?: components["schemas"]["WorkflowLoad"];
-      processesProgress?: components["schemas"]["ProcessLoad"][];
+      workflowProgress?: components['schemas']['WorkflowLoad'];
+      processesProgress?: components['schemas']['ProcessLoad'][];
     };
     RandomWorkflowNameResponse: {
       name?: string;
@@ -2211,15 +2262,15 @@ export interface components {
       run_id?: string;
     };
     RunListResponse: {
-      runs?: components["schemas"]["RunStatus"][];
+      runs?: components['schemas']['RunStatus'][];
       next_page_token?: string;
     };
     RunLog: {
       run_id?: string;
-      request?: components["schemas"]["RunRequest"];
-      state?: components["schemas"]["State"];
-      run_log?: components["schemas"]["Log"];
-      task_logs?: components["schemas"]["Log"][];
+      request?: components['schemas']['RunRequest'];
+      state?: components['schemas']['State'];
+      run_log?: components['schemas']['Log'];
+      task_logs?: components['schemas']['Log'][];
       outputs?: Record<string, never>;
     };
     RunRequest: {
@@ -2236,7 +2287,7 @@ export interface components {
     };
     RunStatus: {
       run_id?: string;
-      state?: components["schemas"]["State"];
+      state?: components['schemas']['State'];
     };
     SSHSecurityKeys: {
       privateKey?: string;
@@ -2245,14 +2296,28 @@ export interface components {
     };
     SecurityKeys: {
       discriminator?: string;
-    } & (components["schemas"]["AwsSecurityKeys"] | components["schemas"]["GoogleSecurityKeys"] | components["schemas"]["GitHubSecurityKeys"] | components["schemas"]["GitLabSecurityKeys"] | components["schemas"]["BitBucketSecurityKeys"] | components["schemas"]["GiteaSecurityKeys"] | components["schemas"]["SSHSecurityKeys"] | components["schemas"]["K8sSecurityKeys"] | components["schemas"]["AzureSecurityKeys"] | components["schemas"]["AzureReposSecurityKeys"] | components["schemas"]["ContainerRegistryKeys"] | components["schemas"]["AgentSecurityKeys"] | components["schemas"]["CodeCommitSecurityKeys"]);
+    } & (
+      | components['schemas']['AwsSecurityKeys']
+      | components['schemas']['GoogleSecurityKeys']
+      | components['schemas']['GitHubSecurityKeys']
+      | components['schemas']['GitLabSecurityKeys']
+      | components['schemas']['BitBucketSecurityKeys']
+      | components['schemas']['GiteaSecurityKeys']
+      | components['schemas']['SSHSecurityKeys']
+      | components['schemas']['K8sSecurityKeys']
+      | components['schemas']['AzureSecurityKeys']
+      | components['schemas']['AzureReposSecurityKeys']
+      | components['schemas']['ContainerRegistryKeys']
+      | components['schemas']['AgentSecurityKeys']
+      | components['schemas']['CodeCommitSecurityKeys']
+    );
     ServiceInfo: {
       version?: string;
       apiVersion?: string;
       commitId?: string;
       authTypes?: string[];
       loginPath?: string;
-      navbar?: components["schemas"]["NavbarConfig"];
+      navbar?: components['schemas']['NavbarConfig'];
       /** Format: int32 */
       heartbeatInterval?: number;
       userWorkspaceEnabled?: boolean;
@@ -2260,7 +2325,7 @@ export interface components {
       landingUrl?: string;
       termsOfUseUrl?: string;
       contentUrl?: string;
-      analytics?: components["schemas"]["Analytics"];
+      analytics?: components['schemas']['Analytics'];
       /** @deprecated */
       allowLocalRepos?: boolean;
       /** Format: int64 */
@@ -2276,18 +2341,28 @@ export interface components {
       allowNextflowCliLogs?: boolean;
     };
     ServiceInfoResponse: {
-      serviceInfo?: components["schemas"]["ServiceInfo"];
+      serviceInfo?: components['schemas']['ServiceInfo'];
     };
     /** Slurm configuration */
-    SlurmComputeConfig: components["schemas"]["AbstractGridConfig"] & {
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+    SlurmComputeConfig: components['schemas']['AbstractGridConfig'] & {
+      environment?: components['schemas']['ConfigEnvVariable'][];
       /** @description property to select the compute config platform */
       discriminator?: string;
     };
     /** @enum {string} */
-    State: "UNKNOWN" | "QUEUED" | "INITIALIZING" | "RUNNING" | "PAUSED" | "COMPLETE" | "EXECUTOR_ERROR" | "SYSTEM_ERROR" | "CANCELED" | "CANCELING";
+    State:
+      | 'UNKNOWN'
+      | 'QUEUED'
+      | 'INITIALIZING'
+      | 'RUNNING'
+      | 'PAUSED'
+      | 'COMPLETE'
+      | 'EXECUTOR_ERROR'
+      | 'SYSTEM_ERROR'
+      | 'CANCELED'
+      | 'CANCELING';
     SubmitWorkflowLaunchRequest: {
-      launch?: components["schemas"]["WorkflowLaunchRequest"];
+      launch?: components['schemas']['WorkflowLaunchRequest'];
     };
     SubmitWorkflowLaunchResponse: {
       workflowId?: string;
@@ -2323,7 +2398,7 @@ export interface components {
       executor?: string;
       machineType?: string;
       cloudZone?: string;
-      priceModel?: components["schemas"]["CloudPriceModel"];
+      priceModel?: components['schemas']['CloudPriceModel'];
       cost?: number;
       errorAction?: string;
       /** Format: int32 */
@@ -2366,14 +2441,14 @@ export interface components {
       id?: number | null;
       /** Format: int64 */
       taskId: number;
-      status: components["schemas"]["TaskStatus"];
+      status: components['schemas']['TaskStatus'];
       /** Format: date-time */
       dateCreated?: string | null;
       /** Format: date-time */
       lastUpdated?: string | null;
     };
     /** @enum {string} */
-    TaskStatus: "NEW" | "SUBMITTED" | "RUNNING" | "CACHED" | "COMPLETED" | "FAILED" | "ABORTED";
+    TaskStatus: 'NEW' | 'SUBMITTED' | 'RUNNING' | 'CACHED' | 'COMPLETED' | 'FAILED' | 'ABORTED';
     Team: {
       /** Format: int64 */
       id?: number | null;
@@ -2394,22 +2469,22 @@ export interface components {
       name?: string;
     };
     TraceBeginRequest: {
-      workflow?: components["schemas"]["Workflow"];
+      workflow?: components['schemas']['Workflow'];
       processNames?: string[];
       towerLaunch?: boolean;
     };
     TraceBeginResponse: {
-      status?: components["schemas"]["TraceProcessingStatus"];
+      status?: components['schemas']['TraceProcessingStatus'];
       workflowId?: string;
       watchUrl?: string;
     };
     TraceCompleteRequest: {
-      workflow?: components["schemas"]["Workflow"];
-      metrics?: components["schemas"]["WorkflowMetrics"][];
-      progress?: components["schemas"]["TraceProgressData"];
+      workflow?: components['schemas']['Workflow'];
+      metrics?: components['schemas']['WorkflowMetrics'][];
+      progress?: components['schemas']['TraceProgressData'];
     };
     TraceCompleteResponse: {
-      status?: components["schemas"]["TraceProcessingStatus"];
+      status?: components['schemas']['TraceProcessingStatus'];
       workflowId?: string;
     };
     TraceCreateRequest: {
@@ -2424,13 +2499,13 @@ export interface components {
       workflowId?: string;
     };
     TraceHeartbeatRequest: {
-      progress?: components["schemas"]["TraceProgressData"];
+      progress?: components['schemas']['TraceProgressData'];
     };
     TraceHeartbeatResponse: {
       message?: string;
     };
     /** @enum {string} */
-    TraceProcessingStatus: "OK" | "KO";
+    TraceProcessingStatus: 'OK' | 'KO';
     TraceProgressData: {
       /** Format: int32 */
       pending?: number;
@@ -2462,7 +2537,7 @@ export interface components {
       peakCpus?: number;
       /** Format: int64 */
       peakMemory?: number;
-      processes?: components["schemas"]["TraceProgressDetail"][];
+      processes?: components['schemas']['TraceProgressDetail'][];
     };
     TraceProgressDetail: {
       /** Format: int32 */
@@ -2501,28 +2576,28 @@ export interface components {
       peakMemory?: number;
     };
     TraceProgressRequest: {
-      tasks?: components["schemas"]["Task"][];
-      progress?: components["schemas"]["TraceProgressData"];
+      tasks?: components['schemas']['Task'][];
+      progress?: components['schemas']['TraceProgressData'];
     };
     TraceProgressResponse: {
-      status?: components["schemas"]["TraceProcessingStatus"];
+      status?: components['schemas']['TraceProcessingStatus'];
       workflowId?: string;
     };
     /** Univa Grid Engine configuration */
-    UnivaComputeConfig: components["schemas"]["AbstractGridConfig"] & {
-      environment?: components["schemas"]["ConfigEnvVariable"][];
+    UnivaComputeConfig: components['schemas']['AbstractGridConfig'] & {
+      environment?: components['schemas']['ConfigEnvVariable'][];
       /** @description property to select the compute config platform */
       discriminator?: string;
     };
     UpdateActionRequest: {
       name?: string;
-      launch?: components["schemas"]["WorkflowLaunchRequest"];
+      launch?: components['schemas']['WorkflowLaunchRequest'];
     };
     UpdateComputeEnvRequest: {
       name?: string;
     };
     UpdateCredentialsRequest: {
-      credentials?: components["schemas"]["Credentials"];
+      credentials?: components['schemas']['Credentials'];
     };
     UpdateDatasetRequest: {
       name?: string;
@@ -2541,7 +2616,7 @@ export interface components {
       isDefault?: boolean;
     };
     UpdateMemberRoleRequest: {
-      role?: components["schemas"]["OrgRole"];
+      role?: components['schemas']['OrgRole'];
     };
     UpdateOrganizationRequest: {
       logoId?: string;
@@ -2553,17 +2628,17 @@ export interface components {
       name?: string;
     };
     UpdateParticipantRoleRequest: {
-      role?: components["schemas"]["WspRole"];
+      role?: components['schemas']['WspRole'];
     };
     UpdatePipelineRequest: {
       name?: string;
       description?: string;
       icon?: string;
-      launch?: components["schemas"]["WorkflowLaunchRequest"];
+      launch?: components['schemas']['WorkflowLaunchRequest'];
       labelIds?: number[];
     };
     UpdatePipelineResponse: {
-      pipeline?: components["schemas"]["PipelineDbDto"];
+      pipeline?: components['schemas']['PipelineDbDto'];
     };
     UpdatePipelineSecretRequest: {
       value?: string;
@@ -2574,13 +2649,13 @@ export interface components {
       name?: string;
     };
     UpdateWorkspaceRequest: {
-      visibility?: components["schemas"]["Visibility"];
+      visibility?: components['schemas']['Visibility'];
       description?: string;
       fullName?: string;
       name?: string;
     };
     UploadDatasetVersionResponse: {
-      version?: components["schemas"]["DatasetVersionDbDto"];
+      version?: components['schemas']['DatasetVersionDbDto'];
     };
     UserDbDto: {
       /** Format: int64 */
@@ -2606,7 +2681,7 @@ export interface components {
       deleted?: boolean;
     };
     /** @enum {string} */
-    Visibility: "PRIVATE" | "SHARED";
+    Visibility: 'PRIVATE' | 'SHARED';
     WesErrorResponse: {
       msg?: string;
       /** Format: int32 */
@@ -2659,7 +2734,7 @@ export interface components {
       succeedDuration?: number;
     };
     Workflow: {
-      status?: components["schemas"]["WorkflowStatus"];
+      status?: components['schemas']['WorkflowStatus'];
       /** Format: int64 */
       ownerId?: number;
       repository?: string;
@@ -2691,9 +2766,9 @@ export interface components {
         [key: string]: unknown;
       };
       configText?: string;
-      manifest?: components["schemas"]["WfManifest"];
-      nextflow?: components["schemas"]["WfNextflow"];
-      stats?: components["schemas"]["WfStats"];
+      manifest?: components['schemas']['WfManifest'];
+      nextflow?: components['schemas']['WfNextflow'];
+      stats?: components['schemas']['WfStats'];
       errorMessage?: string;
       errorReport?: string;
       deleted?: boolean;
@@ -2745,10 +2820,10 @@ export interface components {
       start?: string;
       /** Format: date-time */
       dateCreated?: string;
-      nextflow?: components["schemas"]["WfNextflow"];
+      nextflow?: components['schemas']['WfNextflow'];
       success?: boolean;
       errorMessage?: string;
-      stats?: components["schemas"]["WfStats"];
+      stats?: components['schemas']['WfStats'];
       repository?: string;
       id?: string;
       workDir?: string;
@@ -2757,9 +2832,9 @@ export interface components {
       projectName?: string;
       scriptName?: string;
       launchId?: string;
-      status?: components["schemas"]["WorkflowStatus"];
+      status?: components['schemas']['WorkflowStatus'];
       configText?: string;
-      manifest?: components["schemas"]["WfManifest"];
+      manifest?: components['schemas']['WfManifest'];
       homeDir?: string;
       scriptFile?: string;
       /** Format: int64 */
@@ -2799,7 +2874,7 @@ export interface components {
     };
     WorkflowLaunchResponse: {
       id?: string;
-      computeEnv?: components["schemas"]["ComputeEnv"];
+      computeEnv?: components['schemas']['ComputeEnv'];
       pipeline?: string;
       /** Format: int64 */
       pipelineId?: number;
@@ -2886,33 +2961,33 @@ export interface components {
       lastUpdated?: string;
     };
     WorkflowLogResponse: {
-      log?: components["schemas"]["LogPage"];
+      log?: components['schemas']['LogPage'];
     };
     WorkflowMetrics: {
       /** Format: int64 */
       id?: number | null;
       process: string;
-      cpu?: components["schemas"]["ResourceData"];
-      mem?: components["schemas"]["ResourceData"];
-      vmem?: components["schemas"]["ResourceData"];
-      time?: components["schemas"]["ResourceData"];
-      reads?: components["schemas"]["ResourceData"];
-      writes?: components["schemas"]["ResourceData"];
-      cpuUsage?: components["schemas"]["ResourceData"];
-      memUsage?: components["schemas"]["ResourceData"];
-      timeUsage?: components["schemas"]["ResourceData"];
+      cpu?: components['schemas']['ResourceData'];
+      mem?: components['schemas']['ResourceData'];
+      vmem?: components['schemas']['ResourceData'];
+      time?: components['schemas']['ResourceData'];
+      reads?: components['schemas']['ResourceData'];
+      writes?: components['schemas']['ResourceData'];
+      cpuUsage?: components['schemas']['ResourceData'];
+      memUsage?: components['schemas']['ResourceData'];
+      timeUsage?: components['schemas']['ResourceData'];
     };
     /** @enum {string} */
-    WorkflowQueryAttribute: "optimized" | "labels" | "minimal";
+    WorkflowQueryAttribute: 'optimized' | 'labels' | 'minimal';
     /** @enum {string} */
-    WorkflowStatus: "SUBMITTED" | "RUNNING" | "SUCCEEDED" | "FAILED" | "CANCELLED" | "UNKNOWN";
+    WorkflowStatus: 'SUBMITTED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'UNKNOWN';
     Workspace: {
       /** Format: int64 */
       id?: number | null;
       name: string;
       fullName: string;
       description?: string;
-      visibility: components["schemas"]["Visibility"];
+      visibility: components['schemas']['Visibility'];
       /** Format: date-time */
       dateCreated?: string;
       /** Format: date-time */
@@ -2924,10 +2999,10 @@ export interface components {
       name?: string;
       fullName?: string;
       description?: string;
-      visibility?: components["schemas"]["Visibility"];
+      visibility?: components['schemas']['Visibility'];
     };
     /** @enum {string} */
-    WspRole: "owner" | "admin" | "maintain" | "launch" | "connect" | "view";
+    WspRole: 'owner' | 'admin' | 'maintain' | 'launch' | 'connect' | 'view';
   };
   responses: never;
   parameters: never;
@@ -2941,7 +3016,6 @@ export type $defs = Record<string, never>;
 export type external = Record<string, never>;
 
 export interface operations {
-
   /**
    * List actions
    * @description Lists all available actions in a user context, enriched by `attributes`. Append `?workspaceId` to list actions in a workspace context.
@@ -2952,20 +3026,20 @@ export interface operations {
         /** @description Workspace numeric identifier */
         workspaceId?: number;
         /** @description Additional attribute values to include in the response (`labels`). Returns an empty value (`labels: null`) if omitted. */
-        attributes?: components["schemas"]["ActionQueryAttribute"][];
+        attributes?: components['schemas']['ActionQueryAttribute'][];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListActionsResponse"];
+          'application/json': components['schemas']['ListActionsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -2988,20 +3062,20 @@ export interface operations {
     /** @description Action create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateActionRequest"];
+        'application/json': components['schemas']['CreateActionRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateActionResponse"];
+          'application/json': components['schemas']['CreateActionResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3024,7 +3098,7 @@ export interface operations {
     /** @description Labels add request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociateActionLabelsRequest"];
+        'application/json': components['schemas']['AssociateActionLabelsRequest'];
       };
     };
     responses: {
@@ -3052,7 +3126,7 @@ export interface operations {
     /** @description Labels apply request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociateActionLabelsRequest"];
+        'application/json': components['schemas']['AssociateActionLabelsRequest'];
       };
     };
     responses: {
@@ -3080,7 +3154,7 @@ export interface operations {
     /** @description Labels remove request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociateActionLabelsRequest"];
+        'application/json': components['schemas']['AssociateActionLabelsRequest'];
       };
     };
     responses: {
@@ -3109,13 +3183,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListEventTypesResponse"];
+          'application/json': components['schemas']['ListEventTypesResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3145,7 +3219,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3155,7 +3229,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -3170,7 +3244,7 @@ export interface operations {
         /** @description Workspace numeric identifier */
         workspaceId?: number;
         /** @description Additional attribute values to include in the response (`labels`). Returns an empty value (`labels: null`) if omitted. */
-        attributes?: components["schemas"]["ActionQueryAttribute"][];
+        attributes?: components['schemas']['ActionQueryAttribute'][];
       };
       path: {
         /** @description Action string identifier */
@@ -3181,13 +3255,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeActionResponse"];
+          'application/json': components['schemas']['DescribeActionResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3214,7 +3288,7 @@ export interface operations {
     /** @description Action update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateActionRequest"];
+        'application/json': components['schemas']['UpdateActionRequest'];
       };
     };
     responses: {
@@ -3225,7 +3299,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3257,7 +3331,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3284,20 +3358,20 @@ export interface operations {
     /** @description Action launch request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["LaunchActionRequest"];
+        'application/json': components['schemas']['LaunchActionRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["LaunchActionResponse"];
+          'application/json': components['schemas']['LaunchActionResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3323,7 +3397,7 @@ export interface operations {
     };
     requestBody?: {
       content: {
-        "application/json": components["schemas"]["EmptyBodyRequest"];
+        'application/json': components['schemas']['EmptyBodyRequest'];
       };
     };
     responses: {
@@ -3334,7 +3408,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3348,7 +3422,7 @@ export interface operations {
     /** @description Image file request */
     requestBody?: {
       content: {
-        "multipart/form-data": {
+        'multipart/form-data': {
           /** Format: binary */
           image?: string;
         };
@@ -3358,13 +3432,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateAvatarResponse"];
+          'application/json': components['schemas']['CreateAvatarResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3385,13 +3459,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": string;
+          'application/json': string;
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3421,13 +3495,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListComputeEnvsResponse"];
+          'application/json': components['schemas']['ListComputeEnvsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3450,20 +3524,20 @@ export interface operations {
     /** @description Compute environment create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateComputeEnvRequest"];
+        'application/json': components['schemas']['CreateComputeEnvRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateComputeEnvResponse"];
+          'application/json': components['schemas']['CreateComputeEnvResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3493,7 +3567,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3503,7 +3577,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -3518,7 +3592,7 @@ export interface operations {
         /** @description Workspace numeric identifier */
         workspaceId?: number;
         /** @description Additional attribute values to include in the response (`labels`). Returns an empty value (`labels: null`) if omitted. */
-        attributes?: components["schemas"]["ComputeEnvQueryAttribute"][];
+        attributes?: components['schemas']['ComputeEnvQueryAttribute'][];
       };
       path: {
         /** @description Compute environment string identifier */
@@ -3529,13 +3603,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeComputeEnvResponse"];
+          'application/json': components['schemas']['DescribeComputeEnvResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3562,7 +3636,7 @@ export interface operations {
     /** @description Compute environment update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateComputeEnvRequest"];
+        'application/json': components['schemas']['UpdateComputeEnvRequest'];
       };
     };
     responses: {
@@ -3573,7 +3647,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3583,7 +3657,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -3611,7 +3685,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3621,7 +3695,7 @@ export interface operations {
       /** @description Conflicting deletion */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -3643,7 +3717,7 @@ export interface operations {
     };
     requestBody?: {
       content: {
-        "application/json": components["schemas"]["EmptyBodyRequest"];
+        'application/json': components['schemas']['EmptyBodyRequest'];
       };
     };
     responses: {
@@ -3654,7 +3728,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3680,13 +3754,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListCredentialsResponse"];
+          'application/json': components['schemas']['ListCredentialsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3709,20 +3783,20 @@ export interface operations {
     /** @description Credentials create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateCredentialsRequest"];
+        'application/json': components['schemas']['CreateCredentialsRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateCredentialsResponse"];
+          'application/json': components['schemas']['CreateCredentialsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3752,7 +3826,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3762,7 +3836,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -3786,13 +3860,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeCredentialsResponse"];
+          'application/json': components['schemas']['DescribeCredentialsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3819,7 +3893,7 @@ export interface operations {
     /** @description Credentials update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateCredentialsRequest"];
+        'application/json': components['schemas']['UpdateCredentialsRequest'];
       };
     };
     responses: {
@@ -3830,7 +3904,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3864,7 +3938,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3874,7 +3948,7 @@ export interface operations {
       /** @description Running jobs block the deletion of this credentials */
       409: {
         content: {
-          "application/json": components["schemas"]["DeleteCredentialsConflictException"];
+          'application/json': components['schemas']['DeleteCredentialsConflictException'];
         };
       };
     };
@@ -3894,13 +3968,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListDatasetsResponse"];
+          'application/json': components['schemas']['ListDatasetsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3923,20 +3997,20 @@ export interface operations {
     /** @description Dataset create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateDatasetRequest"];
+        'application/json': components['schemas']['CreateDatasetRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateDatasetResponse"];
+          'application/json': components['schemas']['CreateDatasetResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -3946,7 +4020,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -3967,13 +4041,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListDatasetVersionsResponse"];
+          'application/json': components['schemas']['ListDatasetVersionsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4000,7 +4074,7 @@ export interface operations {
     /** @description Dataset update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateDatasetRequest"];
+        'application/json': components['schemas']['UpdateDatasetRequest'];
       };
     };
     responses: {
@@ -4011,7 +4085,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4021,7 +4095,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -4049,7 +4123,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4077,13 +4151,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeDatasetResponse"];
+          'application/json': components['schemas']['DescribeDatasetResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4112,20 +4186,20 @@ export interface operations {
     /** @description Dataset file request */
     requestBody: {
       content: {
-        "multipart/form-data": components["schemas"]["MultiRequestFileSchema"];
+        'multipart/form-data': components['schemas']['MultiRequestFileSchema'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["UploadDatasetVersionResponse"];
+          'application/json': components['schemas']['UploadDatasetVersionResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4157,13 +4231,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": string;
+          'application/json': string;
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4173,7 +4247,7 @@ export interface operations {
       /** @description Not found */
       404: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -4199,13 +4273,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListDatasetVersionsResponse"];
+          'application/json': components['schemas']['ListDatasetVersionsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4231,13 +4305,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["RunListResponse"];
+          'application/json': components['schemas']['RunListResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["WesErrorResponse"];
+          'application/json': components['schemas']['WesErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4254,21 +4328,21 @@ export interface operations {
     /** @description Run request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["RunRequest"];
-        "multipart/form-data": components["schemas"]["RunRequest"];
+        'application/json': components['schemas']['RunRequest'];
+        'multipart/form-data': components['schemas']['RunRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["RunId"];
+          'application/json': components['schemas']['RunId'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["WesErrorResponse"];
+          'application/json': components['schemas']['WesErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4292,13 +4366,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["RunLog"];
+          'application/json': components['schemas']['RunLog'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["WesErrorResponse"];
+          'application/json': components['schemas']['WesErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4320,20 +4394,20 @@ export interface operations {
     };
     requestBody?: {
       content: {
-        "application/json": components["schemas"]["EmptyBodyRequest"];
+        'application/json': components['schemas']['EmptyBodyRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["RunId"];
+          'application/json': components['schemas']['RunId'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["WesErrorResponse"];
+          'application/json': components['schemas']['WesErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4357,13 +4431,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["RunStatus"];
+          'application/json': components['schemas']['RunStatus'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["WesErrorResponse"];
+          'application/json': components['schemas']['WesErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4378,13 +4452,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ServiceInfo"];
+          'application/json': components['schemas']['ServiceInfo'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["WesErrorResponse"];
+          'application/json': components['schemas']['WesErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4409,7 +4483,7 @@ export interface operations {
         /** @description Filter search parameter */
         search?: string;
         /** @description Label type */
-        type?: components["schemas"]["LabelType"];
+        type?: components['schemas']['LabelType'];
         /** @description Label default flag */
         isDefault?: boolean;
       };
@@ -4418,13 +4492,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListLabelsResponse"];
+          'application/json': components['schemas']['ListLabelsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4447,20 +4521,20 @@ export interface operations {
     /** @description Provide a label `name`. Set `resource: true` for resource labels. Only resource labels have a `value` — if `resource: true`, include a `value`. Else, omit `value` from your request body. */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateLabelRequest"];
+        'application/json': components['schemas']['CreateLabelRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateLabelResponse"];
+          'application/json': components['schemas']['CreateLabelResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4487,20 +4561,20 @@ export interface operations {
     /** @description Label update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateLabelRequest"];
+        'application/json': components['schemas']['UpdateLabelRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["UpdateLabelResponse"];
+          'application/json': components['schemas']['UpdateLabelResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4532,7 +4606,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4560,13 +4634,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeLaunchResponse"];
+          'application/json': components['schemas']['DescribeLaunchResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4594,7 +4668,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeLaunchResponse"];
+          'application/json': components['schemas']['DescribeLaunchResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4618,13 +4692,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListOrganizationsResponse"];
+          'application/json': components['schemas']['ListOrganizationsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4641,20 +4715,20 @@ export interface operations {
     /** @description Organization create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateOrganizationRequest"];
+        'application/json': components['schemas']['CreateOrganizationRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateOrganizationResponse"];
+          'application/json': components['schemas']['CreateOrganizationResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4664,7 +4738,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -4688,7 +4762,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4698,7 +4772,7 @@ export interface operations {
       /** @description Duplicated element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -4718,13 +4792,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeOrganizationResponse"];
+          'application/json': components['schemas']['DescribeOrganizationResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4747,7 +4821,7 @@ export interface operations {
     /** @description Organization update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateOrganizationRequest"];
+        'application/json': components['schemas']['UpdateOrganizationRequest'];
       };
     };
     responses: {
@@ -4758,19 +4832,19 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
       403: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -4794,7 +4868,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4826,13 +4900,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListMembersResponse"];
+          'application/json': components['schemas']['ListMembersResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4864,13 +4938,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListMembersResponse"];
+          'application/json': components['schemas']['ListMembersResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4893,20 +4967,20 @@ export interface operations {
     /** @description Member addition request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AddMemberRequest"];
+        'application/json': components['schemas']['AddMemberRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["AddMemberResponse"];
+          'application/json': components['schemas']['AddMemberResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4916,7 +4990,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -4940,7 +5014,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4970,7 +5044,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -4995,7 +5069,7 @@ export interface operations {
     /** @description Member role update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateMemberRoleRequest"];
+        'application/json': components['schemas']['UpdateMemberRoleRequest'];
       };
     };
     responses: {
@@ -5006,7 +5080,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5038,13 +5112,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListTeamResponse"];
+          'application/json': components['schemas']['ListTeamResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5067,20 +5141,20 @@ export interface operations {
     /** @description Team create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateTeamRequest"];
+        'application/json': components['schemas']['CreateTeamRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateTeamResponse"];
+          'application/json': components['schemas']['CreateTeamResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5090,7 +5164,7 @@ export interface operations {
       /** @description Duplicated element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -5118,7 +5192,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5144,13 +5218,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeTeamResponse"];
+          'application/json': components['schemas']['DescribeTeamResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5175,7 +5249,7 @@ export interface operations {
     /** @description Team update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateTeamRequest"];
+        'application/json': components['schemas']['UpdateTeamRequest'];
       };
     };
     responses: {
@@ -5190,7 +5264,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5200,7 +5274,7 @@ export interface operations {
       /** @description Duplicated element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -5226,7 +5300,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5257,13 +5331,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListMembersResponse"];
+          'application/json': components['schemas']['ListMembersResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5288,20 +5362,20 @@ export interface operations {
     /** @description Team create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateTeamMemberRequest"];
+        'application/json': components['schemas']['CreateTeamMemberRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["AddTeamMemberResponse"];
+          'application/json': components['schemas']['AddTeamMemberResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5333,7 +5407,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5367,13 +5441,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListWorkspacesResponse"];
+          'application/json': components['schemas']['ListWorkspacesResponse'];
         };
       };
       /** @description Bad Request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5383,7 +5457,7 @@ export interface operations {
       /** @description Not Found */
       404: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -5403,13 +5477,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListWorkspacesResponse"];
+          'application/json': components['schemas']['ListWorkspacesResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5432,20 +5506,20 @@ export interface operations {
     /** @description Workspace create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateWorkspaceRequest"];
+        'application/json': components['schemas']['CreateWorkspaceRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateWorkspaceResponse"];
+          'application/json': components['schemas']['CreateWorkspaceResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5455,7 +5529,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -5483,7 +5557,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5493,7 +5567,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -5515,13 +5589,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeWorkspaceResponse"];
+          'application/json': components['schemas']['DescribeWorkspaceResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5546,20 +5620,20 @@ export interface operations {
     /** @description Workspace update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateWorkspaceRequest"];
+        'application/json': components['schemas']['UpdateWorkspaceRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeWorkspaceResponse"];
+          'application/json': components['schemas']['DescribeWorkspaceResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5569,7 +5643,7 @@ export interface operations {
       /** @description Duplicate name */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -5595,7 +5669,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5629,13 +5703,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListParticipantsResponse"];
+          'application/json': components['schemas']['ListParticipantsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5665,7 +5739,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5690,20 +5764,20 @@ export interface operations {
     /** @description Participant addition request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AddParticipantRequest"];
+        'application/json': components['schemas']['AddParticipantRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["AddParticipantResponse"];
+          'application/json': components['schemas']['AddParticipantResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5713,7 +5787,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -5741,7 +5815,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5768,7 +5842,7 @@ export interface operations {
     /** @description Participant role update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateParticipantRoleRequest"];
+        'application/json': components['schemas']['UpdateParticipantRoleRequest'];
       };
     };
     responses: {
@@ -5779,7 +5853,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5803,13 +5877,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListPipelineSecretsResponse"];
+          'application/json': components['schemas']['ListPipelineSecretsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5832,20 +5906,20 @@ export interface operations {
     /** @description Pipeline secret create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreatePipelineSecretRequest"];
+        'application/json': components['schemas']['CreatePipelineSecretRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreatePipelineSecretResponse"];
+          'application/json': components['schemas']['CreatePipelineSecretResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5875,7 +5949,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5885,7 +5959,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -5909,13 +5983,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribePipelineSecretResponse"];
+          'application/json': components['schemas']['DescribePipelineSecretResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5942,7 +6016,7 @@ export interface operations {
     /** @description Secret update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdatePipelineSecretRequest"];
+        'application/json': components['schemas']['UpdatePipelineSecretRequest'];
       };
     };
     responses: {
@@ -5953,7 +6027,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -5985,7 +6059,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6002,7 +6076,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Additional attribute values to include in the response (`labels`, `optimized` status, `computeEnv`). Returns an empty value (`labels: null`, etc.) if omitted. */
-        attributes?: components["schemas"]["PipelineQueryAttribute"][];
+        attributes?: components['schemas']['PipelineQueryAttribute'][];
         /** @description Workspace numeric identifier */
         workspaceId?: number;
         /** @description Pagination max results */
@@ -6019,13 +6093,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListPipelinesResponse"];
+          'application/json': components['schemas']['ListPipelinesResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6048,20 +6122,20 @@ export interface operations {
     /** @description Pipeline creation request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreatePipelineRequest"];
+        'application/json': components['schemas']['CreatePipelineRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreatePipelineResponse"];
+          'application/json': components['schemas']['CreatePipelineResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6071,7 +6145,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -6095,13 +6169,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribePipelineInfoResponse"];
+          'application/json': components['schemas']['DescribePipelineInfoResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6124,7 +6198,7 @@ export interface operations {
     /** @description Labels add request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociatePipelineLabelsRequest"];
+        'application/json': components['schemas']['AssociatePipelineLabelsRequest'];
       };
     };
     responses: {
@@ -6152,7 +6226,7 @@ export interface operations {
     /** @description Labels apply request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociatePipelineLabelsRequest"];
+        'application/json': components['schemas']['AssociatePipelineLabelsRequest'];
       };
     };
     responses: {
@@ -6180,7 +6254,7 @@ export interface operations {
     /** @description Labels remove request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociatePipelineLabelsRequest"];
+        'application/json': components['schemas']['AssociatePipelineLabelsRequest'];
       };
     };
     responses: {
@@ -6209,13 +6283,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListPipelineInfoResponse"];
+          'application/json': components['schemas']['ListPipelineInfoResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6247,7 +6321,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6257,7 +6331,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -6270,7 +6344,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Additional attribute values to include in the response (`labels`, `optimized` status, `computeEnv`). Returns an empty value (`labels: null`, etc.) if omitted. */
-        attributes?: components["schemas"]["PipelineQueryAttribute"][];
+        attributes?: components['schemas']['PipelineQueryAttribute'][];
         /** @description Workspace numeric identifier */
         workspaceId?: number;
         /** @description Source workspace numeric identifier */
@@ -6285,13 +6359,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribePipelineResponse"];
+          'application/json': components['schemas']['DescribePipelineResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6321,20 +6395,20 @@ export interface operations {
     /** @description Pipeline update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdatePipelineRequest"];
+        'application/json': components['schemas']['UpdatePipelineRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["UpdatePipelineResponse"];
+          'application/json': components['schemas']['UpdatePipelineResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6344,7 +6418,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -6372,7 +6446,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6402,13 +6476,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeLaunchResponse"];
+          'application/json': components['schemas']['DescribeLaunchResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6429,7 +6503,7 @@ export interface operations {
         /** @description Source workspace numeric identifier */
         sourceWorkspaceId?: number | null;
         /** @description Attribute values to include in the response: `schema` returns the pipeline schema, `params` returns the pipeline config. Returns all if `attributes` is omitted. */
-        attributes?: components["schemas"]["PipelineSchemaAttributes"][];
+        attributes?: components['schemas']['PipelineSchemaAttributes'][];
       };
       path: {
         /** @description Pipeline numeric identifier */
@@ -6440,7 +6514,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["PipelineSchemaResponse"];
+          'application/json': components['schemas']['PipelineSchemaResponse'];
         };
       };
       /** @description OK - No content */
@@ -6450,7 +6524,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6475,13 +6549,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListPlatformsResponse"];
+          'application/json': components['schemas']['ListPlatformsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6511,13 +6585,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribePlatformResponse"];
+          'application/json': components['schemas']['DescribePlatformResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6545,13 +6619,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListRegionsResponse"];
+          'application/json': components['schemas']['ListRegionsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6566,13 +6640,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ServiceInfoResponse"];
+          'application/json': components['schemas']['ServiceInfoResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -6583,13 +6657,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListAccessTokensResponse"];
+          'application/json': components['schemas']['ListAccessTokensResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6603,20 +6677,20 @@ export interface operations {
     /** @description Access token create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateAccessTokenRequest"];
+        'application/json': components['schemas']['CreateAccessTokenRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateAccessTokenResponse"];
+          'application/json': components['schemas']['CreateAccessTokenResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6626,7 +6700,7 @@ export interface operations {
       /** @description Duplicated element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -6641,7 +6715,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6666,7 +6740,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6686,20 +6760,20 @@ export interface operations {
     /** @description Trace create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TraceCreateRequest"];
+        'application/json': components['schemas']['TraceCreateRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["TraceCreateResponse"];
+          'application/json': components['schemas']['TraceCreateResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6723,20 +6797,20 @@ export interface operations {
     /** @description Trace begin request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TraceBeginRequest"];
+        'application/json': components['schemas']['TraceBeginRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["TraceBeginResponse"];
+          'application/json': components['schemas']['TraceBeginResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6760,20 +6834,20 @@ export interface operations {
     /** @description Trace complete request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TraceCompleteRequest"];
+        'application/json': components['schemas']['TraceCompleteRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["TraceCompleteResponse"];
+          'application/json': components['schemas']['TraceCompleteResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6797,20 +6871,20 @@ export interface operations {
     /** @description Trace heartbeat request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TraceHeartbeatRequest"];
+        'application/json': components['schemas']['TraceHeartbeatRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["TraceHeartbeatResponse"];
+          'application/json': components['schemas']['TraceHeartbeatResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6834,20 +6908,20 @@ export interface operations {
     /** @description Trace progress request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TraceProgressRequest"];
+        'application/json': components['schemas']['TraceProgressRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["TraceProgressResponse"];
+          'application/json': components['schemas']['TraceProgressResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6862,13 +6936,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeUserResponse"];
+          'application/json': components['schemas']['DescribeUserResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6892,13 +6966,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListWorkspacesAndOrgResponse"];
+          'application/json': components['schemas']['ListWorkspacesAndOrgResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6923,7 +6997,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6933,7 +7007,7 @@ export interface operations {
       /** @description Duplicated element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -6950,13 +7024,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeUserResponse"];
+          'application/json': components['schemas']['DescribeUserResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -6976,7 +7050,7 @@ export interface operations {
     /** @description User update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UserDbDto"];
+        'application/json': components['schemas']['UserDbDto'];
       };
     };
     responses: {
@@ -6987,7 +7061,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7012,7 +7086,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7029,7 +7103,7 @@ export interface operations {
     parameters: {
       query?: {
         /** @description Additional attribute values to include in the response (`labels`, `optimized` status). Returns an empty value (`labels: null`) if omitted. Specify `minimal` to remove non-essential fields (for use in UI only). */
-        attributes?: components["schemas"]["WorkflowQueryAttribute"][];
+        attributes?: components['schemas']['WorkflowQueryAttribute'][];
         /** @description Workspace numeric identifier */
         workspaceId?: number;
         /** @description Pagination result max result */
@@ -7044,13 +7118,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListWorkflowsResponse"];
+          'application/json': components['schemas']['ListWorkflowsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7075,20 +7149,20 @@ export interface operations {
     /** @description Delete workflows request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["DeleteWorkflowsRequest"];
+        'application/json': components['schemas']['DeleteWorkflowsRequest'];
       };
     };
     responses: {
       /** @description OK - Return the IDs of workflows that could not be deleted, if any */
       200: {
         content: {
-          "application/json": components["schemas"]["DeleteWorkflowsResponse"];
+          'application/json': components['schemas']['DeleteWorkflowsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7111,7 +7185,7 @@ export interface operations {
     /** @description Labels add request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociateWorkflowLabelsRequest"];
+        'application/json': components['schemas']['AssociateWorkflowLabelsRequest'];
       };
     };
     responses: {
@@ -7139,7 +7213,7 @@ export interface operations {
     /** @description Labels apply request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociateWorkflowLabelsRequest"];
+        'application/json': components['schemas']['AssociateWorkflowLabelsRequest'];
       };
     };
     responses: {
@@ -7167,7 +7241,7 @@ export interface operations {
     /** @description Labels remove request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["AssociateWorkflowLabelsRequest"];
+        'application/json': components['schemas']['AssociateWorkflowLabelsRequest'];
       };
     };
     responses: {
@@ -7197,20 +7271,20 @@ export interface operations {
     /** @description Workflow launch request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["SubmitWorkflowLaunchRequest"];
+        'application/json': components['schemas']['SubmitWorkflowLaunchRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["SubmitWorkflowLaunchResponse"];
+          'application/json': components['schemas']['SubmitWorkflowLaunchResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7225,7 +7299,7 @@ export interface operations {
       /** @description Generated name */
       200: {
         content: {
-          "application/json": components["schemas"]["RandomWorkflowNameResponse"];
+          'application/json': components['schemas']['RandomWorkflowNameResponse'];
         };
       };
     };
@@ -7248,13 +7322,13 @@ export interface operations {
       /** @description Bad request. Invalid run name format */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Duplicated element. Existing run name and session ID combination */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -7269,7 +7343,7 @@ export interface operations {
         /** @description Workspace numeric identifier */
         workspaceId?: number;
         /** @description Comma-separated list of attributes to retrieve. Returns an empty value for each attribute not specified. */
-        attributes?: components["schemas"]["WorkflowQueryAttribute"][];
+        attributes?: components['schemas']['WorkflowQueryAttribute'][];
       };
       path: {
         /** @description Workflow string identifier */
@@ -7280,13 +7354,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeWorkflowResponse"];
+          'application/json': components['schemas']['DescribeWorkflowResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7317,7 +7391,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7343,7 +7417,7 @@ export interface operations {
     };
     requestBody?: {
       content: {
-        "application/json": components["schemas"]["EmptyBodyRequest"];
+        'application/json': components['schemas']['EmptyBodyRequest'];
       };
     };
     responses: {
@@ -7354,7 +7428,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7384,13 +7458,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": string;
+          'application/json': string;
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7422,13 +7496,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": string;
+          'application/json': string;
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7456,13 +7530,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeWorkflowLaunchResponse"];
+          'application/json': components['schemas']['DescribeWorkflowLaunchResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7472,7 +7546,7 @@ export interface operations {
       /** @description Duplicate element. Existing run name and session ID combination */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -7498,13 +7572,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["WorkflowLogResponse"];
+          'application/json': components['schemas']['WorkflowLogResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7536,13 +7610,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["WorkflowLogResponse"];
+          'application/json': components['schemas']['WorkflowLogResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7567,13 +7641,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["GetWorkflowMetricsResponse"];
+          'application/json': components['schemas']['GetWorkflowMetricsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7598,13 +7672,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["GetProgressResponse"];
+          'application/json': components['schemas']['GetProgressResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7632,7 +7706,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateWorkflowStarResponse"];
+          'application/json': components['schemas']['CreateWorkflowStarResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7642,7 +7716,7 @@ export interface operations {
       /** @description Not found */
       404: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -7666,7 +7740,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateWorkflowStarResponse"];
+          'application/json': components['schemas']['CreateWorkflowStarResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7676,13 +7750,13 @@ export interface operations {
       /** @description Not found */
       404: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Duplicated element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -7706,7 +7780,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateWorkflowStarResponse"];
+          'application/json': components['schemas']['CreateWorkflowStarResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7716,7 +7790,7 @@ export interface operations {
       /** @description Not found */
       404: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -7739,13 +7813,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeTaskResponse"];
+          'application/json': components['schemas']['DescribeTaskResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7780,13 +7854,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListTasksResponse"];
+          'application/json': components['schemas']['ListTasksResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7811,13 +7885,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListDatasetsResponse"];
+          'application/json': components['schemas']['ListDatasetsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7841,20 +7915,20 @@ export interface operations {
     /** @description Dataset create request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateDatasetRequest"];
+        'application/json': components['schemas']['CreateDatasetRequest'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["CreateDatasetResponse"];
+          'application/json': components['schemas']['CreateDatasetResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7864,7 +7938,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -7888,13 +7962,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListDatasetVersionsResponse"];
+          'application/json': components['schemas']['ListDatasetVersionsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7920,7 +7994,7 @@ export interface operations {
     /** @description Dataset update request */
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateDatasetRequest"];
+        'application/json': components['schemas']['UpdateDatasetRequest'];
       };
     };
     responses: {
@@ -7931,7 +8005,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7941,7 +8015,7 @@ export interface operations {
       /** @description Duplicate element */
       409: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -7968,7 +8042,7 @@ export interface operations {
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -7995,13 +8069,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["DescribeDatasetResponse"];
+          'application/json': components['schemas']['DescribeDatasetResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -8031,20 +8105,20 @@ export interface operations {
     /** @description Dataset file request */
     requestBody: {
       content: {
-        "multipart/form-data": components["schemas"]["MultiRequestFileSchema"];
+        'multipart/form-data': components['schemas']['MultiRequestFileSchema'];
       };
     };
     responses: {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["UploadDatasetVersionResponse"];
+          'application/json': components['schemas']['UploadDatasetVersionResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -8074,13 +8148,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": string;
+          'application/json': string;
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */
@@ -8090,7 +8164,7 @@ export interface operations {
       /** @description Not found */
       404: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };
@@ -8117,13 +8191,13 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["ListDatasetVersionsResponse"];
+          'application/json': components['schemas']['ListDatasetVersionsResponse'];
         };
       };
       /** @description Bad request */
       400: {
         content: {
-          "application/json": components["schemas"]["ErrorResponse"];
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
       /** @description Operation not allowed */

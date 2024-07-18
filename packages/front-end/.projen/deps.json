@@ -172,6 +172,10 @@
       "type": "runtime"
     },
     {
+      "name": "openapi-zod-client",
+      "type": "runtime"
+    },
+    {
       "name": "pinia",
       "type": "runtime"
     },

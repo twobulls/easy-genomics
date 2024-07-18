@@ -83,10 +83,6 @@
       "type": "runtime"
     },
     {
-      "name": "@zodios/core",
-      "type": "runtime"
-    },
-    {
       "name": "aws-cdk",
       "type": "runtime"
     },

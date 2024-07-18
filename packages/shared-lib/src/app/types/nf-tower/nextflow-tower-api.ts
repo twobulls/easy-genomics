@@ -11,6 +11,7 @@ export type WorkflowProgressResponse = components['schemas']['GetProgressRespons
 /** GET /workflow/{workflowId} **/
 export type DescribeWorkflowQuery = operations['DescribeWorkflow']['parameters']['query'];
 export type DescribeWorkflowResponse = components['schemas']['DescribeWorkflowResponse'];
+export type Workflow = components['schemas']['Workflow'];
 
 /** GET /workflow/{workflowId}/metrics **/
 export type DescribeWorkflowMetricsQuery = operations['DescribeWorkflowMetrics']['parameters']['query'];

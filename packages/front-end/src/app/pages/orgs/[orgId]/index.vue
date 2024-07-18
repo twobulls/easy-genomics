@@ -18,7 +18,7 @@
   const buttonRequestPending = ref<Record<number, boolean>>({});
   const hasNoData = ref(false);
   const isLoading = ref(true);
-  const orgId = $route.params.id;
+  const orgId = $route.params.orgId;
   const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
   const showInviteModule = ref(false);
@@ -216,7 +216,7 @@
   }
 
   async function refreshUserList() {
-    orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId($route.params.id as string);
+    orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
     showInviteModule.value = false;
     hasNoData.value = orgUsersDetailsData.value.length === 0;
   }
@@ -252,7 +252,7 @@
   <EGPageHeader :title="useOrgsStore().selectedOrg!.Name" :description="useOrgsStore().selectedOrg!.Description">
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">
-      <EGInviteModule @invite-success="refreshUserList($event)" :org-id="$route.params.id" />
+      <EGInviteModule @invite-success="refreshUserList($event)" :org-id="orgId" />
     </div>
   </EGPageHeader>
 

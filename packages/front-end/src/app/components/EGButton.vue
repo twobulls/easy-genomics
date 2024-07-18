@@ -7,11 +7,13 @@
     size?: ButtonSize;
     label?: string;
     icon?: string;
+    iconRight?: boolean;
   };
 
   withDefaults(defineProps<ButtonProps>(), {
     variant: ButtonVariantEnum.enum.primary,
     size: ButtonSizeEnum.enum.md,
+    iconRight: true,
   });
 
   const buttonVariants = cva(
@@ -81,14 +83,14 @@
         },
       },
       defaultVariants: { variant: ButtonVariantEnum.enum.primary, size: ButtonSizeEnum.enum.md },
-    }
+    },
   );
 </script>
 
 <template>
   <UButton
     :icon="icon"
-    trailing
+    :trailing="iconRight"
     :class="buttonVariants({ variant, size })"
     :label="label"
     :ui="{

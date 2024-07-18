@@ -76,5 +76,3 @@
 <template>
   <UBadge :ui="getConfig">{{ label }}</UBadge>
 </template>
-
-<style lang="scss"></style>

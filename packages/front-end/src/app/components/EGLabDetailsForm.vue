@@ -120,7 +120,7 @@
   async function getLabDetails() {
     try {
       isLoadingFormData.value = true;
-      const res = await $api.labs.getLabDetails($route.params.id);
+      const res = await $api.labs.getLabDetails($route.params.labId);
       const parseResult = ReadLaboratorySchema.safeParse(res);
 
       if (parseResult.success) {
@@ -203,7 +203,7 @@
       throw new Error(message);
     }
 
-    const labId: string = $route.params.id;
+    const labId: string = $route.params.labId;
     const lab: UpdateLaboratory = parseResult.data;
 
     await $api.labs.update(labId, lab);

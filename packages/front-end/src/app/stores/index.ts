@@ -12,4 +12,4 @@ function resetStores() {
   useUiStore().reset();
   useUserStore().reset();
 }
-export { useOrgsStore, useToastStore, useUserStore, useUiStore, resetStores, useLabsStore };
+export { useOrgsStore, useToastStore, useUserStore, useUiStore, resetStores, useLabsStore, usePipelineRunStore };

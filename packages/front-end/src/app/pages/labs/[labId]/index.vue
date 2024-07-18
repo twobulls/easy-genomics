@@ -6,7 +6,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse, EditUserResponse } from '~/types/api';
-  import { useLabsStore, useOrgsStore, useToastStore, useUiStore } from '~/stores';
+  import { useLabsStore, useOrgsStore, useToastStore, useUiStore, usePipelineRunStore } from '~/stores';
   import useUser from '~/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -17,7 +17,7 @@
   const $route = useRoute();
   const router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
-  const labId = $route.params.id;
+  const labId = $route.params.labId;
   const labName = $route.query.name;
 
   const tabItems = [
@@ -241,8 +241,8 @@
 
   async function getLabUsers(): Promise<void> {
     try {
-      const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails($route.params.id);
-      const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId($route.params.id);
+      const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails(labId);
+      const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId(labId);
       labUsers.value = _labUsersDetails.map((user) => getLabUser(user, _labUsers));
     } catch (error) {
       console.error('Error retrieving lab users', error);
@@ -252,7 +252,7 @@
 
   async function getPipelines(): Promise<void> {
     try {
-      const res = await $api.pipelines.list($route.params.id);
+      const res = await $api.pipelines.list(labId);
       pipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
@@ -261,7 +261,7 @@
 
   async function getWorkflows(): Promise<void> {
     try {
-      const res = await $api.workflows.list($route.params.id);
+      const res = await $api.workflows.list(labId);
       workflows.value = res?.workflows;
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);

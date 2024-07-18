@@ -99,6 +99,10 @@
       "type": "build"
     },
     {
+      "name": "typed-openapi",
+      "type": "build"
+    },
+    {
       "name": "typescript",
       "type": "build"
     },
@@ -169,10 +173,6 @@
     },
     {
       "name": "nuxt",
-      "type": "runtime"
-    },
-    {
-      "name": "openapi-zod-client",
       "type": "runtime"
     },
     {

@@ -4,7 +4,7 @@ import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { VALIDATION_MESSAGES } from '~/constants/validation';
 import { useToastStore } from '~/stores';
-import { decodeJwt } from '~/utils/jwt';
+import { decodeJwt } from '~/utils/jwt-utils';
 
 type UserNameOptions = {
   preferredName?: string | undefined;

@@ -1,11 +1,12 @@
 import { ListPipelinesResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { ListPipelinesResponse as ListPipelinesResponseSchema } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
+import { validateApiResponse } from '~/utils/api-utils';
 
 class PipelinesModule extends HttpFactory {
   $config = useRuntimeConfig();
 
-  // TODO: replace return types with Zod schemas generated Nextflow Tower's OpenAPI schema
   async list(labId: string): Promise<ListPipelinesResponse[]> {
     const res = await this.callNextflowTower<ListPipelinesResponse[]>(
       'GET',
@@ -17,6 +18,7 @@ class PipelinesModule extends HttpFactory {
       throw new Error('Failed to retrieve pipelines');
     }
 
+    validateApiResponse(ListPipelinesResponseSchema, res);
     return res;
   }
 }

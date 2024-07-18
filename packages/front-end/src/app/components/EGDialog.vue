@@ -25,7 +25,7 @@
         <div class="flex flex-col">
           <div class="flex flex-col">
             <div class="flex">
-              <div v-if="primaryMessage" class="font-heading mb-6 text-2xl font-medium">
+              <div v-if="primaryMessage" class="mb-6 font-serif text-2xl font-medium">
                 {{ primaryMessage }}
               </div>
               <div v-if="secondaryMessage" class="mb-6 text-sm text-gray-600">

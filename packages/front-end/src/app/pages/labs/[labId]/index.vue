@@ -6,18 +6,18 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse, EditUserResponse } from '~/types/api';
-  import { useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '~/stores';
+  import { useLabsStore, useOrgsStore, useToastStore, useUiStore, usePipelineRunStore } from '~/stores';
   import useUser from '~/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
-  import { format } from 'date-fns';
+  import { getDate, getTime } from '~/utils/date-time';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
-  const labId = $route.params.id;
+  const labId = $route.params.labId;
   const labName = $route.query.name;
 
   const tabItems = [
@@ -190,7 +190,10 @@
     [
       {
         label: 'View Details',
-        click: () => {},
+        click: () => {
+          useLabsStore().setSelectedWorkflow(row.workflow);
+          router.push({ path: `/labs/${labId}/${row.workflow.id}` });
+        },
       },
     ],
     [
@@ -238,8 +241,8 @@
 
   async function getLabUsers(): Promise<void> {
     try {
-      const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails($route.params.id);
-      const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId($route.params.id);
+      const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails(labId);
+      const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId(labId);
       labUsers.value = _labUsersDetails.map((user) => getLabUser(user, _labUsers));
     } catch (error) {
       console.error('Error retrieving lab users', error);
@@ -249,7 +252,7 @@
 
   async function getPipelines(): Promise<void> {
     try {
-      const res = await $api.pipelines.list($route.params.id);
+      const res = await $api.pipelines.list(labId);
       pipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
@@ -258,7 +261,7 @@
 
   async function getWorkflows(): Promise<void> {
     try {
-      const res = await $api.workflows.list($route.params.id);
+      const res = await $api.workflows.list(labId);
       workflows.value = res?.workflows;
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
@@ -294,23 +297,6 @@
   async function handleUserAddedToLab() {
     showAddUserModule.value = false;
     await refreshLabUsers();
-  }
-
-  function getDate(input) {
-    return format(new Date(input), 'yyyy-MM-dd');
-  }
-
-  /**
-   * Return the time in the format hh:mm:ss a GMT+/-offset, e.g. '09:38:13 AM GMT+10'
-   * @param input
-   */
-  function getTime(input) {
-    const date = new Date(input);
-    const offsetInHours = -date.getTimezoneOffset() / 60;
-    const offset = offsetInHours > 0 ? `+${offsetInHours}` : offsetInHours;
-    const formattedDate = format(date, 'hh:mm:ss a');
-
-    return `${formattedDate} GMT${offset}`;
   }
 
   onBeforeMount(async () => {

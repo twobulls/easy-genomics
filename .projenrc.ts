@@ -318,6 +318,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'aws-amplify@5.3.18',
     'aws-sdk',
     'class-variance-authority',
+    'date-fns',
     'dotenv',
     'jwt-decode',
     'lint-staged',

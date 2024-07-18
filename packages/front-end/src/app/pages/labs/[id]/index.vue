@@ -1,19 +1,21 @@
 <script setup lang="ts">
   import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
   import {
-    LaboratoryRolesEnumSchema,
     LaboratoryRolesEnum,
+    LaboratoryRolesEnumSchema,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '~/types/buttons';
   import { DeletedResponse, EditUserResponse } from '~/types/api';
-  import { useOrgsStore, useToastStore, useUiStore } from '~/stores';
+  import { useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '~/stores';
   import useUser from '~/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
+  import { format } from 'date-fns';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
+  const router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const labId = $route.params.id;
   const labName = $route.query.name;
@@ -27,7 +29,6 @@
     {
       key: 'runs',
       label: 'Runs',
-      disabled: true,
     },
     {
       key: 'users',
@@ -46,6 +47,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const pipelines = ref<[]>([]);
+  const workflows = ref<[]>([]);
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -131,11 +133,42 @@
     },
   ];
 
-  const pipelinesActionItems = (row: any) => [
+  const workflowsTableColumns = [
+    {
+      key: 'runName',
+      label: 'Run Name',
+    },
+    {
+      key: 'lastUpdated',
+      label: 'Last Updated',
+    },
+    {
+      key: 'status',
+      label: 'Status',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
+
+  const pipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',
-        click: () => {},
+        click: () => {
+          usePipelineRunStore().reset();
+          const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
+          usePipelineRunStore().setLabId(labId);
+          usePipelineRunStore().setLabName(labName);
+          usePipelineRunStore().setPipelineId(pipelineId);
+          usePipelineRunStore().setPipelineName(pipelineName);
+          usePipelineRunStore().setPipelineDescription(pipelineDescription);
+          router.push({
+            path: `/labs/${labId}/run-pipeline`,
+            query: { tab: 'Run Details' },
+          });
+        },
       },
     ],
     [
@@ -148,6 +181,27 @@
       {
         label: 'Remove',
         class: 'text-alert-danger-dark',
+        click: () => {},
+      },
+    ],
+  ];
+
+  const workflowsActionItems = (row: any) => [
+    [
+      {
+        label: 'View Details',
+        click: () => {},
+      },
+    ],
+    [
+      {
+        label: 'View Results',
+        click: () => {},
+      },
+    ],
+    [
+      {
+        label: 'View Parameters',
         click: () => {},
       },
     ],
@@ -202,6 +256,15 @@
     }
   }
 
+  async function getWorkflows(): Promise<void> {
+    try {
+      const res = await $api.workflows.list($route.params.id);
+      workflows.value = res?.workflows;
+    } catch (error) {
+      console.error('Error retrieving workflows/runs', error);
+    }
+  }
+
   // update UI with latest list of lab users and their assigned role
   async function refreshLabUsers() {
     useUiStore().setRequestPending(true);
@@ -233,9 +296,27 @@
     await refreshLabUsers();
   }
 
+  function getDate(input) {
+    return format(new Date(input), 'yyyy-MM-dd');
+  }
+
+  /**
+   * Return the time in the format hh:mm:ss a GMT+/-offset, e.g. '09:38:13 AM GMT+10'
+   * @param input
+   */
+  function getTime(input) {
+    const date = new Date(input);
+    const offsetInHours = -date.getTimezoneOffset() / 60;
+    const offset = offsetInHours > 0 ? `+${offsetInHours}` : offsetInHours;
+    const formattedDate = format(date, 'hh:mm:ss a');
+
+    return `${formattedDate} GMT${offset}`;
+  }
+
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
     await getPipelines();
+    await getWorkflows();
     await getLabUsers();
     canAddUsers.value = true;
     useUiStore().setRequestPending(false);
@@ -288,7 +369,41 @@
           </template>
         </EGTable>
       </div>
-      <div v-else-if="item.key === 'runs'" class="space-y-3">Runs TBD</div>
+      <div v-else-if="item.key === 'runs'" class="space-y-3">
+        <EGTable
+          :table-data="workflows"
+          :columns="workflowsTableColumns"
+          :is-loading="useUiStore().isRequestPending"
+          :show-pagination="!useUiStore().isRequestPending"
+        >
+          <template #runName-data="{ row: workflow }">
+            <div class="flex items-center font-medium">
+              {{ workflow?.workflow.runName }}
+            </div>
+          </template>
+
+          <template #lastUpdated-data="{ row: workflow }">
+            <div class="text-body text-sm font-medium">{{ getDate(workflow?.workflow.lastUpdated) }}</div>
+            <div class="text-muted">{{ getTime(workflow?.workflow.lastUpdated) }}</div>
+          </template>
+
+          <template #status-data="{ row: workflow }">
+            <EGStatusChip :status="workflow?.workflow.status" />
+          </template>
+
+          <template #actions-data="{ row }">
+            <div class="flex justify-end">
+              <EGActionButton :items="workflowsActionItems(row)" class="ml-2" />
+            </div>
+          </template>
+
+          <template #empty-state>
+            <div class="text-muted flex h-24 items-center justify-center font-normal">
+              There are no Runs in your Lab
+            </div>
+          </template>
+        </EGTable>
+      </div>
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGSearchInput
           @input-event="updateSearchOutput"

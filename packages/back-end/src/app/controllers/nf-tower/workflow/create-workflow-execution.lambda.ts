@@ -3,6 +3,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import {
   CreateWorkflowLaunchRequest,
   CreateWorkflowLaunchResponse,
+  CreatePipelineRunRequest,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -34,10 +35,12 @@ export const handler: Handler = async (
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
     if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
 
-    // Get post body - delegate to Seqera Cloud / NextFlow Tower to validate and process
-    const request: CreateWorkflowLaunchRequest = event.isBase64Encoded
+    const request: CreatePipelineRunRequest = event.isBase64Encoded
       ? JSON.parse(atob(event.body!))
       : JSON.parse(event.body!);
+
+    // Get post body - delegate to Seqera Cloud / NextFlow Tower to validate and process
+    const pipelineLaunchDetails: CreateWorkflowLaunchRequest = request.pipelineLaunchDetails;
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
@@ -65,7 +68,7 @@ export const handler: Handler = async (
       `${process.env.SEQERA_API_BASE_URL}/workflow/launch?${apiParameters.toString()}`,
       REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },
-      request, // Delegate request body validation to Seqera Cloud / NextFlow Tower
+      pipelineLaunchDetails, // Delegate request body validation to Seqera Cloud / NextFlow Tower
     );
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

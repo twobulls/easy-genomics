@@ -323,7 +323,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'jwt-decode',
     'lint-staged',
     'nuxt',
-    'openapi-zod-client',
     'pinia',
     'prettier-plugin-tailwindcss',
     'sass',
@@ -335,17 +334,18 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
   devDeps: [
     '@aws-sdk/types',
-    '@nuxtjs/eslint-config-typescript',
-    '@typescript-eslint/parser',
     '@nuxt/types',
+    '@nuxtjs/eslint-config-typescript',
     '@types/node',
     '@types/uuid',
+    '@typescript-eslint/parser',
+    'eslint-plugin-prettier',
     'eslint-plugin-vue',
     'kill-port',
     'lint-staged',
-    'vue-eslint-parser',
     'prettier',
-    'eslint-plugin-prettier',
+    'typed-openapi',
+    'vue-eslint-parser',
   ],
 });
 frontEndApp.addScripts({
@@ -361,8 +361,7 @@ frontEndApp.addScripts({
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
   ['pre-commit']: 'lint-staged',
-  ['nftower-spec-to-zod']:
-    'pnpm openapi-zod-client ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml --export-schemas -o ../shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client.ts --template ../shared-lib/src/app/types/nf-tower/openapi-zod-client-template.hbs',
+  ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
 });
 frontEndApp.addFields({
   'lint-staged': {

@@ -61,6 +61,7 @@
     "projen": "^0.79.27",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
+    "typed-openapi": "^0.5.0",
     "typescript": "^5.4.3",
     "vue-eslint-parser": "^9.4.3"
   },
@@ -80,7 +81,6 @@
     "jwt-decode": "^4.0.0",
     "lint-staged": "^15.2.2",
     "nuxt": "^3.10.1",
-    "openapi-zod-client": "^1.18.1",
     "pinia": "^2.1.7",
     "prettier-plugin-tailwindcss": "^0.5.12",
     "sass": "^1.72.0",

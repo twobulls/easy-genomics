@@ -61,6 +61,9 @@
 
   const pipelineLaunchRequest = ref<CreateWorkflowLaunchRequest>();
 
+  const dateStamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const randomHex = Math.random().toString(16).substr(2, 15);
+  const uniqueRunName = ref('');
   const canSubmit = ref(false);
   const isSubmittingFormData = ref(false);
   const runNameCharCount = computed(() => formState.runName.length);
@@ -83,25 +86,52 @@
       console.error('Error validating run details form:', error);
     }
 
+    setUniquePipelineRunName();
+
     canSubmit.value = errors.length === 0;
 
     return errors;
   }
 
+  // Trims white space, replaces spaces between words with hyphens, and enforces a max of one hyphen in a row
+  // e.g. 'some custom name' -> 'some-custom-name'
+  function getSafeRunName(runName: string): string {
+    return runName.trim().replace(/\s+/g, '-').replace(/-+/g, '-');
+  }
+
+  // viralrecon-illumina_community-showcase_20240712_5686910e783b4b2
+  function setUniquePipelineRunName() {
+    try {
+      const { pipelineName, runName } = formState;
+
+      if (runName.trim().length > 1 && runName.length <= maxRunNameLength.value) {
+        const safeRunName = getSafeRunName(runName);
+        uniqueRunName.value = `${pipelineName}_${safeRunName}_${dateStamp}_${randomHex}`;
+      }
+    } catch (error: any) {
+      console.error('Error setting unique pipeline run name:', error);
+    }
+  }
+
   async function onSubmit() {
     // usePipelineRunStore().setUserPipelineRunName(formState.runName);
     // emit('next-tab');
-    console.log('onSubmit; create pipeline run:', { labId, pipelineId });
 
-    const createPipelineRunRequest = {
-      pipelineLaunchDetails: toRaw(pipelineLaunchRequest.value),
-      name: formState.runName,
-    };
+    isSubmittingFormData.value = true;
 
-    console.log('onSubmit; create pipeline run; createPipelineRunRequest:', createPipelineRunRequest);
+    try {
+      const launchRequest = toRaw(pipelineLaunchRequest.value);
+      launchRequest.launch.runName = uniqueRunName.value;
 
-    const res = await $api.workflows.createPipelineRun(labId, createPipelineRunRequest);
-    console.log('onSubmit; create pipeline run; res:', res);
+      console.log('onSubmit; create pipeline run; launchRequest:', launchRequest);
+
+      const res = await $api.workflows.createPipelineRun(labId, launchRequest);
+      console.log('onSubmit; create pipeline run; res:', res);
+    } catch (error: any) {
+      console.error('Error submitting pipeline run:', error);
+    } finally {
+      isSubmittingFormData.value = false;
+    }
   }
 
   onMounted(async () => {
@@ -118,6 +148,7 @@
     <EGFormGroup label="Run Name" name="runName" eager-validation>
       <EGInput v-model="formState.runName" placeholder="Enter a name to identify this pipeline run" autofocus />
       <EGCharacterCounter :value="runNameCharCount" :max="maxRunNameLength" />
+      <EGText v-if="uniqueRunName" tag="small">{{ uniqueRunName }}</EGText>
     </EGFormGroup>
 
     <EGFormGroup label="Description" name="pipelineDescription">

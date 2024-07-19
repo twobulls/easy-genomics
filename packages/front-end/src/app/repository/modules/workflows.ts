@@ -1,5 +1,5 @@
 import {
-  CreatePipelineRunRequest,
+  CreateWorkflowLaunchRequest,
   ListWorkflowsResponse,
 } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import { useRuntimeConfig } from 'nuxt/app';
@@ -10,7 +10,7 @@ import HttpFactory from '../factory';
 class PipelinesModule extends HttpFactory {
   $config = useRuntimeConfig();
 
-  async createPipelineRun(labId: string, pipelineLaunchRequest: CreatePipelineRunRequest): Promise<any> {
+  async createPipelineRun(labId: string, pipelineLaunchRequest: CreateWorkflowLaunchRequest): Promise<any> {
     console.log('Creating pipeline run POST with pipelineLaunchRequest:', pipelineLaunchRequest);
 
     const res = await this.callNextflowTower<any>(

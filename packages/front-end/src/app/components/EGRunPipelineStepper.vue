@@ -1,15 +1,15 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
-  import EGRunPipelineFormRunDetails from './EGRunPipelineFormRunDetails.vue';
+  import EGText from '~/components/EGText.vue';
 
   const $route = useRoute();
   const router = useRouter();
 
-  const labId = usePipelineRunStore().getLabId;
-  const labName = usePipelineRunStore().getLabName;
-  const pipelineId = usePipelineRunStore().getPipelineId;
-  const pipelineName = usePipelineRunStore().getPipelineName;
-  const pipelineDescription = usePipelineRunStore().getPipelineDescription;
+  const labId = usePipelineRunStore().labId;
+  const labName = usePipelineRunStore().labName;
+  const pipelineId = usePipelineRunStore().pipelineId;
+  const pipelineName = usePipelineRunStore().pipelineName;
+  const pipelineDescription = usePipelineRunStore().pipelineDescription;
 
   const items = [
     {
@@ -17,16 +17,16 @@
       key: 'details',
       label: 'Run Details',
     },
-    {
-      disabled: true,
-      key: 'upload',
-      label: 'Upload Data',
-    },
-    {
-      disabled: true,
-      key: 'parameters',
-      label: 'Edit Parameters',
-    },
+    // {
+    //   disabled: true,
+    //   key: 'upload',
+    //   label: 'Upload Data',
+    // },
+    // {
+    //   disabled: true,
+    //   key: 'parameters',
+    //   label: 'Edit Parameters',
+    // },
     {
       disabled: true,
       key: 'review',
@@ -35,6 +35,7 @@
   ];
 
   const selectedIndex = ref(0);
+  const isLaunchSuccess = ref(false);
 
   function enableSelectedItem(index: number) {
     const selectedItem = items.find((_, i) => i === index);
@@ -70,12 +71,6 @@
   function previousTab() {
     const clampedIndex = clampIndex(selected.value - 1);
     selected.value = clampedIndex;
-  }
-
-  function onChange(index: number) {
-    const item = items[index];
-    console.log(`UTabs called onChange; Item ${index} with label ${item.label} was clicked`);
-    // selected.value = index;
   }
 
   // Update the URL query when the selected tab changes.
@@ -123,7 +118,7 @@
 </script>
 
 <template>
-  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" @change="onChange">
+  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles">
     <template #default="{ item, index, selected }">
       <div class="relative flex items-center gap-2 truncate">
         <UIcon v-if="selectedIndex > index" name="i-heroicons-check-20-solid" class="h-4 w-4 flex-shrink-0" />
@@ -133,30 +128,10 @@
     </template>
 
     <template #item="{ item, index }">
-      <!-- Debug logging -->
-      <!-- <div class="mb-4 text-xs">
-        <strong>item:</strong>
-        {{ item }}
-        <br />
-        <strong>items[selectedIndex]:</strong>
-        {{ items[selectedIndex] }}
-        <br />
-        <strong>index:</strong>
-        {{ index }}
-        <br />
-        <strong>selected:</strong>
-        {{ selected }}
-        <br />
-        <strong>selectedIndex:</strong>
-        {{ selectedIndex }}
-      </div> -->
-
       <EGCard>
         <!-- Header -->
-        <div class="font-['Inter'] text-xs font-normal leading-none text-zinc-900">Item 0{{ selectedIndex + 1 }}</div>
-        <div class="font-['Plus Jakarta Sans'] text-lg font-semibold leading-snug text-zinc-900">
-          {{ items[selectedIndex].label }}
-        </div>
+        <EGText tag="small" class="mb-4">Step 0{{ selectedIndex + 1 }}</EGText>
+        <EGText tag="h4" class="mb-0">{{ items[selectedIndex].label }}</EGText>
         <UDivider class="py-4" />
 
         <!-- Run Details -->
@@ -178,7 +153,16 @@
         <template v-if="items[selectedIndex].key === 'parameters'">Edit Parameters Placeholder</template>
 
         <!-- Review Pipeline -->
-        <template v-if="items[selectedIndex].key === 'review'">Review Pipeline Placeholder</template>
+        <template v-if="items[selectedIndex].key === 'review'">
+          <EGRunPipelineFormReviewPipeline
+            :labId="labId"
+            :labName="labName"
+            :pipelineName="usePipelineRunStore().pipelineName"
+            :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
+            @launch-success="isLaunchSuccess = true"
+            :can-launch="true"
+          />
+        </template>
       </EGCard>
     </template>
   </UTabs>

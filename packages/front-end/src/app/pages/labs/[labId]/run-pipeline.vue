@@ -4,6 +4,9 @@
 </script>
 
 <template>
-  <EGPageHeader title="Run Pipeline" :description="labName" />
+  <EGPageHeader title="Run Pipeline" :description="labName">
+    <!-- TODO: wire up Cancel Job -->
+    <!--    <EGButton variant="secondary" label="Cancel job" @click="() => {}" />-->
+  </EGPageHeader>
   <EGRunPipelineStepper />
 </template>

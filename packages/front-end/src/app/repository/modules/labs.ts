@@ -14,7 +14,6 @@ class LabsModule extends HttpFactory {
     const res = await this.call<Laboratory>('POST', '/laboratory/create-laboratory', lab);
 
     if (!res) {
-      console.error('Error calling create Laboratory API');
       throw new Error('Failed to create Laboratory');
     }
 
@@ -25,7 +24,6 @@ class LabsModule extends HttpFactory {
     const res = await this.call<Laboratory[]>('GET', `/laboratory/list-laboratories?organizationId=${orgId}`);
 
     if (!res) {
-      console.error('Error calling list Laboratories API');
       throw new Error('Failed to retrieve Laboratory');
     }
 
@@ -36,7 +34,6 @@ class LabsModule extends HttpFactory {
     const res = await this.call<Laboratory>('GET', `/laboratory/read-laboratory/${labId}`);
 
     if (!res) {
-      console.error('Error calling get Laboratory Details API');
       throw new Error('Failed to retrieve Laboratory Details');
     }
 
@@ -47,7 +44,6 @@ class LabsModule extends HttpFactory {
     const res = await this.call<Laboratory>('PUT', `/laboratory/update-laboratory/${labId}`, lab);
 
     if (!res) {
-      console.error('Error calling update Laboratory API');
       throw new Error('Failed to update Laboratory');
     }
 
@@ -58,7 +54,6 @@ class LabsModule extends HttpFactory {
     const res = await this.call<DeletedResponse>('DELETE', `/laboratory/delete-laboratory/${labId}`);
 
     if (!res) {
-      console.error('Error calling delete Laboratory API');
       throw new Error('Failed to delete Laboratory');
     }
 
@@ -115,7 +110,6 @@ class LabsModule extends HttpFactory {
     );
 
     if (!res) {
-      console.error('Error calling list Laboratory users API');
       throw new Error('Failed to retrieve Laboratory users');
     }
 
@@ -150,7 +144,6 @@ class LabsModule extends HttpFactory {
     });
 
     if (!res) {
-      console.error('Error calling remove user from Laboratory API');
       throw new Error('Failed to remove user from Laboratory');
     }
 
@@ -164,7 +157,6 @@ class LabsModule extends HttpFactory {
     );
 
     if (!res) {
-      console.error('Error calling list Laboratory users details API');
       throw new Error('Failed to retrieve Laboratory users details');
     }
 

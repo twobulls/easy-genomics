@@ -1,4 +1,4 @@
-import { ListPipelinesResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { ListPipelinesResponse, Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 // import { ListPipelinesResponse as ListPipelinesResponseSchema } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
@@ -14,7 +14,6 @@ class PipelinesModule extends HttpFactory {
     );
 
     if (!res) {
-      console.error('Error calling list pipeline API');
       throw new Error('Failed to retrieve pipelines');
     }
 
@@ -23,6 +22,19 @@ class PipelinesModule extends HttpFactory {
     // of the contents of the response, but because of the validation
     // function/schema itself.
     // validateApiResponse(ListPipelinesResponseSchema, res);
+    return res;
+  }
+
+  async readPipelineLaunchDetails(workspaceId: number, labId: string): Promise<Workflow> {
+    const res = await this.callNextflowTower<Workflow>(
+      'GET',
+      `/pipeline/read-pipeline-launch-details/${workspaceId}?laboratoryId=${labId}`,
+    );
+
+    if (!res) {
+      throw new Error('Failed to retrieve workflow');
+    }
+
     return res;
   }
 }

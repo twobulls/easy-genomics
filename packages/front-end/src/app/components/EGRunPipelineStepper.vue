@@ -186,6 +186,7 @@
       primary-button-label="Back to Runs"
       :secondary-button-action="() => resetRunPipeline()"
       secondary-button-label="Launch Another Workflow Run"
+      img-src="/images/empty-state-launched.jpg"
     />
   </template>
 </template>

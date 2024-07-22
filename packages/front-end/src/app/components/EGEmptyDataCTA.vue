@@ -10,7 +10,7 @@
     imgSrc?: string;
   }>();
 
-  const imageSrc = computed(() => props.imgSrc || '/images/empty-state-launched.jpg');
+  const imageSrc = computed(() => props.imgSrc || '/images/empty-state-default.jpg');
 </script>
 
 <template>

@@ -74,8 +74,8 @@
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Organization set up yet."
-    :button-action="() => {}"
-    button-label="Create a new Organization"
+    :primary-button-action="() => {}"
+    primary-button-label="Create a new Organization"
   />
 
   <EGTable

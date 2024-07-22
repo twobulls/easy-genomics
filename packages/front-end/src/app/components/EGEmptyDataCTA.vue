@@ -3,12 +3,14 @@
 
   const props = defineProps<{
     message: string;
-    buttonLabel?: string | undefined;
-    buttonAction?: () => void | undefined;
+    primaryButtonLabel?: string | undefined;
+    secondaryButtonLabel?: string | undefined;
+    primaryButtonAction?: () => void | undefined;
+    secondaryButtonAction?: () => void | undefined;
     imgSrc?: string;
   }>();
 
-  const imageSrc = computed(() => props.imgSrc || '/images/empty-state-default.jpg');
+  const imageSrc = computed(() => props.imgSrc || '/images/empty-state-launched.jpg');
 </script>
 
 <template>
@@ -17,13 +19,23 @@
       <div class="flex w-6/12 flex-col max-md:ml-0 max-md:w-full">
         <div class="my-auto flex flex-col self-stretch font-medium max-md:mt-10">
           <h3 class="text-heading text-2xl leading-8">{{ message }}</h3>
-          <EGButton
-            v-if="buttonAction"
-            :size="ButtonSizeEnum.enum.lg"
-            @click="buttonAction"
-            :label="buttonLabel"
-            class="mt-6 justify-center self-start px-6 py-4 max-md:px-5"
-          />
+          <div class="mt-6 flex space-x-4">
+            <EGButton
+              v-if="primaryButtonAction"
+              :size="ButtonSizeEnum.enum.lg"
+              @click="primaryButtonAction"
+              :label="primaryButtonLabel"
+              class="mt-6 justify-center self-start px-6 py-4 max-md:px-5"
+            />
+            <EGButton
+              v-if="secondaryButtonAction"
+              variant="secondary"
+              :size="ButtonSizeEnum.enum.lg"
+              @click="secondaryButtonAction"
+              :label="secondaryButtonLabel"
+              class="mt-6 justify-center self-start px-6 py-4 max-md:px-5"
+            />
+          </div>
         </div>
       </div>
       <div class="align ml-5 flex w-4/12 flex-col max-md:ml-0 max-md:w-[338px]">

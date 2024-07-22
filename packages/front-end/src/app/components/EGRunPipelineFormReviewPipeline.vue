@@ -11,7 +11,7 @@
 
   const { $api } = useNuxtApp();
   const isLaunchingWorkflow = ref(false);
-  const emit = defineEmits(['next-tab', 'launch-workflow', 'launch-success']);
+  const emit = defineEmits(['next-tab', 'launch-workflow', 'has-launched']);
 
   // TODO: wire up full pipeline once backend is ready
   // function onSubmit() {
@@ -29,7 +29,7 @@
       isLaunchingWorkflow.value = true;
       const launchDetails = await $api.pipelines.readPipelineLaunchDetails(228412645122841, props.labId);
       await $api.workflows.createWorkflow(props.labId, props.userPipelineRunName, launchDetails);
-      emit('launch-success');
+      emit('has-launched');
     } catch (error) {
       console.error('Error launching workflow:', error);
     } finally {

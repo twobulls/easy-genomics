@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
-  const labName = usePipelineRunStore().getLabName;
+  const labName = usePipelineRunStore().labName;
 </script>
 
 <template>

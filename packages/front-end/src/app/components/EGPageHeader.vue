@@ -3,16 +3,18 @@
     defineProps<{
       title: string;
       description?: string;
+      showBack?: boolean;
     }>(),
     {
       description: '',
-    }
+      showBack: true,
+    },
   );
 </script>
 
 <template>
   <div class="mb-6 flex flex-col justify-between">
-    <EGBack />
+    <EGBack v-if="showBack" />
     <div class="flex items-start justify-between">
       <div>
         <EGText tag="h1" class="mb-4">{{ title }}</EGText>

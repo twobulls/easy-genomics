@@ -61,32 +61,6 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
     },
   },
 
-  getters: {
-    getLabId(): string {
-      return this.labId;
-    },
-
-    getLabName(): string {
-      return this.labName;
-    },
-
-    getPipelineId(): number {
-      return this.pipelineId;
-    },
-
-    getPipelineName(): string {
-      return this.pipelineName;
-    },
-
-    getPipelineDescription(): string {
-      return this.pipelineDescription;
-    },
-
-    getUserPipelineRunName(): string {
-      return this.userPipelineRunName;
-    },
-  },
-
   persist: true,
 });
 

@@ -1,32 +1,34 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
-  import EGRunPipelineFormRunDetails from './EGRunPipelineFormRunDetails.vue';
 
   const $route = useRoute();
   const router = useRouter();
 
-  const labId = usePipelineRunStore().getLabId;
-  const labName = usePipelineRunStore().getLabName;
-  const pipelineId = usePipelineRunStore().getPipelineId;
-  const pipelineName = usePipelineRunStore().getPipelineName;
-  const pipelineDescription = usePipelineRunStore().getPipelineDescription;
+  const labId = usePipelineRunStore().labId;
+  const labName = usePipelineRunStore().labName;
+  const pipelineId = usePipelineRunStore().pipelineId;
+  const pipelineName = usePipelineRunStore().pipelineName;
+  const pipelineDescription = usePipelineRunStore().pipelineDescription;
 
+  const selectedIndex = ref(0);
+  const hasLaunched = ref(false);
+
+  // TODO: disable tabs based on the state of the pipeline
   const items = [
     {
-      disabled: false,
       key: 'details',
       label: 'Run Details',
     },
-    {
-      disabled: true,
-      key: 'upload',
-      label: 'Upload Data',
-    },
-    {
-      disabled: true,
-      key: 'parameters',
-      label: 'Edit Parameters',
-    },
+    // {
+    //   disabled: true,
+    //   key: 'upload',
+    //   label: 'Upload Data',
+    // },
+    // {
+    //   disabled: true,
+    //   key: 'parameters',
+    //   label: 'Edit Parameters',
+    // },
     {
       disabled: true,
       key: 'review',
@@ -34,7 +36,30 @@
     },
   ];
 
-  const selectedIndex = ref(0);
+  const EGStepperTabsStyles = {
+    base: 'focus:outline-none',
+    list: {
+      base: 'rounded-none mb-4 mt-0',
+      padding: 'p-0',
+      height: 'h-14',
+      marker: {
+        wrapper: 'duration-200 ease-out focus:outline-none',
+        base: 'absolute top-[0px] h-[4px]',
+        background: 'bg-primary',
+        shadow: 'shadow-none',
+      },
+      size: {
+        sm: 'text-lg',
+      },
+      tab: {
+        base: '!text-base w-auto mr-4 inline-flex font-heading justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out',
+        active: 'text-primary h-14',
+        inactive: 'text-heading',
+        height: 'h-14',
+        padding: 'p-0',
+      },
+    },
+  };
 
   function enableSelectedItem(index: number) {
     const selectedItem = items.find((_, i) => i === index);
@@ -53,7 +78,6 @@
       enableSelectedItem(index);
       setTabQueryParam(index);
       selectedIndex.value = index;
-      console.log('SET selected:', index);
     },
   });
 
@@ -63,7 +87,6 @@
 
   function nextTab() {
     const clampedIndex = clampIndex(selected.value + 1);
-    console.log('nextTab; setting selected to:', clampedIndex);
     selected.value = clampedIndex;
   }
 
@@ -72,10 +95,8 @@
     selected.value = clampedIndex;
   }
 
-  function onChange(index: number) {
-    const item = items[index];
-    console.log(`UTabs called onChange; Item ${index} with label ${item.label} was clicked`);
-    // selected.value = index;
+  function handleLaunchSuccess() {
+    hasLaunched.value = true;
   }
 
   // Update the URL query when the selected tab changes.
@@ -96,67 +117,32 @@
     }
   }
 
-  const EGStepperTabsStyles = {
-    base: 'focus:outline-none',
-    list: {
-      base: 'rounded-none mb-4 mt-0',
-      padding: 'p-0',
-      height: 'h-14',
-      marker: {
-        wrapper: 'duration-200 ease-out focus:outline-none',
-        base: 'absolute top-[0px] h-[2px]',
-        background: 'bg-primary',
-        shadow: 'shadow-none',
-      },
-      size: {
-        sm: 'text-lg',
-      },
-      tab: {
-        base: '!text-base w-auto inline-flex font-heading justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out',
-        active: 'text-primary h-14',
-        inactive: 'text-heading',
-        height: 'h-14',
-        padding: 'p-0',
-      },
-    },
-  };
+  function resetRunPipeline() {
+    hasLaunched.value = false;
+    selected.value = 0;
+    usePipelineRunStore().setUserPipelineRunName('');
+  }
 </script>
 
 <template>
-  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" @change="onChange">
+  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles">
     <template #default="{ item, index, selected }">
       <div class="relative flex items-center gap-2 truncate">
-        <UIcon v-if="selectedIndex > index" name="i-heroicons-check-20-solid" class="h-4 w-4 flex-shrink-0" />
-        <span>{{ item.label }}</span>
+        <UIcon
+          v-if="selectedIndex > index || hasLaunched"
+          name="i-heroicons-check-20-solid"
+          class="text-primary h-4 w-4 flex-shrink-0"
+        />
+        <span :class="selectedIndex > index ? 'text-primary' : ''">{{ item.label }}</span>
         <span v-if="selected" class="bg-primary-500 dark:bg-primary-400 absolute -right-4 h-2 w-2 rounded-full" />
       </div>
     </template>
 
     <template #item="{ item, index }">
-      <!-- Debug logging -->
-      <!-- <div class="mb-4 text-xs">
-        <strong>item:</strong>
-        {{ item }}
-        <br />
-        <strong>items[selectedIndex]:</strong>
-        {{ items[selectedIndex] }}
-        <br />
-        <strong>index:</strong>
-        {{ index }}
-        <br />
-        <strong>selected:</strong>
-        {{ selected }}
-        <br />
-        <strong>selectedIndex:</strong>
-        {{ selectedIndex }}
-      </div> -->
-
-      <EGCard>
+      <EGCard v-if="!hasLaunched">
         <!-- Header -->
-        <div class="font-['Inter'] text-xs font-normal leading-none text-zinc-900">Item 0{{ selectedIndex + 1 }}</div>
-        <div class="font-['Plus Jakarta Sans'] text-lg font-semibold leading-snug text-zinc-900">
-          {{ items[selectedIndex].label }}
-        </div>
+        <EGText tag="small" class="mb-4">Step 0{{ selectedIndex + 1 }}</EGText>
+        <EGText tag="h4" class="mb-0">{{ items[selectedIndex].label }}</EGText>
         <UDivider class="py-4" />
 
         <!-- Run Details -->
@@ -178,8 +164,37 @@
         <template v-if="items[selectedIndex].key === 'parameters'">Edit Parameters Placeholder</template>
 
         <!-- Review Pipeline -->
-        <template v-if="items[selectedIndex].key === 'review'">Review Pipeline Placeholder</template>
+        <template v-if="items[selectedIndex].key === 'review'">
+          <EGRunPipelineFormReviewPipeline
+            :labId="labId"
+            :labName="labName"
+            :pipelineName="usePipelineRunStore().pipelineName"
+            :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
+            @has-launched="handleLaunchSuccess()"
+            :can-launch="true"
+          />
+        </template>
       </EGCard>
     </template>
   </UTabs>
+
+  <template v-if="hasLaunched">
+    <!-- Launch successful -->
+    <EGEmptyDataCTA
+      message="Your Workflow Run has Launched! Check on your progress via Runs."
+      :primary-button-action="() => $router.go(-1)"
+      primary-button-label="Back to Runs"
+      :secondary-button-action="() => resetRunPipeline()"
+      secondary-button-label="Launch Another Workflow Run"
+      img-src="/images/empty-state-launched.jpg"
+    />
+  </template>
 </template>
+
+<style lang="scss">
+  .UTabs {
+    > button {
+      display: none !important;
+    }
+  }
+</style>

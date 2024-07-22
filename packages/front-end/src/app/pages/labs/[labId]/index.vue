@@ -177,13 +177,6 @@
         click: () => {},
       },
     ],
-    [
-      {
-        label: 'Remove',
-        class: 'text-alert-danger-dark',
-        click: () => {},
-      },
-    ],
   ];
 
   const workflowsActionItems = (row: any) => [
@@ -301,9 +294,7 @@
 
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
-    await getPipelines();
-    await getWorkflows();
-    await getLabUsers();
+    await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
     canAddUsers.value = true;
     useUiStore().setRequestPending(false);
   });

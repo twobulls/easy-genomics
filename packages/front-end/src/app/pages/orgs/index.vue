@@ -67,16 +67,15 @@
 </script>
 
 <template>
-  <div class="mb-11 flex items-center justify-between">
-    <EGText tag="h1">Organizations</EGText>
+  <EGPageHeader title="Organizations" :show-back="false">
     <EGButton label="Create a new Organization" to="/orgs/create" />
-  </div>
+  </EGPageHeader>
 
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Organization set up yet."
-    :button-action="() => {}"
-    button-label="Create a new Organization"
+    :primary-button-action="() => {}"
+    primary-button-label="Create a new Organization"
   />
 
   <EGTable

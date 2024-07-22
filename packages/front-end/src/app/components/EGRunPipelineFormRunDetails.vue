@@ -10,6 +10,7 @@
     pipelineDescription: string;
   }>();
 
+  const { $api } = useNuxtApp();
   const emit = defineEmits(['next-tab']);
 
   /**
@@ -34,8 +35,8 @@
   const runNameSchema = z
     .string()
     .trim()
-    .min(1, 'Pipeline run name must be at least 1-character')
-    .max(maxRunNameLength.value, `Pipeline run name must be ${maxRunNameLength.value}-characters or less`);
+    .min(1, 'Pipeline run name must be at least 1 character')
+    .max(maxRunNameLength.value, `Pipeline run name must be ${maxRunNameLength.value} characters or less`);
 
   const formStateSchema = z.object({
     pipelineDescription: z.string().default(''), // Seqera API spec doesn't define a max length for pipeline description
@@ -50,9 +51,17 @@
     runName: '',
   });
 
-  const canSubmit = ref(false);
+  const canProceed = ref(false);
   const isSubmittingFormData = ref(false);
   const runNameCharCount = computed(() => formState.runName.length);
+
+  /**
+   * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
+   */
+  onBeforeMount(async () => {
+    formState.runName = usePipelineRunStore().userPipelineRunName;
+    validate(formState);
+  });
 
   function validate(currentState: FormState): FormError[] {
     const errors: FormError[] = [];
@@ -63,11 +72,18 @@
       console.error('Error validating run details form:', error);
     }
 
-    canSubmit.value = errors.length === 0;
+    canProceed.value = errors.length === 0;
 
     return errors;
   }
 
+  // TODO: wire up full pipeline once backend is ready
+  // function onSubmit() {
+  //   usePipelineRunStore().setUserPipelineRunName(formState.runName);
+  //   emit('next-tab');
+  // }
+
+  // TODO: temporarily skip full pipeline and submit job
   function onSubmit() {
     usePipelineRunStore().setUserPipelineRunName(formState.runName);
     emit('next-tab');
@@ -91,7 +107,7 @@
 
     <div class="flex justify-end pt-4">
       <EGButton
-        :disabled="!canSubmit"
+        :disabled="!canProceed"
         :loading="isSubmittingFormData"
         :size="ButtonSizeEnum.enum.sm"
         type="submit"

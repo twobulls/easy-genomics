@@ -22,9 +22,8 @@
   ];
 
   onBeforeMount(async () => {
-    await updateSelectedUser();
-    await fetchOrgLabs();
-    await fetchUserLabs();
+    await fetchOrgLabs(); // wait for lab data to load
+    await Promise.all([updateSelectedUser(), fetchUserLabs()]);
     isLoading.value = false;
   });
 
@@ -184,8 +183,8 @@
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="There are no labs in your Organization"
-    :button-action="() => $router.push({ path: '/labs/create' })"
-    button-label="Create a Lab"
+    :primary-button-action="() => $router.push({ path: '/labs/create' })"
+    primary-button-label="Create a Lab"
   />
 
   <EGTable

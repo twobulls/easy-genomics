@@ -9,7 +9,6 @@
   import type { FormSubmitEvent } from '#ui/types';
   import { OrgDetailsForm } from '~/types/forms';
   import { VALIDATION_MESSAGES } from '~/constants/validation';
-  import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
 
   const router = useRouter();

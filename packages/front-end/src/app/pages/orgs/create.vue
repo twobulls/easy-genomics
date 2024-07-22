@@ -3,7 +3,6 @@
   import { useToastStore, useUiStore } from '~/stores';
   import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { OrgDetailsForm } from '~/types/forms';
-  import EGFormOrgDetails from '~/components/EGFormOrgDetails.vue';
 
   const router = useRouter();
   const { $api } = useNuxtApp();

@@ -2,7 +2,6 @@
   import { useLabsStore, useOrgsStore } from '~/stores';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
   import { getDate, getTime } from '~/utils/date-time';
-  import EGStatusChip from '~/components/EGStatusChip.vue';
 
   const { $api } = useNuxtApp();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
@@ -31,6 +30,16 @@
   const startedTime = getTime(workflow?.start);
   const stoppedDate = getDate(workflow?.complete);
   const stoppedTime = getTime(workflow?.complete);
+
+  const createdDateTime = computed(() => {
+    return createdDate && createdTime ? `${createdTime} ⋅ ${createdDate}` : '—';
+  });
+  const startedDateTime = computed(() => {
+    return startedDate && startedTime ? `${startedTime} ⋅ ${startedDate}` : '—';
+  });
+  const stoppedDateTime = computed(() => {
+    return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
+  });
 </script>
 
 <template>
@@ -57,15 +66,15 @@
             </div>
             <div class="flex rounded-lg px-4 py-3.5 text-sm">
               <dt class="w-[200px] font-medium text-black">Creation Time</dt>
-              <dd class="text-muted text-left">{{ createdTime }} ⋅ {{ createdDate }}</dd>
+              <dd class="text-muted text-left">{{ createdDateTime }}</dd>
             </div>
             <div class="flex rounded-lg px-4 py-3.5 text-sm">
               <dt class="w-[200px] font-medium text-black">Start Time</dt>
-              <dd class="text-muted text-left max-md:max-w-full">{{ startedTime }} ⋅ {{ startedDate }}</dd>
+              <dd class="text-muted text-left max-md:max-w-full">{{ startedDateTime }}</dd>
             </div>
             <div class="flex rounded-lg px-4 py-3.5 text-sm">
               <dt class="w-[200px] font-medium text-black">Stop Time</dt>
-              <dd class="text-muted text-left max-md:max-w-full">{{ stoppedTime }} ⋅ {{ stoppedDate }}</dd>
+              <dd class="text-muted text-left max-md:max-w-full">{{ stoppedDateTime }}</dd>
             </div>
           </dl>
         </section>

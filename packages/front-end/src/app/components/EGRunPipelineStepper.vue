@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
-  import EGRunPipelineFormRunDetails from '~/components/EGRunPipelineFormRunDetails.vue';
 
   const $route = useRoute();
   const router = useRouter();

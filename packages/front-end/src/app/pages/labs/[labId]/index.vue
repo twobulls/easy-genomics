@@ -301,9 +301,7 @@
 
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
-    await getPipelines();
-    await getWorkflows();
-    await getLabUsers();
+    await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
     canAddUsers.value = true;
     useUiStore().setRequestPending(false);
   });

@@ -22,9 +22,8 @@
   ];
 
   onBeforeMount(async () => {
-    await updateSelectedUser();
-    await fetchOrgLabs();
-    await fetchUserLabs();
+    await fetchOrgLabs(); // wait for lab data to load
+    await Promise.all([updateSelectedUser(), fetchUserLabs()]);
     isLoading.value = false;
   });
 

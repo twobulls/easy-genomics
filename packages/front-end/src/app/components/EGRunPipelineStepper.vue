@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
+  import EGRunPipelineFormRunDetails from '~/components/EGRunPipelineFormRunDetails.vue';
 
   const $route = useRoute();
   const router = useRouter();
@@ -147,7 +148,7 @@
 
         <!-- Run Details -->
         <template v-if="items[selectedIndex].key === 'details'">
-          <EGShortCircuitRunPipelineForm
+          <EGRunPipelineFormRunDetails
             :labId="labId"
             :labName="labName"
             :pipelineId="pipelineId"

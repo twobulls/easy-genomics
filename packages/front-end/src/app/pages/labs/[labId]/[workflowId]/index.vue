@@ -2,7 +2,6 @@
   import { useLabsStore, useOrgsStore } from '~/stores';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
   import { getDate, getTime } from '~/utils/date-time';
-  import EGStatusChip from '~/components/EGStatusChip.vue';
 
   const { $api } = useNuxtApp();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;

@@ -1,4 +1,8 @@
 <script setup lang="ts">
+  import {
+    CreateWorkflowLaunchRequest,
+    DescribePipelineLaunchResponse,
+  } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { ButtonSizeEnum } from '~/types/buttons';
 
   const props = defineProps<{
@@ -27,11 +31,13 @@
   async function launchWorkflow() {
     try {
       isLaunchingWorkflow.value = true;
-      const launchDetails = await $api.pipelines.readPipelineLaunchDetails(
+      const launchDetails: DescribePipelineLaunchResponse = await $api.pipelines.readPipelineLaunchDetails(
         usePipelineRunStore().pipelineId,
         props.labId,
       );
-      await $api.workflows.createWorkflow(props.labId, props.userPipelineRunName, launchDetails);
+      launchDetails.launch.runName = props.userPipelineRunName;
+      const res = await $api.workflows.createPipelineRun(props.labId, launchDetails as CreateWorkflowLaunchRequest);
+      console.log('Pipeline run launched with response details:', res);
       emit('has-launched');
     } catch (error) {
       console.error('Error launching workflow:', error);

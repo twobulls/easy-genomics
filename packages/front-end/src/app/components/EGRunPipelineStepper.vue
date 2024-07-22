@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
-  import EGText from '~/components/EGText.vue';
 
   const $route = useRoute();
   const router = useRouter();
@@ -31,6 +30,7 @@
     //   label: 'Edit Parameters',
     // },
     {
+      disabled: true,
       key: 'review',
       label: 'Review Pipeline',
     },
@@ -125,7 +125,7 @@
 </script>
 
 <template>
-  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" class="UTabs">
+  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles">
     <template #default="{ item, index, selected }">
       <div class="relative flex items-center gap-2 truncate">
         <UIcon

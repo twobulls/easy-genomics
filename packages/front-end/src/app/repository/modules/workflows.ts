@@ -18,7 +18,7 @@ class PipelinesModule extends HttpFactory {
     return res;
   }
 
-  // TODO: Add Zod schema validation
+  // TODO: add Zod response validation
   async createWorkflow(labId: string, runName: string, launchDetails: any): Promise<ListWorkflowsResponse[]> {
     const res = await this.callNextflowTower<ListWorkflowsResponse[]>(
       'POST',

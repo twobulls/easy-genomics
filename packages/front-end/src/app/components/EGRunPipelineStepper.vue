@@ -147,7 +147,7 @@
 
         <!-- Run Details -->
         <template v-if="items[selectedIndex].key === 'details'">
-          <EGShortCircuitRunPipelineForm
+          <EGRunPipelineFormRunDetails
             :labId="labId"
             :labName="labName"
             :pipelineId="pipelineId"

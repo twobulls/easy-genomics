@@ -25,11 +25,11 @@
   const label = computed(() => {
     switch (props.status) {
       case StatusEnum.enum.CANCELLED:
-        return 'Failed';
+        return 'Cancelled';
       case StatusEnum.enum.FAILED:
         return 'Failed';
       case StatusEnum.enum.SUCCEEDED:
-        return 'Completed';
+        return 'Succeeded';
       case StatusEnum.enum.RUNNING:
         return 'Running';
       case StatusEnum.enum.SUBMITTED:

@@ -1,10 +1,11 @@
 import {
   DescribePipelineLaunchResponse,
   ListPipelinesResponse,
-} from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+} from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { ListPipelinesResponse as ListPipelinesResponseSchema } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-// import { validateApiResponse } from '~/utils/api-utils';
+import { validateApiResponse, stripNullProperties } from '~/utils/api-utils';
 
 class PipelinesModule extends HttpFactory {
   $config = useRuntimeConfig();
@@ -24,8 +25,8 @@ class PipelinesModule extends HttpFactory {
     return res;
   }
 
-  async list(labId: string): Promise<ListPipelinesResponse[]> {
-    const res = await this.callNextflowTower<ListPipelinesResponse[]>(
+  async list(labId: string): Promise<ListPipelinesResponse> {
+    const res = await this.callNextflowTower<ListPipelinesResponse>(
       'GET',
       `/pipeline/list-pipelines?laboratoryId=${labId}`,
     );
@@ -35,7 +36,10 @@ class PipelinesModule extends HttpFactory {
       throw new Error('Failed to retrieve pipelines');
     }
 
-    // validateApiResponse(ListPipelinesResponseSchema, res);
+    const cleanedPipelines = stripNullProperties(res?.pipelines || []);
+    const cleanedRes = { ...res, pipelines: cleanedPipelines };
+
+    validateApiResponse(ListPipelinesResponseSchema, cleanedRes);
     return res;
   }
 }

@@ -3,9 +3,18 @@ import { ZodSchema } from 'zod';
 export function validateApiResponse<T>(schema: ZodSchema<T>, data: any) {
   const validation = schema.safeParse(data);
 
-  if (validation.success) {
-  } else {
-    console.error('Error validating response:', validation.error);
-    throw new Error('Failed to validate API response');
+  if (!validation.success) {
+    throw new Error('Failed to validate API response: ', validation.error);
   }
+}
+
+/**
+ * Strip null properties from an array of objects - example usage might be to remove null properties from
+ * a Nextflow Tower API response to allow the Zod schema to validate the response
+ * @param properties
+ */
+export function stripNullProperties(properties: Array<any>): Array<any> {
+  return properties.map((property: any) => {
+    return Object.fromEntries(Object.entries(property).filter(([, value]) => value !== null));
+  });
 }

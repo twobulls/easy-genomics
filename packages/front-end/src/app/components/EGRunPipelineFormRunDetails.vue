@@ -56,8 +56,7 @@
   const runNameCharCount = computed(() => formState.runName.length);
 
   /**
-   * Pre-fill the run name with the user's pipeline run name if it exists.
-   *
+   * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
     formState.runName = usePipelineRunStore().userPipelineRunName;

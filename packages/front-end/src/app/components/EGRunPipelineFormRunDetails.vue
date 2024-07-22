@@ -55,6 +55,12 @@
   const isSubmittingFormData = ref(false);
   const runNameCharCount = computed(() => formState.runName.length);
 
+  // Trims white space, replaces spaces between words with hyphens, and enforces a max of one hyphen in a row
+  // e.g. 'some custom name' -> 'some-custom-name'
+  function getSafeRunName(runName: string): string {
+    return runName.trim().replace(/\s+/g, '-').replace(/-+/g, '-');
+  }
+
   /**
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
@@ -85,7 +91,8 @@
 
   // TODO: temporarily skip full pipeline and submit job
   function onSubmit() {
-    usePipelineRunStore().setUserPipelineRunName(formState.runName);
+    const safeRunName = getSafeRunName(formState.runName);
+    usePipelineRunStore().setUserPipelineRunName(safeRunName);
     emit('next-tab');
   }
 </script>

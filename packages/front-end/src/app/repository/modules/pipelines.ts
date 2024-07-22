@@ -25,10 +25,10 @@ class PipelinesModule extends HttpFactory {
     return res;
   }
 
-  async readPipelineLaunchDetails(workspaceId: number, labId: string): Promise<Workflow> {
+  async readPipelineLaunchDetails(pipelineId: number, labId: string): Promise<Workflow> {
     const res = await this.callNextflowTower<Workflow>(
       'GET',
-      `/pipeline/read-pipeline-launch-details/${workspaceId}?laboratoryId=${labId}`,
+      `/pipeline/read-pipeline-launch-details/${pipelineId}?laboratoryId=${labId}`,
     );
 
     if (!res) {

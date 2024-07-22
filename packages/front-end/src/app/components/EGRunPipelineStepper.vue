@@ -14,9 +14,9 @@
   const selectedIndex = ref(0);
   const hasLaunched = ref(false);
 
+  // TODO: disable tabs based on the state of the pipeline
   const items = [
     {
-      disabled: hasLaunched.value,
       key: 'details',
       label: 'Run Details',
     },
@@ -31,7 +31,6 @@
     //   label: 'Edit Parameters',
     // },
     {
-      disabled: hasLaunched.value,
       key: 'review',
       label: 'Review Pipeline',
     },

@@ -177,13 +177,6 @@
         click: () => {},
       },
     ],
-    [
-      {
-        label: 'Remove',
-        class: 'text-alert-danger-dark',
-        click: () => {},
-      },
-    ],
   ];
 
   const workflowsActionItems = (row: any) => [

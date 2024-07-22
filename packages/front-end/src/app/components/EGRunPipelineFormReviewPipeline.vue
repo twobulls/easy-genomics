@@ -27,7 +27,10 @@
   async function launchWorkflow() {
     try {
       isLaunchingWorkflow.value = true;
-      const launchDetails = await $api.pipelines.readPipelineLaunchDetails(228412645122841, props.labId);
+      const launchDetails = await $api.pipelines.readPipelineLaunchDetails(
+        usePipelineRunStore().pipelineId,
+        props.labId,
+      );
       await $api.workflows.createWorkflow(props.labId, props.userPipelineRunName, launchDetails);
       emit('has-launched');
     } catch (error) {

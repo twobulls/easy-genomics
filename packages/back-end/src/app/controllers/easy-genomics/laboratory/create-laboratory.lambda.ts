@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
 import {
   CreateLaboratory,
@@ -9,10 +10,12 @@ import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handl
 import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 import { OrganizationService } from '../../../services/easy-genomics/organization-service';
+import { S3Service } from '../../../services/s3-service';
 import { SsmService } from '../../../services/ssm-service';
 
 const organizationService = new OrganizationService();
 const laboratoryService = new LaboratoryService();
+const s3Service = new S3Service();
 const ssmService = new SsmService();
 
 export const handler: Handler = async (
@@ -33,6 +36,21 @@ export const handler: Handler = async (
     if (!organization) {
       throw new Error(`Laboratory creation error, OrganizationId '${request.OrganizationId}' not found`);
     }
+
+    const s3BucketId: string = `${crypto.randomBytes(16).toString('hex')}`;
+    const s3BucketName: string = `${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketId}`;
+    console.log(`Creating S3 Bucket with Name: ${s3BucketName}`);
+
+    // S3 bucket names must between 3 - 63 characters long, and globally unique
+    if (s3BucketName.length < 3 || s3BucketName.length > 63) {
+      throw new Error(
+        `Laboratory creation error, unable to create Laboratory S3 Bucket due to invalid length of bucket name; s3BucketName: ${s3BucketName} ${s3BucketName.length}-characters; min: 3, max: 63`,
+      );
+    }
+
+    // Create S3 Bucket for Laboratory
+    const createS3BucketResult = await s3Service.createBucket({ Bucket: s3BucketName });
+    console.log(`S3 Bucket Created: ${JSON.stringify(createS3BucketResult)}`);
 
     const laboratoryId: string = uuidv4();
 

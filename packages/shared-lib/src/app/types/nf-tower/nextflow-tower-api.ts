@@ -22,11 +22,6 @@ export type CreateWorkflowLaunchQuery = operations['CreateWorkflowLaunch']['para
 export type CreateWorkflowLaunchRequest = components['schemas']['SubmitWorkflowLaunchRequest'];
 export type CreateWorkflowLaunchResponse = components['schemas']['SubmitWorkflowLaunchResponse'];
 
-export type CreatePipelineRunRequest = {
-  userRunName: string;
-  pipelineLaunchDetails: CreateWorkflowLaunchRequest;
-};
-
 /** POST /workflow/{workflowId}/cancel **/
 export type CancelWorkflowQuery = operations['CancelWorkflow']['parameters']['query'];
 export type CancelWorkflowResponse = string;

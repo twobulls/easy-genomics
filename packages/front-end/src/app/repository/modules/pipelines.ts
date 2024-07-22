@@ -17,7 +17,7 @@ class PipelinesModule extends HttpFactory {
     );
 
     if (!res) {
-      throw new Error('Failed to retrieve pipelines');
+      throw new Error('Failed to retrieve launch details');
     }
 
     const cleanedPipelines = stripNullProperties(res?.pipelines || []);

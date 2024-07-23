@@ -104,6 +104,13 @@ const root = new typescript.TypeScriptProject({
   eslint: true,
   jest: true,
   jestOptions: jestOptions,
+  githubOptions: {
+    pullRequestLintOptions: {
+      semanticTitleOptions: {
+        types: ['feat', 'fix', 'hotfix', 'release', 'refactor', 'chore', 'docs', 'infra'],
+      },
+    },
+  },
   homepage: 'https://github.com/twobulls/easy-genomics',
   license: 'Apache-2.0',
   licensed: true,

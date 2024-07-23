@@ -19,11 +19,11 @@
       key: 'details',
       label: 'Run Details',
     },
-    // {
-    //   disabled: true,
-    //   key: 'upload',
-    //   label: 'Upload Data',
-    // },
+    {
+      disabled: false,
+      key: 'upload',
+      label: 'Upload Data',
+    },
     // {
     //   disabled: true,
     //   key: 'parameters',
@@ -158,7 +158,9 @@
         </template>
 
         <!-- Upload Data -->
-        <template v-if="items[selectedIndex].key === 'upload'">Upload Placeholder</template>
+        <template v-if="items[selectedIndex].key === 'upload'">
+          <EGRunPipelineFormUploadData @next-tab="() => nextTab()" />
+        </template>
 
         <!-- Edit Parameters -->
         <template v-if="items[selectedIndex].key === 'parameters'">Edit Parameters Placeholder</template>

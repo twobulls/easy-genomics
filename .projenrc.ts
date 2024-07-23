@@ -106,6 +106,7 @@ const root = new typescript.TypeScriptProject({
   jestOptions: jestOptions,
   githubOptions: {
     pullRequestLintOptions: {
+      semanticTitle: true,
       semanticTitleOptions: {
         types: ['feat', 'fix', 'hotfix', 'release', 'refactor', 'chore', 'docs', 'infra'],
       },

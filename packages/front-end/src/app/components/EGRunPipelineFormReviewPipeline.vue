@@ -4,6 +4,7 @@
     DescribePipelineLaunchResponse,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { ButtonSizeEnum } from '~/types/buttons';
+  import { useToastStore } from '~/stores';
 
   const props = defineProps<{
     labId: string;
@@ -35,11 +36,13 @@
         usePipelineRunStore().pipelineId,
         props.labId,
       );
-      launchDetails.launch.runName = props.userPipelineRunName;
-      const res = await $api.workflows.createPipelineRun(props.labId, launchDetails as CreateWorkflowLaunchRequest);
-      console.log('Pipeline run launched with response details:', res);
+      if (launchDetails.launch) {
+        launchDetails.launch.runName = props.userPipelineRunName;
+      }
+      await $api.workflows.createPipelineRun(props.labId, launchDetails as CreateWorkflowLaunchRequest);
       emit('has-launched');
     } catch (error) {
+      useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
       console.error('Error launching workflow:', error);
     } finally {
       isLaunchingWorkflow.value = false;

@@ -161,6 +161,7 @@
   function resetRunPipeline() {
     hasLaunched.value = false;
     selected.value = 0;
+    disableStepsFrom(0);
     usePipelineRunStore().setUserPipelineRunName('');
   }
 </script>

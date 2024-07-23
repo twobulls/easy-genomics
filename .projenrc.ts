@@ -384,6 +384,7 @@ new VscodeSettings(root);
 new Nx(root);
 new Husky(root);
 new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion });
+new GithubActionsCICDRelease(root, { environment: 'sandbox', pnpmVersion: pnpmVersion, onPushBranch: 'infra/*' });
 
 // Provision templated project folders structure with README.md descriptions.
 setupProjectFolders(root);

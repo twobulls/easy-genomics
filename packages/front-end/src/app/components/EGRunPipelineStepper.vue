@@ -203,7 +203,7 @@
         <!-- Upload Data -->
         <template v-if="items[selectedIndex].key === 'upload'">
           Upload Placeholder
-          <div class="flex justify-between pt-4">
+          <div class="mt-12 flex justify-between">
             <EGButton
               :size="ButtonSizeEnum.enum.sm"
               variant="secondary"
@@ -217,7 +217,7 @@
         <!-- Edit Parameters -->
         <template v-if="items[selectedIndex].key === 'parameters'">
           Edit Parameters Placeholder
-          <div class="flex justify-between pt-4">
+          <div class="mt-12 flex justify-between">
             <EGButton
               :size="ButtonSizeEnum.enum.sm"
               variant="secondary"

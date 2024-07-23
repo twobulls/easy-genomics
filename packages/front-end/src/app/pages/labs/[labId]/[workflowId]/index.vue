@@ -83,3 +83,14 @@
     </template>
   </UTabs>
 </template>
+
+<style lang="scss">
+  :deep(.UTabs) {
+    button {
+      background: red !important;
+    }
+  }
+  .UTabs {
+    background: red !important;
+  }
+</style>

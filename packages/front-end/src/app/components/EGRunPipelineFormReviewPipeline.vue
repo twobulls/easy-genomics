@@ -15,7 +15,7 @@
 
   const { $api } = useNuxtApp();
   const isLaunchingWorkflow = ref(false);
-  const emit = defineEmits(['next-tab', 'launch-workflow', 'has-launched']);
+  const emit = defineEmits(['next-tab', 'launch-workflow', 'has-launched', 'previous-tab']);
 
   // TODO: wire up full pipeline once backend is ready
   // function onSubmit() {
@@ -58,14 +58,15 @@
         <dt class="w-[200px] font-medium text-black">Laboratory</dt>
         <dd class="text-muted text-left">{{ labName }}</dd>
       </div>
-      <div class="flex border-b px-4 py-4 text-sm">
+      <div class="flex px-4 py-4 text-sm">
         <dt class="w-[200px] font-medium text-black">Run Name</dt>
         <dd class="text-muted text-left">{{ userPipelineRunName }}</dd>
       </div>
     </dl>
   </section>
 
-  <div class="flex justify-end pt-4">
+  <div class="mt-12 flex justify-between">
+    <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-tab')" />
     <EGButton
       :disabled="!canLaunch"
       :loading="isLaunchingWorkflow"

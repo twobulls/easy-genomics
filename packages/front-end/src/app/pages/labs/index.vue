@@ -118,10 +118,9 @@
 </script>
 
 <template>
-  <div class="mb-11 flex items-center justify-between">
-    <EGText tag="h1" v-if="labData">Labs</EGText>
+  <EGPageHeader title="Labs" :show-back="false">
     <EGButton label="Create a new Lab" class="self-end" @click="() => $router.push({ path: `/labs/create` })" />
-  </div>
+  </EGPageHeader>
 
   <EGEmptyDataCTA
     v-if="hasNoData"

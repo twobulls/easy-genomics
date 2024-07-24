@@ -11,7 +11,7 @@
   }>();
 
   const { $api } = useNuxtApp();
-  const emit = defineEmits(['next-tab']);
+  const emit = defineEmits(['next-tab', 'step-validated']);
 
   /**
    * Seqera API spec
@@ -95,6 +95,10 @@
     usePipelineRunStore().setUserPipelineRunName(safeRunName);
     emit('next-tab');
   }
+
+  watch(canProceed, (val) => {
+    emit('step-validated', val);
+  });
 </script>
 
 <template>

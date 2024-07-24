@@ -9,8 +9,6 @@ class PipelinesModule extends HttpFactory {
   $config = useRuntimeConfig();
 
   async createPipelineRun(labId: string, pipelineLaunchRequest: CreateWorkflowLaunchRequest): Promise<any> {
-    console.log('Creating pipeline run POST with pipelineLaunchRequest:', pipelineLaunchRequest);
-
     const res = await this.callNextflowTower<any>(
       'POST',
       `/workflow/create-workflow-execution?laboratoryId=${labId}`,
@@ -29,25 +27,6 @@ class PipelinesModule extends HttpFactory {
     const res = await this.callNextflowTower<ListWorkflowsResponse[]>(
       'GET',
       `/workflow/list-workflows?laboratoryId=${labId}`,
-    );
-
-    if (!res) {
-      throw new Error('Failed to retrieve workflows');
-    }
-
-    return res;
-  }
-
-  // TODO: add Zod response validation
-  async createWorkflow(labId: string, runName: string, launchDetails: any): Promise<ListWorkflowsResponse[]> {
-    const res = await this.callNextflowTower<ListWorkflowsResponse[]>(
-      'POST',
-      `/workflow/create-workflow-execution?laboratoryId=${labId}`,
-
-      {
-        userRunName: runName,
-        pipelineLaunchDetails: { ...launchDetails },
-      },
     );
 
     if (!res) {

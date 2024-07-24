@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
+  import { ButtonSizeEnum } from '~/types/buttons';
 
   const $route = useRoute();
   const router = useRouter();
@@ -13,28 +14,28 @@
   const selectedIndex = ref(0);
   const hasLaunched = ref(false);
 
-  // TODO: disable tabs based on the state of the pipeline
-  const items = [
+  const items = ref([
     {
+      disabled: false,
       key: 'details',
       label: 'Run Details',
     },
-    // {
-    //   disabled: true,
-    //   key: 'upload',
-    //   label: 'Upload Data',
-    // },
-    // {
-    //   disabled: true,
-    //   key: 'parameters',
-    //   label: 'Edit Parameters',
-    // },
+    {
+      disabled: true,
+      key: 'upload',
+      label: 'Upload Data',
+    },
+    {
+      disabled: true,
+      key: 'parameters',
+      label: 'Edit Parameters',
+    },
     {
       disabled: true,
       key: 'review',
       label: 'Review Pipeline',
     },
-  ];
+  ]);
 
   const EGStepperTabsStyles = {
     base: 'focus:outline-none',
@@ -43,8 +44,8 @@
       padding: 'p-0',
       height: 'h-14',
       marker: {
-        wrapper: 'duration-200 ease-out focus:outline-none',
-        base: 'absolute top-[0px] h-[4px]',
+        wrapper: 'focus:outline-none',
+        base: 'absolute top-[0px] h-[4px]  rounded-none z-10',
         background: 'bg-primary',
         shadow: 'shadow-none',
       },
@@ -52,7 +53,7 @@
         sm: 'text-lg',
       },
       tab: {
-        base: '!text-base w-auto mr-4 inline-flex font-heading justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out',
+        base: '!text-base border-t-4 border-primary-muted rounded-none w-auto mr-4 inline-flex font-heading justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:text-opacity-50 ',
         active: 'text-primary h-14',
         inactive: 'text-heading',
         height: 'h-14',
@@ -61,38 +62,83 @@
     },
   };
 
+  const selected = computed({
+    get() {
+      const index = items.value.findIndex((item) => item.label === $route.query.tab);
+      return clampIndex(index);
+    },
+    set(index) {
+      if (!isStepValid(items.value[index].key)) {
+        for (let i = index; i < items.value.length; i++) {
+          setStepEnabled(items.value[i].key, false);
+        }
+      } else {
+        enableSelectedItem(index);
+        setTabQueryParam(index);
+        selectedIndex.value = index;
+      }
+    },
+  });
+
+  /**
+   * Set the enabled state of a step in the stepper
+   * @param step
+   * @param isEnabled
+   */
+  function setStepEnabled(step: string, isEnabled: boolean) {
+    const stepIndex = items.value.findIndex((item) => item.key === step);
+    if (stepIndex > -1) {
+      if (isEnabled) {
+        items.value[stepIndex].disabled = false;
+      } else {
+        // If the step is disabled, we need to disable all subsequent steps
+        disableStepsFrom(stepIndex);
+      }
+    }
+  }
+
+  /**
+   * Disable all steps from the given index
+   * @param index
+   */
+  function disableStepsFrom(index: number) {
+    for (let i = index; i < items.value.length; i++) {
+      items.value[i].disabled = true;
+    }
+  }
+
   function enableSelectedItem(index: number) {
-    const selectedItem = items.find((_, i) => i === index);
-    if (selectedItem && selectedItem.disabled) {
+    const selectedItem = items.value.find((_, i) => i === index);
+    if (selectedItem?.disabled) {
       selectedItem.disabled = false;
     }
   }
 
-  const selected = computed({
-    get() {
-      const index = items.findIndex((item) => item.label === $route.query.tab);
-      const clampedIndex = clampIndex(index);
-      return clampedIndex;
-    },
-    set(index) {
-      enableSelectedItem(index);
-      setTabQueryParam(index);
-      selectedIndex.value = index;
-    },
-  });
+  function isStepValid(step: string) {
+    const stepItem = items.value.find((item) => item.key === step);
+
+    if (!stepItem) {
+      return false;
+    }
+
+    return !stepItem.disabled;
+  }
+
+  function nextStep(val: string) {
+    setStepEnabled(val, true);
+    nextTab();
+  }
 
   function clampIndex(index: number) {
-    return Math.min(items.length - 1, Math.max(0, index));
+    return Math.min(items.value.length - 1, Math.max(0, index));
   }
 
   function nextTab() {
-    const clampedIndex = clampIndex(selected.value + 1);
-    selected.value = clampedIndex;
+    selected.value = Math.min(items.value.length - 1, selectedIndex.value + 1);
   }
 
   function previousTab() {
-    const clampedIndex = clampIndex(selected.value - 1);
-    selected.value = clampedIndex;
+    selected.value = clampIndex(selected.value - 1);
   }
 
   function handleLaunchSuccess() {
@@ -105,27 +151,23 @@
   // http://localhost:3000/labs/bbac4190-0446-4db4-a084-cfdbc8102297/run-pipeline?tab=Edit+Parameters
   function setTabQueryParam(index: number) {
     const clampedIndex = clampIndex(index);
-    const item = items.find((_, i) => i === clampedIndex);
+    const item = items.value.find((_, i) => i === clampedIndex);
     if (item) {
-      const query = { ...$route.query, tab: items[clampedIndex].label };
+      const query = { ...$route.query, tab: items.value[clampedIndex].label };
       router.replace({ query });
-    } else {
-      console.error(
-        `Item not found for index: ${index}; clampedIndex: ${clampedIndex}; items.length: ${items.length}; items:`,
-        items,
-      );
     }
   }
 
   function resetRunPipeline() {
     hasLaunched.value = false;
     selected.value = 0;
+    disableStepsFrom(0);
     usePipelineRunStore().setUserPipelineRunName('');
   }
 </script>
 
 <template>
-  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles">
+  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" class="UTabs">
     <template #default="{ item, index, selected }">
       <div class="relative flex items-center gap-2 truncate">
         <UIcon
@@ -154,14 +196,37 @@
             :pipelineName="pipelineName"
             :pipelineDescription="pipelineDescription"
             @next-tab="() => nextTab()"
+            @step-validated="setStepEnabled('upload', $event)"
           />
         </template>
 
         <!-- Upload Data -->
-        <template v-if="items[selectedIndex].key === 'upload'">Upload Placeholder</template>
+        <template v-if="items[selectedIndex].key === 'upload'">
+          Upload Placeholder
+          <div class="mt-12 flex justify-between">
+            <EGButton
+              :size="ButtonSizeEnum.enum.sm"
+              variant="secondary"
+              label="Previous step"
+              @click="() => previousTab()"
+            />
+            <EGButton @click="() => nextStep('parameters')" label="Save & Continue" />
+          </div>
+        </template>
 
         <!-- Edit Parameters -->
-        <template v-if="items[selectedIndex].key === 'parameters'">Edit Parameters Placeholder</template>
+        <template v-if="items[selectedIndex].key === 'parameters'">
+          Edit Parameters Placeholder
+          <div class="mt-12 flex justify-between">
+            <EGButton
+              :size="ButtonSizeEnum.enum.sm"
+              variant="secondary"
+              label="Previous step"
+              @click="() => previousTab()"
+            />
+            <EGButton @click="() => nextStep('review')" label="Save & Continue" />
+          </div>
+        </template>
 
         <!-- Review Pipeline -->
         <template v-if="items[selectedIndex].key === 'review'">
@@ -172,6 +237,7 @@
             :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
             @has-launched="handleLaunchSuccess()"
             :can-launch="true"
+            @previous-tab="() => previousTab()"
           />
         </template>
       </EGCard>
@@ -183,18 +249,10 @@
     <EGEmptyDataCTA
       message="Your Workflow Run has Launched! Check on your progress via Runs."
       :primary-button-action="() => $router.go(-1)"
-      primary-button-label="Back to Runs"
+      primary-button-label="Back to Pipelines"
       :secondary-button-action="() => resetRunPipeline()"
       secondary-button-label="Launch Another Workflow Run"
       img-src="/images/empty-state-launched.jpg"
     />
   </template>
 </template>
-
-<style lang="scss">
-  .UTabs {
-    > button {
-      display: none !important;
-    }
-  }
-</style>

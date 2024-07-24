@@ -27,6 +27,9 @@ const laboratoryService = new LaboratoryService();
  * By only requesting the signed-url at the time needed, it will minimise the
  * duration of the signed-url's expiry window to enhance security.
  *
+ * The file size checking logic will later be extended to support multi-part
+ * S3 upload URL generations for files larger than 5GiB to 5TiB.
+ *
  * @param event
  */
 export const handler: Handler = async (
@@ -52,34 +55,30 @@ export const handler: Handler = async (
       throw new Error(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
     }
 
-    const files: UploadFileResponse[] = await Promise.all(
-      request.Files.map(async (file: UploadFileRequest) => {
+    const files: UploadFileResponse[] = request.Files.map((file: UploadFileRequest) => {
+      /**
+       * If a file size is greater than the EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT then throw an error,
+       * otherwise default to generating a single upload S3 URL for the respective file.
+       */
+      if (file.Size > EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT) {
+        throw new Error(`File size is too large: '${file.Name}'`);
+      } else {
         /**
-         * If a file size is greater than the EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT then throw an error,
-         * otherwise default to generating a single upload S3 URL for the respective file.
+         * The S3 Key will consist of: /uploads/{cognito userId}/{transactionId}/{file name}
          */
-        if (file.Size > EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT) {
-          throw new Error(`File size is too large: '${file.Name}'`);
-        } else {
-          /**
-           * The S3 Key will consist of: /uploads/{cognito userId}/{transactionId}/{file name}
-           */
-          const s3Key: string = `uploads/${userId}/${transactionId}/${file.Name}`;
-          const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
-          const s3UrlChecksum: string = createHash('sha256').update(s3Url).digest('hex');
+        const s3Key: string = `uploads/${userId}/${transactionId}/${file.Name}`;
+        const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
+        const s3UrlChecksum: string = createHash('sha256').update(s3Url).digest('hex');
 
-          return new Promise<UploadFileResponse>((resolve, _reject) => {
-            resolve({
-              ...file,
-              Bucket: s3Bucket,
-              Key: s3Key,
-              S3Url: s3Url,
-              S3UrlChecksum: s3UrlChecksum, // Security check to prevent spoofing
-            });
-          });
-        }
-      }),
-    );
+        return {
+          ...file,
+          Bucket: s3Bucket,
+          Key: s3Key,
+          S3Url: s3Url,
+          S3UrlChecksum: s3UrlChecksum, // Security check to prevent spoofing
+        };
+      }
+    });
 
     const response: ResponseFileUploadManifest = {
       TransactionId: transactionId,

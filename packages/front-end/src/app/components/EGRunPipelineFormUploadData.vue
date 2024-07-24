@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import EGButton from './EGButton.vue';
+
   // Example CSV file for 3-pairs of fastq files
   /*
   sample,fastq_1,fastq_2
@@ -24,6 +26,8 @@
 
   const emit = defineEmits(['next-tab']);
 
+  const chooseFilesButton = ref<HTMLButtonElement | null>(null);
+
   const filesToUpload = ref<File[]>([]);
   // const fileList: FileList = ref<FileList>();
   const filePairs: FilePair[] = reactive([]);
@@ -45,6 +49,10 @@
       label: 'R2 File',
     },
   ];
+
+  function chooseFiles() {
+    chooseFilesButton.value?.click();
+  }
 
   function handleDroppedFiles(e: DragEvent) {
     if (!e.isTrusted) {
@@ -163,20 +171,31 @@
       class="mb-8"
     >
       <div
-        class="flex w-full items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-16 text-gray-400"
-        :class="{ 'border-green-700 bg-green-500 text-white': isDropzoneActive }"
+        :class="
+          cn(
+            'ring-primary-500 text-body flex w-full items-center justify-center rounded-lg py-8 ring-2 ring-offset-1 transition-colors duration-200',
+            {
+              'bg-alert-success-muted ring-alert-success font-semibold ring-offset-2': isDropzoneActive,
+            },
+          )
+        "
       >
-        <div class="flex flex-col items-center">
-          <div class="space-y-2">
-            <div>Drag and drop your files here</div>
-            <div class="flex items-center">
-              <label class="pr-1" for="dropzoneFiles">or</label>
-              <input type="file" id="dropzoneFiles" @change="handleFileInputChange" multiple />
-            </div>
+        <div class="flex items-center justify-center">
+          <div>
+            <span :class="cn('visible', { 'invisible': isDropzoneActive })">Drag and</span>
+            drop your files
+            <span :class="cn('visible', { 'invisible': isDropzoneActive })">here or</span>
           </div>
+          <EGButton
+            :class="cn('visible ml-4', { 'invisible': isDropzoneActive })"
+            @click="chooseFiles"
+            label="Choose Files"
+            size="sm"
+          />
         </div>
       </div>
     </div>
-    <UTable v-if="filePairsForTable.length > 0" :columns="columns" :rows="filePairsForTable" />
   </div>
+
+  <UTable v-if="filePairsForTable.length > 0" :columns="columns" :rows="filePairsForTable" />
 </template>

@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHmac } from 'crypto';
 import { RequestFileUploadManifestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/upload/s3-file-upload-manifest';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import {
@@ -68,7 +68,7 @@ export const handler: Handler = async (
          */
         const s3Key: string = `uploads/${userId}/${transactionId}/${file.Name}`;
         const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
-        const s3UrlChecksum: string = createHash('sha256').update(s3Url).digest('hex');
+        const s3UrlChecksum: string = createHmac('sha256', process.env.HMAC_SECRET_KEY).update(s3Url).digest('hex');
 
         return {
           ...file,

@@ -81,6 +81,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
+        '/easy-genomics/upload/create-file-upload-request': {
+          environment: {
+            HMAC_SECRET_KEY: this.props.secretKey,
+          },
+        },
       },
       environment: {
         // Defines the common environment settings for all lambda functions

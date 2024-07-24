@@ -24,5 +24,10 @@ jobs:
           types: |-
             feat
             fix
+            hotfix
+            release
+            refactor
             chore
+            docs
+            infra
           requireScope: false

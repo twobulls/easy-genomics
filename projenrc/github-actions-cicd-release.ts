@@ -6,14 +6,26 @@ export class GithubActionsCICDRelease extends Component {
   private readonly environment: string;
   private readonly pnpmVersion: string;
 
-  constructor(rootProject: typescript.TypeScriptProject, options: { environment: string; pnpmVersion: string }) {
+  constructor(
+    rootProject: typescript.TypeScriptProject,
+    options: {
+      environment: string;
+      pnpmVersion: string;
+      onPushBranch?: string;
+    },
+  ) {
     super(<IConstruct>rootProject);
     this.environment = options.environment;
     this.pnpmVersion = options.pnpmVersion;
 
     const wf = new github.GithubWorkflow(rootProject.github!, `cicd-release-${this.environment}`);
     const runsOn = ['ubuntu-latest'];
-    wf.on({ push: { branches: ['main'] } });
+    const onPushBranch: string | undefined = options.onPushBranch;
+    if (onPushBranch) {
+      wf.on({ push: { branches: [onPushBranch] } });
+    } else {
+      wf.on({ push: { branches: ['main'] } });
+    }
 
     wf.addJobs({
       ['test-back-end']: {
@@ -59,7 +71,6 @@ export class GithubActionsCICDRelease extends Component {
       },
       // ['test-front-end']: {
       //   name: 'Test Front-End',
-      //   needs: ['build-deploy-back-end'],
       //   runsOn,
       //   environment: this.environment,
       //   env: this.loadEnv(),
@@ -104,6 +115,9 @@ export class GithubActionsCICDRelease extends Component {
 
   private loadEnv(): Record<string, string> {
     return {
+      // NODE ENV settings
+      'NODE_OPTIONS': '--max-old-space-size=8192',
+      // Common base settings
       'AWS_ACCOUNT_ID': '${{ secrets.AWS_ACCOUNT_ID }}',
       'AWS_REGION': '${{ secrets.AWS_REGION }}',
       'ENV_TYPE': '${{ vars.ENV_TYPE }}',

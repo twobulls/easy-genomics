@@ -219,7 +219,7 @@ git checkout -b "feat/EG-XXX_add_new_feature"
 |                |       |
 |                |       +-> Summary in present tense with JIRA ticket prefix when possible.
 |                |
-|                +--> Branch Type: feat, fix, hotfix, release, refactor, chore, docs.
+|                +--> Branch Type: feat, fix, hotfix, release, refactor, chore, docs, infra.
 |
 +-------> Create new branch from current branch.
 ```
@@ -230,7 +230,7 @@ git branch -m "fix/EG-XXX_fix_something_&_something_else"
 |              |   |
 |              |   +-> Summary in present tense with JIRA ticket prefix when possible.
 |              |
-|              +--> Branch Type: feat, fix, hotfix, release, refactor, chore, docs.
+|              +--> Branch Type: feat, fix, hotfix, release, refactor, chore, docs, infra.
 |
 +-------> Modify current branch name.
 ```

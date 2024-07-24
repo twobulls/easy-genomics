@@ -60,19 +60,19 @@
           class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 max-md:px-5"
         >
           <dl class="mt-4">
-            <div class="flex rounded-lg px-4 py-3.5 text-sm">
+            <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Workflow Run Status</dt>
               <dd class="text-muted text-left"><EGStatusChip :status="workflow.status" /></dd>
             </div>
-            <div class="flex rounded-lg px-4 py-3.5 text-sm">
+            <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Creation Time</dt>
               <dd class="text-muted text-left">{{ createdDateTime }}</dd>
             </div>
-            <div class="flex rounded-lg px-4 py-3.5 text-sm">
+            <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Start Time</dt>
               <dd class="text-muted text-left max-md:max-w-full">{{ startedDateTime }}</dd>
             </div>
-            <div class="flex rounded-lg px-4 py-3.5 text-sm">
+            <div class="flex p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Stop Time</dt>
               <dd class="text-muted text-left max-md:max-w-full">{{ stoppedDateTime }}</dd>
             </div>

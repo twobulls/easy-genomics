@@ -4,6 +4,7 @@
     DescribePipelineLaunchResponse,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { ButtonSizeEnum } from '~/types/buttons';
+  import { useToastStore } from '~/stores';
 
   const props = defineProps<{
     labId: string;
@@ -15,7 +16,7 @@
 
   const { $api } = useNuxtApp();
   const isLaunchingWorkflow = ref(false);
-  const emit = defineEmits(['next-tab', 'launch-workflow', 'has-launched']);
+  const emit = defineEmits(['next-tab', 'launch-workflow', 'has-launched', 'previous-tab']);
 
   // TODO: wire up full pipeline once backend is ready
   // function onSubmit() {
@@ -35,11 +36,13 @@
         usePipelineRunStore().pipelineId,
         props.labId,
       );
-      launchDetails.launch.runName = props.userPipelineRunName;
-      const res = await $api.workflows.createPipelineRun(props.labId, launchDetails as CreateWorkflowLaunchRequest);
-      console.log('Pipeline run launched with response details:', res);
+      if (launchDetails.launch) {
+        launchDetails.launch.runName = props.userPipelineRunName;
+      }
+      await $api.workflows.createPipelineRun(props.labId, launchDetails as CreateWorkflowLaunchRequest);
       emit('has-launched');
     } catch (error) {
+      useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
       console.error('Error launching workflow:', error);
     } finally {
       isLaunchingWorkflow.value = false;
@@ -58,14 +61,15 @@
         <dt class="w-[200px] font-medium text-black">Laboratory</dt>
         <dd class="text-muted text-left">{{ labName }}</dd>
       </div>
-      <div class="flex border-b px-4 py-4 text-sm">
+      <div class="flex px-4 py-4 text-sm">
         <dt class="w-[200px] font-medium text-black">Run Name</dt>
         <dd class="text-muted text-left">{{ userPipelineRunName }}</dd>
       </div>
     </dl>
   </section>
 
-  <div class="flex justify-end pt-4">
+  <div class="mt-12 flex justify-between">
+    <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-tab')" />
     <EGButton
       :disabled="!canLaunch"
       :loading="isLaunchingWorkflow"

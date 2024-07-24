@@ -182,6 +182,10 @@
       "type": "runtime"
     },
     {
+      "name": "short-unique-id",
+      "type": "runtime"
+    },
+    {
       "name": "uuid",
       "type": "runtime"
     }

@@ -5,6 +5,7 @@ export type UploadFileRequest = {
 
 export type RequestFileUploadManifest = {
   LaboratoryId: string,
+  TransactionId: string,
   Files: UploadFileRequest[]
 };
 

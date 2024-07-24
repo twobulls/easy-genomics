@@ -9,6 +9,7 @@ export const UploadFileRequestSchema = z
 export const RequestFileUploadManifestSchema = z
   .object({
     LaboratoryId: z.string().uuid(),
+    TransactionId: z.string().uuid(),
     Files: z.array(UploadFileRequestSchema),
   })
   .strict();

@@ -9,7 +9,6 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import ShortUniqueId from 'short-unique-id';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 
 const EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT: number = 5 * Math.pow(1024, 3); // 5GiB
@@ -38,8 +37,6 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     const userId = event.requestContext.authorizer.claims['cognito:username'];
-    // Short unique random ID to collate the uploaded files
-    const transactionId: string = new ShortUniqueId().stamp(32);
 
     // Post Request Body
     const request: RequestFileUploadManifest = event.isBase64Encoded
@@ -49,6 +46,13 @@ export const handler: Handler = async (
     if (!RequestFileUploadManifestSchema.safeParse(request).success) throw new Error('Invalid request');
 
     const laboratoryId: string = request.LaboratoryId;
+    /**
+     * Random UUID transactionId received from FE to collate the uploaded files.
+     * It is necessary for the FE to generate and maintain this transactionId
+     * so the FE can allow the user to upload additional files to the same S3
+     * location if required.
+     */
+    const transactionId: string = request.TransactionId;
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     const s3Bucket: string | undefined = laboratory.S3Bucket;
     if (!s3Bucket) {

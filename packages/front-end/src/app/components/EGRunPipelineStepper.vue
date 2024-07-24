@@ -249,7 +249,7 @@
     <EGEmptyDataCTA
       message="Your Workflow Run has Launched! Check on your progress via Runs."
       :primary-button-action="() => $router.go(-1)"
-      primary-button-label="Back to Runs"
+      primary-button-label="Back to Pipelines"
       :secondary-button-action="() => resetRunPipeline()"
       secondary-button-label="Launch Another Workflow Run"
       img-src="/images/empty-state-launched.jpg"

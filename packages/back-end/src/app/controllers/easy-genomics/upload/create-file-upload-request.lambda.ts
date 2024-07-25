@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { createHash } from 'crypto';
 import { RequestFileUploadManifestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/upload/s3-file-upload-manifest';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import {
@@ -21,7 +21,7 @@ const laboratoryService = new LaboratoryService();
  *
  * This API checks each of the file's sizes and generates list of S3 URLs for
  * each of the filenames for the FE. The generated S3 URLs are then used by the
- * FE to request a signed-url to perform the upload.
+ * FE to generate a signed-url to perform the upload securely.
  *
  * By only requesting the signed-url at the time needed, it will minimise the
  * duration of the signed-url's expiry window to enhance security.
@@ -70,7 +70,7 @@ export const handler: Handler = async (
          */
         const s3Key: string = `uploads/${laboratoryId}/${transactionId}/${file.Name}`;
         const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
-        const s3UrlChecksum: string = createHmac('sha256', process.env.HMAC_SECRET_KEY).update(s3Url).digest('hex');
+        const s3UrlChecksum: string = createHash('sha256').update(s3Url).digest('hex');
 
         return {
           ...file,

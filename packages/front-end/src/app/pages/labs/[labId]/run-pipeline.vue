@@ -59,10 +59,10 @@
   />
   <EGRunPipelineStepper @has-launched="hasLaunched = true" />
   <EGDialog
-    action-label="Cancel Workflow Run"
+    action-label="Cancel Pipeline Run"
     :action-variant="ButtonVariantEnum.enum.destructive"
     @action-triggered="handleDialogAction"
-    primary-message="Are you sure you would like to exit this Workflow?"
+    primary-message="Are you sure you would like to cancel?"
     secondary-message="Any changes made or files uploaded will not be saved."
     v-model="isDialogOpen"
   />

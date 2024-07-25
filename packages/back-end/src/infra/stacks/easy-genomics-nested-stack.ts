@@ -81,6 +81,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
+        '/easy-genomics/upload/create-file-upload-request': {
+          environment: {
+            HMAC_SECRET_KEY: this.props.secretKey,
+          },
+        },
       },
       environment: {
         // Defines the common environment settings for all lambda functions
@@ -683,6 +688,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
         resources: ['arn:aws:s3:::*'],
         actions: ['s3:ListAllMyBuckets'],
         effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/upload/create-file-upload-request
+    this.iam.addPolicyStatements('/easy-genomics/upload/create-file-upload-request', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
       }),
     ]);
   };

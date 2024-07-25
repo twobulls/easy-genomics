@@ -259,6 +259,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     'base64-js',
     'dotenv',
     'jsonwebtoken',
+    'short-unique-id',
     'uuid',
   ],
   devDeps: [

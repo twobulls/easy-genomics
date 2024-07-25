@@ -27,7 +27,7 @@
 
   watch([isDialogOpen, backNavigationInProgress], ([dialogOpen, navigatingBack]) => {
     if (dialogOpen) {
-      nextRoute.value = null; // Reset the nextRoute value
+      nextRoute.value = null;
       return; // If the dialog is still open, return and don't execute the routing logic
     }
     if (!navigatingBack && nextRoute.value && isDialogOpen.value) {

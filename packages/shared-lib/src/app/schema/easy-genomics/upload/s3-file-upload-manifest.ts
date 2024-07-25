@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// create-file-upload-request API manifest request validation schemas
 export const UploadFileRequestSchema = z
   .object({
     Name: z.string(),

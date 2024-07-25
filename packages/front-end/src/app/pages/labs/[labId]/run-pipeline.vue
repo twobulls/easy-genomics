@@ -8,7 +8,6 @@
   const isDialogOpen = ref(false);
   const hasLaunched = ref(false);
   const exitConfirmed = ref(false);
-  const hasClickedClose = ref(false);
   let backNavigationInProgress = ref(false);
   let nextRoute = ref(null);
 
@@ -16,7 +15,8 @@
    * Intercept any navigation away from the page (including the browser back button) and present the modal
    */
   onBeforeRouteLeave((to, from, next) => {
-    if (!exitConfirmed.value) {
+    if (hasLaunched.value) next(true);
+    else if (!exitConfirmed.value) {
       handleExitRun();
       nextRoute.value = to.path;
       next(false);
@@ -26,7 +26,6 @@
   });
 
   watch([isDialogOpen, backNavigationInProgress], ([dialogOpen, navigatingBack]) => {
-    console.log(isDialogOpen.value);
     if (dialogOpen) {
       nextRoute.value = null; // Reset the nextRoute value
       return; // If the dialog is still open, return and don't execute the routing logic
@@ -39,9 +38,9 @@
 
   function handleDialogAction() {
     exitConfirmed.value = true;
-    isDialogOpen.value = false; // Manually close the dialog
+    isDialogOpen.value = false;
     backNavigationInProgress.value = true;
-    $router.go(-1); // Then go back in the history
+    $router.go(-1);
     backNavigationInProgress.value = false;
   }
 

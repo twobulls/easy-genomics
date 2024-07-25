@@ -1,12 +1,70 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
+  import { ButtonVariantEnum } from '~/types/buttons';
+
+  const $router = useRouter();
   const labName = usePipelineRunStore().labName;
+
+  const isDialogOpen = ref(false);
+  const hasLaunched = ref(false);
+  const exitConfirmed = ref(false);
+  const hasClickedClose = ref(false);
+  let backNavigationInProgress = ref(false);
+  let nextRoute = ref(null);
+
+  /**
+   * Intercept any navigation away from the page (including the browser back button) and present the modal
+   */
+  onBeforeRouteLeave((to, from, next) => {
+    if (!exitConfirmed.value) {
+      handleExitRun();
+      nextRoute.value = to.path;
+      next(false);
+    } else {
+      next(true);
+    }
+  });
+
+  watch([isDialogOpen, backNavigationInProgress], ([dialogOpen, navigatingBack]) => {
+    console.log(isDialogOpen.value);
+    if (dialogOpen) {
+      nextRoute.value = null; // Reset the nextRoute value
+      return; // If the dialog is still open, return and don't execute the routing logic
+    }
+    if (!navigatingBack && nextRoute.value && isDialogOpen.value) {
+      $router.push(nextRoute.value);
+      nextRoute.value = null;
+    }
+  });
+
+  function handleDialogAction() {
+    exitConfirmed.value = true;
+    isDialogOpen.value = false; // Manually close the dialog
+    backNavigationInProgress.value = true;
+    $router.go(-1); // Then go back in the history
+    backNavigationInProgress.value = false;
+  }
+
+  function handleExitRun() {
+    isDialogOpen.value = true;
+  }
 </script>
 
 <template>
-  <EGPageHeader title="Run Pipeline" :description="labName">
-    <!-- TODO: wire up Cancel Job -->
-    <!--    <EGButton variant="secondary" label="Cancel job" @click="() => {}" />-->
-  </EGPageHeader>
-  <EGRunPipelineStepper />
+  <EGPageHeader
+    title="Run Pipeline"
+    :description="labName"
+    :show-back-button="!hasLaunched"
+    :back-button-action="handleExitRun"
+    back-button-label="Exit Run"
+  />
+  <EGRunPipelineStepper @has-launched="hasLaunched = true" />
+  <EGDialog
+    action-label="Cancel Workflow Run"
+    :action-variant="ButtonVariantEnum.enum.destructive"
+    @action-triggered="handleDialogAction"
+    primary-message="Are you sure you would like to exit this Workflow?"
+    secondary-message="Any changes made or files uploaded will not be saved."
+    v-model="isDialogOpen"
+  />
 </template>

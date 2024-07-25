@@ -14,6 +14,10 @@
   const selectedIndex = ref(0);
   const hasLaunched = ref(false);
 
+  const emit = defineEmits<{
+    (event: 'has-launched');
+  }>();
+
   const items = ref([
     {
       disabled: false,
@@ -143,6 +147,7 @@
 
   function handleLaunchSuccess() {
     hasLaunched.value = true;
+    emit('has-launched');
   }
 
   // Update the URL query when the selected tab changes.

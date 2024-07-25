@@ -36,8 +36,6 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    const userId = event.requestContext.authorizer.claims['cognito:username'];
-
     // Post Request Body
     const request: RequestFileUploadManifest = event.isBase64Encoded
       ? JSON.parse(atob(event.body!))
@@ -68,9 +66,9 @@ export const handler: Handler = async (
         throw new Error(`File size is too large: '${file.Name}'`);
       } else {
         /**
-         * The S3 Key will consist of: /uploads/{cognito userId}/{transactionId}/{file name}
+         * The S3 Key will consist of: /uploads/{laboratoryId}/{transactionId}/{file name}
          */
-        const s3Key: string = `uploads/${userId}/${transactionId}/${file.Name}`;
+        const s3Key: string = `uploads/${laboratoryId}/${transactionId}/${file.Name}`;
         const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
         const s3UrlChecksum: string = createHmac('sha256', process.env.HMAC_SECRET_KEY).update(s3Url).digest('hex');
 

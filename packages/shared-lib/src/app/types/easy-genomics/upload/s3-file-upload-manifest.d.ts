@@ -1,21 +1,21 @@
-// create-file-upload-request API manifest request & response type definitions
-export type RequestFileUploadManifest = {
+// create-file-upload-request API FileUploadRequest & FileUploadManifest type definitions
+export type FileUploadRequest = {
   LaboratoryId: string,
   TransactionId: string,
-  Files: UploadFileRequest[]
+  Files: FileInfo[]
 };
 
-export type UploadFileRequest = {
+export type FileInfo = {
   Name: string,
   Size: number,
 };
 
-export type ResponseFileUploadManifest = {
+export type FileUploadManifest = {
   TransactionId: string,
-  Files: UploadFileResponse[]
+  Files: FileUploadInfo[]
 };
 
-export type UploadFileResponse = {
+export type FileUploadInfo = {
   Name: string,
   Size: number,
   Bucket: string,
@@ -23,10 +23,10 @@ export type UploadFileResponse = {
   S3Url: string,
   S3UrlChecksum: string,
   UploadId?: string,
-  MultiParts?: UploadFilePart[],
+  MultiParts?: FileUploadPartInfo[],
 }
 
-export type UploadFilePart = {
+export type FileUploadPartInfo = {
   PartNo: number,
   Start: number,
   End: number,

@@ -1,11 +1,11 @@
 import { createHash } from 'crypto';
-import { RequestFileUploadManifestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/upload/s3-file-upload-manifest';
+import { FileUploadRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/upload/s3-file-upload-manifest';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import {
-  RequestFileUploadManifest,
-  ResponseFileUploadManifest,
-  UploadFileRequest,
-  UploadFileResponse,
+  FileUploadRequest,
+  FileUploadManifest,
+  FileInfo,
+  FileUploadInfo,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -37,11 +37,9 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     // Post Request Body
-    const request: RequestFileUploadManifest = event.isBase64Encoded
-      ? JSON.parse(atob(event.body!))
-      : JSON.parse(event.body!);
+    const request: FileUploadRequest = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!RequestFileUploadManifestSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!FileUploadRequestSchema.safeParse(request).success) throw new Error('Invalid request');
 
     const laboratoryId: string = request.LaboratoryId;
     /**
@@ -57,7 +55,7 @@ export const handler: Handler = async (
       throw new Error(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
     }
 
-    const files: UploadFileResponse[] = request.Files.map((file: UploadFileRequest) => {
+    const files: FileUploadInfo[] = request.Files.map((file: FileInfo) => {
       /**
        * If a file size is greater than the EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT then throw an error,
        * otherwise default to generating a single upload S3 URL for the respective file.
@@ -82,7 +80,7 @@ export const handler: Handler = async (
       }
     });
 
-    const response: ResponseFileUploadManifest = {
+    const response: FileUploadManifest = {
       TransactionId: transactionId,
       Files: files,
     };

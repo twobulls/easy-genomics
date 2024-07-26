@@ -1,14 +1,14 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import IconsResolver from 'unplugin-icons/resolver';
-import Icons from 'unplugin-icons/vite';
-import Components from 'unplugin-vue-components/vite';
+import { join } from 'path';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 import {
   findConfiguration,
   getStackEnvName,
   loadConfigurations,
 } from '@easy-genomics/shared-lib/src/app/utils/configuration';
-import { join } from 'path';
+import IconsResolver from 'unplugin-icons/resolver';
+import Icons from 'unplugin-icons/vite';
+import Components from 'unplugin-vue-components/vite';
 
 let awsRegion: string | undefined;
 let awsCognitoUserPoolId: string | undefined;
@@ -62,13 +62,9 @@ export default defineNuxtConfig({
   },
 
   devtools: { enabled: true },
-
   modules: ['@nuxt/ui', '@pinia/nuxt', '@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt'],
-
   srcDir: 'src/app/',
-
   css: ['@/styles/main.scss'],
-
   ssr: false,
 
   build: {
@@ -112,4 +108,6 @@ export default defineNuxtConfig({
       },
     },
   },
+
+  compatibilityDate: '2024-07-26',
 });

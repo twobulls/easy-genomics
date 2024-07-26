@@ -60,7 +60,7 @@
       return;
     }
 
-    const files: FilePairsForTable = e.dataTransfer?.files;
+    const files = e.dataTransfer?.files;
     if (!files) return;
 
     processFilePairsForTable(files);
@@ -72,13 +72,13 @@
       return;
     }
 
-    const files: FilePairsForTable = e.target.files;
+    const files: FileList = e.target.files;
     if (!files) return;
 
     processFilePairsForTable(files);
   }
 
-  function processFilePairsForTable(files: FilePairsForTable) {
+  function processFilePairsForTable(files: FileList) {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       addFile(file);
@@ -186,6 +186,14 @@
             drop your files
             <span :class="cn('visible', { 'invisible': isDropzoneActive })">here or</span>
           </div>
+          <input
+            ref="chooseFilesButton"
+            type="file"
+            id="dropzoneFiles"
+            @change="handleFileInputChange"
+            hidden
+            multiple
+          />
           <EGButton
             :class="cn('visible ml-4', { 'invisible': isDropzoneActive })"
             @click="chooseFiles"

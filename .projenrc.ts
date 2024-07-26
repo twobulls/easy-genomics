@@ -104,6 +104,14 @@ const root = new typescript.TypeScriptProject({
   eslint: true,
   jest: true,
   jestOptions: jestOptions,
+  githubOptions: {
+    pullRequestLintOptions: {
+      semanticTitle: true,
+      semanticTitleOptions: {
+        types: ['feat', 'fix', 'hotfix', 'release', 'refactor', 'chore', 'docs', 'infra'],
+      },
+    },
+  },
   homepage: 'https://github.com/twobulls/easy-genomics',
   license: 'Apache-2.0',
   licensed: true,
@@ -251,6 +259,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     'base64-js',
     'dotenv',
     'jsonwebtoken',
+    'short-unique-id',
     'uuid',
   ],
   devDeps: [
@@ -386,6 +395,7 @@ new VscodeSettings(root);
 new Nx(root);
 new Husky(root);
 new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion });
+new GithubActionsCICDRelease(root, { environment: 'sandbox', pnpmVersion: pnpmVersion, onPushBranch: 'infra/*' });
 
 // Provision templated project folders structure with README.md descriptions.
 setupProjectFolders(root);

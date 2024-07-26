@@ -10,7 +10,7 @@
     isLoading?: boolean;
   }>();
 
-  const $emit = defineEmits(['update-user']);
+  const emit = defineEmits(['update-user']);
   const { UserId, OrganizationId, UserEmail, OrganizationUserStatus } = props.user;
   const toggleVal = ref(props.user.OrganizationAdmin);
   const displayName = useUser().displayName({
@@ -24,7 +24,7 @@
     toggleVal.value = !toggleVal.value;
     try {
       await $api.orgs.editOrgUser(OrganizationId, UserId, OrganizationUserStatus, toggleVal.value);
-      $emit('update-user');
+      emit('update-user');
       useToastStore().success(`${displayName}’s Lab Access has been successfully updated`);
     } catch (error) {
       useToastStore().error(VALIDATION_MESSAGES.network);

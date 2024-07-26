@@ -48,6 +48,7 @@ jspm_packages/
 !/.husky/commit-msg
 !/.husky/pre-commit
 !/.github/workflows/cicd-release-quality.yml
+!/.github/workflows/cicd-release-sandbox.yml
 !/packages/back-end/src/app/README.md
 !/packages/back-end/src/app/controllers/README.md
 !/packages/back-end/src/app/controllers/easy-genomics/README.md

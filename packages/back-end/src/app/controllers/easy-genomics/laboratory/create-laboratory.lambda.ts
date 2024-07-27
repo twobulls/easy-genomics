@@ -37,20 +37,10 @@ export const handler: Handler = async (
       throw new Error(`Laboratory creation error, OrganizationId '${request.OrganizationId}' not found`);
     }
 
-    const s3BucketId: string = `${crypto.randomBytes(16).toString('hex')}`;
-    const s3BucketName: string = `${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketId}`;
-    console.log(`Creating S3 Bucket with Name: ${s3BucketName}`);
-
-    // S3 bucket names must between 3 - 63 characters long, and globally unique
-    if (s3BucketName.length < 3 || s3BucketName.length > 63) {
-      throw new Error(
-        `Laboratory creation error, unable to create Laboratory S3 Bucket due to invalid length of bucket name; s3BucketName: ${s3BucketName} ${s3BucketName.length}-characters; min: 3, max: 63`,
-      );
+    const s3BucketGivenName: string | undefined = request.S3Bucket;
+    if (s3BucketGivenName) {
+      await createS3Bucket(s3BucketGivenName);
     }
-
-    // Create S3 Bucket for Laboratory
-    const createS3BucketResult = await s3Service.createBucket({ Bucket: s3BucketName });
-    console.log(`S3 Bucket Created: ${JSON.stringify(createS3BucketResult)}`);
 
     const laboratoryId: string = uuidv4();
 
@@ -60,7 +50,7 @@ export const handler: Handler = async (
       Name: request.Name,
       Description: request.Description,
       Status: 'Active',
-      S3Bucket: request.S3Bucket,
+      S3Bucket: s3BucketGivenName,
       AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
       NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,
       NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
@@ -95,4 +85,20 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
+}
+
+async function createS3Bucket(s3BucketGivenName: string) {
+  const s3BucketFullName: string = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketGivenName}`;
+  console.log(`Creating S3 Bucket: ${s3BucketFullName}`);
+
+  // S3 bucket names must between 3 - 63 characters long, and globally unique
+  if (s3BucketFullName.length < 3 || s3BucketFullName.length > 63) {
+    throw new Error(
+      `Laboratory creation error, unable to create Laboratory S3 Bucket due to invalid length of bucket name; s3BucketGivenName: ${s3BucketGivenName} is too long`,
+    );
+  }
+
+  // Create S3 Bucket for Laboratory
+  const createS3BucketResult = await s3Service.createBucket({ Bucket: s3BucketFullName });
+  console.log(`S3 Bucket Created: ${JSON.stringify(createS3BucketResult)}`);
 }

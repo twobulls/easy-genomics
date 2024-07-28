@@ -143,10 +143,6 @@
       "type": "runtime"
     },
     {
-      "name": "aws-sdk",
-      "type": "runtime"
-    },
-    {
       "name": "class-variance-authority",
       "type": "runtime"
     },

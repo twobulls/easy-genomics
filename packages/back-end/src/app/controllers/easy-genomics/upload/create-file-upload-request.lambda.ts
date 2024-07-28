@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { GetBucketLocationCommandOutput } from '@aws-sdk/client-s3';
 import { FileUploadRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/upload/s3-file-upload-manifest';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import {
@@ -10,10 +11,12 @@ import {
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
+import { S3Service } from '../../../services/s3-service';
 
 const EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT: number = 5 * Math.pow(1024, 3); // 5GiB
 
 const laboratoryService = new LaboratoryService();
+const s3Service = new S3Service();
 
 /**
  * This API expects a LaboratoryId and a list of file details (consisting of the
@@ -50,10 +53,30 @@ export const handler: Handler = async (
      */
     const transactionId: string = request.TransactionId;
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
-    const s3Bucket: string | undefined = laboratory.S3Bucket;
-    if (!s3Bucket) {
+    const s3BucketGivenName: string | undefined = laboratory.S3Bucket;
+    if (!s3BucketGivenName) {
       throw new Error(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
     }
+    // Reconstruct S3 Bucket Full Names
+    const s3BucketFullName = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketGivenName}`;
+    // Retrieve S3 Bucket Region and also sanity check S3 Bucket exists still
+    const bucketLocation = await s3Service
+      .getBucketLocation({
+        Bucket: s3BucketFullName,
+      })
+      .then(async (result: GetBucketLocationCommandOutput) => {
+        if (result.$metadata.httpStatusCode === 200) {
+          return result.LocationConstraint;
+        } else {
+          throw new Error(`Laboratory ${laboratoryId} S3 Bucket access error: ${result.$metadata.httpStatusCode}`);
+        }
+      })
+      .catch((error) => {
+        throw new Error(`Laboratory ${laboratoryId} S3 Bucket access error: ${error.toString()}`);
+      });
+
+    // S3 Buckets in Region us-east-1 have a LocationConstraint of null.
+    const s3Region: string = bucketLocation ? bucketLocation : 'us-east-1';
 
     const files: FileUploadInfo[] = request.Files.map((file: FileInfo) => {
       /**
@@ -67,13 +90,14 @@ export const handler: Handler = async (
          * The S3 Key will consist of: /uploads/{laboratoryId}/{transactionId}/{file name}
          */
         const s3Key: string = `uploads/${laboratoryId}/${transactionId}/${file.Name}`;
-        const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
+        const s3Url: string = `s3://${s3BucketFullName}/${s3Key}`;
         const s3UrlChecksum: string = createHash('sha256').update(s3Url).digest('hex');
 
         return {
           ...file,
-          Bucket: s3Bucket,
+          Bucket: s3BucketFullName,
           Key: s3Key,
+          Region: s3Region,
           S3Url: s3Url,
           S3UrlChecksum: s3UrlChecksum, // Security check to prevent spoofing
         };

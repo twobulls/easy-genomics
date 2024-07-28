@@ -20,6 +20,7 @@ export type FileUploadInfo = {
   Size: number,
   Bucket: string,
   Key: string,
+  Region: string,
   S3Url: string,
   S3UrlChecksum: string,
   UploadId?: string,

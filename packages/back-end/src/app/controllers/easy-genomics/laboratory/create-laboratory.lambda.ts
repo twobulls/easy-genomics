@@ -99,7 +99,9 @@ function getS3BucketGivenName(s3BucketGivenName?: string): string | undefined {
   if (!s3BucketGivenName) {
     return undefined;
   } else {
-    return s3BucketGivenName.trim().toLowerCase()
+    return s3BucketGivenName
+      .trim()
+      .toLowerCase()
       .replace(/[\s-]/g, '_')
       .replace(/[^a-zA-Z0-9._]/g, '');
   }

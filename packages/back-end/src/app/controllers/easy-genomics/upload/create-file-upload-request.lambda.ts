@@ -79,6 +79,14 @@ export const handler: Handler = async (
     const s3Region: string = bucketLocation ? bucketLocation : 'us-east-1';
 
     const files: FileUploadInfo[] = request.Files.map((file: FileInfo) => {
+      // Sanity checks
+      if (file.Name.length === 0) {
+        throw new Error(`File name is invalid: '${file.Name}'`);
+      }
+      if (file.Size === 0) {
+        throw new Error(`File size is invalid: '${file.Name}'`);
+      }
+
       /**
        * If a file size is greater than the EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT then throw an error,
        * otherwise default to generating a single upload S3 URL for the respective file.

@@ -155,9 +155,6 @@ importers:
       aws-lambda:
         specifier: ^1.0.7
         version: 1.0.7
-      aws-sdk:
-        specifier: ^2.1549.0
-        version: 2.1661.0
       base64-js:
         specifier: ^1.5.1
         version: 1.5.1
@@ -264,9 +261,6 @@ importers:
       aws-cdk-lib:
         specifier: ^2.124.0
         version: 2.150.0(constructs@10.3.0)
-      aws-sdk:
-        specifier: ^2.1549.0
-        version: 2.1661.0
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0

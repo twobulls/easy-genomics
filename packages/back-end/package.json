@@ -70,7 +70,6 @@
     "@easy-genomics/shared-lib": "workspace:*",
     "aws-cdk-lib": "^2.124.0",
     "aws-lambda": "^1.0.7",
-    "aws-sdk": "^2.1549.0",
     "base64-js": "^1.5.1",
     "constructs": "^10.0.5",
     "dotenv": "^16.4.1",

@@ -1,3 +1,4 @@
+import { marshall } from '@aws-sdk/util-dynamodb';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
@@ -14,7 +15,6 @@ import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user
 import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { AwsCustomResource, AwsCustomResourcePolicy } from 'aws-cdk-lib/custom-resources';
-import { DynamoDB } from 'aws-sdk';
 import { Construct } from 'constructs';
 import { CognitoUserConstruct } from '../constructs/cognito-user-construct';
 import { DataProvisioningNestedStackProps } from '../types/back-end-stack';
@@ -105,7 +105,7 @@ export class DataProvisioningNestedStack extends NestedStack {
           action: 'putItem',
           parameters: {
             TableName: tableName,
-            Item: DynamoDB.Converter.input(testRecord).M,
+            Item: marshall(testRecord),
           },
           physicalResourceId: {
             id: `${tableName}_InitData`,
@@ -125,7 +125,7 @@ export class DataProvisioningNestedStack extends NestedStack {
 
     if (table) {
       const batchItems = testRecords.map((testRecord) => {
-        return { PutRequest: { Item: DynamoDB.Converter.input(testRecord).M } };
+        return { PutRequest: { Item: marshall(testRecord) } };
       });
 
       new AwsCustomResource(this, `${tableName}_InitData`, {

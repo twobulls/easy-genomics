@@ -122,7 +122,6 @@ export class LambdaConstruct extends Construct {
       handler: 'handler',
       tracing: aws_lambda.Tracing.ACTIVE,
       bundling: {
-        externalModules: ['aws-sdk'],
         loader: { '.hbs': 'text' },
       },
       logRetention: RetentionDays.ONE_DAY,

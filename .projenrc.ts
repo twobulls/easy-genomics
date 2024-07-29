@@ -21,7 +21,7 @@ import { VscodeSettings } from './projenrc/vscode';
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.124.0';
 const nodeVersion = '20.15.0';
-const pnpmVersion = '9.4.0';
+const pnpmVersion = '9.6.0';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;

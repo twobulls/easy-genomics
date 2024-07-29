@@ -17,11 +17,13 @@ import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { AwsCustomResource, AwsCustomResourcePolicy } from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 import { CognitoUserConstruct } from '../constructs/cognito-user-construct';
+import { S3Construct } from '../constructs/s3-construct';
 import { DataProvisioningNestedStackProps } from '../types/back-end-stack';
 
 export class DataProvisioningNestedStack extends NestedStack {
   private props: DataProvisioningNestedStackProps;
   private cognitoUserConstruct: CognitoUserConstruct;
+  private s3Construct: S3Construct;
 
   constructor(scope: Construct, id: string, props: DataProvisioningNestedStackProps) {
     super(scope, id, props);
@@ -33,6 +35,8 @@ export class DataProvisioningNestedStack extends NestedStack {
       devEnv: this.props.devEnv,
       userPool: this.props.userPool,
     });
+    // Setup S3 Construct
+    this.s3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-bucket`, {});
 
     try {
       // Add System Admin User Account
@@ -55,11 +59,19 @@ export class DataProvisioningNestedStack extends NestedStack {
         Type: 'organization-name',
       });
 
-      this.addDynamoDBSeedData<Laboratory>(`${this.props.namePrefix}-laboratory-table`, laboratory);
+      const s3BucketGivenName = 'test-bucket'; // Name of S3 bucket for provisioned 'Test Laboratory' record
+      // S3 Bucket Names must be globally unique
+      const s3BucketFullName = `${this.props.env.account!}-${this.props.namePrefix}-easy-genomics-lab-${s3BucketGivenName}`;
+      this.addDynamoDBSeedData<Laboratory>(`${this.props.namePrefix}-laboratory-table`, {
+        ...laboratory,
+        S3Bucket: s3BucketGivenName, // Only save the S3 Bucket's Given Name in Laboratory DynamoDB record
+      });
       uniqueReferences.push({
         Value: laboratory.Name.toLowerCase(),
         Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
       });
+      // Add corresponding S3 Bucket for seeded 'Test Laboratory'
+      this.s3Construct.createBucket(s3BucketFullName, this.props.devEnv);
 
       if (this.props.testUserEmail && this.props.testUserPassword) {
         try {

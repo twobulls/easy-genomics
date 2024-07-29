@@ -167,9 +167,6 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.2
-      short-unique-id:
-        specifier: ^5.2.0
-        version: 5.2.0
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
@@ -243,6 +240,9 @@ importers:
       '@aws-amplify/ui-vue':
         specifier: 3.1.30
         version: 3.1.30(@types/node@20.14.13)(aws-amplify@5.3.18(react-native@0.74.3(@babel/core@7.24.9)(@babel/preset-env@7.25.0(@babel/core@7.24.9))(react@18.2.0)))(vue@3.4.34(typescript@5.5.4))
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.620.0
+        version: 3.620.0
       '@easy-genomics/shared-lib':
         specifier: workspace:*
         version: link:../shared-lib
@@ -255,6 +255,12 @@ importers:
       '@pinia/nuxt':
         specifier: ^0.5.1
         version: 0.5.2(magicast@0.3.4)(rollup@4.19.1)(typescript@5.5.4)(vue@3.4.34(typescript@5.5.4))
+      '@smithy/types':
+        specifier: ^3.3.0
+        version: 3.3.0
+      '@smithy/url-parser':
+        specifier: ^3.0.3
+        version: 3.0.3
       aws-amplify:
         specifier: 5.3.18
         version: 5.3.18(react-native@0.74.3(@babel/core@7.24.9)(@babel/preset-env@7.25.0(@babel/core@7.24.9))(react@18.2.0))
@@ -1121,6 +1127,10 @@ packages:
     resolution: {integrity: sha512-vDCeMXvic/LU0KFIUjpC3RiSTIkkvESsEfbVHiHH0YINfl8HnEqR5rj+L8+phsCeVg2+LmYwYxd5NRz4PHxt5g==}
     engines: {node: '>=16.0.0'}
 
+  '@aws-sdk/s3-request-presigner@3.620.0':
+    resolution: {integrity: sha512-mGSy6YqP5nErZduPjFu69atUM6PJJaL2uLbZCO/WmEXGB/bqhDH3wYEybsZABOqzT88boMF91npoqBNgqTeDGA==}
+    engines: {node: '>=16.0.0'}
+
   '@aws-sdk/service-error-classification@3.186.0':
     resolution: {integrity: sha512-DRl3ORk4tF+jmH5uvftlfaq0IeKKpt0UPAOAFQ/JFWe+TjOcQd/K+VC0iiIG97YFp3aeFmH1JbEgsNxd+8fdxw==}
     engines: {node: '>= 12.0.0'}
@@ -1245,6 +1255,10 @@ packages:
 
   '@aws-sdk/util-endpoints@3.614.0':
     resolution: {integrity: sha512-wK2cdrXHH4oz4IomV/yrGkftU9A+ITB6nFL+rxxyO78is2ifHJpFdV4aqk4LSkXYPi6CXWNru/Dqc7yiKXgJPw==}
+    engines: {node: '>=16.0.0'}
+
+  '@aws-sdk/util-format-url@3.609.0':
+    resolution: {integrity: sha512-fuk29BI/oLQlJ7pfm6iJ4gkEpHdavffAALZwXh9eaY1vQ0ip0aKfRTiNudPoJjyyahnz5yJ1HkmlcDitlzsOrQ==}
     engines: {node: '>=16.0.0'}
 
   '@aws-sdk/util-hex-encoding@3.186.0':
@@ -8609,10 +8623,6 @@ packages:
   shell-quote@1.8.1:
     resolution: {integrity: sha512-6j1W9l1iAs/4xYBI1SYOVZyFcCis9b4KCLQ8fgAGG07QvzaRLVVRQvAy85yNmmZSjYjg4MWh4gNvlPujU/5LpA==}
 
-  short-unique-id@5.2.0:
-    resolution: {integrity: sha512-cMGfwNyfDZ/nzJ2k2M+ClthBIh//GlZl1JEf47Uoa9XR11bz8Pa2T2wQO4bVrRdH48LrIDWJahQziKo3MjhsWg==}
-    hasBin: true
-
   side-channel@1.0.6:
     resolution: {integrity: sha512-fDW/EZ6Q9RiO8eFG8Hj+7u/oW+XrPTIChwCOM2+th2A6OblDtYYIpve9m+KvI9Z4C9qSEXlaGR6bTEYHReuglA==}
     engines: {node: '>= 0.4'}
@@ -11911,6 +11921,17 @@ snapshots:
       '@smithy/util-middleware': 3.0.3
       tslib: 2.6.3
 
+  '@aws-sdk/s3-request-presigner@3.620.0':
+    dependencies:
+      '@aws-sdk/signature-v4-multi-region': 3.620.0
+      '@aws-sdk/types': 3.609.0
+      '@aws-sdk/util-format-url': 3.609.0
+      '@smithy/middleware-endpoint': 3.1.0
+      '@smithy/protocol-http': 4.1.0
+      '@smithy/smithy-client': 3.1.11
+      '@smithy/types': 3.3.0
+      tslib: 2.6.3
+
   '@aws-sdk/service-error-classification@3.186.0': {}
 
   '@aws-sdk/service-error-classification@3.6.1': {}
@@ -12077,6 +12098,13 @@ snapshots:
       '@aws-sdk/types': 3.609.0
       '@smithy/types': 3.3.0
       '@smithy/util-endpoints': 2.0.5
+      tslib: 2.6.3
+
+  '@aws-sdk/util-format-url@3.609.0':
+    dependencies:
+      '@aws-sdk/types': 3.609.0
+      '@smithy/querystring-builder': 3.0.3
+      '@smithy/types': 3.3.0
       tslib: 2.6.3
 
   '@aws-sdk/util-hex-encoding@3.186.0':
@@ -21223,8 +21251,6 @@ snapshots:
   shell-exec@1.0.2: {}
 
   shell-quote@1.8.1: {}
-
-  short-unique-id@5.2.0: {}
 
   side-channel@1.0.6:
     dependencies:

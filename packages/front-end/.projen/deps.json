@@ -116,6 +116,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/s3-request-presigner",
+      "type": "runtime"
+    },
+    {
       "name": "@easy-genomics/shared-lib",
       "version": "workspace:*",
       "type": "runtime"
@@ -130,6 +134,14 @@
     },
     {
       "name": "@pinia/nuxt",
+      "type": "runtime"
+    },
+    {
+      "name": "@smithy/types",
+      "type": "runtime"
+    },
+    {
+      "name": "@smithy/url-parser",
       "type": "runtime"
     },
     {

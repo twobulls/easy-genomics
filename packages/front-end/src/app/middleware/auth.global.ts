@@ -41,11 +41,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
       // if user is signed in redirect to Labs page
       if (user && url.pathname === '/signin') {
-        return navigateTo('/labs');
+        return await navigateTo('/labs');
       }
       // if user is not signed in and is trying to acccess an authed page, redirect to sign in page
       if (!user && to.fullPath !== '/signin') {
-        return navigateTo('/signin');
+        return await navigateTo('/signin');
       }
     } catch (e) {
       if (to.fullPath !== '/signin') {

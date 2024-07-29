@@ -21,7 +21,7 @@ import { VscodeSettings } from './projenrc/vscode';
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.124.0';
 const nodeVersion = '20.15.0';
-const pnpmVersion = '9.4.0';
+const pnpmVersion = '9.6.0';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
@@ -255,7 +255,6 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/util-dynamodb',
     '@easy-genomics/shared-lib@workspace:*',
     'aws-lambda',
-    'aws-sdk',
     'base64-js',
     'dotenv',
     'jsonwebtoken',
@@ -325,7 +324,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@pinia-plugin-persistedstate/nuxt',
     '@pinia/nuxt',
     'aws-amplify@5.3.18',
-    'aws-sdk',
     'class-variance-authority',
     'clsx',
     'date-fns',

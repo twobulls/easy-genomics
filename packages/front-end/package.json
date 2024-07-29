@@ -73,7 +73,6 @@
     "@pinia/nuxt": "^0.5.1",
     "aws-amplify": "5.3.18",
     "aws-cdk-lib": "^2.124.0",
-    "aws-sdk": "^2.1549.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "constructs": "^10.0.5",

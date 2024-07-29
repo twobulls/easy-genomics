@@ -186,7 +186,7 @@
     </template>
 
     <template #item="{ item, index }">
-      <EGCard v-if="!hasLaunched">
+      <EGCard v-if="!hasLaunched" class="mb-16">
         <!-- Header -->
         <EGText tag="small" class="mb-4">Step 0{{ selectedIndex + 1 }}</EGText>
         <EGText tag="h4" class="mb-0">{{ items[selectedIndex].label }}</EGText>
@@ -207,7 +207,10 @@
 
         <!-- Upload Data -->
         <template v-if="items[selectedIndex].key === 'upload'">
-          <EGRunPipelineFormUploadData @next-tab="() => nextTab()" />
+          <EGRunPipelineFormUploadData
+            @next-tab="() => nextTab()"
+            @step-validated="setStepEnabled('parameters', $event)"
+          />
         </template>
 
         <!-- Edit Parameters -->

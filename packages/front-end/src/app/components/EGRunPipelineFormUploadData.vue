@@ -16,10 +16,15 @@
     error?: string;
   };
 
-  const emit = defineEmits(['next-tab']);
+  const emit = defineEmits(['next-tab', 'step-validated']);
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
+  const canGetUploadPaths = ref(false);
+  const canGetSignedUrls = ref(false);
+  const canUploadFiles = ref(false);
+  const isUploadProcessRunning = ref(false);
+  const canProceed = ref(false);
   const filesToUpload = ref<File[]>([]);
   // const filePairs: FilePair[] = reactive([]);
   const filePairs = ref<FilePair[]>([]);
@@ -59,7 +64,7 @@
     const files = e.dataTransfer?.files;
     if (!files) return;
 
-    processFilePairsForTable(files);
+    updateFilePairs(files);
   }
 
   function handleFileInputChange(e: Event) {
@@ -76,14 +81,31 @@
     const files: FileList = e.target.files;
     if (!files) return;
 
-    processFilePairsForTable(files);
+    updateFilePairs(files);
   }
 
-  function processFilePairsForTable(files: FileList) {
+  function updateFilePairs(files: FileList) {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       addFile(file);
     }
+
+    validateFilePairs();
+  }
+
+  /**
+   * Validate that each file pair has an R1 and R2 file
+   */
+  function validateFilePairs() {
+    let haveMatchingFilePairs = true;
+    for (const filePair of filePairs.value) {
+      if (!filePair.r1File || !filePair.r2File) {
+        haveMatchingFilePairs = false;
+        break;
+      }
+    }
+
+    canGetUploadPaths.value = haveMatchingFilePairs;
   }
 
   function fileExists(files: File[], newFile: File): boolean {
@@ -151,6 +173,8 @@
     filesToUpload.value = filesToUpload.value.filter((file) => !file.name.startsWith(sampleId));
     filePairs.value = filePairs.value.filter((filePair) => filePair.sampleId !== sampleId);
     console.log('Removed file pair; sampleId:', sampleId);
+
+    validateFilePairs();
   }
 
   function toggleDropzoneActive() {
@@ -169,6 +193,18 @@
 
       return { sampleId, r1File: r1File?.name, r2File: r2File?.name };
     });
+  });
+
+  async function startUploadProcess() {
+    isUploadProcessRunning.value = true;
+    await uploadFiles();
+    isUploadProcessRunning.value = false;
+  }
+
+  async function uploadFiles() {}
+
+  watch(canProceed, (val) => {
+    emit('step-validated', val);
   });
 </script>
 
@@ -239,6 +275,16 @@
       </div>
     </template>
   </UTable>
+
+  <div class="flex justify-end pt-4">
+    <EGButton
+      @click="startUploadProcess"
+      :disabled="!canGetUploadPaths"
+      :loading="isUploadProcessRunning"
+      :size="ButtonSizeEnum.enum.sm"
+      label="Upload Files"
+    />
+  </div>
 </template>
 
 <style lang="scss">

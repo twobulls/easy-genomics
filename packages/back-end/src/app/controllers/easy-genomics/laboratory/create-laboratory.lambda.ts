@@ -37,7 +37,7 @@ export const handler: Handler = async (
       throw new Error(`Laboratory creation error, OrganizationId '${request.OrganizationId}' not found`);
     }
 
-    const s3BucketGivenName: string | undefined = request.S3Bucket;
+    const s3BucketGivenName: string | undefined = getS3BucketGivenName(request.S3Bucket);
     if (s3BucketGivenName) {
       await createS3Bucket(s3BucketGivenName);
     }
@@ -87,7 +87,25 @@ function getErrorMessage(err: any) {
   }
 }
 
-async function createS3Bucket(s3BucketGivenName: string) {
+/**
+ * Helper function to using Regex to clean up S3 Bucket Given Name to satisfy S3
+ * naming requirements:
+ *
+ * https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html
+ *
+ * @param s3BucketGivenName
+ */
+function getS3BucketGivenName(s3BucketGivenName?: string): string | undefined {
+  if (!s3BucketGivenName) {
+    return undefined;
+  } else {
+    return s3BucketGivenName.trim().toLowerCase()
+      .replace(/[\s-]/g, '_')
+      .replace(/[^a-zA-Z0-9._]/g, '');
+  }
+}
+
+async function createS3Bucket(s3BucketGivenName: string): Promise<void> {
   const s3BucketFullName: string = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketGivenName}`;
   console.log(`Creating S3 Bucket: ${s3BucketFullName}`);
 

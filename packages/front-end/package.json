@@ -67,10 +67,13 @@
   },
   "dependencies": {
     "@aws-amplify/ui-vue": "3.1.30",
+    "@aws-sdk/s3-request-presigner": "^3.620.0",
     "@easy-genomics/shared-lib": "workspace:*",
     "@nuxt/ui": "^2.15.0",
     "@pinia-plugin-persistedstate/nuxt": "^1.2.0",
     "@pinia/nuxt": "^0.5.1",
+    "@smithy/types": "^3.3.0",
+    "@smithy/url-parser": "^3.0.3",
     "aws-amplify": "5.3.18",
     "aws-cdk-lib": "^2.124.0",
     "class-variance-authority": "^0.7.0",

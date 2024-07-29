@@ -74,7 +74,6 @@
     "constructs": "^10.0.5",
     "dotenv": "^16.4.1",
     "jsonwebtoken": "^9.0.2",
-    "short-unique-id": "^5.2.0",
     "uuid": "^8.3.2"
   },
   "engines": {

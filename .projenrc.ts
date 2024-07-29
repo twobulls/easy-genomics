@@ -258,7 +258,6 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     'base64-js',
     'dotenv',
     'jsonwebtoken',
-    'short-unique-id',
     'uuid',
   ],
   devDeps: [
@@ -319,10 +318,13 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   },
   deps: [
     '@aws-amplify/ui-vue@3.1.30',
+    '@aws-sdk/s3-request-presigner',
     '@easy-genomics/shared-lib@workspace:*',
     '@nuxt/ui',
     '@pinia-plugin-persistedstate/nuxt',
     '@pinia/nuxt',
+    '@smithy/types',
+    '@smithy/url-parser',
     'aws-amplify@5.3.18',
     'class-variance-authority',
     'date-fns',

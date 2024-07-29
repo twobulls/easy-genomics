@@ -68,6 +68,11 @@
       return;
     }
 
+    if (!e.target) {
+      console.error('File input change event target not found');
+      return;
+    }
+
     const files: FileList = e.target.files;
     if (!files) return;
 
@@ -86,7 +91,7 @@
   }
 
   function addFile(file: File) {
-    const isDuplicateFile = false; // fileExists(filesToUpload.value, file);
+    const isDuplicateFile = fileExists(filesToUpload.value, file);
     if (isDuplicateFile) {
       console.warn(`File ${file.name} already exists`);
       return;
@@ -158,9 +163,8 @@
 
     return filePairs.value.map((filePair: FilePair) => {
       const { sampleId, r1File, r2File } = filePair;
-      // return { sampleId, r1File: r1File?.name, r2File: r2File?.name };
 
-      // const rowClass = r1File && r2File ? undefined : 'bg-alert-danger-muted'; // 'bg-alert-error-muted'
+      // const rowClass = r1File && r2File ? undefined : 'bg-alert-danger-muted';
       // return { sampleId, r1File: r1File?.name, r2File: r2File?.name, class: rowClass };
 
       return { sampleId, r1File: r1File?.name, r2File: r2File?.name };
@@ -213,9 +217,9 @@
     </div>
   </div>
 
-  <div v-if="filePairsForTable.length > 0" class="text-body pt-2 text-sm">
-    <div>Files: {{ filesToUpload.length }}</div>
+  <div v-if="filePairsForTable.length > 0" class="text-body flex justify-between px-4 pt-2 text-sm">
     <div>Samples: {{ filePairs.length }}</div>
+    <div>Files: {{ filesToUpload.length }}</div>
   </div>
 
   <UTable

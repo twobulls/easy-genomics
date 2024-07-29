@@ -1,13 +1,5 @@
 <script setup lang="ts">
-  import EGButton from './EGButton.vue';
-
-  // Example CSV file for 3-pairs of fastq files
-  /*
-  sample,fastq_1,fastq_2
-  GOL2051A64544_S114_L002,s3://demo-easy-genomics-nf-tower-bucket/64f9d3be-a716-4def-ad92-5fda460d474f/GOL2051A64544_S114_L002_R1_001.fastq.gz,s3://demo-easy-genomics-nf-tower-bucket/64f9d3be-a716-4def-ad92-5fda460d474f/GOL2051A64544_S114_L002_R2_001.fastq.gz
-  GOL2051A64547_S115_L002,s3://demo-easy-genomics-nf-tower-bucket/64f9d3be-a716-4def-ad92-5fda460d474f/GOL2051A64547_S115_L002_R1_001.fastq.gz,s3://demo-easy-genomics-nf-tower-bucket/64f9d3be-a716-4def-ad92-5fda460d474f/GOL2051A64547_S115_L002_R2_001.fastq.gz
-  GOL2051A55857_S103_L002,s3://demo-easy-genomics-nf-tower-bucket/64f9d3be-a716-4def-ad92-5fda460d474f/GOL2051A55857_S103_L002_R1_001.fastq.gz,s3://demo-easy-genomics-nf-tower-bucket/64f9d3be-a716-4def-ad92-5fda460d474f/GOL2051A55857_S103_L002_R2_001.fastq.gz
-  */
+  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
 
   type FilePair = {
     sampleId: string; // Common start if the file names for the pair e.g. GOL2051A67473_S133_L002 when uploading a pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
@@ -29,8 +21,8 @@
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
   const filesToUpload = ref<File[]>([]);
-  // const fileList: FileList = ref<FileList>();
-  const filePairs: FilePair[] = reactive([]);
+  // const filePairs: FilePair[] = reactive([]);
+  const filePairs = ref<FilePair[]>([]);
 
   const progressUpdated = ref(0);
   const isDropzoneActive = ref(false);
@@ -47,6 +39,10 @@
     {
       key: 'r2File',
       label: 'R2 File',
+    },
+    {
+      key: 'actions',
+      label: '',
     },
   ];
 
@@ -100,7 +96,7 @@
     addFileToFilePairs(file);
 
     console.log('filesToUpload', toRaw(filesToUpload.value));
-    console.log('filePairs', toRaw(filePairs));
+    console.log('filePairs', toRaw(filePairs.value));
   }
 
   function addFileToFilesToUpload(file: File) {
@@ -110,15 +106,15 @@
   function addFileToFilePairs(file: File) {
     const uploadFile = getUploadFile(file);
     const sampleId = getSampleIdFromFileName(file.name);
-    const existingFilePair = filePairs.find((filePair) => filePair.sampleId === sampleId);
+    const existingFilePair = filePairs.value.find((filePair) => filePair.sampleId === sampleId);
     const filePair: FilePair = existingFilePair || { sampleId };
 
     try {
       addUploadFileToFilePair(uploadFile, filePair);
       if (!existingFilePair) {
-        filePairs.push(filePair);
+        filePairs.value.push(filePair);
       }
-    } catch (error: Error) {
+    } catch (error: any) {
       console.warn(error.message);
     }
   }
@@ -145,30 +141,41 @@
     return fileName.substring(0, fileName.lastIndexOf('_R'));
   }
 
+  function removeFilePair(sampleId: string) {
+    console.log('Removing file pair; sampleId:', sampleId);
+    filesToUpload.value = filesToUpload.value.filter((file) => !file.name.startsWith(sampleId));
+    filePairs.value = filePairs.value.filter((filePair) => filePair.sampleId !== sampleId);
+    console.log('Removed file pair; sampleId:', sampleId);
+  }
+
   function toggleDropzoneActive() {
     isDropzoneActive.value = !isDropzoneActive.value;
     console.log('isDropzoneActive', toRaw(isDropzoneActive.value));
   }
 
   const filePairsForTable = computed(() => {
-    if (filePairs.length === 0) return [];
+    if (filePairs.value.length === 0) return [];
 
-    return filePairs.map((filePair: FilePair) => {
+    return filePairs.value.map((filePair: FilePair) => {
       const { sampleId, r1File, r2File } = filePair;
+      // return { sampleId, r1File: r1File?.name, r2File: r2File?.name };
+
+      // const rowClass = r1File && r2File ? undefined : 'bg-alert-danger-muted'; // 'bg-alert-error-muted'
+      // return { sampleId, r1File: r1File?.name, r2File: r2File?.name, class: rowClass };
+
       return { sampleId, r1File: r1File?.name, r2File: r2File?.name };
     });
   });
 </script>
 
 <template>
-  <div class="pb-16" @drop.prevent="handleDroppedFiles">
+  <div class="py-4" @drop.prevent="handleDroppedFiles">
     <div
       id="dropzone"
       @dragenter.prevent="toggleDropzoneActive"
       @dragleave.prevent="toggleDropzoneActive"
       @dragover.prevent
       @drop.prevent="toggleDropzoneActive"
-      class="mb-8"
     >
       <div
         :class="
@@ -187,6 +194,7 @@
             <span :class="cn('visible', { 'invisible': isDropzoneActive })">here or</span>
           </div>
           <input
+            accept=".gz,.fastq"
             ref="chooseFilesButton"
             type="file"
             id="dropzoneFiles"
@@ -205,5 +213,43 @@
     </div>
   </div>
 
-  <UTable v-if="filePairsForTable.length > 0" :columns="columns" :rows="filePairsForTable" />
+  <div v-if="filePairsForTable.length > 0" class="text-body pt-2 text-sm">
+    <div>Files: {{ filesToUpload.length }}</div>
+    <div>Samples: {{ filePairs.length }}</div>
+  </div>
+
+  <UTable
+    v-if="filePairsForTable.length > 0"
+    :columns="columns"
+    :rows="filePairsForTable"
+    class="EGTable mt-4 rounded-2xl"
+  >
+    <template #actions-data="{ row }">
+      <div class="flex items-center space-x-2">
+        <EGButton
+          icon="i-heroicons-trash"
+          :size="ButtonSizeEnum.enum.xs"
+          :variant="ButtonVariantEnum.enum.destructive"
+          @click="removeFilePair(row.sampleId)"
+        />
+      </div>
+    </template>
+  </UTable>
 </template>
+
+<style lang="scss">
+  .EGTable {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    width: 100%;
+    table-layout: auto;
+
+    tbody tr {
+      td {
+        font-size: 12px;
+        padding-top: 22px;
+        padding-bottom: 22px;
+      }
+    }
+  }
+</style>

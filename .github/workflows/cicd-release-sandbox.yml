@@ -39,7 +39,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.4.0
+          version: 9.6.0
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -94,7 +94,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.4.0
+          version: 9.6.0
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -159,7 +159,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9.4.0
+          version: 9.6.0
       - name: Setup node
         uses: actions/setup-node@v4
         with:

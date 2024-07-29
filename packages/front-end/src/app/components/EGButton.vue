@@ -77,6 +77,7 @@
           ],
         },
         size: {
+          xs: ['px-3', 'py-2'],
           sm: ['px-6', 'py-3'],
           md: ['px-6 py-4 font-medium'],
           lg: ['p-6 text-base font-semibold'],

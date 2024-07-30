@@ -36,6 +36,9 @@ import {
   NoSuchUpload,
   NotFound,
   ObjectNotInActiveTierError,
+  PutObjectCommand,
+  PutObjectCommandInput,
+  PutObjectCommandOutput,
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
@@ -51,6 +54,7 @@ export enum S3Command {
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
   LIST_BUCKET_OBJECTS = 'list-bucket-objects',
   GET_OBJECT = 'get-object',
+  PUT_OBJECT = 'put-object',
   // Multi-Part S3 Uploads
   CREATE_MULTI_PART_UPLOAD = 'create-multi-part-upload',
   ABORT_MULTI_PART_UPLOAD = 'abort-multi-part-upload',
@@ -95,6 +99,10 @@ export class S3Service {
 
   public getObject = async (getObjectInput: GetObjectCommandInput): Promise<GetObjectCommandOutput> => {
     return this.s3Request<GetObjectCommandInput, GetObjectCommandOutput>(S3Command.GET_OBJECT, getObjectInput);
+  };
+
+  public putObject = async (putObjectInput: PutObjectCommandInput): Promise<PutObjectCommandOutput> => {
+    return this.s3Request<PutObjectCommandInput, PutObjectCommandOutput>(S3Command.PUT_OBJECT, putObjectInput);
   };
 
   private s3Request = async <RequestType, ResponseType>(
@@ -160,6 +168,8 @@ export class S3Service {
         return new ListObjectsV2Command(data as ListObjectsV2CommandInput);
       case S3Command.GET_OBJECT:
         return new GetObjectCommand(data as GetObjectCommandInput);
+      case S3Command.PUT_OBJECT:
+        return new PutObjectCommand(data as PutObjectCommandInput);
       // Multi-Part S3 Upload Commands
       case S3Command.CREATE_MULTI_PART_UPLOAD:
         return new CreateMultipartUploadCommand(data as CreateMultipartUploadCommandInput);

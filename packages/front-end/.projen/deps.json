@@ -120,6 +120,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/util-format-url",
+      "type": "runtime"
+    },
+    {
       "name": "@easy-genomics/shared-lib",
       "version": "workspace:*",
       "type": "runtime"

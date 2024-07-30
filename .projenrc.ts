@@ -319,6 +319,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   deps: [
     '@aws-amplify/ui-vue@3.1.30',
     '@aws-sdk/s3-request-presigner',
+    '@aws-sdk/util-format-url',
     '@easy-genomics/shared-lib@workspace:*',
     '@nuxt/ui',
     '@pinia-plugin-persistedstate/nuxt',

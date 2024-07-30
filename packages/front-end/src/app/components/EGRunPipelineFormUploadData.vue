@@ -1,4 +1,7 @@
 <script setup lang="ts">
+  import { Auth } from 'aws-amplify';
+  import { ICredentials } from 'aws-amplify/lib/Common/types/types';
+  import { AwsCredentialIdentity } from '@smithy/types/dist-types/identity/awsCredentialIdentity';
   import { v4 as uuidv4 } from 'uuid';
   import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
   import {
@@ -9,7 +12,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
 
   type FilePair = {
-    sampleId: string; // Common start if the file names for the pair e.g. GOL2051A67473_S133_L002 when uploading a pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
+    sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
     r1File?: UploadedFile;
     r2File?: UploadedFile;
   };
@@ -210,12 +213,12 @@
 
   async function startUploadProcess() {
     isUploadProcessRunning.value = true;
-    await getUploadFilesManifest();
-    // await uploadFiles();
+    const uploadManifest = await getUploadFilesManifest();
+    await uploadFiles(uploadManifest);
     isUploadProcessRunning.value = false;
   }
 
-  async function getUploadFilesManifest() {
+  async function getUploadFilesManifest(): Promise<FileUploadManifest> {
     const files: FileInfo[] = [];
     for (const file of filesToUpload.value) {
       files.push({
@@ -237,9 +240,27 @@
     const response = await $api.uploads.getFileUploadManifest(request);
 
     console.log('Get file upload manifest response:', response);
+
+    return response;
   }
 
-  async function uploadFiles() {}
+  async function uploadFiles(uploadManifest: FileUploadManifest) {
+    // console.log('uploadFiles; Getting credentials');
+    // const credentials: ICredentials = await Auth.currentUserCredentials();
+    // console.log('uploadFiles; credentials:', credentials);
+
+    // console.log('uploadFiles; Getting awsCredentialIdentity');
+    // const awsCredentialIdentity: AwsCredentialIdentity = {
+    //   accessKeyId: credentials.accessKeyId,
+    //   secretAccessKey: credentials.secretAccessKey,
+    //   sessionToken: credentials.sessionToken,
+    // };
+    // console.log('uploadFiles; awsCredentialIdentity:', awsCredentialIdentity);
+
+    console.log('uploadFiles; Getting currentSession');
+    const currentSession = await Auth.currentSession();
+    console.log('uploadFiles; currentSession:', currentSession);
+  }
 
   watch(canProceed, (val) => {
     emit('step-validated', val);

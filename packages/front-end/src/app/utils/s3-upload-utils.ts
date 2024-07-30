@@ -1,5 +1,6 @@
 import { Hash } from 'crypto';
 import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
+import { formatUrl } from '@aws-sdk/util-format-url';
 import { FileUploadInfo } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
 import { AwsCredentialIdentity } from '@smithy/types/dist-types/identity/awsCredentialIdentity';
 import { parseUrl } from '@smithy/url-parser';
@@ -13,7 +14,10 @@ import { parseUrl } from '@smithy/url-parser';
  * @param credentials
  * @param fileUploadInfo
  */
-export function getFileUploadSignedS3Url(credentials: AwsCredentialIdentity, fileUploadInfo: FileUploadInfo): string {
+export async function getFileUploadSignedS3Url(
+  credentials: AwsCredentialIdentity,
+  fileUploadInfo: FileUploadInfo,
+): Promise<string> {
   const bucket: string = fileUploadInfo.Bucket;
   const key: string = fileUploadInfo.Key;
   const region: string = fileUploadInfo.Region;

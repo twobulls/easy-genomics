@@ -18,6 +18,9 @@ import {
   GetBucketLocationCommand,
   GetBucketLocationCommandInput,
   GetBucketLocationCommandOutput,
+  GetObjectCommand,
+  GetObjectCommandInput,
+  GetObjectCommandOutput,
   InvalidObjectState,
   ListBucketsCommand,
   ListBucketsCommandInput,
@@ -47,6 +50,7 @@ export enum S3Command {
   COPY_BUCKET_OBJECT = 'copy-bucket-object',
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
   LIST_BUCKET_OBJECTS = 'list-bucket-objects',
+  GET_OBJECT = 'get-object',
   // Multi-Part S3 Uploads
   CREATE_MULTI_PART_UPLOAD = 'create-multi-part-upload',
   ABORT_MULTI_PART_UPLOAD = 'abort-multi-part-upload',
@@ -87,6 +91,10 @@ export class S3Service {
       S3Command.GET_BUCKET_LOCATION,
       getBucketLocationInput,
     );
+  };
+
+  public getObject = async (getObjectInput: GetObjectCommandInput): Promise<GetObjectCommandOutput> => {
+    return this.s3Request<GetObjectCommandInput, GetObjectCommandOutput>(S3Command.GET_OBJECT, getObjectInput);
   };
 
   private s3Request = async <RequestType, ResponseType>(
@@ -150,6 +158,8 @@ export class S3Service {
         return new DeleteObjectCommand(data as DeleteObjectCommandInput);
       case S3Command.LIST_BUCKET_OBJECTS:
         return new ListObjectsV2Command(data as ListObjectsV2CommandInput);
+      case S3Command.GET_OBJECT:
+        return new GetObjectCommand(data as GetObjectCommandInput);
       // Multi-Part S3 Upload Commands
       case S3Command.CREATE_MULTI_PART_UPLOAD:
         return new CreateMultipartUploadCommand(data as CreateMultipartUploadCommandInput);

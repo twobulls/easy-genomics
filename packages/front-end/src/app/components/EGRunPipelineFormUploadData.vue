@@ -1,5 +1,12 @@
 <script setup lang="ts">
+  import { v4 as uuidv4 } from 'uuid';
   import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
+  import {
+    FileInfo,
+    FileUploadInfo,
+    FileUploadManifest,
+    FileUploadRequest,
+  } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
 
   type FilePair = {
     sampleId: string; // Common start if the file names for the pair e.g. GOL2051A67473_S133_L002 when uploading a pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
@@ -16,7 +23,12 @@
     error?: string;
   };
 
+  const { $api } = useNuxtApp();
+  const $route = useRoute();
+
   const emit = defineEmits(['next-tab', 'step-validated']);
+
+  const labId = $route.params.labId as string;
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -97,7 +109,8 @@
    * Validate that each file pair has an R1 and R2 file
    */
   function validateFilePairs() {
-    let haveMatchingFilePairs = true;
+    let haveMatchingFilePairs = filePairs.value.length > 0;
+
     for (const filePair of filePairs.value) {
       if (!filePair.r1File || !filePair.r2File) {
         haveMatchingFilePairs = false;
@@ -197,8 +210,33 @@
 
   async function startUploadProcess() {
     isUploadProcessRunning.value = true;
-    await uploadFiles();
+    await getUploadFilesManifest();
+    // await uploadFiles();
     isUploadProcessRunning.value = false;
+  }
+
+  async function getUploadFilesManifest() {
+    const files: FileInfo[] = [];
+    for (const file of filesToUpload.value) {
+      files.push({
+        Name: file.name,
+        Size: file.size,
+      });
+    }
+
+    const transactionId = uuidv4();
+
+    const request: FileUploadRequest = {
+      LaboratoryId: labId,
+      TransactionId: transactionId,
+      Files: files,
+    };
+
+    console.log('Get file upload manifest request:', request);
+
+    const response = await $api.uploads.getFileUploadManifest(request);
+
+    console.log('Get file upload manifest response:', response);
   }
 
   async function uploadFiles() {}

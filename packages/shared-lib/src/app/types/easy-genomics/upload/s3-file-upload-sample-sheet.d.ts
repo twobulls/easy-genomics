@@ -1,5 +1,4 @@
 // create-file-upload-sample-sheet API SampleSheetRequest & SampleSheetResponse type definitions
-import { FileUploadInfo } from "./s3-file-upload-manifest";
 
 export type SampleSheetRequest = {
   LaboratoryId: string,
@@ -9,12 +8,17 @@ export type SampleSheetRequest = {
 
 // DNA Sequenced R1 & R2 file pair of UploadedFileInfo type
 export type UploadedFilePairInfo = {
-  R1: UploadedFileInfo;
-  R2: UploadedFileInfo;
+  R1: UploadedFileInfo,
+  R2: UploadedFileInfo,
 }
 
-// Same as FileUploadInfo type without multi-part details: UploadId, MultiParts
-export type UploadedFileInfo = Omit<FileUploadInfo, 'UploadId'|'MultiParts'>;
+// Subset of FileUploadInfo type
+export type UploadedFileInfo = {
+  Bucket: string,
+  Key: string,
+  Region: string,
+  S3Url: string,
+}
 
 export type SampleSheetResponse = {
   TransactionId: string,

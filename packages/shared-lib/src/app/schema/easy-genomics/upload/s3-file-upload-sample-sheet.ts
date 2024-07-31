@@ -4,8 +4,6 @@ import { z } from 'zod';
 
 export const UploadedFileInfoSchema = z
   .object({
-    Name: z.string(),
-    Size: z.number(),
     Bucket: z.string(),
     Key: z.string(),
     Region: z.string(),

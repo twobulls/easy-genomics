@@ -18,7 +18,7 @@ function parseAndValidateDate(input: string | null | undefined) {
  * @param input
  */
 export function getDate(input: string | null | undefined): string | null {
-  const date = parseAndValidateDate(input); // Utilize Extracted function
+  const date = parseAndValidateDate(input);
   if (!date) return null;
 
   return format(date, 'yyyy-MM-dd');
@@ -29,7 +29,7 @@ export function getDate(input: string | null | undefined): string | null {
  * @param input
  */
 export function getTime(input: string | null | undefined): string | null {
-  const date = parseAndValidateDate(input); // Utilize Extracted function
+  const date = parseAndValidateDate(input);
   if (!date) return null;
 
   const offsetInHours = -date.getTimezoneOffset() / 60;

@@ -11,7 +11,7 @@
   }>();
 
   const { $api } = useNuxtApp();
-  const emit = defineEmits(['next-tab', 'step-validated']);
+  const emit = defineEmits(['next-step', 'step-validated']);
 
   /**
    * Seqera API spec
@@ -83,17 +83,10 @@
     return errors;
   }
 
-  // TODO: wire up full pipeline once backend is ready
-  // function onSubmit() {
-  //   usePipelineRunStore().setUserPipelineRunName(formState.runName);
-  //   emit('next-tab');
-  // }
-
-  // TODO: temporarily skip full pipeline and submit job
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
     usePipelineRunStore().setUserPipelineRunName(safeRunName);
-    emit('next-tab');
+    emit('next-step');
   }
 
   watch(canProceed, (val) => {
@@ -103,19 +96,23 @@
 
 <template>
   <UForm :schema="formStateSchema" :state="formState" :validate="validate" @submit="onSubmit">
-    <EGFormGroup label="Pipeline" name="pipelineName">
-      <EGInput v-model="formState.pipelineName" :disabled="true" />
-    </EGFormGroup>
+    <EGCard>
+      <EGText tag="small" class="mb-4">Step 01</EGText>
+      <EGText tag="h4" class="mb-0">Run Details</EGText>
+      <UDivider class="py-4" />
+      <EGFormGroup label="Pipeline" name="pipelineName">
+        <EGInput v-model="formState.pipelineName" :disabled="true" />
+      </EGFormGroup>
 
-    <EGFormGroup label="Run Name" name="runName" eager-validation>
-      <EGInput v-model="formState.runName" placeholder="Enter a name to identify this pipeline run" autofocus />
-      <EGCharacterCounter :value="runNameCharCount" :max="maxRunNameLength" />
-    </EGFormGroup>
+      <EGFormGroup label="Run Name" name="runName" eager-validation>
+        <EGInput v-model="formState.runName" placeholder="Enter a name to identify this pipeline run" autofocus />
+        <EGCharacterCounter :value="runNameCharCount" :max="maxRunNameLength" />
+      </EGFormGroup>
 
-    <EGFormGroup label="Description" name="pipelineDescription">
-      <EGTextArea v-model="formState.pipelineDescription" :disabled="true" />
-    </EGFormGroup>
-
+      <EGFormGroup label="Description" name="pipelineDescription">
+        <EGTextArea v-model="formState.pipelineDescription" :disabled="true" />
+      </EGFormGroup>
+    </EGCard>
     <div class="flex justify-end pt-4">
       <EGButton
         :disabled="!canProceed"

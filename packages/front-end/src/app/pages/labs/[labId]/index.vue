@@ -165,7 +165,7 @@
           usePipelineRunStore().setPipelineName(pipelineName);
           usePipelineRunStore().setPipelineDescription(pipelineDescription);
           router.push({
-            path: `/labs/${labId}/run-pipeline`,
+            path: `/labs/${labId}/${pipelineId}/run-pipeline`,
             query: { tab: 'Run Details' },
           });
         },

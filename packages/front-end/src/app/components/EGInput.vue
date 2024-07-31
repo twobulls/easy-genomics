@@ -1,7 +1,7 @@
 <script setup lang="ts">
   withDefaults(
     defineProps<{
-      modelValue?: string;
+      modelValue?: string | number;
       placeholder?: string;
       disabled?: boolean;
       clearable?: boolean;
@@ -11,7 +11,7 @@
       placeholder: '',
       disabled: false,
       autocomplete: '',
-    }
+    },
   );
 
   function clear() {

@@ -18,15 +18,15 @@ export type UploadedFileInfo = Omit<FileUploadInfo, 'UploadId'|'MultiParts'>;
 
 export type SampleSheetResponse = {
   TransactionId: string,
-  SampleSheet?: SampleSheetInfo,
+  SampleSheet: SampleSheetInfo,
 };
 
 export type SampleSheetInfo = {
   Name: string,
   Size: number,
+  Checksum: string,
   Bucket: string,
   Key: string,
   Region: string,
   S3Url: string,
-  S3UrlChecksum: string,
 }

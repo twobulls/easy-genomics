@@ -10,7 +10,6 @@ export const UploadedFileInfoSchema = z
     Key: z.string(),
     Region: z.string(),
     S3Url: z.string(),
-    S3UrlChecksum: z.string(),
   })
   .strict();
 

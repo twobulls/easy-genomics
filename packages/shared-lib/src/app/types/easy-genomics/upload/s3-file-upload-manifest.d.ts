@@ -22,7 +22,6 @@ export type FileUploadInfo = {
   Key: string,
   Region: string,
   S3Url: string,
-  S3UrlChecksum: string,
   UploadId?: string,
   MultiParts?: FileUploadPartInfo[],
 }

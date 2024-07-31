@@ -18,9 +18,9 @@ import {
   GetBucketLocationCommand,
   GetBucketLocationCommandInput,
   GetBucketLocationCommandOutput,
-  GetObjectCommand,
-  GetObjectCommandInput,
-  GetObjectCommandOutput,
+  HeadObjectCommand,
+  HeadObjectCommandInput,
+  HeadObjectCommandOutput,
   InvalidObjectState,
   ListBucketsCommand,
   ListBucketsCommandInput,
@@ -53,7 +53,7 @@ export enum S3Command {
   COPY_BUCKET_OBJECT = 'copy-bucket-object',
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
   LIST_BUCKET_OBJECTS = 'list-bucket-objects',
-  GET_OBJECT = 'get-object',
+  HEAD_OBJECT = 'head-object',
   PUT_OBJECT = 'put-object',
   // Multi-Part S3 Uploads
   CREATE_MULTI_PART_UPLOAD = 'create-multi-part-upload',
@@ -97,8 +97,16 @@ export class S3Service {
     );
   };
 
-  public getObject = async (getObjectInput: GetObjectCommandInput): Promise<GetObjectCommandOutput> => {
-    return this.s3Request<GetObjectCommandInput, GetObjectCommandOutput>(S3Command.GET_OBJECT, getObjectInput);
+  public doesObjectExist = async (headObjectInput: HeadObjectCommandInput): Promise<boolean> => {
+    try {
+      const response = await this.s3Request<HeadObjectCommandInput, HeadObjectCommandOutput>(
+        S3Command.HEAD_OBJECT,
+        headObjectInput,
+      );
+      return response.$metadata.httpStatusCode === 200;
+    } catch (error: any) {
+      return false;
+    }
   };
 
   public putObject = async (putObjectInput: PutObjectCommandInput): Promise<PutObjectCommandOutput> => {
@@ -166,8 +174,8 @@ export class S3Service {
         return new DeleteObjectCommand(data as DeleteObjectCommandInput);
       case S3Command.LIST_BUCKET_OBJECTS:
         return new ListObjectsV2Command(data as ListObjectsV2CommandInput);
-      case S3Command.GET_OBJECT:
-        return new GetObjectCommand(data as GetObjectCommandInput);
+      case S3Command.HEAD_OBJECT:
+        return new HeadObjectCommand(data as HeadObjectCommandInput);
       case S3Command.PUT_OBJECT:
         return new PutObjectCommand(data as PutObjectCommandInput);
       // Multi-Part S3 Upload Commands

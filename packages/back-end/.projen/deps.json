@@ -161,10 +161,6 @@
       "type": "runtime"
     },
     {
-      "name": "aws-sdk",
-      "type": "runtime"
-    },
-    {
       "name": "base64-js",
       "type": "runtime"
     },
@@ -179,10 +175,6 @@
     },
     {
       "name": "jsonwebtoken",
-      "type": "runtime"
-    },
-    {
-      "name": "short-unique-id",
       "type": "runtime"
     },
     {

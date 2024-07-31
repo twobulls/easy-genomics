@@ -180,7 +180,8 @@
 
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
-            <!-- TODO: move this block inside Step 2 upload component just before </UForm> -->
+            <!-- TODO: add this snippet inside Step 2 upload component at end of <template> block + write up next/prev
+             button emit events (see: EGRunPipelineFormEditParameters.vue) -->
             <div class="mt-6 flex justify-between">
               <EGButton
                 :size="ButtonSizeEnum.enum.sm"

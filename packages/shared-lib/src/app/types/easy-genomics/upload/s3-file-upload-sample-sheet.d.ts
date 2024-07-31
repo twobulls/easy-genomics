@@ -18,7 +18,8 @@ export type UploadedFileInfo = Omit<FileUploadInfo, 'UploadId'|'MultiParts'>;
 
 export type SampleSheetResponse = {
   TransactionId: string,
-  SampleSheet: SampleSheetInfo,
+  SampleSheetInfo: SampleSheetInfo,
+  SampleSheetContents: string,
 };
 
 export type SampleSheetInfo = {

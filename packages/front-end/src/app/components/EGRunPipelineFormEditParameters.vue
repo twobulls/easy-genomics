@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '~/types/buttons';
-  import { z } from 'zod';
 
   const props = defineProps<{
     schema: object;
@@ -8,12 +7,7 @@
   }>();
 
   const { $api } = useNuxtApp();
-  const emit = defineEmits(['next-tab', 'previous-step', 'step-validated']);
-
-  const formStateSchema = z.object({});
-  type FormState = z.infer<typeof formStateSchema>;
-
-  const formState = reactive<FormState>({});
+  const emit = defineEmits(['previous-step', 'step-validated']);
 
   const activeSection = ref<string | null>(null);
 
@@ -23,7 +17,7 @@
   });
 
   onMounted(() => {
-    // set first section in side panel of UI active by default
+    // set first section in side panel of UI to active
     const definitions = props.schema.definitions;
     const firstKey = Object.keys(definitions)[0];
     activeSection.value = definitions[firstKey].title;
@@ -66,29 +60,6 @@
     },
     { deep: true },
   );
-
-  // function validate(currentState: FormState): FormError[] {
-  //   const errors: FormError[] = [];
-  //
-  //   try {
-  //     // maybeAddFieldValidationErrors(errors, runNameSchema, 'runName', currentState.runName);
-  //   } catch (error) {
-  //     console.error('Error validating run details form:', error);
-  //   }
-  //
-  //   canProceed.value = errors.length === 0;
-  //
-  //   return errors;
-  // }
-
-  // TODO: temporarily skip full pipeline and submit job
-  function onSubmit() {
-    emit('next-tab');
-  }
-
-  // watch(canProceed, (val) => {
-  //   emit('step-validated', val);
-  // });
 </script>
 
 <template>
@@ -112,56 +83,54 @@
       </EGCard>
     </div>
     <div class="w-3/4">
-      <UForm :schema="formStateSchema" :state="formState" @submit="onSubmit">
-        <EGCard
+      <EGCard
+        v-for="(section, sectionIndex) in Object.values(schema.definitions)"
+        :key="`section-${sectionIndex}`"
+        v-show="activeSection === section.title"
+      >
+        <EGText tag="h4" class="mb-4">{{ section.title }}</EGText>
+
+        <EGRunPipelineParameterInputs
           v-for="(section, sectionIndex) in Object.values(schema.definitions)"
           :key="`section-${sectionIndex}`"
           v-show="activeSection === section.title"
-        >
-          <EGText tag="h4" class="mb-4">{{ section.title }}</EGText>
+          :section="<Object>section"
+          :params="localProps.params"
+          @update:params="
+            (val) => {
+              localProps.params = val;
+            }
+          "
+        />
 
-          <EGRunPipelineParameterInputs
-            v-for="(section, sectionIndex) in Object.values(schema.definitions)"
-            :key="`section-${sectionIndex}`"
-            v-show="activeSection === section.title"
-            :section="<Object>section"
-            :params="localProps.params"
-            @update:params="
-              (val) => {
-                localProps.params = val;
-              }
-            "
-          />
-
-          <div class="mt-12 flex justify-end">
-            <EGButton
-              v-if="sectionIndex > 0"
-              :size="ButtonSizeEnum.enum.sm"
-              variant="secondary"
-              label="Previous"
-              @click="prevSection"
-            />
-            <EGButton
-              class="ml-4"
-              v-if="sectionIndex < Object.keys(schema.definitions).length - 1"
-              :size="ButtonSizeEnum.enum.sm"
-              variant="secondary"
-              label="Next"
-              @click="nextSection"
-            />
-          </div>
-        </EGCard>
-
-        <div class="mt-6 flex justify-between">
+        <div class="mt-12 flex justify-end">
           <EGButton
+            v-if="sectionIndex > 0"
             :size="ButtonSizeEnum.enum.sm"
             variant="secondary"
-            label="Previous step"
-            @click="emit('previous-step')"
+            label="Previous"
+            @click="prevSection"
           />
-          <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="emit('next-step')" />
+          <EGButton
+            class="ml-4"
+            v-if="sectionIndex < Object.keys(schema.definitions).length - 1"
+            :size="ButtonSizeEnum.enum.sm"
+            variant="secondary"
+            label="Next"
+            @click="nextSection"
+          />
         </div>
-      </UForm>
+      </EGCard>
+
+      <div class="mt-6 flex justify-between">
+        <EGButton
+          :size="ButtonSizeEnum.enum.sm"
+          variant="secondary"
+          label="Previous step"
+          @click="emit('previous-step')"
+        />
+        <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="emit('next-step')" />
+      </div>
     </div>
   </div>
 </template>

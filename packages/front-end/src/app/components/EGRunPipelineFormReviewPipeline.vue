@@ -12,11 +12,7 @@
 
   const { $api } = useNuxtApp();
   const isLaunchingWorkflow = ref(false);
-  const emit = defineEmits(['next-tab', 'launch-workflow', 'has-launched', 'previous-tab']);
-
-  function onSubmit() {
-    emit('launch-workflow');
-  }
+  const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
 
   async function launchWorkflow() {
     try {

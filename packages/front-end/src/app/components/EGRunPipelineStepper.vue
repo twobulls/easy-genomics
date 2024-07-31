@@ -180,6 +180,7 @@
 
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
+            <!-- TODO: move this block inside Step 2 upload component just before </UForm> -->
             <div class="mt-6 flex justify-between">
               <EGButton
                 :size="ButtonSizeEnum.enum.sm"
@@ -194,8 +195,8 @@
           <!-- Edit Parameters -->
           <template v-if="items[selectedIndex].key === 'parameters'">
             <EGRunPipelineFormEditParameters
-              :schema="schema"
               :params="params"
+              :schema="schema"
               @next-step="() => nextStep('review')"
               @previous-step="() => previousStep()"
             />
@@ -204,14 +205,14 @@
           <!-- Review Pipeline -->
           <template v-if="items[selectedIndex].key === 'review'">
             <EGRunPipelineFormReviewPipeline
+              :can-launch="true"
               :lab-id="labId"
               :lab-name="labName"
+              :params="usePipelineRunStore().params"
               :pipeline-name="usePipelineRunStore().pipelineName"
               :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
               @has-launched="handleLaunchSuccess()"
-              :can-launch="true"
               @previous-tab="() => previousStep()"
-              :params="usePipelineRunStore().params"
             />
           </template>
         </div>

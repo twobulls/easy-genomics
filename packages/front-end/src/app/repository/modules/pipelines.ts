@@ -41,6 +41,7 @@ class PipelinesModule extends HttpFactory {
       throw new Error('Failed to retrieve workflow');
     }
 
+    // TODO: add validateApiResponse()
     return res;
   }
 

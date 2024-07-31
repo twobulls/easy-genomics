@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
   import { ButtonVariantEnum } from '~/types/buttons';
+  import { initialize } from 'esbuild';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -13,6 +14,11 @@
   const backNavigationInProgress = ref(false);
   const nextRoute = ref(null);
   const schema = ref('');
+  const resetStepperKey = ref(0);
+
+  onBeforeMount(async () => {
+    await initializePipelineData();
+  });
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
@@ -28,16 +34,14 @@
     }
   });
 
-  watch([isDialogOpen, backNavigationInProgress], ([dialogOpen, navigatingBack]) => {
-    if (dialogOpen) {
-      nextRoute.value = null;
-      return; // If the dialog is still open, return and don't execute the routing logic
-    }
-    if (!navigatingBack && nextRoute.value && isDialogOpen.value) {
-      $router.push(nextRoute.value);
-      nextRoute.value = null;
-    }
-  });
+  /**
+   * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
+   */
+  async function initializePipelineData() {
+    const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
+    schema.value = JSON.parse(res.schema);
+    usePipelineRunStore().setParams(JSON.parse(<string>res.params));
+  }
 
   function handleDialogAction() {
     exitConfirmed.value = true;
@@ -51,10 +55,28 @@
     isDialogOpen.value = true;
   }
 
-  onBeforeMount(async () => {
-    const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
-    schema.value = JSON.parse(res.schema);
-    usePipelineRunStore().setParams(JSON.parse(<string>res.params));
+  /**
+   * Resets the pipeline run workflow:
+   * - clears some store values
+   * - re-initializes the schema + prefills params
+   * - re-mounts the stepper to reset it to initial state
+   */
+  function resetRunPipeline() {
+    usePipelineRunStore().setUserPipelineRunName('');
+    usePipelineRunStore().setParams({});
+    initializePipelineData();
+    resetStepperKey.value++;
+  }
+
+  watch([isDialogOpen, backNavigationInProgress], ([dialogOpen, navigatingBack]) => {
+    if (dialogOpen) {
+      nextRoute.value = null;
+      return; // If the dialog is still open, return and don't execute the routing logic
+    }
+    if (!navigatingBack && nextRoute.value && isDialogOpen.value) {
+      $router.push(nextRoute.value);
+      nextRoute.value = null;
+    }
   });
 </script>
 
@@ -66,7 +88,13 @@
     :back-button-action="handleExitRun"
     back-button-label="Exit Run"
   />
-  <EGRunPipelineStepper @has-launched="hasLaunched = true" :schema="schema" :params="usePipelineRunStore().params" />
+  <EGRunPipelineStepper
+    @has-launched="hasLaunched = true"
+    :schema="schema"
+    :params="usePipelineRunStore().params"
+    @reset-run-pipeline="resetRunPipeline()"
+    :key="resetStepperKey"
+  />
   <EGDialog
     action-label="Cancel Pipeline Run"
     :action-variant="ButtonVariantEnum.enum.destructive"

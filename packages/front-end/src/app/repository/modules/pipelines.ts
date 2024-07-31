@@ -5,7 +5,6 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import {
   ListPipelinesResponse as ListPipelinesResponseSchema,
-  DescribeLaunchResponse as DescribeLaunchResponseSchema,
   PipelineSchemaResponse as PipelineSchemaResponseSchema,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
 import { useRuntimeConfig } from 'nuxt/app';
@@ -42,7 +41,6 @@ class PipelinesModule extends HttpFactory {
       throw new Error('Failed to retrieve workflow');
     }
 
-    validateApiResponse(DescribeLaunchResponseSchema, res);
     return res;
   }
 

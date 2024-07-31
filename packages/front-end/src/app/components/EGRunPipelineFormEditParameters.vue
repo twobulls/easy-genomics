@@ -152,7 +152,7 @@
           </div>
         </EGCard>
 
-        <div class="mt-12 flex justify-between">
+        <div class="mt-6 flex justify-between">
           <EGButton
             :size="ButtonSizeEnum.enum.sm"
             variant="secondary"

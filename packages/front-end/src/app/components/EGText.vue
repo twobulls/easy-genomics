@@ -75,7 +75,7 @@
   h3,
   h4,
   h5 {
-    font-weight: 500;
+    font-weight: 600; // 500?
     letter-spacing: toRem(-0.14px);
 
     > p {

@@ -142,8 +142,15 @@
     selected.value = clampIndex(selected.value - 1);
   }
 
+  function disableAllSteps() {
+    items.value.forEach((item) => {
+      item.disabled = true;
+    });
+  }
+
   function handleLaunchSuccess() {
     hasLaunched.value = true;
+    disableAllSteps();
     emit('has-launched');
   }
 </script>

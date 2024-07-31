@@ -31,7 +31,7 @@ export class S3Construct extends Construct {
       ],
       cors: [
         {
-          allowedMethods: [HttpMethods.GET, HttpMethods.POST, HttpMethods.PUT],
+          allowedMethods: [HttpMethods.GET, HttpMethods.POST, HttpMethods.PUT, HttpMethods.HEAD],
           allowedOrigins: ['*'], // TODO: Restrict to domain in configuration file
           allowedHeaders: ['*'],
         },

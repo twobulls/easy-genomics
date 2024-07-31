@@ -1,8 +1,13 @@
 import {
   DescribePipelineLaunchResponse,
   ListPipelinesResponse,
+  DescribePipelineSchemaResponse,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-import { ListPipelinesResponse as ListPipelinesResponseSchema } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
+import {
+  ListPipelinesResponse as ListPipelinesResponseSchema,
+  DescribeLaunchResponse as DescribeLaunchResponseSchema,
+  PipelineSchemaResponse as PipelineSchemaResponseSchema,
+} from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
 import { validateApiResponse, stripNullProperties } from '~/utils/api-utils';
@@ -27,7 +32,6 @@ class PipelinesModule extends HttpFactory {
     return res;
   }
 
-  // TODO: add Zod response validation
   async readPipelineLaunchDetails(pipelineId: number, labId: string): Promise<DescribePipelineLaunchResponse> {
     const res = await this.callNextflowTower<DescribePipelineLaunchResponse>(
       'GET',
@@ -38,6 +42,21 @@ class PipelinesModule extends HttpFactory {
       throw new Error('Failed to retrieve workflow');
     }
 
+    validateApiResponse(DescribeLaunchResponseSchema, res);
+    return res;
+  }
+
+  async readPipelineSchema(pipelineId: number, labId: string): Promise<DescribePipelineSchemaResponse> {
+    const res = await this.callNextflowTower<DescribePipelineSchemaResponse>(
+      'GET',
+      `/pipeline/read-pipeline-schema/${pipelineId}?laboratoryId=${labId}`,
+    );
+
+    if (!res) {
+      throw new Error('Failed to retrieve workflow');
+    }
+
+    validateApiResponse(PipelineSchemaResponseSchema, res);
     return res;
   }
 }

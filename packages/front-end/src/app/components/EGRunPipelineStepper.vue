@@ -2,6 +2,11 @@
   import { usePipelineRunStore } from '~/stores';
   import { ButtonSizeEnum } from '~/types/buttons';
 
+  defineProps({
+    schema: Object,
+    params: Object,
+  });
+
   const $route = useRoute();
   const router = useRouter();
 
@@ -65,6 +70,11 @@
       },
     },
   };
+
+  onBeforeMount(() => {
+    // on page load, set the tab to the first tab query parameter
+    setTabQueryParam(0);
+  });
 
   const selected = computed({
     get() {
@@ -130,18 +140,14 @@
 
   function nextStep(val: string) {
     setStepEnabled(val, true);
-    nextTab();
+    selected.value = Math.min(items.value.length - 1, selectedIndex.value + 1);
   }
 
   function clampIndex(index: number) {
     return Math.min(items.value.length - 1, Math.max(0, index));
   }
 
-  function nextTab() {
-    selected.value = Math.min(items.value.length - 1, selectedIndex.value + 1);
-  }
-
-  function previousTab() {
+  function previousStep() {
     selected.value = clampIndex(selected.value - 1);
   }
 
@@ -186,12 +192,7 @@
     </template>
 
     <template #item="{ item, index }">
-      <EGCard v-if="!hasLaunched">
-        <!-- Header -->
-        <EGText tag="small" class="mb-4">Step 0{{ selectedIndex + 1 }}</EGText>
-        <EGText tag="h4" class="mb-0">{{ items[selectedIndex].label }}</EGText>
-        <UDivider class="py-4" />
-
+      <div v-if="!hasLaunched">
         <!-- Run Details -->
         <template v-if="items[selectedIndex].key === 'details'">
           <EGRunPipelineFormRunDetails
@@ -200,20 +201,19 @@
             :pipelineId="pipelineId"
             :pipelineName="pipelineName"
             :pipelineDescription="pipelineDescription"
-            @next-tab="() => nextTab()"
+            @next-step="() => nextStep('upload')"
             @step-validated="setStepEnabled('upload', $event)"
           />
         </template>
 
         <!-- Upload Data -->
         <template v-if="items[selectedIndex].key === 'upload'">
-          Upload Placeholder
           <div class="mt-12 flex justify-between">
             <EGButton
               :size="ButtonSizeEnum.enum.sm"
               variant="secondary"
               label="Previous step"
-              @click="() => previousTab()"
+              @click="() => previousStep()"
             />
             <EGButton @click="() => nextStep('parameters')" label="Save & Continue" />
           </div>
@@ -221,16 +221,12 @@
 
         <!-- Edit Parameters -->
         <template v-if="items[selectedIndex].key === 'parameters'">
-          Edit Parameters Placeholder
-          <div class="mt-12 flex justify-between">
-            <EGButton
-              :size="ButtonSizeEnum.enum.sm"
-              variant="secondary"
-              label="Previous step"
-              @click="() => previousTab()"
-            />
-            <EGButton @click="() => nextStep('review')" label="Save & Continue" />
-          </div>
+          <EGRunPipelineFormEditParameters
+            :schema="schema"
+            :params="params"
+            @next-step="() => nextStep('review')"
+            @previous-step="() => previousStep()"
+          />
         </template>
 
         <!-- Review Pipeline -->
@@ -242,15 +238,14 @@
             :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
             @has-launched="handleLaunchSuccess()"
             :can-launch="true"
-            @previous-tab="() => previousTab()"
+            @previous-tab="() => previousStep()"
           />
         </template>
-      </EGCard>
+      </div>
     </template>
   </UTabs>
 
   <template v-if="hasLaunched">
-    <!-- Launch successful -->
     <EGEmptyDataCTA
       message="Your Workflow Run has Launched! Check on your progress via Runs."
       :primary-button-action="() => $router.go(-1)"

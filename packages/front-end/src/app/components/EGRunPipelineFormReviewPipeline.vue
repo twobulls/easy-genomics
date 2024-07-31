@@ -1,30 +1,19 @@
 <script setup lang="ts">
-  import {
-    CreateWorkflowLaunchRequest,
-    DescribePipelineLaunchResponse,
-  } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { ButtonSizeEnum } from '~/types/buttons';
-  import { useToastStore } from '~/stores';
 
   const props = defineProps<{
+    canLaunch?: boolean;
     labId: string;
     labName: string;
+    params: object;
     pipelineName: string;
     userPipelineRunName: string;
-    canLaunch?: boolean;
   }>();
 
   const { $api } = useNuxtApp();
   const isLaunchingWorkflow = ref(false);
   const emit = defineEmits(['next-tab', 'launch-workflow', 'has-launched', 'previous-tab']);
 
-  // TODO: wire up full pipeline once backend is ready
-  // function onSubmit() {
-  //   usePipelineRunStore().setUserPipelineRunName(formState.runName);
-  //   emit('next-tab');
-  // }
-
-  // TODO: temporarily skip full pipeline and submit job
   function onSubmit() {
     emit('launch-workflow');
   }
@@ -32,14 +21,15 @@
   async function launchWorkflow() {
     try {
       isLaunchingWorkflow.value = true;
-      const launchDetails: DescribePipelineLaunchResponse = await $api.pipelines.readPipelineLaunchDetails(
+      const launchDetails = await $api.pipelines.readPipelineLaunchDetails(
         usePipelineRunStore().pipelineId,
         props.labId,
       );
+      launchDetails.paramsText = JSON.parse(props.params);
       if (launchDetails.launch) {
         launchDetails.launch.runName = props.userPipelineRunName;
       }
-      await $api.workflows.createPipelineRun(props.labId, launchDetails as CreateWorkflowLaunchRequest);
+      await $api.workflows.createPipelineRun(props.labId, launchDetails);
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');

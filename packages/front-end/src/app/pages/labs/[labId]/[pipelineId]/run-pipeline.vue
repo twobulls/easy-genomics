@@ -2,14 +2,17 @@
   import { usePipelineRunStore } from '~/stores';
   import { ButtonVariantEnum } from '~/types/buttons';
 
+  const { $api } = useNuxtApp();
   const $router = useRouter();
+  const $route = useRoute();
   const labName = usePipelineRunStore().labName;
 
   const isDialogOpen = ref(false);
   const hasLaunched = ref(false);
   const exitConfirmed = ref(false);
-  let backNavigationInProgress = ref(false);
-  let nextRoute = ref(null);
+  const backNavigationInProgress = ref(false);
+  const nextRoute = ref(null);
+  const schema = ref('');
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
@@ -47,6 +50,12 @@
   function handleExitRun() {
     isDialogOpen.value = true;
   }
+
+  onBeforeMount(async () => {
+    const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
+    schema.value = JSON.parse(res.schema);
+    usePipelineRunStore().setParams(JSON.parse(<string>res.params));
+  });
 </script>
 
 <template>
@@ -57,7 +66,7 @@
     :back-button-action="handleExitRun"
     back-button-label="Exit Run"
   />
-  <EGRunPipelineStepper @has-launched="hasLaunched = true" />
+  <EGRunPipelineStepper @has-launched="hasLaunched = true" :schema="schema" :params="usePipelineRunStore().params" />
   <EGDialog
     action-label="Cancel Pipeline Run"
     :action-variant="ButtonVariantEnum.enum.destructive"

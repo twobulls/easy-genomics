@@ -19,7 +19,7 @@ importers:
         version: 18.6.3
       '@commitlint/cz-commitlint':
         specifier: ^18.6.1
-        version: 18.6.1(@types/node@20.14.13)(commitizen@4.3.0(@types/node@20.14.13)(typescript@5.5.4))(inquirer@8.2.5)(typescript@5.5.4)
+        version: 18.6.1(@types/node@20.14.13)(commitizen@4.3.0(@types/node@20.14.13)(typescript@5.5.4))(inquirer@8.2.6)(typescript@5.5.4)
       '@nrwl/devkit':
         specifier: ^15
         version: 15.9.7(nx@15.9.7)
@@ -6295,6 +6295,10 @@ packages:
     resolution: {integrity: sha512-QAgPDQMEgrDssk1XiwwHoOGYF9BAbUcc1+j+FhEvaOt8/cKRqyLn0U5qA6F74fGhTMGxf92pOvPBeh29jQJDTQ==}
     engines: {node: '>=12.0.0'}
 
+  inquirer@8.2.6:
+    resolution: {integrity: sha512-M1WuAmb7pn9zdFRtQYk26ZBoY043Sse0wVDdk4Bppr+JOXyQYybdtvK+l9wUibhtjdjvtoiNy8tk+EgsYIUqKg==}
+    engines: {node: '>=12.0.0'}
+
   internal-slot@1.0.7:
     resolution: {integrity: sha512-NGnrKwXzSms2qUUih/ILZ5JBqNTSa1+ZmP6flaIp6KmSElgE9qdndzS3cqjrDovwFdmwsGsLdeFgB6suw+1e9g==}
     engines: {node: '>= 0.4'}
@@ -9385,7 +9389,7 @@ packages:
     resolution: {integrity: sha512-kZf/K6hEIrWHI6XqOFUiiMa+79wE/D8Q+NCNAWclkyg3b4d2k7s0QGepNjiABc+aR3N1PAyHL7p6UcLY6LmrnA==}
 
   utils-merge@1.0.1:
-    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
+    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
     engines: {node: '>= 0.4.0'}
 
   uuid@3.4.0:
@@ -13347,14 +13351,14 @@ snapshots:
       ajv: 8.17.1
     optional: true
 
-  '@commitlint/cz-commitlint@18.6.1(@types/node@20.14.13)(commitizen@4.3.0(@types/node@20.14.13)(typescript@5.5.4))(inquirer@8.2.5)(typescript@5.5.4)':
+  '@commitlint/cz-commitlint@18.6.1(@types/node@20.14.13)(commitizen@4.3.0(@types/node@20.14.13)(typescript@5.5.4))(inquirer@8.2.6)(typescript@5.5.4)':
     dependencies:
       '@commitlint/ensure': 18.6.1
       '@commitlint/load': 18.6.1(@types/node@20.14.13)(typescript@5.5.4)
       '@commitlint/types': 18.6.1
       chalk: 4.1.2
       commitizen: 4.3.0(@types/node@20.14.13)(typescript@5.5.4)
-      inquirer: 8.2.5
+      inquirer: 8.2.6
       lodash.isplainobject: 4.0.6
       word-wrap: 1.2.5
     transitivePeerDependencies:
@@ -18472,6 +18476,24 @@ snapshots:
       strip-ansi: 6.0.1
       through: 2.3.8
       wrap-ansi: 7.0.0
+
+  inquirer@8.2.6:
+    dependencies:
+      ansi-escapes: 4.3.2
+      chalk: 4.1.2
+      cli-cursor: 3.1.0
+      cli-width: 3.0.0
+      external-editor: 3.1.0
+      figures: 3.2.0
+      lodash: 4.17.21
+      mute-stream: 0.0.8
+      ora: 5.4.1
+      run-async: 2.4.1
+      rxjs: 7.8.1
+      string-width: 4.2.3
+      strip-ansi: 6.0.1
+      through: 2.3.8
+      wrap-ansi: 6.2.0
 
   internal-slot@1.0.7:
     dependencies:

@@ -42,6 +42,7 @@ import {
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export enum S3Command {
   // Manage S3 Bucket
@@ -95,6 +96,11 @@ export class S3Service {
       S3Command.GET_BUCKET_LOCATION,
       getBucketLocationInput,
     );
+  };
+
+  public getPreSignedUploadUrl = async (putObjectInput: PutObjectCommandInput): Promise<string> => {
+    const putObjectCommand: PutObjectCommand = new PutObjectCommand(putObjectInput);
+    return getSignedUrl(this.s3Client, putObjectCommand, { expiresIn: 3600 });
   };
 
   public doesObjectExist = async (headObjectInput: HeadObjectCommandInput): Promise<boolean> => {

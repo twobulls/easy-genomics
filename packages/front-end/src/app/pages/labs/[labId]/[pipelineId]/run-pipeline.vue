@@ -2,6 +2,7 @@
   import { usePipelineRunStore } from '~/stores';
   import { ButtonVariantEnum } from '~/types/buttons';
   import { initialize } from 'esbuild';
+  import { DescribePipelinesResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -13,11 +14,13 @@
   const exitConfirmed = ref(false);
   const backNavigationInProgress = ref(false);
   const nextRoute = ref(null);
-  const schema = ref('');
+  const schema = ref({});
   const resetStepperKey = ref(0);
+  const isLoading = ref(true);
 
   onBeforeMount(async () => {
     await initializePipelineData();
+    isLoading.value = false;
   });
 
   /**
@@ -94,6 +97,7 @@
     :params="usePipelineRunStore().params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
+    :is-loading="isLoading"
   />
   <EGDialog
     action-label="Cancel Pipeline Run"

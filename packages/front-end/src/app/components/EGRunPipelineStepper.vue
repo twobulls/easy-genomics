@@ -2,10 +2,11 @@
   import { usePipelineRunStore } from '~/stores';
   import { ButtonSizeEnum } from '~/types/buttons';
 
-  defineProps({
-    schema: Object,
-    params: Object,
-  });
+  const props = defineProps<{
+    schema: object;
+    params: object;
+    isLoading: boolean;
+  }>();
 
   const router = useRouter();
 
@@ -142,8 +143,15 @@
     selected.value = clampIndex(selected.value - 1);
   }
 
+  function disableAllSteps() {
+    items.value.forEach((item) => {
+      item.disabled = true;
+    });
+  }
+
   function handleLaunchSuccess() {
     hasLaunched.value = true;
+    disableAllSteps();
     emit('has-launched');
   }
 </script>
@@ -164,7 +172,9 @@
       </template>
 
       <template #item="{ item, index }">
-        <div v-if="!hasLaunched">
+        <div class="bg-skeleton-container flex h-[473px] items-center rounded-2xl p-4" v-if="isLoading" />
+
+        <div v-else-if="!hasLaunched">
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunPipelineFormRunDetails
@@ -193,7 +203,6 @@
             </div>
           </template>
 
-          <!-- Edit Parameters -->
           <template v-if="items[selectedIndex].key === 'parameters'">
             <EGRunPipelineFormEditParameters
               :params="params"

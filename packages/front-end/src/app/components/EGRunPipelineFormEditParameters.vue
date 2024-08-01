@@ -7,7 +7,7 @@
   }>();
 
   const { $api } = useNuxtApp();
-  const emit = defineEmits(['previous-step', 'step-validated']);
+  const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const activeSection = ref<string | null>(null);
 

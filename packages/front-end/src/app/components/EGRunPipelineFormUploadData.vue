@@ -29,7 +29,7 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
 
-  const emit = defineEmits(['next-tab', 'step-validated']);
+  const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const labId = $route.params.labId as string;
 
@@ -189,6 +189,7 @@
     filesToUpload.value = filesToUpload.value.filter((file) => !file.name.startsWith(sampleId));
     filePairs.value = filePairs.value.filter((filePair) => filePair.sampleId !== sampleId);
     console.log('Removed file pair; sampleId:', sampleId);
+    canProceed.value = false;
 
     validateFilePairs();
   }
@@ -216,6 +217,7 @@
     const uploadManifest = await getUploadFilesManifest();
     await uploadFiles(uploadManifest);
     isUploadProcessRunning.value = false;
+    canProceed.value = true;
   }
 
   async function getUploadFilesManifest(): Promise<FileUploadManifest> {
@@ -268,80 +270,99 @@
 </script>
 
 <template>
-  <div class="py-4" @drop.prevent="handleDroppedFiles">
-    <div
-      id="dropzone"
-      @dragenter.prevent="toggleDropzoneActive"
-      @dragleave.prevent="toggleDropzoneActive"
-      @dragover.prevent
-      @drop.prevent="toggleDropzoneActive"
-    >
+  <EGCard>
+    <EGText tag="small" class="mb-4">Step 02</EGText>
+    <EGText tag="h4" class="mb-0">Upload Data</EGText>
+    <EGText tag="small" class="mb-0" color-class="text-muted">
+      Any similar files with the suffix _R1 or _R2 Will be combined as paired-end data samples. Max file size of 5GB
+    </EGText>
+    <UDivider class="py-4" />
+    <div class="py-4" @drop.prevent="handleDroppedFiles">
       <div
-        :class="
-          cn(
-            'ring-primary-500 text-body flex w-full items-center justify-center rounded-lg py-8 ring-2 ring-offset-1 transition-colors duration-200',
-            {
-              'bg-alert-success-muted ring-alert-success font-semibold ring-offset-2': isDropzoneActive,
-            },
-          )
-        "
+        id="dropzone"
+        @dragenter.prevent="toggleDropzoneActive"
+        @dragleave.prevent="toggleDropzoneActive"
+        @dragover.prevent
+        @drop.prevent="toggleDropzoneActive"
       >
-        <div class="flex items-center justify-center">
-          <div>
-            <span :class="cn('visible', { 'invisible': isDropzoneActive })">Drag and</span>
-            drop your files
-            <span :class="cn('visible', { 'invisible': isDropzoneActive })">here or</span>
+        <div
+          :class="
+            cn(
+              'ring-primary-500 text-body flex w-full items-center justify-center rounded-lg py-8 ring-2 ring-offset-1 transition-colors duration-200',
+              {
+                'bg-alert-success-muted ring-alert-success font-semibold ring-offset-2': isDropzoneActive,
+              },
+            )
+          "
+        >
+          <div class="flex items-center justify-center">
+            <div>
+              <span :class="cn('visible', { 'invisible': isDropzoneActive })">Drag and</span>
+              drop your files
+              <span :class="cn('visible', { 'invisible': isDropzoneActive })">here or</span>
+            </div>
+            <input
+              accept=".gz,.fastq"
+              ref="chooseFilesButton"
+              type="file"
+              id="dropzoneFiles"
+              @change="handleFileInputChange"
+              hidden
+              multiple
+            />
+            <EGButton
+              :class="cn('visible ml-4', { 'invisible': isDropzoneActive })"
+              @click="chooseFiles"
+              label="Choose Files"
+              size="sm"
+            />
           </div>
-          <input
-            accept=".gz,.fastq"
-            ref="chooseFilesButton"
-            type="file"
-            id="dropzoneFiles"
-            @change="handleFileInputChange"
-            hidden
-            multiple
-          />
-          <EGButton
-            :class="cn('visible ml-4', { 'invisible': isDropzoneActive })"
-            @click="chooseFiles"
-            label="Choose Files"
-            size="sm"
-          />
         </div>
       </div>
     </div>
-  </div>
 
-  <div v-if="filePairsForTable.length > 0" class="text-body flex justify-between px-4 pt-2 text-sm">
-    <div>Samples: {{ filePairs.length }}</div>
-    <div>Files: {{ filesToUpload.length }}</div>
-  </div>
+    <div v-if="filePairsForTable.length > 0" class="text-body flex justify-between px-4 pt-2 text-sm">
+      <div>Samples: {{ filePairs.length }}</div>
+      <div>Files: {{ filesToUpload.length }}</div>
+    </div>
 
-  <UTable
-    v-if="filePairsForTable.length > 0"
-    :columns="columns"
-    :rows="filePairsForTable"
-    class="EGTable mt-4 rounded-2xl"
-  >
-    <template #actions-data="{ row }">
-      <div class="flex items-center space-x-2">
-        <EGButton
-          icon="i-heroicons-trash"
-          :size="ButtonSizeEnum.enum.xs"
-          :variant="ButtonVariantEnum.enum.destructive"
-          @click="removeFilePair(row.sampleId)"
-        />
-      </div>
-    </template>
-  </UTable>
+    <UTable
+      v-if="filePairsForTable.length > 0"
+      :columns="columns"
+      :rows="filePairsForTable"
+      class="EGTable mt-4 rounded-2xl"
+    >
+      <template #actions-data="{ row }">
+        <div class="flex items-center space-x-2">
+          <EGButton
+            icon="i-heroicons-trash"
+            :size="ButtonSizeEnum.enum.xs"
+            :variant="ButtonVariantEnum.enum.destructive"
+            @click="removeFilePair(row.sampleId)"
+          />
+        </div>
+      </template>
+    </UTable>
 
-  <div class="flex justify-end pt-4">
+    <div class="flex justify-end pt-4">
+      <EGButton
+        @click="startUploadProcess"
+        :disabled="!canGetUploadPaths"
+        :loading="isUploadProcessRunning"
+        :size="ButtonSizeEnum.enum.sm"
+        label="Upload Files"
+      />
+    </div>
+  </EGCard>
+
+  <div class="mt-6 flex justify-between">
+    <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-step')" />
     <EGButton
-      @click="startUploadProcess"
-      :disabled="!canGetUploadPaths"
-      :loading="isUploadProcessRunning"
       :size="ButtonSizeEnum.enum.sm"
-      label="Upload Files"
+      variant="secondary"
+      label="Next step"
+      @click="emit('next-step')"
+      :disabled="!canProceed"
     />
   </div>
 </template>

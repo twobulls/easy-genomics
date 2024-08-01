@@ -191,19 +191,11 @@
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunPipelineFormUploadData
-              @next-tab="() => nextTab()"
+              @next-step="() => nextStep('parameters')"
+              @previous-step="() => previousStep()"
               @step-validated="setStepEnabled('parameters', $event)"
             />
           </template>
-          <!--            <div class="mt-6 flex justify-between">-->
-          <!--              <EGButton-->
-          <!--                :size="ButtonSizeEnum.enum.sm"-->
-          <!--                variant="secondary"-->
-          <!--                label="Previous step"-->
-          <!--                @click="() => previousStep()"-->
-          <!--              />-->
-          <!--              <EGButton @click="() => nextStep('parameters')" label="Save & Continue" />-->
-          <!--            </div>-->
 
           <template v-if="items[selectedIndex].key === 'parameters'">
             <EGRunPipelineFormEditParameters

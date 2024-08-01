@@ -42,12 +42,15 @@
 <template>
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
-      <component
-        :is="components[propertyType(propertyDetail)]"
-        :name="propertyName"
-        :details="propertyDetail"
-        v-model="propValues[propertyName]"
-      />
+      <!-- ignore Seqera "file upload" input types -->
+      <template v-if="propertyDetail?.format !== 'file-path'">
+        <component
+          :is="components[propertyType(propertyDetail)]"
+          :name="propertyName"
+          :details="propertyDetail"
+          v-model="propValues[propertyName]"
+        />
+      </template>
     </div>
   </div>
 </template>

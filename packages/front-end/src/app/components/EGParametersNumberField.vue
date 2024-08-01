@@ -7,7 +7,6 @@
 
   let { modelValue } = toRefs(props);
 
-  // this watcher would convert undefined to 0
   watch(
     modelValue,
     (newVal) => {

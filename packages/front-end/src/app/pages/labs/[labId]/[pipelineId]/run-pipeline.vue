@@ -14,7 +14,7 @@
   const exitConfirmed = ref(false);
   const backNavigationInProgress = ref(false);
   const nextRoute = ref(null);
-  const schema = ref({} as DescribePipelinesResponse);
+  const schema = ref({});
   const resetStepperKey = ref(0);
   const isLoading = ref(true);
 

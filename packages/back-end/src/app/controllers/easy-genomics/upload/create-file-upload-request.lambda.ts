@@ -1,4 +1,3 @@
-import { createHash } from 'crypto';
 import { GetBucketLocationCommandOutput } from '@aws-sdk/client-s3';
 import { FileUploadRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/upload/s3-file-upload-manifest';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
@@ -12,6 +11,7 @@ import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 import { S3Service } from '../../../services/s3-service';
+import { validateOrganizationAccess } from '../../../utils/rest-api-utils';
 
 const EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT: number = 5 * Math.pow(1024, 3); // 5GiB
 
@@ -53,6 +53,9 @@ export const handler: Handler = async (
      */
     const transactionId: string = request.TransactionId;
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
+    if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
+      throw new Error('Unauthorized');
+    }
     const s3BucketGivenName: string | undefined = laboratory.S3Bucket;
     if (!s3BucketGivenName) {
       throw new Error(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
@@ -99,7 +102,6 @@ export const handler: Handler = async (
          */
         const s3Key: string = `uploads/${laboratoryId}/${transactionId}/${file.Name}`;
         const s3Url: string = `s3://${s3BucketFullName}/${s3Key}`;
-        const s3UrlChecksum: string = createHash('sha256').update(s3Url).digest('hex');
 
         return {
           ...file,
@@ -107,7 +109,6 @@ export const handler: Handler = async (
           Key: s3Key,
           Region: s3Region,
           S3Url: s3Url,
-          S3UrlChecksum: s3UrlChecksum, // Security check to prevent spoofing
         };
       }
     });

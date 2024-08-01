@@ -18,6 +18,9 @@ import {
   GetBucketLocationCommand,
   GetBucketLocationCommandInput,
   GetBucketLocationCommandOutput,
+  HeadObjectCommand,
+  HeadObjectCommandInput,
+  HeadObjectCommandOutput,
   InvalidObjectState,
   ListBucketsCommand,
   ListBucketsCommandInput,
@@ -33,6 +36,9 @@ import {
   NoSuchUpload,
   NotFound,
   ObjectNotInActiveTierError,
+  PutObjectCommand,
+  PutObjectCommandInput,
+  PutObjectCommandOutput,
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
@@ -47,6 +53,8 @@ export enum S3Command {
   COPY_BUCKET_OBJECT = 'copy-bucket-object',
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
   LIST_BUCKET_OBJECTS = 'list-bucket-objects',
+  HEAD_OBJECT = 'head-object',
+  PUT_OBJECT = 'put-object',
   // Multi-Part S3 Uploads
   CREATE_MULTI_PART_UPLOAD = 'create-multi-part-upload',
   ABORT_MULTI_PART_UPLOAD = 'abort-multi-part-upload',
@@ -87,6 +95,22 @@ export class S3Service {
       S3Command.GET_BUCKET_LOCATION,
       getBucketLocationInput,
     );
+  };
+
+  public doesObjectExist = async (headObjectInput: HeadObjectCommandInput): Promise<boolean> => {
+    try {
+      const response = await this.s3Request<HeadObjectCommandInput, HeadObjectCommandOutput>(
+        S3Command.HEAD_OBJECT,
+        headObjectInput,
+      );
+      return response.$metadata.httpStatusCode === 200;
+    } catch (error: any) {
+      return false;
+    }
+  };
+
+  public putObject = async (putObjectInput: PutObjectCommandInput): Promise<PutObjectCommandOutput> => {
+    return this.s3Request<PutObjectCommandInput, PutObjectCommandOutput>(S3Command.PUT_OBJECT, putObjectInput);
   };
 
   private s3Request = async <RequestType, ResponseType>(
@@ -150,6 +174,10 @@ export class S3Service {
         return new DeleteObjectCommand(data as DeleteObjectCommandInput);
       case S3Command.LIST_BUCKET_OBJECTS:
         return new ListObjectsV2Command(data as ListObjectsV2CommandInput);
+      case S3Command.HEAD_OBJECT:
+        return new HeadObjectCommand(data as HeadObjectCommandInput);
+      case S3Command.PUT_OBJECT:
+        return new PutObjectCommand(data as PutObjectCommandInput);
       // Multi-Part S3 Upload Commands
       case S3Command.CREATE_MULTI_PART_UPLOAD:
         return new CreateMultipartUploadCommand(data as CreateMultipartUploadCommandInput);

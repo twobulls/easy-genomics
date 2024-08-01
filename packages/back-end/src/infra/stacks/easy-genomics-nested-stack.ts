@@ -701,6 +701,27 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+    // /easy-genomics/upload/create-file-upload-sample-sheet
+    this.iam.addPolicyStatements('/easy-genomics/upload/create-file-upload-sample-sheet', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*'],
+        actions: [
+          's3:GetBucketLocation',
+          's3:ListBucket', // Required for HeadObject command
+          's3:GetObject', // Required for HeadObject command
+          's3:HeadObject',
+          's3:PutObject',
+        ],
+        effect: Effect.ALLOW,
+      }),
+    ]);
   };
 
   // Easy Genomics specific DynamoDB tables

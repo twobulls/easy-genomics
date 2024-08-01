@@ -36,13 +36,14 @@
         click: async () => viewOrg(row),
       },
     ],
-    [
-      {
-        label: 'Remove',
-        class: 'text-alert-danger-dark',
-        click: () => {},
-      },
-    ],
+    // TODO: temporarily disabled; see: https://dept-au.atlassian.net/browse/EG-575
+    // [
+    //   {
+    //     label: 'Remove',
+    //     class: 'text-alert-danger-dark',
+    //     click: () => {},
+    //   },
+    // ],
   ];
 
   function viewOrg(org: Organization) {

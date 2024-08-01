@@ -22,7 +22,7 @@
 <template>
   <EGToasts class="top-[70px]" />
   <EGHeader :is-authed="true" key="routeKey" />
-  <main class="mx-auto mt-10 px-4">
+  <main class="mx-auto mb-4 mt-10 px-4">
     <slot v-if="hasInit" />
   </main>
 </template>

@@ -102,8 +102,10 @@ function getS3BucketGivenName(s3BucketGivenName?: string): string | undefined {
     return s3BucketGivenName
       .trim()
       .toLowerCase()
-      .replace(/[\s-]/g, '_')
-      .replace(/[^a-zA-Z0-9._]/g, '');
+      .replace(/[\s_]/g, '-')
+      .replace(/[^a-zA-Z0-9.-]/g, '')
+      .replace(/^-+|-+$|-+/g, '-')
+      .replace(/^\.+|\.+$|\.+/g, '.');
   }
 }
 

@@ -700,6 +700,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
         actions: ['s3:GetBucketLocation'],
         effect: Effect.ALLOW,
       }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*/*'],
+        actions: ['s3:PutObject'], // Required to generate pre-signed S3 Urls for uploading with PutObject request
+        effect: Effect.ALLOW,
+      }),
     ]);
     // /easy-genomics/upload/create-file-upload-sample-sheet
     this.iam.addPolicyStatements('/easy-genomics/upload/create-file-upload-sample-sheet', [

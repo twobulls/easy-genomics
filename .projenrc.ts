@@ -251,6 +251,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/client-sts',
     '@aws-sdk/client-s3',
     '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/s3-request-presigner',
     '@aws-sdk/types',
     '@aws-sdk/util-dynamodb',
     '@easy-genomics/shared-lib@workspace:*',

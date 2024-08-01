@@ -140,6 +140,9 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: ^3.506.0
         version: 3.620.1(@aws-sdk/client-dynamodb@3.620.1)
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.620.1
+        version: 3.620.1
       '@aws-sdk/types':
         specifier: ^3.502.0
         version: 3.609.0
@@ -9384,7 +9387,7 @@ packages:
     resolution: {integrity: sha512-kZf/K6hEIrWHI6XqOFUiiMa+79wE/D8Q+NCNAWclkyg3b4d2k7s0QGepNjiABc+aR3N1PAyHL7p6UcLY6LmrnA==}
 
   utils-merge@1.0.1:
-    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
+    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
 
   uuid@3.4.0:

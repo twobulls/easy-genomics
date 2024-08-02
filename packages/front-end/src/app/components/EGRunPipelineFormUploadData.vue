@@ -4,9 +4,16 @@
   import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
   import {
     FileInfo,
+    FileUploadInfo,
     FileUploadManifest,
     FileUploadRequest,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
+  import {
+    SampleSheetRequest,
+    SampleSheetResponse,
+    UploadedFileInfo,
+    UploadedFilePairInfo,
+  } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
 
   type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
@@ -31,6 +38,9 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const labId = $route.params.labId as string;
+
+  // TODO: Move transactionId to store and generate at step 01
+  const transactionId = uuidv4();
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -210,8 +220,56 @@
     const uploadManifest = await getUploadFilesManifest();
     addUploadUrls(uploadManifest);
     await uploadFiles();
+    const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
+    const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
+    console.log('Sample sheet response:', sampleSheetResponse);
+
     isUploadProcessRunning.value = false;
+
     canProceed.value = true;
+  }
+
+  function getUploadedFilePairs(uploadManifest: FileUploadManifest): UploadedFilePairInfo[] {
+    const uploadedFilePairs: UploadedFilePairInfo[] = [];
+
+    uploadManifest.Files.forEach((file: FileUploadInfo) => {
+      const { Bucket, Key, Name, Region, S3Url } = file;
+      const uploadFileInfo: UploadedFileInfo = {
+        Bucket,
+        Key,
+        Region,
+        S3Url,
+      };
+      const sampleId = getSampleIdFromFileName(Name);
+      const existingFilePair = uploadedFilePairs.find((filePair) => filePair.SampleId === sampleId);
+      if (existingFilePair) {
+        if (file.Name.includes('_R1_')) {
+          existingFilePair.R1 = uploadFileInfo;
+        } else if (file.Name.includes('_R2_')) {
+          existingFilePair.R2 = uploadFileInfo;
+        }
+      } else {
+        const newFilePair: UploadedFilePairInfo = {
+          SampleId: sampleId,
+          R1: Name.includes('_R1_') ? uploadFileInfo : undefined,
+          R2: Name.includes('_R2_') ? uploadFileInfo : undefined,
+        };
+        uploadedFilePairs.push(newFilePair);
+      }
+    });
+
+    console.log('uploadedFilePairs:', uploadedFilePairs);
+
+    return uploadedFilePairs;
+  }
+
+  async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
+    const request: SampleSheetRequest = {
+      LaboratoryId: labId,
+      TransactionId: transactionId,
+      UploadedFilePairs: uploadedFilePairs,
+    };
+    return await $api.uploads.getSampleSheetCsv(request);
   }
 
   async function getUploadFilesManifest(): Promise<FileUploadManifest> {
@@ -222,8 +280,6 @@
         Size: fileDetails.size,
       });
     }
-
-    const transactionId = uuidv4();
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,

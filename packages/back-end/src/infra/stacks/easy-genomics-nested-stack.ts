@@ -283,7 +283,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [`arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-easy-genomics-lab-*`],
-        actions: ['s3:CreateBucket'],
+        actions: ['s3:CreateBucket', 's3:*'], // TODO: Lock down S3 permissions for PutBucketLifecycleConfiguration
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({

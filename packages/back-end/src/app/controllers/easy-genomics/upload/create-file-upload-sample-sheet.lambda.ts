@@ -121,41 +121,32 @@ function getErrorMessage(err: any) {
 async function generateSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<string> {
   /**
    * Iterate over the supplied list of UploadedFiles to check the R1 & R2 file
-   * pairs exist. Ignore both R1 & R2 file pairs if any are not found.
+   * pairs exist, and generate CSV sample-sheet row record.
    */
-  const validatedCsvRows: string[] = (
+  const sampleSheetCsvData: string[] = (
     await Promise.all(
-      uploadedFilePairs.map(async (uploadedFilePair: UploadedFilePairInfo) => {
+      uploadedFilePairs.map(async (uploadedFilePair: UploadedFilePairInfo, index: number) => {
         const r1 = uploadedFilePair.R1;
         const r2 = uploadedFilePair.R2;
 
-        const validPair: boolean = (
-          await Promise.all([
-            s3Service.doesObjectExist({ Bucket: r1.Bucket, Key: r1.Key }),
-            s3Service.doesObjectExist({ Bucket: r2.Bucket, Key: r2.Key }),
-          ])
-        ).every((response: Awaited<boolean>) => response === true);
+        const validPair: boolean[] = await Promise.all([
+          s3Service.doesObjectExist({ Bucket: r1.Bucket, Key: r1.Key }),
+          s3Service.doesObjectExist({ Bucket: r2.Bucket, Key: r2.Key }),
+        ]);
 
-        if (validPair) {
-          return `${r1.S3Url}, ${r2.S3Url}`; // CSV Sample-Sheet row without sample index
+        if (validPair[0] === false) {
+          throw new Error(`Uploaded R1 sample file not found: ${r1.Key}`);
+        } else if (validPair[1] === false) {
+          throw new Error(`Uploaded R2 sample file not found: ${r2.Key}`);
         } else {
-          return ''; // Exclude invalid pair
+          return `Sample_${index + 1}, ${r1.S3Url}, ${r2.S3Url}`; // CSV Sample-Sheet row with sample index
         }
       }),
     )
-  )
-    .map((csvRow: Awaited<string>) => {
-      return csvRow;
-    })
-    .filter((csvRow) => csvRow !== '');
-
-  /**
-   * Generate the CSV Sample-Sheet based off the validated CSV Rows and index
-   * the samples accordingly.
-   */
-  const sampleSheetCsvData: string[] = validatedCsvRows.map((validatedCsvRow: string, index: number) => {
-    return `Sample_${index + 1}, ${validatedCsvRow}`;
+  ).map((csvRow: Awaited<string>) => {
+    return csvRow;
   });
+
   const sampleSheetCsv: string = [...SAMPLE_SHEET_CSV_HEADER, ...sampleSheetCsvData].join('\n');
   return sampleSheetCsv;
 }

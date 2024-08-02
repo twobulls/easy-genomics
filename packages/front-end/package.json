@@ -77,6 +77,7 @@
     "@smithy/url-parser": "^3.0.3",
     "aws-amplify": "5.3.18",
     "aws-cdk-lib": "^2.124.0",
+    "axios": "^1.7.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "constructs": "^10.0.5",

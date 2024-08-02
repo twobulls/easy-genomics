@@ -328,6 +328,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@smithy/types',
     '@smithy/url-parser',
     'aws-amplify@5.3.18',
+    'axios',
     'class-variance-authority',
     'clsx',
     'date-fns',

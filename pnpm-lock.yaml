@@ -273,6 +273,9 @@ importers:
       aws-cdk-lib:
         specifier: ^2.124.0
         version: 2.150.0(constructs@10.3.0)
+      axios:
+        specifier: ^1.7.2
+        version: 1.7.2
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0

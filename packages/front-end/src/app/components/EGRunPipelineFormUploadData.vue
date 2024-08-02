@@ -1,26 +1,25 @@
 <script setup lang="ts">
-  import { Auth } from 'aws-amplify';
-  import { ICredentials } from 'aws-amplify/lib/Common/types/types';
-  import { AwsCredentialIdentity } from '@smithy/types/dist-types/identity/awsCredentialIdentity';
+  import axios from 'axios';
   import { v4 as uuidv4 } from 'uuid';
   import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
   import {
     FileInfo,
-    FileUploadInfo,
     FileUploadManifest,
     FileUploadRequest,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
 
   type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
-    r1File?: UploadedFile;
-    r2File?: UploadedFile;
+    r1File?: FileDetails;
+    r2File?: FileDetails;
   };
 
-  type UploadedFile = {
+  type FileDetails = {
+    file: File;
     progress: number;
     percentage: number;
     name: string;
+    size: number;
     location?: string;
     url?: string;
     error?: string;
@@ -35,16 +34,12 @@
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
-  const canGetUploadPaths = ref(false);
-  const canGetSignedUrls = ref(false);
+  const filesToUpload = ref<FileDetails[]>([]);
+  const filePairs = ref<FilePair[]>([]);
+
   const canUploadFiles = ref(false);
   const isUploadProcessRunning = ref(false);
   const canProceed = ref(false);
-  const filesToUpload = ref<File[]>([]);
-  // const filePairs: FilePair[] = reactive([]);
-  const filePairs = ref<FilePair[]>([]);
-
-  const progressUpdated = ref(0);
   const isDropzoneActive = ref(false);
 
   const columns = [
@@ -79,7 +74,7 @@
     const files = e.dataTransfer?.files;
     if (!files) return;
 
-    updateFilePairs(files);
+    addFiles(files);
   }
 
   function handleFileInputChange(e: Event) {
@@ -96,10 +91,10 @@
     const files: FileList = e.target.files;
     if (!files) return;
 
-    updateFilePairs(files);
+    addFiles(files);
   }
 
-  function updateFilePairs(files: FileList) {
+  function addFiles(files: FileList) {
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       addFile(file);
@@ -115,45 +110,56 @@
     let haveMatchingFilePairs = filePairs.value.length > 0;
 
     for (const filePair of filePairs.value) {
+      console.log('Validating file pair:', filePair);
+      console.log('R1 file:', filePair.r1File);
+      console.log('R2 file:', filePair.r2File);
       if (!filePair.r1File || !filePair.r2File) {
         haveMatchingFilePairs = false;
         break;
       }
     }
 
-    canGetUploadPaths.value = haveMatchingFilePairs;
-  }
+    canUploadFiles.value = haveMatchingFilePairs;
 
-  function fileExists(files: File[], newFile: File): boolean {
-    return files.some((file) => file.name === newFile.name);
+    console.log('Can upload files:', canUploadFiles.value);
   }
 
   function addFile(file: File) {
-    const isDuplicateFile = fileExists(filesToUpload.value, file);
+    const isDuplicateFile = checkIsFileDuplicate(file);
     if (isDuplicateFile) {
       console.warn(`File ${file.name} already exists`);
       return;
     }
 
-    addFileToFilesToUpload(file);
-    addFileToFilePairs(file);
+    const fileDetails = getFileDetails(file);
+    filesToUpload.value.push(fileDetails);
+    addFileToFilePairs(fileDetails);
 
     console.log('filesToUpload', toRaw(filesToUpload.value));
     console.log('filePairs', toRaw(filePairs.value));
   }
 
-  function addFileToFilesToUpload(file: File) {
-    filesToUpload.value.push(file);
+  function checkIsFileDuplicate(newFile: File): boolean {
+    return filesToUpload.value.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
   }
 
-  function addFileToFilePairs(file: File) {
-    const uploadFile = getUploadFile(file);
-    const sampleId = getSampleIdFromFileName(file.name);
+  function getFileDetails(file: File): FileDetails {
+    return {
+      file,
+      size: file.size,
+      progress: 0,
+      percentage: 0,
+      name: file.name,
+    };
+  }
+
+  function addFileToFilePairs(fileDetails: FileDetails) {
+    const sampleId = getSampleIdFromFileName(fileDetails.name);
     const existingFilePair = filePairs.value.find((filePair) => filePair.sampleId === sampleId);
     const filePair: FilePair = existingFilePair || { sampleId };
 
     try {
-      addUploadFileToFilePair(uploadFile, filePair);
+      addToFilePair(fileDetails, filePair);
       if (!existingFilePair) {
         filePairs.value.push(filePair);
       }
@@ -162,22 +168,14 @@
     }
   }
 
-  function addUploadFileToFilePair(uploadFile: UploadedFile, filePair: FilePair) {
-    if (uploadFile.name.includes('_R1_')) {
-      filePair.r1File = uploadFile;
-    } else if (uploadFile.name.includes('_R2_')) {
-      filePair.r2File = uploadFile;
+  function addToFilePair(fileDetails: FileDetails, filePair: FilePair) {
+    if (fileDetails.name.includes('_R1_')) {
+      filePair.r1File = fileDetails;
+    } else if (fileDetails.name.includes('_R2_')) {
+      filePair.r2File = fileDetails;
     } else {
-      throw new Error(`File ${uploadFile.name} does not contain _R1_ or _R2_`);
+      throw new Error(`File ${fileDetails.name} does not contain _R1_ or _R2_`);
     }
-  }
-
-  function getUploadFile(file: File): UploadedFile {
-    return {
-      progress: 0,
-      percentage: 0,
-      name: file.name,
-    };
   }
 
   function getSampleIdFromFileName(fileName: string): string {
@@ -189,7 +187,6 @@
     filesToUpload.value = filesToUpload.value.filter((file) => !file.name.startsWith(sampleId));
     filePairs.value = filePairs.value.filter((filePair) => filePair.sampleId !== sampleId);
     console.log('Removed file pair; sampleId:', sampleId);
-    canProceed.value = false;
 
     validateFilePairs();
   }
@@ -204,10 +201,6 @@
 
     return filePairs.value.map((filePair: FilePair) => {
       const { sampleId, r1File, r2File } = filePair;
-
-      // const rowClass = r1File && r2File ? undefined : 'bg-alert-danger-muted';
-      // return { sampleId, r1File: r1File?.name, r2File: r2File?.name, class: rowClass };
-
       return { sampleId, r1File: r1File?.name, r2File: r2File?.name };
     });
   });
@@ -215,17 +208,18 @@
   async function startUploadProcess() {
     isUploadProcessRunning.value = true;
     const uploadManifest = await getUploadFilesManifest();
-    await uploadFiles(uploadManifest);
+    addUploadUrls(uploadManifest);
+    await uploadFiles();
     isUploadProcessRunning.value = false;
     canProceed.value = true;
   }
 
   async function getUploadFilesManifest(): Promise<FileUploadManifest> {
     const files: FileInfo[] = [];
-    for (const file of filesToUpload.value) {
+    for (const fileDetails of filesToUpload.value) {
       files.push({
-        Name: file.name,
-        Size: file.size,
+        Name: fileDetails.name,
+        Size: fileDetails.size,
       });
     }
 
@@ -246,22 +240,35 @@
     return response;
   }
 
-  async function uploadFiles(uploadManifest: FileUploadManifest) {
-    // console.log('uploadFiles; Getting credentials');
-    // const credentials: ICredentials = await Auth.currentUserCredentials();
-    // console.log('uploadFiles; credentials:', credentials);
+  function addUploadUrls(uploadManifest: FileUploadManifest) {
+    filesToUpload.value.forEach((fileDetails) => {
+      const fileUploadInfo = uploadManifest.Files.find((file) => file.Name === fileDetails.name);
+      if (fileUploadInfo) {
+        fileDetails.url = fileUploadInfo.S3Url;
+      }
+    });
+  }
 
-    // console.log('uploadFiles; Getting awsCredentialIdentity');
-    // const awsCredentialIdentity: AwsCredentialIdentity = {
-    //   accessKeyId: credentials.accessKeyId,
-    //   secretAccessKey: credentials.secretAccessKey,
-    //   sessionToken: credentials.sessionToken,
-    // };
-    // console.log('uploadFiles; awsCredentialIdentity:', awsCredentialIdentity);
+  async function uploadFiles() {
+    console.log('Uploading files:', filesToUpload.value.length);
+    await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
+    console.log('Uploaded files:', filesToUpload.value.length);
+  }
 
-    console.log('uploadFiles; Getting currentSession');
-    const currentSession = await Auth.currentSession();
-    console.log('uploadFiles; currentSession:', currentSession);
+  async function uploadFile(fileDetails: FileDetails) {
+    const { file, name } = fileDetails;
+
+    return axios.put(fileDetails.url!, file, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
+        fileDetails.progress = progress;
+        fileDetails.percentage = progress;
+        console.log(`${name}; Upload progress: ${progress}%`);
+      },
+    });
   }
 
   watch(canProceed, (val) => {
@@ -347,7 +354,7 @@
     <div class="flex justify-end pt-4">
       <EGButton
         @click="startUploadProcess"
-        :disabled="!canGetUploadPaths"
+        :disabled="!canUploadFiles || isUploadProcessRunning || canProceed"
         :loading="isUploadProcessRunning"
         :size="ButtonSizeEnum.enum.sm"
         label="Upload Files"

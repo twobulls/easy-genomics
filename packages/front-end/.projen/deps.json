@@ -159,6 +159,10 @@
       "type": "runtime"
     },
     {
+      "name": "axios",
+      "type": "runtime"
+    },
+    {
       "name": "class-variance-authority",
       "type": "runtime"
     },

@@ -2,14 +2,16 @@ import { defineNuxtPlugin } from '#app';
 import LabsModule from '~/repository/modules/labs';
 import OrgsModule from '~/repository/modules/orgs';
 import PipelinesModule from '~/repository/modules/pipelines';
+import UploadsModule from '~/repository/modules/uploads';
 import UsersModule from '~/repository/modules/users';
 import WorkflowsModules from '~/repository/modules/workflows';
 
 interface IApiInstance {
   labs: LabsModule;
   orgs: OrgsModule;
-  users: UsersModule;
   pipelines: PipelinesModule;
+  uploads: UploadsModule;
+  users: UsersModule;
   workflows: WorkflowsModules;
 }
 
@@ -26,8 +28,9 @@ export default defineNuxtPlugin((nuxtApp) => {
   const modules: IApiInstance = {
     labs: new LabsModule(apiFetcher),
     orgs: new OrgsModule(apiFetcher),
-    users: new UsersModule(apiFetcher),
     pipelines: new PipelinesModule(apiFetcher),
+    uploads: new UploadsModule(apiFetcher),
+    users: new UsersModule(apiFetcher),
     workflows: new WorkflowsModules(apiFetcher),
   };
 

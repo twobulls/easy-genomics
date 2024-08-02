@@ -81,37 +81,43 @@ export const handler: Handler = async (
     // S3 Buckets in Region us-east-1 have a LocationConstraint of null.
     const s3Region: string = bucketLocation ? bucketLocation : 'us-east-1';
 
-    const files: FileUploadInfo[] = request.Files.map((file: FileInfo) => {
-      // Sanity checks
-      if (file.Name.length === 0) {
-        throw new Error(`File name is invalid: '${file.Name}'`);
-      }
-      if (file.Size === 0) {
-        throw new Error(`File size is invalid: '${file.Name}'`);
-      }
+    const files: FileUploadInfo[] = await Promise.all(
+      request.Files.map(async (file: FileInfo) => {
+        // Sanity checks
+        if (file.Name.length === 0) {
+          throw new Error(`File name is invalid: '${file.Name}'`);
+        }
+        if (file.Size === 0) {
+          throw new Error(`File size is invalid: '${file.Name}'`);
+        }
 
-      /**
-       * If a file size is greater than the EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT then throw an error,
-       * otherwise default to generating a single upload S3 URL for the respective file.
-       */
-      if (file.Size > EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT) {
-        throw new Error(`File size is too large: '${file.Name}'`);
-      } else {
         /**
-         * The S3 Key will consist of: /uploads/{laboratoryId}/{transactionId}/{file name}
+         * If a file size is greater than the EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT then throw an error,
+         * otherwise default to generating a single upload S3 URL for the respective file.
          */
-        const s3Key: string = `uploads/${laboratoryId}/${transactionId}/${file.Name}`;
-        const s3Url: string = `s3://${s3BucketFullName}/${s3Key}`;
+        if (file.Size > EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT) {
+          throw new Error(`File size is too large: '${file.Name}'`);
+        } else {
+          /**
+           * The S3 Key will consist of: uploads/{laboratoryId}/{transactionId}/{file name}
+           */
+          const s3Key: string = `uploads/${laboratoryId}/${transactionId}/${file.Name}`;
+          const preSignedUrl = await s3Service.getPreSignedUploadUrl({
+            Bucket: s3BucketFullName,
+            Key: s3Key,
+            ContentLength: file.Size,
+          });
 
-        return {
-          ...file,
-          Bucket: s3BucketFullName,
-          Key: s3Key,
-          Region: s3Region,
-          S3Url: s3Url,
-        };
-      }
-    });
+          return {
+            ...file,
+            Bucket: s3BucketFullName,
+            Key: s3Key,
+            Region: s3Region,
+            S3Url: preSignedUrl,
+          };
+        }
+      }),
+    );
 
     const response: FileUploadManifest = {
       TransactionId: transactionId,

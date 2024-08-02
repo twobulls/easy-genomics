@@ -190,17 +190,11 @@
 
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
-            <!-- TODO: add this snippet inside Step 2 upload component at end of <template> block + write up next/prev
-             button emit events (see: EGRunPipelineFormEditParameters.vue) -->
-            <div class="mt-6 flex justify-between">
-              <EGButton
-                :size="ButtonSizeEnum.enum.sm"
-                variant="secondary"
-                label="Previous step"
-                @click="() => previousStep()"
-              />
-              <EGButton @click="() => nextStep('parameters')" label="Save & Continue" />
-            </div>
+            <EGRunPipelineFormUploadData
+              @next-step="() => nextStep('parameters')"
+              @previous-step="() => previousStep()"
+              @step-validated="setStepEnabled('parameters', $event)"
+            />
           </template>
 
           <template v-if="items[selectedIndex].key === 'parameters'">

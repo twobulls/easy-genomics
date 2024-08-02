@@ -139,6 +139,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/s3-request-presigner",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/types",
       "type": "runtime"
     },

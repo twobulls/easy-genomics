@@ -10,10 +10,11 @@
       columns: any[];
       isLoading?: boolean;
       actionItems?: () => ActionItem[];
-      showPagination: boolean;
+      showPagination?: boolean;
     }>(),
     {
       isLoading: false,
+      showPagination: true,
     },
   );
 

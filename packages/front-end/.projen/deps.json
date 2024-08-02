@@ -159,7 +159,15 @@
       "type": "runtime"
     },
     {
+      "name": "axios",
+      "type": "runtime"
+    },
+    {
       "name": "class-variance-authority",
+      "type": "runtime"
+    },
+    {
+      "name": "clsx",
       "type": "runtime"
     },
     {
@@ -197,6 +205,10 @@
     },
     {
       "name": "sass",
+      "type": "runtime"
+    },
+    {
+      "name": "tailwind-merge",
       "type": "runtime"
     },
     {

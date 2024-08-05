@@ -64,12 +64,17 @@ export const handler: Handler = async (
     const apiParameters: URLSearchParams = new URLSearchParams();
     apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
 
+    // TODO: handle base 64 encoded response
+    // e.g. Next Flow Tower error response when the run name starts with a number
+    // even though the run name requirement is not documented in the Next Flow Tower API
+    // beyond being a string with a maximum length of 80 characters
     const response: CreateWorkflowLaunchResponse = await httpRequest<CreateWorkflowLaunchResponse>(
       `${process.env.SEQERA_API_BASE_URL}/workflow/launch?${apiParameters.toString()}`,
       REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },
       createWorkflowLaunchRequest, // Delegate request body validation to Seqera Cloud / NextFlow Tower
     );
+
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);

@@ -78,7 +78,7 @@ export default defineNuxtConfig({
       AWS_REGION: awsRegion,
       AWS_USER_POOL_ID: awsCognitoUserPoolId,
       AWS_CLIENT_ID: awsCognitoUserPoolClientId,
-      BASE_API_URL: awsApiGatewayUrl,
+      BASE_API_URL: awsApiGatewayUrl.replace(/\/+$/, ''), // Remove trailing slashes
       ENV_TYPE: process.env.envType || 'dev',
       GITHUB_RUN_NUMBER: process.env.GITHUB_RUN_NUMBER || 'Unknown',
     },

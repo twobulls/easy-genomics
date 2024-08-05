@@ -1,6 +1,6 @@
 export interface ConfigurationSettings {
   ['aws-account-id']: number,
-  ['aws-region']: 'us-east-1' | 'us-west-2' | 'ap-southeast-1' | 'ap-southeast-2' | 'eu-central-1' | 'eu-west-1' | 'eu-west-2',
+  ['aws-region']: string,
   ['env-type']: 'dev' | 'pre-prod' | 'prod',
   ['app-domain-name']: string,
 
@@ -25,7 +25,6 @@ export interface ConfigurationSettings {
     ['aws-cognito-user-pool-id']: string,
     ['aws-cognito-client-id']: string,
     ['base-api-url']: string, // TODO: Replace with app-domain-name once APIGateway uses custom domains
-    ['mock-org-id']: string, // TODO: Remove once custom User Authorization logic retrieves OrgIds
   }
 }
 

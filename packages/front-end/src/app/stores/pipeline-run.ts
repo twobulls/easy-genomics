@@ -9,6 +9,7 @@ export const pipelineRunStateSchema = z.object({
   pipelineDescription: z.string(),
   userPipelineRunName: z.string(),
   params: z.object({}),
+  sampleSheetCsv: z.string(),
   // s3 path of uploaded file
   // csv file
   // org
@@ -28,6 +29,7 @@ const initialState = (): PipeLineRunState => ({
   pipelineDescription: '',
   userPipelineRunName: '',
   params: {},
+  sampleSheetCsv: '',
 });
 
 const usePipelineRunStore = defineStore('pipelineRunStore', {
@@ -60,6 +62,10 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
 
     setParams(params: object) {
       this.params = params;
+    },
+
+    setSampleSheetCsv(sampleSheetCsv: string) {
+      this.sampleSheetCsv = sampleSheetCsv;
     },
 
     reset() {

@@ -14,6 +14,7 @@
     UploadedFileInfo,
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
+  import { usePipelineRunStore } from '~/stores';
 
   type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
@@ -222,7 +223,7 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    console.log('Sample sheet response:', sampleSheetResponse);
+    usePipelineRunStore().setSampleSheetCsv(sampleSheetResponse.SampleSheetContents);
 
     isUploadProcessRunning.value = false;
 
@@ -276,7 +277,10 @@
       TransactionId: transactionId,
       UploadedFilePairs: uploadedFilePairs,
     };
-    return await $api.uploads.getSampleSheetCsv(request);
+    const response = await $api.uploads.getSampleSheetCsv(request);
+    console.log('Get CSV sample sheet response:', response);
+
+    return response;
   }
 
   async function getUploadFilesManifest(): Promise<FileUploadManifest> {

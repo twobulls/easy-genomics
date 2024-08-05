@@ -229,16 +229,23 @@
     canProceed.value = true;
   }
 
+  function removeQueryStringFromS3Url(s3Url: string): string {
+    return s3Url.split('?')[0];
+  }
+
   function getUploadedFilePairs(uploadManifest: FileUploadManifest): UploadedFilePairInfo[] {
     const uploadedFilePairs: UploadedFilePairInfo[] = [];
 
     uploadManifest.Files.forEach((file: FileUploadInfo) => {
       const { Bucket, Key, Name, Region, S3Url } = file;
+      const url = removeQueryStringFromS3Url(S3Url);
+      console.log('Uploaded file:', Name, url);
+
       const uploadFileInfo: UploadedFileInfo = {
         Bucket,
         Key,
         Region,
-        S3Url,
+        S3Url: url,
       };
       const sampleId = getSampleIdFromFileName(Name);
       const existingFilePair = uploadedFilePairs.find((filePair) => filePair.SampleId === sampleId);

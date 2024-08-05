@@ -42,7 +42,7 @@
       {
         label: 'Remove',
         class: 'text-alert-danger-dark',
-        click: () => deleteLab(row.LaboratoryId, row.Name),
+        click: () => deleteLab(lab.LaboratoryId, lab.Name),
       },
     ],
   ];

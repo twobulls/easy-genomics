@@ -171,12 +171,6 @@
         },
       },
     ],
-    [
-      {
-        label: 'View Parameters',
-        click: () => {},
-      },
-    ],
   ];
 
   const workflowsActionItems = (row: any) => [
@@ -195,15 +189,6 @@
         click: () => {
           useLabsStore().setSelectedWorkflow(row.workflow);
           router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
-        },
-      },
-    ],
-    [
-      {
-        label: 'View Parameters',
-        click: () => {
-          useLabsStore().setSelectedWorkflow(row.workflow);
-          router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Workflow Parameters' } });
         },
       },
     ],

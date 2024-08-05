@@ -10,16 +10,16 @@
   const $route = useRoute();
   const schema = ref({});
   const params = ref({});
-  const isLoading = ref(true);
+  const previousPageRoute = ref('');
 
   const tabItems = [
     {
-      key: 'runResults',
-      label: 'Run Results',
-    },
-    {
       key: 'runDetails',
       label: 'Run Details',
+    },
+    {
+      key: 'runResults',
+      label: 'Run Results',
     },
   ];
 
@@ -46,15 +46,6 @@
     let paramTab = $router.currentRoute.value.query?.tab;
     if (!paramTab) paramTab = 'Run Results'; // fallback for no query param to default to first tab
     tabIndex = paramTab ? tabItems.findIndex((tab) => tab.label === paramTab) : 0;
-
-    const paramsRes = await $api.workflows.readWorkflow($route.params.workflowId, $route.params.labId);
-    params.value = paramsRes.workflow.params;
-
-    const schemaRes = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
-    debugger;
-    schema.value = JSON.parse(schemaRes.schema);
-
-    isLoading.value = false;
   });
 
   // watch route change to correspondingly change selected tab
@@ -67,16 +58,7 @@
 </script>
 
 <template>
-  <EGPageHeader :title="workflow.runName" description="View your Lab users, details and pipelines">
-    <!-- TODO: wire up button once data is available -->
-    <!--    <EGButton-->
-    <!--      icon="i-heroicons-arrow-down-tray"-->
-    <!--      :icon-right="false"-->
-    <!--      label="Download Run Results"-->
-    <!--      @click="() => window.alert('TODO')"-->
-    <!--    />-->
-  </EGPageHeader>
-
+  <EGPageHeader :title="workflow.runName" description="View your Lab users, details and pipelines" />
   <UTabs
     :ui="EGTabsStyles"
     :model-value="tabIndex"
@@ -89,10 +71,14 @@
     "
   >
     <template #item="{ item }">
-      <div v-if="item.key === 'runResults'" class="space-y-3">TBD</div>
+      <div v-if="item.key === 'runResults'" class="space-y-3">
+        <EGText tag="p" class="pt-4">
+          Please log into NextFlower / Seqera Cloud to download the results for this run.
+        </EGText>
+      </div>
       <div v-if="item.key === 'runDetails'" class="space-y-3">
         <section
-          class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 max-md:px-5"
+          class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 pt-0 max-md:px-5"
         >
           <dl class="mt-4">
             <div class="flex border-b p-4 text-sm">
@@ -113,9 +99,6 @@
             </div>
           </dl>
         </section>
-      </div>
-      <div v-if="item.key === 'workflowParams'" class="space-y-3">
-        <EGRunPipelineFormEditParameters :params="params" :schema="schema" v-if="isLoading" />
       </div>
     </template>
   </UTabs>

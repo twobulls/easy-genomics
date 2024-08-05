@@ -1,11 +1,8 @@
 import {
   CreateWorkflowLaunchRequest,
   ListWorkflowsResponse,
-  DescribeWorkflowResponse,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-// import { DescribeWorkflowResponse as DescribeWorkflowResponseSchema } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
 import HttpFactory from '../factory';
-// import { validateApiResponse } from '~/utils/api-utils';
 
 class PipelinesModule extends HttpFactory {
   async createPipelineRun(labId: string, pipelineLaunchRequest: CreateWorkflowLaunchRequest): Promise<any> {
@@ -33,21 +30,6 @@ class PipelinesModule extends HttpFactory {
       throw new Error('Failed to retrieve workflows');
     }
 
-    return res;
-  }
-
-  async readWorkflow(workflowId: string, labId: string): Promise<DescribeWorkflowResponse[]> {
-    const res = await this.callNextflowTower<DescribeWorkflowResponse[]>(
-      'GET',
-      `/workflow/read-workflow/${workflowId}/?laboratoryId=${labId}`,
-    );
-
-    if (!res) {
-      throw new Error('Failed to retrieve workflows');
-    }
-
-    // TODO
-    // validateApiResponse(DescribeWorkflowResponseSchema, res);
     return res;
   }
 }

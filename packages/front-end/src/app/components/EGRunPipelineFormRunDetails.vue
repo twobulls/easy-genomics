@@ -89,6 +89,23 @@
     emit('next-step');
   }
 
+  // function to remove all non-letter characters from the beginning of the string value
+  function removeFirstNonLetterCharacters(value: string): string {
+    return value.replace(/^[^a-zA-Z]+/, '');
+  }
+
+  function handleRunNameInput(event: InputEvent) {
+    if (event?.target) {
+      const target = event.target as HTMLInputElement;
+      const inputName: string = target.value;
+      const supportedName = removeFirstNonLetterCharacters(inputName);
+      // Update UI
+      target.value = supportedName;
+      // Update state
+      formState.runName = supportedName;
+    }
+  }
+
   watch(canProceed, (val) => {
     emit('step-validated', val);
   });
@@ -104,8 +121,13 @@
         <EGInput v-model="formState.pipelineName" :disabled="true" />
       </EGFormGroup>
 
-      <EGFormGroup label="Run Name" name="runName" eager-validation>
-        <EGInput v-model="formState.runName" placeholder="Enter a name to identify this pipeline run" autofocus />
+      <EGFormGroup label="Run Name" hint="(first character must be a letter)" name="runName" eager-validation required>
+        <EGInput
+          v-model="formState.runName"
+          placeholder="Enter a name to identify this pipeline run"
+          @input.prevent="handleRunNameInput"
+          autofocus
+        />
         <EGCharacterCounter :value="runNameCharCount" :max="maxRunNameLength" />
       </EGFormGroup>
 

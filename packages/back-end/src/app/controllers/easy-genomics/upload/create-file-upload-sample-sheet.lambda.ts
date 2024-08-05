@@ -38,7 +38,11 @@ export const handler: Handler = async (
     // Post Request Body
     const request: SampleSheetRequest = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!SampleSheetRequestSchema.safeParse(request).success) throw new Error('Invalid request');
+    const requestParseResult = SampleSheetRequestSchema.safeParse(request);
+    if (!requestParseResult.success) {
+      requestParseResult.error.issues.forEach((issue) => console.error(issue));
+      throw new Error('Invalid request');
+    }
 
     const laboratoryId: string = request.LaboratoryId;
     const transactionId: string = request.TransactionId;

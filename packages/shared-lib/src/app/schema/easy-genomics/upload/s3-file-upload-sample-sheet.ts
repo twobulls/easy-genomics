@@ -14,6 +14,7 @@ export const UploadedFileInfoSchema = z
 // DNA Sequenced R1 & R2 file pair of UploadedFileInfoSchema type
 export const UploadedFilePairInfoSchema = z
   .object({
+    SampleId: z.string(),
     R1: UploadedFileInfoSchema,
     R2: UploadedFileInfoSchema,
   })

@@ -1,8 +1,6 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '~/stores';
   import { ButtonVariantEnum } from '~/types/buttons';
-  import { initialize } from 'esbuild';
-  import { DescribePipelinesResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();

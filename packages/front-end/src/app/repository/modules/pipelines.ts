@@ -7,13 +7,10 @@ import {
   ListPipelinesResponse as ListPipelinesResponseSchema,
   PipelineSchemaResponse as PipelineSchemaResponseSchema,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
-import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
 import { validateApiResponse, stripNullProperties } from '~/utils/api-utils';
 
 class PipelinesModule extends HttpFactory {
-  $config = useRuntimeConfig();
-
   async list(labId: string): Promise<ListPipelinesResponse> {
     const res = await this.callNextflowTower<ListPipelinesResponse>(
       'GET',

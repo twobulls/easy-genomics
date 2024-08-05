@@ -185,20 +185,26 @@
         label: 'View Details',
         click: () => {
           useLabsStore().setSelectedWorkflow(row.workflow);
-          router.push({ path: `/labs/${labId}/${row.workflow.id}` });
+          router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
         },
       },
     ],
     [
       {
         label: 'View Results',
-        click: () => {},
+        click: () => {
+          useLabsStore().setSelectedWorkflow(row.workflow);
+          router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+        },
       },
     ],
     [
       {
         label: 'View Parameters',
-        click: () => {},
+        click: () => {
+          useLabsStore().setSelectedWorkflow(row.workflow);
+          router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Workflow Parameters' } });
+        },
       },
     ],
   ];

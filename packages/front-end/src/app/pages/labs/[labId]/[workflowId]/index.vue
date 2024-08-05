@@ -6,6 +6,11 @@
   const { $api } = useNuxtApp();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const workflow = useLabsStore().workflow;
+  const $router = useRouter();
+  const $route = useRoute();
+  const schema = ref({});
+  const params = ref({});
+  const isLoading = ref(true);
 
   const tabItems = [
     {
@@ -16,13 +21,9 @@
       key: 'runDetails',
       label: 'Run Details',
     },
-    {
-      key: 'workflowParams',
-      label: 'Workflow Parameters',
-    },
   ];
 
-  const defaultTabIndex = 1;
+  let tabIndex = 0;
 
   const createdDate = getDate(workflow?.dateCreated);
   const createdTime = getTime(workflow?.dateCreated);
@@ -40,19 +41,53 @@
   const stoppedDateTime = computed(() => {
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
+
+  onBeforeMount(async () => {
+    let paramTab = $router.currentRoute.value.query?.tab;
+    if (!paramTab) paramTab = 'Run Results'; // fallback for no query param to default to first tab
+    tabIndex = paramTab ? tabItems.findIndex((tab) => tab.label === paramTab) : 0;
+
+    const paramsRes = await $api.workflows.readWorkflow($route.params.workflowId, $route.params.labId);
+    params.value = paramsRes.workflow.params;
+
+    const schemaRes = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
+    debugger;
+    schema.value = JSON.parse(schemaRes.schema);
+
+    isLoading.value = false;
+  });
+
+  // watch route change to correspondingly change selected tab
+  watch(
+    () => $router.currentRoute.value.query.tab,
+    (newVal) => {
+      tabIndex = newVal ? tabItems.findIndex((tab) => tab.label === newVal) : 0;
+    },
+  );
 </script>
 
 <template>
   <EGPageHeader :title="workflow.runName" description="View your Lab users, details and pipelines">
-    <EGButton
-      icon="i-heroicons-arrow-down-tray"
-      :icon-right="false"
-      label="Download Run Results"
-      @click="() => window.alert('TODO')"
-    />
+    <!-- TODO: wire up button once data is available -->
+    <!--    <EGButton-->
+    <!--      icon="i-heroicons-arrow-down-tray"-->
+    <!--      :icon-right="false"-->
+    <!--      label="Download Run Results"-->
+    <!--      @click="() => window.alert('TODO')"-->
+    <!--    />-->
   </EGPageHeader>
 
-  <UTabs :ui="EGTabsStyles" :default-index="defaultTabIndex" :items="tabItems">
+  <UTabs
+    :ui="EGTabsStyles"
+    :model-value="tabIndex"
+    :items="tabItems"
+    @update:model-value="
+      (newIndex) => {
+        $router.push({ query: { ...$router.currentRoute.query, tab: tabItems[newIndex].label } });
+        tabIndex = newIndex;
+      }
+    "
+  >
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">TBD</div>
       <div v-if="item.key === 'runDetails'" class="space-y-3">
@@ -79,7 +114,9 @@
           </dl>
         </section>
       </div>
-      <div v-if="item.key === 'workflowParams'" class="space-y-3">TBD</div>
+      <div v-if="item.key === 'workflowParams'" class="space-y-3">
+        <EGRunPipelineFormEditParameters :params="params" :schema="schema" v-if="isLoading" />
+      </div>
     </template>
   </UTabs>
 </template>

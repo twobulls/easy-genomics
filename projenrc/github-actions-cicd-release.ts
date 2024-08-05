@@ -122,7 +122,7 @@ export class GithubActionsCICDRelease extends Component {
       'AWS_REGION': '${{ secrets.AWS_REGION }}',
       'ENV_TYPE': '${{ vars.ENV_TYPE }}',
       'ENV_NAME': '${{ vars.ENV_NAME }}',
-      'APPLICATION_URL': '${{ vars.APPLICATION_URL }}',
+      'APP_DOMAIN_NAME': '${{ vars.APP_DOMAIN_NAME }}',
       // Back-End specific settings
       'SYSTEM_ADMIN_EMAIL': '${{ vars.SYSTEM_ADMIN_EMAIL }}',
       'SYSTEM_ADMIN_PASSWORD': '${{ secrets.SYSTEM_ADMIN_PASSWORD }}',

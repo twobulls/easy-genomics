@@ -5,7 +5,7 @@ easy-genomics:
         aws-account-id:
         aws-region: # e.g. us-east-1
         env-type: # e.g. dev | pre-prod | prod
-        application-url: # e.g. dev.easy-genomics.myinstitution.org
+        app-domain-name: # e.g. dev.easy-genomics.myinstitution.org
 
         # Back-End specific settings
         back-end:
@@ -26,4 +26,4 @@ easy-genomics:
             # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
             aws-cognito-user-pool-id:
             aws-cognito-client-id:
-            base-api-url: # TODO: Replace with application-url once APIGateway uses custom domains
+            base-api-url: # TODO: Replace with app-domain-name once APIGateway uses custom domains

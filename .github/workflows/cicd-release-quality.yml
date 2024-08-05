@@ -19,7 +19,7 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       ENV_TYPE: ${{ vars.ENV_TYPE }}
       ENV_NAME: ${{ vars.ENV_NAME }}
-      APPLICATION_URL: ${{ vars.APPLICATION_URL }}
+      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
       SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
       SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -74,7 +74,7 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       ENV_TYPE: ${{ vars.ENV_TYPE }}
       ENV_NAME: ${{ vars.ENV_NAME }}
-      APPLICATION_URL: ${{ vars.APPLICATION_URL }}
+      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
       SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
       SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}
@@ -139,7 +139,7 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       ENV_TYPE: ${{ vars.ENV_TYPE }}
       ENV_NAME: ${{ vars.ENV_NAME }}
-      APPLICATION_URL: ${{ vars.APPLICATION_URL }}
+      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
       SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
       SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
       SECRET_KEY: ${{ secrets.SECRET_KEY }}

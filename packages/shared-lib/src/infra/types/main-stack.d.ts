@@ -7,7 +7,7 @@ export interface BaseStackProps extends StackProps {
     devEnv: boolean;
     envName: string;
     envType: string;
-    applicationUrl: string;
+    appDomainName: string;
 }
 
 // Defines Front-End Stack props

@@ -17,7 +17,7 @@ if (process.env.CI_CD === 'true') {
   const awsCertificateArn: string | undefined = process.env.AWS_CERTIFICATE_ARN;
   const envName: string | undefined = process.env.ENV_NAME;
   const envType: string | undefined = process.env.ENV_TYPE;
-  const applicationUrl: string | undefined = process.env.APPLICATION_URL;
+  const appDomainName: string | undefined = process.env.APP_DOMAIN_NAME;
 
   if (!awsAccountId) throw new Error('AWS_ACCOUNT_ID undefined, please check the CI/CD environment configuration');
   if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
@@ -32,7 +32,7 @@ if (process.env.CI_CD === 'true') {
   }
   if (!envName) throw new Error('ENV_NAME undefined, please check the CI/CD environment configuration');
   if (!envType) throw new Error('ENV_TYPE undefined, please check the CI/CD environment configuration');
-  if (!applicationUrl) throw new Error('APPLICATION_URL undefined, please check the CI/CD environment configuration');
+  if (!appDomainName) throw new Error('APP_DOMAIN_NAME undefined, please check the CI/CD environment configuration');
 
   // AWS infrastructure resources can be destroyed only when devEnv is true
   const devEnv: boolean = envType === 'dev';
@@ -48,7 +48,7 @@ if (process.env.CI_CD === 'true') {
     devEnv,
     envName,
     envType,
-    applicationUrl,
+    appDomainName,
     certificateArn: awsCertificateArn,
     hostedZoneId: awsHostedZoneId,
     hostedZoneName: awsHostedZoneName,
@@ -72,7 +72,7 @@ if (process.env.CI_CD === 'true') {
       const awsAccountId: string = configSettings['aws-account-id'].toString();
       const awsRegion: string = configSettings['aws-region'];
       const envType: string = configSettings['env-type']; // dev | pre-prod | prod
-      const applicationUrl: string = configSettings['application-url'];
+      const appDomainName: string = configSettings['app-domain-name'];
 
       const awsHostedZoneId: string = configSettings['front-end']['aws-hosted-zone-id'];
       const awsHostedZoneName: string = configSettings['front-end']['aws-hosted-zone-name'];
@@ -92,7 +92,7 @@ if (process.env.CI_CD === 'true') {
         devEnv,
         envName,
         envType,
-        applicationUrl,
+        appDomainName,
         certificateArn: awsCertificateArn,
         hostedZoneId: awsHostedZoneId,
         hostedZoneName: awsHostedZoneName,

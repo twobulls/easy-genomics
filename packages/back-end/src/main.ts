@@ -13,7 +13,7 @@ if (process.env.CI_CD === 'true') {
   const awsRegion: string | undefined = process.env.AWS_REGION;
   const envName: string | undefined = process.env.ENV_NAME;
   const envType: string | undefined = process.env.ENV_TYPE;
-  const applicationUrl: string | undefined = process.env.APPLICATION_URL;
+  const appDomainName: string | undefined = process.env.APP_DOMAIN_NAME;
   const systemAdminEmail: string | undefined = process.env.SYSTEM_ADMIN_EMAIL;
   const systemAdminPassword: string | undefined = process.env.SYSTEM_ADMIN_PASSWORD;
   const secretKey: string | undefined = process.env.SECRET_KEY;
@@ -32,7 +32,7 @@ if (process.env.CI_CD === 'true') {
   if (!envType) {
     throw new Error('"ENV_TYPE" undefined, please check the CI/CD environment configuration');
   }
-  if (!applicationUrl) {
+  if (!appDomainName) {
     throw new Error('"APPLICATION_URL" undefined, please check the CI/CD environment configuration');
   }
   if (!systemAdminEmail) {
@@ -66,7 +66,7 @@ if (process.env.CI_CD === 'true') {
     devEnv: devEnv,
     envName: envName,
     envType: envType,
-    applicationUrl: applicationUrl,
+    appDomainName: appDomainName,
     namePrefix: namePrefix,
     systemAdminEmail: systemAdminEmail,
     systemAdminPassword: systemAdminPassword,
@@ -94,7 +94,7 @@ if (process.env.CI_CD === 'true') {
       const awsAccountId: string | undefined = configSettings['aws-account-id'].toString();
       const awsRegion: string | undefined = configSettings['aws-region'];
       const envType: string | undefined = configSettings['env-type']; // dev | pre-prod | prod
-      const applicationUrl: string | undefined = configSettings['application-url'];
+      const appDomainName: string | undefined = configSettings['app-domain-name'];
 
       const systemAdminEmail: string | undefined = configSettings['back-end']['system-admin-email'];
       const systemAdminPassword: string | undefined = configSettings['back-end']['system-admin-password'];
@@ -109,8 +109,8 @@ if (process.env.CI_CD === 'true') {
       if (!awsRegion) throw new Error('"aws-region" undefined, please check the easy-genomics.yaml configuration');
       if (!envName) throw new Error('"env-name" undefined, please check the easy-genomics.yaml configuration');
       if (!envType) throw new Error('"env-type" undefined, please check the easy-genomics.yaml configuration');
-      if (!applicationUrl) {
-        throw new Error('"application-url" undefined, please check the easy-genomics.yaml configuration');
+      if (!appDomainName) {
+        throw new Error('"app-domain-name" undefined, please check the easy-genomics.yaml configuration');
       }
       if (!systemAdminEmail) {
         throw new Error('"system-admin-email" undefined, please check the easy-genomics.yaml configuration');
@@ -144,7 +144,7 @@ if (process.env.CI_CD === 'true') {
         devEnv: devEnv,
         envName: envName,
         envType: envType,
-        applicationUrl: applicationUrl,
+        appDomainName: appDomainName,
         namePrefix: namePrefix,
         systemAdminEmail: systemAdminEmail,
         systemAdminPassword: systemAdminPassword,

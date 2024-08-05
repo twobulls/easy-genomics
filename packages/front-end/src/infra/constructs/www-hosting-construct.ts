@@ -92,12 +92,12 @@ export class WwwHostingConstruct extends Construct {
 
   // WWW S3 Bucket for static web pages
   private setupS3Buckets = () => {
-    const applicationUrl: string = this.props.applicationUrl;
+    const appDomainName: string = this.props.appDomainName;
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3`, {});
 
     // Using the configured domainName for the WWW S3 Bucket
-    const wwwBucketName: string = applicationUrl; // Must be globally unique
-    new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${applicationUrl}` });
+    const wwwBucketName: string = appDomainName; // Must be globally unique
+    new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${appDomainName}` });
 
     // Create S3 Bucket for static website hosting through CloudFront distribution
     const wwwBucket: Bucket = s3.createBucket(
@@ -113,16 +113,16 @@ export class WwwHostingConstruct extends Construct {
 
   // CloudFront Distribution - requires the HostedZone and Certificate are already configured in AWS
   private setupCloudFrontDistribution = () => {
-    const applicationUrl: string = this.props.applicationUrl;
+    const appDomainName: string = this.props.appDomainName;
 
-    const wwwBucket: Bucket | undefined = this.s3Buckets.get(applicationUrl);
+    const wwwBucket: Bucket | undefined = this.s3Buckets.get(appDomainName);
     if (!wwwBucket) {
-      throw new Error(`S3 Bucket not found: ${applicationUrl}`);
+      throw new Error(`S3 Bucket not found: ${appDomainName}`);
     }
 
     // Grant CloudFront access to WWW S3 Bucket
     const originAccessIdentity: OriginAccessIdentity = new OriginAccessIdentity(this, 'cloudfront-OAI', {
-      comment: `OAI for ${applicationUrl}`,
+      comment: `OAI for ${appDomainName}`,
     });
 
     wwwBucket.grantRead(originAccessIdentity);
@@ -142,7 +142,7 @@ export class WwwHostingConstruct extends Construct {
       maxTtl: this.props.indexCacheDuration,
       minTtl: this.props.indexCacheDuration,
       defaultTtl: this.props.indexCacheDuration,
-      comment: `Caching policy for ${applicationUrl}`,
+      comment: `Caching policy for ${appDomainName}`,
       enableAcceptEncodingGzip: true,
       enableAcceptEncodingBrotli: true,
     });
@@ -170,7 +170,7 @@ export class WwwHostingConstruct extends Construct {
     const distribution: Distribution = new Distribution(this, 'SiteDistribution', {
       certificate,
       defaultRootObject: this.props.webSiteIndexDocument,
-      domainNames: [applicationUrl],
+      domainNames: [appDomainName],
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
       webAclId: this.props.webAclId, // Optional AWS WAF web ACL
       defaultBehavior: {

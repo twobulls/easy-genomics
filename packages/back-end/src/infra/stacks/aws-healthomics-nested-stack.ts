@@ -38,7 +38,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
         REGION: this.props.env.region!,
-        DOMAIN_NAME: this.props.applicationUrl,
+        DOMAIN_NAME: this.props.appDomainName,
         NAME_PREFIX: this.props.namePrefix,
       },
     });

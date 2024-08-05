@@ -4,7 +4,7 @@ export const ConfigurationSettingsSchema = z.object({
   ['aws-account-id']: z.number(),
   ['aws-region']: z.string(),
   ['env-type']: z.enum(['dev', 'pre-prod', 'prod']),
-  ['application-url']: z.string(),
+  ['app-domain-name']: z.string(),
 
   // Back-End specific settings
   ['back-end']: z.object({

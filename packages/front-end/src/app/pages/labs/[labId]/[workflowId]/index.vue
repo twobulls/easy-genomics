@@ -6,6 +6,7 @@
   const { $api } = useNuxtApp();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const workflow = useLabsStore().workflow;
+  const router = useRouter();
 
   const tabItems = [
     {
@@ -22,7 +23,7 @@
     },
   ];
 
-  const defaultTabIndex = 1;
+  let tabIndex = 0;
 
   const createdDate = getDate(workflow?.dateCreated);
   const createdTime = getTime(workflow?.dateCreated);
@@ -40,6 +41,20 @@
   const stoppedDateTime = computed(() => {
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
+
+  onBeforeMount(() => {
+    let paramTab = router.currentRoute.value.query?.tab;
+    if (!paramTab) paramTab = 'Run Results'; // fallback for no query param to default to first tab
+    tabIndex = paramTab ? tabItems.findIndex((tab) => tab.label === paramTab) : 0;
+  });
+
+  // watch route change to correspondingly change selected tab
+  watch(
+    () => router.currentRoute.value.query.tab,
+    (newVal) => {
+      tabIndex = newVal ? tabItems.findIndex((tab) => tab.label === newVal) : 0;
+    },
+  );
 </script>
 
 <template>
@@ -52,7 +67,17 @@
     />
   </EGPageHeader>
 
-  <UTabs :ui="EGTabsStyles" :default-index="defaultTabIndex" :items="tabItems">
+  <UTabs
+    :ui="EGTabsStyles"
+    :model-value="tabIndex"
+    :items="tabItems"
+    @update:model-value="
+      (newIndex) => {
+        router.push({ query: { ...router.currentRoute.query, tab: tabItems[newIndex].label } });
+        tabIndex = newIndex;
+      }
+    "
+  >
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">TBD</div>
       <div v-if="item.key === 'runDetails'" class="space-y-3">

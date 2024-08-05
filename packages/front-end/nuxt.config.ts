@@ -14,7 +14,7 @@ let awsRegion: string | undefined;
 let awsCognitoUserPoolId: string | undefined;
 let awsCognitoUserPoolClientId: string | undefined;
 let awsBaseApiUrl: string | undefined;
-let mockOrgId: string | undefined; // TODO: Remove once custom User Authorization logic retrieves OrgIds
+// let mockOrgId: string | undefined; // TODO: Remove once custom User Authorization logic retrieves OrgIds
 
 if (process.env.CI_CD === 'true') {
   console.log('Loading Front-End Nuxt environment settings for CI/CD Pipeline...');
@@ -52,7 +52,6 @@ if (process.env.CI_CD === 'true') {
   awsCognitoUserPoolId = configSettings['front-end']['aws-cognito-user-pool-id'];
   awsCognitoUserPoolClientId = configSettings['front-end']['aws-cognito-client-id'];
   awsBaseApiUrl = configSettings['front-end']['base-api-url'];
-  mockOrgId = configSettings['front-end']['mock-org-id']; // TODO: Remove once custom User Authorization logic retrieves OrgIds
 }
 
 // @ts-ignore

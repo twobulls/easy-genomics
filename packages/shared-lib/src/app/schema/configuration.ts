@@ -24,6 +24,5 @@ export const ConfigurationSettingsSchema = z.object({
     ['aws-cognito-user-pool-id']: z.string().nullable(),
     ['aws-cognito-client-id']: z.string().nullable(),
     ['base-api-url']: z.string().nullable(), // TODO: Replace with application-url once APIGateway uses custom domains
-    ['mock-org-id']: z.string().nullable(), // TODO: Remove once custom User Authorization logic retrieves OrgIds
   }),
 }).strict();

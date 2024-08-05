@@ -26,4 +26,3 @@ easy-genomics:
             aws-cognito-user-pool-id:
             aws-cognito-client-id:
             base-api-url: # TODO: Replace with application-url once APIGateway uses custom domains
-            mock-org-id: # TODO: Remove once custom User Authorization logic retrieves OrgIds

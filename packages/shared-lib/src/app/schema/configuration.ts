@@ -21,8 +21,8 @@ export const ConfigurationSettingsSchema = z.object({
     ['aws-certificate-arn']: z.string(),
 
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
+    ['aws-api-gateway-url']: z.string().nullable(),
     ['aws-cognito-user-pool-id']: z.string().nullable(),
-    ['aws-cognito-client-id']: z.string().nullable(),
-    ['base-api-url']: z.string().nullable(), // TODO: Replace with application-url once APIGateway uses custom domains
+    ['aws-cognito-user-pool-client-id']: z.string().nullable(),
   }),
 }).strict();

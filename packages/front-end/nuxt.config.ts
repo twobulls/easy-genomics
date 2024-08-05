@@ -11,19 +11,18 @@ import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 
 let awsRegion: string | undefined;
+let awsApiGatewayUrl: string | undefined;
 let awsCognitoUserPoolId: string | undefined;
 let awsCognitoUserPoolClientId: string | undefined;
-let awsBaseApiUrl: string | undefined;
-// let mockOrgId: string | undefined; // TODO: Remove once custom User Authorization logic retrieves OrgIds
 
 if (process.env.CI_CD === 'true') {
   console.log('Loading Front-End Nuxt environment settings for CI/CD Pipeline...');
 
   // CI/CD Pipeline uses ENV parameters
   awsRegion = process.env.AWS_REGION;
+  awsApiGatewayUrl = process.env.AWS_API_GATEWAY_URL;
   awsCognitoUserPoolId = process.env.AWS_COGNITO_USER_POOL_ID;
   awsCognitoUserPoolClientId = process.env.AWS_COGNITO_CLIENT_ID;
-  awsBaseApiUrl = process.env.AWS_BASE_API_URL;
 } else {
   console.log('Loading Front-End Nuxt easy-genomics.yaml settings...');
 
@@ -49,9 +48,9 @@ if (process.env.CI_CD === 'true') {
   }
 
   awsRegion = configSettings['aws-region'];
+  awsApiGatewayUrl = configSettings['front-end']['aws-api-gateway-url'];
   awsCognitoUserPoolId = configSettings['front-end']['aws-cognito-user-pool-id'];
-  awsCognitoUserPoolClientId = configSettings['front-end']['aws-cognito-client-id'];
-  awsBaseApiUrl = configSettings['front-end']['base-api-url'];
+  awsCognitoUserPoolClientId = configSettings['front-end']['aws-cognito-user-pool-client-id'];
 }
 
 // @ts-ignore
@@ -79,7 +78,7 @@ export default defineNuxtConfig({
       AWS_REGION: awsRegion,
       AWS_USER_POOL_ID: awsCognitoUserPoolId,
       AWS_CLIENT_ID: awsCognitoUserPoolClientId,
-      BASE_API_URL: awsBaseApiUrl,
+      BASE_API_URL: awsApiGatewayUrl,
       ENV_TYPE: process.env.envType || 'dev',
       GITHUB_RUN_NUMBER: process.env.GITHUB_RUN_NUMBER || 'Unknown',
     },

@@ -22,9 +22,9 @@ export interface ConfigurationSettings {
     ['aws-certificate-arn']: string,
 
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
+    ['aws-api-gateway-url']: string,
     ['aws-cognito-user-pool-id']: string,
-    ['aws-cognito-client-id']: string,
-    ['base-api-url']: string, // TODO: Replace with app-domain-name once APIGateway uses custom domains
+    ['aws-cognito-user-pool-client-id']: string,
   }
 }
 

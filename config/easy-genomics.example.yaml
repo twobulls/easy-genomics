@@ -2,9 +2,9 @@ easy-genomics:
   configurations:
     - dev: # Unique identifier for the following collection of configuration settings (e.g. dev, uat, prod)
         # Shared settings common to Back-End and Front-End sub-packages
-        aws-account-id:
+        aws-account-id: # e.g 123456789
         aws-region: # e.g. us-east-1
-        env-type: # e.g. dev | pre-prod | prod
+        env-type: # e.g. dev | pre-prod | prod; only dev env-type can have AWS CloudFormation resources destroyed
         app-domain-name: # e.g. dev.easy-genomics.myinstitution.org
 
         # Back-End specific settings
@@ -24,6 +24,6 @@ easy-genomics:
             aws-certificate-arn:
 
             # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
+            aws-api-gateway-url:
             aws-cognito-user-pool-id:
-            aws-cognito-client-id:
-            base-api-url: # TODO: Replace with app-domain-name once APIGateway uses custom domains
+            aws-cognito-user-pool-client-id:

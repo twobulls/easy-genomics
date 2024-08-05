@@ -28,9 +28,9 @@ jobs:
       AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
       AWS_HOSTED_ZONE_NAME: ${{ secrets.AWS_HOSTED_ZONE_NAME }}
       AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
+      AWS_API_GATEWAY_URL: ${{ secrets.AWS_API_GATEWAY_URL }}
       AWS_COGNITO_USER_POOL_ID: ${{ secrets.AWS_COGNITO_USER_POOL_ID }}
-      AWS_COGNITO_CLIENT_ID: ${{ secrets.AWS_COGNITO_CLIENT_ID }}
-      AWS_BASE_API_URL: ${{ secrets.AWS_BASE_API_URL }}
+      AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AWS_COGNITO_USER_POOL_CLIENT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -83,9 +83,9 @@ jobs:
       AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
       AWS_HOSTED_ZONE_NAME: ${{ secrets.AWS_HOSTED_ZONE_NAME }}
       AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
+      AWS_API_GATEWAY_URL: ${{ secrets.AWS_API_GATEWAY_URL }}
       AWS_COGNITO_USER_POOL_ID: ${{ secrets.AWS_COGNITO_USER_POOL_ID }}
-      AWS_COGNITO_CLIENT_ID: ${{ secrets.AWS_COGNITO_CLIENT_ID }}
-      AWS_BASE_API_URL: ${{ secrets.AWS_BASE_API_URL }}
+      AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AWS_COGNITO_USER_POOL_CLIENT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -148,9 +148,9 @@ jobs:
       AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
       AWS_HOSTED_ZONE_NAME: ${{ secrets.AWS_HOSTED_ZONE_NAME }}
       AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
+      AWS_API_GATEWAY_URL: ${{ secrets.AWS_API_GATEWAY_URL }}
       AWS_COGNITO_USER_POOL_ID: ${{ secrets.AWS_COGNITO_USER_POOL_ID }}
-      AWS_COGNITO_CLIENT_ID: ${{ secrets.AWS_COGNITO_CLIENT_ID }}
-      AWS_BASE_API_URL: ${{ secrets.AWS_BASE_API_URL }}
+      AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AWS_COGNITO_USER_POOL_CLIENT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

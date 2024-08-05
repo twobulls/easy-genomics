@@ -8,12 +8,16 @@
     label?: string;
     icon?: string;
     iconRight?: boolean;
+    disabled?: boolean;
   };
 
   withDefaults(defineProps<ButtonProps>(), {
     variant: ButtonVariantEnum.enum.primary,
     size: ButtonSizeEnum.enum.md,
+    label: '',
+    icon: '',
     iconRight: true,
+    disabled: false,
   });
 
   const buttonVariants = cva(
@@ -90,6 +94,7 @@
 
 <template>
   <UButton
+    :disabled="disabled"
     :icon="icon"
     :trailing="iconRight"
     :class="buttonVariants({ variant, size })"

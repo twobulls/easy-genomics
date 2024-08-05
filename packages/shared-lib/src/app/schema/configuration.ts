@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const ConfigurationSettingsSchema = z.object({
   ['aws-account-id']: z.number(),
-  ['aws-region']: z.enum(['us-east-1', 'us-west-2', 'ap-southeast-1', 'ap-southeast-2', 'eu-central-1', 'eu-west-1', 'eu-west-2']),
+  ['aws-region']: z.string(),
   ['env-type']: z.enum(['dev', 'pre-prod', 'prod']),
   ['application-url']: z.string(),
 

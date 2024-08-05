@@ -1,18 +1,19 @@
 easy-genomics:
   configurations:
-    - dev:
+    - dev: # Unique identifier for the following collection of configuration settings (e.g. dev, uat, prod)
+        # Shared settings common to Back-End and Front-End sub-packages
         aws-account-id:
-        aws-region:
-        env-type:
-        application-url:
+        aws-region: # e.g. us-east-1
+        env-type: # e.g. dev | pre-prod | prod
+        application-url: # e.g. dev.easy-genomics.myinstitution.org
 
         # Back-End specific settings
         back-end:
+            secret-key: # Random Secret Key value for cryptographic salt
             system-admin-email:
-            system-admin-password:
-            secret-key:
+            system-admin-password: # System Admin initial Cognito Password
             test-user-email:
-            test-user-password:
+            test-user-password: # Demo User initial Cognito Password
             seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; defaults to 'https://api.cloud.seqera.io'
 
         # Front-End specific settings

@@ -238,8 +238,8 @@ details generated from the Back-End deployment.
 
                   # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
                   aws-api-gateway-url: {AWS_API_GATEWAY_URL}
-                  aws-cognito-user-pool-id: {AWS_COGNITO_USER_POOL_CLIENT_ID}
-                  aws-cognito-user-pool-client-id: {AWS_COGNITO_USER_POOL_ID}  
+                  aws-cognito-user-pool-id: {AWS_COGNITO_USER_POOL_ID}
+                  aws-cognito-user-pool-client-id: {AWS_COGNITO_USER_POOL_CLIENT_ID}
    ```
 
 5. Deploy the Easy Genomics Front-End sub-package to AWS using the following commands:

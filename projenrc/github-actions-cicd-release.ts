@@ -122,7 +122,7 @@ export class GithubActionsCICDRelease extends Component {
       'AWS_REGION': '${{ secrets.AWS_REGION }}',
       'ENV_TYPE': '${{ vars.ENV_TYPE }}',
       'ENV_NAME': '${{ vars.ENV_NAME }}',
-      'APPLICATION_URL': '${{ vars.APPLICATION_URL }}',
+      'APP_DOMAIN_NAME': '${{ vars.APP_DOMAIN_NAME }}',
       // Back-End specific settings
       'SYSTEM_ADMIN_EMAIL': '${{ vars.SYSTEM_ADMIN_EMAIL }}',
       'SYSTEM_ADMIN_PASSWORD': '${{ secrets.SYSTEM_ADMIN_PASSWORD }}',
@@ -133,9 +133,9 @@ export class GithubActionsCICDRelease extends Component {
       'AWS_HOSTED_ZONE_ID': '${{ secrets.AWS_HOSTED_ZONE_ID }}', // Must be pre-configured in AWS
       'AWS_HOSTED_ZONE_NAME': '${{ secrets.AWS_HOSTED_ZONE_NAME }}', // Must be pre-configured in AWS
       'AWS_CERTIFICATE_ARN': '${{ secrets.AWS_CERTIFICATE_ARN }}', // Must be pre-configured in AWS
+      'AWS_API_GATEWAY_URL': '${{ secrets.AWS_API_GATEWAY_URL }}', // Sourced from Back-End deployment
       'AWS_COGNITO_USER_POOL_ID': '${{ secrets.AWS_COGNITO_USER_POOL_ID }}', // Sourced from Back-End deployment
-      'AWS_COGNITO_CLIENT_ID': '${{ secrets.AWS_COGNITO_CLIENT_ID }}', // Sourced from Back-End deployment
-      'AWS_BASE_API_URL': '${{ secrets.AWS_BASE_API_URL }}', // Sourced from Back-End deployment
+      'AWS_COGNITO_USER_POOL_CLIENT_ID': '${{ secrets.AWS_COGNITO_USER_POOL_CLIENT_ID }}', // Sourced from Back-End deployment
     };
   }
 

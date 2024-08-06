@@ -1,8 +1,8 @@
 export interface ConfigurationSettings {
   ['aws-account-id']: number,
-  ['aws-region']: 'us-east-1' | 'us-west-2' | 'ap-southeast-1' | 'ap-southeast-2' | 'eu-central-1' | 'eu-west-1' | 'eu-west-2',
+  ['aws-region']: string,
   ['env-type']: 'dev' | 'pre-prod' | 'prod',
-  ['application-url']: string,
+  ['app-domain-name']: string,
 
   // Back-End specific settings
   ['back-end']: {
@@ -22,10 +22,9 @@ export interface ConfigurationSettings {
     ['aws-certificate-arn']: string,
 
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
+    ['aws-api-gateway-url']: string,
     ['aws-cognito-user-pool-id']: string,
-    ['aws-cognito-client-id']: string,
-    ['base-api-url']: string, // TODO: Replace with application-url once APIGateway uses custom domains
-    ['mock-org-id']: string, // TODO: Remove once custom User Authorization logic retrieves OrgIds
+    ['aws-cognito-user-pool-client-id']: string,
   }
 }
 

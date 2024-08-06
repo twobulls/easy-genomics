@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 export const ConfigurationSettingsSchema = z.object({
   ['aws-account-id']: z.number(),
-  ['aws-region']: z.enum(['us-east-1', 'us-west-2', 'ap-southeast-1', 'ap-southeast-2', 'eu-central-1', 'eu-west-1', 'eu-west-2']),
+  ['aws-region']: z.string(),
   ['env-type']: z.enum(['dev', 'pre-prod', 'prod']),
-  ['application-url']: z.string(),
+  ['app-domain-name']: z.string(),
 
   // Back-End specific settings
   ['back-end']: z.object({
@@ -21,9 +21,8 @@ export const ConfigurationSettingsSchema = z.object({
     ['aws-certificate-arn']: z.string(),
 
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
+    ['aws-api-gateway-url']: z.string().nullable(),
     ['aws-cognito-user-pool-id']: z.string().nullable(),
-    ['aws-cognito-client-id']: z.string().nullable(),
-    ['base-api-url']: z.string().nullable(), // TODO: Replace with application-url once APIGateway uses custom domains
-    ['mock-org-id']: z.string().nullable(), // TODO: Remove once custom User Authorization logic retrieves OrgIds
+    ['aws-cognito-user-pool-client-id']: z.string().nullable(),
   }),
 }).strict();

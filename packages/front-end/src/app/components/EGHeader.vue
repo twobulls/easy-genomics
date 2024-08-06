@@ -69,6 +69,7 @@
             @click="signOut()"
             class="ml-8 h-10"
             label="Sign Out"
+            :disabled="true"
           />
         </div>
       </template>

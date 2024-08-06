@@ -82,8 +82,6 @@ order to install the NodeJS package(s) locally.
 Additionally, you will need to manually setup a Public Hosted Zone in AWS Route53 with the same Domain Name that will be 
 used in the`${easy-genomics root-dir}/config/easy-genomics.yaml` configuration file's `app-domain-name` setting.
 
-* ``
-
 1. Clone this Github Repository to your local machine:
 
    ```

@@ -224,8 +224,8 @@ and edit the Shared and Back-End settings for your deployment environment.
       dev-main-back-end-stack.CognitoUserPoolId = {AWS_COGNITO_USER_POOL_ID}
       ```
 
-4. Update the `${easy-genomics root-dir}/config/easy-genomics.yaml` Front-End specific settings with the AWS configuration
-details generated from the Back-End deployment.
+4. Update the `${easy-genomics root-dir}/config/easy-genomics.yaml` Front-End specific settings with the pre-configured
+AWS Route53 Hosted Zone details, and the AWS configuration details generated from the Back-End deployment.
    
    ```
             ...

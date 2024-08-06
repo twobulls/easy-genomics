@@ -22,7 +22,7 @@ if (process.env.CI_CD === 'true') {
   awsRegion = process.env.AWS_REGION;
   awsApiGatewayUrl = process.env.AWS_API_GATEWAY_URL;
   awsCognitoUserPoolId = process.env.AWS_COGNITO_USER_POOL_ID;
-  awsCognitoUserPoolClientId = process.env.AWS_COGNITO_CLIENT_ID;
+  awsCognitoUserPoolClientId = process.env.AWS_COGNITO_USER_POOL_CLIENT_ID;
 } else {
   console.log('Loading Front-End Nuxt easy-genomics.yaml settings...');
 

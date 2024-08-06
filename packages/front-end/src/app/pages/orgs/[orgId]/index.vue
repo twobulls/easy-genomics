@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import { OrgUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
   import { useOrgsStore, useToastStore, useUiStore } from '~/stores';
   import useUser from '~/composables/useUser';
@@ -10,7 +11,6 @@
   import { OrgDetailsForm } from '~/types/forms';
   import { VALIDATION_MESSAGES } from '~/constants/validation';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
-  import { OrgUserDetails } from '~/types/users';
 
   const router = useRouter();
   const $route = useRoute();
@@ -20,7 +20,7 @@
   const isLoading = ref(true);
   const orgId = $route.params.orgId;
   const orgSettingsData = ref({} as Organization | undefined);
-  const orgUsersDetailsData = ref<OrgUserDetails[]>([]);
+  const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
   const { resendInvite, labsCount } = useUser($api);
@@ -65,7 +65,7 @@
     },
   ];
 
-  function editUser(user: OrgUserDetails) {
+  function editUser(user: OrgUser) {
     router.push({
       path: '/orgs/edit-user',
       query: {
@@ -75,7 +75,7 @@
     });
   }
 
-  const actionItems = (user: OrgUserDetails) => [
+  const actionItems = (user: OrgUser) => [
     [
       {
         label: 'Edit User Access',
@@ -102,7 +102,7 @@
     if (!searchOutput.value && !hasNoData.value) {
       return orgUsersDetailsData.value;
     }
-    return orgUsersDetailsData.value.filter((user: OrgUserDetails) => {
+    return orgUsersDetailsData.value.filter((user: OrgUser) => {
       const fullName = user.displayName.toLowerCase();
 
       const email = String(user.UserEmail).toLowerCase();
@@ -188,7 +188,7 @@
     return orgSettingsData.value;
   }
 
-  async function resend(userDetails: OrgUserDetails, index: number) {
+  async function resend(userDetails: OrgUser, index: number) {
     const { OrganizationId, UserEmail } = userDetails;
 
     if (!UserEmail) {
@@ -321,12 +321,12 @@
                 <div>
                   {{ row.FirstName ? row.FirstName : row.displayName }}
                 </div>
-                <div class="text-muted text-xs font-normal">{{ (row as OrgUserDetails).UserEmail }}</div>
+                <div class="text-muted text-xs font-normal">{{ (row as OrgUser).UserEmail }}</div>
               </div>
             </div>
           </template>
           <template #status-data="{ row }">
-            <span class="text-muted">{{ (row as OrgUserDetails).OrganizationUserStatus }}</span>
+            <span class="text-muted">{{ (row as OrgUser).OrganizationUserStatus }}</span>
           </template>
           <template #labs-data="{ row }">
             <span class="text-muted">{{ labsCount(row) }}</span>
@@ -337,8 +337,8 @@
                 size="sm"
                 variant="secondary"
                 label="Resend Invite"
-                v-if="isInvited((row as OrgUserDetails).OrganizationUserStatus)"
-                @click="resend(row as OrgUserDetails, index)"
+                v-if="isInvited((row as OrgUser).OrganizationUserStatus)"
+                @click="resend(row as OrgUser, index)"
                 :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                 :loading="isButtonRequestPending(index)"
               />

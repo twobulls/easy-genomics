@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { useOrgsStore } from '~/stores';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+  import { ButtonSizeEnum } from '~/types/buttons';
 
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
@@ -69,7 +70,9 @@
 
 <template>
   <EGPageHeader title="Organizations" :show-back="false">
-    <EGButton label="Create a new Organization" to="/orgs/create" />
+    <!-- TODO: temporarily disabled for Pilot 1 - see: https://dept-au.atlassian.net/browse/EG-547 -->
+    <!--    <EGButton label="Create a new Organization" to="/orgs/create" />-->
+    <EGButton label="Create a new Organization" :disabled="true" />
   </EGPageHeader>
 
   <EGEmptyDataCTA

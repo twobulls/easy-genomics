@@ -226,7 +226,7 @@
     <template v-if="hasLaunched">
       <EGEmptyDataCTA
         message="Your Workflow Run has Launched! Check on your progress via Runs."
-        :primary-button-action="() => $router.go(-1)"
+        :primary-button-action="() => $router.replace(useUiStore().previousPageRoute)"
         primary-button-label="Back to Pipelines"
         :secondary-button-action="() => emit('reset-run-pipeline')"
         secondary-button-label="Launch Another Workflow Run"

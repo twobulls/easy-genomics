@@ -7,7 +7,7 @@
 
 <template>
   <a
-    @click="customBackAction ? customBackAction?.() : $router.go(-1)"
+    @click="customBackAction ? customBackAction?.() : $router.replace(useUiStore().previousPageRoute)"
     class="text-primary mb-4 flex w-min cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
   >
     <UIcon name="i-heroicons-arrow-left-solid" />

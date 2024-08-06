@@ -43,7 +43,17 @@
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
       <!-- ignore Seqera "file upload" input types -->
-      <template v-if="propertyDetail?.format !== 'file-path'">
+      <template v-if="!propertyDetail?.hidden && propertyDetail.format === 'file-path' && propertyName === 'input'">
+        <component
+          :is="components[propertyType(propertyDetail)]"
+          :name="propertyName"
+          :disabled="true"
+          :details="propertyDetail"
+          v-model="propValues[propertyName]"
+        />
+        <EGButton label="Download sample sheet" class="mt-2" />
+      </template>
+      <template v-else-if="!propertyDetail?.hidden && propertyDetail.format !== 'file-path'">
         <component
           :is="components[propertyType(propertyDetail)]"
           :name="propertyName"

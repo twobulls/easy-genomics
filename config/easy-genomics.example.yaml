@@ -1,18 +1,19 @@
 easy-genomics:
   configurations:
-    - dev:
-        aws-account-id:
-        aws-region:
-        env-type:
-        application-url:
+    - dev: # Unique identifier for the following collection of configuration settings (e.g. dev, uat, prod)
+        # Shared settings common to Back-End and Front-End sub-packages
+        aws-account-id: # e.g 123456789
+        aws-region: # e.g. us-east-1
+        env-type: # e.g. dev | pre-prod | prod; only dev env-type can have AWS CloudFormation resources destroyed
+        app-domain-name: # e.g. dev.easy-genomics.myinstitution.org
 
         # Back-End specific settings
         back-end:
+            secret-key: # Random Secret Key value for cryptographic salt
             system-admin-email:
-            system-admin-password:
-            secret-key:
+            system-admin-password: # System Admin initial Cognito Password
             test-user-email:
-            test-user-password:
+            test-user-password: # Demo User initial Cognito Password
             seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; defaults to 'https://api.cloud.seqera.io'
 
         # Front-End specific settings
@@ -23,7 +24,6 @@ easy-genomics:
             aws-certificate-arn:
 
             # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
+            aws-api-gateway-url:
             aws-cognito-user-pool-id:
-            aws-cognito-client-id:
-            base-api-url: # TODO: Replace with application-url once APIGateway uses custom domains
-            mock-org-id: # TODO: Remove once custom User Authorization logic retrieves OrgIds
+            aws-cognito-user-pool-client-id:

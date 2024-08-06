@@ -29,7 +29,7 @@ export class NFTowerNestedStack extends NestedStack {
         // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
         REGION: this.props.env.region!,
-        DOMAIN_NAME: this.props.applicationUrl,
+        DOMAIN_NAME: this.props.appDomainName,
         ENV_TYPE: this.props.envType,
         NAME_PREFIX: this.props.namePrefix,
         SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,

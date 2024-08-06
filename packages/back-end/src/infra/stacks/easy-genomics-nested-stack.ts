@@ -86,7 +86,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
         REGION: this.props.env.region!,
-        DOMAIN_NAME: this.props.applicationUrl,
+        DOMAIN_NAME: this.props.appDomainName,
         ENV_TYPE: this.props.envType,
         NAME_PREFIX: this.props.namePrefix,
       },
@@ -95,8 +95,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.ses = new SesConstruct(this, `${this.props.constructNamespace}-ses`, {
       awsAccount: this.props.env.account!,
       awsRegion: this.props.env.region!,
-      domainName: this.props.applicationUrl,
-      emailSender: `no.reply@${this.props.applicationUrl}`,
+      domainName: this.props.appDomainName,
+      emailSender: `no.reply@${this.props.appDomainName}`,
     });
   }
 
@@ -580,7 +580,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [
-          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.applicationUrl}`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.appDomainName}`,
           `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@twobulls.com`, // TODO: remove (only for Dev/Quality testing purposes)
           `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@deptagency.com`, // TODO: remove (only for Dev/Quality testing purposes)
           `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
@@ -589,7 +589,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
         conditions: {
           StringEquals: {
-            'ses:FromAddress': `no.reply@${this.props.applicationUrl}`,
+            'ses:FromAddress': `no.reply@${this.props.appDomainName}`,
           },
         },
       }),

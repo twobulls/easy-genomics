@@ -7,10 +7,8 @@
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const workflow = useLabsStore().workflow;
   const $router = useRouter();
-  const $route = useRoute();
   const schema = ref({});
   const params = ref({});
-  const previousPageRoute = ref('');
 
   const tabItems = [
     {

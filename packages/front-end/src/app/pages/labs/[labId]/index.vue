@@ -108,7 +108,7 @@
 
   const usersTableColumns = [
     {
-      key: 'Name',
+      key: 'displayName',
       label: 'Name',
       sortable: true,
     },

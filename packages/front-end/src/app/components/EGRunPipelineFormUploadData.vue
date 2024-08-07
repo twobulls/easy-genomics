@@ -347,9 +347,24 @@
   <EGCard>
     <EGText tag="small" class="mb-4">Step 02</EGText>
     <EGText tag="h4" class="mb-0">Upload Data</EGText>
-    <EGText tag="small" class="mb-0" color-class="text-muted">
-      Any similar files with the suffix _R1 or _R2 Will be combined as paired-end data samples. Max file size of 5GB
-    </EGText>
+    <ul class="text-muted ml-6 mt-1 list-disc text-sm font-normal tracking-tight">
+      <li>
+        Files containing _R1_ or _R2_ with a matching prefix and suffix will be combined as paired-end data samples e.g,
+        <ul class="ml-4 list-disc text-xs font-normal tracking-tight">
+          <li>
+            GOL2051A55857_S103_L002
+            <strong>_R1_</strong>
+            001.fastq.gz
+          </li>
+          <li>
+            GOL2051A55857_S103_L002
+            <strong>_R2_</strong>
+            001.fastq.gz
+          </li>
+        </ul>
+      </li>
+      <li>5GB max size per individual file</li>
+    </ul>
     <UDivider class="py-4" />
     <div class="py-4" @drop.prevent="handleDroppedFiles">
       <div

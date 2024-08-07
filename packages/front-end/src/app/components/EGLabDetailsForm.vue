@@ -325,6 +325,7 @@
           v-model="state.NextFlowTowerAccessToken"
           :select-on-focus="true"
           :password="true"
+          placeholder="Add or update the Next Flow Tower personal access token. Note: A previously set token will never be shown."
           :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
           eager-validation

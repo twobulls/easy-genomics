@@ -345,9 +345,8 @@
           :show-pagination="!useUiStore().isRequestPending"
         >
           <template #runName-data="{ row: workflow }">
-            <div class="flex items-center font-medium">
-              {{ workflow?.workflow.runName }}
-            </div>
+            <div class="text-body text-sm font-medium">{{ getDate(workflow?.workflow.lastUpdated) }}</div>
+            <div class="text-muted text-xs font-normal">{{ workflow?.workflow?.manifest?.name }}</div>
           </template>
 
           <template #lastUpdated-data="{ row: workflow }">

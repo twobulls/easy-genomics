@@ -9,7 +9,7 @@
     {
       timeout: 5000,
       variant: 'info',
-    }
+    },
   );
 
   const baseUi = {

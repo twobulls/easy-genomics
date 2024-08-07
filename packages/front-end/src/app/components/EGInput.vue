@@ -30,7 +30,7 @@
     :disabled="disabled"
     :ui="{
       icon: { trailing: { pointer: '' } },
-      base: 'h-13 !shadow-none border-background-stroke-dark text-body bg-white disabled:text-muted disabled:bg-background-light-grey',
+      base: 'h-13 !shadow-none border-background-stroke-dark text-body bg-white disabled:text-muted disabled:bg-background-light-grey disabled:opacity-100',
       rounded: 'rounded-md',
       placeholder: 'text-muted',
       padding: {

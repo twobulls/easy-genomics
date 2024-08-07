@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import { OrgUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
   import { useOrgsStore, useToastStore, useUiStore } from '~/stores';
   import useUser from '~/composables/useUser';
@@ -19,7 +20,7 @@
   const isLoading = ref(true);
   const orgId = $route.params.orgId;
   const orgSettingsData = ref({} as Organization | undefined);
-  const orgUsersDetailsData = ref<OrganizationUserDetails[]>([]);
+  const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
   const { $api } = useNuxtApp();
   const { resendInvite, labsCount } = useUser($api);
@@ -46,8 +47,9 @@
 
   const tableColumns = [
     {
-      key: 'Name',
+      key: 'displayName',
       label: 'Name',
+      sortable: true,
     },
     {
       key: 'status',
@@ -63,7 +65,7 @@
     },
   ];
 
-  function editUser(user: OrganizationUserDetails) {
+  function editUser(user: OrgUser) {
     router.push({
       path: '/orgs/edit-user',
       query: {
@@ -73,11 +75,11 @@
     });
   }
 
-  const actionItems = (row: OrganizationUserDetails) => [
+  const actionItems = (user: OrgUser) => [
     [
       {
         label: 'Edit User Access',
-        click: async () => editUser(row),
+        click: async () => editUser(user),
       },
     ],
     [
@@ -85,13 +87,8 @@
         label: 'Remove From Org',
         class: 'text-alert-danger-dark',
         click: () => {
-          selectedUserId.value = row.UserId;
-          primaryMessage.value = `Are you sure you want to remove ${useUser().displayName({
-            preferredName: row.PreferredName,
-            firstName: row.FirstName,
-            lastName: row.LastName,
-            email: row.UserEmail,
-          })} from ${useOrgsStore().selectedOrg!.Name}?`;
+          selectedUserId.value = user.UserId;
+          primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${useOrgsStore().selectedOrg!.Name}?`;
           isOpen.value = true;
         },
       },
@@ -105,17 +102,10 @@
     if (!searchOutput.value && !hasNoData.value) {
       return orgUsersDetailsData.value;
     }
-    return orgUsersDetailsData.value.filter((person: OrganizationUserDetails) => {
-      const fullName = String(
-        useUser().displayName({
-          preferredName: person.PreferredName || '',
-          firstName: person.FirstName || '',
-          lastName: person.LastName || '',
-          email: person.UserEmail,
-        }),
-      ).toLowerCase();
+    return orgUsersDetailsData.value.filter((user: OrgUser) => {
+      const fullName = user.displayName.toLowerCase();
 
-      const email = String(person.UserEmail).toLowerCase();
+      const email = String(user.UserEmail).toLowerCase();
 
       return fullName.includes(lowerCasedSearch.value) || email.includes(lowerCasedSearch.value);
     });
@@ -132,12 +122,7 @@
     isRemovingUser.value = true;
 
     const userToRemove = orgUsersDetailsData.value.find((user) => user.UserId === selectedUserId.value);
-    const displayName = useUser().displayName({
-      preferredName: userToRemove?.PreferredName,
-      firstName: userToRemove?.FirstName,
-      lastName: userToRemove?.LastName,
-      email: userToRemove?.UserEmail,
-    });
+    const displayName = userToRemove.displayName;
 
     try {
       if (!selectedUserId.value) {
@@ -177,11 +162,23 @@
         orgSettingsData.value = await $api.orgs.orgSettings(orgId);
         useOrgsStore().setSelectedOrg(orgSettingsData.value!);
       }
-      orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
 
-      if (orgUsersDetailsData.value.length === 0) {
+      const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(orgId);
+
+      if (orgUsers?.length === 0) {
         hasNoData.value = true;
       }
+
+      // Add displayName to each of the user records for display and sorting purposes
+      orgUsersDetailsData.value = orgUsers.map((user) => ({
+        ...user,
+        displayName: useUser().displayName({
+          preferredName: user.PreferredName,
+          firstName: user.FirstName,
+          lastName: user.LastName,
+          email: user.UserEmail,
+        }),
+      }));
     } catch (error) {
       console.error(error);
       throw error;
@@ -191,8 +188,14 @@
     return orgSettingsData.value;
   }
 
-  async function resend(userDetails: OrganizationUserDetails, index: number) {
+  async function resend(userDetails: OrgUser, index: number) {
     const { OrganizationId, UserEmail } = userDetails;
+
+    if (!UserEmail) {
+      console.error('UserEmail is missing');
+      return;
+    }
+
     setButtonRequestPending(true, index);
 
     try {
@@ -306,40 +309,24 @@
           :action-items="actionItems"
           :show-pagination="!isLoading"
         >
-          <template #Name-data="{ row }">
+          <template #Name-data="{ user: row }">
             <div class="flex items-center">
               <EGUserAvatar
                 class="mr-4"
-                :name="
-                  useUser().displayName({
-                    preferredName: row.PreferredName,
-                    firstName: row.FirstName,
-                    lastName: row.LastName,
-                    email: row.UserEmail,
-                  })
-                "
+                :name="row.displayName"
                 :email="row.UserEmail"
                 :is-active="row.OrganizationUserStatus === 'Active'"
               />
               <div class="flex flex-col">
                 <div>
-                  {{
-                    row.FirstName
-                      ? useUser().displayName({
-                          preferredName: row.PreferredName,
-                          firstName: row.FirstName,
-                          lastName: row.LastName,
-                          email: row.UserEmail,
-                        })
-                      : ''
-                  }}
+                  {{ row.FirstName ? row.FirstName : row.displayName }}
                 </div>
-                <div class="text-muted text-xs font-normal">{{ (row as OrganizationUserDetails).UserEmail }}</div>
+                <div class="text-muted text-xs font-normal">{{ (row as OrgUser).UserEmail }}</div>
               </div>
             </div>
           </template>
           <template #status-data="{ row }">
-            <span class="text-muted">{{ (row as OrganizationUserDetails).OrganizationUserStatus }}</span>
+            <span class="text-muted">{{ (row as OrgUser).OrganizationUserStatus }}</span>
           </template>
           <template #labs-data="{ row }">
             <span class="text-muted">{{ labsCount(row) }}</span>
@@ -350,8 +337,8 @@
                 size="sm"
                 variant="secondary"
                 label="Resend Invite"
-                v-if="isInvited((row as OrganizationUserDetails).OrganizationUserStatus)"
-                @click="resend(row as OrganizationUserDetails, index)"
+                v-if="isInvited((row as OrgUser).OrganizationUserStatus)"
+                @click="resend(row as OrgUser, index)"
                 :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                 :loading="isButtonRequestPending(index)"
               />
@@ -361,7 +348,7 @@
         </EGTable>
 
         <div class="text-muted my-6 text-center text-xs">
-          This organisation can only be removed by contacting your System administrator at: [System admin email]
+          This organization can only be removed by contacting your System administrator at: [System admin email]
         </div>
       </template>
     </template>

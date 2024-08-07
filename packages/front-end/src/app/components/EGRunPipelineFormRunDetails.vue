@@ -89,21 +89,32 @@
     emit('next-step');
   }
 
-  // function to remove all non-letter characters from the beginning of the string value
-  function removeFirstNonLetterCharacters(value: string): string {
-    return value.replace(/^[^a-zA-Z]+/, '');
+  /**
+   * Converts the user input value to one supported by the Next Flow Tower API.
+   *
+   * Allows only alphanumeric characters, hyphens, and underscores.
+   * Removes any other characters and replaces multiple hyphens and underscores with a single instance.
+   * Removes any leading non-alphabetic characters.
+   * Replaces sequences of hyphens and underscores with the first character of the sequence. e.g.
+   * 'example-_run-name_-test' -> 'example-run-name_test'
+   *
+   * @param {string} input - The input string to extract the run name from.
+   * @returns {string} - The supported run name extracted from the input string.
+   */
+  function getSupportedRunName(value: string): string {
+    return value
+      .replace(/[^a-zA-Z0-9-_]+/g, '')
+      .replace(/[-_]+/g, (match) => match.charAt(0))
+      .replace(/([-_])\1+/g, '$1')
+      .replace(/^[^a-zA-Z]+/, '');
   }
 
   function handleRunNameInput(event: InputEvent) {
-    if (event?.target) {
-      const target = event.target as HTMLInputElement;
-      const inputName: string = target.value;
-      const supportedName = removeFirstNonLetterCharacters(inputName);
-      // Update UI
-      target.value = supportedName;
-      // Update state
-      formState.runName = supportedName;
-    }
+    const target = event.target as HTMLInputElement;
+    const inputName = target.value;
+    const supportedName = getSupportedRunName(inputName);
+    target.value = supportedName;
+    formState.runName = supportedName;
   }
 
   watch(canProceed, (val) => {
@@ -121,7 +132,13 @@
         <EGInput v-model="formState.pipelineName" :disabled="true" />
       </EGFormGroup>
 
-      <EGFormGroup label="Run Name" hint="(first character must be a letter)" name="runName" eager-validation required>
+      <EGFormGroup
+        label="Run Name"
+        hint="(Only alphanumeric characters, hyphens, and underscores. First character must be a letter.)"
+        name="runName"
+        eager-validation
+        required
+      >
         <EGInput
           v-model="formState.runName"
           placeholder="Enter a name to identify this pipeline run"

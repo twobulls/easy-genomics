@@ -26,7 +26,7 @@
       disabled: false,
       showTogglePasswordButton: true,
       selectOnFocus: false,
-    }
+    },
   );
 
   const inputType = props.password ? ref('password') : ref('text');
@@ -56,10 +56,11 @@
   >
     <template v-if="showTogglePasswordButton" #trailing>
       <UButton
+        class="text-alert-danger"
         color="black"
         variant="link"
         :padded="false"
-        :icon="inputType === 'password' ? 'i-heroicons-eye-slash text-red' : 'i-heroicons-eye'"
+        :icon="inputType === 'password' ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
         @click="switchVisibility"
       />
     </template>

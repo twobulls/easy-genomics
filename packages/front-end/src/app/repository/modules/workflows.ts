@@ -12,6 +12,8 @@ class PipelinesModule extends HttpFactory {
       pipelineLaunchRequest,
     );
 
+    console.log('createPipelineRun response:', res);
+
     if (!res) {
       console.error('Error calling create pipeline run API');
       throw new Error('Failed to create pipeline run');

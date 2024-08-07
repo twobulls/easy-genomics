@@ -121,9 +121,9 @@
     let haveMatchingFilePairs = filePairs.value.length > 0;
 
     for (const filePair of filePairs.value) {
-      console.log('Validating file pair:', filePair);
-      console.log('R1 file:', filePair.r1File);
-      console.log('R2 file:', filePair.r2File);
+      console.debug('Validating file pair:', filePair);
+      console.debug('R1 file:', filePair.r1File);
+      console.debug('R2 file:', filePair.r2File);
       if (!filePair.r1File || !filePair.r2File) {
         haveMatchingFilePairs = false;
         break;
@@ -132,13 +132,24 @@
 
     canUploadFiles.value = haveMatchingFilePairs;
 
-    console.log('Can upload files:', canUploadFiles.value);
+    console.debug('Can upload files:', canUploadFiles.value);
   }
 
   function addFile(file: File) {
+    console.debug(`Adding file; name: ${file.name}; size: ${file.size} bytes`);
+    if (file.size < 1) {
+      const message = `File ${file.name} is too small: ${file.size} bytes`;
+      // TODO: warn user with toast message
+      console.warn(message);
+      return;
+    }
+
     const isDuplicateFile = checkIsFileDuplicate(file);
+    console.debug(`Is ${file.name} duplicate: ${isDuplicateFile}`);
     if (isDuplicateFile) {
-      console.warn(`File ${file.name} already exists`);
+      const message = `File ${file.name} already exists`;
+      // TODO: warn user with toast message
+      console.warn(message);
       return;
     }
 
@@ -146,8 +157,8 @@
     filesToUpload.value.push(fileDetails);
     addFileToFilePairs(fileDetails);
 
-    console.log('filesToUpload', toRaw(filesToUpload.value));
-    console.log('filePairs', toRaw(filePairs.value));
+    console.debug('filesToUpload', toRaw(filesToUpload.value));
+    console.debug('filePairs', toRaw(filePairs.value));
   }
 
   function checkIsFileDuplicate(newFile: File): boolean {
@@ -175,7 +186,7 @@
         filePairs.value.push(filePair);
       }
     } catch (error: any) {
-      console.warn(error.message);
+      console.warn('Error adding file to file pair:', error);
     }
   }
 
@@ -194,17 +205,17 @@
   }
 
   function removeFilePair(sampleId: string) {
-    console.log('Removing file pair; sampleId:', sampleId);
+    console.debug('Removing file pair; sampleId:', sampleId);
     filesToUpload.value = filesToUpload.value.filter((file) => !file.name.startsWith(sampleId));
     filePairs.value = filePairs.value.filter((filePair) => filePair.sampleId !== sampleId);
-    console.log('Removed file pair; sampleId:', sampleId);
+    console.debug('Removed file pair; sampleId:', sampleId);
 
     validateFilePairs();
   }
 
   function toggleDropzoneActive() {
     isDropzoneActive.value = !isDropzoneActive.value;
-    console.log('isDropzoneActive', toRaw(isDropzoneActive.value));
+    console.debug('isDropzoneActive', toRaw(isDropzoneActive.value));
   }
 
   const filePairsForTable = computed(() => {
@@ -241,7 +252,7 @@
     uploadManifest.Files.forEach((file: FileUploadInfo) => {
       const { Bucket, Key, Name, Region, S3Url } = file;
       const url = removeQueryStringFromS3Url(S3Url);
-      console.log('Uploaded file:', Name, url);
+      console.debug('Uploaded file:', Name, url);
 
       const uploadFileInfo: UploadedFileInfo = {
         Bucket,
@@ -267,7 +278,7 @@
       }
     });
 
-    console.log('uploadedFilePairs:', uploadedFilePairs);
+    console.debug('uploadedFilePairs:', uploadedFilePairs);
 
     return uploadedFilePairs;
   }
@@ -279,7 +290,7 @@
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
-    console.log('Get CSV sample sheet response:', response);
+    console.debug('Get CSV sample sheet response:', response);
 
     return response;
   }
@@ -299,11 +310,11 @@
       Files: files,
     };
 
-    console.log('Get file upload manifest request:', request);
+    console.debug('Get file upload manifest request:', request);
 
     const response = await $api.uploads.getFileUploadManifest(request);
 
-    console.log('Get file upload manifest response:', response);
+    console.debug('Get file upload manifest response:', response);
 
     return response;
   }
@@ -318,9 +329,9 @@
   }
 
   async function uploadFiles() {
-    console.log('Uploading files:', filesToUpload.value.length);
+    console.debug('Uploading files:', filesToUpload.value.length);
     await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
-    console.log('Uploaded files:', filesToUpload.value.length);
+    console.debug('Uploaded files:', filesToUpload.value.length);
   }
 
   async function uploadFile(fileDetails: FileDetails) {
@@ -334,7 +345,7 @@
         const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
         fileDetails.progress = progress;
         fileDetails.percentage = progress;
-        console.log(`${name}; Upload progress: ${progress}%`);
+        console.debug(`${name}; Upload progress: ${progress}%`);
       },
     });
   }

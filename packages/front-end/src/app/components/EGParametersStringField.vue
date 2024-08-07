@@ -4,6 +4,7 @@
     details: object;
     modelValue: string;
     disabled?: boolean;
+    hideDescription?: boolean;
   }>();
 </script>
 
@@ -17,7 +18,7 @@
       @input.lazy="$emit('update:modelValue', $event.target.value)"
       class="mt-1"
     />
-    <EGText v-if="details.help_text" tag="small" color-class="text-muted">
+    <EGText v-if="!hideDescription && details.help_text" tag="small" color-class="text-muted">
       {{ details.help_text }}
     </EGText>
   </div>

@@ -37,23 +37,41 @@
       propValues[propName] = props.params[propName];
     }
   });
+
+  function downloadSampleSheet() {
+    const csvString = usePipelineRunStore().sampleSheetCsv;
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `samplesheet-${usePipelineRunStore().pipelineName}--${usePipelineRunStore().userPipelineRunName}.csv`,
+    );
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 </script>
 
 <template>
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
-      <!-- ignore Seqera "file upload" input types -->
       <template v-if="!propertyDetail?.hidden && propertyDetail.format === 'file-path' && propertyName === 'input'">
         <component
           :is="components[propertyType(propertyDetail)]"
-          :name="propertyName"
+          name="input"
           :disabled="true"
           :details="propertyDetail"
-          v-model="propValues[propertyName]"
+          v-model="usePipelineRunStore().S3Url"
+          :hide-description="true"
         />
-        <EGButton label="Download sample sheet" class="mt-2" />
+        <EGButton label="Download sample sheet" class="mt-2" @click="downloadSampleSheet()" />
       </template>
-      <template v-else-if="!propertyDetail?.hidden && propertyDetail.format !== 'file-path'">
+      <!-- ignore Seqera "file upload" input types  -->
+      <template v-if="!propertyDetail?.hidden && propertyDetail.format !== 'file-path'">
         <component
           :is="components[propertyType(propertyDetail)]"
           :name="propertyName"

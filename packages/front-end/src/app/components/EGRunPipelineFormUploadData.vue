@@ -224,6 +224,7 @@
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     usePipelineRunStore().setSampleSheetCsv(sampleSheetResponse.SampleSheetContents);
+    usePipelineRunStore().setS3Url(sampleSheetResponse.SampleSheetInfo.S3Url);
 
     isUploadProcessRunning.value = false;
 

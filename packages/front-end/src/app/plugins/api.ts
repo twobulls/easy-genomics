@@ -19,7 +19,7 @@ class FetchOptions {}
 
 export default defineNuxtPlugin((nuxtApp) => {
   const fetchOptions: FetchOptions = {
-    baseURL: nuxtApp.$config.BASE_API_URL,
+    baseURL: nuxtApp.$config.public.BASE_API_URL,
   };
 
   const apiFetcher = $fetch.create(fetchOptions);

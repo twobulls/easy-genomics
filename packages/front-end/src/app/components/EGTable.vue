@@ -122,9 +122,6 @@
 
     tbody tr td:nth-child(2) {
       white-space: normal;
-    }
-
-    tbody tr td:nth-child(2) {
       font-size: 12px;
       color: #818181;
     }

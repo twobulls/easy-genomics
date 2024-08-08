@@ -141,10 +141,10 @@ if (process.env.CI_CD === 'true') {
       if (!secretKey) throw new Error('"secret-key" undefined, please check the easy-genomics.yaml configuration');
       if (devEnv) {
         if (!testUserEmail) {
-          throw new Error('"TEST_USER_EMAIL" undefined, please check the CI/CD environment configuration');
+          throw new Error('"test-user-email" undefined, please check the easy-genomics.yaml configuration');
         }
         if (!testUserPassword) {
-          throw new Error('"TEST_USER_PASSWORD" undefined, please check the CI/CD environment configuration');
+          throw new Error('"test-user-password" undefined, please check the easy-genomics.yaml configuration');
         }
       }
 

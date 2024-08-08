@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
 import {
   CreateLaboratory,
@@ -37,33 +36,48 @@ export const handler: Handler = async (
       throw new Error(`Laboratory creation error, OrganizationId '${request.OrganizationId}' not found`);
     }
 
-    const s3BucketGivenName: string | undefined = getS3BucketGivenName(request.S3Bucket);
-    if (s3BucketGivenName) {
-      await createS3Bucket(s3BucketGivenName);
-    }
+    const {
+      AwsHealthOmicsEnabled: orgAwsHealthOmicsEnabled,
+      NextFlowTowerEnabled: orgNextFlowTowerEnabled,
+      OrganizationId,
+    } = organization;
+
+    const {
+      AwsHealthOmicsEnabled,
+      Description,
+      Name,
+      NextFlowTowerAccessToken,
+      NextFlowTowerEnabled,
+      NextFlowTowerWorkspaceId,
+    } = request;
+
+    // Create S3 Bucket with name based on Laboratory Name
+    const s3BucketName = getS3BucketGivenName(Name);
+    console.log(`S3 Bucket Name: ${s3BucketName}; from Laboratory Name: ${Name}`);
+    await createS3Bucket(s3BucketName);
 
     const laboratoryId: string = uuidv4();
 
     const response = await laboratoryService.add({
-      OrganizationId: request.OrganizationId,
+      OrganizationId,
       LaboratoryId: laboratoryId,
-      Name: request.Name,
-      Description: request.Description,
+      Name,
+      Description,
       Status: 'Active',
-      S3Bucket: s3BucketGivenName,
-      AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
-      NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,
-      NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
+      S3Bucket: s3BucketName,
+      AwsHealthOmicsEnabled: AwsHealthOmicsEnabled || orgAwsHealthOmicsEnabled || false,
+      NextFlowTowerEnabled: NextFlowTowerEnabled || orgNextFlowTowerEnabled || false,
+      NextFlowTowerWorkspaceId,
       CreatedAt: new Date().toISOString(),
       CreatedBy: currentUserId,
     });
 
     // Store NextFlow AccessToken in SSM if value supplied
-    if (request.NextFlowTowerAccessToken) {
+    if (NextFlowTowerAccessToken) {
       await ssmService.putParameter({
-        Name: `/easy-genomics/organization/${request.OrganizationId}/laboratory/${laboratoryId}/nf-access-token`,
+        Name: `/easy-genomics/organization/${OrganizationId}/laboratory/${laboratoryId}/nf-access-token`,
         Description: `Easy Genomics Laboratory ${laboratoryId} NF AccessToken`,
-        Value: request.NextFlowTowerAccessToken,
+        Value: NextFlowTowerAccessToken,
         Type: 'SecureString',
         Overwrite: false,
       });
@@ -76,7 +90,7 @@ export const handler: Handler = async (
   }
 };
 
-// Used for customising error messages by exception types
+// Used for customizing error messages by exception types
 function getErrorMessage(err: any) {
   if (err instanceof ConditionalCheckFailedException) {
     return 'Laboratory already exists';
@@ -95,28 +109,24 @@ function getErrorMessage(err: any) {
  *
  * @param s3BucketGivenName
  */
-function getS3BucketGivenName(s3BucketGivenName?: string): string | undefined {
-  if (!s3BucketGivenName) {
-    return undefined;
-  } else {
-    return s3BucketGivenName
-      .trim()
-      .toLowerCase()
-      .replace(/[\s_]/g, '-')
-      .replace(/[^a-zA-Z0-9.-]/g, '')
-      .replace(/^-+|-+$|-+/g, '-')
-      .replace(/^\.+|\.+$|\.+/g, '.');
-  }
+function getS3BucketGivenName(s3BucketGivenName: string): string {
+  return s3BucketGivenName
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]/g, '-')
+    .replace(/[^a-zA-Z0-9.-]/g, '')
+    .replace(/^-+|-+$|-+/g, '-')
+    .replace(/^\.+|\.+$|\.+/g, '.');
 }
 
-async function createS3Bucket(s3BucketGivenName: string): Promise<void> {
-  const s3BucketFullName: string = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketGivenName}`;
-  console.log(`Creating S3 Bucket: ${s3BucketFullName}`);
+async function createS3Bucket(s3BucketName: string): Promise<void> {
+  const s3BucketFullName: string = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketName}`;
+  console.log(`Creating S3 Bucket Full Name: ${s3BucketFullName}; from requested S3 Bucket Name: ${s3BucketName}`);
 
   // S3 bucket names must between 3 - 63 characters long, and globally unique
   if (s3BucketFullName.length < 3 || s3BucketFullName.length > 63) {
     throw new Error(
-      `Laboratory creation error, unable to create Laboratory S3 Bucket due to invalid length of bucket name; s3BucketGivenName: ${s3BucketGivenName} is too long`,
+      `Laboratory creation error, unable to create Laboratory S3 Bucket due to invalid length of bucket name; s3BucketGivenName: ${s3BucketName} is too long`,
     );
   }
 

@@ -18,7 +18,6 @@ export interface ConfigurationSettings {
   ['front-end']: {
     // The following Front-End Infrastructure settings will need to be pre-configured in AWS.
     ['aws-hosted-zone-id']: string,
-    ['aws-hosted-zone-name']: string,
     ['aws-certificate-arn']: string,
 
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.

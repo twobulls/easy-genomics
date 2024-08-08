@@ -17,7 +17,6 @@ export const ConfigurationSettingsSchema = z.object({
   ['front-end']: z.object({
     // The following Front-End Infrastructure settings will need to be pre-configured in AWS.
     ['aws-hosted-zone-id']: z.string(),
-    ['aws-hosted-zone-name']: z.string(),
     ['aws-certificate-arn']: z.string(),
 
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.

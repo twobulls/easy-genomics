@@ -20,7 +20,6 @@ easy-genomics:
         front-end:
             # The following Front-End Infrastructure settings will need to be pre-configured in AWS.
             aws-hosted-zone-id:
-            aws-hosted-zone-name:
             aws-certificate-arn:
 
             # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.

@@ -13,7 +13,6 @@ export interface BaseStackProps extends StackProps {
 // Defines Front-End Stack props
 export interface FrontEndStackProps extends BaseStackProps {
     hostedZoneId: string;
-    hostedZoneName: string;
     certificateArn: string;
 }
 

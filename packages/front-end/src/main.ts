@@ -13,7 +13,6 @@ if (process.env.CI_CD === 'true') {
   const awsAccountId: string | undefined = process.env.AWS_ACCOUNT_ID;
   const awsRegion: string | undefined = process.env.AWS_REGION;
   const awsHostedZoneId: string | undefined = process.env.AWS_HOSTED_ZONE_ID;
-  const awsHostedZoneName: string | undefined = process.env.AWS_HOSTED_ZONE_NAME;
   const awsCertificateArn: string | undefined = process.env.AWS_CERTIFICATE_ARN;
   const envName: string | undefined = process.env.ENV_NAME;
   const envType: string | undefined = process.env.ENV_TYPE;
@@ -23,9 +22,6 @@ if (process.env.CI_CD === 'true') {
   if (!awsRegion) throw new Error('AWS_REGION undefined, please check the CI/CD environment configuration');
   if (!awsHostedZoneId) {
     throw new Error('AWS_HOSTED_ZONE_ID undefined, please check the CI/CD environment configuration');
-  }
-  if (!awsHostedZoneName) {
-    throw new Error('AWS_HOSTED_ZONE_NAME undefined, please check the CI/CD environment configuration');
   }
   if (!awsCertificateArn) {
     throw new Error('AWS_CERTIFICATE_ARN undefined, please check the CI/CD environment configuration');
@@ -51,7 +47,6 @@ if (process.env.CI_CD === 'true') {
     appDomainName,
     certificateArn: awsCertificateArn,
     hostedZoneId: awsHostedZoneId,
-    hostedZoneName: awsHostedZoneName,
   });
 } else {
   console.log('Loading Front-End easy-genomics.yaml settings...');
@@ -75,7 +70,6 @@ if (process.env.CI_CD === 'true') {
       const appDomainName: string = configSettings['app-domain-name'];
 
       const awsHostedZoneId: string = configSettings['front-end']['aws-hosted-zone-id'];
-      const awsHostedZoneName: string = configSettings['front-end']['aws-hosted-zone-name'];
       const awsCertificateArn: string = configSettings['front-end']['aws-certificate-arn'];
 
       // AWS infrastructure resources can be destroyed only when devEnv is true
@@ -95,7 +89,6 @@ if (process.env.CI_CD === 'true') {
         appDomainName,
         certificateArn: awsCertificateArn,
         hostedZoneId: awsHostedZoneId,
-        hostedZoneName: awsHostedZoneName,
       });
     }
   });

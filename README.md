@@ -161,7 +161,7 @@ and edit the Shared and Back-End settings for your deployment environment.
             aws-region: # e.g. us-east-1
             env-type: dev # e.g. dev | pre-prod | prod; only dev env-type can have AWS CloudFormation resources destroyed
             app-domain-name: dev.easy-genomics.mycompany.com # e.g. dev.easy-genomics.myinstitution.org
-            aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist if configured
+            aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist for domain name if configured
 
             # Back-End specific settings
             back-end:

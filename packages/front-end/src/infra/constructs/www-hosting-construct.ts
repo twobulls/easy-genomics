@@ -198,8 +198,11 @@ export class WwwHostingConstruct extends Construct {
     new CfnOutput(this, 'DistributionId', { key: 'DistributionId', value: distribution.distributionId });
 
     if (this.props.hostedZoneId) {
-      // Retrieve Hosted Zone
-      const hostedZone: IHostedZone = HostedZone.fromHostedZoneId(this, 'HostedZone', this.props.hostedZoneId);
+      // Retrieve Hosted Zone by configured hostedZoneId and appDomainName
+      const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+        hostedZoneId: this.props.hostedZoneId,
+        zoneName: this.props.appDomainName,
+      });
       new CfnOutput(this, 'HostedZoneId', { key: 'HostedZoneId', value: hostedZone.hostedZoneId });
       new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
 

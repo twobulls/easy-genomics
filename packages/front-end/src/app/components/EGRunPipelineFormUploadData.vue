@@ -362,7 +362,7 @@
     <ul class="text-muted ml-6 mt-1 list-disc text-sm font-normal tracking-tight">
       <li>
         Files containing _R1_ or _R2_ with a matching prefix and suffix will be combined as paired-end data samples e.g,
-        <ul class="ml-4 list-disc text-xs font-normal tracking-tight">
+        <ul>
           <li>
             GOL2051A55857_S103_L002
             <strong>_R1_</strong>

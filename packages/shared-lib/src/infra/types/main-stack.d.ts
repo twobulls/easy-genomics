@@ -8,12 +8,12 @@ export interface BaseStackProps extends StackProps {
     envName: string;
     envType: string;
     appDomainName: string;
-    hostedZoneId?: string;
+    awsHostedZoneId?: string;
 }
 
 // Defines Front-End Stack props
 export interface FrontEndStackProps extends BaseStackProps {
-    certificateArn: string;
+    awsCertificateArn?: string;
 }
 
 // Defines Back-End Stack props

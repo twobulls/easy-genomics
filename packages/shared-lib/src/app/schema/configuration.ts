@@ -22,6 +22,6 @@ export const ConfigurationSettingsSchema = z.object({
     ['aws-cognito-user-pool-client-id']: z.string().nullable(),
 
     // The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-    ['aws-certificate-arn']: z.string(),
+    ['aws-certificate-arn']: z.string().nullable(),
   }),
 }).strict();

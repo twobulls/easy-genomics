@@ -22,8 +22,8 @@ export interface ConfigurationSettings {
     ['aws-cognito-user-pool-id']?: string,
     ['aws-cognito-user-pool-client-id']?: string,
 
-    // The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-    ['aws-certificate-arn']: string,
+    // The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
+    ['aws-certificate-arn']?: string, // Not required when env-type: 'dev'
   }
 }
 

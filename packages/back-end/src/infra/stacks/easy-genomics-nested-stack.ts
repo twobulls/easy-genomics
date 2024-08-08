@@ -95,7 +95,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.ses = new SesConstruct(this, `${this.props.constructNamespace}-ses`, {
       awsAccount: this.props.env.account!,
       awsRegion: this.props.env.region!,
-      domainName: this.props.appDomainName,
+      appDomainName: this.props.appDomainName,
+      awsHostedZoneId: this.props.awsHostedZoneId,
       emailSender: `no.reply@${this.props.appDomainName}`,
     });
   }

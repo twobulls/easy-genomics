@@ -6,7 +6,8 @@ import { Construct } from 'constructs';
 export interface SesConstructProps extends StackProps {
   awsAccount: string;
   awsRegion: string;
-  domainName: string;
+  appDomainName: string;
+  awsHostedZoneId?: string;
   emailSender: string;
 }
 
@@ -20,11 +21,11 @@ export class SesConstruct extends Construct {
     super(scope, id);
     this.props = props;
 
-    const hostedZone: IHostedZone = HostedZone.fromLookup(this, 'Zone', { domainName: this.props.domainName });
+    const hostedZone: IHostedZone = HostedZone.fromLookup(this, 'Zone', { domainName: this.props.appDomainName });
 
     const emailDomainIdentity = new EmailIdentity(this, 'VerifiedEmailDomainIdentity', {
       identity: Identity.publicHostedZone(hostedZone),
-      mailFromDomain: `mail.${this.props.domainName}`,
+      mailFromDomain: `mail.${this.props.appDomainName}`,
     });
     emailDomainIdentity.applyRemovalPolicy(RemovalPolicy.DESTROY);
 

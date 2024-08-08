@@ -43,7 +43,7 @@ if (process.env.CI_CD === 'true') {
   if (!awsCognitoUserPoolClientId) {
     throw new Error('AWS_COGNITO_USER_POOL_CLIENT_ID undefined, please check the CI/CD environment configuration');
   }
-  if (!awsCertificateArn) {
+  if (!devEnv && !awsCertificateArn) {
     throw new Error('AWS_CERTIFICATE_ARN undefined, please check the CI/CD environment configuration');
   }
 
@@ -60,8 +60,8 @@ if (process.env.CI_CD === 'true') {
     envName,
     envType,
     appDomainName,
-    certificateArn: awsCertificateArn,
-    hostedZoneId: awsHostedZoneId,
+    awsHostedZoneId,
+    awsCertificateArn,
   });
 } else {
   console.log('Loading Front-End easy-genomics.yaml settings...');
@@ -92,7 +92,7 @@ if (process.env.CI_CD === 'true') {
       const awsCognitoUserPoolClientId: string | undefined =
         configSettings['front-end']['aws-cognito-user-pool-client-id'];
 
-      const awsCertificateArn: string = configSettings['front-end']['aws-certificate-arn'];
+      const awsCertificateArn: string | undefined = configSettings['front-end']['aws-certificate-arn'];
 
       // AWS infrastructure resources can be destroyed only when devEnv is true
       const devEnv: boolean = envType === 'dev';
@@ -112,6 +112,9 @@ if (process.env.CI_CD === 'true') {
       if (!devEnv && !awsHostedZoneId) {
         throw new Error('"aws-hosted-zone-id" undefined, please check the easy-genomics.yaml configuration');
       }
+      if (!devEnv && !awsCertificateArn) {
+        throw new Error('"aws-certificate-arn" undefined, please check the easy-genomics.yaml configuration');
+      }
 
       // Setups Front-End Stack to support static web hosting for the UI
       new FrontEndStack(app, `${envName}-main-front-end-stack`, {
@@ -124,8 +127,8 @@ if (process.env.CI_CD === 'true') {
         envName,
         envType,
         appDomainName,
-        hostedZoneId: awsHostedZoneId,
-        certificateArn: awsCertificateArn,
+        awsHostedZoneId,
+        awsCertificateArn,
       });
     }
   });

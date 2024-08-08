@@ -111,7 +111,7 @@ export class WwwHostingConstruct extends Construct {
     this.s3Buckets.set(wwwBucketName, wwwBucket); // Add Bucket to Map collection
   };
 
-  // CloudFront Distribution - requires the HostedZone and Certificate are already configured in AWS
+  // CloudFront Distribution
   private setupCloudFrontDistribution = () => {
     const appDomainName: string = this.props.appDomainName;
 
@@ -147,22 +147,20 @@ export class WwwHostingConstruct extends Construct {
       enableAcceptEncodingBrotli: true,
     });
 
-    // Retrieve TLS certificate
-    const certificate: ICertificate = Certificate.fromCertificateArn(
-      this,
-      'SiteCertificate',
-      this.props.certificateArn,
-    );
-    new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
-
     const s3Origin: S3Origin = new S3Origin(wwwBucket, { originAccessIdentity });
     const indexPath: string = `/${this.props.webSiteIndexDocument}`;
+
+    const certificate: ICertificate | undefined =
+      this.props.awsHostedZoneId && this.props.awsCertificateArn
+        ? this.getCertificate(this.props.awsCertificateArn)
+        : undefined;
+    const domainNames: string[] = this.props.awsHostedZoneId && certificate ? [this.props.appDomainName] : [];
 
     // CloudFront distribution
     const distribution: Distribution = new Distribution(this, 'SiteDistribution', {
       certificate,
       defaultRootObject: this.props.webSiteIndexDocument,
-      domainNames: [appDomainName],
+      domainNames,
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
       webAclId: this.props.webAclId, // Optional AWS WAF web ACL
       defaultBehavior: {
@@ -197,10 +195,11 @@ export class WwwHostingConstruct extends Construct {
     });
     new CfnOutput(this, 'DistributionId', { key: 'DistributionId', value: distribution.distributionId });
 
-    if (this.props.hostedZoneId) {
-      // Retrieve Hosted Zone by configured hostedZoneId and appDomainName
+    if (this.props.awsHostedZoneId && this.props.awsCertificateArn) {
+      console.log(`Proceeding to setup CloudFront Distribution with Site Alias: ${this.props.appDomainName}`);
+      // Retrieve Hosted Zone by configured awsHostedZoneId and appDomainName
       const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-        hostedZoneId: this.props.hostedZoneId,
+        hostedZoneId: this.props.awsHostedZoneId,
         zoneName: this.props.appDomainName,
       });
       new CfnOutput(this, 'HostedZoneId', { key: 'HostedZoneId', value: hostedZone.hostedZoneId });
@@ -223,6 +222,13 @@ export class WwwHostingConstruct extends Construct {
         distributionPaths: ['/*'],
       });
     }
+  };
+
+  private getCertificate = (awsCertificateArn: string): ICertificate => {
+    // Retrieve TLS certificate
+    const certificate: ICertificate = Certificate.fromCertificateArn(this, 'SiteCertificate', awsCertificateArn);
+    new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
+    return certificate;
   };
 
   private applySecurityHeaders = (): ResponseHeadersPolicy | undefined => {

@@ -9,9 +9,9 @@ export const ConfigurationSettingsSchema = z.object({
 
   // Back-End specific settings
   ['back-end']: z.object({
+    ['secret-key']: z.string(), // JWT signing secret
     ['system-admin-email']: z.string(),
     ['system-admin-password']: z.string(), // Initial Cognito password
-    ['secret-key']: z.string(), // JWT signing secret
   }),
 
   // Front-End specific settings

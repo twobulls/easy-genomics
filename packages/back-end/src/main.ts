@@ -46,16 +46,15 @@ if (process.env.CI_CD === 'true') {
   if (!devEnv && !awsHostedZoneId) {
     throw new Error('"AWS_HOSTED_ZONE_ID" undefined, please check the CI/CD environment configuration');
   }
+  if (!secretKey) {
+    throw new Error('"SECRET_KEY" undefined, please check the CI/CD environment configuration');
+  }
   if (!systemAdminEmail) {
     throw new Error('"SYSTEM_ADMIN_EMAIL" undefined, please check the CI/CD environment configuration');
   }
   if (!systemAdminPassword) {
     throw new Error('"SYSTEM_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
   }
-  if (!secretKey) {
-    throw new Error('"SECRET_KEY" undefined, please check the CI/CD environment configuration');
-  }
-
   if (devEnv) {
     if (!testUserEmail) {
       throw new Error('"TEST_USER_EMAIL" undefined, please check the CI/CD environment configuration');
@@ -77,9 +76,9 @@ if (process.env.CI_CD === 'true') {
     appDomainName: appDomainName,
     hostedZoneId: awsHostedZoneId,
     namePrefix: namePrefix,
+    secretKey: secretKey,
     systemAdminEmail: systemAdminEmail,
     systemAdminPassword: systemAdminPassword,
-    secretKey: secretKey,
     testUserEmail: testUserEmail,
     testUserPassword: testUserPassword,
     seqeraApiBaseUrl: seqeraApiBaseUrl,
@@ -108,9 +107,9 @@ if (process.env.CI_CD === 'true') {
       const awsHostedZoneId: string | undefined = configSettings['aws-hosted-zone-id'];
 
       // Back-End configuration settings
+      const secretKey: string | undefined = configSettings['back-end']['secret-key'];
       const systemAdminEmail: string | undefined = configSettings['back-end']['system-admin-email'];
       const systemAdminPassword: string | undefined = configSettings['back-end']['system-admin-password'];
-      const secretKey: string | undefined = configSettings['back-end']['secret-key'];
       const testUserEmail: string | undefined = configSettings['back-end']['test-user-email'];
       const testUserPassword: string | undefined = configSettings['back-end']['test-user-password'];
       const seqeraApiBaseUrl: string = configSettings['back-end']['seqera-api-base-url'] || SEQERA_API_BASE_URL;
@@ -132,13 +131,13 @@ if (process.env.CI_CD === 'true') {
       if (!devEnv && !awsHostedZoneId) {
         throw new Error('"aws-hosted-zone-id" undefined, please check the easy-genomics.yaml configuration');
       }
+      if (!secretKey) throw new Error('"secret-key" undefined, please check the easy-genomics.yaml configuration');
       if (!systemAdminEmail) {
         throw new Error('"system-admin-email" undefined, please check the easy-genomics.yaml configuration');
       }
       if (!systemAdminPassword) {
         throw new Error('"system-admin-password" undefined, please check the easy-genomics.yaml configuration');
       }
-      if (!secretKey) throw new Error('"secret-key" undefined, please check the easy-genomics.yaml configuration');
       if (devEnv) {
         if (!testUserEmail) {
           throw new Error('"test-user-email" undefined, please check the easy-genomics.yaml configuration');
@@ -161,9 +160,9 @@ if (process.env.CI_CD === 'true') {
         appDomainName: appDomainName,
         hostedZoneId: awsHostedZoneId,
         namePrefix: namePrefix,
+        secretKey: secretKey,
         systemAdminEmail: systemAdminEmail,
         systemAdminPassword: systemAdminPassword,
-        secretKey: secretKey,
         testUserEmail: testUserEmail,
         testUserPassword: testUserPassword,
         seqeraApiBaseUrl: seqeraApiBaseUrl,

@@ -7,9 +7,9 @@ export interface ConfigurationSettings {
 
   // Back-End specific settings
   ['back-end']: {
+    ['secret-key']: string, // JWT signing secret
     ['system-admin-email']: string,
     ['system-admin-password']: string, // Initial Cognito password
-    ['secret-key']: string, // JWT signing secret
     ['test-user-email']: string,
     ['test-user-password']: string,
     ['seqera-api-base-url']?: string, // Optional: Update for self-hosted Seqera API Base URL; defaults to 'https://api.cloud.seqera.io'

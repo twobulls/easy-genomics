@@ -19,9 +19,9 @@ export interface FrontEndStackProps extends BaseStackProps {
 // Defines Back-End Stack props
 export interface BackEndStackProps extends BaseStackProps {
     namePrefix: string;
+    secretKey: string;
     systemAdminEmail: string;
     systemAdminPassword: string;
-    secretKey: string;
     testUserEmail?: string;
     testUserPassword?: string;
     seqeraApiBaseUrl: string;

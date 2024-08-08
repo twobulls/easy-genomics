@@ -174,13 +174,14 @@ and edit the Shared and Back-End settings for your deployment environment.
 
             # Front-End specific settings
                front-end:
-                  # The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-                  aws-certificate-arn:
-
                   # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
                   aws-api-gateway-url:
                   aws-cognito-user-pool-id:
                   aws-cognito-user-pool-client-id:
+
+                  # The following Front-End Infrastructure settings will need to be pre-configured in AWS.
+                  aws-certificate-arn:
+
          - prod:
             ...
    ```

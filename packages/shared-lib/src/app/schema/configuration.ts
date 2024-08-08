@@ -16,12 +16,12 @@ export const ConfigurationSettingsSchema = z.object({
 
   // Front-End specific settings
   ['front-end']: z.object({
-    // The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-    ['aws-certificate-arn']: z.string(),
-
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
     ['aws-api-gateway-url']: z.string().nullable(),
     ['aws-cognito-user-pool-id']: z.string().nullable(),
     ['aws-cognito-user-pool-client-id']: z.string().nullable(),
+
+    // The following Front-End Infrastructure settings will need to be pre-configured in AWS.
+    ['aws-certificate-arn']: z.string(),
   }),
 }).strict();

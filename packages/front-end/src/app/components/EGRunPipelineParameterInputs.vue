@@ -10,6 +10,7 @@
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
+    if (property.type === 'string' && property.format === 'path') return 'EGParametersStringField';
     if (property.type === 'string' && property.format === 'file-path') return 'EGParametersStringField';
     if (property.type === 'string' && property.format === 'directory-path') return 'EGParametersStringField';
     if (property.type === 'boolean') return 'EGParametersBooleanField';

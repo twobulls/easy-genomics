@@ -161,6 +161,7 @@ and edit the Shared and Back-End settings for your deployment environment.
             aws-region: # e.g. us-east-1
             env-type: dev # e.g. dev | pre-prod | prod; only dev env-type can have AWS CloudFormation resources destroyed
             app-domain-name: dev.easy-genomics.mycompany.com # e.g. dev.easy-genomics.myinstitution.org
+            aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist if configured
 
             # Back-End specific settings
             back-end:
@@ -174,7 +175,6 @@ and edit the Shared and Back-End settings for your deployment environment.
             # Front-End specific settings
                front-end:
                   # The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-                  aws-hosted-zone-id:
                   aws-certificate-arn:
 
                   # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.

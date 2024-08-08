@@ -147,14 +147,6 @@ export class WwwHostingConstruct extends Construct {
       enableAcceptEncodingBrotli: true,
     });
 
-    // Retrieve Hosted Zone
-    const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: this.props.hostedZoneId,
-      zoneName: this.props.appDomainName,
-    });
-    new CfnOutput(this, 'HostedZoneId', { key: 'HostedZoneId', value: hostedZone.hostedZoneId });
-    new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
-
     // Retrieve TLS certificate
     const certificate: ICertificate = Certificate.fromCertificateArn(
       this,
@@ -205,11 +197,18 @@ export class WwwHostingConstruct extends Construct {
     });
     new CfnOutput(this, 'DistributionId', { key: 'DistributionId', value: distribution.distributionId });
 
-    // Route53 alias record for the CloudFront distribution
-    new ARecord(this, 'SiteAliasRecord', {
-      target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
-      zone: hostedZone,
-    });
+    if (this.props.hostedZoneId) {
+      // Retrieve Hosted Zone
+      const hostedZone: IHostedZone = HostedZone.fromHostedZoneId(this, 'HostedZone', this.props.hostedZoneId);
+      new CfnOutput(this, 'HostedZoneId', { key: 'HostedZoneId', value: hostedZone.hostedZoneId });
+      new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
+
+      // Route53 alias record for the CloudFront distribution
+      new ARecord(this, 'SiteAliasRecord', {
+        target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+        zone: hostedZone,
+      });
+    }
 
     const wwwSourceDir = path.join(__dirname, '../../../dist'); // Generated site contents folder
     if (fs.existsSync(wwwSourceDir)) {

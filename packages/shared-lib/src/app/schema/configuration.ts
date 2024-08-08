@@ -5,6 +5,7 @@ export const ConfigurationSettingsSchema = z.object({
   ['aws-region']: z.string(),
   ['env-type']: z.enum(['dev', 'pre-prod', 'prod']),
   ['app-domain-name']: z.string(),
+  ['aws-hosted-zone-id']: z.string().nullable(), // Not required when env-type: 'dev', but must exist if configured
 
   // Back-End specific settings
   ['back-end']: z.object({
@@ -16,7 +17,6 @@ export const ConfigurationSettingsSchema = z.object({
   // Front-End specific settings
   ['front-end']: z.object({
     // The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-    ['aws-hosted-zone-id']: z.string(),
     ['aws-certificate-arn']: z.string(),
 
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.

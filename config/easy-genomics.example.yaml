@@ -6,6 +6,7 @@ easy-genomics:
         aws-region: # e.g. us-east-1
         env-type: # e.g. dev | pre-prod | prod; only dev env-type can have AWS CloudFormation resources destroyed
         app-domain-name: # e.g. dev.easy-genomics.myinstitution.org
+        aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist if configured
 
         # Back-End specific settings
         back-end:
@@ -19,7 +20,6 @@ easy-genomics:
         # Front-End specific settings
         front-end:
             # The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-            aws-hosted-zone-id:
             aws-certificate-arn:
 
             # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.

@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { join } from 'path';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
@@ -6,6 +7,10 @@ import { BackEndStack } from './infra/stacks/back-end-stack';
 
 const SEQERA_API_BASE_URL = 'https://api.cloud.seqera.io';
 const app = new App();
+
+// Generate random value for cryptographic secret on each deployment - used in JWT signature
+const jwtSecretKey: string = randomUUID();
+
 if (process.env.CI_CD === 'true') {
   console.log('Loading Back-End environment settings for CI/CD Pipeline...');
   // CI/CD Pipeline uses ENV parameters
@@ -18,7 +23,6 @@ if (process.env.CI_CD === 'true') {
 
   const systemAdminEmail: string | undefined = process.env.SYSTEM_ADMIN_EMAIL;
   const systemAdminPassword: string | undefined = process.env.SYSTEM_ADMIN_PASSWORD;
-  const secretKey: string | undefined = process.env.SECRET_KEY;
   const testUserEmail: string | undefined = process.env.TEST_USER_EMAIL;
   const testUserPassword: string | undefined = process.env.TEST_USER_PASSWORD;
   const seqeraApiBaseUrl: string = process.env.SEQERA_API_BASE_URL || SEQERA_API_BASE_URL;
@@ -45,9 +49,6 @@ if (process.env.CI_CD === 'true') {
   }
   if (!devEnv && !awsHostedZoneId) {
     throw new Error('"AWS_HOSTED_ZONE_ID" undefined, please check the CI/CD environment configuration');
-  }
-  if (!secretKey) {
-    throw new Error('"SECRET_KEY" undefined, please check the CI/CD environment configuration');
   }
   if (!systemAdminEmail) {
     throw new Error('"SYSTEM_ADMIN_EMAIL" undefined, please check the CI/CD environment configuration');
@@ -76,7 +77,7 @@ if (process.env.CI_CD === 'true') {
     appDomainName: appDomainName,
     awsHostedZoneId: awsHostedZoneId,
     namePrefix: namePrefix,
-    secretKey: secretKey,
+    jwtSecretKey: jwtSecretKey,
     systemAdminEmail: systemAdminEmail,
     systemAdminPassword: systemAdminPassword,
     testUserEmail: testUserEmail,
@@ -107,7 +108,6 @@ if (process.env.CI_CD === 'true') {
       const awsHostedZoneId: string | undefined = configSettings['aws-hosted-zone-id'];
 
       // Back-End configuration settings
-      const secretKey: string | undefined = configSettings['back-end']['secret-key'];
       const systemAdminEmail: string | undefined = configSettings['back-end']['system-admin-email'];
       const systemAdminPassword: string | undefined = configSettings['back-end']['system-admin-password'];
       const testUserEmail: string | undefined = configSettings['back-end']['test-user-email'];
@@ -131,7 +131,7 @@ if (process.env.CI_CD === 'true') {
       if (!devEnv && !awsHostedZoneId) {
         throw new Error('"aws-hosted-zone-id" undefined, please check the easy-genomics.yaml configuration');
       }
-      if (!secretKey) throw new Error('"secret-key" undefined, please check the easy-genomics.yaml configuration');
+
       if (!systemAdminEmail) {
         throw new Error('"system-admin-email" undefined, please check the easy-genomics.yaml configuration');
       }
@@ -160,7 +160,7 @@ if (process.env.CI_CD === 'true') {
         appDomainName: appDomainName,
         awsHostedZoneId: awsHostedZoneId,
         namePrefix: namePrefix,
-        secretKey: secretKey,
+        jwtSecretKey: jwtSecretKey,
         systemAdminEmail: systemAdminEmail,
         systemAdminPassword: systemAdminPassword,
         testUserEmail: testUserEmail,

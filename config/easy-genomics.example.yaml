@@ -10,7 +10,6 @@ easy-genomics:
 
         # Back-End specific settings
         back-end:
-            secret-key: # Random Secret Key value for cryptographic salt
             system-admin-email:
             system-admin-password: # System Admin initial Cognito Password
             test-user-email:

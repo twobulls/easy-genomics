@@ -39,7 +39,7 @@ export class AuthNestedStack extends NestedStack {
         // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
         '/auth/process-custom-email-sender': {
           environment: {
-            JWT_SECRET_KEY: this.props.secretKey,
+            JWT_SECRET_KEY: this.props.jwtSecretKey,
           },
         },
         '/auth/process-pre-token-generation': {

@@ -97,7 +97,6 @@ export class WwwHostingConstruct extends Construct {
 
     // Using the configured domainName for the WWW S3 Bucket
     const wwwBucketName: string = appDomainName; // Must be globally unique
-    new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${appDomainName}` });
 
     // Create S3 Bucket for static website hosting through CloudFront distribution
     const wwwBucket: Bucket = s3.createBucket(
@@ -193,7 +192,6 @@ export class WwwHostingConstruct extends Construct {
         },
       ],
     });
-    new CfnOutput(this, 'DistributionId', { key: 'DistributionId', value: distribution.distributionId });
 
     if (this.props.awsHostedZoneId && this.props.awsCertificateArn) {
       console.log(`Proceeding to setup CloudFront Distribution with Site Alias: ${this.props.appDomainName}`);
@@ -202,13 +200,21 @@ export class WwwHostingConstruct extends Construct {
         hostedZoneId: this.props.awsHostedZoneId,
         zoneName: this.props.appDomainName,
       });
-      new CfnOutput(this, 'HostedZoneId', { key: 'HostedZoneId', value: hostedZone.hostedZoneId });
       new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
 
-      // Route53 alias record for the CloudFront distribution
+      // Setup Route53 alias record for the CloudFront distribution
       new ARecord(this, 'SiteAliasRecord', {
         target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         zone: hostedZone,
+      });
+
+      // Domain Name alias configured for the ApplicationUrl
+      new CfnOutput(this, 'ApplicationUrl', { key: 'ApplicationUrl', value: `https://${appDomainName}` });
+    } else {
+      // Domain Name alias not configured for the ApplicationUrl - output CloudFront Distribution URL
+      new CfnOutput(this, 'ApplicationUrl', {
+        key: 'ApplicationUrl',
+        value: `https://${distribution.distributionDomainName}`,
       });
     }
 

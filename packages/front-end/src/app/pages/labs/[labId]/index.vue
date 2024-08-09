@@ -291,7 +291,11 @@
 </script>
 
 <template>
-  <EGPageHeader :title="labName" description="View your Lab users, details and pipelines">
+  <EGPageHeader
+    :title="labName"
+    description="View your Lab users, details and pipelines"
+    :back-action="() => $router.push('/labs')"
+  >
     <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = true" />
     <EGAddLabUsersModule
       v-if="showAddUserModule"

@@ -3,24 +3,22 @@
     defineProps<{
       title: string;
       description?: string;
-      showBackButton?: boolean;
+      showBack?: boolean;
       backButtonLabel?: string;
-      backButtonAction?: void | (() => void);
+      backAction: void | (() => void);
     }>(),
     {
       description: '',
-      showBackButton: true,
+      showBack: true,
     },
   );
 </script>
 
 <template>
   <div class="mb-6 flex flex-col justify-between">
-    <EGBack
-      v-if="showBackButton"
-      :label="backButtonLabel"
-      :custom-back-action="backButtonAction ? backButtonAction : undefined"
-    />
+    <div class="h-[40px]">
+      <EGBack v-if="showBack" :label="backButtonLabel" :back-action="backAction" />
+    </div>
     <div class="flex items-start justify-between">
       <div>
         <EGText tag="h1" class="mb-0">{{ title }}</EGText>

@@ -251,7 +251,11 @@
 </script>
 
 <template>
-  <EGPageHeader :title="useOrgsStore().selectedOrg!.Name" :description="useOrgsStore().selectedOrg!.Description">
+  <EGPageHeader
+    :title="useOrgsStore().selectedOrg!.Name"
+    :description="useOrgsStore().selectedOrg!.Description"
+    :back-action="() => $router.push('/orgs')"
+  >
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">
       <EGInviteModule @invite-success="refreshUserList($event)" :org-id="orgId" />

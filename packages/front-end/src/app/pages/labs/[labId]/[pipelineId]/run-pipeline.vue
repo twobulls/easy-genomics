@@ -86,7 +86,7 @@
     title="Run Pipeline"
     :description="labName"
     :show-back-button="!hasLaunched"
-    :back-button-action="handleExitRun"
+    :back-action="handleExitRun"
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper

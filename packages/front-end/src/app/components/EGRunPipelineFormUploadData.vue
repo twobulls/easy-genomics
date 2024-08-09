@@ -359,7 +359,7 @@
   <EGCard>
     <EGText tag="small" class="mb-4">Step 02</EGText>
     <EGText tag="h4" class="mb-0">Upload Data</EGText>
-    <ul class="text-muted ml-6 mt-1 list-disc text-sm font-normal tracking-tight">
+    <ul class="text-muted ml-6 mt-1 list-disc text-xs font-normal tracking-tight">
       <li>
         Files containing _R1_ or _R2_ with a matching prefix and suffix will be combined as paired-end data samples e.g,
         <ul>

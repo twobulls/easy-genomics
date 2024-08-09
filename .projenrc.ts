@@ -274,6 +274,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
 });
 backEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
+  ['build-and-deploy']: 'pnpm cdk bootstrap; pnpm run build; pnpm run deploy',
   ['cicd-test-back-end']: 'export CI_CD=true; pnpm run test',
   ['cicd-bootstrap-back-end']: 'export CI_CD=true; pnpm cdk bootstrap',
   ['cicd-build-deploy-back-end']: 'export CI_CD=true; pnpm cdk bootstrap; pnpm run build; pnpm run deploy',
@@ -364,6 +365,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 });
 frontEndApp.addScripts({
   ['bootstrap']: 'pnpm cdk bootstrap',
+  ['build-and-deploy']: 'pnpm cdk bootstrap; pnpm run nuxt-prepare; pnpm run build; pnpm run nuxt-generate; pnpm run deploy',
   ['cicd-test-front-end']: 'export CI_CD=true; pnpm run test',
   ['cicd-bootstrap-front-end']: 'export CI_CD=true; pnpm cdk bootstrap',
   ['cicd-build-deploy-front-end']:

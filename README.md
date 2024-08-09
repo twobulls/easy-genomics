@@ -34,6 +34,8 @@ NOTE: As of 2024, the Easy Genomics' AWS HealthOmics integration has been deferr
 upcoming new features on their development roadmap, and will focus on integration with NextFlow Tower / Seqera Cloud
 platform in the meantime.
 
+---
+
 ## Installation Quick Start Guide
 
 The configuration deployment consists of five steps:
@@ -47,8 +49,8 @@ Skip to [Configuration and Installation](#configuration-and-installation) sectio
 [Prerequisites and Preparation](#prerequisites-and-preparation) tasks below.
 
 ### Prerequisites and Preparation
-Before the following Quick Start instructions can be carried out, your local computer requires the following utilities
-to be installed.
+Before the following Quick Start instructions can be carried out, the O/S environment used for this installation 
+requires the following utilities to be available.
 
 | Build Dependency Utility | Tested Version | More Information                          | 
 |--------------------------|----------------|-------------------------------------------|
@@ -57,32 +59,43 @@ to be installed.
  | `node`                   | v20.15.0       | https://nodejs.org                        |
 | `pnpm`                   | v9.6.0         | https://pnpm.io/installation              | 
 
-NOTE: If you are using a restricted operating system environment for deployment where NodeJS package(s) cannot be
-installed in a system-wide / global context (such as AWS CloudShell), you will need to run the following commands in
-order to install the NodeJS package(s) locally.
+NOTE: If you are using a restricted O/S environment for deployment where NodeJS package(s) cannot be installed in a
+system-wide / global context (such as AWS Cloud9), you will need to run the following commands in order to
+install the NodeJS package(s) locally.
 
 ```
 # Verify GIT is installed and executable
-[cloudshell-user@ip-... ~]$ git --version                           # Expect v2.40.1
+[user ~]$ git --version                           # Expect v2.40.1
 
 # Install NVM and verify it is executable
-[cloudshell-user@ip-... ~]$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-[cloudshell-user@ip-... ~]$ nvm --version                           # Expect v0.40.0
+[user ~]$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+[user ~]$ nvm --version                           # Expect v0.40.0
 
 # Use NVM to install and use NodeJs ver 20.15.0
-[cloudshell-user@ip-... ~]$ nvm install 20.15.0
-[cloudshell-user@ip-... ~]$ nvm alias default 20.15.0
-[cloudshell-user@ip-... ~]$ node --version                          # Expect v20.15.0
+[user ~]$ nvm install 20.15.0
+[user ~]$ nvm alias default 20.15.0
+[user ~]$ node --version                          # Expect v20.15.0
 
 # Install PNPM and verify it is executable
-[cloudshell-user@ip-... ~]$ npm install -g pnpm
-[cloudshell-user@ip-... ~]$ pnpm --version                          # Expect v9.6.0
+[user ~]$ npm install -g pnpm
+[user ~]$ pnpm --version                          # Expect v9.6.0
 ```
 
-Additionally, you will need to manually setup a Public Hosted Zone in AWS Route53 with the same Domain Name that will be 
-used in the`${easy-genomics root-dir}/config/easy-genomics.yaml` configuration file's `app-domain-name` setting.
+Also ensure the O/S has sufficient disk space (50GiB or more) to complete the compilation and installation process.
 
-1. Clone this Github Repository to your local machine:
+If you are using the AWS Cloud9 environment, you will need to increase the EBS disk volume using the following [AWS
+provided Bash script](https://docs.aws.amazon.com/cloud9/latest/user-guide/move-environment.html#move-environment-resize).
+Copy and save the script logic as `resize.sh` to your AWS Cloud9 environment, and then run the script:
+
+```
+[user ~]$ chmod +x ./resize.sh                    # Make the './resize.sh' script executable
+[user ~]$ ./resize.sh 200                         # Run './resize.sh' script to increase ESB volume size to 200GiB
+```
+
+Once the above mentioned prerequisites and preparation steps have been completed, complete the following commands to
+obtain the Easy Genomics project source code and install the project dependencies.
+
+1. Clone this Github Repository to your local O/S environment:
 
    ```
    $ git clone https://github.com/twobulls/easy-genomics.git
@@ -112,17 +125,10 @@ used in the`${easy-genomics root-dir}/config/easy-genomics.yaml` configuration f
    ```
    [easy-genomics]$ pnpm projen install
    ```
-   
-    * The `.projenrc.ts` defined dependencies can be easily upgraded and resolve any potential security updates:
-      ```
-      [easy-genomics]$ pnpm projen upgrade
-      ```
 
 ### Configuration and Installation
 
 1. Configure your local machine AWS CLI credentials.
-
-   * NOTE: This step is not required if using AWS CloudShell.
 
       ```
       [easy-genomics]$ aws configure
@@ -147,7 +153,7 @@ used in the`${easy-genomics root-dir}/config/easy-genomics.yaml` configuration f
 and edit the Shared and Back-End settings for your deployment environment.
 
    For convenience, the `easy-genomics.yaml` configuration file can support multiple configurations, but each will
-   require a unique identifier for the collection of configuration settings. The example below illustrates the
+   require a Unique Identifier for the collection of configuration settings. The example below illustrates the
    `dev` and `prod` configuration settings.
 
    ```
@@ -190,14 +196,16 @@ and edit the Shared and Back-End settings for your deployment environment.
    * Each configuration is validated at run-time, if a configuration is incomplete or invalid it will be ignored as part
    of the build and deployment.
 
-3. Deploy the Easy Genomics Back-End sub-package to AWS using the following commands:
+3. Deploy the Easy Genomics Back-End sub-package to AWS using the following command options.
 
-   ```
-   [easy-genomics]$ cd packages/back-end
-   [easy-genomics/packages/back-end]$ pnpm run bootstrap
-   [easy-genomics/packages/back-end]$ pnpm run build
-   [easy-genomics/packages/back-end]$ pnpm run deploy
-   ```
+    * If you have a single collection of configuration settings defined in the `easy-genomics.yaml`, you can use the
+    `build-and-deploy` short-cut command:
+
+      ```
+      [easy-genomics]$ cd packages/back-end
+      [easy-genomics/packages/back-end]$ pnpm run build-and-deploy
+      ```
+      
     * NOTE: If the `easy-genomics.yaml` has multiple collections of configuration settings, you can supply the
     configuration collection's `{Unique identifier}-main-back-end-stack` to specifically build and deploy it.
    
@@ -208,11 +216,11 @@ and edit the Shared and Back-End settings for your deployment environment.
       [easy-genomics/packages/back-end]$ pnpm run deploy dev-main-back-end-stack
       ```
    
-    Once Back-End deployment is completed, it will generate the following AWS configurations details which will be 
+    Once Back-End deployment is completed, it will generate the following AWS configurations details, which will be 
     required for the Front-End configuration settings.
 
       ```
-      [easy-genomics/packages/back-end]$ pnpm run deploy
+      [easy-genomics/packages/back-end]$ pnpm run build-and-deploy
       ...
    
       Outputs:
@@ -221,38 +229,37 @@ and edit the Shared and Back-End settings for your deployment environment.
       dev-main-back-end-stack.CognitoUserPoolId = {AWS_COGNITO_USER_POOL_ID}
       ```
 
-4. Update the `${easy-genomics root-dir}/config/easy-genomics.yaml` Front-End specific settings with the pre-configured
-AWS Route53 Hosted Zone details, and the AWS configuration details generated from the Back-End deployment.
+4. Update the `${easy-genomics root-dir}/config/easy-genomics.yaml` Front-End specific settings with the AWS
+configuration details generated from the Back-End deployment.
    
    ```
             ...
             # Front-End specific settings
                front-end:
-                  # The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-                  aws-hosted-zone-id:
-                  aws-hosted-zone-name:
-                  aws-certificate-arn:
-
                   # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
                   aws-api-gateway-url: {AWS_API_GATEWAY_URL}
                   aws-cognito-user-pool-id: {AWS_COGNITO_USER_POOL_ID}
                   aws-cognito-user-pool-client-id: {AWS_COGNITO_USER_POOL_CLIENT_ID}
+   
+                   # The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
+                   aws-certificate-arn: # Not required when env-type: 'dev'
    ```
 
-5. Deploy the Easy Genomics Front-End sub-package to AWS using the following commands:
+5. Deploy the Easy Genomics Front-End sub-package to AWS using the following command options. 
 
-   ```
-   [easy-genomics/packages/back-end]$ cd ../front-end
-   [easy-genomics/packages/front-end]$ pnpm run bootstrap
-   [easy-genomics/packages/front-end]$ pnpm run build
-   [easy-genomics/packages/front-end]$ pnpm run nuxt-prepare
-   [easy-genomics/packages/front-end]$ pnpm run nuxt-generate
-   [easy-genomics/packages/front-end]$ pnpm run deploy
-   ```
+   * If you have a single collection of configuration settings defined in the `easy-genomics.yaml`, you can use the
+   `build-and-deploy` short-cut command:
 
-    * NOTE: If the `easy-genomics.yaml` has multiple collections of configuration settings, you can supply the
-    configuration collection's `{Unique identifier}-main-front-end-stack` to specifically build and deploy it.
-    You will also need to explicitly specify the `{Unique identifier}` to prepare and generate the Nuxt UI content.
+      ```
+      e.g.
+      
+      [easy-genomics/packages/back-end]$ cd ../front-end
+      [easy-genomics/packages/front-end]$ pnpm run build-and-deploy
+      ```
+
+   * Otherwise, if the `easy-genomics.yaml` has multiple collections of configuration settings, you can supply the
+   configuration collection's `{Unique identifier}-main-front-end-stack` to specifically build and deploy it.
+   You will also need to explicitly specify the `{Unique identifier}` to prepare and generate the Nuxt UI content.
    
       ```
       e.g.
@@ -263,16 +270,23 @@ AWS Route53 Hosted Zone details, and the AWS configuration details generated fro
       [easy-genomics/packages/front-end]$ pnpm run deploy dev-main-front-end-stack
       ```
       
-      * Once Front-End deployment is completed, open a web browser and enter the URL for the configured `app-domain-name`
-      to access the login page. 
-
-      * Use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured
-      `test-user-email` and `test-user-password` account details to log in into Easy Genomics to test the functionality.
-
-   * NOTE: Whilst in non-production status, the deployed Easy Genomics installation requires manually adding a new
-   user's email to the AWS Simple-Email-Service (SES) verified identities list before AWS SES will send out new user
-   invitations and forgot-password emails.
+     Once Front-End deployment is completed, it will output the `ApplicationUrl` which can then be accessed from
+     your web browser.
+   
+      ```
+      Outputs:
+      sandbox-main-front-end-stack.ApplicationUrl = https://d268n4k7arvq66.cloudfront.net
+      sandbox-main-front-end-stack.HostingBucketName = sandbox.dev.easygenomics.org
+      ```
       
+     * NOTE: If the `aws-hosted-zone-id` and/or the `aws-certificate-arn` are not defined in the `easy-genomics.yaml`, the
+     `ApplicationUrl` returned will be the CloudFront Distribution URL.
+
+   Finally, use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured`test-user-email` and
+   `test-user-password` account details to log in into Easy Genomics to test the functionality.
+
+---
+
 ## Contributions
 
 ### Branch Naming convention:

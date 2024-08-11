@@ -5,7 +5,7 @@
       description?: string;
       showBack?: boolean;
       backButtonLabel?: string;
-      backAction: void | (() => void);
+      backAction: () => void;
     }>(),
     {
       description: '',

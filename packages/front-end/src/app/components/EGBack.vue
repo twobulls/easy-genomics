@@ -1,6 +1,6 @@
 <script setup lang="ts">
   const $router = useRouter();
-  const props = withDefaults(defineProps<{ label?: string; backAction?: () => void | undefined }>(), {
+  const props = withDefaults(defineProps<{ label?: string; backAction?: () => void }>(), {
     label: 'Back',
   });
 </script>

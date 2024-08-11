@@ -56,7 +56,6 @@
   >
     <template v-if="showTogglePasswordButton" #trailing>
       <UButton
-        class="text-alert-danger"
         color="black"
         variant="link"
         :padded="false"

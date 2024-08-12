@@ -61,7 +61,7 @@ export class DataProvisioningNestedStack extends NestedStack {
 
       const s3BucketGivenName = 'test-bucket'; // Name of S3 bucket for provisioned 'Test Laboratory' record
       // S3 Bucket Names must be globally unique
-      const s3BucketFullName = `${this.props.env.account!}-${this.props.namePrefix}-easy-genomics-lab-${s3BucketGivenName}`;
+      const s3BucketFullName = `${this.props.env.account!}-${this.props.namePrefix}-lab-${s3BucketGivenName}`;
       this.addDynamoDBSeedData<Laboratory>(`${this.props.namePrefix}-laboratory-table`, {
         ...laboratory,
         S3Bucket: s3BucketGivenName, // Only save the S3 Bucket's Given Name in Laboratory DynamoDB record

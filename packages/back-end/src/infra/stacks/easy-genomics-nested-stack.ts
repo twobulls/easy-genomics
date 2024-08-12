@@ -281,8 +281,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
         actions: ['dynamodb:PutItem'],
         effect: Effect.ALLOW,
       }),
+      // IMPORTANT
+      // This IAM policy prevents creation of Lab S3 buckets where the bucket name
+      // doesn't begin with the name component of the  'resources' prefix.
+      // e.g. 123456789012-dev-build2-lab-*
       new PolicyStatement({
-        resources: [`arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-easy-genomics-lab-*`],
+        resources: [`arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-*`],
         actions: ['s3:CreateBucket', 's3:*'], // TODO: Lock down S3 permissions for PutBucketLifecycleConfiguration
         effect: Effect.ALLOW,
       }),

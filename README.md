@@ -274,8 +274,8 @@ configuration details generated from the Back-End deployment.
    
       ```
       Outputs:
-      sandbox-main-front-end-stack.ApplicationUrl = https://d268n4k7arvq66.cloudfront.net
-      sandbox-main-front-end-stack.HostingBucketName = sandbox.dev.easygenomics.org
+      dev-main-front-end-stack.ApplicationUrl = https://abcdef12345.cloudfront.net
+      dev-main-front-end-stack.HostingBucketName = {app-domain-name}
       ```
       
      * NOTE: If the `aws-hosted-zone-id` and/or the `aws-certificate-arn` are not defined in the `easy-genomics.yaml`, the

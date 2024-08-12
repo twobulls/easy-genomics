@@ -14,7 +14,6 @@ easy-genomics:
             system-admin-password: # System Admin initial Cognito Password
             test-user-email:
             test-user-password: # Demo User initial Cognito Password
-            seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; defaults to 'https://api.cloud.seqera.io'
 
         # Front-End specific settings
         front-end:

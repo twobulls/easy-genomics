@@ -7,6 +7,7 @@ export interface ConfigurationSettings {
 
   // Back-End specific settings
   ['back-end']: {
+    ['jwt-secret-key']?: string, // Optional: If undefined, generate a random value on deployment for JWT Signature
     ['system-admin-email']: string,
     ['system-admin-password']: string, // Initial Cognito password
     ['test-user-email']: string,

@@ -8,9 +8,6 @@ import { BackEndStack } from './infra/stacks/back-end-stack';
 const SEQERA_API_BASE_URL = 'https://api.cloud.seqera.io';
 const app = new App();
 
-// Generate random value for cryptographic secret on each deployment - used in JWT signature
-const jwtSecretKey: string = randomUUID();
-
 if (process.env.CI_CD === 'true') {
   console.log('Loading Back-End environment settings for CI/CD Pipeline...');
   // CI/CD Pipeline uses ENV parameters
@@ -21,6 +18,7 @@ if (process.env.CI_CD === 'true') {
   const appDomainName: string | undefined = process.env.APP_DOMAIN_NAME;
   const awsHostedZoneId: string | undefined = process.env.AWS_HOSTED_ZONE_ID;
 
+  const jwtSecretKey: string | undefined = process.env.JWT_SECRET_KEY;
   const systemAdminEmail: string | undefined = process.env.SYSTEM_ADMIN_EMAIL;
   const systemAdminPassword: string | undefined = process.env.SYSTEM_ADMIN_PASSWORD;
   const testUserEmail: string | undefined = process.env.TEST_USER_EMAIL;
@@ -77,7 +75,8 @@ if (process.env.CI_CD === 'true') {
     appDomainName: appDomainName,
     awsHostedZoneId: awsHostedZoneId,
     namePrefix: namePrefix,
-    jwtSecretKey: jwtSecretKey,
+    // Generate random value for JWT signature secret on deployment if JWT_SECRET_KEY CI/CD configuration undefined
+    jwtSecretKey: jwtSecretKey ? jwtSecretKey : randomUUID(),
     systemAdminEmail: systemAdminEmail,
     systemAdminPassword: systemAdminPassword,
     testUserEmail: testUserEmail,
@@ -108,6 +107,7 @@ if (process.env.CI_CD === 'true') {
       const awsHostedZoneId: string | undefined = configSettings['aws-hosted-zone-id'];
 
       // Back-End configuration settings
+      const jwtSecretKey: string | undefined = configSettings['back-end']['jwt-secret-key'];
       const systemAdminEmail: string | undefined = configSettings['back-end']['system-admin-email'];
       const systemAdminPassword: string | undefined = configSettings['back-end']['system-admin-password'];
       const testUserEmail: string | undefined = configSettings['back-end']['test-user-email'];
@@ -160,7 +160,8 @@ if (process.env.CI_CD === 'true') {
         appDomainName: appDomainName,
         awsHostedZoneId: awsHostedZoneId,
         namePrefix: namePrefix,
-        jwtSecretKey: jwtSecretKey,
+        // Generate random value for JWT signature secret on deployment if jwt-secret-key configuration undefined
+        jwtSecretKey: jwtSecretKey ? jwtSecretKey : randomUUID(),
         systemAdminEmail: systemAdminEmail,
         systemAdminPassword: systemAdminPassword,
         testUserEmail: testUserEmail,

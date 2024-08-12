@@ -48,7 +48,7 @@
     exitConfirmed.value = true;
     isDialogOpen.value = false;
     backNavigationInProgress.value = true;
-    $router.replace(useUiStore().previousPageRoute);
+    $router.push(useUiStore().previousPageRoute);
     backNavigationInProgress.value = false;
   }
 

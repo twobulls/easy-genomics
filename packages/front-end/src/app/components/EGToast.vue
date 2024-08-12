@@ -13,9 +13,9 @@
   );
 
   const baseUi = {
-    wrapper: 'w-full pointer-events-auto ',
+    wrapper: 'w-full pointer-events-auto',
     container: 'relative overflow-hidden',
-    inner: 'w-0 flex-1 ml-2',
+    inner: 'w-0 flex-1 ml-2 mr-1',
     title: 'text-body',
     description: 'text-body',
     actions: 'flex items-center gap-2 mt-3 flex-shrink-0',

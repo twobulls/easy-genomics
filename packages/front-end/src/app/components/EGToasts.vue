@@ -5,7 +5,7 @@
 
 <template>
   <div
-    class="pointer-events-none fixed bottom-auto left-0 right-0 z-[55] ml-auto mr-auto flex w-full flex-col justify-center sm:w-96"
+    class="pointer-events-none fixed bottom-auto left-0 right-0 z-[55] ml-auto mr-auto flex w-full max-w-lg flex-col justify-center break-all"
     role="region"
   >
     <div class="space-y-3 overflow-y-auto px-4 py-6 sm:px-6">

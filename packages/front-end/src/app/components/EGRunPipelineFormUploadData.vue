@@ -14,7 +14,7 @@
     UploadedFileInfo,
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-  import { usePipelineRunStore } from '~/stores';
+  import { usePipelineRunStore, useToastStore } from '~/stores';
 
   type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
@@ -52,6 +52,9 @@
   const isUploadProcessRunning = ref(false);
   const canProceed = ref(false);
   const isDropzoneActive = ref(false);
+
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
+  const MIN_FILE_SIZE = 1; // 1byte
 
   const columns = [
     {
@@ -137,19 +140,25 @@
 
   function addFile(file: File) {
     console.debug(`Adding file; name: ${file.name}; size: ${file.size} bytes`);
-    if (file.size < 1) {
+
+    if (file.size < MIN_FILE_SIZE) {
       const message = `File ${file.name} is too small: ${file.size} bytes`;
-      // TODO: warn user with toast message
-      console.warn(message);
+      useToastStore().error(message);
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      const message = `File ${file.name} is too large: ${file.size} bytes. Maximum allowed size is 5GB.`;
+      useToastStore().error(message);
       return;
     }
 
     const isDuplicateFile = checkIsFileDuplicate(file);
     console.debug(`Is ${file.name} duplicate: ${isDuplicateFile}`);
+
     if (isDuplicateFile) {
       const message = `File ${file.name} already exists`;
-      // TODO: warn user with toast message
-      console.warn(message);
+      useToastStore().error(message);
       return;
     }
 
@@ -196,7 +205,9 @@
     } else if (fileDetails.name.includes('_R2_')) {
       filePair.r2File = fileDetails;
     } else {
-      throw new Error(`File ${fileDetails.name} does not contain _R1_ or _R2_`);
+      const message = `File ${fileDetails.name} does not contain _R1_ or _R2_`;
+      useToastStore().error(message);
+      throw new Error(message);
     }
   }
 

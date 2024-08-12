@@ -175,7 +175,6 @@ and edit the Shared and Back-End settings for your deployment environment.
                system-admin-password: T0pS3cret! # System Admin initial Cognito Password
                test-user-email: demo.user@myinstitution.org
                test-user-password: P@ssw0rd! # Demo User initial Cognito Password
-               seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; defaults to 'https://api.cloud.seqera.io'
 
             # Front-End specific settings
                front-end:

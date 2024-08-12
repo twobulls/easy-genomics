@@ -5,7 +5,6 @@
   const props = defineProps<{
     schema: object;
     params: object;
-    isLoading: boolean;
   }>();
 
   const router = useRouter();
@@ -172,9 +171,7 @@
       </template>
 
       <template #item="{ item, index }">
-        <div class="bg-skeleton-container flex h-[473px] items-center rounded-2xl p-4" v-if="isLoading" />
-
-        <div v-else-if="!hasLaunched">
+        <div v-if="!hasLaunched">
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunPipelineFormRunDetails
@@ -226,7 +223,7 @@
     <template v-if="hasLaunched">
       <EGEmptyDataCTA
         message="Your Workflow Run has Launched! Check on your progress via Runs."
-        :primary-button-action="() => $router.replace(useUiStore().previousPageRoute)"
+        :primary-button-action="() => $router.push(useUiStore().previousPageRoute)"
         primary-button-label="Back to Pipelines"
         :secondary-button-action="() => emit('reset-run-pipeline')"
         secondary-button-label="Launch Another Workflow Run"

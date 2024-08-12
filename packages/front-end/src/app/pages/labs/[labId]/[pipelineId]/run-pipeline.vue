@@ -14,11 +14,9 @@
   const nextRoute = ref(null);
   const schema = ref({});
   const resetStepperKey = ref(0);
-  const isLoading = ref(true);
 
   onBeforeMount(async () => {
     await initializePipelineData();
-    isLoading.value = false;
   });
 
   /**
@@ -48,7 +46,7 @@
     exitConfirmed.value = true;
     isDialogOpen.value = false;
     backNavigationInProgress.value = true;
-    $router.replace(useUiStore().previousPageRoute);
+    $router.push(useUiStore().previousPageRoute);
     backNavigationInProgress.value = false;
   }
 
@@ -86,7 +84,7 @@
     title="Run Pipeline"
     :description="labName"
     :show-back-button="!hasLaunched"
-    :back-button-action="handleExitRun"
+    :back-action="handleExitRun"
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper
@@ -95,7 +93,6 @@
     :params="usePipelineRunStore().params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
-    :is-loading="isLoading"
   />
   <EGDialog
     action-label="Cancel Pipeline Run"

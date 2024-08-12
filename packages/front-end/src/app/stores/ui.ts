@@ -24,6 +24,9 @@ const useUiStore = defineStore('uiStore', {
       Object.assign(this, initialState());
     },
   },
+  persist: {
+    paths: ['previousPageRoute'],
+  },
 });
 
 export default useUiStore;

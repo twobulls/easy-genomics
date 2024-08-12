@@ -5,7 +5,6 @@
   const props = defineProps<{
     schema: object;
     params: object;
-    isLoading: boolean;
   }>();
 
   const router = useRouter();
@@ -172,9 +171,7 @@
       </template>
 
       <template #item="{ item, index }">
-        <div class="bg-skeleton-container flex h-[473px] items-center rounded-2xl p-4" v-if="isLoading" />
-
-        <div v-else-if="!hasLaunched">
+        <div v-if="!hasLaunched">
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunPipelineFormRunDetails

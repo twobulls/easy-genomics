@@ -48,25 +48,25 @@
   const variantInfoUi = {
     ...baseUi,
     background: 'bg-alert-blue-muted',
-    icon: 'i-heroicons-information-circle w-6 h-6 mr-1',
+    icon: 'i-heroicons:information-circle w-6 h-6 mr-1',
     ring: 'ring-1 ring-blue-900',
   };
   const variantSuccessUi = {
     ...baseUi,
     background: 'bg-alert-success-muted',
-    icon: 'i-heroicons-check-20-solid w-6 h-6 mr-1',
+    icon: 'i-heroicons:check-20-solid w-6 h-6 mr-1',
     ring: 'ring-1 ring-alert-success',
   };
   const variantWarningUi = {
     ...baseUi,
     background: 'bg-alert-caution-muted',
-    icon: 'i-heroicons-information-circle w-6 h-6 mr-1',
+    icon: 'i-heroicons:information-circle w-6 h-6 mr-1',
     ring: 'ring-1 ring-alert-caution',
   };
   const variantErrorUi = {
     ...baseUi,
     background: 'bg-alert-danger-muted',
-    icon: 'i-heroicons-exclamation-triangle w-6 h-6 mr-1',
+    icon: 'i-heroicons:exclamation-triangle w-6 h-6 mr-1',
     ring: 'ring-1 ring-alert-danger',
   };
 

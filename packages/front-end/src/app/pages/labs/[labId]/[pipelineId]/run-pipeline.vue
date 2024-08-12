@@ -14,11 +14,9 @@
   const nextRoute = ref(null);
   const schema = ref({});
   const resetStepperKey = ref(0);
-  const isLoading = ref(true);
 
   onBeforeMount(async () => {
     await initializePipelineData();
-    isLoading.value = false;
   });
 
   /**
@@ -95,7 +93,6 @@
     :params="usePipelineRunStore().params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
-    :is-loading="isLoading"
   />
   <EGDialog
     action-label="Cancel Pipeline Run"

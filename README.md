@@ -172,9 +172,9 @@ and edit the Shared and Back-End settings for your deployment environment.
             # Back-End specific settings
             back-end:
                system-admin-email: sysadmin@myinstitution.org
-               system-admin-password: T0pS3cret! # System Admin initial Cognito Password
+               system-admin-password: # System Admin initial Cognito Password
                test-user-email: demo.user@myinstitution.org
-               test-user-password: P@ssw0rd! # Demo User initial Cognito Password
+               test-user-password: # Demo User initial Cognito Password
 
             # Front-End specific settings
                front-end:

@@ -6,7 +6,8 @@ import { Construct } from 'constructs';
 export interface SesConstructProps extends StackProps {
   awsAccount: string;
   awsRegion: string;
-  domainName: string;
+  appDomainName: string;
+  awsHostedZoneId?: string;
   emailSender: string;
 }
 
@@ -20,16 +21,24 @@ export class SesConstruct extends Construct {
     super(scope, id);
     this.props = props;
 
-    const hostedZone: IHostedZone = HostedZone.fromLookup(this, 'Zone', { domainName: this.props.domainName });
+    if (!this.props.awsHostedZoneId) {
+      console.log('Skipping SES configuration - AWS HostedZoneId not configured');
+    } else {
+      console.log(`Proceeding with SES configuration with AWS HostedZoneId: ${this.props.awsHostedZoneId}`);
+      const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+        hostedZoneId: this.props.awsHostedZoneId,
+        zoneName: this.props.appDomainName,
+      });
 
-    const emailDomainIdentity = new EmailIdentity(this, 'VerifiedEmailDomainIdentity', {
-      identity: Identity.publicHostedZone(hostedZone),
-      mailFromDomain: `mail.${this.props.domainName}`,
-    });
-    emailDomainIdentity.applyRemovalPolicy(RemovalPolicy.DESTROY);
+      const emailDomainIdentity = new EmailIdentity(this, 'VerifiedEmailDomainIdentity', {
+        identity: Identity.publicHostedZone(hostedZone),
+        mailFromDomain: `mail.${this.props.appDomainName}`,
+      });
+      emailDomainIdentity.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
-    this.setupUserInvitationEmailTemplate();
-    this.setupUserForgotPasswordEmailTemplate();
+      this.setupUserInvitationEmailTemplate();
+      this.setupUserForgotPasswordEmailTemplate();
+    }
   }
 
   private setupUserInvitationEmailTemplate() {

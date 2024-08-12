@@ -118,7 +118,7 @@
 </script>
 
 <template>
-  <EGPageHeader title="Labs" :show-back="false">
+  <EGPageHeader title="Labs" :show-back="false" :back-action="() => $router.push('/')">
     <EGButton label="Create a new Lab" class="self-end" @click="() => $router.push({ path: `/labs/create` })" />
   </EGPageHeader>
 

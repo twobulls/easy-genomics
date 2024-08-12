@@ -162,7 +162,6 @@
 
 <template>
   <EGPageHeader title="Edit User Access" />
-
   <div class="mb-4">
     <EGUserOrgAdminToggle
       v-if="useOrgsStore().selectedUser"

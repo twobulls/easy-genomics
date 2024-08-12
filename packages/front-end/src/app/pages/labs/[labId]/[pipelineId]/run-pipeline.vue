@@ -48,7 +48,7 @@
     exitConfirmed.value = true;
     isDialogOpen.value = false;
     backNavigationInProgress.value = true;
-    $router.replace(useUiStore().previousPageRoute);
+    $router.push(useUiStore().previousPageRoute);
     backNavigationInProgress.value = false;
   }
 
@@ -86,7 +86,7 @@
     title="Run Pipeline"
     :description="labName"
     :show-back-button="!hasLaunched"
-    :back-button-action="handleExitRun"
+    :back-action="handleExitRun"
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper

@@ -353,7 +353,7 @@
         :disabled="useUiStore().isRequestPending"
         label="Cancel"
         name="cancel"
-        @click="$router.replace(useUiStore().previousPageRoute)"
+        @click="$router.push(useUiStore().previousPageRoute)"
       />
     </div>
 

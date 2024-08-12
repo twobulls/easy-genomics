@@ -8,5 +8,8 @@ export default defineNuxtRouteMiddleware((to, from) => {
     return;
   }
 
-  uiStore.setPreviousPageRoute(from.fullPath);
+  // Only set previous route if navigating away from the current page
+  if (to.path !== from.path) {
+    uiStore.setPreviousPageRoute(from.fullPath);
+  }
 });

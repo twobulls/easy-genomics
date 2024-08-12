@@ -125,6 +125,7 @@ export class GithubActionsCICDRelease extends Component {
       'APP_DOMAIN_NAME': '${{ vars.APP_DOMAIN_NAME }}',
       'AWS_HOSTED_ZONE_ID': '${{ secrets.AWS_HOSTED_ZONE_ID }}', // Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
       // Back-End specific settings
+      'JWT_SECRET_KEY': '${{ secrets.JWT_SECRET_KEY }}',
       'SYSTEM_ADMIN_EMAIL': '${{ vars.SYSTEM_ADMIN_EMAIL }}',
       'SYSTEM_ADMIN_PASSWORD': '${{ secrets.SYSTEM_ADMIN_PASSWORD }}',
       'TEST_USER_EMAIL': '${{ vars.TEST_USER_EMAIL }}',

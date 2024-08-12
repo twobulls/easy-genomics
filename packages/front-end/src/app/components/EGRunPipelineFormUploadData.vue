@@ -468,7 +468,7 @@
   </div>
 </template>
 
-<style lang="scss">
+<style scoped lang="scss">
   .EGTable {
     font-family: 'Inter', sans-serif;
     font-size: 14px;

@@ -21,6 +21,7 @@
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
     "bootstrap": "pnpm cdk bootstrap",
+    "build-and-deploy": "pnpm cdk bootstrap; pnpm run nuxt-prepare; pnpm run build; pnpm run nuxt-generate; pnpm run deploy",
     "cicd-test-front-end": "export CI_CD=true; pnpm run test",
     "cicd-bootstrap-front-end": "export CI_CD=true; pnpm cdk bootstrap",
     "cicd-build-deploy-front-end": "export CI_CD=true; pnpm run nuxt-prepare; pnpm run build; pnpm run nuxt-generate; pnpm run deploy",

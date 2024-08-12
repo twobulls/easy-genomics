@@ -23,6 +23,16 @@ if (process.env.CI_CD === 'true') {
   awsApiGatewayUrl = process.env.AWS_API_GATEWAY_URL;
   awsCognitoUserPoolId = process.env.AWS_COGNITO_USER_POOL_ID;
   awsCognitoUserPoolClientId = process.env.AWS_COGNITO_USER_POOL_CLIENT_ID;
+
+  if (!awsApiGatewayUrl) {
+    throw new Error('AWS_API_GATEWAY_URL undefined, please check the CI/CD environment configuration');
+  }
+  if (!awsCognitoUserPoolId) {
+    throw new Error('AWS_COGNITO_USER_POOL_ID undefined, please check the CI/CD environment configuration');
+  }
+  if (!awsCognitoUserPoolClientId) {
+    throw new Error('AWS_COGNITO_USER_POOL_CLIENT_ID undefined, please check the CI/CD environment configuration');
+  }
 } else {
   console.log('Loading Front-End Nuxt easy-genomics.yaml settings...');
 
@@ -51,6 +61,16 @@ if (process.env.CI_CD === 'true') {
   awsApiGatewayUrl = configSettings['front-end']['aws-api-gateway-url'];
   awsCognitoUserPoolId = configSettings['front-end']['aws-cognito-user-pool-id'];
   awsCognitoUserPoolClientId = configSettings['front-end']['aws-cognito-user-pool-client-id'];
+
+  if (!awsApiGatewayUrl) {
+    throw new Error('"aws-api-gateway-url" undefined, please check the easy-genomics.yaml configuration');
+  }
+  if (!awsCognitoUserPoolId) {
+    throw new Error('"aws-cognito-user-pool-id" undefined, please check the easy-genomics.yaml configuration');
+  }
+  if (!awsCognitoUserPoolClientId) {
+    throw new Error('"aws-cognito-user-pool-client-id" undefined, please check the easy-genomics.yaml configuration');
+  }
 }
 
 // @ts-ignore

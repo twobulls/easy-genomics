@@ -166,7 +166,6 @@
           usePipelineRunStore().setPipelineDescription(pipelineDescription);
           router.push({
             path: `/labs/${labId}/${pipelineId}/run-pipeline`,
-            query: { tab: 'Run Details' },
           });
         },
       },
@@ -345,9 +344,8 @@
           :show-pagination="!useUiStore().isRequestPending"
         >
           <template #runName-data="{ row: workflow }">
-            <div class="flex items-center font-medium">
-              {{ workflow?.workflow.runName }}
-            </div>
+            <div class="text-body text-sm font-medium">{{ workflow.workflow.runName }}</div>
+            <div class="text-muted text-xs font-normal">{{ workflow?.workflow.projectName }}</div>
           </template>
 
           <template #lastUpdated-data="{ row: workflow }">

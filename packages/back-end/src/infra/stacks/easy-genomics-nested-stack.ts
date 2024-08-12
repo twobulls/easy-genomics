@@ -42,7 +42,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           environment: {
             COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
-            JWT_SECRET_KEY: this.props.secretKey,
+            JWT_SECRET_KEY: this.props.jwtSecretKey,
           },
         },
         '/easy-genomics/user/confirm-user-invitation-request': {
@@ -51,7 +51,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             COGNITO_KMS_KEY_ARN: this.props.cognitoIdpKmsKey?.keyArn!,
             COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
-            JWT_SECRET_KEY: this.props.secretKey,
+            JWT_SECRET_KEY: this.props.jwtSecretKey,
           },
           methodOptions: {
             // apiKeyRequired: true,
@@ -74,7 +74,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
             COGNITO_KMS_KEY_ARN: this.props.cognitoIdpKmsKey?.keyArn!,
             COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
-            JWT_SECRET_KEY: this.props.secretKey,
+            JWT_SECRET_KEY: this.props.jwtSecretKey,
           },
           methodOptions: {
             // apiKeyRequired: true,
@@ -95,7 +95,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.ses = new SesConstruct(this, `${this.props.constructNamespace}-ses`, {
       awsAccount: this.props.env.account!,
       awsRegion: this.props.env.region!,
-      domainName: this.props.appDomainName,
+      appDomainName: this.props.appDomainName,
+      awsHostedZoneId: this.props.awsHostedZoneId,
       emailSender: `no.reply@${this.props.appDomainName}`,
     });
   }

@@ -8,7 +8,6 @@
     NextFlowTowerWorkspaceIdSchema,
     LabDetailsFormModeEnum,
     LabDetailsFormMode,
-    S3BucketSchema,
   } from '~/types/labs';
   import { AutoCompleteOptionsEnum } from '~/types/forms';
   import { FormError } from '#ui/types';
@@ -50,7 +49,6 @@
 
   // Hide/show fields default
   const isNextFlowTowerAccessTokenFieldHidden = ref(true);
-  const isS3BucketFieldHidden = ref(true);
 
   const defaultState: LabDetails = {
     Name: '',
@@ -97,7 +95,6 @@
 
       // hide fields
       isNextFlowTowerAccessTokenFieldHidden.value = true;
-      isS3BucketFieldHidden.value = true;
     } else if (newFormMode === LabDetailsFormModeEnum.enum.Create || newFormMode === LabDetailsFormModeEnum.enum.Edit) {
       // enable fields
       isNameFieldDisabled.value = false;
@@ -106,7 +103,6 @@
 
       // show fields
       isNextFlowTowerAccessTokenFieldHidden.value = false;
-      isS3BucketFieldHidden.value = false;
     }
   }
 
@@ -234,10 +230,6 @@
       state.NextFlowTowerWorkspaceId,
     );
 
-    if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
-      maybeAddFieldValidationErrors(errors, S3BucketSchema, 'S3Bucket', state.S3Bucket);
-    }
-
     // Check if the form can be submitted based on the number of validation errors
     checkCanSubmitFormData(errors.length);
 
@@ -330,11 +322,6 @@
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
           eager-validation
         />
-      </EGFormGroup>
-
-      <!-- S3 Bucket -->
-      <EGFormGroup v-if="!isS3BucketFieldHidden" label="S3 Bucket" name="S3Bucket" eager-validation>
-        <EGInput v-model="state.S3Bucket" />
       </EGFormGroup>
     </EGCard>
 

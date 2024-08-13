@@ -56,16 +56,15 @@ export const handler: Handler = async (
     if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
       throw new Error('Unauthorized');
     }
-    const s3BucketGivenName: string | undefined = laboratory.S3Bucket;
-    if (!s3BucketGivenName) {
+    const s3Bucket: string | undefined = laboratory.S3Bucket;
+    if (!s3Bucket) {
       throw new Error(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
     }
-    // Reconstruct S3 Bucket Full Names
-    const s3BucketFullName = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketGivenName}`;
+
     // Retrieve S3 Bucket Region and also sanity check S3 Bucket exists still
     const bucketLocation = await s3Service
       .getBucketLocation({
-        Bucket: s3BucketFullName,
+        Bucket: s3Bucket,
       })
       .then(async (result: GetBucketLocationCommandOutput) => {
         if (result.$metadata.httpStatusCode === 200) {
@@ -103,14 +102,14 @@ export const handler: Handler = async (
            */
           const s3Key: string = `uploads/${laboratoryId}/${transactionId}/${file.Name}`;
           const preSignedUrl = await s3Service.getPreSignedUploadUrl({
-            Bucket: s3BucketFullName,
+            Bucket: s3Bucket,
             Key: s3Key,
             ContentLength: file.Size,
           });
 
           return {
             ...file,
-            Bucket: s3BucketFullName,
+            Bucket: s3Bucket,
             Key: s3Key,
             Region: s3Region,
             S3Url: preSignedUrl,

@@ -51,15 +51,14 @@ export const handler: Handler = async (
       throw new Error('Unauthorized');
     }
 
-    const s3BucketGivenName: string | undefined = laboratory.S3Bucket;
-    if (!s3BucketGivenName) {
+    const s3Bucket: string | undefined = laboratory.S3Bucket;
+    if (!s3Bucket) {
       throw new Error(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
     }
-    // Reconstruct S3 Bucket Full Name
-    const s3BucketFullName: string = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-easy-genomics-lab-${s3BucketGivenName}`;
+
     const s3Key: string = `uploads/${laboratoryId}/${transactionId}/sample-sheet.csv`;
-    const s3Url: string = `s3://${s3BucketFullName}/${s3Key}`;
-    const bucketLocation = (await s3Service.getBucketLocation({ Bucket: s3BucketFullName })).LocationConstraint;
+    const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
+    const bucketLocation = (await s3Service.getBucketLocation({ Bucket: s3Bucket })).LocationConstraint;
 
     // S3 Buckets in Region us-east-1 have a LocationConstraint of null.
     const s3Region: string = bucketLocation ? bucketLocation : 'us-east-1';
@@ -69,7 +68,7 @@ export const handler: Handler = async (
 
     const result: PutObjectCommandOutput = await s3Service.putObject({
       ACL: 'private',
-      Bucket: s3BucketFullName,
+      Bucket: s3Bucket,
       Key: s3Key,
       Body: sampleSheetCsv,
       ContentType: 'text/csv',
@@ -78,7 +77,7 @@ export const handler: Handler = async (
 
     if (result.$metadata.httpStatusCode !== 200) {
       throw new Error(
-        `Unable to write '${s3Key}' to S3 Bucket '${s3BucketFullName}': Error ${result.$metadata.httpStatusCode}`,
+        `Unable to write '${s3Key}' to S3 Bucket '${s3Bucket}': Error ${result.$metadata.httpStatusCode}`,
       );
     } else {
       const response: SampleSheetResponse = {
@@ -87,7 +86,7 @@ export const handler: Handler = async (
           Name: 'sample-sheet.csv',
           Size: sampleSheetCsv.length,
           Checksum: sampleSheetCsvChecksum,
-          Bucket: s3BucketFullName,
+          Bucket: s3Bucket,
           Key: s3Key,
           Region: s3Region,
           S3Url: s3Url,

@@ -30,7 +30,7 @@ const LabDetailsSchema = z.object({
   Description: LabDescriptionSchema,
   NextFlowTowerAccessToken: NextFlowTowerAccessTokenSchema,
   NextFlowTowerWorkspaceId: NextFlowTowerWorkspaceIdSchema,
-  S3Bucket: S3BucketSchema,
+  S3Bucket: S3BucketSchema.optional(),
 });
 type LabDetails = z.infer<typeof LabDetailsSchema>;
 

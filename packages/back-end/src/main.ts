@@ -48,12 +48,7 @@ if (process.env.CI_CD === 'true') {
   if (!devEnv && !awsHostedZoneId) {
     throw new Error('"AWS_HOSTED_ZONE_ID" undefined, please check the CI/CD environment configuration');
   }
-  if (!systemAdminEmail) {
-    throw new Error('"SYSTEM_ADMIN_EMAIL" undefined, please check the CI/CD environment configuration');
-  }
-  if (!systemAdminPassword) {
-    throw new Error('"SYSTEM_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
-  }
+
   if (devEnv) {
     if (!testUserEmail) {
       throw new Error('"TEST_USER_EMAIL" undefined, please check the CI/CD environment configuration');
@@ -132,12 +127,6 @@ if (process.env.CI_CD === 'true') {
         throw new Error('"aws-hosted-zone-id" undefined, please check the easy-genomics.yaml configuration');
       }
 
-      if (!systemAdminEmail) {
-        throw new Error('"system-admin-email" undefined, please check the easy-genomics.yaml configuration');
-      }
-      if (!systemAdminPassword) {
-        throw new Error('"system-admin-password" undefined, please check the easy-genomics.yaml configuration');
-      }
       if (devEnv) {
         if (!testUserEmail) {
           throw new Error('"test-user-email" undefined, please check the easy-genomics.yaml configuration');

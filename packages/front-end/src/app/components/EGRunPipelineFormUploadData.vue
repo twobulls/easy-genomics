@@ -343,6 +343,7 @@
     console.debug('Uploading files:', filesToUpload.value.length);
     await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
     console.debug('Uploaded files:', filesToUpload.value.length);
+    useToastStore().success('Files uploaded successfully');
   }
 
   async function uploadFile(fileDetails: FileDetails) {
@@ -352,6 +353,7 @@
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      // TODO: Add progress bar
       onUploadProgress: (progressEvent) => {
         const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
         fileDetails.progress = progress;

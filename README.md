@@ -130,6 +130,8 @@ obtain the Easy Genomics project source code and install the project dependencie
 
 1. Configure your local machine AWS CLI credentials.
 
+   NOTE: This step is not required if the configuration and deployment is from an AWS environment such as CloudShell, or Cloud9.
+
       ```
       [easy-genomics]$ aws configure
       AWS Access Key ID [****************PXCF]:
@@ -161,20 +163,18 @@ and edit the Shared and Back-End settings for your deployment environment.
 
    easy-genomics:
       configurations:
-         - dev: # Unique identifier for the following collection of configuration settings (e.g. dev, uat, demo, prod)
+         - demo: # Unique identifier for the following collection of configuration settings (e.g. dev, uat, demo, prod)
             # Shared settings common to Back-End and Front-End sub-packages
             aws-account-id: # e.g. 123456789
             aws-region: # e.g. us-east-1
             env-type: dev # e.g. dev | pre-prod | prod; only dev env-type can have AWS CloudFormation resources destroyed
-            app-domain-name: dev.easy-genomics.mycompany.com # e.g. dev.easy-genomics.myinstitution.org
+            app-domain-name: demo.easy-genomics.mycompany.com # e.g. demo.easy-genomics.myinstitution.org
             aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
 
             # Back-End specific settings
             back-end:
-               system-admin-email: sysadmin@myinstitution.org
-               system-admin-password: # System Admin initial Cognito Password
-               test-user-email: demo.user@myinstitution.org
-               test-user-password: # Demo User initial Cognito Password
+               test-user-email: demouser@easygenomics.com
+               test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
 
             # Front-End specific settings
                front-end:

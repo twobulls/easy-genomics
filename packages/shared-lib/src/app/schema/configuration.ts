@@ -9,8 +9,12 @@ export const ConfigurationSettingsSchema = z.object({
 
   // Back-End specific settings
   ['back-end']: z.object({
-    ['system-admin-email']: z.string(),
-    ['system-admin-password']: z.string(), // Initial Cognito password
+    ['jwt-secret-key']: z.string().nullable().optional(), // Optional: If undefined, generate a random value on deployment for JWT Signature
+    ['system-admin-email']: z.string().nullable().optional(),
+    ['system-admin-password']: z.string().nullable().optional(), // Initial Cognito password
+    ['test-user-email']: z.string(),
+    ['test-user-password']: z.string(), // Initial Cognito password
+    ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; defaults to 'https://api.cloud.seqera.io'
   }),
 
   // Front-End specific settings

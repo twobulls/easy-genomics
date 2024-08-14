@@ -38,15 +38,17 @@ export class DataProvisioningNestedStack extends NestedStack {
     // Setup S3 Construct
     this.s3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-bucket`, {});
 
-    try {
-      // Add System Admin User Account
-      this.cognitoUserConstruct.addUser(
-        this.props.systemAdminEmail,
-        this.props.systemAdminPassword,
-        this.props.userPoolSystemAdminGroupName,
-      );
-    } catch (err: unknown) {
-      console.error('Unable to create System Admin User Account: ', err);
+    if (this.props.systemAdminEmail && this.props.systemAdminPassword) {
+      try {
+        // Add System Admin User Account
+        this.cognitoUserConstruct.addUser(
+          this.props.systemAdminEmail,
+          this.props.systemAdminPassword,
+          this.props.userPoolSystemAdminGroupName,
+        );
+      } catch (err: unknown) {
+        console.error('Unable to create System Admin User Account: ', err);
+      }
     }
 
     if (this.props.devEnv) {

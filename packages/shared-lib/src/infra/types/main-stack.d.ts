@@ -20,8 +20,8 @@ export interface FrontEndStackProps extends BaseStackProps {
 export interface BackEndStackProps extends BaseStackProps {
     namePrefix: string;
     jwtSecretKey: string;
-    systemAdminEmail: string;
-    systemAdminPassword: string;
+    systemAdminEmail?: string;
+    systemAdminPassword?: string;
     testUserEmail?: string;
     testUserPassword?: string;
     seqeraApiBaseUrl: string;

@@ -11,6 +11,7 @@
       isLoading?: boolean;
       actionItems?: () => ActionItem[];
       showPagination?: boolean;
+      rowClickAction?: (rowItem: any) => void | undefined;
     }>(),
     {
       isLoading: false,
@@ -49,6 +50,12 @@
     }"
   >
     <UTable
+      :ui="{
+        tr: {
+          active: ` ${rowClickAction ? 'hover:bg-gray-50 cursor-pointer' : 'hover:bg-white cursor-default'}`,
+        },
+      }"
+      @select="rowClickAction ? rowClickAction($event) : undefined"
       class="EGTable rounded-2xl"
       :rows="rows"
       :columns="columns"
@@ -61,7 +68,7 @@
       </template>
 
       <template #actions-data="{ row }">
-        <EGActionButton v-if="actionItems" :items="actionItems(row)" />
+        <EGActionButton v-if="actionItems" :items="actionItems(row)" @click="$event.stopPropagation()" />
       </template>
       <template #empty-state>
         <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
@@ -105,7 +112,9 @@
         }
       }
     }
-
+    tbody {
+      padding: 40px;
+    }
     tbody tr {
       td {
         padding-top: 22px;

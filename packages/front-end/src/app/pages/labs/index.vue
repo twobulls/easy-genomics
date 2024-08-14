@@ -53,8 +53,13 @@
   const selectedId = ref('');
   const displayName = ref('');
 
-  function viewLab(id: string, name: string) {
-    router.push({ path: `/labs/${id}`, query: { name } });
+  function viewLab(labId: string, name: string) {
+    router.push({ path: `/labs/${labId}`, query: { name } });
+  }
+
+  function onRowClicked(row: any) {
+    const { LaboratoryId: labId, Name: name } = row;
+    router.push({ path: `/labs/${labId}`, query: { name } });
   }
 
   function resetSelectedLabValues() {
@@ -63,8 +68,8 @@
     primaryMessage.value = '';
   }
 
-  async function deleteLab(LabId: string, labName: string) {
-    selectedId.value = LabId;
+  async function deleteLab(labId: string, labName: string) {
+    selectedId.value = labId;
     displayName.value = labName;
     primaryMessage.value = `Are you sure you want to remove lab '${labName}'?`;
     isOpen.value = true;
@@ -130,6 +135,7 @@
   />
 
   <EGTable
+    :row-click-action="onRowClicked"
     v-else
     :table-data="labData"
     :columns="tableColumns"

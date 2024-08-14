@@ -36,16 +36,10 @@ export const handler: Handler = async (
       throw new Error(`Laboratory creation error, OrganizationId '${request.OrganizationId}' not found`);
     }
 
-    // Automatically create an S3 Bucket for this Lab based on the Lab name and Lab ID
+    // Automatically create an S3 Bucket for this Lab based on the LaboratoryId, and must be less than 63
     const laboratoryId: string = crypto.randomUUID().toLowerCase();
-    const bucketName = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-lab-${laboratoryId}`;
-
-    // S3 bucket names must between 3 - 63 characters long, and globally unique
-    if (bucketName.length < 3 || bucketName.length > 63) {
-      throw new Error(
-        `Laboratory creation error, unable to create Laboratory S3 Bucket due to invalid length of bucket name; bucketName: ${bucketName} (${bucketName.length}-chars) exceeds the length allowed 3 to 63 characters`,
-      );
-    }
+    const s3BucketId = laboratoryId.replace(/-+/g, '');
+    const bucketName = `${process.env.ACCOUNT_ID}-${process.env.NAME_PREFIX}-lab-${s3BucketId}`.substring(0, 63);
 
     // Create S3 Bucket for Laboratory
     const createS3BucketResult = await s3Service.createBucket({ Bucket: bucketName });

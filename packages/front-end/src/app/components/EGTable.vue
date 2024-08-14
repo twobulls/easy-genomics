@@ -112,9 +112,6 @@
         }
       }
     }
-    tbody {
-      padding: 40px;
-    }
     tbody tr {
       td {
         padding-top: 22px;

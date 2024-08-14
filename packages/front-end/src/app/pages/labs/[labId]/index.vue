@@ -54,6 +54,13 @@
   const primaryMessage = ref('');
   const userToRemove = ref();
 
+  onBeforeMount(async () => {
+    useUiStore().setRequestPending(true);
+    await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+    canAddUsers.value = true;
+    useUiStore().setRequestPending(false);
+  });
+
   function displayRemoveUserDialog(user: LabUser) {
     userToRemove.value = user;
     primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName}?`;
@@ -176,10 +183,7 @@
     [
       {
         label: 'View Details',
-        click: () => {
-          useLabsStore().setSelectedWorkflow(row.workflow);
-          router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
-        },
+        click: () => viewRunDetails(row),
       },
     ],
     [
@@ -282,12 +286,14 @@
     await refreshLabUsers();
   }
 
-  onBeforeMount(async () => {
-    useUiStore().setRequestPending(true);
-    await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
-    canAddUsers.value = true;
-    useUiStore().setRequestPending(false);
-  });
+  function onRowClicked(row) {
+    viewRunDetails(row);
+  }
+
+  function viewRunDetails(row) {
+    useLabsStore().setSelectedWorkflow(row.workflow);
+    router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
+  }
 </script>
 
 <template>
@@ -342,6 +348,7 @@
       </div>
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable
+          :row-click-action="onRowClicked"
           :table-data="workflows"
           :columns="workflowsTableColumns"
           :is-loading="useUiStore().isRequestPending"
@@ -363,7 +370,7 @@
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton :items="workflowsActionItems(row)" class="ml-2" />
+              <EGActionButton :items="workflowsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
             </div>
           </template>
 

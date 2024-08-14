@@ -65,21 +65,25 @@
     },
   ];
 
-  function editUser(user: OrgUser) {
+  function editUser(userId: string) {
     router.push({
       path: '/orgs/edit-user',
       query: {
-        userId: user.UserId,
+        userId,
         orgId,
       },
     });
+  }
+
+  function onRowClicked(row: OrgUser) {
+    editUser(row.UserId);
   }
 
   const actionItems = (user: OrgUser) => [
     [
       {
         label: 'Edit User Access',
-        click: async () => editUser(user),
+        click: async () => editUser(user.UserId),
       },
     ],
     [
@@ -307,6 +311,7 @@
         />
 
         <EGTable
+          :row-click-action="onRowClicked"
           :table-data="filteredTableData"
           :columns="tableColumns"
           :is-loading="isLoading"
@@ -338,15 +343,26 @@
           <template #actions-data="{ row, index }">
             <div class="flex justify-end">
               <EGButton
+                class="pointer-events-none relative z-10"
                 size="sm"
                 variant="secondary"
                 label="Resend Invite"
                 v-if="isInvited((row as OrgUser).OrganizationUserStatus)"
-                @click="resend(row as OrgUser, index)"
+                @click="
+                  () => {
+                    (event) => event.stopPropagation();
+                    resend(row as OrgUser, index);
+                  }
+                "
                 :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                 :loading="isButtonRequestPending(index)"
               />
-              <EGActionButton v-if="row.OrganizationUserStatus === 'Active'" :items="actionItems(row)" class="ml-2" />
+              <EGActionButton
+                @click="$event.stopPropagation()"
+                v-if="row.OrganizationUserStatus === 'Active'"
+                :items="actionItems(row)"
+                class="ml-2"
+              />
             </div>
           </template>
         </EGTable>

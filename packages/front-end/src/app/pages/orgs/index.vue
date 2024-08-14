@@ -52,6 +52,10 @@
     navigateTo(`/orgs/${org.OrganizationId}`);
   }
 
+  function onRowClicked(org: Organization) {
+    viewOrg(org);
+  }
+
   onBeforeMount(async () => {
     try {
       orgData.value = await $api.orgs.list();
@@ -83,6 +87,7 @@
   />
 
   <EGTable
+    :row-click-action="onRowClicked"
     :table-data="orgData"
     :columns="tableColumns"
     :is-loading="isLoading"

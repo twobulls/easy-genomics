@@ -34,7 +34,7 @@ export interface Laboratory extends BaseAttributes {
   Name: string;
   Description?: string;
   Status: Status;
-  S3Bucket?: string;
+  S3Bucket?: string; // S3 Bucket Full Name
   AwsHealthOmicsEnabled?: boolean;
   NextFlowTowerEnabled?: boolean;
   NextFlowTowerWorkspaceId?: string;

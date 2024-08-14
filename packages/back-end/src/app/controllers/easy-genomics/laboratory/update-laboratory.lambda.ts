@@ -37,8 +37,6 @@ export const handler: Handler = async (
         ...existing,
         Name: request.Name,
         Description: request.Description,
-        // 2024-08-08 EG-612: S3Bucket is now created automatically at creation time and no longer editable for now. Functionality will be added in future to select and manage S3Buckets for a lab.
-        // S3Bucket: request.S3Bucket,
         Status: 'Active',
         AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled,
         NextFlowTowerEnabled: request.NextFlowTowerEnabled,

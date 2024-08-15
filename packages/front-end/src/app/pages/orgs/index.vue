@@ -27,12 +27,6 @@
   const actionItems = (row: Organization) => [
     [
       {
-        label: 'Summary',
-        click: () => {},
-      },
-    ],
-    [
-      {
         label: 'View / Edit',
         click: async () => viewOrg(row),
       },

@@ -28,12 +28,6 @@
   const actionItems = (lab: Laboratory) => [
     [
       {
-        label: 'Summary',
-        click: () => {},
-      },
-    ],
-    [
-      {
         label: 'View / Edit',
         click: () => viewLab(lab.LaboratoryId, lab.Name),
       },

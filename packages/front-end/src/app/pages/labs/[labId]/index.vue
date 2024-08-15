@@ -163,18 +163,7 @@
     [
       {
         label: 'Run',
-        click: () => {
-          usePipelineRunStore().reset();
-          const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
-          usePipelineRunStore().setLabId(labId);
-          usePipelineRunStore().setLabName(labName);
-          usePipelineRunStore().setPipelineId(pipelineId);
-          usePipelineRunStore().setPipelineName(pipelineName);
-          usePipelineRunStore().setPipelineDescription(pipelineDescription);
-          router.push({
-            path: `/labs/${labId}/${pipelineId}/run-pipeline`,
-          });
-        },
+        click: () => viewRunPipeline(pipeline),
       },
     ],
   ];
@@ -286,8 +275,25 @@
     await refreshLabUsers();
   }
 
-  function onRowClicked(row) {
+  function onRunsRowClicked(row) {
     viewRunDetails(row);
+  }
+
+  function onPipelinesRowClicked(row) {
+    viewRunPipeline(row);
+  }
+
+  function viewRunPipeline(pipeline) {
+    usePipelineRunStore().reset();
+    const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
+    usePipelineRunStore().setLabId(labId);
+    usePipelineRunStore().setLabName(labName);
+    usePipelineRunStore().setPipelineId(pipelineId);
+    usePipelineRunStore().setPipelineName(pipelineName);
+    usePipelineRunStore().setPipelineDescription(pipelineDescription);
+    router.push({
+      path: `/labs/${labId}/${pipelineId}/run-pipeline`,
+    });
   }
 
   function viewRunDetails(row) {
@@ -318,6 +324,7 @@
     <template #item="{ item }">
       <div v-if="item.key === 'pipelines'" class="space-y-3">
         <EGTable
+          :row-click-action="onPipelinesRowClicked"
           :table-data="pipelines"
           :columns="pipelinesTableColumns"
           :is-loading="useUiStore().isRequestPending"
@@ -335,7 +342,7 @@
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton :items="pipelinesActionItems(row)" class="ml-2" />
+              <EGActionButton :items="pipelinesActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
             </div>
           </template>
 
@@ -348,7 +355,7 @@
       </div>
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable
-          :row-click-action="onRowClicked"
+          :row-click-action="onRunsRowClicked"
           :table-data="workflows"
           :columns="workflowsTableColumns"
           :is-loading="useUiStore().isRequestPending"

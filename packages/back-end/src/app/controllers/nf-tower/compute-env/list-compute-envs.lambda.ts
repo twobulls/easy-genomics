@@ -5,12 +5,7 @@ import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 import { SsmService } from '../../../services/ssm-service';
-import {
-  getApiParameters,
-  httpRequest,
-  REST_API_METHOD,
-  validateOrganizationAccess,
-} from '../../../utils/rest-api-utils';
+import { getApiParameters, httpRequest, REST_API_METHOD } from '../../../utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -38,9 +33,6 @@ export const handler: Handler = async (
     if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
-    if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
-      throw new Error('Unauthorized');
-    }
     if (!laboratory.NextFlowTowerWorkspaceId) {
       throw new Error('Laboratory Workspace Id unavailable');
     }

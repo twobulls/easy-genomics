@@ -11,7 +11,6 @@ import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
 import { S3Service } from '../../../services/s3-service';
-import { validateOrganizationAccess } from '../../../utils/rest-api-utils';
 
 const SAMPLE_SHEET_CSV_HEADER: string[] = ['sample, fastq_1, fastq_2'];
 
@@ -47,9 +46,6 @@ export const handler: Handler = async (
     const laboratoryId: string = request.LaboratoryId;
     const transactionId: string = request.TransactionId;
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
-    if (!validateOrganizationAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)) {
-      throw new Error('Unauthorized');
-    }
 
     const s3Bucket: string | undefined = laboratory.S3Bucket;
     if (!s3Bucket) {

@@ -222,9 +222,29 @@
   }
 
   async function refreshUserList() {
-    orgUsersDetailsData.value = await $api.orgs.usersDetailsByOrgId(orgId);
-    showInviteModule.value = false;
-    hasNoData.value = orgUsersDetailsData.value.length === 0;
+    try {
+      const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(orgId);
+
+      if (orgUsers?.length === 0) {
+        hasNoData.value = true;
+      }
+
+      // Add displayName to each of the user records for display and sorting purposes
+      orgUsersDetailsData.value = orgUsers.map((user) => ({
+        ...user,
+        displayName: useUser().displayName({
+          preferredName: user.PreferredName,
+          firstName: user.FirstName,
+          lastName: user.LastName,
+          email: user.UserEmail,
+        }),
+      }));
+    } catch (error) {
+      console.error(error);
+      throw error;
+    } finally {
+      showInviteModule.value = false;
+    }
   }
 
   function isButtonRequestPending(index: number) {

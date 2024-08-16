@@ -343,16 +343,14 @@
           <template #actions-data="{ row, index }">
             <div class="flex justify-end">
               <EGButton
-                class="pointer-events-none relative z-10"
+                class="relative z-10"
                 size="sm"
                 variant="secondary"
                 label="Resend Invite"
                 v-if="isInvited((row as OrgUser).OrganizationUserStatus)"
                 @click="
-                  () => {
-                    (event) => event.stopPropagation();
-                    resend(row as OrgUser, index);
-                  }
+                  $event.stopPropagation();
+                  resend(row as OrgUser, index);
                 "
                 :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                 :loading="isButtonRequestPending(index)"

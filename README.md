@@ -154,6 +154,10 @@ obtain the Easy Genomics project source code and install the project dependencie
 2. Copy the `${easy-genomics root-dir}/config/easy-genomics.example.yaml` as `${easy-genomics root-dir}/config/easy-genomics.yaml`
 and edit the Shared and Back-End settings for your deployment environment.
 
+   Please ensure each of the settings are enclosed with quotes `'...'` to enforce explicit string values.
+
+   * NOTE: The quotation for the `aws-account-id` setting is mandatory if the AWS Account ID starts with `00...`.
+
    For convenience, the `easy-genomics.yaml` configuration file can support multiple configurations, but each will
    require a Unique Identifier for the collection of configuration settings. The example below illustrates the
    `dev` and `prod` configuration settings.
@@ -165,15 +169,15 @@ and edit the Shared and Back-End settings for your deployment environment.
       configurations:
          - demo: # Unique identifier for the following collection of configuration settings (e.g. dev, uat, demo, prod)
             # Shared settings common to Back-End and Front-End sub-packages
-            aws-account-id: # e.g. 123456789
-            aws-region: # e.g. us-east-1
-            env-type: dev # e.g. dev | pre-prod | prod; only dev env-type can have AWS CloudFormation resources destroyed
-            app-domain-name: demo.easy-genomics.mycompany.com # e.g. demo.easy-genomics.myinstitution.org
+            aws-account-id: '123456789' # e.g. '123456789'
+            aws-region: 'us-east-1' # e.g. 'us-east-1'
+            env-type: 'dev' # e.g. 'dev' | 'pre-prod' | 'prod'; only 'dev' env-type can have AWS CloudFormation resources destroyed
+            app-domain-name: 'demo.easy-genomics.mycompany.com' # e.g. demo.easy-genomics.myinstitution.org
             aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
 
             # Back-End specific settings
             back-end:
-               test-user-email: demouser@easygenomics.com
+               test-user-email: 'demouser@easygenomics.com'
                test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
 
             # Front-End specific settings
@@ -230,15 +234,17 @@ and edit the Shared and Back-End settings for your deployment environment.
 
 4. Update the `${easy-genomics root-dir}/config/easy-genomics.yaml` Front-End specific settings with the AWS
 configuration details generated from the Back-End deployment.
-   
+
+   Please ensure each of the settings are enclosed with quotes `'...'` to enforce explicit string values.
+
    ```
             ...
             # Front-End specific settings
                front-end:
                   # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
-                  aws-api-gateway-url: {AWS_API_GATEWAY_URL}
-                  aws-cognito-user-pool-id: {AWS_COGNITO_USER_POOL_ID}
-                  aws-cognito-user-pool-client-id: {AWS_COGNITO_USER_POOL_CLIENT_ID}
+                  aws-api-gateway-url: '{AWS_API_GATEWAY_URL}'
+                  aws-cognito-user-pool-id: '{AWS_COGNITO_USER_POOL_ID}'
+                  aws-cognito-user-pool-client-id: '{AWS_COGNITO_USER_POOL_CLIENT_ID}'
    
                    # The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
                    aws-certificate-arn: # Not required when env-type: 'dev'

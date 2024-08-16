@@ -1,5 +1,5 @@
 export interface ConfigurationSettings {
-  ['aws-account-id']: number,
+  ['aws-account-id']: string,
   ['aws-region']: string,
   ['env-type']: 'dev' | 'pre-prod' | 'prod',
   ['app-domain-name']: string,

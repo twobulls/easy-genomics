@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const ConfigurationSettingsSchema = z.object({
-  ['aws-account-id']: z.number(),
+  ['aws-account-id']: z.string(),
   ['aws-region']: z.string(),
   ['env-type']: z.enum(['dev', 'pre-prod', 'prod']),
   ['app-domain-name']: z.string(),

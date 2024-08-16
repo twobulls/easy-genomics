@@ -2,15 +2,15 @@ easy-genomics:
   configurations:
     - demo: # Unique identifier for the following collection of configuration settings (e.g. dev, uat, demo, prod)
         # Shared settings common to Back-End and Front-End sub-packages
-        aws-account-id: # e.g 123456789
-        aws-region: # e.g. us-east-1
-        env-type: # e.g. dev | pre-prod | prod; only 'dev' env-type can have AWS CloudFormation resources destroyed
-        app-domain-name: # e.g. demo.easy-genomics.myinstitution.org
+        aws-account-id: # e.g '123456789'
+        aws-region: # e.g. 'us-east-1'
+        env-type: # e.g. 'dev' | 'pre-prod' | 'prod'; only 'dev' env-type can have AWS CloudFormation resources destroyed
+        app-domain-name: # e.g. 'demo.easy-genomics.myinstitution.org'
         aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
 
         # Back-End specific settings
         back-end:
-            test-user-email: demouser@easygenomics.com
+            test-user-email: 'demouser@easygenomics.com'
             test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
 
         # Front-End specific settings

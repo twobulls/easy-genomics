@@ -28,26 +28,8 @@ export class GithubActionsCICDRelease extends Component {
     }
 
     wf.addJobs({
-      ['test-back-end']: {
-        name: 'Test Back-End',
-        runsOn,
-        environment: this.environment,
-        env: this.loadEnv(),
-        permissions: {
-          contents: github.workflows.JobPermission.WRITE,
-          actions: github.workflows.JobPermission.READ,
-        },
-        steps: [
-          ...this.bootstrapSteps(),
-          {
-            name: 'Run CI/CD Test Back-End',
-            run: 'pnpm run cicd-test-back-end',
-          },
-        ],
-      },
       ['build-deploy-back-end']: {
         name: 'Build & Deploy Back-End',
-        needs: ['test-back-end'],
         runsOn,
         environment: this.environment,
         env: this.loadEnv(),
@@ -59,36 +41,15 @@ export class GithubActionsCICDRelease extends Component {
         steps: [
           ...this.bootstrapSteps(),
           ...this.configureAwsCredentials(),
-          {
-            name: 'Run CI/CD CDK Bootstrap Back-End',
-            run: 'pnpm run cicd-bootstrap-back-end',
-          },
           {
             name: 'Run CI/CD Build & Deploy Back-End',
             run: 'pnpm run cicd-build-deploy-back-end',
           },
         ],
       },
-      // ['test-front-end']: {
-      //   name: 'Test Front-End',
-      //   runsOn,
-      //   environment: this.environment,
-      //   env: this.loadEnv(),
-      //   permissions: {
-      //     contents: github.workflows.JobPermission.WRITE,
-      //     actions: github.workflows.JobPermission.READ,
-      //   },
-      //   steps: [
-      //     ...this.bootstrapSteps(),
-      //     {
-      //       name: 'Run CI/CD Test Front-End',
-      //       run: 'pnpm cicd-test-front-end',
-      //     },
-      //   ],
-      // },
       ['build-deploy-front-end']: {
         name: 'Build & Deploy Front-End',
-        // needs: ['test-front-end'],
+        needs: ['build-deploy-back-end'],
         runsOn,
         environment: this.environment,
         env: this.loadEnv(),
@@ -100,10 +61,6 @@ export class GithubActionsCICDRelease extends Component {
         steps: [
           ...this.bootstrapSteps(),
           ...this.configureAwsCredentials(),
-          {
-            name: 'Run CI/CD CDK Bootstrap Back-End',
-            run: 'pnpm cicd-bootstrap-front-end',
-          },
           {
             name: 'Run CI/CD Build & Deploy Front-End',
             run: 'pnpm cicd-build-deploy-front-end',
@@ -179,7 +136,6 @@ export class GithubActionsCICDRelease extends Component {
         name: 'Install dependencies',
         run: 'pnpm install',
       },
-
       // This determines the sha of the last successful build on the main branch
       // (known as the base sha) and adds to env vars along with the current (head) sha.
       // The commits between the base and head sha's is used by subesquent 'nx affected'

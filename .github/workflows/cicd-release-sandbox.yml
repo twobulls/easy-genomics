@@ -6,61 +6,8 @@ on:
     branches:
       - infra/*
 jobs:
-  test-back-end:
-    name: Test Back-End
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      actions: read
-    environment: sandbox
-    env:
-      NODE_OPTIONS: --max-old-space-size=8192
-      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      ENV_TYPE: ${{ vars.ENV_TYPE }}
-      ENV_NAME: ${{ vars.ENV_NAME }}
-      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
-      AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
-      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
-      SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
-      TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
-      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-      AWS_API_GATEWAY_URL: ${{ secrets.AWS_API_GATEWAY_URL }}
-      AWS_COGNITO_USER_POOL_ID: ${{ secrets.AWS_COGNITO_USER_POOL_ID }}
-      AWS_COGNITO_USER_POOL_CLIENT_ID: ${{ secrets.AWS_COGNITO_USER_POOL_CLIENT_ID }}
-      AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.6.0
-      - name: Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.15.0
-          cache: pnpm
-      - name: Nx cache
-        uses: actions/cache@v4
-        with:
-          path: node_modules/.cache/nx
-          fail-on-cache-miss: false
-          key: nx-${{ github.repository_id }}-${{ github.sha }}
-      - name: Install dependencies
-        run: pnpm install
-      - name: Derive SHAs for nx affected commands
-        uses: nrwl/nx-set-shas@v4
-        with:
-          main-branch-name: main
-      - name: Run CI/CD Test Back-End
-        run: pnpm run cicd-test-back-end
   build-deploy-back-end:
     name: Build & Deploy Back-End
-    needs: test-back-end
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -119,12 +66,11 @@ jobs:
           role-duration-seconds: 3600
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
-      - name: Run CI/CD CDK Bootstrap Back-End
-        run: pnpm run cicd-bootstrap-back-end
       - name: Run CI/CD Build & Deploy Back-End
         run: pnpm run cicd-build-deploy-back-end
   build-deploy-front-end:
     name: Build & Deploy Front-End
+    needs: build-deploy-back-end
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -183,7 +129,5 @@ jobs:
           role-duration-seconds: 3600
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
-      - name: Run CI/CD CDK Bootstrap Back-End
-        run: pnpm cicd-bootstrap-front-end
       - name: Run CI/CD Build & Deploy Front-End
         run: pnpm cicd-build-deploy-front-end

@@ -163,34 +163,17 @@ if (root.eslint) {
   root.eslint.addPlugins('prettier');
   root.eslint.addExtends('plugin:prettier/recommended');
 }
-root.removeScript('build');
-root.removeScript('deploy');
 root.addScripts({
   // Development convenience scripts
-  ['bootstrap-all']:
-    'pnpm nx run-many --targets=bootstrap --projects=@easy-genomics/back-end,@easy-genomics/front-end --verbose',
-  ['build-all']: 'pnpm run build-back-end && pnpm run build-front-end',
-  ['deploy-all']: 'pnpm run deploy-back-end && pnpm run deploy-front-end',
-  ['build-back-end']: 'pnpm nx run-many --targets=test,build --projects=@easy-genomics/back-end --verbose',
-  ['build-front-end']:
-    'pnpm nx run-many --targets=test,nuxt-prepare,build,nuxt-generate --projects=@easy-genomics/front-end --verbose',
-  ['deploy-back-end']: 'pnpm nx run-many --targets=test,build,deploy --projects=@easy-genomics/back-end --verbose',
-  ['deploy-front-end']:
-    'pnpm nx run-many --targets=test,nuxt-prepare,build,nuxt-generate,deploy --projects=@easy-genomics/front-end --verbose',
+  ['build-back-end']: 'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
+  ['build-front-end']: 'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   // CI/CD convenience scripts
-  ['cicd-test-back-end']:
-    'pnpm nx run-many --targets=cicd-test-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
-  ['cicd-bootstrap-back-end']:
-    'pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/back-end --verbose',
   ['cicd-build-deploy-back-end']:
-    'pnpm nx run-many --targets=cicd-build-deploy-back-end --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose',
-  ['cicd-test-front-end']:
-    'pnpm nx run-many --targets=cicd-test-front-end --projects=@easy-genomics/front-end --verbose',
-  ['cicd-bootstrap-front-end']:
-    'pnpm nx run-many --targets=cicd-bootstrap-back-end --project=@easy-genomics/front-end --verbose',
+    'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
   ['cicd-build-deploy-front-end']:
-    'pnpm nx run-many --targets=cicd-build-deploy-front-end --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose',
+    'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
+  ['projen']: 'pnpm dlx projen; nx reset', // Clear NX cache each time projen is synthesized to avoid cache disk-space overconsumption
 });
 
 // Defines the Easy Genomics 'shared-lib' subproject
@@ -273,11 +256,9 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
 });
 backEndApp.addScripts({
-  ['bootstrap']: 'pnpm cdk bootstrap',
-  ['build-and-deploy']: 'pnpm cdk bootstrap; pnpm run build; pnpm run deploy',
-  ['cicd-test-back-end']: 'export CI_CD=true; pnpm run test',
-  ['cicd-bootstrap-back-end']: 'export CI_CD=true; pnpm cdk bootstrap',
-  ['cicd-build-deploy-back-end']: 'export CI_CD=true; pnpm cdk bootstrap; pnpm run build; pnpm run deploy',
+  ['build']: 'pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
+  ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
+  ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy',  // Run root build-back-end script to inc shared-lib
 });
 if (backEndApp.eslint) {
   backEndApp.eslint.addRules(eslintGlobalRules);
@@ -364,15 +345,12 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
 });
 frontEndApp.addScripts({
-  ['bootstrap']: 'pnpm cdk bootstrap',
-  ['build-and-deploy']: 'pnpm cdk bootstrap; pnpm run nuxt-prepare; pnpm run build; pnpm run nuxt-generate; pnpm run deploy',
-  ['cicd-test-front-end']: 'export CI_CD=true; pnpm run test',
-  ['cicd-bootstrap-front-end']: 'export CI_CD=true; pnpm cdk bootstrap',
-  ['cicd-build-deploy-front-end']:
-    'export CI_CD=true; pnpm run nuxt-prepare; pnpm run build; pnpm run nuxt-generate; pnpm run deploy',
+  ['build']: 'pnpm run nuxt-prepare && pnpm run nuxt-generate && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
+  ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
+  ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy', // Run root build-front-end script to inc shared-lib
   ['nuxt-build']: 'nuxt build',
-  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
-  ['nuxt-generate']: 'nuxt generate',
+  ['nuxt-dev']: 'pnpm kill-port 3000; nuxt dev',
+  ['nuxt-generate']: 'nuxt generate', // Required to create front-end/.nuxt/tsconfig.json
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',

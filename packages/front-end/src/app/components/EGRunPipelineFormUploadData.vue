@@ -101,6 +101,10 @@
     });
   });
 
+  const showDropzone = computed(
+    () => !canProceed.value && uploadStatus.value !== 'success' && uploadStatus.value !== 'uploading',
+  );
+
   function chooseFiles() {
     chooseFilesButton.value?.click();
   }
@@ -430,7 +434,7 @@
       <li>5GB max size per individual file</li>
     </ul>
     <UDivider class="py-4" />
-    <div class="py-4" @drop.prevent="handleDroppedFiles" v-if="!canProceed && uploadStatus !== 'uploading'">
+    <div class="py-4" @drop.prevent="handleDroppedFiles" v-if="showDropzone">
       <div
         id="dropzone"
         @dragenter.prevent="toggleDropzoneActive"

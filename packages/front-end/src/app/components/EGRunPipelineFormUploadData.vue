@@ -101,8 +101,18 @@
     });
   });
 
-  const showDropzone = computed(
-    () => !canProceed.value && uploadStatus.value !== 'success' && uploadStatus.value !== 'uploading',
+  const showDropzone = computed(() => !canProceed.value || uploadStatus.value === 'idle');
+
+  const isUploadButtonDisabled = computed(
+    () =>
+      !canUploadFiles.value ||
+      uploadStatus.value === 'uploading' ||
+      uploadStatus.value === 'success' ||
+      canProceed.value,
+  );
+
+  const isRemoveButtonDisabled = computed(
+    () => uploadStatus.value !== 'uploading' && uploadStatus.value !== 'success' && !canProceed.value,
   );
 
   function chooseFiles() {
@@ -383,7 +393,6 @@
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        timeout: 5000,
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
           fileDetails.progress = progress;
@@ -513,7 +522,7 @@
       <template #actions-data="{ row }">
         <div class="flex items-center space-x-2">
           <UIcon
-            v-if="uploadStatus !== 'uploading' && !canProceed"
+            v-if="isRemoveButtonDisabled"
             name="i-heroicons-trash"
             @click="removeFilePair(row.sampleId)"
             class="h-6 w-6 cursor-pointer bg-black"
@@ -525,7 +534,7 @@
     <div class="flex justify-end pt-4">
       <EGButton
         @click="startUploadProcess"
-        :disabled="!canUploadFiles || uploadStatus === 'uploading' || canProceed"
+        :disabled="isUploadButtonDisabled"
         :loading="uploadStatus === 'uploading'"
         label="Upload Files"
         size="md"
@@ -582,7 +591,7 @@
         padding-top: 22px;
         padding-bottom: 22px;
         color: #12181f;
-        height: 70px;
+        height: 77px;
       }
     }
     &.upload-status--idle {

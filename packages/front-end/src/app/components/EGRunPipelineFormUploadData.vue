@@ -101,9 +101,7 @@
     });
   });
 
-  const showDropzone = computed(
-    () => !canProceed.value && uploadStatus.value !== 'success' && uploadStatus.value !== 'uploading',
-  );
+  const showDropzone = computed(() => !canProceed.value || uploadStatus.value === 'idle');
 
   const isUploadButtonDisabled = computed(
     () =>

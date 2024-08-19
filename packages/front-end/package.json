@@ -22,7 +22,7 @@
     "projen": "pnpm dlx projen",
     "build-and-deploy": "pnpm -w run build-front-end && pnpm run deploy",
     "nuxt-build": "nuxt build",
-    "nuxt-dev": "pnpm kill-port 3000; nuxt dev",
+    "nuxt-dev": "pnpm kill-port 3000 && nuxt dev",
     "nuxt-generate": "nuxt generate",
     "nuxt-prepare": "nuxt prepare",
     "nuxt-preview": "nuxt preview",

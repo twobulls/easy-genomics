@@ -351,7 +351,7 @@ frontEndApp.addScripts({
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy', // Run root build-front-end script to inc shared-lib
   ['nuxt-build']: 'nuxt build',
-  ['nuxt-dev']: 'pnpm kill-port 3000; nuxt dev',
+  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
   ['nuxt-generate']: 'nuxt generate', // Required to create front-end/.nuxt/tsconfig.json
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',

@@ -540,10 +540,12 @@
   .EGTable {
     font-family: 'Inter', sans-serif;
     width: 100%;
-    table-layout: auto;
+    table-layout: fixed;
 
     thead tr th:first-child {
       width: 70px;
+      max-width: 70px;
+      min-width: 70px;
       padding-left: 0;
       font-weight: 500;
     }

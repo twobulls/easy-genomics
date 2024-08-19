@@ -331,7 +331,6 @@
         />
 
         <EGTable
-          :row-click-action="onRowClicked"
           :table-data="filteredTableData"
           :columns="tableColumns"
           :is-loading="isLoading"

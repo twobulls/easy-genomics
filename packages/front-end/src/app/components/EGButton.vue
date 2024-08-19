@@ -21,7 +21,7 @@
   });
 
   const buttonVariants = cva(
-    'rounded-lg text-center text-sm shadow-none focus-visible:outline-offset-1 transition-colors duration-200',
+    'rounded-lg text-center text-sm shadow-none focus-visible:outline-offset-1 transition-colors duration-200 whitespace-nowrap',
     {
       variants: {
         variant: {

@@ -2,6 +2,7 @@
   const $router = useRouter();
   const props = withDefaults(defineProps<{ label?: string; backAction?: () => void }>(), {
     label: 'Back',
+    backAction: undefined,
   });
 </script>
 

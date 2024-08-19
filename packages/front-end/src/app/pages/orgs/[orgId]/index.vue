@@ -126,7 +126,7 @@
     isRemovingUser.value = true;
 
     const userToRemove = orgUsersDetailsData.value.find((user) => user.UserId === selectedUserId.value);
-    const displayName = userToRemove.displayName;
+    const displayName = userToRemove?.displayName;
 
     try {
       if (!selectedUserId.value) {

@@ -56,7 +56,7 @@
         },
       }"
       @select="rowClickAction ? rowClickAction($event) : undefined"
-      class="EGTable rounded-2xl"
+      class="rounded-2xl"
       :rows="rows"
       :columns="columns"
       :loading="isLoading"
@@ -84,11 +84,11 @@
   </div>
 </template>
 
-<style lang="scss">
+<style scoped lang="scss">
   /**
    * Table styles are quite granular so styled here via SCSS instead of the UTable's :ui prop config object
    */
-  .EGTable {
+  :deep(table) {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     width: 100%;
@@ -106,12 +106,14 @@
           padding-left: 40px;
           width: 320px;
         }
+
         th:last-child {
           text-align: right;
           padding-right: 40px;
         }
       }
     }
+
     tbody tr {
       td {
         padding-top: 22px;
@@ -126,10 +128,10 @@
       white-space: normal;
     }
 
-    tbody tr td:nth-child(2) {
-      white-space: normal;
-      font-size: 12px;
+    tbody tr td:not(:first-child) {
+      font-size: 12px; // FIXME
       color: #818181;
+      white-space: normal;
     }
 
     tbody tr td:last-child {

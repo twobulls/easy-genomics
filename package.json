@@ -2,7 +2,6 @@
   "name": "@easy-genomics",
   "description": "Easy Genomics web application to help simplify genomic analysis of sequenced genetic data for bioinformaticians utilizing AWS HealthOmics & NextFlow Tower",
   "scripts": {
-    "build": "pnpm dlx projen build",
     "clobber": "pnpm dlx projen clobber",
     "compile": "pnpm dlx projen compile",
     "default": "pnpm dlx projen default",

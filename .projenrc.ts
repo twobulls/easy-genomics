@@ -163,6 +163,8 @@ if (root.eslint) {
   root.eslint.addPlugins('prettier');
   root.eslint.addExtends('plugin:prettier/recommended');
 }
+root.removeScript('build'); // Remove default root build script - use Back-End & Front-End 'build-and-deploy' script instead
+root.removeScript('deploy'); // Remove default root deploy script - use Back-End & Front-End 'build-and-deploy' script instead
 root.addScripts({
   // Development convenience scripts
   ['build-back-end']: 'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',

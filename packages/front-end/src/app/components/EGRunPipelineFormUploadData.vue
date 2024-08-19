@@ -51,16 +51,14 @@
   const filePairs = ref<FilePair[]>([]);
 
   const canUploadFiles = ref(false);
-  const isUploadProcessRunning = ref(false);
   const canProceed = ref(false);
   const isDropzoneActive = ref(false);
 
+  // overall upload status for all files
   const uploadStatus = ref('idle')<UploadStatus>;
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
-
-  const uploadProgress = ref(0);
 
   const columns = [
     {
@@ -98,7 +96,8 @@
 
     return filePairs.value.map((filePair: FilePair) => {
       const { sampleId, r1File, r2File } = filePair;
-      return { sampleId, r1File: r1File?.name, r2File: r2File?.name };
+      const uploadProgress = Math.max(r1File?.percentage ?? 0, r2File?.percentage ?? 0);
+      return { sampleId, r1File: r1File?.name, r2File: r2File?.name, uploadProgress };
     });
   });
 
@@ -257,7 +256,6 @@
   }
 
   async function startUploadProcess() {
-    isUploadProcessRunning.value = true;
     uploadStatus.value = 'uploading';
 
     const uploadManifest = await getUploadFilesManifest();
@@ -267,8 +265,6 @@
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     usePipelineRunStore().setSampleSheetCsv(sampleSheetResponse.SampleSheetContents);
     usePipelineRunStore().setS3Url(sampleSheetResponse.SampleSheetInfo.S3Url);
-
-    isUploadProcessRunning.value = false;
 
     canProceed.value = true;
   }
@@ -367,9 +363,7 @@
       useToastStore().success('Files uploaded successfully');
       console.debug('Uploaded files:', filesToUpload.value.length);
     } catch (e) {
-      uploadProgress.value = 0;
       uploadStatus.value = 'failed';
-      isUploadProcessRunning.value = false;
       useToastStore().error(`Error uploading files`);
       throw Error(e);
     }
@@ -384,15 +378,10 @@
           'Content-Type': 'multipart/form-data',
         },
         onUploadProgress: (progressEvent) => {
-          uploadProgress.value = Number(
-            Math.round((progressEvent?.loaded / progressEvent.total) * 100)
-              .toString()
-              .padStart(2, '0'),
-          );
-
-          fileDetails.progress = uploadProgress.value;
-          fileDetails.percentage = uploadProgress.value;
-          console.debug(`${name}; Upload progress: ${uploadProgress.value}%`);
+          const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
+          fileDetails.progress = progress;
+          fileDetails.percentage = progress;
+          console.debug(`${name}; Upload progress: ${progress}%`);
         },
       });
 
@@ -400,6 +389,17 @@
     } catch (error: any) {
       console.error('Error uploading file:', error);
     }
+  }
+
+  function showLoadingSpinner(progress: number): boolean {
+    return uploadStatus.value === 'uploading' && progress < 100;
+  }
+
+  function formatProgress(progress) {
+    if (progress === 0) {
+      return '0';
+    }
+    return progress.toString().padStart(2, '0');
   }
 
   watch(canProceed, (val) => {
@@ -430,7 +430,7 @@
       <li>5GB max size per individual file</li>
     </ul>
     <UDivider class="py-4" />
-    <div class="py-4" @drop.prevent="handleDroppedFiles">
+    <div class="py-4" @drop.prevent="handleDroppedFiles" v-if="!canProceed && uploadStatus !== 'uploading'">
       <div
         id="dropzone"
         @dragenter.prevent="toggleDropzoneActive"
@@ -484,41 +484,42 @@
       :class="uploadProgressStyles"
     >
       <template #uploadProgress-data="{ row }">
-        <div class="flex items-center space-x-2">
-          <EGLoadingSpinner v-if="uploadStatus === 'uploading'" />
+        <div class="flex w-full items-center">
+          <EGLoadingSpinner v-if="showLoadingSpinner(row.uploadProgress)" />
           <UIcon
             v-else-if="uploadStatus === 'success'"
             name="i-heroicons-check-20-solid"
-            class="bg-alert-success-text h-6 w-6"
+            class="bg-alert-success-text h-8 w-8"
           />
           <UIcon
             v-else-if="uploadStatus === 'failed'"
             name="i-heroicons-exclamation-triangle"
-            class="bg-alert-danger h-6 w-6"
+            class="bg-alert-danger h-8 w-8"
           />
-
-          <span class="font-medium" v-if="uploadStatus !== 'idle'">{{ uploadProgress }}%</span>
+          <div class="flex w-full items-center justify-end">
+            <span class="font-medium" v-if="uploadStatus !== 'idle'">{{ formatProgress(row.uploadProgress) }}%</span>
+          </div>
         </div>
       </template>
       <template #actions-data="{ row }">
         <div class="flex items-center space-x-2">
           <UIcon
+            v-if="uploadStatus !== 'uploading' && !canProceed"
             name="i-heroicons-trash"
-            @click="uploadStatus !== 'uploading' ? removeFilePair(row.sampleId) : undefined"
+            @click="removeFilePair(row.sampleId)"
             class="h-6 w-6 cursor-pointer bg-black"
-            :class="{ '!cursor-default bg-opacity-30': uploadStatus === 'uploading' }"
           />
+          <UIcon v-else name="i-heroicons-trash" class="h-6 w-6 cursor-default bg-black bg-opacity-30" />
         </div>
       </template>
     </UTable>
-
     <div class="flex justify-end pt-4">
       <EGButton
         @click="startUploadProcess"
-        :disabled="!canUploadFiles || isUploadProcessRunning || canProceed"
-        :loading="isUploadProcessRunning"
-        :size="ButtonSizeEnum.enum.sm"
+        :disabled="!canUploadFiles || uploadStatus === 'uploading' || canProceed"
+        :loading="uploadStatus === 'uploading'"
         label="Upload Files"
+        size="md"
       />
     </div>
   </EGCard>
@@ -542,7 +543,7 @@
     table-layout: auto;
 
     thead tr th:first-child {
-      width: 80px;
+      width: 70px;
       padding-left: 0;
       font-weight: 500;
     }
@@ -550,8 +551,7 @@
     tbody tr td:nth-child(1) {
       padding-left: 12px;
       padding-right: 0;
-      width: 80px !important;
-      display: flex;
+      width: 70px !important;
     }
 
     tbody tr td:nth-child(2) {

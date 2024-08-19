@@ -391,7 +391,6 @@
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        timeout: 5000,
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
           fileDetails.progress = progress;

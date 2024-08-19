@@ -111,6 +111,10 @@
       canProceed.value,
   );
 
+  const isRemoveButtonDisabled = computed(
+    () => uploadStatus.value !== 'uploading' && uploadStatus.value !== 'success' && !canProceed.value,
+  );
+
   function chooseFiles() {
     chooseFilesButton.value?.click();
   }
@@ -518,7 +522,7 @@
       <template #actions-data="{ row }">
         <div class="flex items-center space-x-2">
           <UIcon
-            v-if="uploadStatus !== 'uploading' && uploadStatus !== 'success' && !canProceed"
+            v-if="isRemoveButtonDisabled"
             name="i-heroicons-trash"
             @click="removeFilePair(row.sampleId)"
             class="h-6 w-6 cursor-pointer bg-black"
@@ -587,7 +591,7 @@
         padding-top: 22px;
         padding-bottom: 22px;
         color: #12181f;
-        height: 70px;
+        height: 77px;
       }
     }
     &.upload-status--idle {

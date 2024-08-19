@@ -105,6 +105,14 @@
     () => !canProceed.value && uploadStatus.value !== 'success' && uploadStatus.value !== 'uploading',
   );
 
+  const isUploadButtonDisabled = computed(
+    () =>
+      !canUploadFiles.value ||
+      uploadStatus.value === 'uploading' ||
+      uploadStatus.value === 'success' ||
+      canProceed.value,
+  );
+
   function chooseFiles() {
     chooseFilesButton.value?.click();
   }
@@ -513,7 +521,7 @@
       <template #actions-data="{ row }">
         <div class="flex items-center space-x-2">
           <UIcon
-            v-if="uploadStatus !== 'uploading' && !canProceed"
+            v-if="uploadStatus !== 'uploading' && uploadStatus !== 'success' && !canProceed"
             name="i-heroicons-trash"
             @click="removeFilePair(row.sampleId)"
             class="h-6 w-6 cursor-pointer bg-black"
@@ -525,7 +533,7 @@
     <div class="flex justify-end pt-4">
       <EGButton
         @click="startUploadProcess"
-        :disabled="!canUploadFiles || uploadStatus === 'uploading' || canProceed"
+        :disabled="isUploadButtonDisabled"
         :loading="uploadStatus === 'uploading'"
         label="Upload Files"
         size="md"

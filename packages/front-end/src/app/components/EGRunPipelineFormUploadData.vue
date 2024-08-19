@@ -361,15 +361,17 @@
 
   async function uploadFiles() {
     console.debug('Uploading files:', filesToUpload.value.length);
-    try {
-      await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
+    const results = await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
+
+    const anyRejected = results.some((result) => result.status === 'rejected');
+
+    if (anyRejected) {
+      uploadStatus.value = 'failed';
+      useToastStore().error('Error uploading one or more files');
+    } else {
       uploadStatus.value = 'success';
       useToastStore().success('Files uploaded successfully');
       console.debug('Uploaded files:', filesToUpload.value.length);
-    } catch (e) {
-      uploadStatus.value = 'failed';
-      useToastStore().error(`Error uploading files`);
-      throw Error(e);
     }
   }
 
@@ -381,6 +383,7 @@
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 5000,
         onUploadProgress: (progressEvent) => {
           const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
           fileDetails.progress = progress;
@@ -392,6 +395,8 @@
       return response;
     } catch (error: any) {
       console.error('Error uploading file:', error);
+      fileDetails.error = 'Failed to upload';
+      return Promise.reject(error);
     }
   }
 

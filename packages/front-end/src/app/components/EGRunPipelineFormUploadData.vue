@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import axios from 'axios';
   import { v4 as uuidv4 } from 'uuid';
-  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
+  import { ButtonSizeEnum } from '~/types/buttons';
   import {
     FileInfo,
     FileUploadInfo,
@@ -15,6 +15,8 @@
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { usePipelineRunStore, useToastStore } from '~/stores';
+
+  type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
   type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
@@ -49,14 +51,19 @@
   const filePairs = ref<FilePair[]>([]);
 
   const canUploadFiles = ref(false);
-  const isUploadProcessRunning = ref(false);
   const canProceed = ref(false);
   const isDropzoneActive = ref(false);
+
+  // overall upload status for all files
+  const uploadStatus = ref('idle')<UploadStatus>;
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
 
   const columns = [
+    {
+      key: 'uploadProgress',
+    },
     {
       key: 'sampleId',
       label: 'Sample ID',
@@ -74,6 +81,29 @@
       label: '',
     },
   ];
+
+  const uploadProgressStyles = computed(() => {
+    return {
+      'upload-status--idle': uploadStatus.value === 'idle',
+      'upload-status--uploading': uploadStatus.value === 'uploading',
+      'upload-status--success': uploadStatus.value === 'success',
+      'upload-status--failed': uploadStatus.value === 'failed',
+    };
+  });
+
+  const filePairsForTable = computed(() => {
+    if (filePairs.value.length === 0) return [];
+
+    return filePairs.value.map((filePair: FilePair) => {
+      const { sampleId, r1File, r2File } = filePair;
+      const uploadProgress = Math.max(r1File?.percentage ?? 0, r2File?.percentage ?? 0);
+      return { sampleId, r1File: r1File?.name, r2File: r2File?.name, uploadProgress };
+    });
+  });
+
+  const showDropzone = computed(
+    () => !canProceed.value && uploadStatus.value !== 'success' && uploadStatus.value !== 'uploading',
+  );
 
   function chooseFiles() {
     chooseFilesButton.value?.click();
@@ -229,17 +259,9 @@
     console.debug('isDropzoneActive', toRaw(isDropzoneActive.value));
   }
 
-  const filePairsForTable = computed(() => {
-    if (filePairs.value.length === 0) return [];
-
-    return filePairs.value.map((filePair: FilePair) => {
-      const { sampleId, r1File, r2File } = filePair;
-      return { sampleId, r1File: r1File?.name, r2File: r2File?.name };
-    });
-  });
-
   async function startUploadProcess() {
-    isUploadProcessRunning.value = true;
+    uploadStatus.value = 'uploading';
+
     const uploadManifest = await getUploadFilesManifest();
     addUploadUrls(uploadManifest);
     await uploadFiles();
@@ -247,8 +269,6 @@
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     usePipelineRunStore().setSampleSheetCsv(sampleSheetResponse.SampleSheetContents);
     usePipelineRunStore().setS3Url(sampleSheetResponse.SampleSheetInfo.S3Url);
-
-    isUploadProcessRunning.value = false;
 
     canProceed.value = true;
   }
@@ -341,26 +361,54 @@
 
   async function uploadFiles() {
     console.debug('Uploading files:', filesToUpload.value.length);
-    await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
-    console.debug('Uploaded files:', filesToUpload.value.length);
-    useToastStore().success('Files uploaded successfully');
+    const results = await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
+
+    const anyRejected = results.some((result) => result.status === 'rejected');
+
+    if (anyRejected) {
+      uploadStatus.value = 'failed';
+      useToastStore().error('Error uploading one or more files');
+    } else {
+      uploadStatus.value = 'success';
+      useToastStore().success('Files uploaded successfully');
+      console.debug('Uploaded files:', filesToUpload.value.length);
+    }
   }
 
   async function uploadFile(fileDetails: FileDetails) {
     const { file, name } = fileDetails;
 
-    return axios.put(fileDetails.url!, file, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      // TODO: Add progress bar
-      onUploadProgress: (progressEvent) => {
-        const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
-        fileDetails.progress = progress;
-        fileDetails.percentage = progress;
-        console.debug(`${name}; Upload progress: ${progress}%`);
-      },
-    });
+    try {
+      const response = await axios.put(fileDetails.url!, file, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        timeout: 5000,
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
+          fileDetails.progress = progress;
+          fileDetails.percentage = progress;
+          console.debug(`${name}; Upload progress: ${progress}%`);
+        },
+      });
+
+      return response;
+    } catch (error: any) {
+      console.error('Error uploading file:', error);
+      fileDetails.error = 'Failed to upload';
+      return Promise.reject(error);
+    }
+  }
+
+  function showLoadingSpinner(progress: number): boolean {
+    return uploadStatus.value === 'uploading' && progress < 100;
+  }
+
+  function formatProgress(progress) {
+    if (progress === 0) {
+      return '0';
+    }
+    return progress.toString().padStart(2, '0');
   }
 
   watch(canProceed, (val) => {
@@ -371,7 +419,7 @@
 <template>
   <EGCard>
     <EGText tag="small" class="mb-4">Step 02</EGText>
-    <EGText tag="h4" class="mb-0">Upload Data</EGText>
+    <EGText tag="h4" class="mb-4">Upload Data</EGText>
     <ul class="text-muted ml-6 mt-1 list-disc text-xs font-normal tracking-tight">
       <li>
         Files containing _R1_ or _R2_ with a matching prefix and suffix will be combined as paired-end data samples e.g,
@@ -391,7 +439,7 @@
       <li>5GB max size per individual file</li>
     </ul>
     <UDivider class="py-4" />
-    <div class="py-4" @drop.prevent="handleDroppedFiles">
+    <div class="py-4" @drop.prevent="handleDroppedFiles" v-if="showDropzone">
       <div
         id="dropzone"
         @dragenter.prevent="toggleDropzoneActive"
@@ -411,8 +459,10 @@
         >
           <div class="flex items-center justify-center">
             <div>
-              <span :class="cn('visible', { 'invisible': isDropzoneActive })">Drag and</span>
-              drop your files
+              <span :class="cn('visible', { 'invisible': isDropzoneActive })">Drag and&nbsp;</span>
+              <span v-if="isDropzoneActive">Drop</span>
+              <span v-else>drop</span>
+              your files
               <span :class="cn('visible', { 'invisible': isDropzoneActive })">here or</span>
             </div>
             <input
@@ -435,36 +485,50 @@
       </div>
     </div>
 
-    <div v-if="filePairsForTable.length > 0" class="text-body flex justify-between px-4 pt-2 text-sm">
-      <div>Samples: {{ filePairs.length }}</div>
-      <div>Files: {{ filesToUpload.length }}</div>
-    </div>
-
     <UTable
       v-if="filePairsForTable.length > 0"
       :columns="columns"
       :rows="filePairsForTable"
-      class="EGTable mt-4 rounded-2xl"
+      class="EGTable mt-1"
+      :class="uploadProgressStyles"
     >
+      <template #uploadProgress-data="{ row }">
+        <div class="flex w-full items-center">
+          <EGLoadingSpinner v-if="showLoadingSpinner(row.uploadProgress)" />
+          <UIcon
+            v-else-if="uploadStatus === 'success'"
+            name="i-heroicons-check-20-solid"
+            class="bg-alert-success-text h-8 w-8"
+          />
+          <UIcon
+            v-else-if="uploadStatus === 'failed'"
+            name="i-heroicons-exclamation-triangle"
+            class="bg-alert-danger h-8 w-8"
+          />
+          <div class="flex w-full items-center justify-end">
+            <span class="font-medium" v-if="uploadStatus !== 'idle'">{{ formatProgress(row.uploadProgress) }}%</span>
+          </div>
+        </div>
+      </template>
       <template #actions-data="{ row }">
         <div class="flex items-center space-x-2">
-          <EGButton
-            icon="i-heroicons-trash"
-            :size="ButtonSizeEnum.enum.xs"
-            :variant="ButtonVariantEnum.enum.destructive"
+          <UIcon
+            v-if="uploadStatus !== 'uploading' && !canProceed"
+            name="i-heroicons-trash"
             @click="removeFilePair(row.sampleId)"
+            class="h-6 w-6 cursor-pointer bg-black"
           />
+          <UIcon v-else name="i-heroicons-trash" class="h-6 w-6 cursor-default bg-black bg-opacity-30" />
         </div>
       </template>
     </UTable>
-
     <div class="flex justify-end pt-4">
       <EGButton
         @click="startUploadProcess"
-        :disabled="!canUploadFiles || isUploadProcessRunning || canProceed"
-        :loading="isUploadProcessRunning"
-        :size="ButtonSizeEnum.enum.sm"
+        :disabled="!canUploadFiles || uploadStatus === 'uploading' || canProceed"
+        :loading="uploadStatus === 'uploading'"
         label="Upload Files"
+        size="md"
       />
     </div>
   </EGCard>
@@ -481,18 +545,73 @@
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
   .EGTable {
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
     width: 100%;
-    table-layout: auto;
+    table-layout: fixed;
+
+    thead tr th:first-child {
+      width: 70px;
+      max-width: 70px;
+      min-width: 70px;
+      padding-left: 0;
+      font-weight: 500;
+    }
+
+    tbody tr td:nth-child(1) {
+      padding-left: 12px;
+      padding-right: 0;
+      width: 70px !important;
+    }
+
+    tbody tr td:nth-child(2) {
+      font-weight: 500;
+    }
+
+    tbody tr td:not(:first-child) {
+      font-size: 12px;
+    }
+
+    tbody tr td:last-child {
+      width: 50px;
+    }
 
     tbody tr {
       td {
-        font-size: 12px;
         padding-top: 22px;
         padding-bottom: 22px;
+        color: #12181f;
+        height: 70px;
+      }
+    }
+    &.upload-status--idle {
+      tbody tr {
+        td {
+        }
+      }
+    }
+    &.upload-status--uploading {
+      tbody tr {
+        td {
+          background: #f7f7f7;
+        }
+      }
+    }
+
+    &.upload-status--failed {
+      tbody tr {
+        td {
+          background: #fdefec;
+        }
+      }
+    }
+  }
+  .upload-status--success {
+    tbody tr {
+      td {
+        background: #daf4e2;
+        color: #306239 !important;
       }
     }
   }

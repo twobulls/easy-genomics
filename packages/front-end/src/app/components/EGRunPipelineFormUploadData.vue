@@ -571,6 +571,7 @@
         padding-top: 22px;
         padding-bottom: 22px;
         color: #12181f;
+        height: 70px;
       }
     }
     &.upload-status--idle {

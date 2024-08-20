@@ -155,7 +155,7 @@ if (process.env.CI_CD === 'true') {
         systemAdminPassword: systemAdminPassword,
         testUserEmail: testUserEmail,
         testUserPassword: testUserPassword,
-        seqeraApiBaseUrl: seqeraApiBaseUrl,
+        seqeraApiBaseUrl: seqeraApiBaseUrl.replace(/\/+$/, ''), // Remove trailing slashes
       });
     }
   });

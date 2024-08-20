@@ -179,6 +179,7 @@ and edit the Shared and Back-End settings for your deployment environment.
             back-end:
                test-user-email: 'demouser@easygenomics.com'
                test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
 
             # Front-End specific settings
                front-end:
@@ -289,6 +290,16 @@ configuration details generated from the Back-End deployment.
 
    Finally, use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured`test-user-email` and
    `test-user-password` account details to log in into Easy Genomics to test the functionality.
+
+   Once you have completed an initial deployment of the Back-End and Front-End application logic, you can subsequently
+   use the `build-and-deploy` short-cut command from the `${easy-genomics root-dir}` directory to conveniently complete
+   both Back-End and Front-End deployments in one command.
+
+      ```
+      e.g.
+      [easy-genomics/packages/front-end]$ cd ../../
+      [easy-genomics]$ pnpm run build-and-deploy             # Deploys both Back-End and Front-End logic using the existing easy-genomics.yaml settings
+      ```
 
 ---
 

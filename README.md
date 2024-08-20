@@ -291,6 +291,16 @@ configuration details generated from the Back-End deployment.
    Finally, use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured`test-user-email` and
    `test-user-password` account details to log in into Easy Genomics to test the functionality.
 
+   Once you have completed an initial deployment of the Back-End and Front-End application logic, you can subsequently
+   use the `build-and-deploy` short-cut command from the `${easy-genomics root-dir}` directory to conveniently complete
+   both Back-End and Front-End deployments in one command.
+
+      ```
+      e.g.
+      [easy-genomics/packages/front-end]$ cd ../../
+      [easy-genomics]$ pnpm run build-and-deploy             # Deploys both Back-End and Front-End logic using the existing easy-genomics.yaml settings
+      ```
+
 ---
 
 ## Contributions

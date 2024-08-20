@@ -14,7 +14,7 @@ export const ConfigurationSettingsSchema = z.object({
     ['system-admin-password']: z.string().nullable().optional(), // Initial Cognito password
     ['test-user-email']: z.string(),
     ['test-user-password']: z.string(), // Initial Cognito password
-    ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; defaults to 'https://api.cloud.seqera.io'
+    ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
   }),
 
   // Front-End specific settings

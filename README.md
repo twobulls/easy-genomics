@@ -179,6 +179,7 @@ and edit the Shared and Back-End settings for your deployment environment.
             back-end:
                test-user-email: 'demouser@easygenomics.com'
                test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
 
             # Front-End specific settings
                front-end:

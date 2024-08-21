@@ -151,13 +151,11 @@ const root = new typescript.TypeScriptProject({
   ],
 });
 if (root.eslint) {
-  root.eslint.addRules({
-    eslintGlobalRules,
-    overrides: {
-      'files': ['packages/shared-lib/**'],
-      'rules': {
-        'import/no-extraneous-dependencies': 'off',
-      },
+  root.eslint.addRules({ ...eslintGlobalRules });
+  root.eslint.addOverride({
+    'files': ['packages/shared-lib/**'],
+    'rules': {
+      'import/no-extraneous-dependencies': 'off',
     },
   });
   root.eslint.addPlugins('prettier');
@@ -167,8 +165,10 @@ root.removeScript('build'); // Remove default root build script - use Back-End &
 root.removeScript('deploy'); // Remove default root deploy script - use Back-End & Front-End 'build-and-deploy' script instead
 root.addScripts({
   // Development convenience scripts
-  ['build-back-end']: 'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
-  ['build-front-end']: 'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
+  ['build-back-end']:
+    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
+  ['build-front-end']:
+    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['build-and-deploy']:
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
@@ -264,10 +264,10 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
 backEndApp.addScripts({
   ['build']: 'pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
-  ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy',  // Run root build-back-end script to inc shared-lib
+  ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy', // Run root build-back-end script to inc shared-lib
 });
 if (backEndApp.eslint) {
-  backEndApp.eslint.addRules(eslintGlobalRules);
+  backEndApp.eslint.addRules({ ...eslintGlobalRules });
   backEndApp.eslint.addExtends('plugin:prettier/recommended');
   backEndApp.eslint.addPlugins('prettier');
 }
@@ -351,7 +351,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
 });
 frontEndApp.addScripts({
-  ['build']: 'pnpm run nuxt-prepare && pnpm run nuxt-generate && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
+  ['build']:
+    'pnpm run nuxt-prepare && pnpm run nuxt-generate && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy', // Run root build-front-end script to inc shared-lib
   ['nuxt-build']: 'nuxt build',

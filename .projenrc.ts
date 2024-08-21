@@ -186,7 +186,7 @@ const root = new typescript.TypeScriptProject({
 if (root.eslint) {
   root.eslint.addRules({ ...eslintGlobalRules });
   root.eslint.addOverride({
-    files: ['packages/shared-lib/**'],
+    files: ['packages/*/src/**/*.{js,ts,vue}'],
     rules: {
       'import/no-extraneous-dependencies': 'off',
     },
@@ -204,7 +204,7 @@ root.addScripts({
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
-  ['lint']: 'eslint "packages/**/*.{js,ts,vue}" --fix --ignore-pattern "node_modules/*" --ignore-pattern "dist/*"',
+  ['lint']: "eslint 'packages/*/src/**/*.{js,ts,vue}' --fix",
   ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:

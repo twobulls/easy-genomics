@@ -10,7 +10,7 @@
     "inlineSources": true,
     "lib": [
       "DOM",
-      "ESNext"
+      "ES2022"
     ],
     "module": "CommonJS",
     "noEmitOnError": false,

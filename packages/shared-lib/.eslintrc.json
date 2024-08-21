@@ -7,7 +7,8 @@
   "root": true,
   "plugins": [
     "@typescript-eslint",
-    "import"
+    "import",
+    "prettier"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -56,7 +57,7 @@
       }
     ],
     "comma-dangle": [
-      "error",
+      "warn",
       "always-multiline"
     ],
     "comma-spacing": [
@@ -119,7 +120,7 @@
       "error"
     ],
     "semi": [
-      "error",
+      "warn",
       "always"
     ],
     "max-len": [
@@ -215,7 +216,19 @@
           "method"
         ]
       }
-    ]
+    ],
+    "no-unused-vars": "warn",
+    "@typescript-eslint/no-unused-vars": [
+      "warn"
+    ],
+    "space-before-function-paren": "off",
+    "no-console": "off",
+    "arrow-parens": "warn",
+    "no-new": "warn",
+    "no-empty": "warn",
+    "prettier/prettier": "warn",
+    "require-await": "warn",
+    "array-callback-return": "warn"
   },
   "overrides": []
 }

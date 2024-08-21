@@ -17,8 +17,7 @@
     "project": "./tsconfig.dev.json"
   },
   "extends": [
-    "plugin:import/typescript",
-    "plugin:prettier/recommended"
+    "plugin:import/typescript"
   ],
   "settings": {
     "import/parsers": {

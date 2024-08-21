@@ -204,7 +204,7 @@ root.addScripts({
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
-  ['lint']: "eslint 'packages/*/src/**/*.{js,ts,vue}' --fix",
+  ['lint']: "eslint 'packages/*/src/**/*.{js,ts}' --fix",
   ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:

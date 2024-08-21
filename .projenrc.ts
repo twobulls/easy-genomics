@@ -125,7 +125,7 @@ const root = new typescript.TypeScriptProject({
   license: 'Apache-2.0',
   licensed: true,
   minNodeVersion: nodeVersion,
-  name: '@easy-genomics',
+  name: '@easy-genomics/root',
   packageManager: javascript.NodePackageManager.PNPM,
   prettier: true,
   prettierOptions,
@@ -182,6 +182,7 @@ root.addScripts({
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
+  'lint': 'eslint "packages/**/*.{js,ts,vue}" --fix --ignore-pattern "node_modules/*" --ignore-pattern "dist/*"',
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:
     'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',

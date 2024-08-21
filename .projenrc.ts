@@ -43,6 +43,19 @@ const prettierOptions: PrettierOptions = {
     bracketSameLine: false,
     plugins: ['prettier-plugin-tailwindcss'],
   },
+  ignoreFileOptions: {
+    ignorePatterns: [
+      '.eslintrc.json',
+      '.github/pull_request_template.md',
+      '.prettierrc.json',
+      '.vscode/settings.json',
+      'nx.json',
+      'packages/back-end/.eslintrc.json',
+      'packages/back-end/cdk.json',
+      'packages/back-end/cdk.out',
+      'packages/front-end/cdk.out',
+    ],
+  },
 };
 
 // Changing compiler options will require that you re-run projen twice.
@@ -182,7 +195,8 @@ root.addScripts({
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
-  'lint': 'eslint "packages/**/*.{js,ts,vue}" --fix --ignore-pattern "node_modules/*" --ignore-pattern "dist/*"',
+  ['lint']: 'eslint "packages/**/*.{js,ts,vue}" --fix --ignore-pattern "node_modules/*" --ignore-pattern "dist/*"',
+  ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:
     'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',

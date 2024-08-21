@@ -8,6 +8,15 @@ packages/back-end/.eslintrc.json
 packages/back-end/cdk.json
 packages/back-end/cdk.out
 packages/front-end/cdk.out
+packages/front-end/cdk.json
+tsconfig.dev.json
+tsconfig.json
+packages/shared-lib/tsconfig.dev.json
+packages/back-end/tsconfig.dev.json
+packages/front-end/tsconfig.dev.json
+packages/shared-lib/tsconfig.json
+packages/back-end/tsconfig.json
+packages/front-end/tsconfig.json
 packages/back-end/src/app/README.md
 packages/back-end/src/app/controllers/README.md
 packages/back-end/src/app/controllers/easy-genomics/README.md

@@ -1,6 +1,6 @@
 import { Auth } from 'aws-amplify';
-import { VALIDATION_MESSAGES } from '~/constants/validation';
-import { useToastStore, useUiStore } from '~/stores';
+import { VALIDATION_MESSAGES } from '@FE/constants/validation';
+import { useToastStore, useUiStore } from '@FE/stores';
 
 export default function useAuth() {
   async function isAuthed() {

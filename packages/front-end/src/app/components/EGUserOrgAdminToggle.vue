@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-  import { useToastStore } from '~/stores';
-  import useUser from '~/composables/useUser';
-  import { VALIDATION_MESSAGES } from '~/constants/validation';
+  import { useToastStore } from '@FE/stores';
+  import useUser from '@FE/composables/useUser';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 
   const { $api } = useNuxtApp();
   const props = defineProps<{

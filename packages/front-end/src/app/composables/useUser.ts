@@ -2,9 +2,9 @@ import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
-import { VALIDATION_MESSAGES } from '~/constants/validation';
-import { useToastStore } from '~/stores';
-import { decodeJwt } from '~/utils/jwt-utils';
+import { VALIDATION_MESSAGES } from '@FE/constants/validation';
+import { useToastStore } from '@FE/stores';
+import { decodeJwt } from '@FE/utils/jwt-utils';
 
 type UserNameOptions = {
   preferredName?: string | undefined;

@@ -10,7 +10,7 @@
     "inlineSources": true,
     "lib": [
       "DOM",
-      "ESNext"
+      "ES2022"
     ],
     "module": "CommonJS",
     "noEmitOnError": false,
@@ -26,11 +26,23 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "ES2019",
-    "rootDir": ".",
+    "baseUrl": ".",
+    "sourceMap": true,
     "types": [
       "vue"
     ],
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "paths": {
+      "@FE/*": [
+        "src/app/*"
+      ],
+      "#app": [
+        "node_modules/nuxt/dist/app"
+      ],
+      "#ui/*": [
+        "node_modules/@nuxt/ui/dist/runtime/*"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",

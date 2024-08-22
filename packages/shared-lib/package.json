@@ -13,7 +13,8 @@
     "test:watch": "pnpm dlx projen test:watch",
     "upgrade": "pnpm dlx projen upgrade",
     "watch": "pnpm dlx projen watch",
-    "projen": "pnpm dlx projen"
+    "projen": "pnpm dlx projen",
+    "lint": "eslint 'src/**/*.{js,ts}' --fix"
   },
   "author": {
     "name": "DEPT Agency",

@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-  import { ButtonVariantEnum } from '~/types/buttons';
-  import { useToastStore, useUiStore } from '~/stores';
-  import { DeletedResponse } from '~/types/api';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
+  import { useToastStore, useUiStore } from '@FE/stores';
+  import { DeletedResponse } from '@FE/types/api';
 
   const { $api } = useNuxtApp();
   const router = useRouter();

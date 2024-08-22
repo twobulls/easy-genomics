@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { AutoCompleteOption, AutoCompleteOptionsEnum } from '~/types/forms';
+  import { AutoCompleteOption, AutoCompleteOptionsEnum } from '@FE/types/forms';
 
   /**
    * Props

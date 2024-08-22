@@ -1,9 +1,9 @@
 <script setup lang="ts">
   import { FormError } from '#ui/types';
   import { z } from 'zod';
-  import { maybeAddFieldValidationErrors } from '~/utils/form-utils';
-  import { ButtonSizeEnum } from '~/types/buttons';
-  import { usePipelineRunStore } from '~/stores';
+  import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { usePipelineRunStore } from '@FE/stores';
 
   const props = defineProps<{
     pipelineName: string;

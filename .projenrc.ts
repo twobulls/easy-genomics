@@ -360,6 +360,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     compilerOptions: {
       baseUrl: '.',
       lib: ['DOM', 'ES2022'],
+      sourceMap: true,
       types: ['vue'],
       verbatimModuleSyntax: false,
       paths: {

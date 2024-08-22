@@ -1,4 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import path from 'path';
 import { join } from 'path';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 import {
@@ -107,6 +108,11 @@ export default defineNuxtConfig({
   vite: {
     define: {
       'window.global': {}, // required by Amplify
+    },
+    resolve: {
+      alias: {
+        '@FE': path.resolve(__dirname, './src/app'),
+      },
     },
     plugins: [
       Components({

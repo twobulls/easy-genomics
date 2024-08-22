@@ -27,6 +27,7 @@
     "stripInternal": true,
     "target": "ES2019",
     "baseUrl": ".",
+    "sourceMap": true,
     "types": [
       "vue"
     ],

@@ -26,7 +26,6 @@
     "target": "ES2022",
     "baseUrl": ".",
     "rootDir": ".",
-    "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "paths": {

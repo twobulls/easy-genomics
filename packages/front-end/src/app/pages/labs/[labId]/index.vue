@@ -12,6 +12,7 @@
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
   import { getDate, getTime } from '~/utils/date-time';
+  import { caseInsensitiveSortFn } from '~/utils/sort-utils';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -118,6 +119,7 @@
       key: 'displayName',
       label: 'Name',
       sortable: true,
+      sort: caseInsensitiveSortFn,
     },
     {
       key: 'actions',

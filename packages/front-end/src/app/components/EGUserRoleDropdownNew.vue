@@ -14,7 +14,7 @@
     {
       disabled: false,
       showRemoveFromLab: false,
-    }
+    },
   );
 
   const emit = defineEmits(['remove-user-from-lab', 'assign-lab-role']);

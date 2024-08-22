@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { cva } from 'class-variance-authority';
-  import { ButtonVariantEnum, ButtonVariant, ButtonSizeEnum, ButtonSize } from '~/types/buttons';
+  import { ButtonVariantEnum, ButtonVariant, ButtonSizeEnum, ButtonSize } from '@FE/types/buttons';
 
   type ButtonProps = {
     variant?: ButtonVariant;

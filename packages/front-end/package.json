@@ -27,7 +27,8 @@
     "nuxt-prepare": "nuxt prepare",
     "nuxt-preview": "nuxt preview",
     "nuxt-postinstall": "nuxt prepare",
-    "nftower-spec-to-zod": "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'"
+    "nftower-spec-to-zod": "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
+    "lint": "eslint 'src/**/*.{js,ts}' --fix"
   },
   "author": {
     "name": "DEPT Agency",

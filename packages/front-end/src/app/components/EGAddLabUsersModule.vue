@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { LabUser, OrgUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-  import { useToastStore, useUiStore } from '~/stores';
-  import { EditUserResponse } from '~/types/api';
+  import { useToastStore, useUiStore } from '@FE/stores';
+  import { EditUserResponse } from '@FE/types/api';
 
   const props = defineProps<{
     orgId: string;
@@ -30,7 +30,7 @@
     (newLabUsers) => {
       labUsers.value = newLabUsers;
       refreshOrgUsersWithoutLabAccess();
-    }
+    },
   );
 
   // Watch selectedUserId.value to enable/disable the add button
@@ -38,7 +38,7 @@
     () => selectedUserId.value,
     (newSelectedUserId) => {
       canAddUser.value = !!newSelectedUserId;
-    }
+    },
   );
 
   async function handleAddSelectedUserToLab() {

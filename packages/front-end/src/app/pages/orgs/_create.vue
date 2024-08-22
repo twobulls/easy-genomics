@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import type { FormSubmitEvent } from '#ui/types';
-  import { useToastStore, useUiStore } from '~/stores';
-  import { VALIDATION_MESSAGES } from '~/constants/validation';
-  import { OrgDetailsForm } from '~/types/forms';
+  import { useToastStore, useUiStore } from '@FE/stores';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
+  import { OrgDetailsForm } from '@FE/types/forms';
 
   const router = useRouter();
   const { $api } = useNuxtApp();

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-  import { useLabsStore, useOrgsStore } from '~/stores';
-  import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
-  import { getDate, getTime } from '~/utils/date-time';
+  import { useLabsStore, useOrgsStore } from '@FE/stores';
+  import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
+  import { getDate, getTime } from '@FE/utils/date-time';
 
   const { $api } = useNuxtApp();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;

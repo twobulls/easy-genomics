@@ -1,6 +1,6 @@
 <script setup lang="ts">
-  import { usePipelineRunStore } from '~/stores';
-  import { ButtonSizeEnum } from '~/types/buttons';
+  import { usePipelineRunStore } from '@FE/stores';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
 
   const props = defineProps<{
     schema: object;

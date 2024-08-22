@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user-details';
-  import { LaboratoryRolesEnum, LaboratoryRolesEnumSchema } from '~/types/roles';
+  import { LaboratoryRolesEnum, LaboratoryRolesEnumSchema } from '@FE/types/roles';
 
   interface LaboratoryUserDetailsWithRoles extends LaboratoryUserDetails {
     assignedRole: LaboratoryRolesEnumSchema;
@@ -15,7 +15,7 @@
     {
       disabled: false,
       showRemoveFromLab: false,
-    }
+    },
   );
 
   const { PreferredName, FirstName, LastName, UserId, UserEmail } = props.user;

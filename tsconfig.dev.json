@@ -31,13 +31,13 @@
     "skipLibCheck": true,
     "paths": {
       "@BE/*": [
-        "packages/back-end/src/*"
+        "packages/back-end/src/app/*"
       ],
       "@FE/*": [
-        "packages/front-end/src/*"
+        "packages/front-end/src/app/*"
       ],
       "@SharedLib/*": [
-        "packages/shared-lib/src/*"
+        "packages/shared-lib/src/app/*"
       ]
     }
   },

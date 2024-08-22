@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { VALIDATION_MESSAGES } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 
   const props = withDefaults(
     defineProps<{

@@ -100,9 +100,9 @@ const tsConfigOptions: TypescriptConfigOptions = {
     noImplicitAny: true,
     strict: true,
     paths: {
-      '@BE/*': ['packages/back-end/src/*'],
-      '@FE/*': ['packages/front-end/src/*'],
-      '@SharedLib/*': ['packages/shared-lib/src/*'],
+      '@BE/*': ['packages/back-end/src/app/*'],
+      '@FE/*': ['packages/front-end/src/app/*'],
+      '@SharedLib/*': ['packages/shared-lib/src/app/*'],
     },
     // noUnusedLocals: false,
   },
@@ -204,7 +204,8 @@ root.addScripts({
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
-  ['lint']: "eslint 'packages/*/src/**/*.{js,ts}' --fix",
+  ['lint-all']:
+    'pnpm --prefix packages/front-end run lint && pnpm --prefix packages/back-end run lint && pnpm --prefix packages/shared-lib run lint',
   ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:
@@ -244,6 +245,18 @@ const sharedLib = new typescript.TypeScriptProject({
   minNodeVersion: root.minNodeVersion,
   deps: ['@nestjs/config', 'aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'js-yaml', 'uuid', 'zod'],
   devDeps: ['@types/aws-lambda', '@types/js-yaml', '@types/uuid', 'aws-cdk-lib', 'openapi-typescript'],
+  tsconfig: {
+    ...tsConfigOptions,
+    compilerOptions: {
+      baseUrl: '.',
+      paths: {
+        '@SharedLib/*': ['src/app/*'],
+      },
+    },
+  },
+});
+sharedLib.addScripts({
+  ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
 });
 
 if (sharedLib.eslint) {
@@ -272,6 +285,15 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
+  tsconfig: {
+    ...tsConfigOptions,
+    compilerOptions: {
+      baseUrl: '.',
+      paths: {
+        '@BE/*': ['src/app/*'],
+      },
+    },
+  },
   deps: [
     '@aws-crypto/client-node',
     '@aws-crypto/decrypt-node',
@@ -309,7 +331,9 @@ backEndApp.addScripts({
   ['build']: 'pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy', // Run root build-back-end script to inc shared-lib
+  ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
 });
+
 if (backEndApp.eslint) {
   backEndApp.eslint.addRules({ ...eslintGlobalRules });
   backEndApp.eslint.addPlugins('prettier');
@@ -341,10 +365,15 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     ...tsConfigOptions,
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
+      baseUrl: '.',
       lib: ['DOM', 'ES2022'],
-      rootDir: '.',
       types: ['vue'],
       verbatimModuleSyntax: false,
+      paths: {
+        '@FE/*': ['src/app/*'],
+        '#app': ['node_modules/nuxt/dist/app'], // Nuxt
+        '#ui/*': ['node_modules/@nuxt/ui/dist/runtime/*'], // NuxtUI
+      },
     },
     include: ['.nuxt/**/*.d.ts', 'auto-imports.d.ts', 'components.d.ts', '**/*.ts', '**/*d.ts', '**/*.vue'],
   },
@@ -402,10 +431,20 @@ frontEndApp.addScripts({
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
   ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
+  ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
+  // ['lint']: "eslint 'src/**/*.{js,ts,vue}' --fix",
 });
 
 // Setup Frontend App ESLint configuration
 if (frontEndApp.eslint) {
+  // frontEndApp.eslint.config.settings = {
+  //   'import/resolver': {
+  //     alias: {
+  //       map: [['~', './src']],
+  //       extensions: ['.js', '.ts', '.vue'],
+  //     },
+  //   },
+  // };
   frontEndApp.eslint.addRules({ ...eslintGlobalRules });
   frontEndApp.eslint.addExtends(
     '@nuxtjs/eslint-config-typescript',

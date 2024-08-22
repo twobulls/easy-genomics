@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { LabDetailsFormModeEnum } from '~/types/labs';
+  import { LabDetailsFormModeEnum } from '@FE/types/labs';
 </script>
 
 <template>

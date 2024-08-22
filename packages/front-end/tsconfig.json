@@ -2,7 +2,7 @@
 {
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "rootDir": ".",
+    "rootDir": "src",
     "outDir": "lib",
     "alwaysStrict": true,
     "declaration": true,
@@ -28,10 +28,22 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "ES2019",
+    "baseUrl": ".",
     "types": [
       "vue"
     ],
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "paths": {
+      "@FE/*": [
+        "src/app/*"
+      ],
+      "#app": [
+        "node_modules/nuxt/dist/app"
+      ],
+      "#ui/*": [
+        "node_modules/@nuxt/ui/dist/runtime/*"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",

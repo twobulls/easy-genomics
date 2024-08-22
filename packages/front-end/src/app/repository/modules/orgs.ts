@@ -7,7 +7,7 @@ import { CreateOrganization, Organization } from '@easy-genomics/shared-lib/src/
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-import { DeletedResponse } from '~/types/api';
+import { DeletedResponse } from '@FE/types/api';
 
 class OrgsModule extends HttpFactory {
   $config = useRuntimeConfig();

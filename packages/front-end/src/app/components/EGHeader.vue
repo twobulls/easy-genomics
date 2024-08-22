@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ButtonSizeEnum } from '~/types/buttons';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
 
   const props = withDefaults(
     defineProps<{

@@ -26,11 +26,22 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "ES2019",
-    "rootDir": ".",
+    "baseUrl": ".",
     "types": [
       "vue"
     ],
-    "verbatimModuleSyntax": false
+    "verbatimModuleSyntax": false,
+    "paths": {
+      "@FE/*": [
+        "src/app/*"
+      ],
+      "#app": [
+        "node_modules/nuxt/dist/app"
+      ],
+      "#ui/*": [
+        "node_modules/@nuxt/ui/dist/runtime/*"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",

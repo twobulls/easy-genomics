@@ -8,13 +8,13 @@
     NextFlowTowerWorkspaceIdSchema,
     LabDetailsFormModeEnum,
     LabDetailsFormMode,
-  } from '~/types/labs';
-  import { AutoCompleteOptionsEnum } from '~/types/forms';
+  } from '@FE/types/labs';
+  import { AutoCompleteOptionsEnum } from '@FE/types/forms';
   import { FormError } from '#ui/types';
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-  import { ButtonSizeEnum, ButtonVariantEnum } from '~/types/buttons';
-  import { useToastStore, useUiStore } from '~/stores';
-  import { maybeAddFieldValidationErrors } from '~/utils/form-utils';
+  import { ButtonSizeEnum, ButtonVariantEnum } from '@FE/types/buttons';
+  import { useToastStore, useUiStore } from '@FE/stores';
+  import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import {
     CreateLaboratory,
     CreateLaboratorySchema,

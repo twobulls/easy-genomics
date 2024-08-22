@@ -8,7 +8,7 @@ import {
   PipelineSchemaResponse as PipelineSchemaResponseSchema,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
 import HttpFactory from '../factory';
-import { validateApiResponse, stripNullProperties } from '~/utils/api-utils';
+import { validateApiResponse, stripNullProperties } from '@FE/utils/api-utils';
 
 class PipelinesModule extends HttpFactory {
   async list(labId: string): Promise<ListPipelinesResponse> {

@@ -50,10 +50,7 @@
     "indent": [
       "off"
     ],
-    "@typescript-eslint/indent": [
-      "error",
-      2
-    ],
+    "@typescript-eslint/indent": "off",
     "quotes": [
       "error",
       "single",

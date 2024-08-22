@@ -44,25 +44,18 @@ const prettierOptions: PrettierOptions = {
     plugins: ['prettier-plugin-tailwindcss'],
   },
   ignoreFileOptions: {
+    // add any Projen ready-only generated config files here
     ignorePatterns: [
       '.eslintrc.json',
       '.github/pull_request_template.md',
       '.prettierrc.json',
       '.vscode/settings.json',
       'nx.json',
-      'packages/back-end/.eslintrc.json',
-      'packages/back-end/cdk.json',
-      'packages/back-end/cdk.out',
-      'packages/front-end/cdk.out',
-      'packages/front-end/cdk.json',
-      'tsconfig.dev.json',
-      'tsconfig.json',
-      'packages/shared-lib/tsconfig.dev.json',
-      'packages/back-end/tsconfig.dev.json',
-      'packages/front-end/tsconfig.dev.json',
-      'packages/shared-lib/tsconfig.json',
-      'packages/back-end/tsconfig.json',
-      'packages/front-end/tsconfig.json',
+      '.eslintrc.json',
+      'cdk.json',
+      'cdk.out/',
+      'tsconfig*.json',
+      '*.d.ts',
     ],
   },
 };
@@ -82,6 +75,7 @@ const eslintGlobalRules = {
   'prettier/prettier': 'warn',
   'require-await': 'warn',
   'array-callback-return': 'warn',
+  '@typescript-eslint/indent': 'off',
 };
 
 const tsConfigOptions: TypescriptConfigOptions = {
@@ -92,7 +86,6 @@ const tsConfigOptions: TypescriptConfigOptions = {
     lib: ['ES2022'],
     module: 'CommonJS',
     target: 'ES2022',
-    sourceMap: true,
     declaration: true,
     esModuleInterop: true,
     forceConsistentCasingInFileNames: true,
@@ -432,19 +425,10 @@ frontEndApp.addScripts({
   ['nuxt-postinstall']: 'nuxt prepare',
   ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
-  // ['lint']: "eslint 'src/**/*.{js,ts,vue}' --fix",
 });
 
 // Setup Frontend App ESLint configuration
 if (frontEndApp.eslint) {
-  // frontEndApp.eslint.config.settings = {
-  //   'import/resolver': {
-  //     alias: {
-  //       map: [['~', './src']],
-  //       extensions: ['.js', '.ts', '.vue'],
-  //     },
-  //   },
-  // };
   frontEndApp.eslint.addRules({ ...eslintGlobalRules });
   frontEndApp.eslint.addExtends(
     '@nuxtjs/eslint-config-typescript',

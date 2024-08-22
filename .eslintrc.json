@@ -146,7 +146,8 @@
     "no-empty": "warn",
     "prettier/prettier": "warn",
     "require-await": "warn",
-    "array-callback-return": "warn"
+    "array-callback-return": "warn",
+    "@typescript-eslint/indent": "off"
   },
   "overrides": [
     {

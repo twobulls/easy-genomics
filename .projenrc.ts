@@ -212,7 +212,6 @@ root.addScripts({
 
 root.addFields({
   'lint-staged': {
-    '{**/*,*}.{js,ts,vue}': ['eslint --fix'],
     '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
   },
 });

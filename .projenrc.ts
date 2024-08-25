@@ -69,7 +69,7 @@ const eslintGlobalRules = {
   'comma-dangle': ['warn', 'always-multiline'],
   'space-before-function-paren': 'off',
   'no-console': 'off',
-  'arrow-parens': 'warn',
+  'arrow-parens': ['warn', 'always'],
   'no-new': 'warn',
   'no-empty': 'warn',
   'prettier/prettier': 'warn',

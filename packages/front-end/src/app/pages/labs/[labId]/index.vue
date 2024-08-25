@@ -431,7 +431,7 @@
             <div class="flex items-center">
               <EGUserRoleDropdownNew
                 :show-remove-from-lab="true"
-                :key="labUser?.UserId"
+                :key="labUser?.LabManager"
                 :disabled="useUiStore().isRequestPending"
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

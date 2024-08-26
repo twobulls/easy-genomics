@@ -41,6 +41,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.620.1",
     "@nestjs/config": "^3.2.2",
     "aws-cdk": "^2.125.0",
     "aws-cdk-lib": "^2.125.0",

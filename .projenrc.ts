@@ -236,7 +236,16 @@ const sharedLib = new typescript.TypeScriptProject({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
-  deps: ['@nestjs/config', 'aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'js-yaml', 'uuid', 'zod'],
+  deps: [
+    '@aws-sdk/client-cognito-identity-provider',
+    '@nestjs/config',
+    'aws-cdk',
+    'aws-cdk-lib',
+    'aws-lambda',
+    'js-yaml',
+    'uuid',
+    'zod',
+  ],
   devDeps: ['@types/aws-lambda', '@types/js-yaml', '@types/uuid', 'aws-cdk-lib', 'openapi-typescript'],
   tsconfig: {
     ...tsConfigOptions,

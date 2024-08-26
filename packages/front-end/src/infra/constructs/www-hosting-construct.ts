@@ -211,11 +211,6 @@ export class WwwHostingConstruct extends Construct {
         target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         zone: hostedZone,
       });
-      // eslint-disable-next-line no-new
-      new ARecord(this, 'SiteAliasRecord', {
-        target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
-        zone: hostedZone,
-      });
       // Domain Name alias configured for the ApplicationUrl
       // eslint-disable-next-line no-new
       new CfnOutput(this, 'ApplicationUrl', { key: 'ApplicationUrl', value: `https://${appDomainName}` });

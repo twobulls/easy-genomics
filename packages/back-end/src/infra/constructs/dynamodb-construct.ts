@@ -56,7 +56,7 @@ export class DynamoConstruct extends Construct {
     // Add Global Secondary Indexes if defined
     if (settings.gsi) {
       // NOTE: Global Secondary Indexes can be added / removed from the table as desired
-      settings.gsi.forEach((value: SchemaOptions, _index: number, _array: SchemaOptions[]) => {
+      settings.gsi.forEach((value: SchemaOptions) => {
         table.addGlobalSecondaryIndex({
           indexName: `${value.partitionKey.name}_Index`,
           partitionKey: value.partitionKey,
@@ -69,7 +69,7 @@ export class DynamoConstruct extends Construct {
     if (sortKey && settings.lsi) {
       // NOTE: Local Secondary Indexes can only be defined at the initial table creation
       // and cannot be added / removed after the table has been created
-      settings.lsi.forEach((value: Attribute, _index: number, _array: Attribute[]) => {
+      settings.lsi.forEach((value: Attribute) => {
         table.addLocalSecondaryIndex({
           indexName: `${value.name}_Index`,
           sortKey: value,

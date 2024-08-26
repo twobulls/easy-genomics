@@ -73,7 +73,7 @@ const eslintGlobalRules = {
   'no-new': 'warn',
   'no-empty': 'warn',
   'prettier/prettier': 'warn',
-  'require-await': 'warn',
+  'require-await': 'off',
   'array-callback-return': 'warn',
   '@typescript-eslint/indent': 'off',
 };

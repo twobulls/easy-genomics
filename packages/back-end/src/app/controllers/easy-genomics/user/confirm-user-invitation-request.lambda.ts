@@ -95,7 +95,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
         }
 
         // Decrypt the temporaryPassword
-        const { plaintext, messageHeader } = await cryptoClient.decrypt(keyring, toByteArray(temporaryPassword));
+        const { plaintext } = await cryptoClient.decrypt(keyring, toByteArray(temporaryPassword));
 
         // Login with temporaryPassword to obtain accessToken and complete auth challenge set new password
         const response: InitiateAuthCommandOutput = await cognitoIdpService.initiateAuth(

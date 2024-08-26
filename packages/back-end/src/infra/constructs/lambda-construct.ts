@@ -78,7 +78,7 @@ export class LambdaConstruct extends Construct {
     }
 
     // Find all existing Lambda Functions within specified lambdaFunctionsDir and register them as REST APIs with API Gateway / Event Triggers
-    this.getLambdaFunctions(path.join(__dirname, `../../../${this.props.lambdaFunctionsDir}`)).map(
+    this.getLambdaFunctions(path.join(__dirname, `../../../${this.props.lambdaFunctionsDir}`)).forEach(
       (lambdaFunction: AssociativeArray<string>) => {
         this.registerLambdaFunction(lambdaFunction);
       },

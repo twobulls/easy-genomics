@@ -50,6 +50,7 @@ if (process.env.CI_CD === 'true') {
   const constructNamespace: string = `${envName}-easy-genomics`;
 
   // Setups Front-End Stack to support static web hosting for the UI
+  // eslint-disable-next-line no-new
   new FrontEndStack(app, `${envName}-main-front-end-stack`, {
     env: {
       account: awsAccountId,
@@ -117,6 +118,8 @@ if (process.env.CI_CD === 'true') {
       }
 
       // Setups Front-End Stack to support static web hosting for the UI
+
+      // eslint-disable-next-line no-new
       new FrontEndStack(app, `${envName}-main-front-end-stack`, {
         env: {
           account: awsAccountId,

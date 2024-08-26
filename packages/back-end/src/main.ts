@@ -58,6 +58,7 @@ if (process.env.CI_CD === 'true') {
     }
   }
   // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
+  // eslint-disable-next-line no-new
   new BackEndStack(app, `${envName}-main-back-end-stack`, {
     env: {
       account: awsAccountId,
@@ -137,6 +138,7 @@ if (process.env.CI_CD === 'true') {
       }
 
       // Setups Back-End Stack which initiates the nested stacks for Auth, Easy Genomics, AWS HealthOmics and NextFlow Tower
+      // eslint-disable-next-line no-new
       new BackEndStack(app, `${envName}-main-back-end-stack`, {
         env: {
           account: awsAccountId,

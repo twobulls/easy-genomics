@@ -133,6 +133,7 @@ export class WwwHostingConstruct extends Construct {
         principals: [new CanonicalUserPrincipal(originAccessIdentity.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
       }),
     );
+    // eslint-disable-next-line no-new
     new CfnOutput(this, 'HostingBucketName', { key: 'HostingBucketName', value: wwwBucket.bucketName });
 
     const responseHeadersPolicy: ResponseHeadersPolicy | undefined = this.applySecurityHeaders();
@@ -200,21 +201,26 @@ export class WwwHostingConstruct extends Construct {
         hostedZoneId: this.props.awsHostedZoneId,
         zoneName: this.props.appDomainName,
       });
+      // eslint-disable-next-line no-new
       new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
 
       // Setup Route53 alias record for the CloudFront distribution
+      // eslint-disable-next-line no-new
       new ARecord(this, 'SiteAliasRecord', {
         target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         zone: hostedZone,
       });
+      // eslint-disable-next-line no-new
       new ARecord(this, 'SiteAliasRecord', {
         target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         zone: hostedZone,
       });
       // Domain Name alias configured for the ApplicationUrl
+      // eslint-disable-next-line no-new
       new CfnOutput(this, 'ApplicationUrl', { key: 'ApplicationUrl', value: `https://${appDomainName}` });
     } else {
       // Domain Name alias not configured for the ApplicationUrl - output CloudFront Distribution URL
+      // eslint-disable-next-line no-new
       new CfnOutput(this, 'ApplicationUrl', {
         key: 'ApplicationUrl',
         value: `https://${distribution.distributionDomainName}`,
@@ -224,6 +230,7 @@ export class WwwHostingConstruct extends Construct {
     const wwwSourceDir = path.join(__dirname, '../../../dist'); // Generated site contents folder
     if (fs.existsSync(wwwSourceDir)) {
       // Deploy site contents to S3 bucket
+      // eslint-disable-next-line no-new
       new BucketDeployment(this, 'DeployWithInvalidation', {
         sources: [Source.asset(wwwSourceDir)],
         destinationBucket: wwwBucket,
@@ -236,6 +243,7 @@ export class WwwHostingConstruct extends Construct {
   private getCertificate = (awsCertificateArn: string): ICertificate => {
     // Retrieve TLS certificate
     const certificate: ICertificate = Certificate.fromCertificateArn(this, 'SiteCertificate', awsCertificateArn);
+    // eslint-disable-next-line no-new
     new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
     return certificate;
   };

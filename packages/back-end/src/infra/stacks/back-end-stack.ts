@@ -87,6 +87,7 @@ export class BackEndStack extends Stack {
       constructNamespace: `${this.props.namePrefix}-aws-healthomics`, // Overriding value
       restApi: this.apiGateway.restApi,
     };
+    // eslint-disable-next-line no-new
     new AwsHealthOmicsNestedStack(
       this,
       `${this.props.envName}-aws-healthomics-nested-stack`,
@@ -98,6 +99,7 @@ export class BackEndStack extends Stack {
       constructNamespace: `${this.props.namePrefix}-nf-tower`, // Overriding value
       restApi: this.apiGateway.restApi,
     };
+    // eslint-disable-next-line no-new
     new NFTowerNestedStack(this, `${this.props.envName}-nf-tower-nested-stack`, nfTowerNestedStackProps);
 
     const dataProvisioningNestedStackProps: DataProvisioningNestedStackProps = {
@@ -107,16 +109,20 @@ export class BackEndStack extends Stack {
       userPoolSystemAdminGroupName: authNestedStack.cognito.userPoolGroup.groupName,
       dynamoDBTables: easyGenomicsNestedStack.dynamoDBTables,
     };
+    // eslint-disable-next-line no-new
     new DataProvisioningNestedStack(this, 'data-provisioning-nested-stack', dataProvisioningNestedStackProps);
 
+    // eslint-disable-next-line no-new
     new CfnOutput(this, 'CognitoUserPoolId', {
       key: 'CognitoUserPoolId',
       value: authNestedStack.cognito.userPool.userPoolId,
     });
+    // eslint-disable-next-line no-new
     new CfnOutput(this, 'CognitoUserPoolClientId', {
       key: 'CognitoUserPoolClientId',
       value: authNestedStack.cognito.userPoolClient.userPoolClientId,
     });
+    // eslint-disable-next-line no-new
     new CfnOutput(this, 'ApiGatewayRestApiUrl', { key: 'ApiGatewayRestApiUrl', value: this.apiGateway.restApi.url });
   };
 }

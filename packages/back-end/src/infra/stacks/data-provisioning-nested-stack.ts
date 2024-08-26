@@ -113,6 +113,7 @@ export class DataProvisioningNestedStack extends NestedStack {
     const table: Table | undefined = this.props.dynamoDBTables.get(tableName);
 
     if (table) {
+      // eslint-disable-next-line no-new
       new AwsCustomResource(this, `${tableName}_InitData`, {
         onCreate: {
           service: 'DynamoDB',
@@ -141,7 +142,7 @@ export class DataProvisioningNestedStack extends NestedStack {
       const batchItems = testRecords.map((testRecord) => {
         return { PutRequest: { Item: marshall(testRecord) } };
       });
-
+      // eslint-disable-next-line no-new
       new AwsCustomResource(this, `${tableName}_InitData`, {
         onCreate: {
           service: 'DynamoDB',

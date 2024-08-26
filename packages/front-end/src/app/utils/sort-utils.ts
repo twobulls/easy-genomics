@@ -1,7 +1,7 @@
 /**
  * An insensitive case sort function for use by Nuxt UI tables
  */
-export function caseInsensitiveSortFn(a: any, b: any, direction: 'asc' | 'desc') {
+export function caseInsensitiveSortFn(a: string, b: string, direction: 'asc' | 'desc'): number {
   if (a.toLowerCase() === b.toLowerCase()) {
     // If idenical ignoring case, sort by case for consistency of results
     if (direction === 'asc') {

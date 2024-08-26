@@ -89,7 +89,7 @@ if (process.env.CI_CD === 'true') {
   }
 
   // Iterate through valid configurations to synthesize CloudFormation stacks
-  configurations.map((configuration: { [p: string]: ConfigurationSettings }) => {
+  configurations.forEach((configuration: { [p: string]: ConfigurationSettings }) => {
     const envName: string | undefined = Object.keys(configuration).shift();
     const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift();
 

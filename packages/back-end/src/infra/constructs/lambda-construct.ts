@@ -86,8 +86,8 @@ export class LambdaConstruct extends Construct {
 
     // Attach the Schema Models to API Gateway REST API
     if (this.props.restApi) {
-      for (const [_, value] of Object.entries(this.props.lambdaFunctionsResources)) {
-        value.schemas?.map((schema: JsonSchema) => {
+      for (const value of Object.values(this.props.lambdaFunctionsResources)) {
+        value.schemas?.forEach((schema: JsonSchema) => {
           this.props.restApi!.addModel(`${toPascalCase(schema.title!)}`, {
             modelName: `${toPascalCase(schema.title!)}`,
             schema: schema,
@@ -141,7 +141,7 @@ export class LambdaConstruct extends Construct {
       console.debug(
         `Attaching IAM Policy to REST API Endpoint: ${lambdaApiEndpoint}\n${JSON.stringify(iamPolicyStatements, null, 2)}`,
       );
-      iamPolicyStatements.map((iamPolicyStatement: PolicyStatement) => {
+      iamPolicyStatements.forEach((iamPolicyStatement: PolicyStatement) => {
         lambdaHandler.addToRolePolicy(iamPolicyStatement);
       });
     } else {
@@ -150,12 +150,12 @@ export class LambdaConstruct extends Construct {
 
     if (lambdaFunction.command === 'process') {
       // Register Event Source Listeners/Triggers for the respective Lambda function
-      this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.events?.map((eventSource: IEventSource) => {
+      this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.events?.forEach((eventSource: IEventSource) => {
         lambdaHandler.addEventSource(eventSource);
       });
 
       // Register Callback Functions for the respective Lambda function
-      this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.callbacks?.map((callback) => {
+      this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.callbacks?.forEach((callback) => {
         callback(lambdaHandler);
       });
     } else {

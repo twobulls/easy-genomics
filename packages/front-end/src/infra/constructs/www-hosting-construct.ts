@@ -207,12 +207,10 @@ export class WwwHostingConstruct extends Construct {
         target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         zone: hostedZone,
       });
-
-      const siteAliasRecord = new ARecord(this, 'SiteAliasRecord', {
+      new ARecord(this, 'SiteAliasRecord', {
         target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         zone: hostedZone,
       });
-
       // Domain Name alias configured for the ApplicationUrl
       new CfnOutput(this, 'ApplicationUrl', { key: 'ApplicationUrl', value: `https://${appDomainName}` });
     } else {

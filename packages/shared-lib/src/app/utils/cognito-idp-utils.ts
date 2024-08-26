@@ -31,7 +31,10 @@ export async function getCognitoIdpInfo(userPoolName: string, userPoolClientName
     .shift();
 
   if (!userPool || !userPoolClient) {
-    throw new Error('Unable to obtain Cognito User Pool / Client details.');
+    const reason = !userPool
+      ? `User Pool Name '${userPoolName}' not found`
+      : `User Pool Client Name '${userPoolClientName}' not found`;
+    throw new Error(`Unable to obtain Cognito User Pool / Client details: ${reason}`);
   } else {
     const cognitoIdpInfo: CognitoIdpInfo = {
       UserPoolId: userPool.Id,

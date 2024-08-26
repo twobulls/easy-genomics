@@ -1,7 +1,7 @@
 {
   "name": "@easy-genomics/front-end",
   "scripts": {
-    "build": "pnpm run nuxt-prepare && pnpm run nuxt-generate && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build",
+    "build": "pnpm run nuxt-prepare && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-generate",
     "bundle": "pnpm dlx projen bundle",
     "compile": "pnpm dlx projen compile",
     "default": "pnpm dlx projen default",

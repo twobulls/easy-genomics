@@ -421,13 +421,13 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 });
 frontEndApp.addScripts({
   ['build']:
-    'pnpm run nuxt-prepare && pnpm run nuxt-generate && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
+    'pnpm run nuxt-prepare && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-generate',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy', // Run root build-front-end script to inc shared-lib
   ['nuxt-build']: 'nuxt build',
   ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
-  ['nuxt-generate']: 'nuxt generate', // Required to create front-end/.nuxt/tsconfig.json
-  ['nuxt-prepare']: 'nuxt prepare',
+  ['nuxt-generate']: 'nuxt generate',
+  ['nuxt-prepare']: 'nuxt prepare', // Required to create front-end/.nuxt/tsconfig.json
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
   ['test-e2e-local']: 'npx playwright test --project=local --reporter=html',

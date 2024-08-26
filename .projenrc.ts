@@ -63,18 +63,18 @@ const prettierOptions: PrettierOptions = {
 // Changing compiler options will require that you re-run projen twice.
 // As the jestConfig is reliant on the current (pre-projen run) version of ./tsconfig.json
 const eslintGlobalRules = {
-  'no-unused-vars': 'off',
-  '@typescript-eslint/no-unused-vars': ['warn'],
-  'semi': ['warn', 'always'],
-  'comma-dangle': ['warn', 'always-multiline'],
+  'no-unused-vars': 'error',
+  '@typescript-eslint/no-unused-vars': ['error'],
+  'semi': ['error', 'always'],
+  'comma-dangle': ['error', 'always-multiline'],
   'space-before-function-paren': 'off',
   'no-console': 'off',
-  'arrow-parens': ['warn', 'always'],
-  'no-new': 'warn',
-  'no-empty': 'warn',
-  'prettier/prettier': 'warn',
+  'arrow-parens': ['error', 'always'],
+  'no-new': 'error',
+  'no-empty': 'error',
+  'prettier/prettier': 'error',
   'require-await': 'off',
-  'array-callback-return': 'warn',
+  'array-callback-return': 'error',
   '@typescript-eslint/indent': 'off',
 };
 

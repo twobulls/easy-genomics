@@ -54,7 +54,7 @@
       }
     ],
     "comma-dangle": [
-      "warn",
+      "error",
       "always-multiline"
     ],
     "comma-spacing": [
@@ -117,7 +117,7 @@
       "error"
     ],
     "semi": [
-      "warn",
+      "error",
       "always"
     ],
     "max-len": [
@@ -214,21 +214,21 @@
         ]
       }
     ],
-    "no-unused-vars": "off",
+    "no-unused-vars": "error",
     "@typescript-eslint/no-unused-vars": [
-      "warn"
+      "error"
     ],
     "space-before-function-paren": "off",
     "no-console": "off",
     "arrow-parens": [
-      "warn",
+      "error",
       "always"
     ],
-    "no-new": "warn",
-    "no-empty": "warn",
-    "prettier/prettier": "warn",
+    "no-new": "error",
+    "no-empty": "error",
+    "prettier/prettier": "error",
     "require-await": "off",
-    "array-callback-return": "warn"
+    "array-callback-return": "error"
   },
   "overrides": []
 }

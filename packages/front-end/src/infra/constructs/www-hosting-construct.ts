@@ -96,7 +96,7 @@ export class WwwHostingConstruct extends Construct {
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3`, {});
 
     // Using the configured domainName for the WWW S3 Bucket
-    const wwwBucketName: string = appDomainName; // Must be globally unique
+    const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
 
     // Create S3 Bucket for static website hosting through CloudFront distribution
     const wwwBucket: Bucket = s3.createBucket(
@@ -113,15 +113,16 @@ export class WwwHostingConstruct extends Construct {
   // CloudFront Distribution
   private setupCloudFrontDistribution = () => {
     const appDomainName: string = this.props.appDomainName;
+    const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
 
-    const wwwBucket: Bucket | undefined = this.s3Buckets.get(appDomainName);
+    const wwwBucket: Bucket | undefined = this.s3Buckets.get(wwwBucketName);
     if (!wwwBucket) {
-      throw new Error(`S3 Bucket not found: ${appDomainName}`);
+      throw new Error(`S3 Bucket not found: ${wwwBucketName}`);
     }
 
     // Grant CloudFront access to WWW S3 Bucket
     const originAccessIdentity: OriginAccessIdentity = new OriginAccessIdentity(this, 'cloudfront-OAI', {
-      comment: `OAI for ${appDomainName}`,
+      comment: `OAI for ${wwwBucketName}`,
     });
 
     wwwBucket.grantRead(originAccessIdentity);

@@ -26,7 +26,7 @@ export const handler: Handler = async (
         Name: `/easy-genomics/organization/${existing.OrganizationId}/laboratory/${existing.LaboratoryId}/nf-access-token`,
       })
       .then((value: GetParameterCommandOutput) => !!value.Parameter)
-      .catch((_) => {
+      .catch(() => {
         return false;
       });
 

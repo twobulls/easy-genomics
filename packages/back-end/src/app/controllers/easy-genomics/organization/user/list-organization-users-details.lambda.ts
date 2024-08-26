@@ -3,8 +3,8 @@ import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types
 import { OrganizationAccess, User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
-import { UserService } from '../../../../services/easy-genomics/user-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 
 const organizationUserService = new OrganizationUserService();
 const userService = new UserService();

@@ -40,7 +40,7 @@ export const handler: Handler = async (
       .deleteParameter({
         Name: `/easy-genomics/organization/${existingLaboratory.OrganizationId}/laboratory/${existingLaboratory.LaboratoryId}/nf-access-token`,
       })
-      .catch((_) => {});
+      .catch(() => {});
 
     return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {

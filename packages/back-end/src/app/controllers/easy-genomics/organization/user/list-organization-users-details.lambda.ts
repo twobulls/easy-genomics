@@ -29,15 +29,15 @@ export const handler: Handler = async (
     const users: User[] = await userService.listUsers(userIds);
 
     const response: OrganizationUserDetails[] = organizationUsers
-      .map((orgUser) => {
-        const user: User | undefined = users.filter((u) => u.UserId === orgUser.UserId).shift();
+      .map((orgUser) => { 
+        const user: User | undefined = users.find((u) => u.UserId === orgUser.UserId); // Use find instead of filter and shift
         if (user) {
           const organizationAccess: OrganizationAccess | undefined =
             user.OrganizationAccess && organizationId
               ? { [organizationId]: user.OrganizationAccess[organizationId] }
               : user.OrganizationAccess;
 
-          return <OrganizationUserDetails>{
+          return {
             UserId: user.UserId,
             UserEmail: user.Email,
             UserStatus: user.Status,
@@ -49,10 +49,11 @@ export const handler: Handler = async (
             OrganizationUserStatus: orgUser.Status,
             OrganizationAdmin: orgUser.OrganizationAdmin,
             OrganizationAccess: organizationAccess,
-          };
+          } as OrganizationUserDetails;
         }
+        return undefined;
       })
-      .flat();
+      .filter((item): item is OrganizationUserDetails => item !== undefined);
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

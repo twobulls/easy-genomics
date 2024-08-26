@@ -9,8 +9,8 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
-import { S3Service } from '../../../services/s3-service';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { S3Service } from '@BE/services/s3-service';
 
 const SAMPLE_SHEET_CSV_HEADER: string[] = ['sample, fastq_1, fastq_2'];
 

@@ -3,9 +3,9 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { DescribePipelinesResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
-import { SsmService } from '../../../services/ssm-service';
-import { httpRequest, REST_API_METHOD } from '../../../utils/rest-api-utils';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { SsmService } from '@BE/services/ssm-service';
+import { httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();

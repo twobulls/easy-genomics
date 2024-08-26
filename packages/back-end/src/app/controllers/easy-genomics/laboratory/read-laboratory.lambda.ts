@@ -3,8 +3,8 @@ import { ReadLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-ge
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
-import { SsmService } from '../../../services/ssm-service';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { SsmService } from '@BE/services/ssm-service';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();

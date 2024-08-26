@@ -2,9 +2,9 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
-import { LaboratoryUserService } from '../../../services/easy-genomics/laboratory-user-service';
-import { SsmService } from '../../../services/ssm-service';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
+import { SsmService } from '@BE/services/ssm-service';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryUserService = new LaboratoryUserService();

@@ -17,11 +17,11 @@ import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { toByteArray } from 'base64-js';
 import { JwtPayload } from 'jsonwebtoken';
-import { CognitoIdpService } from '../../../services/cognito-idp-service';
-import { OrganizationUserService } from '../../../services/easy-genomics/organization-user-service';
-import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
-import { UserService } from '../../../services/easy-genomics/user-service';
-import { verifyJwt } from '../../../utils/jwt-utils';
+import { CognitoIdpService } from '@BE/services/cognito-idp-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
+import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
+import { verifyJwt } from '@BE/utils/jwt-utils';
 
 const cryptoClient = buildClient(CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT);
 const generatorKeyId = process.env.COGNITO_KMS_KEY_ID;

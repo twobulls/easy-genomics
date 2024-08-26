@@ -29,7 +29,7 @@ export const handler: Handler = async (
     const users: User[] = await userService.listUsers(userIds);
 
     const response: OrganizationUserDetails[] = organizationUsers
-      .map((orgUser) => { 
+      .map((orgUser) => {
         const user: User | undefined = users.find((u) => u.UserId === orgUser.UserId); // Use find instead of filter and shift
         if (user) {
           const organizationAccess: OrganizationAccess | undefined =
@@ -67,7 +67,7 @@ export const handler: Handler = async (
   }
 };
 
-const listOrganizationUsers = async (organizationId?: string, userId?: string): Promise<OrganizationUser[]> => {
+const listOrganizationUsers = (organizationId?: string, userId?: string): Promise<OrganizationUser[]> => {
   if (organizationId && !userId) {
     return organizationUserService.queryByOrganizationId(organizationId);
   } else if (!organizationId && userId) {

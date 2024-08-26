@@ -33,7 +33,7 @@ export const handler: Handler = async (
   }
 };
 
-const listOrganizationUsers = async (organizationId?: string, userId?: string): Promise<OrganizationUser[]> => {
+const listOrganizationUsers = (organizationId?: string, userId?: string): Promise<OrganizationUser[]> => {
   if (organizationId && !userId) {
     return organizationUserService.queryByOrganizationId(organizationId);
   } else if (!organizationId && userId) {

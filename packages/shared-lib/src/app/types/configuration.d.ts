@@ -3,7 +3,9 @@ export interface ConfigurationSettings {
   ['aws-region']: string,
   ['env-type']: 'dev' | 'pre-prod' | 'prod',
   ['app-domain-name']: string,
+  // The following settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
   ['aws-hosted-zone-id']?: string, // Not required when env-type: 'dev', but must exist if configured
+  ['aws-certificate-arn']?: string, // Not required when env-type: 'dev', but must exist if configured
 
   // Back-End specific settings
   ['back-end']: {
@@ -16,13 +18,7 @@ export interface ConfigurationSettings {
   }
 
   // Front-End specific settings
-  ['front-end']: {
-    // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
-    ['aws-api-gateway-url']?: string,
-
-    // The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
-    ['aws-certificate-arn']?: string, // Not required when env-type: 'dev'
-  }
+  ['front-end']?: {}
 }
 
 export interface Configuration {

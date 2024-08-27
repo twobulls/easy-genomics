@@ -92,12 +92,11 @@ export class WwwHostingConstruct extends Construct {
 
   // WWW S3 Bucket for static web pages
   private setupS3Buckets = () => {
-    const applicationUrl: string = this.props.applicationUrl;
+    const appDomainName: string = this.props.appDomainName;
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3`, {});
 
     // Using the configured domainName for the WWW S3 Bucket
-    const wwwBucketName: string = applicationUrl; // Must be globally unique
-    new CfnOutput(this, 'SiteApplicationUrl', { key: 'SiteApplicationUrl', value: `https://${applicationUrl}` });
+    const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
 
     // Create S3 Bucket for static website hosting through CloudFront distribution
     const wwwBucket: Bucket = s3.createBucket(
@@ -111,18 +110,19 @@ export class WwwHostingConstruct extends Construct {
     this.s3Buckets.set(wwwBucketName, wwwBucket); // Add Bucket to Map collection
   };
 
-  // CloudFront Distribution - requires the HostedZone and Certificate are already configured in AWS
+  // CloudFront Distribution
   private setupCloudFrontDistribution = () => {
-    const applicationUrl: string = this.props.applicationUrl;
+    const appDomainName: string = this.props.appDomainName;
+    const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
 
-    const wwwBucket: Bucket | undefined = this.s3Buckets.get(applicationUrl);
+    const wwwBucket: Bucket | undefined = this.s3Buckets.get(wwwBucketName);
     if (!wwwBucket) {
-      throw new Error(`S3 Bucket not found: ${applicationUrl}`);
+      throw new Error(`S3 Bucket not found: ${wwwBucketName}`);
     }
 
     // Grant CloudFront access to WWW S3 Bucket
     const originAccessIdentity: OriginAccessIdentity = new OriginAccessIdentity(this, 'cloudfront-OAI', {
-      comment: `OAI for ${applicationUrl}`,
+      comment: `OAI for ${wwwBucketName}`,
     });
 
     wwwBucket.grantRead(originAccessIdentity);
@@ -131,11 +131,10 @@ export class WwwHostingConstruct extends Construct {
       new PolicyStatement({
         actions: ['s3:GetObject'],
         resources: [wwwBucket.arnForObjects('*')],
-        principals: [
-          new CanonicalUserPrincipal(originAccessIdentity.cloudFrontOriginAccessIdentityS3CanonicalUserId),
-        ],
+        principals: [new CanonicalUserPrincipal(originAccessIdentity.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
       }),
     );
+
     new CfnOutput(this, 'HostingBucketName', { key: 'HostingBucketName', value: wwwBucket.bucketName });
 
     const responseHeadersPolicy: ResponseHeadersPolicy | undefined = this.applySecurityHeaders();
@@ -144,35 +143,25 @@ export class WwwHostingConstruct extends Construct {
       maxTtl: this.props.indexCacheDuration,
       minTtl: this.props.indexCacheDuration,
       defaultTtl: this.props.indexCacheDuration,
-      comment: `Caching policy for ${applicationUrl}`,
+      comment: `Caching policy for ${appDomainName}`,
       enableAcceptEncodingGzip: true,
       enableAcceptEncodingBrotli: true,
     });
 
-    // Retrieve Hosted Zone
-    const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
-      hostedZoneId: this.props.hostedZoneId,
-      zoneName: this.props.hostedZoneName,
-    });
-    new CfnOutput(this, 'HostedZoneId', { key: 'HostedZoneId', value: hostedZone.hostedZoneId });
-    new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
-
-    // Retrieve TLS certificate
-    const certificate: ICertificate = Certificate.fromCertificateArn(
-      this,
-      'SiteCertificate',
-      this.props.certificateArn,
-    );
-    new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
-
-    const s3Origin: S3Origin = new S3Origin(wwwBucket, { originAccessIdentity: originAccessIdentity });
+    const s3Origin: S3Origin = new S3Origin(wwwBucket, { originAccessIdentity });
     const indexPath: string = `/${this.props.webSiteIndexDocument}`;
+
+    const certificate: ICertificate | undefined =
+      this.props.awsHostedZoneId && this.props.awsCertificateArn
+        ? this.getCertificate(this.props.awsCertificateArn)
+        : undefined;
+    const domainNames: string[] = this.props.awsHostedZoneId && certificate ? [this.props.appDomainName] : [];
 
     // CloudFront distribution
     const distribution: Distribution = new Distribution(this, 'SiteDistribution', {
-      certificate: certificate,
+      certificate,
       defaultRootObject: this.props.webSiteIndexDocument,
-      domainNames: [applicationUrl],
+      domainNames,
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
       webAclId: this.props.webAclId, // Optional AWS WAF web ACL
       defaultBehavior: {
@@ -181,13 +170,13 @@ export class WwwHostingConstruct extends Construct {
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS, // HEAD, GET, OPTIONS
         viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
-        responseHeadersPolicy: responseHeadersPolicy,
+        responseHeadersPolicy,
       },
       additionalBehaviors: {
         [indexPath]: {
           origin: s3Origin,
           cachePolicy: indexCachePolicy,
-          responseHeadersPolicy: responseHeadersPolicy,
+          responseHeadersPolicy,
         },
       },
       errorResponses: [
@@ -205,17 +194,39 @@ export class WwwHostingConstruct extends Construct {
         },
       ],
     });
-    new CfnOutput(this, 'DistributionId', { key: 'DistributionId', value: distribution.distributionId });
 
-    // Route53 alias record for the CloudFront distribution
-    new ARecord(this, 'SiteAliasRecord', {
-      target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
-      zone: hostedZone,
-    });
+    if (this.props.awsHostedZoneId && this.props.awsCertificateArn) {
+      console.log(`Proceeding to setup CloudFront Distribution with Site Alias: ${this.props.appDomainName}`);
+      // Retrieve Hosted Zone by configured awsHostedZoneId and appDomainName
+      const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+        hostedZoneId: this.props.awsHostedZoneId,
+        zoneName: this.props.appDomainName,
+      });
+
+      new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
+
+      // Setup Route53 alias record for the CloudFront distribution
+
+      new ARecord(this, 'SiteAliasRecord', {
+        target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+        zone: hostedZone,
+      });
+      // Domain Name alias configured for the ApplicationUrl
+
+      new CfnOutput(this, 'ApplicationUrl', { key: 'ApplicationUrl', value: `https://${appDomainName}` });
+    } else {
+      // Domain Name alias not configured for the ApplicationUrl - output CloudFront Distribution URL
+
+      new CfnOutput(this, 'ApplicationUrl', {
+        key: 'ApplicationUrl',
+        value: `https://${distribution.distributionDomainName}`,
+      });
+    }
 
     const wwwSourceDir = path.join(__dirname, '../../../dist'); // Generated site contents folder
     if (fs.existsSync(wwwSourceDir)) {
       // Deploy site contents to S3 bucket
+
       new BucketDeployment(this, 'DeployWithInvalidation', {
         sources: [Source.asset(wwwSourceDir)],
         destinationBucket: wwwBucket,
@@ -225,11 +236,21 @@ export class WwwHostingConstruct extends Construct {
     }
   };
 
+  private getCertificate = (awsCertificateArn: string): ICertificate => {
+    // Retrieve TLS certificate
+    const certificate: ICertificate = Certificate.fromCertificateArn(this, 'SiteCertificate', awsCertificateArn);
+
+    new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
+    return certificate;
+  };
+
   private applySecurityHeaders = (): ResponseHeadersPolicy | undefined => {
     if (this.props.securityHeaders?.enabled) {
       return new ResponseHeadersPolicy(this, 'ResponseHeadersPolicy', {
         securityHeadersBehavior: this.props.securityHeaders,
       });
-    } else {return;}
+    } else {
+      return undefined;
+    }
   };
 }

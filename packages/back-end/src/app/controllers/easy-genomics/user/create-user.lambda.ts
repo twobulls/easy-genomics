@@ -4,7 +4,7 @@ import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
-import { UserService } from '../../../services/easy-genomics/user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 
 const userService = new UserService();
 
@@ -16,9 +16,7 @@ export const handler: Handler = async (
   try {
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: User = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: User = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     console.log('DEBUG: request = ', request);
 
     // Data validation safety check
@@ -56,4 +54,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

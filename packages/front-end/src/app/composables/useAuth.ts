@@ -1,6 +1,6 @@
 import { Auth } from 'aws-amplify';
-import { ERRORS } from '~/constants/validation';
-import { useToastStore, useUiStore } from '~/stores/stores';
+import { VALIDATION_MESSAGES } from '@FE/constants/validation';
+import { useToastStore, useUiStore } from '@FE/stores';
 
 export default function useAuth() {
   async function isAuthed() {
@@ -24,7 +24,7 @@ export default function useAuth() {
       if (error.code === 'NotAuthorizedException') {
         useToastStore().error('Incorrect email or password. Please try again.');
       } else {
-        useToastStore().error(ERRORS.network);
+        useToastStore().error(VALIDATION_MESSAGES.network);
       }
       console.error('Error occurred during sign in.', error);
       throw error;
@@ -33,16 +33,23 @@ export default function useAuth() {
     }
   }
 
+  async function getToken(): Promise<string> {
+    const session = await Auth.currentSession();
+    return session.getIdToken().getJwtToken();
+  }
+
   async function signOut() {
     try {
       await Auth.signOut();
       await navigateTo('/signin');
+      useToastStore().success('You have been signed out.');
     } catch (error) {
       console.error('Error occurred during sign out.', error);
       throw error;
     }
   }
   return {
+    getToken,
     isAuthed,
     signIn,
     signOut,

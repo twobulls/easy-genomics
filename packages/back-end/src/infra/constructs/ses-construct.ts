@@ -6,7 +6,8 @@ import { Construct } from 'constructs';
 export interface SesConstructProps extends StackProps {
   awsAccount: string;
   awsRegion: string;
-  domainName: string;
+  appDomainName: string;
+  awsHostedZoneId?: string;
   emailSender: string;
 }
 
@@ -20,16 +21,24 @@ export class SesConstruct extends Construct {
     super(scope, id);
     this.props = props;
 
-    const hostedZone: IHostedZone = HostedZone.fromLookup(this, 'Zone', { domainName: this.props.domainName });
+    if (!this.props.awsHostedZoneId) {
+      console.log('Skipping SES configuration - AWS HostedZoneId not configured');
+    } else {
+      console.log(`Proceeding with SES configuration with AWS HostedZoneId: ${this.props.awsHostedZoneId}`);
+      const hostedZone: IHostedZone = HostedZone.fromHostedZoneAttributes(this, 'HostedZone', {
+        hostedZoneId: this.props.awsHostedZoneId,
+        zoneName: this.props.appDomainName,
+      });
 
-    const emailDomainIdentity = new EmailIdentity(this, 'VerifiedEmailDomainIdentity', {
-      identity: Identity.publicHostedZone(hostedZone),
-      mailFromDomain: `mail.${this.props.domainName}`,
-    });
-    emailDomainIdentity.applyRemovalPolicy(RemovalPolicy.DESTROY);
+      const emailDomainIdentity = new EmailIdentity(this, 'VerifiedEmailDomainIdentity', {
+        identity: Identity.publicHostedZone(hostedZone),
+        mailFromDomain: `mail.${this.props.appDomainName}`,
+      });
+      emailDomainIdentity.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
-    this.setupUserInvitationEmailTemplate();
-    this.setupUserForgotPasswordEmailTemplate();
+      this.setupUserInvitationEmailTemplate();
+      this.setupUserForgotPasswordEmailTemplate();
+    }
   }
 
   private setupUserInvitationEmailTemplate() {
@@ -374,7 +383,7 @@ export class SesConstruct extends Construct {
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div style="mso-line-height-rule: exactly;mso-text-raise: 11px;vertical-align: middle;">
                                                 <h1 class="size-32" style="Margin-top: 0;Margin-bottom: 0;font-style: normal;font-weight: normal;color: #565656;font-size: 28px;line-height: 36px;font-family: sans-serif;text-align: center;" lang="x-size-32"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #12181f;">You've been invited</span></span></h1>
-                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">to {{ ORGANIZATION_NAME }}, click the link below to set up your account and get started. This link will expire in 7 Days.</span></span></p>
+                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">to {{ ORGANIZATION_NAME }}, click the link below to set up your account and get started. This link will expire in 7 days.</span></span></p>
                                              </div>
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">

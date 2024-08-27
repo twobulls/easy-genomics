@@ -1,5 +1,10 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+  const $route = useRoute();
+  const $router = useRouter();
 
-<template>Welcome to EasyGenomics.</template>
-
-<style scoped></style>
+  onMounted(() => {
+    if ($route.path !== '/labs') {
+      $router.push('/labs');
+    }
+  });
+</script>

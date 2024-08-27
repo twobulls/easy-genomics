@@ -3,18 +3,23 @@ import { Auth } from 'aws-amplify';
 const baseURL = window.location.origin;
 
 /**
- * @description Check auth status on every route change and redirect to signIn page if not authenticated
+ * @description Routing rules for authed/non-authed users, invoked on every route change
  */
-export default defineNuxtRouteMiddleware(async (context) => {
-  const url = new URL(context.fullPath, baseURL);
+export default defineNuxtRouteMiddleware(async (to) => {
+  const url = new URL(to.fullPath, baseURL);
 
+  // If the URL contains an email query parameter (incoming from /accept-invite) do not redirect
+  if (url.search.startsWith('?email=')) {
+    return;
+  }
+
+  // accept invite redirect to sign in page
   if (url.pathname === '/accept-invitation') {
     const token = url.searchParams.get('invite');
 
     // If the 'accept-password' query parameter is missing or empty, redirect to '/'
     if (!token) {
-      alert(token);
-      return navigateTo('/');
+      return navigateTo('/signin');
     }
   }
 
@@ -23,22 +28,27 @@ export default defineNuxtRouteMiddleware(async (context) => {
 
     // If the 'forgot-password' query parameter is missing or empty, redirect to '/'
     if (!token) {
-      return navigateTo('/');
+      return navigateTo('/signin');
     }
   }
 
+  /**
+   * @description Redirects for authed/non-authed users
+   */
   if (!['/accept-invitation', '/forgot-password', '/reset-password'].includes(url.pathname)) {
     try {
       const user = await Auth.currentAuthenticatedUser();
 
+      // if user is signed in redirect to Labs page
       if (user && url.pathname === '/signin') {
-        return navigateTo('/labs');
+        return await navigateTo('/labs');
       }
-      if (!user && context.fullPath !== '/signin') {
-        return navigateTo('/signin');
+      // if user is not signed in and is trying to acccess an authed page, redirect to sign in page
+      if (!user && to.fullPath !== '/signin') {
+        return await navigateTo('/signin');
       }
     } catch (e) {
-      if (context.fullPath !== '/signin') {
+      if (to.fullPath !== '/signin') {
         return navigateTo('/signin');
       }
     }

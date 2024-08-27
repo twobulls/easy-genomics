@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { useToastStore, useUiStore } from '~/stores/stores';
-  import { ERRORS } from '~/constants/validation';
+  import { useToastStore, useUiStore } from '@FE/stores';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 
   definePageMeta({ layout: 'password' });
 
@@ -10,7 +10,7 @@
   const { $api } = useNuxtApp();
   const { signIn } = useAuth();
   const formSchema = z.object({
-    email: z.string().email(ERRORS.email),
+    email: z.string().email(VALIDATION_MESSAGES.email),
   });
 
   watchEffect(() => {
@@ -20,7 +20,7 @@
   function handleSuccess(email: string) {
     useToastStore().success(`Reset link has been sent to ${email}`);
     state.value.email = '';
-    navigateTo('/sign-in');
+    navigateTo('/signin');
   }
 
   /**
@@ -37,7 +37,7 @@
       if (error.message === 'Request error: Failed to fetch') {
         handleSuccess(email);
       } else {
-        useToastStore().error(ERRORS.network);
+        useToastStore().error(VALIDATION_MESSAGES.network);
         console.error('Error occurred during forgot password request.', error);
         throw error;
       }

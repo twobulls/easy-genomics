@@ -1,10 +1,7 @@
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import {
-  LaboratoryAccess,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { LaboratoryAccess, User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class PlatformUserService extends DynamoDBService {
@@ -102,7 +99,8 @@ export class PlatformUserService extends DynamoDBService {
 
     const response = await this.transactWriteItems({
       TransactItems: [
-        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+        {
+          // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
           Put: {
             TableName: this.USER_TABLE_NAME,
             ConditionExpression: 'attribute_exists(#UserId)',
@@ -151,14 +149,13 @@ export class PlatformUserService extends DynamoDBService {
 
     // Find the current OrganizationAccess to identify the existing associated LaboratoryIds to remove
     const laboratoryAccess: LaboratoryAccess | undefined =
-      (user.OrganizationAccess && user.OrganizationAccess[organizationUser.OrganizationId])
+      user.OrganizationAccess && user.OrganizationAccess[organizationUser.OrganizationId]
         ? user.OrganizationAccess[organizationUser.OrganizationId].LaboratoryAccess
         : undefined;
 
     // Generate array of Delete transaction items to remove the User's associated LaboratoryUser mappings
-    const laboratoryUserDeletions = (laboratoryAccess)
-      ? Object.keys(laboratoryAccess)
-        .map(laboratoryId => {
+    const laboratoryUserDeletions = laboratoryAccess
+      ? Object.keys(laboratoryAccess).map((laboratoryId) => {
           return {
             Delete: {
               TableName: this.LABORATORY_USER_TABLE_NAME,
@@ -172,11 +169,12 @@ export class PlatformUserService extends DynamoDBService {
       : [];
 
     // Update the current Organization Access to exclude the Organization to remove
-    (user.OrganizationAccess) ? (delete user.OrganizationAccess[organizationUser.OrganizationId]) : false;
+    user.OrganizationAccess ? delete user.OrganizationAccess[organizationUser.OrganizationId] : false;
 
     const response = await this.transactWriteItems({
       TransactItems: [
-        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+        {
+          // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
           Put: {
             TableName: this.USER_TABLE_NAME,
             ConditionExpression: 'attribute_exists(#UserId)',
@@ -226,7 +224,8 @@ export class PlatformUserService extends DynamoDBService {
 
     const response = await this.transactWriteItems({
       TransactItems: [
-        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+        {
+          // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
           Put: {
             TableName: this.USER_TABLE_NAME,
             ConditionExpression: 'attribute_exists(#UserId)',
@@ -236,7 +235,8 @@ export class PlatformUserService extends DynamoDBService {
             Item: marshall(user),
           },
         },
-        { // Using PutItem request to update the existing OrganizationUser record for marshalling convenience instead of UpdateItem
+        {
+          // Using PutItem request to update the existing OrganizationUser record for marshalling convenience instead of UpdateItem
           Put: {
             TableName: this.ORGANIZATION_USER_TABLE_NAME,
             ConditionExpression: 'attribute_exists(#OrganizationId) AND attribute_exists(#UserId)',
@@ -277,7 +277,8 @@ export class PlatformUserService extends DynamoDBService {
 
     const response = await this.transactWriteItems({
       TransactItems: [
-        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+        {
+          // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
           Put: {
             TableName: this.USER_TABLE_NAME,
             ConditionExpression: 'attribute_exists(#UserId)',
@@ -328,7 +329,8 @@ export class PlatformUserService extends DynamoDBService {
 
     const response = await this.transactWriteItems({
       TransactItems: [
-        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+        {
+          // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
           Put: {
             TableName: this.USER_TABLE_NAME,
             ConditionExpression: 'attribute_exists(#UserId)',
@@ -377,7 +379,8 @@ export class PlatformUserService extends DynamoDBService {
 
     const response = await this.transactWriteItems({
       TransactItems: [
-        { // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+        {
+          // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
           Put: {
             TableName: this.USER_TABLE_NAME,
             ConditionExpression: 'attribute_exists(#UserId)',
@@ -387,7 +390,8 @@ export class PlatformUserService extends DynamoDBService {
             Item: marshall(user),
           },
         },
-        { // Using PutItem request to update the existing LaboratoryUser record for marshalling convenience instead of UpdateItem
+        {
+          // Using PutItem request to update the existing LaboratoryUser record for marshalling convenience instead of UpdateItem
           Put: {
             TableName: this.LABORATORY_USER_TABLE_NAME,
             ConditionExpression: 'attribute_exists(#LaboratoryId) AND attribute_exists(#UserId)',
@@ -407,5 +411,4 @@ export class PlatformUserService extends DynamoDBService {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
   }
-
 }

@@ -1,21 +1,27 @@
 <script setup lang="ts">
   import { cva } from 'class-variance-authority';
-  import { ButtonVariantEnum, ButtonVariant, ButtonSizeEnum, ButtonSize } from '~/types/buttons';
+  import { ButtonVariantEnum, ButtonVariant, ButtonSizeEnum, ButtonSize } from '@FE/types/buttons';
 
   type ButtonProps = {
     variant?: ButtonVariant;
     size?: ButtonSize;
     label?: string;
     icon?: string;
+    iconRight?: boolean;
+    disabled?: boolean;
   };
 
   withDefaults(defineProps<ButtonProps>(), {
     variant: ButtonVariantEnum.enum.primary,
     size: ButtonSizeEnum.enum.md,
+    label: '',
+    icon: '',
+    iconRight: true,
+    disabled: false,
   });
 
   const buttonVariants = cva(
-    'rounded-lg text-center text-sm shadow-none focus-visible:outline-offset-1 transition-colors duration-200',
+    'rounded-lg text-center text-sm shadow-none focus-visible:outline-offset-1 transition-colors duration-200 whitespace-nowrap',
     {
       variants: {
         variant: {
@@ -75,20 +81,22 @@
           ],
         },
         size: {
+          xs: ['px-3', 'py-2'],
           sm: ['px-6', 'py-3'],
           md: ['px-6 py-4 font-medium'],
           lg: ['p-6 text-base font-semibold'],
         },
       },
       defaultVariants: { variant: ButtonVariantEnum.enum.primary, size: ButtonSizeEnum.enum.md },
-    }
+    },
   );
 </script>
 
 <template>
   <UButton
+    :disabled="disabled"
     :icon="icon"
-    trailing
+    :trailing="iconRight"
     :class="buttonVariants({ variant, size })"
     :label="label"
     :ui="{

@@ -5,7 +5,7 @@
     }>(),
     {
       padding: 6,
-    }
+    },
   );
 </script>
 
@@ -18,7 +18,7 @@
         padding: `sm:p-${padding}`,
       },
       rounded: 'rounded-2xl',
-      border: 'border-neutral-200',
+      border: 'stroke-light',
     }"
   >
     <slot />

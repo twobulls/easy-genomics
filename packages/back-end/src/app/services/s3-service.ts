@@ -15,9 +15,13 @@ import {
   DeleteBucketCommandOutput,
   DeleteObjectCommand,
   DeleteObjectCommandInput,
+  ExpirationStatus,
   GetBucketLocationCommand,
   GetBucketLocationCommandInput,
   GetBucketLocationCommandOutput,
+  HeadObjectCommand,
+  HeadObjectCommandInput,
+  HeadObjectCommandOutput,
   InvalidObjectState,
   ListBucketsCommand,
   ListBucketsCommandInput,
@@ -33,9 +37,19 @@ import {
   NoSuchUpload,
   NotFound,
   ObjectNotInActiveTierError,
+  PutBucketCorsCommand,
+  PutBucketCorsCommandInput,
+  PutBucketCorsCommandOutput,
+  PutBucketLifecycleConfigurationCommand,
+  PutBucketLifecycleConfigurationCommandInput,
+  PutBucketLifecycleConfigurationCommandOutput,
+  PutObjectCommand,
+  PutObjectCommandInput,
+  PutObjectCommandOutput,
   S3Client,
   S3ServiceException,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export enum S3Command {
   // Manage S3 Bucket
@@ -43,10 +57,14 @@ export enum S3Command {
   DELETE_BUCKET = 'delete-bucket',
   LIST_BUCKETS = 'list-buckets',
   GET_BUCKET_LOCATION = 'get-bucket-location',
+  PUT_BUCKET_CORS = 'put-bucket-cors',
+  PUT_BUCKET_LIFECYCLE_CONFIGURATION = 'put-bucket-lifecycle-configuration',
   // Manage S3 Bucket objects
   COPY_BUCKET_OBJECT = 'copy-bucket-object',
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
   LIST_BUCKET_OBJECTS = 'list-bucket-objects',
+  HEAD_OBJECT = 'head-object',
+  PUT_OBJECT = 'put-object',
   // Multi-Part S3 Uploads
   CREATE_MULTI_PART_UPLOAD = 'create-multi-part-upload',
   ABORT_MULTI_PART_UPLOAD = 'abort-multi-part-upload',
@@ -63,10 +81,51 @@ export class S3Service {
   }
 
   public createBucket = async (createBucketInput: CreateBucketCommandInput): Promise<CreateBucketCommandOutput> => {
-    return this.s3Request<CreateBucketCommandInput, CreateBucketCommandOutput>(
-      S3Command.CREATE_BUCKET,
-      createBucketInput,
+    // Create S3 Bucket
+    const createBucketCommandOutput: CreateBucketCommandOutput = await this.s3Request<
+      CreateBucketCommandInput,
+      CreateBucketCommandOutput
+    >(S3Command.CREATE_BUCKET, createBucketInput);
+
+    // Set S3 Bucket CORS configuration
+    const putBucketCorsCommandInput: PutBucketCorsCommandInput = {
+      Bucket: createBucketInput.Bucket,
+      CORSConfiguration: {
+        CORSRules: [
+          {
+            AllowedMethods: ['GET', 'PUT', 'POST', 'HEAD'],
+            AllowedOrigins: ['*'], // TODO: Restrict to domain in configuration file
+            AllowedHeaders: ['*'],
+          },
+        ],
+      },
+    };
+    await this.s3Request<PutBucketCorsCommandInput, PutBucketCorsCommandOutput>(
+      S3Command.PUT_BUCKET_CORS,
+      putBucketCorsCommandInput,
     );
+
+    // Set S3 Bucket Lifecycle Rules
+    const putBucketLifecycleConfigurationCommandInput: PutBucketLifecycleConfigurationCommandInput = {
+      Bucket: createBucketInput.Bucket,
+      LifecycleConfiguration: {
+        Rules: [
+          {
+            Prefix: 'uploads',
+            Status: ExpirationStatus.Enabled,
+            AbortIncompleteMultipartUpload: {
+              DaysAfterInitiation: 2,
+            },
+          },
+        ],
+      },
+    };
+    await this.s3Request<PutBucketLifecycleConfigurationCommandInput, PutBucketLifecycleConfigurationCommandOutput>(
+      S3Command.PUT_BUCKET_LIFECYCLE_CONFIGURATION,
+      putBucketLifecycleConfigurationCommandInput,
+    );
+
+    return createBucketCommandOutput;
   };
 
   public deleteBucket = async (deleteBucketInput: DeleteBucketCommandInput): Promise<DeleteBucketCommandOutput> => {
@@ -77,26 +136,49 @@ export class S3Service {
   };
 
   public listBuckets = async (listBucketsInput: ListBucketsCommandInput): Promise<ListBucketsCommandOutput> => {
-    return this.s3Request<ListBucketsCommandInput, ListBucketsCommandOutput>(
-      S3Command.LIST_BUCKETS,
-      listBucketsInput,
-    );
+    return this.s3Request<ListBucketsCommandInput, ListBucketsCommandOutput>(S3Command.LIST_BUCKETS, listBucketsInput);
   };
 
-  public getBucketLocation = async (getBucketLocationInput: GetBucketLocationCommandInput): Promise<GetBucketLocationCommandOutput> => {
+  public getBucketLocation = async (
+    getBucketLocationInput: GetBucketLocationCommandInput,
+  ): Promise<GetBucketLocationCommandOutput> => {
     return this.s3Request<GetBucketLocationCommandInput, GetBucketLocationCommandOutput>(
       S3Command.GET_BUCKET_LOCATION,
       getBucketLocationInput,
     );
   };
 
-  private s3Request = async <RequestType, ResponseType>(command: S3Command, data?: RequestType): Promise<ResponseType> => {
+  public getPreSignedUploadUrl = async (putObjectInput: PutObjectCommandInput): Promise<string> => {
+    const putObjectCommand: PutObjectCommand = new PutObjectCommand(putObjectInput);
+    return getSignedUrl(this.s3Client, putObjectCommand, { expiresIn: 3600 });
+  };
+
+  public doesObjectExist = async (headObjectInput: HeadObjectCommandInput): Promise<boolean> => {
+    try {
+      const response = await this.s3Request<HeadObjectCommandInput, HeadObjectCommandOutput>(
+        S3Command.HEAD_OBJECT,
+        headObjectInput,
+      );
+      return response.$metadata.httpStatusCode === 200;
+    } catch (error: any) {
+      return false;
+    }
+  };
+
+  public putObject = async (putObjectInput: PutObjectCommandInput): Promise<PutObjectCommandOutput> => {
+    return this.s3Request<PutObjectCommandInput, PutObjectCommandOutput>(S3Command.PUT_OBJECT, putObjectInput);
+  };
+
+  private s3Request = async <RequestType, ResponseType>(
+    command: S3Command,
+    data?: RequestType,
+  ): Promise<ResponseType> => {
     try {
       console.log(
         `[s3-service : s3Request] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
       );
 
-      return (await this.s3Client.send(this.getS3Command(command, data)));
+      return await this.s3Client.send(this.getS3Command(command, data));
     } catch (error: any) {
       console.error(
         `[s3-service : s3Request] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
@@ -141,6 +223,10 @@ export class S3Service {
         return new DeleteBucketCommand(data as DeleteBucketCommandInput);
       case S3Command.GET_BUCKET_LOCATION:
         return new GetBucketLocationCommand(data as GetBucketLocationCommandInput);
+      case S3Command.PUT_BUCKET_CORS:
+        return new PutBucketCorsCommand(data as PutBucketCorsCommandInput);
+      case S3Command.PUT_BUCKET_LIFECYCLE_CONFIGURATION:
+        return new PutBucketLifecycleConfigurationCommand(data as PutBucketLifecycleConfigurationCommandInput);
       // S3 Bucket Object Commands
       case S3Command.COPY_BUCKET_OBJECT:
         return new CopyObjectCommand(data as CopyObjectCommandInput);
@@ -148,6 +234,10 @@ export class S3Service {
         return new DeleteObjectCommand(data as DeleteObjectCommandInput);
       case S3Command.LIST_BUCKET_OBJECTS:
         return new ListObjectsV2Command(data as ListObjectsV2CommandInput);
+      case S3Command.HEAD_OBJECT:
+        return new HeadObjectCommand(data as HeadObjectCommandInput);
+      case S3Command.PUT_OBJECT:
+        return new PutObjectCommand(data as PutObjectCommandInput);
       // Multi-Part S3 Upload Commands
       case S3Command.CREATE_MULTI_PART_UPLOAD:
         return new CreateMultipartUploadCommand(data as CreateMultipartUploadCommandInput);

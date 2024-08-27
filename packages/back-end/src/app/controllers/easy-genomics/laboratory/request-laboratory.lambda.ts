@@ -2,7 +2,7 @@ import { RequestLaboratorySchema } from '@easy-genomics/shared-lib/src/app/schem
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 
 const laboratoryService = new LaboratoryService();
 
@@ -12,9 +12,7 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     // Post Request Body
-    const request: Laboratory = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: Laboratory = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!RequestLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
 
@@ -34,4 +32,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

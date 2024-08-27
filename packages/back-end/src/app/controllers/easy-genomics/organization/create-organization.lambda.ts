@@ -4,7 +4,7 @@ import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genom
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
-import { OrganizationService } from '../../../services/easy-genomics/organization-service';
+import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
 
 const organizationService = new OrganizationService();
 
@@ -15,9 +15,7 @@ export const handler: Handler = async (
   try {
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: Organization = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: Organization = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!CreateOrganizationSchema.safeParse(request).success) throw new Error('Invalid request');
 
@@ -50,4 +48,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

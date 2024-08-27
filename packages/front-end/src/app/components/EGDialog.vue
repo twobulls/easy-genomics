@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
+  import { ButtonVariantEnum, ButtonSizeEnum } from '@FE/types/buttons';
 
   defineProps<{
     modelValue: any;
@@ -23,52 +23,38 @@
     <UCard>
       <template #header>
         <div class="flex flex-col">
-          <div class="flex flex-col">
-            <div class="flex">
-              <div v-if="primaryMessage" class="font-heading mb-6 text-2xl font-medium">
-                {{ primaryMessage }}
-              </div>
-              <div v-if="secondaryMessage" class="mb-6 text-sm text-gray-600">
-                {{ secondaryMessage }}
-                <div>
-                  <UButton
-                    @click="handleCancel"
-                    icon="i-heroicons-x-mark"
-                    class="hover:bg-background-dark-grey ml-2"
-                    color="black"
-                    variant="ghost"
-                    :ui="{ rounded: 'rounded-full' }"
-                  />
-                </div>
-              </div>
-              <div>
-                <UButton
-                  @click="handleCancel"
-                  icon="i-heroicons-x-mark"
-                  class="hover:bg-background-dark-grey ml-2"
-                  color="black"
-                  variant="ghost"
-                  :ui="{ rounded: 'rounded-full' }"
-                />
-              </div>
-            </div>
-            <div class="flex justify-end gap-4">
-              <div v-if="cancelLabel">
-                <EGButton
-                  @click="handleCancel"
-                  :label="cancelLabel"
-                  :variant="ButtonVariantEnum.enum.secondary"
-                  :size="ButtonSizeEnum.enum.sm"
-                />
-              </div>
-              <EGButton
-                @click="emit('action-triggered')"
-                :label="actionLabel"
-                :size="ButtonSizeEnum.enum.sm"
-                :variant="ButtonVariantEnum.enum.destructive"
-                autofocus
+          <div class="flex">
+            <EGText tag="h3" class="mb-6">{{ primaryMessage }}</EGText>
+            <div>
+              <UButton
+                @click="handleCancel"
+                icon="i-heroicons-x-mark"
+                class="hover:bg-background-dark-grey ml-2"
+                color="black"
+                variant="ghost"
+                :ui="{ rounded: 'rounded-full' }"
               />
             </div>
+          </div>
+          <div v-if="secondaryMessage">
+            <EGText tag="p" class="mb-6">{{ secondaryMessage }}</EGText>
+          </div>
+          <div class="flex justify-end gap-4">
+            <div v-if="cancelLabel">
+              <EGButton
+                @click="handleCancel"
+                :label="cancelLabel"
+                :variant="ButtonVariantEnum.enum.secondary"
+                :size="ButtonSizeEnum.enum.sm"
+              />
+            </div>
+            <EGButton
+              @click="emit('action-triggered')"
+              :label="actionLabel"
+              :size="ButtonSizeEnum.enum.sm"
+              :variant="ButtonVariantEnum.enum.destructive"
+              autofocus
+            />
           </div>
         </div>
       </template>

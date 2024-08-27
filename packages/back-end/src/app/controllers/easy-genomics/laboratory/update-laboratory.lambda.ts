@@ -1,15 +1,16 @@
 import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
-import { GetBucketLocationCommandOutput } from '@aws-sdk/client-s3';
-import { UpdateLaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+import {
+  UpdateLaboratory,
+  UpdateLaboratorySchema,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
-import { S3Service } from '../../../services/s3-service';
-import { encrypt } from '../../../utils/encryption-utils';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { SsmService } from '@BE/services/ssm-service';
 
 const laboratoryService = new LaboratoryService();
-const s3Service = new S3Service();
+const ssmService = new SsmService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -22,55 +23,53 @@ export const handler: Handler = async (
 
     const userId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Put Request Body
-    const request: Laboratory = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: UpdateLaboratory = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!UpdateLaboratorySchema.safeParse(request).success) throw new Error('Invalid request');
-
-    // Check Laboratory S3 Bucket is valid
-    if (!request.S3Bucket) {
-      throw new Error('Laboratory S3 Bucket is required');
-    }
-    const bucketLocation: GetBucketLocationCommandOutput = await s3Service.getBucketLocation({ Bucket: request.S3Bucket });
-    if (bucketLocation.$metadata.httpStatusCode !== 200) {
-      throw new Error(`Unable to find Laboratory S3 Bucket: ${request.S3Bucket}`);
-    }
-    /**
-     * S3 CLI/SDK get-bucket-location lookup will return LocationConstraint = null for the AWS region 'us-east-1'.
-     * This is the expected behaviour: https://github.com/aws/aws-cli/issues/3864
-     */
-    if ((process.env.REGION === 'us-east-1' && bucketLocation.LocationConstraint != null) ||
-        (process.env.REGION !== 'us-east-1' && process.env.REGION !== bucketLocation.LocationConstraint)) {
-      throw new Error(`Laboratory S3 Bucket does not belong to the same AWS Region: ${process.env.AWS_REGION}`);
+    if (!UpdateLaboratorySchema.safeParse(request).success) {
+      throw new Error('Invalid request');
     }
 
     // Lookup by LaboratoryId to confirm existence before updating
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
-    const updated: Laboratory = await laboratoryService.update({
-      ...existing,
-      ...request,
-      NextFlowTowerAccessToken: await encrypt(request.NextFlowTowerAccessToken),
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: userId,
-    }, existing);
-    return buildResponse(200, JSON.stringify(updated), event);
+
+    const response: Laboratory = await laboratoryService.update(
+      {
+        ...existing,
+        Name: request.Name,
+        Description: request.Description,
+        Status: 'Active',
+        AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled,
+        NextFlowTowerEnabled: request.NextFlowTowerEnabled,
+        NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
+        ModifiedAt: new Date().toISOString(),
+        ModifiedBy: userId,
+      },
+      existing,
+    );
+
+    // Update NextFlow AccessToken in SSM if new value supplied
+    if (request.NextFlowTowerAccessToken) {
+      await ssmService.putParameter({
+        Name: `/easy-genomics/organization/${existing.OrganizationId}/laboratory/${existing.LaboratoryId}/nf-access-token`,
+        Description: `Easy Genomics Laboratory ${existing.LaboratoryId} NF AccessToken`,
+        Value: request.NextFlowTowerAccessToken,
+        Type: 'SecureString',
+        Overwrite: true,
+      });
+    }
+
+    return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        Error: getErrorMessage(err),
-      }),
-    };
+    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
   }
 };
 
-// Used for customising error messages by exception types
+// Used for customizing error messages by exception types
 function getErrorMessage(err: any) {
   if (err instanceof TransactionCanceledException) {
     return 'Laboratory Name already taken';
   } else {
     return err.message;
   }
-};
+}

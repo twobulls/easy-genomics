@@ -1,27 +1,52 @@
-import { Auth } from 'aws-amplify';
 import { useRuntimeConfig } from 'nuxt/app';
+const { getToken } = useAuth();
 
 class HttpFactory {
-  private baseRequestUrl = `${useRuntimeConfig().public.BASE_API_URL}/easy-genomics`;
+  private baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
+  private defaultApiUrl = `${this.baseApiUrl}/easy-genomics`;
+  private nfTowerApiUrl = `${this.baseApiUrl}/nf-tower`;
+
+  /**
+   * @description Default API request handler
+   */
+  call<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
+    return this.performRequest<T>(method, this.defaultApiUrl + url, data);
+  }
+
+  /**
+   * @description NF Tower API request handler
+   */
+  callNextflowTower<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
+    return this.performRequest<T>(method, this.nfTowerApiUrl + url, data);
+  }
 
   /**
    * @description Call API with token and handle response errors
    * @param method
    * @param url
    * @param data
-   * @param xApiKey
    * @returns Promise<T | undefined>
    */
-  async call<T>(method = 'GET', url: string, data: unknown = '', xApiKey: string = ''): Promise<T | undefined> {
-    const requestUrl = `${this.baseRequestUrl}${url}`;
+  private async performRequest<T>(method: string, url: string, data: unknown = ''): Promise<T | undefined> {
     try {
-      const token: string | undefined = xApiKey ? undefined : await this.getToken();
       const headers: HeadersInit = new Headers();
       headers.append('Content-Type', 'application/json');
+
+      // TODO: Consider adding a custom JWT Authorizer to the Public API Gateway for Public APIs
+      // The invite/reset password token will be passed as the Bearer token
+      // A dedicated custom Lambda authorizer will be run by the API Gateway to validate the token
+      // enabling single responsibility and separation of concerns.
+      // Possibly further upsides as API Gateway may execute the authorizer for free or cheaply,
+      // either way the Lambda resource allocation can be much lower than those that require more complex logic
+      // and access to various services and large response payloads.
+      let token: string | undefined;
+      try {
+        token = await getToken();
+      } catch (tokenError) {
+        console.warn(`Failed to get token; reason: ${tokenError}; continuing without Bearer or X-API header`);
+      }
       if (token) {
         headers.append('Authorization', token);
-      } else if (xApiKey) {
-        headers.append('x-api-key', xApiKey);
       }
       const settings: RequestInit = {
         method,
@@ -30,11 +55,12 @@ class HttpFactory {
       if (data) {
         settings.body = JSON.stringify(data);
       }
-      const response = await fetch(requestUrl, settings);
+      const response = await fetch(url, settings);
       if (!response.ok) {
         await this.handleResponseError(response);
       }
-      return (await response.json()) as Promise<T>;
+
+      return await ((await response.json()) as Promise<T>);
     } catch (error: any) {
       throw new Error(`Request error: ${error.message}`);
     }
@@ -43,18 +69,12 @@ class HttpFactory {
   private async handleResponseError(response: Response): Promise<void> {
     let errorMessage = `HTTP error! status: ${response.status}`;
     try {
-      const errorBody: any = await response.json();
-      errorMessage = errorBody.message || errorMessage;
+      const errorBody: { Error: string } = await response.json();
+      errorMessage = errorBody.Error || errorMessage;
     } catch (error) {
       console.error('Error parsing response body', error);
     }
     throw new Error(errorMessage);
-  }
-
-  private async getToken(): Promise<string> {
-    const session = await Auth.currentSession();
-    const idToken = session.getIdToken().getJwtToken();
-    return `Bearer ${idToken}`;
   }
 }
 

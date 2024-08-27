@@ -3,8 +3,8 @@ import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/e
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryUserService } from '../../../../services/easy-genomics/laboratory-user-service';
-import { UserService } from '../../../../services/easy-genomics/user-service';
+import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 
 const laboratoryUserService = new LaboratoryUserService();
 const userService = new UserService();
@@ -25,13 +25,13 @@ export const handler: Handler = async (
     }
 
     // Retrieve User Details for the list of LaboratoryUsers for display
-    const userIds: string[] = laboratoryUsers.map(labUser => labUser.UserId);
+    const userIds: string[] = laboratoryUsers.map((labUser) => labUser.UserId);
     const users: User[] = await userService.listUsers(userIds);
 
-    const response: LaboratoryUserDetails[] = laboratoryUsers.map(labUser => {
-      const user: User | undefined = users.filter(u => u.UserId === labUser.UserId).shift();
+    const response: LaboratoryUserDetails[] = laboratoryUsers.reduce((accumulator, labUser) => {
+      const user: User | undefined = users.find((u) => u.UserId === labUser.UserId);
       if (user) {
-        return <LaboratoryUserDetails>{
+        const details: LaboratoryUserDetails = {
           UserId: labUser.UserId,
           LaboratoryId: labUser.LaboratoryId,
           LabManager: labUser.LabManager,
@@ -41,8 +41,10 @@ export const handler: Handler = async (
           LastName: user.LastName,
           UserEmail: user.Email,
         };
+        accumulator.push(details);
       }
-    }).flat();
+      return accumulator;
+    }, [] as LaboratoryUserDetails[]);
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
@@ -56,7 +58,7 @@ export const handler: Handler = async (
   }
 };
 
-const listLaboratoryUsers = async (laboratoryId?: string, userId?: string): Promise<LaboratoryUser[]> => {
+const listLaboratoryUsers = (laboratoryId?: string, userId?: string): Promise<LaboratoryUser[]> => {
   if (laboratoryId && !userId) {
     return laboratoryUserService.queryByLaboratoryId(laboratoryId);
   } else if (!laboratoryId && userId) {
@@ -69,4 +71,4 @@ const listLaboratoryUsers = async (laboratoryId?: string, userId?: string): Prom
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

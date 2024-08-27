@@ -7,7 +7,10 @@
   "root": true,
   "plugins": [
     "@typescript-eslint",
-    "import"
+    "import",
+    "eslint-plugin-vue",
+    "prettier",
+    "vue"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -16,7 +19,10 @@
     "project": "./tsconfig.dev.json"
   },
   "extends": [
-    "plugin:import/typescript"
+    "plugin:import/typescript",
+    "@nuxtjs/eslint-config-typescript",
+    "plugin:prettier/recommended",
+    "plugin:vue/vue3-recommended"
   ],
   "settings": {
     "import/parsers": {
@@ -44,10 +50,7 @@
     "indent": [
       "off"
     ],
-    "@typescript-eslint/indent": [
-      "error",
-      2
-    ],
+    "@typescript-eslint/indent": "off",
     "quotes": [
       "error",
       "single",
@@ -215,7 +218,22 @@
           "method"
         ]
       }
-    ]
+    ],
+    "no-unused-vars": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error"
+    ],
+    "space-before-function-paren": "off",
+    "no-console": "off",
+    "arrow-parens": [
+      "error",
+      "always"
+    ],
+    "no-new": "off",
+    "no-empty": "error",
+    "prettier/prettier": "error",
+    "require-await": "off",
+    "array-callback-return": "error"
   },
   "overrides": []
 }

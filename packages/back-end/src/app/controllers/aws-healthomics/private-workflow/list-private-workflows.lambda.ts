@@ -1,7 +1,7 @@
 import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/private-workflow';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { PrivateWorkflowService } from '../../../services/aws-healthomics/private-workflow-service';
+import { PrivateWorkflowService } from '@BE/services/aws-healthomics/private-workflow-service';
 
 const privateWorkflowService = new PrivateWorkflowService();
 
@@ -26,4 +26,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

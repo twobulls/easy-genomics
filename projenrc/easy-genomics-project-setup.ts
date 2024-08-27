@@ -18,7 +18,7 @@ export function setupProjectFolders(project: Project) {
     createProjectFolders(project, root.children, `${root.name}`);
   } else {
     throw new Error(
-      `ProjectFolders folder structure does not start with '${MONO_REPO_ROOT_FOLDER}' directory. Please review the 'project-folders-structure.ts' definition.`
+      `ProjectFolders folder structure does not start with '${MONO_REPO_ROOT_FOLDER}' directory. Please review the 'project-folders-structure.ts' definition.`,
     );
   }
 }

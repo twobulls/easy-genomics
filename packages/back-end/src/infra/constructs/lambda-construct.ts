@@ -3,12 +3,7 @@ import path from 'path';
 import { AssociativeArray, HttpRequest } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { toPascalCase } from '@easy-genomics/shared-lib/src/app/utils/string-utils';
 import { aws_lambda, aws_lambda_nodejs, Duration } from 'aws-cdk-lib';
-import {
-  JsonSchema,
-  LambdaIntegration,
-  Resource,
-  CognitoUserPoolsAuthorizer,
-} from 'aws-cdk-lib/aws-apigateway';
+import { JsonSchema, LambdaIntegration, Resource, CognitoUserPoolsAuthorizer } from 'aws-cdk-lib/aws-apigateway';
 import { MethodOptions } from 'aws-cdk-lib/aws-apigateway/lib/method';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { IEventSource, IFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -48,6 +43,7 @@ const ALLOWED_LAMBDA_FUNCTION_OPERATIONS: AssociativeArray<HttpRequest> = {
   ['list']: 'GET', // List multiple records
   ['read']: 'GET',
   ['update']: 'PUT',
+  ['cancel']: 'PUT',
   ['patch']: 'PATCH',
   ['delete']: 'DELETE',
   // Additional Lambda Function operations for managing objects by using the Posted Hash/Partition Key & Sort Key
@@ -61,6 +57,7 @@ const ALLOWED_LAMBDA_FUNCTION_OPERATIONS: AssociativeArray<HttpRequest> = {
 const ALLOWED_LAMBDA_FUNCTION_OPERATIONS_WITH_RESOURCE_ID: AssociativeArray<HttpRequest> = {
   ['read']: 'GET', // Read specific record
   ['update']: 'PUT', // Update specific record
+  ['cancel']: 'PUT', // Update specific record
   ['patch']: 'PATCH', // Patch specific record
   ['delete']: 'DELETE', // Delete specific record
 };
@@ -81,7 +78,7 @@ export class LambdaConstruct extends Construct {
     }
 
     // Find all existing Lambda Functions within specified lambdaFunctionsDir and register them as REST APIs with API Gateway / Event Triggers
-    this.getLambdaFunctions(path.join(__dirname, `../../../${this.props.lambdaFunctionsDir}`)).map(
+    this.getLambdaFunctions(path.join(__dirname, `../../../${this.props.lambdaFunctionsDir}`)).forEach(
       (lambdaFunction: AssociativeArray<string>) => {
         this.registerLambdaFunction(lambdaFunction);
       },
@@ -89,8 +86,8 @@ export class LambdaConstruct extends Construct {
 
     // Attach the Schema Models to API Gateway REST API
     if (this.props.restApi) {
-      for (const [_, value] of Object.entries(this.props.lambdaFunctionsResources)) {
-        value.schemas?.map((schema: JsonSchema) => {
+      for (const value of Object.values(this.props.lambdaFunctionsResources)) {
+        value.schemas?.forEach((schema: JsonSchema) => {
           this.props.restApi!.addModel(`${toPascalCase(schema.title!)}`, {
             modelName: `${toPascalCase(schema.title!)}`,
             schema: schema,
@@ -117,14 +114,14 @@ export class LambdaConstruct extends Construct {
     const lambdaMethodOptions = this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.methodOptions || undefined;
 
     const lambdaHandler: IFunction = new aws_lambda_nodejs.NodejsFunction(this, `${lambdaId}`, {
-      runtime: Runtime.NODEJS_18_X,
+      runtime: Runtime.NODEJS_20_X,
       timeout: Duration.seconds(30),
+      memorySize: 1024,
       functionName: `${this.props.lambdaFunctionsNamespace}-${lambdaName}`.slice(0, 64),
       entry: `${lambdaFunction.path}`,
       handler: 'handler',
       tracing: aws_lambda.Tracing.ACTIVE,
       bundling: {
-        externalModules: ['aws-sdk'],
         loader: { '.hbs': 'text' },
       },
       logRetention: RetentionDays.ONE_DAY,
@@ -141,8 +138,10 @@ export class LambdaConstruct extends Construct {
     // Attach relevant IAM policies to Lambda Function matching specific API Endpoint
     const iamPolicyStatements: PolicyStatement[] | undefined = this.props.iamPolicyStatements?.get(lambdaApiEndpoint);
     if (iamPolicyStatements) {
-      console.debug(`Attaching IAM Policy to REST API Endpoint: ${lambdaApiEndpoint}\n${JSON.stringify(iamPolicyStatements, null, 2)}`);
-      iamPolicyStatements.map((iamPolicyStatement: PolicyStatement) => {
+      console.debug(
+        `Attaching IAM Policy to REST API Endpoint: ${lambdaApiEndpoint}\n${JSON.stringify(iamPolicyStatements, null, 2)}`,
+      );
+      iamPolicyStatements.forEach((iamPolicyStatement: PolicyStatement) => {
         lambdaHandler.addToRolePolicy(iamPolicyStatement);
       });
     } else {
@@ -151,12 +150,12 @@ export class LambdaConstruct extends Construct {
 
     if (lambdaFunction.command === 'process') {
       // Register Event Source Listeners/Triggers for the respective Lambda function
-      this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.events?.map((eventSource: IEventSource) => {
+      this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.events?.forEach((eventSource: IEventSource) => {
         lambdaHandler.addEventSource(eventSource);
       });
 
       // Register Callback Functions for the respective Lambda function
-      this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.callbacks?.map((callback) => {
+      this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.callbacks?.forEach((callback) => {
         callback(lambdaHandler);
       });
     } else {
@@ -172,7 +171,8 @@ export class LambdaConstruct extends Construct {
             {
               authorizer: this.authorizer,
               ...lambdaMethodOptions,
-            });
+            },
+          );
         } else {
           pathResource.addMethod(
             ALLOWED_LAMBDA_FUNCTION_OPERATIONS[lambdaFunction.command],
@@ -180,7 +180,8 @@ export class LambdaConstruct extends Construct {
             {
               authorizer: this.authorizer,
               ...lambdaMethodOptions,
-            });
+            },
+          );
         }
       }
     }

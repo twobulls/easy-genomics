@@ -6,34 +6,28 @@ import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user
 import { ConfirmUserForgotPasswordRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
 import { UserForgotPasswordJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-  Handler,
-} from 'aws-lambda';
+import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { toByteArray } from 'base64-js';
 import { JwtPayload } from 'jsonwebtoken';
-import { CognitoIdpService } from '../../../services/cognito-idp-service';
-import { UserService } from '../../../services/easy-genomics/user-service';
-import { verifyJwt } from '../../../utils/jwt-utils';
+import { CognitoIdpService } from '@BE/services/cognito-idp-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
+import { verifyJwt } from '@BE/utils/jwt-utils';
 
 const cryptoClient = buildClient(CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT);
 const generatorKeyId = process.env.COGNITO_KMS_KEY_ID;
 const keyIds = [process.env.COGNITO_KMS_KEY_ARN];
 const keyring = new KmsKeyringNode({ generatorKeyId, keyIds });
 
-const cognitoIdpService = new CognitoIdpService();
+const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const userService = new UserService();
 
-export const handler: Handler = async (
-  event: APIGatewayProxyEvent,
-): Promise<APIGatewayProxyResult> => {
+export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     // Post Request Body
-    const request: ConfirmUserForgotPasswordRequest = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: ConfirmUserForgotPasswordRequest = event.isBase64Encoded
+      ? JSON.parse(atob(event.body!))
+      : JSON.parse(event.body!);
 
     // Data validation safety check
     if (!ConfirmUserForgotPasswordRequestSchema.safeParse(request).success) throw new Error('Invalid request');
@@ -63,7 +57,7 @@ export const handler: Handler = async (
       if (payload.Verification !== verification) {
         throw new Error('User Forgot Password Verification invalid');
       } else {
-        const response: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(process.env.COGNITO_USER_POOL_ID, user.UserId);
+        const response: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(user.UserId);
         if (response.$metadata.httpStatusCode !== 200) {
           throw new Error(`Unable to find User record: '${payload.Email}'`);
         }
@@ -72,11 +66,16 @@ export const handler: Handler = async (
         }
 
         // Decrypt the confirmationCode
-        const { plaintext, messageHeader } = await cryptoClient.decrypt(keyring, toByteArray(payload.Code));
+        const { plaintext } = await cryptoClient.decrypt(keyring, toByteArray(payload.Code));
         const confirmationCode: string = plaintext.toString();
 
         // Update User's Password
-        await cognitoIdpService.confirmForgotPassword(process.env.COGNITO_USER_POOL_CLIENT_ID, user.UserId, request.Password, confirmationCode);
+        await cognitoIdpService.confirmForgotPassword(
+          process.env.COGNITO_USER_POOL_CLIENT_ID,
+          user.UserId,
+          request.Password,
+          confirmationCode,
+        );
         return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
       }
     } else {
@@ -96,4 +95,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

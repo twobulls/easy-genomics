@@ -1,7 +1,7 @@
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { OrganizationService } from '../../../services/easy-genomics/organization-service';
+import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
 
 const organizationService = new OrganizationService();
 
@@ -37,4 +37,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

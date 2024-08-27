@@ -1,5 +1,5 @@
 <!-- TODO: replace all code for displaying combinations of a user avatar, display name, and email with this EGUserDisplay component - https://dept-au.atlassian.net/browse/EG-504
-For example from packages/front-end/src/app/pages/orgs/view/[id].vue:
+For example from packages/front-end/src/app/pages/orgs/[id]/index.vue:
 
 <div class="flex items-center">
   <EGUserAvatar class="mr-4" :name="useUser().displayName({
@@ -26,21 +26,20 @@ For example from packages/front-end/src/app/pages/orgs/view/[id].vue:
   </div>
 </div> -->
 
-
 <script setup lang="ts">
-import { UserStatus } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/status';
+  import { UserStatus } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/status';
 
-withDefaults(
-  defineProps<{
-    displayName: string;
-    email: string;
-    status: UserStatus;
-    showAvatar?: boolean;
-  }>(),
-  {
-    showAvatar: false,
-  }
-);
+  withDefaults(
+    defineProps<{
+      displayName: string;
+      email: string;
+      status: UserStatus;
+      showAvatar?: boolean;
+    }>(),
+    {
+      showAvatar: false,
+    },
+  );
 </script>
 
 <template>

@@ -28,8 +28,9 @@ export class Husky extends Component {
       preCommit.addLine(`# ${PROJEN_MARKER} -- see projenrc/husky.ts`);
       preCommit.addLine('# pre-commit hook file');
       preCommit.addLine(
-        "pnpm exec validate-branch-name -r '^(main|release){1}$|^(feat|fix|hotfix|release|refactor|chore|docs)/.+$'"
+        "pnpm exec validate-branch-name -r '^(main|release){1}$|^(feat|fix|hotfix|infra|release|refactor|chore|docs)/.+$'",
       );
+      preCommit.addLine('pnpm pre-commit');
       preCommit.addLine('');
     }
   }

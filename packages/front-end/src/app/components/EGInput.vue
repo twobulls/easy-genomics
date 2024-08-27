@@ -1,7 +1,7 @@
 <script setup lang="ts">
   withDefaults(
     defineProps<{
-      modelValue?: string;
+      modelValue?: string | number;
       placeholder?: string;
       disabled?: boolean;
       clearable?: boolean;
@@ -11,7 +11,7 @@
       placeholder: '',
       disabled: false,
       autocomplete: '',
-    }
+    },
   );
 
   function clear() {
@@ -30,7 +30,7 @@
     :disabled="disabled"
     :ui="{
       icon: { trailing: { pointer: '' } },
-      base: 'h-13 !shadow-none border-background-stroke-dark text-body bg-white disabled:text-muted disabled:bg-background-light-grey',
+      base: 'h-13 !shadow-none border-background-stroke-dark text-body bg-white disabled:text-muted disabled:bg-background-light-grey disabled:opacity-100',
       rounded: 'rounded-md',
       placeholder: 'text-muted',
       padding: {

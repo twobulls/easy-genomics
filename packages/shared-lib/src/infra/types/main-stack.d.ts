@@ -7,22 +7,22 @@ export interface BaseStackProps extends StackProps {
     devEnv: boolean;
     envName: string;
     envType: string;
-    applicationUrl: string;
+    appDomainName: string;
+    awsHostedZoneId?: string;
 }
 
 // Defines Front-End Stack props
 export interface FrontEndStackProps extends BaseStackProps {
-    hostedZoneId: string;
-    hostedZoneName: string;
-    certificateArn: string;
+    awsCertificateArn?: string;
 }
 
 // Defines Back-End Stack props
 export interface BackEndStackProps extends BaseStackProps {
     namePrefix: string;
-    systemAdminEmail: string;
-    systemAdminPassword: string;
-    secretKey: string;
+    jwtSecretKey: string;
+    systemAdminEmail?: string;
+    systemAdminPassword?: string;
     testUserEmail?: string;
     testUserPassword?: string;
+    seqeraApiBaseUrl: string;
 }

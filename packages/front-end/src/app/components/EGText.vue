@@ -28,7 +28,7 @@
     :is="tag"
     :class="[
       `${colorClass}`,
-      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `font-heading ${colorClass}` : '',
+      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `font-serif ${colorClass}` : '',
       ['a'].includes(<string>tag) ? `hover:underline ${colorClass}` : '',
     ]"
   >
@@ -44,7 +44,6 @@
   h3,
   h4,
   h5 {
-    font-family: 'PlusJakartaSans', sans-serif;
     font-weight: 600;
   }
   h1 {
@@ -69,14 +68,14 @@
     line-height: toRem(22px);
   }
   h5 {
-    font-size: toRem(18px);
-    line-height: toRem(22px);
+    font-size: toRem(14px);
+    line-height: toRem(20px);
   }
   h2,
   h3,
   h4,
   h5 {
-    font-weight: 500;
+    font-weight: 600; // 500?
     letter-spacing: toRem(-0.14px);
 
     > p {
@@ -87,11 +86,15 @@
   a,
   p,
   div,
-  span,
-  small {
-    font-family: 'Inter', sans-serif;
+  span {
     line-height: toRem(24px);
     font-weight: 400;
     letter-spacing: 0;
+  }
+
+  small {
+    font-weight: 400;
+    line-height: toRem(16px);
+    letter-spacing: 0.2px;
   }
 </style>

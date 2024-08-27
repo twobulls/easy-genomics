@@ -1,15 +1,14 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { AddOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
-import { Status } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { OrganizationService } from '../../../../services/easy-genomics/organization-service';
-import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
-import { PlatformUserService } from '../../../../services/easy-genomics/platform-user-service';
-import { UserService } from '../../../../services/easy-genomics/user-service';
+import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
+import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 
 const organizationUserService = new OrganizationUserService();
 const organizationService = new OrganizationService();
@@ -24,15 +23,15 @@ export const handler: Handler = async (
   try {
     const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: OrganizationUser = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: OrganizationUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!AddOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
-    const organizationUser: OrganizationUser | void =
-      await organizationUserService.get(request.OrganizationId, request.UserId).catch((error: any) => {
-        if (error.message.endsWith('Resource not found')) { // TODO - improve error to handle ResourceNotFoundException instead of checking error message
+    const organizationUser: OrganizationUser | void = await organizationUserService
+      .get(request.OrganizationId, request.UserId)
+      .catch((error: any) => {
+        if (error.message.endsWith('Resource not found')) {
+          // TODO - improve error to handle ResourceNotFoundException instead of checking error message
           // Do nothing - allow new Organization-User access mapping to proceed.
         } else {
           throw error;
@@ -48,22 +47,27 @@ export const handler: Handler = async (
     const user: User = await userService.get(request.UserId);
 
     // Attempt to add the User to the Organization in one transaction
-    if (await platformUserService.addExistingUserToOrganization({
-      ...user,
-      OrganizationAccess: {
-        ...user.OrganizationAccess,
-        [organization.OrganizationId]: {
-          Status: request.Status,
-          LaboratoryAccess: {},
+    if (
+      await platformUserService.addExistingUserToOrganization(
+        {
+          ...user,
+          OrganizationAccess: {
+            ...user.OrganizationAccess,
+            [organization.OrganizationId]: {
+              Status: request.Status,
+              LaboratoryAccess: {},
+            },
+          },
+          ModifiedAt: new Date().toISOString(),
+          ModifiedBy: currentUserId,
         },
-      },
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: currentUserId,
-    }, {
-      ...request,
-      CreatedAt: new Date().toISOString(),
-      CreatedBy: currentUserId,
-    })) {
+        {
+          ...request,
+          CreatedAt: new Date().toISOString(),
+          CreatedBy: currentUserId,
+        },
+      )
+    ) {
       return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
     }
   } catch (err: any) {
@@ -84,4 +88,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

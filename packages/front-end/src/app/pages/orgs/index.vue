@@ -1,6 +1,7 @@
 <script setup lang="ts">
-  import { useOrgsStore } from '~/stores/stores';
+  import { useOrgsStore } from '@FE/stores';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
@@ -26,30 +27,27 @@
   const actionItems = (row: Organization) => [
     [
       {
-        label: 'Summary',
-        click: () => {},
-      },
-    ],
-    [
-      {
         label: 'View / Edit',
         click: async () => viewOrg(row),
       },
     ],
-    [
-      {
-        label: 'Remove',
-        class: 'text-alert-danger-dark',
-        click: () => {},
-      },
-    ],
+    // TODO: temporarily disabled; see: https://dept-au.atlassian.net/browse/EG-575
+    // [
+    //   {
+    //     label: 'Remove',
+    //     class: 'text-alert-danger-dark',
+    //     click: () => {},
+    //   },
+    // ],
   ];
 
   function viewOrg(org: Organization) {
     useOrgsStore().setSelectedOrg(org);
-    navigateTo({
-      path: `/orgs/view/${org.OrganizationId}`,
-    });
+    navigateTo(`/orgs/${org.OrganizationId}`);
+  }
+
+  function onRowClicked(org: Organization) {
+    viewOrg(org);
   }
 
   onBeforeMount(async () => {
@@ -69,19 +67,21 @@
 </script>
 
 <template>
-  <div class="mb-11 flex items-center justify-between">
-    <EGText tag="h1">Organizations</EGText>
-    <EGButton label="Create a new Organization" to="/orgs/new" />
-  </div>
+  <EGPageHeader title="Organizations" :show-back="false" :back-action="() => $router.push('/')">
+    <!-- TODO: temporarily disabled for Pilot 1 - see: https://dept-au.atlassian.net/browse/EG-547 -->
+    <!--    <EGButton label="Create a new Organization" to="/orgs/create" />-->
+    <EGButton label="Create a new Organization" :disabled="true" />
+  </EGPageHeader>
 
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Organization set up yet."
-    :button-action="() => {}"
-    button-label="Create a new Organization"
+    :primary-button-action="() => {}"
+    primary-button-label="Create a new Organization"
   />
 
   <EGTable
+    :row-click-action="onRowClicked"
     :table-data="orgData"
     :columns="tableColumns"
     :is-loading="isLoading"

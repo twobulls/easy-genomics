@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ButtonSizeEnum } from '~/types/buttons';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
 
   const props = withDefaults(
     defineProps<{
@@ -7,7 +7,7 @@
     }>(),
     {
       isAuthed: false,
-    }
+    },
   );
 
   const { signOut, isAuthed } = useAuth();
@@ -33,7 +33,7 @@
           <!--          to="/runs"-->
           <!--          inactive-class="text-body"-->
           <!--          active-class="text-primary bg-primary-muted"-->
-          <!--          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"-->
+          <!--          class="ULink font-serif flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"-->
           <!--        >-->
           <!--          Runs-->
           <!--        </ULink>-->
@@ -41,7 +41,7 @@
           <!--          to="/workflows"-->
           <!--          inactive-class="text-body"-->
           <!--          active-class="text-primary bg-primary-muted"-->
-          <!--          class="ULink font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"-->
+          <!--          class="ULink font-serif flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"-->
           <!--        >-->
           <!--          Workflows-->
           <!--        </ULink>-->
@@ -50,7 +50,7 @@
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
             :class="isSubpath(labsPath) ? 'text-primary-dark bg-primary-muted' : ''"
-            class="ULink text-body font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
+            class="ULink text-body flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 font-serif text-sm tracking-normal"
           >
             Labs
           </ULink>
@@ -59,7 +59,7 @@
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
             :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"
-            class="ULink text-body font-heading flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"
+            class="ULink text-body flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 font-serif text-sm tracking-normal"
           >
             Organizations
           </ULink>
@@ -68,7 +68,7 @@
             v-if="isAuthed"
             @click="signOut()"
             class="ml-8 h-10"
-            label="Sign out"
+            label="Sign Out"
           />
         </div>
       </template>

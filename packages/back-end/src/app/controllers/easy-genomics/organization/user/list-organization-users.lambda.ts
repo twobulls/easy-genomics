@@ -1,7 +1,7 @@
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
 
 const organizationUserService = new OrganizationUserService();
 
@@ -33,17 +33,19 @@ export const handler: Handler = async (
   }
 };
 
-const listOrganizationUsers = async (organizationId?: string, userId?: string): Promise<OrganizationUser[]> => {
+const listOrganizationUsers = (organizationId?: string, userId?: string): Promise<OrganizationUser[]> => {
   if (organizationId && !userId) {
     return organizationUserService.queryByOrganizationId(organizationId);
   } else if (!organizationId && userId) {
     return organizationUserService.queryByUserId(userId);
   } else {
-    throw new Error('Specify either organizationId or userId query parameter to retrieve the list of organization-users');
+    throw new Error(
+      'Specify either organizationId or userId query parameter to retrieve the list of organization-users',
+    );
   }
 };
 
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

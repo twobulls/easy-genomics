@@ -4,7 +4,7 @@ import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/aws-hea
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
-import { PrivateWorkflowService } from '../../../services/aws-healthomics/private-workflow-service';
+import { PrivateWorkflowService } from '@BE/services/aws-healthomics/private-workflow-service';
 
 const privateWorkflowService = new PrivateWorkflowService();
 
@@ -15,9 +15,7 @@ export const handler: Handler = async (
   try {
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
-    const request: PrivateWorkflow = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: PrivateWorkflow = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!CreatePrivateWorkflowSchema.safeParse(request).success) throw new Error('Invalid request');
 
@@ -47,4 +45,4 @@ function getErrorMessage(err: any) {
   } else {
     return err.message;
   }
-};
+}

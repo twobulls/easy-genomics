@@ -7,7 +7,7 @@
     {
       placeholder: 'Search',
       disabled: false,
-    }
+    },
   );
 
   const searchTerm = ref('');

@@ -42,13 +42,16 @@ export type OrganizationAccess = Record<string, OrganizationAccessDetails>;
 
 export type OrganizationAccessDetails = {
   Status: OrgUserStatus,
+  OrganizationAdmin?: Boolean,
   LaboratoryAccess?: LaboratoryAccess
 };
 
 export type LaboratoryAccess = Record<string, LaboratoryAccessDetails>;
 
 export type LaboratoryAccessDetails = {
-  Status: Status
+  Status: Status,
+  LabManager?: Boolean,
+  LabTechnician?: Boolean,
 };
 
 export type UserTitle = 'Prof' | 'Dr' | 'Mr' | 'Mrs' | 'Ms';

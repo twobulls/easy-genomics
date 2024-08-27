@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { ERRORS } from '~/constants/validation';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 
   const props = withDefaults(
     defineProps<{
@@ -11,17 +11,18 @@
     {
       placeholder: 'Enter Email',
       disabled: false,
-    }
+    },
   );
 
+  const { $api } = useNuxtApp();
   const $emit = defineEmits(['invite-success']);
   const formSchema = z.object({
-    email: z.string().email(ERRORS.email),
+    email: z.string().email(VALIDATION_MESSAGES.email),
   });
   const isFormDisabled = ref(true);
   const isRequestPending = ref(false);
   const state = ref({ email: '' });
-  const { invite } = useUser();
+  const { invite } = useUser($api);
 
   async function onSubmit() {
     try {

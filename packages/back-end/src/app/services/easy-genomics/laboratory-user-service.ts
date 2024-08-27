@@ -83,7 +83,7 @@ export class LaboratoryUserService extends DynamoDBService implements Service {
 
     if (response.$metadata.httpStatusCode === 200) {
       if (response.Items) {
-        return response.Items.map(item => <LaboratoryUser>unmarshall(item));
+        return response.Items.map((item) => <LaboratoryUser>unmarshall(item));
       } else {
         throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
       }
@@ -111,7 +111,7 @@ export class LaboratoryUserService extends DynamoDBService implements Service {
 
     if (response.$metadata.httpStatusCode === 200) {
       if (response.Items) {
-        return response.Items.map(item => <LaboratoryUser>unmarshall(item));
+        return response.Items.map((item) => <LaboratoryUser>unmarshall(item));
       } else {
         throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
       }
@@ -129,8 +129,14 @@ export class LaboratoryUserService extends DynamoDBService implements Service {
 
     const updateExclusions: string[] = ['LaboratoryId', 'UserId', 'CreatedAt', 'CreatedBy'];
 
-    const expressionAttributeNames: {[p: string]: string} = this.getExpressionAttributeNamesDefinition(laboratoryUser, updateExclusions);
-    const expressionAttributeValues: {[p: string]: any} = this.getExpressionAttributeValuesDefinition(laboratoryUser, updateExclusions);
+    const expressionAttributeNames: { [p: string]: string } = this.getExpressionAttributeNamesDefinition(
+      laboratoryUser,
+      updateExclusions,
+    );
+    const expressionAttributeValues: { [p: string]: any } = this.getExpressionAttributeValuesDefinition(
+      laboratoryUser,
+      updateExclusions,
+    );
     const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
 
     const response: UpdateItemCommandOutput = await this.updateItem({

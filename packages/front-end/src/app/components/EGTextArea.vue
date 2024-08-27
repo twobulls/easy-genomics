@@ -9,7 +9,7 @@
       placeholder: '',
       disabled: false,
       required: false,
-    }
+    },
   );
 </script>
 
@@ -17,7 +17,7 @@
   <UTextarea
     :disabled="disabled"
     :ui="{
-      base: 'mt-2 !shadow-none border-background-dark-grey bg-white text-body disabled:text-muted disabled:bg-background-light-grey',
+      base: 'mt-2 !shadow-none border-background-dark-grey bg-white text-body disabled:text-muted disabled:bg-background-light-grey disabled:opacity-100',
       rounded: 'rounded-md',
       placeholder: 'text-muted',
       padding: {

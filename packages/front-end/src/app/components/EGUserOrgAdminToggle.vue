@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-  import { useToastStore } from '~/stores/stores';
-  import useUser from '~/composables/useUser';
-  import { ERRORS } from '~/constants/validation';
+  import { useToastStore } from '@FE/stores';
+  import useUser from '@FE/composables/useUser';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 
   const { $api } = useNuxtApp();
   const props = defineProps<{
@@ -10,7 +10,7 @@
     isLoading?: boolean;
   }>();
 
-  const $emit = defineEmits(['update-user']);
+  const emit = defineEmits(['update-user']);
   const { UserId, OrganizationId, UserEmail, OrganizationUserStatus } = props.user;
   const toggleVal = ref(props.user.OrganizationAdmin);
   const displayName = useUser().displayName({
@@ -24,10 +24,10 @@
     toggleVal.value = !toggleVal.value;
     try {
       await $api.orgs.editOrgUser(OrganizationId, UserId, OrganizationUserStatus, toggleVal.value);
-      $emit('update-user');
+      emit('update-user');
       useToastStore().success(`${displayName}’s Lab Access has been successfully updated`);
     } catch (error) {
-      useToastStore().error(ERRORS.network);
+      useToastStore().error(VALIDATION_MESSAGES.network);
       toggleVal.value = !toggleVal.value;
       console.error(error);
     }

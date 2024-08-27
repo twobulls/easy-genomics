@@ -42,3 +42,18 @@ export function maxLengthText(input: string, maxLength: number | undefined) {
   }
   return input;
 }
+
+export function getCharacterText(count: number) {
+  return count === 1 ? 'character' : 'characters';
+}
+
+/**
+ * Returns the value of a URL parameter
+ *
+ * @param {string} param
+ * @return {*}  {(string | null)}
+ */
+export function getUrlParamValue(param: string): string | null {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
+}

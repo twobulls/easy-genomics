@@ -1,18 +1,17 @@
 <script setup lang="ts">
-  withDefaults(
-    defineProps<{
-      label?: string;
-    }>(),
-    {
-      label: 'Back',
-    }
-  );
+  const $router = useRouter();
+  const props = withDefaults(defineProps<{ label?: string; backAction?: () => void }>(), {
+    label: 'Back',
+    backAction: undefined,
+  });
 </script>
 
 <template>
-  <a @click="$router.go(-1)"
-    class="text-primary mb-4 w-min flex cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium">
-    <i class="i-heroicons-arrow-left-solid"></i>
+  <a
+    @click="backAction ? backAction?.() : $router.push(useUiStore().previousPageRoute)"
+    class="text-primary mb-4 flex w-min cursor-pointer items-center gap-1 whitespace-nowrap text-base font-medium"
+  >
+    <UIcon name="i-heroicons-arrow-left-solid" />
     <span>{{ label }}</span>
   </a>
 </template>

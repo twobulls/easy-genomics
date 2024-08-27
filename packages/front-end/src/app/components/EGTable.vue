@@ -10,11 +10,13 @@
       columns: any[];
       isLoading?: boolean;
       actionItems?: () => ActionItem[];
-      showPagination: boolean;
+      showPagination?: boolean;
+      rowClickAction?: (rowItem: any) => void | undefined;
     }>(),
     {
       isLoading: false,
-    }
+      showPagination: true,
+    },
   );
 
   const localProps = reactive({
@@ -36,7 +38,7 @@
     () => props.tableData,
     (newTableData: any) => {
       localProps.tableData = newTableData;
-    }
+    },
   );
 </script>
 
@@ -48,7 +50,13 @@
     }"
   >
     <UTable
-      class="EGTable rounded-2xl"
+      :ui="{
+        tr: {
+          active: ` ${rowClickAction ? 'hover:bg-gray-50 cursor-pointer' : 'hover:bg-white cursor-default'}`,
+        },
+      }"
+      @select="rowClickAction ? rowClickAction($event) : undefined"
+      class="rounded-2xl"
       :rows="rows"
       :columns="columns"
       :loading="isLoading"
@@ -60,7 +68,7 @@
       </template>
 
       <template #actions-data="{ row }">
-        <EGActionButton v-if="actionItems" :items="actionItems(row)" />
+        <EGActionButton v-if="actionItems" :items="actionItems(row)" @click="$event.stopPropagation()" />
       </template>
       <template #empty-state>
         <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
@@ -76,8 +84,11 @@
   </div>
 </template>
 
-<style lang="scss">
-  .EGTable {
+<style scoped lang="scss">
+  /**
+   * Table styles are quite granular so styled here via SCSS instead of the UTable's :ui prop config object
+   */
+  :deep(table) {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     width: 100%;
@@ -93,8 +104,9 @@
 
         th:first-child {
           padding-left: 40px;
-          width: 400px;
+          width: 320px;
         }
+
         th:last-child {
           text-align: right;
           padding-right: 40px;
@@ -102,15 +114,24 @@
       }
     }
 
+    tbody tr {
+      td {
+        padding-top: 22px;
+        padding-bottom: 22px;
+      }
+    }
+
     tbody tr td:nth-child(1) {
       color: black;
       font-weight: 600;
       padding-left: 40px;
+      white-space: normal;
     }
 
-    tbody tr td:nth-child(2) {
-      font-size: 12px;
+    tbody tr td:not(:first-child) {
+      font-size: 12px; // FIXME
       color: #818181;
+      white-space: normal;
     }
 
     tbody tr td:last-child {

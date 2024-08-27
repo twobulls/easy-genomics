@@ -1,20 +1,19 @@
+import { CreateLaboratory, UpdateLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
-import { CreateLaboratory, Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-import { DeletedResponse, EditUserResponse } from '~/types/api';
+import { DeletedResponse, EditUserResponse } from '@FE/types/api';
 
 class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();
 
   async create(lab: CreateLaboratory): Promise<Laboratory | undefined> {
-
-    const res = this.call<Laboratory>('POST', '/laboratory/create-laboratory', lab);
+    const res = await this.call<Laboratory>('POST', '/laboratory/create-laboratory', lab);
 
     if (!res) {
-      console.error('Error calling create Laboratory API');
       throw new Error('Failed to create Laboratory');
     }
 
@@ -25,7 +24,6 @@ class LabsModule extends HttpFactory {
     const res = await this.call<Laboratory[]>('GET', `/laboratory/list-laboratories?organizationId=${orgId}`);
 
     if (!res) {
-      console.error('Error calling list Laboratories API');
       throw new Error('Failed to retrieve Laboratory');
     }
 
@@ -36,8 +34,17 @@ class LabsModule extends HttpFactory {
     const res = await this.call<Laboratory>('GET', `/laboratory/read-laboratory/${labId}`);
 
     if (!res) {
-      console.error('Error calling get Laboratory Details API');
       throw new Error('Failed to retrieve Laboratory Details');
+    }
+
+    return res;
+  }
+
+  async update(labId: string, lab: UpdateLaboratory): Promise<Laboratory> {
+    const res = await this.call<Laboratory>('PUT', `/laboratory/update-laboratory/${labId}`, lab);
+
+    if (!res) {
+      throw new Error('Failed to update Laboratory');
     }
 
     return res;
@@ -47,7 +54,6 @@ class LabsModule extends HttpFactory {
     const res = await this.call<DeletedResponse>('DELETE', `/laboratory/delete-laboratory/${labId}`);
 
     if (!res) {
-      console.error('Error calling delete Laboratory API');
       throw new Error('Failed to delete Laboratory');
     }
 
@@ -104,7 +110,6 @@ class LabsModule extends HttpFactory {
     );
 
     if (!res) {
-      console.error('Error calling list Laboratory users API');
       throw new Error('Failed to retrieve Laboratory users');
     }
 
@@ -139,7 +144,6 @@ class LabsModule extends HttpFactory {
     });
 
     if (!res) {
-      console.error('Error calling remove user from Laboratory API');
       throw new Error('Failed to remove user from Laboratory');
     }
 
@@ -153,7 +157,6 @@ class LabsModule extends HttpFactory {
     );
 
     if (!res) {
-      console.error('Error calling list Laboratory users details API');
       throw new Error('Failed to retrieve Laboratory users details');
     }
 

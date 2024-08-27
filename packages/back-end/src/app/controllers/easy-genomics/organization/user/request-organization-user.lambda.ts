@@ -2,7 +2,7 @@ import { RequestOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
 
 const organizationUserService = new OrganizationUserService();
 
@@ -12,9 +12,7 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     // Post Request Body
-    const request: OrganizationUser = (
-      event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!)
-    );
+    const request: OrganizationUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!RequestOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
 
@@ -34,4 +32,4 @@ export const handler: Handler = async (
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

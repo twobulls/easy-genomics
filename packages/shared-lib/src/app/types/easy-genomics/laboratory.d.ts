@@ -18,7 +18,6 @@
  *   S3Bucket?: <string>,
  *   AwsHealthOmicsEnabled?: <boolean>,
  *   NextFlowTowerEnabled?: <boolean>,
- *   NextFlowTowerAccessToken?: <string>, // Encrypted
  *   NextFlowTowerWorkspaceId?: <string>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
@@ -28,7 +27,6 @@
  */
 import { BaseAttributes, Status } from '../base-entity';
 import { z } from 'zod';
-import { CreateLaboratorySchema } from '../../schema/easy-genomics/laboratory';
 
 export interface Laboratory extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
@@ -36,11 +34,8 @@ export interface Laboratory extends BaseAttributes {
   Name: string;
   Description?: string;
   Status: Status;
-  S3Bucket?: string;
+  S3Bucket?: string; // S3 Bucket Full Name
   AwsHealthOmicsEnabled?: boolean;
   NextFlowTowerEnabled?: boolean;
-  NextFlowTowerAccessToken?: string; // Encrypted
   NextFlowTowerWorkspaceId?: string;
 }
-
-export type CreateLaboratory = z.infer<typeof CreateLaboratorySchema>;

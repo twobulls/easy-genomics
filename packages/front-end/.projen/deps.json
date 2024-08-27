@@ -9,12 +9,16 @@
       "type": "build"
     },
     {
+      "name": "@nuxtjs/eslint-config-typescript",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
     {
       "name": "@types/node",
-      "version": "^18",
+      "version": "^20",
       "type": "build"
     },
     {
@@ -49,6 +53,14 @@
       "type": "build"
     },
     {
+      "name": "eslint-plugin-prettier",
+      "type": "build"
+    },
+    {
+      "name": "eslint-plugin-vue",
+      "type": "build"
+    },
+    {
       "name": "eslint",
       "version": "^8",
       "type": "build"
@@ -79,12 +91,28 @@
       "type": "build"
     },
     {
+      "name": "typed-openapi",
+      "type": "build"
+    },
+    {
       "name": "typescript",
+      "type": "build"
+    },
+    {
+      "name": "vue-eslint-parser",
       "type": "build"
     },
     {
       "name": "@aws-amplify/ui-vue",
       "version": "3.1.30",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/s3-request-presigner",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/util-format-url",
       "type": "runtime"
     },
     {
@@ -105,6 +133,14 @@
       "type": "runtime"
     },
     {
+      "name": "@smithy/types",
+      "type": "runtime"
+    },
+    {
+      "name": "@smithy/url-parser",
+      "type": "runtime"
+    },
+    {
       "name": "aws-amplify",
       "version": "5.3.18",
       "type": "runtime"
@@ -115,7 +151,7 @@
       "type": "runtime"
     },
     {
-      "name": "aws-sdk",
+      "name": "axios",
       "type": "runtime"
     },
     {
@@ -123,8 +159,16 @@
       "type": "runtime"
     },
     {
+      "name": "clsx",
+      "type": "runtime"
+    },
+    {
       "name": "constructs",
       "version": "^10.0.5",
+      "type": "runtime"
+    },
+    {
+      "name": "date-fns",
       "type": "runtime"
     },
     {
@@ -157,6 +201,10 @@
     },
     {
       "name": "sass",
+      "type": "runtime"
+    },
+    {
+      "name": "tailwind-merge",
       "type": "runtime"
     },
     {

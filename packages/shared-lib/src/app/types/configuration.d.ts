@@ -1,38 +1,30 @@
 export interface ConfigurationSettings {
-  ['aws-account-id']: number;
-  ['aws-region']:
-    | 'us-east-1'
-    | 'us-west-2'
-    | 'ap-southeast-1'
-    | 'ap-southeast-2'
-    | 'eu-central-1'
-    | 'eu-west-1'
-    | 'eu-west-2';
-  ['env-type']: 'dev' | 'pre-prod' | 'prod';
-  ['application-url']: string;
-  ['test-user-email']: string;
-  ['test-user-password']: string;
+  ['aws-account-id']: string,
+  ['aws-region']: string,
+  ['env-type']: 'dev' | 'pre-prod' | 'prod',
+  ['app-domain-name']: string,
+  ['aws-hosted-zone-id']?: string, // Not required when env-type: 'dev', but must exist if configured
 
   // Back-End specific settings
   ['back-end']: {
-    ['system-admin-email']: string;
-    ['system-admin-password']: string; // Initial Cognito password
-    ['secret-key']: string; // JWT signing secret
-  };
+    ['jwt-secret-key']?: string, // Optional: If undefined, generate a random value on deployment for JWT Signature
+    ['system-admin-email']?: string,
+    ['system-admin-password']?: string, // Initial Cognito password
+    ['test-user-email']: string,
+    ['test-user-password']: string,
+    ['seqera-api-base-url']?: string, // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+  }
 
   // Front-End specific settings
   ['front-end']: {
-    // The following Front-End Infrastructure settings will need to be pre-configured in AWS.
-    ['aws-hosted-zone-id']: string;
-    ['aws-hosted-zone-name']: string;
-    ['aws-certificate-arn']: string;
-
     // The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
-    ['aws-cognito-user-pool-id']: string;
-    ['aws-cognito-client-id']: string;
-    ['base-api-url']: string; // TODO: Replace with application-url once APIGateway uses custom domains
-    ['mock-org-id']: string; // TODO: Remove once custom User Authorization logic retrieves OrgIds
-  };
+    ['aws-api-gateway-url']?: string,
+    ['aws-cognito-user-pool-id']?: string,
+    ['aws-cognito-user-pool-client-id']?: string,
+
+    // The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
+    ['aws-certificate-arn']?: string, // Not required when env-type: 'dev'
+  }
 }
 
 export interface Configuration {

@@ -1,12 +1,10 @@
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import {
-  OrganizationUserDetails,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { OrganizationAccess, User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
-import { UserService } from '../../../../services/easy-genomics/user-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 
 const organizationUserService = new OrganizationUserService();
 const userService = new UserService();
@@ -27,31 +25,35 @@ export const handler: Handler = async (
     }
 
     // Retrieve User Details for the list of OrganizationUsers for display
-    const userIds: string[] = [...new Set(organizationUsers.map(orgUser => orgUser.UserId))];
+    const userIds: string[] = [...new Set(organizationUsers.map((orgUser) => orgUser.UserId))];
     const users: User[] = await userService.listUsers(userIds);
 
-    const response: OrganizationUserDetails[] = organizationUsers.map(orgUser => {
-      const user: User | undefined = users.filter(u => u.UserId === orgUser.UserId).shift();
-      if (user) {
-        const organizationAccess: OrganizationAccess | undefined = (user.OrganizationAccess && organizationId)
-          ? { [organizationId]: user.OrganizationAccess[organizationId] }
-          : user.OrganizationAccess;
+    const response: OrganizationUserDetails[] = organizationUsers
+      .map((orgUser) => {
+        const user: User | undefined = users.find((u) => u.UserId === orgUser.UserId); // Use find instead of filter and shift
+        if (user) {
+          const organizationAccess: OrganizationAccess | undefined =
+            user.OrganizationAccess && organizationId
+              ? { [organizationId]: user.OrganizationAccess[organizationId] }
+              : user.OrganizationAccess;
 
-        return <OrganizationUserDetails>{
-          UserId: user.UserId,
-          UserEmail: user.Email,
-          UserStatus: user.Status,
-          Title: user.Title,
-          PreferredName: user.PreferredName,
-          FirstName: user.FirstName,
-          LastName: user.LastName,
-          OrganizationId: orgUser.OrganizationId,
-          OrganizationUserStatus: orgUser.Status,
-          OrganizationAdmin: orgUser.OrganizationAdmin,
-          OrganizationAccess: organizationAccess,
-        };
-      }
-    }).flat();
+          return {
+            UserId: user.UserId,
+            UserEmail: user.Email,
+            UserStatus: user.Status,
+            Title: user.Title,
+            PreferredName: user.PreferredName,
+            FirstName: user.FirstName,
+            LastName: user.LastName,
+            OrganizationId: orgUser.OrganizationId,
+            OrganizationUserStatus: orgUser.Status,
+            OrganizationAdmin: orgUser.OrganizationAdmin,
+            OrganizationAccess: organizationAccess,
+          } as OrganizationUserDetails;
+        }
+        return undefined;
+      })
+      .filter((item): item is OrganizationUserDetails => item !== undefined);
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
@@ -65,17 +67,19 @@ export const handler: Handler = async (
   }
 };
 
-const listOrganizationUsers = async (organizationId?: string, userId?: string): Promise<OrganizationUser[]> => {
+const listOrganizationUsers = (organizationId?: string, userId?: string): Promise<OrganizationUser[]> => {
   if (organizationId && !userId) {
     return organizationUserService.queryByOrganizationId(organizationId);
   } else if (!organizationId && userId) {
     return organizationUserService.queryByUserId(userId);
   } else {
-    throw new Error('Specify either organizationId or userId query parameter to retrieve the list of organization-users');
+    throw new Error(
+      'Specify either organizationId or userId query parameter to retrieve the list of organization-users',
+    );
   }
 };
 
 // Used for customising error messages by exception types
 function getErrorMessage(err: any) {
   return err.message;
-};
+}

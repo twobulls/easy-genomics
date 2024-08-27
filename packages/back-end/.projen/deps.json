@@ -1,15 +1,7 @@
 {
   "dependencies": [
     {
-      "name": "@aws-sdk/client-cognito-identity-provider",
-      "type": "build"
-    },
-    {
       "name": "@aws-sdk/types",
-      "type": "build"
-    },
-    {
-      "name": "@aws-sdk/util-dynamodb",
       "type": "build"
     },
     {
@@ -26,7 +18,7 @@
     },
     {
       "name": "@types/node",
-      "version": "^18",
+      "version": "^20",
       "type": "build"
     },
     {
@@ -65,6 +57,10 @@
       "type": "build"
     },
     {
+      "name": "eslint-plugin-prettier",
+      "type": "build"
+    },
+    {
       "name": "eslint",
       "version": "^8",
       "type": "build"
@@ -76,6 +72,10 @@
     {
       "name": "jest-junit",
       "version": "^15",
+      "type": "build"
+    },
+    {
+      "name": "prettier",
       "type": "build"
     },
     {
@@ -123,7 +123,23 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/client-ssm",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/client-sso-oidc",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/client-sts",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/lib-dynamodb",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/s3-request-presigner",
       "type": "runtime"
     },
     {
@@ -146,10 +162,6 @@
     },
     {
       "name": "aws-lambda",
-      "type": "runtime"
-    },
-    {
-      "name": "aws-sdk",
       "type": "runtime"
     },
     {

@@ -83,7 +83,7 @@ export class OrganizationUserService extends DynamoDBService implements Service 
 
     if (response.$metadata.httpStatusCode === 200) {
       if (response.Items) {
-        return response.Items.map(item => <OrganizationUser>unmarshall(item));
+        return response.Items.map((item) => <OrganizationUser>unmarshall(item));
       } else {
         throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
       }
@@ -111,7 +111,7 @@ export class OrganizationUserService extends DynamoDBService implements Service 
 
     if (response.$metadata.httpStatusCode === 200) {
       if (response.Items) {
-        return response.Items.map(item => <OrganizationUser>unmarshall(item));
+        return response.Items.map((item) => <OrganizationUser>unmarshall(item));
       } else {
         throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
       }
@@ -129,8 +129,14 @@ export class OrganizationUserService extends DynamoDBService implements Service 
 
     const updateExclusions: string[] = ['OrganizationId', 'UserId', 'CreatedAt', 'CreatedBy'];
 
-    const expressionAttributeNames: {[p: string]: string} = this.getExpressionAttributeNamesDefinition(organizationUser, updateExclusions);
-    const expressionAttributeValues: {[p: string]: any} = this.getExpressionAttributeValuesDefinition(organizationUser, updateExclusions);
+    const expressionAttributeNames: { [p: string]: string } = this.getExpressionAttributeNamesDefinition(
+      organizationUser,
+      updateExclusions,
+    );
+    const expressionAttributeValues: { [p: string]: any } = this.getExpressionAttributeValuesDefinition(
+      organizationUser,
+      updateExclusions,
+    );
     const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
 
     const response: UpdateItemCommandOutput = await this.updateItem({

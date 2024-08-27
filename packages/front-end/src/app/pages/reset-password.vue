@@ -1,48 +1,69 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { useToastStore, useUiStore } from '~/stores/stores';
-  import { ERRORS } from '~/constants/validation';
-  import { checkTokenExpiry } from '~/utils/jwt';
+  import { useToastStore, useUiStore } from '@FE/stores';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
+  import { checkIsTokenExpired } from '@FE/utils/jwt-utils';
+  import { getUrlParamValue } from '@FE/utils/string-utils';
+  import { NonEmptyStringSchema } from '@easy-genomics/shared-lib/src/app/types/base-unified';
+  import { AutoCompleteOptionsEnum } from '@FE/types/forms';
 
   definePageMeta({ layout: 'password' });
 
   const isFormDisabled = ref(true);
   const state = ref({ firstName: '', lastName: '', password: '' });
   const { $api } = useNuxtApp();
-  const { signIn } = useAuth();
   const formSchema = z.object({
     password: z
       .string()
-      .nonempty(ERRORS.notEmpty)
-      .min(8, ERRORS.passwordMinLength)
-      .max(256, ERRORS.passwordMaxLength)
-      .refine((value) => !/\s/.test(value), ERRORS.notSpaces)
-      .refine((value) => /[a-zA-Z]/.test(value), ERRORS.passwordCharacter)
-      .refine((value) => /[0-9]/.test(value), ERRORS.passwordNumber)
-      .refine((value) => /[^a-zA-Z0-9]/.test(value), ERRORS.passwordSymbol),
+      .nonempty(VALIDATION_MESSAGES.notEmpty)
+      .min(8, VALIDATION_MESSAGES.passwordMinLength)
+      .max(50, VALIDATION_MESSAGES.passwordMaxLength)
+      .refine((value) => !/\s/.test(value), VALIDATION_MESSAGES.notSpaces)
+      .refine((value) => /[A-Z]/.test(value), VALIDATION_MESSAGES.passwordUppercase)
+      .refine((value) => /[a-z]/.test(value), VALIDATION_MESSAGES.passwordLowercase)
+      .refine((value) => /[0-9]/.test(value), VALIDATION_MESSAGES.passwordNumber)
+      .refine((value) => /[^a-zA-Z0-9]/.test(value), VALIDATION_MESSAGES.passwordSymbol),
   });
   const forgotPasswordToken = ref('');
 
   /**
-   * @description Check if the reset token is valid and not expired, otherwise redirect to the sign-in page
+   * @description Check if the reset token is valid and not expired, otherwise redirect to the signin page
    */
   onMounted(() => {
-    const resetToken = getResetToken();
-    return checkTokenExpiry(resetToken) ? (forgotPasswordToken.value = resetToken) : handleExpiredToken();
+    processToken();
   });
 
   watchEffect(() => {
     isFormDisabled.value = !formSchema.safeParse(state.value).success;
   });
 
-  function handleExpiredToken() {
-    useToastStore().error('Your invite link has been accepted or expired.');
-    navigateTo('/sign-in');
+  function processToken() {
+    try {
+      const token = getUrlToken();
+      const isTokenExpired = checkIsTokenExpired(token);
+      if (isTokenExpired) {
+        handleExpiredToken();
+        return;
+      } else {
+        forgotPasswordToken.value = token;
+      }
+    } catch (error) {
+      console.error('Error processing token; error:', error);
+    }
   }
 
-  function getResetToken() {
-    const url = new URL(window.location.href);
-    return url.searchParams.get('forgot-password');
+  function getUrlToken(): string {
+    const token = getUrlParamValue('forgot-password');
+    const parseResult = NonEmptyStringSchema.safeParse(token);
+    if (!parseResult.success) {
+      throw new Error('Invalid invite token');
+    }
+    return parseResult.data;
+  }
+
+  function handleExpiredToken() {
+    useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
+    navigateTo('/signin');
   }
 
   /**
@@ -57,7 +78,7 @@
       state.value.password = '';
       await navigateTo('/signin');
     } catch (error: any) {
-      useToastStore().error(ERRORS.network);
+      useToastStore().error(VALIDATION_MESSAGES.network);
       console.error('Error occurred during password reset.', error);
       throw error;
     } finally {
@@ -70,7 +91,11 @@
   <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
     <EGText tag="h2" class="mb-4">Reset my password</EGText>
     <EGFormGroup label="New password" name="password">
-      <EGPasswordInput v-model="state.password" :disabled="useUiStore().isRequestPending" />
+      <EGPasswordInput
+        v-model="state.password"
+        :disabled="useUiStore().isRequestPending"
+        :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
+      />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton

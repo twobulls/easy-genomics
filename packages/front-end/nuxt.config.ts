@@ -1,25 +1,77 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import path from 'path';
+import { join } from 'path';
+import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
+import {
+  findConfiguration,
+  getStackEnvName,
+  loadConfigurations,
+} from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import IconsResolver from 'unplugin-icons/resolver';
 import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 
-import { envConfig } from './config/env-config';
+let awsRegion: string | undefined;
+let awsApiGatewayUrl: string | undefined;
+let awsCognitoUserPoolId: string | undefined;
+let awsCognitoUserPoolClientId: string | undefined;
 
-let awsRegion;
-let awsCognitoUserPoolId;
-let awsCognitoUserPoolClientId;
-let awsBaseApiUrl;
-let mockOrgId;
+if (process.env.CI_CD === 'true') {
+  console.log('Loading Front-End Nuxt environment settings for CI/CD Pipeline...');
 
-if (envConfig) {
-  awsRegion = envConfig['aws-region'];
-  awsCognitoUserPoolId = envConfig['front-end']['aws-cognito-user-pool-id'];
-  awsCognitoUserPoolClientId = envConfig['front-end']['aws-cognito-client-id'];
-  awsBaseApiUrl = envConfig['front-end']['base-api-url'];
-  mockOrgId = envConfig['front-end']['mock-org-id']; // TODO: Remove once custom User Authorization logic retrieves OrgIds
+  // CI/CD Pipeline uses ENV parameters
+  awsRegion = process.env.AWS_REGION;
+  awsApiGatewayUrl = process.env.AWS_API_GATEWAY_URL;
+  awsCognitoUserPoolId = process.env.AWS_COGNITO_USER_POOL_ID;
+  awsCognitoUserPoolClientId = process.env.AWS_COGNITO_USER_POOL_CLIENT_ID;
+
+  if (!awsApiGatewayUrl) {
+    throw new Error('AWS_API_GATEWAY_URL undefined, please check the CI/CD environment configuration');
+  }
+  if (!awsCognitoUserPoolId) {
+    throw new Error('AWS_COGNITO_USER_POOL_ID undefined, please check the CI/CD environment configuration');
+  }
+  if (!awsCognitoUserPoolClientId) {
+    throw new Error('AWS_COGNITO_USER_POOL_CLIENT_ID undefined, please check the CI/CD environment configuration');
+  }
 } else {
-  // Handle the error. Throw an exception or use default values, for example:
-  throw Error('Configuration is undefined. Please ensure that the configuration is correctly setup.');
+  console.log('Loading Front-End Nuxt easy-genomics.yaml settings...');
+
+  // Load configuration settings for each environment
+  const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
+    join(__dirname, '../../config/easy-genomics.yaml'),
+  );
+  if (configurations.length === 0) {
+    throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
+  }
+
+  // Try to retrieve optional command argument: --stack {env-name}
+  const STACK_ENV_NAME: string | undefined = getStackEnvName();
+  if (configurations.length > 1 && !STACK_ENV_NAME) {
+    throw new Error('Multiple configurations found in easy-genomics.yaml, please specify argument: --stack {env-name}');
+  }
+
+  const configuration: { [p: string]: ConfigurationSettings } =
+    configurations.length > 1 ? findConfiguration(STACK_ENV_NAME!, configurations) : configurations.shift()!;
+  const configSettings = Object.values(configuration).shift();
+  if (!configSettings) {
+    throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
+  }
+
+  awsRegion = configSettings['aws-region'];
+  awsApiGatewayUrl = configSettings['front-end']['aws-api-gateway-url'];
+  awsCognitoUserPoolId = configSettings['front-end']['aws-cognito-user-pool-id'];
+  awsCognitoUserPoolClientId = configSettings['front-end']['aws-cognito-user-pool-client-id'];
+
+  if (!awsApiGatewayUrl) {
+    throw new Error('"aws-api-gateway-url" undefined, please check the easy-genomics.yaml configuration');
+  }
+  if (!awsCognitoUserPoolId) {
+    throw new Error('"aws-cognito-user-pool-id" undefined, please check the easy-genomics.yaml configuration');
+  }
+  if (!awsCognitoUserPoolClientId) {
+    throw new Error('"aws-cognito-user-pool-client-id" undefined, please check the easy-genomics.yaml configuration');
+  }
 }
 
 // @ts-ignore
@@ -29,13 +81,9 @@ export default defineNuxtConfig({
   },
 
   devtools: { enabled: true },
-
   modules: ['@nuxt/ui', '@pinia/nuxt', '@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt'],
-
   srcDir: 'src/app/',
-
   css: ['@/styles/main.scss'],
-
   ssr: false,
 
   build: {
@@ -51,16 +99,20 @@ export default defineNuxtConfig({
       AWS_REGION: awsRegion,
       AWS_USER_POOL_ID: awsCognitoUserPoolId,
       AWS_CLIENT_ID: awsCognitoUserPoolClientId,
-      BASE_API_URL: awsBaseApiUrl,
+      BASE_API_URL: awsApiGatewayUrl.replace(/\/+$/, ''), // Remove trailing slashes
       ENV_TYPE: process.env.envType || 'dev',
       GITHUB_RUN_NUMBER: process.env.GITHUB_RUN_NUMBER || 'Unknown',
-      MOCK_ORG_ID: mockOrgId, // TODO: Remove once custom User Authorization logic retrieves OrgIds
     },
   },
 
   vite: {
     define: {
       'window.global': {}, // required by Amplify
+    },
+    resolve: {
+      alias: {
+        '@FE': path.resolve(__dirname, './src/app'),
+      },
     },
     plugins: [
       Components({
@@ -80,4 +132,6 @@ export default defineNuxtConfig({
       },
     },
   },
+
+  compatibilityDate: '2024-07-26',
 });

@@ -212,6 +212,7 @@ root.addScripts({
 
 root.addFields({
   'lint-staged': {
+    'packages/**/*.{js,ts}': ['pnpm lint-all'],
     '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
   },
 });

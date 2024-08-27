@@ -145,7 +145,7 @@
       "error",
       "always"
     ],
-    "no-new": "error",
+    "no-new": "off",
     "no-empty": "error",
     "prettier/prettier": "error",
     "require-await": "off",

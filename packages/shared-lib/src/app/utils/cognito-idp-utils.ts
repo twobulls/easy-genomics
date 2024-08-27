@@ -21,14 +21,14 @@ const cognitoIdpClient: CognitoIdentityProviderClient = new CognitoIdentityProvi
  */
 export async function getCognitoIdpInfo(userPoolName: string, userPoolClientName: string): Promise<CognitoIdpInfo> {
   const userPools: UserPoolDescriptionType[] = await listCognitoIdpUserPools();
-  const userPool: UserPoolDescriptionType | undefined = userPools
-    .filter((up: UserPoolDescriptionType) => up.Name === userPoolName)
-    .shift();
+  const userPool: UserPoolDescriptionType | undefined = userPools.find(
+    (up: UserPoolDescriptionType) => up.Name === userPoolName,
+  );
 
   const userPoolClients: UserPoolClientDescription[] = await listCognitoIdpUserPoolClients(userPool?.Id);
-  const userPoolClient: UserPoolClientDescription | undefined = userPoolClients
-    .filter((upc: UserPoolClientDescription) => upc.ClientName === userPoolClientName)
-    .shift();
+  const userPoolClient: UserPoolClientDescription | undefined = userPoolClients.find(
+    (upc: UserPoolClientDescription) => upc.ClientName === userPoolClientName,
+  );
 
   if (!userPool || !userPoolClient) {
     const reason = !userPool

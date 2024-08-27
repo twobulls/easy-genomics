@@ -70,7 +70,7 @@ const eslintGlobalRules = {
   'space-before-function-paren': 'off',
   'no-console': 'off',
   'arrow-parens': ['error', 'always'],
-  'no-new': 'error',
+  'no-new': 'off',
   'no-empty': 'error',
   'prettier/prettier': 'error',
   'require-await': 'off',

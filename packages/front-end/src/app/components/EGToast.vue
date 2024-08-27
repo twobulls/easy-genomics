@@ -1,4 +1,6 @@
 <script setup lang="ts">
+  import { ToastVariant } from '@FE/types/toast';
+
   const props = withDefaults(
     defineProps<{
       id: string;

@@ -4,8 +4,8 @@ import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user
 import { CreateUserForgotPasswordRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
-import { CognitoIdpService } from '../../../services/cognito-idp-service';
-import { UserService } from '../../../services/easy-genomics/user-service';
+import { CognitoIdpService } from '@BE/services/cognito-idp-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 
 const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const userService: UserService = new UserService();

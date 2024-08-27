@@ -9,8 +9,8 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
-import { S3Service } from '../../../services/s3-service';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { S3Service } from '@BE/services/s3-service';
 
 const EASY_GENOMICS_SINGLE_FILE_TRANSFER_LIMIT: number = 5 * Math.pow(1024, 3); // 5GiB
 
@@ -62,7 +62,7 @@ export const handler: Handler = async (
       .getBucketLocation({
         Bucket: s3Bucket,
       })
-      .then(async (result: GetBucketLocationCommandOutput) => {
+      .then((result: GetBucketLocationCommandOutput) => {
         if (result.$metadata.httpStatusCode === 200) {
           return result.LocationConstraint;
         } else {

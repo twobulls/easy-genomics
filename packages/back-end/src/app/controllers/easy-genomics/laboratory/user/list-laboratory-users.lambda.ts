@@ -1,7 +1,7 @@
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryUserService } from '../../../../services/easy-genomics/laboratory-user-service';
+import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
 
 const laboratoryUserService = new LaboratoryUserService();
 
@@ -32,7 +32,7 @@ export const handler: Handler = async (
   }
 };
 
-const listLaboratoryUsers = async (laboratoryId?: string, userId?: string): Promise<LaboratoryUser[]> => {
+const listLaboratoryUsers = (laboratoryId?: string, userId?: string): Promise<LaboratoryUser[]> => {
   if (laboratoryId && !userId) {
     return laboratoryUserService.queryByLaboratoryId(laboratoryId);
   } else if (!laboratoryId && userId) {

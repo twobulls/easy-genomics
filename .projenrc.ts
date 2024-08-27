@@ -63,18 +63,18 @@ const prettierOptions: PrettierOptions = {
 // Changing compiler options will require that you re-run projen twice.
 // As the jestConfig is reliant on the current (pre-projen run) version of ./tsconfig.json
 const eslintGlobalRules = {
-  'no-unused-vars': 'warn',
-  '@typescript-eslint/no-unused-vars': ['warn'],
-  'semi': ['warn', 'always'],
-  'comma-dangle': ['warn', 'always-multiline'],
+  'no-unused-vars': 'off',
+  '@typescript-eslint/no-unused-vars': ['error'],
+  'semi': ['error', 'always'],
+  'comma-dangle': ['error', 'always-multiline'],
   'space-before-function-paren': 'off',
   'no-console': 'off',
-  'arrow-parens': 'warn',
-  'no-new': 'warn',
-  'no-empty': 'warn',
-  'prettier/prettier': 'warn',
-  'require-await': 'warn',
-  'array-callback-return': 'warn',
+  'arrow-parens': ['error', 'always'],
+  'no-new': 'off',
+  'no-empty': 'error',
+  'prettier/prettier': 'error',
+  'require-await': 'off',
+  'array-callback-return': 'error',
   '@typescript-eslint/indent': 'off',
 };
 
@@ -192,7 +192,7 @@ root.addScripts({
   ['build-back-end']:
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
   ['build-front-end']:
-    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
+    'nx reset && pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['build-and-deploy']:
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
@@ -212,6 +212,7 @@ root.addScripts({
 
 root.addFields({
   'lint-staged': {
+    'packages/**/*.{js,ts}': ['pnpm lint-all'],
     '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
   },
 });

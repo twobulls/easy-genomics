@@ -1,7 +1,7 @@
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { UserService } from '../../../services/easy-genomics/user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 
 const userService = new UserService();
 

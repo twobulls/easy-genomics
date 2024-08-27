@@ -127,26 +127,29 @@
         ]
       }
     ],
-    "no-unused-vars": "warn",
+    "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
-      "warn"
+      "error"
     ],
     "semi": [
-      "warn",
+      "error",
       "always"
     ],
     "comma-dangle": [
-      "warn",
+      "error",
       "always-multiline"
     ],
     "space-before-function-paren": "off",
     "no-console": "off",
-    "arrow-parens": "warn",
-    "no-new": "warn",
-    "no-empty": "warn",
-    "prettier/prettier": "warn",
-    "require-await": "warn",
-    "array-callback-return": "warn",
+    "arrow-parens": [
+      "error",
+      "always"
+    ],
+    "no-new": "off",
+    "no-empty": "error",
+    "prettier/prettier": "error",
+    "require-await": "off",
+    "array-callback-return": "error",
     "@typescript-eslint/indent": "off"
   },
   "overrides": [

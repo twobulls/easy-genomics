@@ -5,15 +5,12 @@ import {
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { CreateOrganization, Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
 import { DeletedResponse } from '@FE/types/api';
 
 class OrgsModule extends HttpFactory {
-  $config = useRuntimeConfig();
-
   async create(org: CreateOrganization): Promise<Organization | undefined> {
-    const res = this.call<Organization>('POST', '/organization/create-organization', org);
+    const res = await this.call<Organization>('POST', '/organization/create-organization', org);
 
     if (!res) {
       throw new Error('Failed to create Organization');
@@ -23,7 +20,7 @@ class OrgsModule extends HttpFactory {
   }
 
   async list(): Promise<Organization[] | undefined> {
-    const res = this.call<Organization[]>('GET', '/organization/list-organizations');
+    const res = await this.call<Organization[]>('GET', '/organization/list-organizations');
 
     if (!res) {
       throw new Error('Failed to retrieve list of Organizations');
@@ -59,7 +56,7 @@ class OrgsModule extends HttpFactory {
   }
 
   async orgSettings(orgId: string): Promise<Organization | undefined> {
-    const res = this.call<Organization>('GET', `/organization/read-organization/${orgId}`);
+    const res = await this.call<Organization>('GET', `/organization/read-organization/${orgId}`);
 
     if (!res) {
       throw new Error(`Failed to retrieve Organization ${orgId} settings`);
@@ -82,7 +79,7 @@ class OrgsModule extends HttpFactory {
     };
 
     try {
-      EditOrganizationUserSchema.parse(input);
+      await EditOrganizationUserSchema.parse(input);
     } catch (error) {
       throw new Error(`Validation failed: ${error}`);
     }
@@ -126,7 +123,7 @@ class OrgsModule extends HttpFactory {
     } catch (error) {
       throw new Error(`Validation failed: ${error}`);
     }
-    const res = this.call<Organization>('PUT', `/organization/update-organization/${orgId}`, body);
+    const res = await this.call<Organization>('PUT', `/organization/update-organization/${orgId}`, body);
 
     if (!res) {
       throw new Error('Failed to update Organization details');

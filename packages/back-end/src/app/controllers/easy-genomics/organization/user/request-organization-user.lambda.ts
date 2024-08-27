@@ -2,7 +2,7 @@ import { RequestOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
 
 const organizationUserService = new OrganizationUserService();
 

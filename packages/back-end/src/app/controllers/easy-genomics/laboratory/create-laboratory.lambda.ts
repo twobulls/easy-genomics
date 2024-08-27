@@ -7,10 +7,10 @@ import {
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../services/easy-genomics/laboratory-service';
-import { OrganizationService } from '../../../services/easy-genomics/organization-service';
-import { S3Service } from '../../../services/s3-service';
-import { SsmService } from '../../../services/ssm-service';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
+import { S3Service } from '@BE/services/s3-service';
+import { SsmService } from '@BE/services/ssm-service';
 
 const organizationService = new OrganizationService();
 const laboratoryService = new LaboratoryService();

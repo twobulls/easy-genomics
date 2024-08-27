@@ -37,7 +37,7 @@ class UsersModule extends HttpFactory {
       Email: email,
     });
 
-    const res = this.call<CreateUserInvitationRequest>('POST', '/user/create-user-invitation-request', {
+    const res = await this.call<CreateUserInvitationRequest>('POST', '/user/create-user-invitation-request', {
       OrganizationId: orgId,
       Email: email,
     });
@@ -54,7 +54,7 @@ class UsersModule extends HttpFactory {
       Email: email,
     });
 
-    const res = this.call<CreateUserForgotPasswordRequest>('POST', '/user/create-user-forgot-password-request', {
+    const res = await this.call<CreateUserForgotPasswordRequest>('POST', '/user/create-user-forgot-password-request', {
       Email: email,
     });
 

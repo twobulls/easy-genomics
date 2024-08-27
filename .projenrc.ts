@@ -237,6 +237,7 @@ const sharedLib = new typescript.TypeScriptProject({
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
   deps: [
+    '@aws-sdk/client-api-gateway',
     '@aws-sdk/client-cognito-identity-provider',
     '@nestjs/config',
     'aws-cdk',

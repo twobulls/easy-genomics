@@ -83,8 +83,8 @@ export class S3Service {
   public createBucket = async (createBucketInput: CreateBucketCommandInput): Promise<CreateBucketCommandOutput> => {
     // Create S3 Bucket
     const createBucketCommandOutput: CreateBucketCommandOutput = await this.s3Request<
-    CreateBucketCommandInput,
-    CreateBucketCommandOutput
+      CreateBucketCommandInput,
+      CreateBucketCommandOutput
     >(S3Command.CREATE_BUCKET, createBucketInput);
 
     // Set S3 Bucket CORS configuration

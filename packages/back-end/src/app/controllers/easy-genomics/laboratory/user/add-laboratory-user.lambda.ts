@@ -12,11 +12,11 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { LaboratoryService } from '../../../../services/easy-genomics/laboratory-service';
-import { LaboratoryUserService } from '../../../../services/easy-genomics/laboratory-user-service';
-import { OrganizationUserService } from '../../../../services/easy-genomics/organization-user-service';
-import { PlatformUserService } from '../../../../services/easy-genomics/platform-user-service';
-import { UserService } from '../../../../services/easy-genomics/user-service';
+import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
+import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryUserService = new LaboratoryUserService();

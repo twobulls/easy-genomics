@@ -1,14 +1,14 @@
 <script setup lang="ts">
-  import { ButtonSizeEnum } from '~/types/buttons';
-  import { cleanText } from '~/utils/string-utils';
-  import { useUiStore } from '~/stores';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { cleanText } from '@FE/utils/string-utils';
+  import { useUiStore } from '@FE/stores';
   import {
     ORG_DESCRIPTION_MAX_LENGTH,
     ORG_NAME_MAX_LENGTH,
     OrgDescriptionSchema,
     OrgDetailsFormSchema,
     OrgNameSchema,
-  } from '~/types/forms';
+  } from '@FE/types/forms';
 
   const props = withDefaults(
     defineProps<{
@@ -18,7 +18,7 @@
     {
       name: '',
       description: '',
-    }
+    },
   );
 
   // Form-related refs and computed props

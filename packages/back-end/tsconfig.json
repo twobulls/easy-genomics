@@ -25,10 +25,19 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "stripInternal": true,
-    "target": "ES2019"
+    "target": "ES2019",
+    "baseUrl": ".",
+    "paths": {
+      "@BE/*": [
+        "src/app/*"
+      ]
+    }
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "packages/back-end/src/**/*.ts",
+    "packages/front-end/src/**/*.ts",
+    "packages/shared-lib/src/**/*.ts"
   ],
   "exclude": [
     "cdk.out"

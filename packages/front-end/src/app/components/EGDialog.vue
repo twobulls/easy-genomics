@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ButtonVariantEnum, ButtonSizeEnum } from '~/types/buttons';
+  import { ButtonVariantEnum, ButtonSizeEnum } from '@FE/types/buttons';
 
   defineProps<{
     modelValue: any;

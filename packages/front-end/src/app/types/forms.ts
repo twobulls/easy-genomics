@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getCharacterText } from '~/utils/string-utils';
+import { getCharacterText } from '@FE/utils/string-utils';
 
 /*
     Organization Name

@@ -156,16 +156,16 @@ export class PlatformUserService extends DynamoDBService {
     // Generate array of Delete transaction items to remove the User's associated LaboratoryUser mappings
     const laboratoryUserDeletions = laboratoryAccess
       ? Object.keys(laboratoryAccess).map((laboratoryId) => {
-        return {
-          Delete: {
-            TableName: this.LABORATORY_USER_TABLE_NAME,
-            Key: {
-              LaboratoryId: { S: laboratoryId },
-              UserId: { S: user.UserId },
+          return {
+            Delete: {
+              TableName: this.LABORATORY_USER_TABLE_NAME,
+              Key: {
+                LaboratoryId: { S: laboratoryId },
+                UserId: { S: user.UserId },
+              },
             },
-          },
-        };
-      })
+          };
+        })
       : [];
 
     // Update the current Organization Access to exclude the Organization to remove

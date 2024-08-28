@@ -219,6 +219,7 @@ export class UserService extends DynamoDBService implements Service {
   }
 
   async delete(user: User): Promise<boolean> {
+    console.error(user);
     throw new Error('TBD');
   }
 }

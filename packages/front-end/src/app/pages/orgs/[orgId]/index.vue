@@ -2,16 +2,16 @@
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { OrgUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useOrgsStore, useToastStore, useUiStore } from '~/stores';
-  import useUser from '~/composables/useUser';
+  import { useOrgsStore, useToastStore, useUiStore } from '@FE/stores';
+  import useUser from '@FE/composables/useUser';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-  import { ButtonVariantEnum } from '~/types/buttons';
-  import { DeletedResponse } from '~/types/api';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
+  import { DeletedResponse } from '@FE/types/api';
   import type { FormSubmitEvent } from '#ui/types';
-  import { OrgDetailsForm } from '~/types/forms';
-  import { VALIDATION_MESSAGES } from '~/constants/validation';
-  import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
-  import { caseInsensitiveSortFn } from '~/utils/sort-utils';
+  import { OrgDetailsForm } from '@FE/types/forms';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
+  import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
+  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const router = useRouter();
   const $route = useRoute();

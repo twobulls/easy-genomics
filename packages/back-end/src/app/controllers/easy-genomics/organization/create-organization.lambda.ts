@@ -4,7 +4,7 @@ import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genom
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
-import { OrganizationService } from '../../../services/easy-genomics/organization-service';
+import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
 
 const organizationService = new OrganizationService();
 

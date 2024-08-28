@@ -5,7 +5,7 @@ import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-gen
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
-import { DeletedResponse, EditUserResponse } from '~/types/api';
+import { DeletedResponse, EditUserResponse } from '@FE/types/api';
 
 class LabsModule extends HttpFactory {
   $config = useRuntimeConfig();

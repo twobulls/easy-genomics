@@ -2,7 +2,7 @@ import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genom
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { OrganizationAccessDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { defineStore } from 'pinia';
-import useUser from '~/composables/useUser';
+import useUser from '@FE/composables/useUser';
 
 interface OrgsStoreState {
   selectedUser: OrganizationUserDetails | undefined;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useOrgsStore, useToastStore, useUiStore } from '~/stores';
+  import { useOrgsStore, useToastStore, useUiStore } from '@FE/stores';
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 

@@ -5,9 +5,9 @@
   } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
   import { FormError } from '#ui/types';
   import { z } from 'zod';
-  import { maybeAddFieldValidationErrors } from '~/utils/form-utils';
-  import { ButtonSizeEnum } from '~/types/buttons';
-  import { usePipelineRunStore } from '~/stores';
+  import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { usePipelineRunStore } from '@FE/stores';
 
   const { $api } = useNuxtApp();
 

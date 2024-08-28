@@ -96,7 +96,7 @@ export class WwwHostingConstruct extends Construct {
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3`, {});
 
     // Using the configured domainName for the WWW S3 Bucket
-    const wwwBucketName: string = appDomainName; // Must be globally unique
+    const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
 
     // Create S3 Bucket for static website hosting through CloudFront distribution
     const wwwBucket: Bucket = s3.createBucket(
@@ -113,15 +113,16 @@ export class WwwHostingConstruct extends Construct {
   // CloudFront Distribution
   private setupCloudFrontDistribution = () => {
     const appDomainName: string = this.props.appDomainName;
+    const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
 
-    const wwwBucket: Bucket | undefined = this.s3Buckets.get(appDomainName);
+    const wwwBucket: Bucket | undefined = this.s3Buckets.get(wwwBucketName);
     if (!wwwBucket) {
-      throw new Error(`S3 Bucket not found: ${appDomainName}`);
+      throw new Error(`S3 Bucket not found: ${wwwBucketName}`);
     }
 
     // Grant CloudFront access to WWW S3 Bucket
     const originAccessIdentity: OriginAccessIdentity = new OriginAccessIdentity(this, 'cloudfront-OAI', {
-      comment: `OAI for ${appDomainName}`,
+      comment: `OAI for ${wwwBucketName}`,
     });
 
     wwwBucket.grantRead(originAccessIdentity);
@@ -133,6 +134,7 @@ export class WwwHostingConstruct extends Construct {
         principals: [new CanonicalUserPrincipal(originAccessIdentity.cloudFrontOriginAccessIdentityS3CanonicalUserId)],
       }),
     );
+
     new CfnOutput(this, 'HostingBucketName', { key: 'HostingBucketName', value: wwwBucket.bucketName });
 
     const responseHeadersPolicy: ResponseHeadersPolicy | undefined = this.applySecurityHeaders();
@@ -200,18 +202,21 @@ export class WwwHostingConstruct extends Construct {
         hostedZoneId: this.props.awsHostedZoneId,
         zoneName: this.props.appDomainName,
       });
+
       new CfnOutput(this, 'HostedZoneName', { key: 'HostedZoneName', value: hostedZone.zoneName });
 
       // Setup Route53 alias record for the CloudFront distribution
+
       new ARecord(this, 'SiteAliasRecord', {
         target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
         zone: hostedZone,
       });
-
       // Domain Name alias configured for the ApplicationUrl
+
       new CfnOutput(this, 'ApplicationUrl', { key: 'ApplicationUrl', value: `https://${appDomainName}` });
     } else {
       // Domain Name alias not configured for the ApplicationUrl - output CloudFront Distribution URL
+
       new CfnOutput(this, 'ApplicationUrl', {
         key: 'ApplicationUrl',
         value: `https://${distribution.distributionDomainName}`,
@@ -221,6 +226,7 @@ export class WwwHostingConstruct extends Construct {
     const wwwSourceDir = path.join(__dirname, '../../../dist'); // Generated site contents folder
     if (fs.existsSync(wwwSourceDir)) {
       // Deploy site contents to S3 bucket
+
       new BucketDeployment(this, 'DeployWithInvalidation', {
         sources: [Source.asset(wwwSourceDir)],
         destinationBucket: wwwBucket,
@@ -233,6 +239,7 @@ export class WwwHostingConstruct extends Construct {
   private getCertificate = (awsCertificateArn: string): ICertificate => {
     // Retrieve TLS certificate
     const certificate: ICertificate = Certificate.fromCertificateArn(this, 'SiteCertificate', awsCertificateArn);
+
     new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
     return certificate;
   };

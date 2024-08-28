@@ -8,13 +8,13 @@ import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/t
 import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { CognitoIdpService } from '../../../services/cognito-idp-service';
-import { OrganizationService } from '../../../services/easy-genomics/organization-service';
-import { OrganizationUserService } from '../../../services/easy-genomics/organization-user-service';
-import { PlatformUserService } from '../../../services/easy-genomics/platform-user-service';
-import { UserService } from '../../../services/easy-genomics/user-service';
-import { SesService } from '../../../services/ses-service';
-import { generateJwt } from '../../../utils/jwt-utils';
+import { CognitoIdpService } from '@BE/services/cognito-idp-service';
+import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
+import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
+import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
+import { SesService } from '@BE/services/ses-service';
+import { generateJwt } from '@BE/utils/jwt-utils';
 
 const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const organizationService = new OrganizationService();

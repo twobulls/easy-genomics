@@ -50,6 +50,7 @@ if (process.env.CI_CD === 'true') {
   const constructNamespace: string = `${envName}-easy-genomics`;
 
   // Setups Front-End Stack to support static web hosting for the UI
+
   new FrontEndStack(app, `${envName}-main-front-end-stack`, {
     env: {
       account: awsAccountId,
@@ -74,7 +75,7 @@ if (process.env.CI_CD === 'true') {
   }
 
   // Iterate through valid configurations to synthesize CloudFormation stacks
-  configurations.map((configuration: { [p: string]: ConfigurationSettings }) => {
+  configurations.forEach((configuration: { [p: string]: ConfigurationSettings }) => {
     const envName: string | undefined = Object.keys(configuration).shift();
     const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift();
 
@@ -117,6 +118,7 @@ if (process.env.CI_CD === 'true') {
       }
 
       // Setups Front-End Stack to support static web hosting for the UI
+
       new FrontEndStack(app, `${envName}-main-front-end-stack`, {
         env: {
           account: awsAccountId,

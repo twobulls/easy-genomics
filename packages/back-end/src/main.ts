@@ -58,6 +58,7 @@ if (process.env.CI_CD === 'true') {
     }
   }
   // Setups Back-End Stack which initiates the nested stacks for Easy Genomics, AWS HealthOmics and NextFlow Tower
+
   new BackEndStack(app, `${envName}-main-back-end-stack`, {
     env: {
       account: awsAccountId,
@@ -89,7 +90,7 @@ if (process.env.CI_CD === 'true') {
   }
 
   // Iterate through valid configurations to synthesize CloudFormation stacks
-  configurations.map((configuration: { [p: string]: ConfigurationSettings }) => {
+  configurations.forEach((configuration: { [p: string]: ConfigurationSettings }) => {
     const envName: string | undefined = Object.keys(configuration).shift();
     const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift();
 
@@ -137,6 +138,7 @@ if (process.env.CI_CD === 'true') {
       }
 
       // Setups Back-End Stack which initiates the nested stacks for Auth, Easy Genomics, AWS HealthOmics and NextFlow Tower
+
       new BackEndStack(app, `${envName}-main-back-end-stack`, {
         env: {
           account: awsAccountId,

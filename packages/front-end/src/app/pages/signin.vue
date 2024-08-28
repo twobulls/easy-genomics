@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { z } from 'zod';
-  import { resetStores, useUiStore } from '~/stores';
-  import { VALIDATION_MESSAGES } from '~/constants/validation';
+  import { resetStores, useUiStore } from '@FE/stores';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 
   definePageMeta({ layout: 'signin' });
 

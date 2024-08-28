@@ -8,7 +8,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "lib": [
-      "es2019"
+      "ES2022"
     ],
     "module": "CommonJS",
     "noEmitOnError": false,
@@ -23,18 +23,20 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "stripInternal": true,
-    "target": "ES2019",
+    "target": "ES2022",
     "baseUrl": ".",
     "rootDir": ".",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
     "paths": {
       "@BE/*": [
-        "packages/back-end/src/*"
+        "packages/back-end/src/app/*"
       ],
       "@FE/*": [
-        "packages/front-end/src/*"
+        "packages/front-end/src/app/*"
       ],
       "@SharedLib/*": [
-        "packages/shared-lib/src/*"
+        "packages/shared-lib/src/app/*"
       ]
     }
   },

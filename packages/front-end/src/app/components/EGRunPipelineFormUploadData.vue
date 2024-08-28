@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import axios from 'axios';
   import { v4 as uuidv4 } from 'uuid';
-  import { ButtonSizeEnum } from '~/types/buttons';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
   import {
     FileInfo,
     FileUploadInfo,
@@ -14,7 +14,7 @@
     UploadedFileInfo,
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-  import { usePipelineRunStore, useToastStore } from '~/stores';
+  import { usePipelineRunStore, useToastStore } from '@FE/stores';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 

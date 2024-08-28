@@ -4,15 +4,15 @@
     LaboratoryRolesEnum,
     LaboratoryRolesEnumSchema,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
-  import { ButtonVariantEnum } from '~/types/buttons';
-  import { DeletedResponse, EditUserResponse } from '~/types/api';
-  import { useLabsStore, useOrgsStore, useToastStore, useUiStore, usePipelineRunStore } from '~/stores';
-  import useUser from '~/composables/useUser';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
+  import { DeletedResponse, EditUserResponse } from '@FE/types/api';
+  import { useLabsStore, useOrgsStore, useToastStore, useUiStore, usePipelineRunStore } from '@FE/stores';
+  import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-  import { EGTabsStyles } from '~/styles/nuxtui/UTabs';
-  import { getDate, getTime } from '~/utils/date-time';
-  import { caseInsensitiveSortFn } from '~/utils/sort-utils';
+  import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
+  import { getDate, getTime } from '@FE/utils/date-time';
+  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -433,7 +433,7 @@
             <div class="flex items-center">
               <EGUserRoleDropdownNew
                 :show-remove-from-lab="true"
-                :key="labUser?.UserId"
+                :key="labUser?.LabManager"
                 :disabled="useUiStore().isRequestPending"
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

@@ -1,10 +1,10 @@
 import { defineNuxtPlugin } from '#app';
-import LabsModule from '~/repository/modules/labs';
-import OrgsModule from '~/repository/modules/orgs';
-import PipelinesModule from '~/repository/modules/pipelines';
-import UploadsModule from '~/repository/modules/uploads';
-import UsersModule from '~/repository/modules/users';
-import WorkflowsModules from '~/repository/modules/workflows';
+import LabsModule from '@FE/repository/modules/labs';
+import OrgsModule from '@FE/repository/modules/orgs';
+import PipelinesModule from '@FE/repository/modules/pipelines';
+import UploadsModule from '@FE/repository/modules/uploads';
+import UsersModule from '@FE/repository/modules/users';
+import WorkflowsModules from '@FE/repository/modules/workflows';
 
 interface IApiInstance {
   labs: LabsModule;

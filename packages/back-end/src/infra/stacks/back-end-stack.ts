@@ -87,6 +87,7 @@ export class BackEndStack extends Stack {
       constructNamespace: `${this.props.namePrefix}-aws-healthomics`, // Overriding value
       restApi: this.apiGateway.restApi,
     };
+
     new AwsHealthOmicsNestedStack(
       this,
       `${this.props.envName}-aws-healthomics-nested-stack`,
@@ -98,6 +99,7 @@ export class BackEndStack extends Stack {
       constructNamespace: `${this.props.namePrefix}-nf-tower`, // Overriding value
       restApi: this.apiGateway.restApi,
     };
+
     new NFTowerNestedStack(this, `${this.props.envName}-nf-tower-nested-stack`, nfTowerNestedStackProps);
 
     const dataProvisioningNestedStackProps: DataProvisioningNestedStackProps = {
@@ -107,16 +109,19 @@ export class BackEndStack extends Stack {
       userPoolSystemAdminGroupName: authNestedStack.cognito.userPoolGroup.groupName,
       dynamoDBTables: easyGenomicsNestedStack.dynamoDBTables,
     };
+
     new DataProvisioningNestedStack(this, 'data-provisioning-nested-stack', dataProvisioningNestedStackProps);
 
     new CfnOutput(this, 'CognitoUserPoolId', {
       key: 'CognitoUserPoolId',
       value: authNestedStack.cognito.userPool.userPoolId,
     });
+
     new CfnOutput(this, 'CognitoUserPoolClientId', {
       key: 'CognitoUserPoolClientId',
       value: authNestedStack.cognito.userPoolClient.userPoolClientId,
     });
+
     new CfnOutput(this, 'ApiGatewayRestApiUrl', { key: 'ApiGatewayRestApiUrl', value: this.apiGateway.restApi.url });
   };
 }

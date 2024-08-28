@@ -1,6 +1,6 @@
 <script setup lang="ts">
-  import { usePipelineRunStore } from '~/stores';
-  import { ButtonVariantEnum } from '~/types/buttons';
+  import { usePipelineRunStore } from '@FE/stores';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();

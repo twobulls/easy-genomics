@@ -1,9 +1,4 @@
-import {
-  SendEmailCommand,
-  SendTemplatedEmailCommand,
-  SendTemplatedEmailCommandOutput,
-  SESClient,
-} from '@aws-sdk/client-ses';
+import { SendTemplatedEmailCommand, SendTemplatedEmailCommandOutput, SESClient } from '@aws-sdk/client-ses';
 
 export interface SesServiceProps {
   accountId: string;

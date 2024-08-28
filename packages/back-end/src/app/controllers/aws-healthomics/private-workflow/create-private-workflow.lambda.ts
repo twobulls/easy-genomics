@@ -4,7 +4,7 @@ import { PrivateWorkflow } from '@easy-genomics/shared-lib/src/app/types/aws-hea
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
-import { PrivateWorkflowService } from '../../../services/aws-healthomics/private-workflow-service';
+import { PrivateWorkflowService } from '@BE/services/aws-healthomics/private-workflow-service';
 
 const privateWorkflowService = new PrivateWorkflowService();
 

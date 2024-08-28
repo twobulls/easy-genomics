@@ -43,19 +43,59 @@ const prettierOptions: PrettierOptions = {
     bracketSameLine: false,
     plugins: ['prettier-plugin-tailwindcss'],
   },
+  ignoreFileOptions: {
+    // add any Projen ready-only generated config files here
+    ignorePatterns: [
+      '.eslintrc.json',
+      '.github/pull_request_template.md',
+      '.prettierrc.json',
+      '.vscode/settings.json',
+      'nx.json',
+      '.eslintrc.json',
+      'cdk.json',
+      'cdk.out/',
+      'tsconfig*.json',
+      '*.d.ts',
+    ],
+  },
 };
 
 // Changing compiler options will require that you re-run projen twice.
 // As the jestConfig is reliant on the current (pre-projen run) version of ./tsconfig.json
+const eslintGlobalRules = {
+  'no-unused-vars': 'off',
+  '@typescript-eslint/no-unused-vars': ['error'],
+  'semi': ['error', 'always'],
+  'comma-dangle': ['error', 'always-multiline'],
+  'space-before-function-paren': 'off',
+  'no-console': 'off',
+  'arrow-parens': ['error', 'always'],
+  'no-new': 'off',
+  'no-empty': 'error',
+  'prettier/prettier': 'error',
+  'require-await': 'off',
+  'array-callback-return': 'error',
+  '@typescript-eslint/indent': 'off',
+};
+
 const tsConfigOptions: TypescriptConfigOptions = {
   compilerOptions: {
     baseUrl: '.',
     rootDir: '.',
     // Add '@App/' as a path import alias for '<rootDir>/src/app/'
+    lib: ['ES2022'],
+    module: 'CommonJS',
+    target: 'ES2022',
+    declaration: true,
+    esModuleInterop: true,
+    forceConsistentCasingInFileNames: true,
+    skipLibCheck: true,
+    noImplicitAny: true,
+    strict: true,
     paths: {
-      '@BE/*': ['packages/back-end/src/*'],
-      '@FE/*': ['packages/front-end/src/*'],
-      '@SharedLib/*': ['packages/shared-lib/src/*'],
+      '@BE/*': ['packages/back-end/src/app/*'],
+      '@FE/*': ['packages/front-end/src/app/*'],
+      '@SharedLib/*': ['packages/shared-lib/src/app/*'],
     },
     // noUnusedLocals: false,
   },
@@ -75,22 +115,6 @@ const jestOptions: JestOptions = {
   },
   junitReporting: false,
   extraCliOptions: ['--detectOpenHandles'],
-};
-
-const eslintGlobalRules = {
-  // below rules are downgraded or disabled so as not to conflict with equivalent Prettier rules
-  'no-unused-vars': 'warn',
-  '@typescript-eslint/no-unused-vars': ['warn'],
-  'semi': ['warn', 'always'],
-  'comma-dangle': ['warn', 'always-multiline'],
-  'space-before-function-paren': 'off',
-  'no-console': 'off',
-  'arrow-parens': 'warn',
-  'no-new': 'warn',
-  'no-empty': 'warn',
-  'prettier/prettier': 'warn',
-  'require-await': 'warn',
-  'array-callback-return': 'warn',
 };
 
 const root = new typescript.TypeScriptProject({
@@ -116,7 +140,7 @@ const root = new typescript.TypeScriptProject({
   license: 'Apache-2.0',
   licensed: true,
   minNodeVersion: nodeVersion,
-  name: '@easy-genomics',
+  name: '@easy-genomics/root',
   packageManager: javascript.NodePackageManager.PNPM,
   prettier: true,
   prettierOptions,
@@ -150,29 +174,32 @@ const root = new typescript.TypeScriptProject({
     'prettier',
   ],
 });
+
+// Apply the global ESLint rules to the root project
 if (root.eslint) {
-  root.eslint.addRules({
-    eslintGlobalRules,
-    overrides: {
-      'files': ['packages/shared-lib/**'],
-      'rules': {
-        'import/no-extraneous-dependencies': 'off',
-      },
+  root.eslint.addRules({ ...eslintGlobalRules });
+  root.eslint.addOverride({
+    files: ['packages/*/src/**/*.{js,ts,vue}'],
+    rules: {
+      'import/no-extraneous-dependencies': 'off',
     },
   });
   root.eslint.addPlugins('prettier');
-  root.eslint.addExtends('plugin:prettier/recommended');
+  root.eslint.addExtends('plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended');
 }
-root.removeScript('build'); // Remove default root build script - use Back-End & Front-End 'build-and-deploy' script instead
-root.removeScript('deploy'); // Remove default root deploy script - use Back-End & Front-End 'build-and-deploy' script instead
 root.addScripts({
   // Development convenience scripts
-  ['build-back-end']: 'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
-  ['build-front-end']: 'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
+  ['build-back-end']:
+    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
+  ['build-front-end']:
+    'nx reset && pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['build-and-deploy']:
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
+  ['lint-all']:
+    'pnpm --prefix packages/front-end run lint && pnpm --prefix packages/back-end run lint && pnpm --prefix packages/shared-lib run lint',
+  ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:
     'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
@@ -180,10 +207,18 @@ root.addScripts({
     'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
   ['projen']: 'pnpm dlx projen; nx reset', // Clear NX cache each time projen is synthesized to avoid cache disk-space overconsumption
+  ['pre-commit']: 'lint-staged',
+});
+
+root.addFields({
+  'lint-staged': {
+    'packages/**/*.{js,ts}': ['pnpm lint-all'],
+    '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
+  },
 });
 
 // Defines the Easy Genomics 'shared-lib' subproject
-new typescript.TypeScriptProject({
+const sharedLib = new typescript.TypeScriptProject({
   parent: root,
   name: '@easy-genomics/shared-lib',
   outdir: './packages/shared-lib',
@@ -203,7 +238,24 @@ new typescript.TypeScriptProject({
   minNodeVersion: root.minNodeVersion,
   deps: ['@nestjs/config', 'aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'js-yaml', 'uuid', 'zod'],
   devDeps: ['@types/aws-lambda', '@types/js-yaml', '@types/uuid', 'aws-cdk-lib', 'openapi-typescript'],
+  tsconfig: {
+    ...tsConfigOptions,
+    compilerOptions: {
+      baseUrl: '.',
+      paths: {
+        '@SharedLib/*': ['src/app/*'],
+      },
+    },
+  },
 });
+sharedLib.addScripts({
+  ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
+});
+
+if (sharedLib.eslint) {
+  sharedLib.eslint.addRules({ ...eslintGlobalRules });
+  sharedLib.eslint.addPlugins('prettier');
+}
 
 // Defines the Easy Genomics 'back-end' subproject
 const backEndApp = new awscdk.AwsCdkTypeScriptApp({
@@ -217,17 +269,24 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   lambdaAutoDiscover: false,
   requireApproval: awscdk.ApprovalLevel.NEVER,
   sampleCode: false,
-  // Copyright & Licensing
   authorName: authorName,
   authorOrganization: true,
   copyrightOwner: copyrightOwner,
   copyrightPeriod: copyrightPeriod,
   license: 'Apache-2.0',
   licensed: true,
-  // Use same settings from root project
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
+  tsconfig: {
+    ...tsConfigOptions,
+    compilerOptions: {
+      baseUrl: '.',
+      paths: {
+        '@BE/*': ['src/app/*'],
+      },
+    },
+  },
   deps: [
     '@aws-crypto/client-node',
     '@aws-crypto/decrypt-node',
@@ -264,11 +323,12 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
 backEndApp.addScripts({
   ['build']: 'pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
-  ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy',  // Run root build-back-end script to inc shared-lib
+  ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy', // Run root build-back-end script to inc shared-lib
+  ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
 });
+
 if (backEndApp.eslint) {
-  backEndApp.eslint.addRules(eslintGlobalRules);
-  backEndApp.eslint.addExtends('plugin:prettier/recommended');
+  backEndApp.eslint.addRules({ ...eslintGlobalRules });
   backEndApp.eslint.addPlugins('prettier');
 }
 // Defines the Easy Genomics 'front-end' subproject
@@ -298,12 +358,18 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     ...tsConfigOptions,
     extends: TypescriptConfigExtends.fromPaths(['./.nuxt/tsconfig.json']),
     compilerOptions: {
-      'lib': ['DOM', 'ESNext'],
-      rootDir: '.',
+      baseUrl: '.',
+      lib: ['DOM', 'ES2022'],
+      sourceMap: true,
       types: ['vue'],
       verbatimModuleSyntax: false,
+      paths: {
+        '@FE/*': ['src/app/*'],
+        '#app': ['node_modules/nuxt/dist/app'], // Nuxt
+        '#ui/*': ['node_modules/@nuxt/ui/dist/runtime/*'], // NuxtUI
+      },
     },
-    'include': ['.nuxt/**/*.d.ts', 'auto-imports.d.ts', 'components.d.ts', '**/*.ts', '**/*d.ts', '**/*.vue'],
+    include: ['.nuxt/**/*.d.ts', 'auto-imports.d.ts', 'components.d.ts', '**/*.ts', '**/*d.ts', '**/*.vue'],
   },
   deps: [
     '@aws-amplify/ui-vue@3.1.30',
@@ -322,7 +388,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'date-fns',
     'dotenv',
     'jwt-decode',
-    'lint-staged',
     'nuxt',
     'pinia',
     'prettier-plugin-tailwindcss',
@@ -344,14 +409,13 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'eslint-plugin-prettier',
     'eslint-plugin-vue',
     'kill-port',
-    'lint-staged',
-    'prettier',
     'typed-openapi',
     'vue-eslint-parser',
   ],
 });
 frontEndApp.addScripts({
-  ['build']: 'pnpm run nuxt-prepare && pnpm run nuxt-generate && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
+  ['build']:
+    'pnpm run nuxt-prepare && pnpm run nuxt-generate && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy', // Run root build-front-end script to inc shared-lib
   ['nuxt-build']: 'nuxt build',
@@ -360,15 +424,11 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
-  ['pre-commit']: 'lint-staged',
   ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
+  ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
 });
-frontEndApp.addFields({
-  'lint-staged': {
-    '{**/*,*}.{js,ts}': ['eslint --fix'],
-    '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
-  },
-});
+
+// Setup Frontend App ESLint configuration
 if (frontEndApp.eslint) {
   frontEndApp.eslint.addRules({ ...eslintGlobalRules });
   frontEndApp.eslint.addExtends(
@@ -379,6 +439,7 @@ if (frontEndApp.eslint) {
   frontEndApp.eslint.addPlugins('eslint-plugin-vue', 'prettier', 'vue');
 }
 
+// Apply additional project setup
 new PnpmWorkspace(root);
 new VscodeSettings(root);
 new Nx(root);
@@ -404,4 +465,6 @@ root.gitignore.addPatterns(
   'config/easy-genomics.yaml',
   'packages/back-end/cdk.context.json',
 );
+
+// Synthesize the project
 root.synth();

@@ -11,6 +11,7 @@
   import { OrgDetailsForm } from '@FE/types/forms';
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
+  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const router = useRouter();
   const $route = useRoute();
@@ -50,6 +51,7 @@
       key: 'displayName',
       label: 'Name',
       sortable: true,
+      sort: caseInsensitiveSortFn,
     },
     {
       key: 'status',

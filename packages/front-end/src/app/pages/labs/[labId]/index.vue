@@ -14,6 +14,7 @@
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
+  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -147,6 +148,7 @@
       key: 'displayName',
       label: 'Name',
       sortable: true,
+      sort: caseInsensitiveSortFn,
     },
     {
       key: 'actions',

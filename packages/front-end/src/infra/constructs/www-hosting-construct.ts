@@ -238,10 +238,7 @@ export class WwwHostingConstruct extends Construct {
 
   private getCertificate = (awsCertificateArn: string): ICertificate => {
     // Retrieve TLS certificate
-    const certificate: ICertificate = Certificate.fromCertificateArn(this, 'SiteCertificate', awsCertificateArn);
-
-    new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
-    return certificate;
+    return Certificate.fromCertificateArn(this, 'SiteCertificate', awsCertificateArn);
   };
 
   private applySecurityHeaders = (): ResponseHeadersPolicy | undefined => {

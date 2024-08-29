@@ -366,12 +366,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
       types: ['vue'],
       verbatimModuleSyntax: false,
       paths: {
-        // FIXME
-        // '@BE/*': ['/packages/back-end/src/app/*'],
         '@FE/*': ['src/app/*'],
-        // '@SharedLib/*': ['/packages/shared-lib/src/app/*'],
-        // '@config/*': ['/config/*'],
-        // '@tests/*': ['/tests/*'],
         '#app': ['node_modules/nuxt/dist/app'], // Nuxt
         '#ui/*': ['node_modules/@nuxt/ui/dist/runtime/*'], // NuxtUI
       },

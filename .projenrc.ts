@@ -197,8 +197,6 @@ root.addScripts({
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
-  ['lint-all']:
-    'pnpm --prefix packages/front-end run lint && pnpm --prefix packages/back-end run lint && pnpm --prefix packages/shared-lib run lint',
   ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:
@@ -212,8 +210,10 @@ root.addScripts({
 
 root.addFields({
   'lint-staged': {
-    'packages/**/*.{js,ts}': ['pnpm lint-all'],
     '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}': ['prettier --write'],
+    'packages/front-end/src/**/*.{js,ts}': ['pnpm --prefix packages/front-end run lint'],
+    'packages/back-end/src/**/*.{js,ts}': ['pnpm --prefix packages/back-end run lint'],
+    'packages/shared-lib/src/**/*.{js,ts}': ['pnpm --prefix packages/shared-lib run lint'],
   },
 });
 

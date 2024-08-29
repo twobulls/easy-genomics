@@ -2,6 +2,7 @@
   import { useOrgsStore } from '@FE/stores';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
@@ -13,6 +14,7 @@
       key: 'Name',
       label: 'Name',
       sortable: true,
+      sort: caseInsensitiveSortFn,
     },
     {
       key: 'Description',

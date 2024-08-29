@@ -3,6 +3,7 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { useToastStore, useUiStore } from '@FE/stores';
   import { DeletedResponse } from '@FE/types/api';
+  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const { $api } = useNuxtApp();
   const router = useRouter();
@@ -14,6 +15,7 @@
       key: 'Name',
       label: 'Name',
       sortable: true,
+      sort: caseInsensitiveSortFn,
     },
     {
       key: 'Description',

@@ -20,7 +20,6 @@
     "build-back-end": "pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true",
     "build-front-end": "nx reset && pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true",
     "build-and-deploy": "pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true",
-    "lint-all": "pnpm --prefix packages/front-end run lint && pnpm --prefix packages/back-end run lint && pnpm --prefix packages/shared-lib run lint",
     "prettier": "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
     "cicd-build-deploy-back-end": "export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true",
     "cicd-build-deploy-front-end": "export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true",
@@ -116,11 +115,17 @@
   },
   "types": "lib/index.d.ts",
   "lint-staged": {
-    "packages/**/*.{js,ts}": [
-      "pnpm lint-all"
-    ],
     "{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}": [
       "prettier --write"
+    ],
+    "packages/front-end/src/**/*.{js,ts}": [
+      "pnpm --prefix packages/front-end run lint"
+    ],
+    "packages/back-end/src/**/*.{js,ts}": [
+      "pnpm --prefix packages/back-end run lint"
+    ],
+    "packages/shared-lib/src/**/*.{js,ts}": [
+      "pnpm --prefix packages/shared-lib run lint"
     ]
   },
   "packageManager": "pnpm@9.6.0",

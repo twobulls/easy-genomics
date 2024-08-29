@@ -23,27 +23,7 @@
   const labId = $route.params.labId;
   const modal = useModal();
 
-  const tabItems = [
-    {
-      key: 'pipelines',
-
-      label: 'Pipelines',
-    },
-    {
-      key: 'runs',
-      label: 'Runs',
-    },
-    {
-      key: 'users',
-      label: 'Lab Users',
-    },
-    {
-      key: 'details',
-      label: 'Details',
-    },
-  ];
-  let tabIndex = 0;
-
+  const tabIndex = ref(0);
   const defaultTabIndex = 0;
 
   const lab = ref<Laboratory>();
@@ -61,10 +41,28 @@
 
   const labName = computed(() => lab.value?.Name);
 
+  const hasWorkspaceIDAndPAT = computed(() => {
+    return !!(lab.value?.NextFlowTowerWorkspaceId && lab.value?.HasNextFlowTowerAccessToken);
+  });
+
+  const tabItems = computed(() => [
+    ...(hasWorkspaceIDAndPAT.value
+      ? [
+          { key: 'pipelines', label: 'Pipelines' },
+          { key: 'runs', label: 'Runs' },
+          { key: 'users', label: 'Lab Users' },
+        ]
+      : []),
+    {
+      key: 'details',
+      label: 'Details',
+    },
+  ]);
+
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
     await getLab();
-    if (!hasWorkspaceIDAndPAT()) {
+    if (!hasWorkspaceIDAndPAT.value) {
       showRedirectModal();
     } else {
       await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
@@ -73,10 +71,6 @@
     useUiStore().setRequestPending(false);
   });
 
-  function hasWorkspaceIDAndPAT() {
-    return lab.value?.NextFlowTowerWorkspaceId && lab.value?.HasNextFlowTowerAccessToken;
-  }
-
   function showRedirectModal() {
     modal.open(EGModal, {
       title: `No Workspace ID or Personal Access Token found`,
@@ -84,8 +78,8 @@
         "Both of these are required to run a pipeline. Please click 'Edit' in the Lab Details tab to set these up.",
       confirmLabel: 'Okay',
       confirmAction() {
-        tabIndex = 3;
-        $router.push({ query: { ...$router.currentRoute.query, tab: tabItems[tabIndex].label } });
+        tabIndex.value = 0;
+        $router.push({ query: { ...$router.currentRoute.query, tab: tabItems.value[tabIndex.value].label } });
         modal.close();
       },
     });
@@ -264,6 +258,7 @@
       console.error('Error retrieving Lab', error);
     }
   }
+
   async function getPipelines(): Promise<void> {
     try {
       const res = await $api.pipelines.list(labId);
@@ -343,7 +338,7 @@
   watch(
     () => $router.currentRoute.value.query.tab,
     (newVal) => {
-      tabIndex = newVal ? tabItems.findIndex((tab) => tab.label === newVal) : 0;
+      tabIndex.value = newVal ? tabItems.value.findIndex((tab) => tab.label === newVal) : 0;
     },
   );
 </script>
@@ -367,6 +362,7 @@
   </EGPageHeader>
 
   <UTabs
+    v-if="lab"
     :ui="EGTabsStyles"
     :default-index="defaultTabIndex"
     :items="tabItems"

@@ -5,7 +5,6 @@
 !/.projen/files.json
 !/.github/workflows/pull-request-lint.yml
 !/package.json
-!/LICENSE
 !/.npmignore
 logs
 *.log
@@ -49,6 +48,7 @@ jspm_packages/
 !/.husky/pre-commit
 !/.github/workflows/cicd-release-quality.yml
 !/.github/workflows/cicd-release-sandbox.yml
+!/LICENSE
 !/packages/back-end/src/app/README.md
 !/packages/back-end/src/app/controllers/README.md
 !/packages/back-end/src/app/controllers/easy-genomics/README.md

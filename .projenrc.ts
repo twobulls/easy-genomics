@@ -1,4 +1,4 @@
-import { awscdk, javascript, typescript } from 'projen';
+import { awscdk, javascript, typescript, LicenseOptions } from 'projen';
 import {
   ArrowParens,
   HTMLWhitespaceSensitivity,
@@ -13,6 +13,7 @@ import {
 import { pathsToModuleNameMapper } from 'ts-jest';
 import { setupProjectFolders } from './projenrc/easy-genomics-project-setup';
 import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
+import { ApacheLicense } from './projenrc/apache-license';
 import { Husky } from './projenrc/husky';
 import { Nx } from './projenrc/nx';
 import { PnpmWorkspace } from './projenrc/pnpm';
@@ -117,11 +118,15 @@ const jestOptions: JestOptions = {
   extraCliOptions: ['--detectOpenHandles'],
 };
 
+const licenseOptions: LicenseOptions = {
+  spdx: 'Apache-2.0',
+  copyrightOwner: copyrightOwner,
+  copyrightPeriod: copyrightPeriod,
+};
+
 const root = new typescript.TypeScriptProject({
   authorName: authorName,
   authorOrganization: true,
-  copyrightOwner: copyrightOwner,
-  copyrightPeriod: copyrightPeriod,
   defaultReleaseBranch: defaultReleaseBranch,
   description:
     'Easy Genomics web application to help simplify genomic analysis of sequenced genetic data for bioinformaticians utilizing AWS HealthOmics & NextFlow Tower',
@@ -137,8 +142,7 @@ const root = new typescript.TypeScriptProject({
     },
   },
   homepage: 'https://github.com/twobulls/easy-genomics',
-  license: 'Apache-2.0',
-  licensed: true,
+  licensed: false, // we apply the Apache 2.0 license later
   minNodeVersion: nodeVersion,
   name: '@easy-genomics/root',
   packageManager: javascript.NodePackageManager.PNPM,
@@ -227,11 +231,7 @@ const sharedLib = new typescript.TypeScriptProject({
   sampleCode: false,
   authorName: authorName,
   authorOrganization: true,
-  // Copyright & Licensing
-  copyrightOwner: copyrightOwner,
-  copyrightPeriod: copyrightPeriod,
-  license: 'Apache-2.0',
-  licensed: true,
+  licensed: false, // we apply the Apache 2.0 license later
   // Use same settings from root project
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
@@ -271,10 +271,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   sampleCode: false,
   authorName: authorName,
   authorOrganization: true,
-  copyrightOwner: copyrightOwner,
-  copyrightPeriod: copyrightPeriod,
-  license: 'Apache-2.0',
-  licensed: true,
+  licensed: false, // we apply the Apache 2.0 license later
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
@@ -346,10 +343,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   // Copyright & Licensing
   authorName: authorName,
   authorOrganization: true,
-  copyrightOwner: copyrightOwner,
-  copyrightPeriod: copyrightPeriod,
-  license: 'Apache-2.0',
-  licensed: true,
+  licensed: false, // we apply the Apache 2.0 license later
   // Use same settings from root project
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
@@ -446,6 +440,10 @@ new Nx(root);
 new Husky(root);
 new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion });
 new GithubActionsCICDRelease(root, { environment: 'sandbox', pnpmVersion: pnpmVersion, onPushBranch: 'infra/*' });
+new ApacheLicense(root, licenseOptions);
+new ApacheLicense(backEndApp, licenseOptions);
+new ApacheLicense(frontEndApp, licenseOptions);
+new ApacheLicense(sharedLib, licenseOptions);
 
 // Provision templated project folders structure with README.md descriptions.
 setupProjectFolders(root);

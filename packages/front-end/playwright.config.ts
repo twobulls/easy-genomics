@@ -1,8 +1,6 @@
 import type { PlaywrightTestConfig } from 'playwright/test';
 import { envConfig } from './config/env-config';
 
-// TODO: variablize the base URLs
-
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',
   timeout: 100 * 1000,

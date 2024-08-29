@@ -76,9 +76,7 @@
     "moduleNameMapper": {
       "^@BE/(.*)$": "<rootDir>/packages/back-end/src/app/$1",
       "^@FE/(.*)$": "<rootDir>/packages/front-end/src/app/$1",
-      "^@SharedLib/(.*)$": "<rootDir>/packages/shared-lib/src/app/$1",
-      "^@config/(.*)$": "<rootDir>/config/$1",
-      "^@tests/(.*)$": "<rootDir>/tests/$1"
+      "^@SharedLib/(.*)$": "<rootDir>/packages/shared-lib/src/app/$1"
     },
     "coveragePathIgnorePatterns": [
       "/node_modules/"

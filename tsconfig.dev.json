@@ -37,12 +37,6 @@
       ],
       "@SharedLib/*": [
         "packages/shared-lib/src/app/*"
-      ],
-      "@config/*": [
-        "config/*"
-      ],
-      "@tests/*": [
-        "tests/*"
       ]
     }
   },

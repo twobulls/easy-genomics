@@ -96,8 +96,6 @@ const tsConfigOptions: TypescriptConfigOptions = {
       '@BE/*': ['packages/back-end/src/app/*'],
       '@FE/*': ['packages/front-end/src/app/*'],
       '@SharedLib/*': ['packages/shared-lib/src/app/*'],
-      '@config/*': ['config/*'],
-      '@tests/*': ['tests/*'],
     },
     // noUnusedLocals: false,
   },

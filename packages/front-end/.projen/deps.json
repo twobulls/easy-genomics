@@ -176,6 +176,10 @@
       "type": "runtime"
     },
     {
+      "name": "esrun",
+      "type": "runtime"
+    },
+    {
       "name": "jwt-decode",
       "type": "runtime"
     },

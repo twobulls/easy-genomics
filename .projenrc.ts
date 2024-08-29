@@ -391,6 +391,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'clsx',
     'date-fns',
     'dotenv',
+    'esrun',
     'jwt-decode',
     'nuxt',
     'pinia',
@@ -422,11 +423,11 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 });
 frontEndApp.addScripts({
   ['build']:
-    'pnpm run nuxt-prepare && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-generate',
+    'pnpm run nuxt-reset && pnpm run nuxt-prepare && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-load-settings && pnpm run nuxt-generate',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy', // Run root build-front-end script to inc shared-lib
-  ['nuxt-build']: 'nuxt build',
-  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
+  ['nuxt-dev']: 'pnpm run build && pnpm kill-port 3000 && nuxt dev',
+  ['nuxt-load-settings']: 'npx esrun nuxt-load-configuration-settings.ts',
   ['nuxt-generate']: 'nuxt generate',
   ['nuxt-prepare']: 'nuxt prepare', // Required to create front-end/.nuxt/tsconfig.json
   ['nuxt-preview']: 'nuxt preview',
@@ -435,6 +436,7 @@ frontEndApp.addScripts({
   ['test-e2e-local:headed']: 'npx playwright test --project=local --ui --reporter=html',
   ['test-e2e']: 'npx playwright test --project=quality --reporter=html',
   ['test-e2e:headed']: 'npx playwright test --project=quality --ui --reporter=html',
+  ['nuxt-reset']: 'nuxt cleanup',
   ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
 });

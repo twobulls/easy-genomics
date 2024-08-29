@@ -473,7 +473,7 @@ root.gitignore.addPatterns(
   'packages/back-end/cdk.context.json',
   '*/front-end/test-results',
   '*/front-end/tests/e2e/.auth/user.json',
-  '**/playwright-report',
+  'packages/front-end/playwright-report',
 );
 
 // Synthesize the project

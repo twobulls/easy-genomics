@@ -330,7 +330,7 @@ End-to-End tests validates the entire application from start to finish by simula
 written in TypeScript and use the Playwright library to automate a headless browser instance interacting with the
 application.
 
-End-to-End tests (`*.spec.ts`) are located in the `packages/front-end/test/e2e` directory and are executed using
+End-to-End tests (`*.spec.e2e.ts`) are located in the `packages/front-end/test/e2e` directory and are executed using
 [Playwright](https://playwright.dev/).
 
 Run the following commands from the root directory of the project. The headless commands will run via a CLI only,

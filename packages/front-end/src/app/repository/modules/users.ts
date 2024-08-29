@@ -15,12 +15,9 @@ import {
   ConfirmUserForgotPasswordRequest,
   CreateUserForgotPasswordRequest,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
-import { useRuntimeConfig } from 'nuxt/app';
 import HttpFactory from '../factory';
 
 class UsersModule extends HttpFactory {
-  $config = useRuntimeConfig();
-
   async list(): Promise<User | undefined> {
     const res = await this.call<User>('GET', '/user/list-users');
 

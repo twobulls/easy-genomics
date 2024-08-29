@@ -74,8 +74,7 @@
   function showRedirectModal() {
     modal.open(EGModal, {
       title: `No Workspace ID or Personal Access Token found`,
-      message:
-        "Both of these are required to run a pipeline. Please click 'Edit' in the Lab Details tab to set these up.",
+      message: "Both of these are required to run a pipeline. Please click 'Edit' in the next screen to set these up.",
       confirmLabel: 'Okay',
       confirmAction() {
         tabIndex.value = 0;

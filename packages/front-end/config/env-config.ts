@@ -38,5 +38,4 @@ function getConfigurationSettings(): ConfigurationSettings {
   return envConfig;
 }
 
-// Export the environment configuration
 export const envConfig = getConfigurationSettings();

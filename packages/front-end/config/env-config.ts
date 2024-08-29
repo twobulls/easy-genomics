@@ -6,9 +6,11 @@ import {
 } from '@easy-genomics/shared-lib/lib/app/utils/configuration';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 
-// Load configuration settings for each environment
+/**
+ * Extracts the configuration settings for the current environment from the master YAML configuration
+ */
 const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
-  join(__dirname, '../../../config/easy-genomics.yaml')
+  join(__dirname, '../../../config/easy-genomics.yaml'),
 );
 if (configurations.length === 0) {
   throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');

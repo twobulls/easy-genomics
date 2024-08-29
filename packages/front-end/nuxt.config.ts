@@ -76,6 +76,12 @@ if (process.env.CI_CD === 'true') {
 
 // @ts-ignore
 export default defineNuxtConfig({
+  server: {
+    port: 3000, // Example port
+    strictPort: true, // Fail if the port is already in use
+    host: '127.0.0.1', // Ensure it binds to localhost
+  },
+
   colorMode: {
     preference: 'light',
   },

@@ -68,7 +68,14 @@
     </div>
     <div class="flex items-center">
       <span class="text-xs">Organization Admin</span>
-      <UToggle :model-value="toggleVal" @click="toggleOrgAdminPerm()" class="qe-org-admin-toggle ml-2" />
+      <UToggle
+        class="ml-2"
+        :model-value="toggleVal"
+        @click="toggleOrgAdminPerm()"
+        :ui="{
+          base: 'test-org-admin-toggle',
+        }"
+      />
     </div>
   </div>
 </template>

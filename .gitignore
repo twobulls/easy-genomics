@@ -82,12 +82,13 @@ jspm_packages/
 .env.*
 .idea
 .DS_Store
-test-reports/*
+test-reports
 .nuxt
 .output
 dist
 config/easy-genomics.yaml
 packages/back-end/cdk.context.json
-*/front-end/playwright-report/*
-*/front-end/test-results/*
+*/front-end/test-results
+*/front-end/tests/e2e/.auth/user.json
+**/playwright-report
 !/.projenrc.ts

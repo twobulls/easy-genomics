@@ -3,12 +3,15 @@ import path from 'path';
 import IconsResolver from 'unplugin-icons/resolver';
 import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
+import * as dotenv from 'dotenv';
 
 /**
- * Read the following environmental variables setup either by:
- *  - CI/CD release environment, or
- *  - front-end/src/main.ts logic using the easy-genomics.yaml configuration file
+ * Read the following environmental variables from {easy-genomics root dir}/config/.env.nuxt file.
  */
+dotenv.config({
+  path: '../../config/.env.nuxt',
+});
+
 const awsRegion: string | undefined = process.env.AWS_REGION;
 const envType: string | undefined = process.env.ENV_TYPE;
 const awsApiGatewayUrl: string | undefined = process.env.AWS_API_GATEWAY_URL;

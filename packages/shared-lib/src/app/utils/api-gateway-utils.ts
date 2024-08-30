@@ -12,6 +12,7 @@ const apiGatewayClient: APIGatewayClient = new APIGatewayClient();
 /**
  * Public utility to query API Gateway to obtain Easy Genomics' REST API URL.
  * @param apiGatewayRestApiName
+ * @param awsRegion
  */
 export async function getApiGatewayInfo(apiGatewayRestApiName: string, awsRegion: string): Promise<ApiGatewayInfo> {
   const restApis: RestApi[] = await listApiGatewayRestApis();

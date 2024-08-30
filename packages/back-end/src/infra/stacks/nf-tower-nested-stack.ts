@@ -11,7 +11,7 @@ export class NFTowerNestedStack extends NestedStack {
   lambda: LambdaConstruct;
 
   constructor(scope: Construct, id: string, props: NFTowerNestedStackProps) {
-    super(scope, id, props);
+    super(scope, id);
     this.props = props;
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {

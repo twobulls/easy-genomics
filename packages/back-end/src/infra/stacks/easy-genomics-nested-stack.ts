@@ -18,7 +18,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
   ses: SesConstruct;
 
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
-    super(scope, id, props);
+    super(scope, id);
     this.props = props;
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {

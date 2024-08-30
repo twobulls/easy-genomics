@@ -26,7 +26,7 @@ export class DataProvisioningNestedStack extends NestedStack {
   private s3Construct: S3Construct;
 
   constructor(scope: Construct, id: string, props: DataProvisioningNestedStackProps) {
-    super(scope, id, props);
+    super(scope, id);
     this.props = props;
 
     // Setup Cognito User Construct

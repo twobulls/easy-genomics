@@ -50,24 +50,6 @@ if (process.env.CI_CD === 'true') {
   if (!devEnv && !awsCertificateArn) {
     throw new Error('AWS_CERTIFICATE_ARN undefined, please check the CI/CD environment configuration');
   }
-
-  const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
-  const constructNamespace: string = `${namePrefix}-easy-genomics`;
-
-  // Setups Front-End Stack to support static web hosting for the UI
-  new FrontEndStack(app, `${envName}-main-front-end-stack`, {
-    env: {
-      account: awsAccountId,
-      region: awsRegion,
-    },
-    constructNamespace,
-    devEnv,
-    envName,
-    envType,
-    appDomainName,
-    awsHostedZoneId,
-    awsCertificateArn,
-  });
 } else {
   console.log('Loading Front-End easy-genomics.yaml settings...');
 

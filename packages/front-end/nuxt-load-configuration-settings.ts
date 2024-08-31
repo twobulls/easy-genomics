@@ -66,33 +66,43 @@ export async function exportNuxtConfigurationSettings(awsRegion: string, envName
 
 // eslint-disable-next-line no-void
 void (async () => {
-  // @ts-ignore
-  const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
-    join(__dirname, '../../config/easy-genomics.yaml'),
-  );
-  if (configurations.length === 0) {
-    throw new Error('Easy Genomics Configuration missing / invalid, please update: easy-genomics.yaml');
-  } else if (configurations.length > 1) {
-    throw new Error('Too many Easy Genomics Configurations found, please update: easy-genomics.yaml');
+  if (process.env.CI_CD === 'true') {
+    const awsRegion: string = process.env.AWS_REGION;
+    const envName: string = process.env.ENV_NAME;
+    const envType: string = process.env.ENV_TYPE;
+
+    await exportNuxtConfigurationSettings(awsRegion, envName, envType).catch((error) => {
+      throw error;
+    });
   } else {
-    const configuration: { [p: string]: ConfigurationSettings } | undefined = configurations.shift();
+    // @ts-ignore
+    const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
+      join(__dirname, '../../config/easy-genomics.yaml'),
+    );
+    if (configurations.length === 0) {
+      throw new Error('Easy Genomics Configuration missing / invalid, please update: easy-genomics.yaml');
+    } else if (configurations.length > 1) {
+      throw new Error('Too many Easy Genomics Configurations found, please update: easy-genomics.yaml');
+    } else {
+      const configuration: { [p: string]: ConfigurationSettings } | undefined = configurations.shift();
 
-    if (configuration) {
-      const envName = Object.keys(configuration).shift();
-      const configSettings = Object.values(configuration).shift();
+      if (configuration) {
+        const envName: string | undefined = Object.keys(configuration).shift();
+        const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift();
 
-      if (!envName || !configSettings) {
-        throw new Error(
-          'Easy Genomics Configuration missing / invalid, please check the easy-genomics.yaml configuration',
-        );
+        if (!envName || !configSettings) {
+          throw new Error(
+            'Easy Genomics Configuration missing / invalid, please check the easy-genomics.yaml configuration',
+          );
+        }
+
+        const envType: string = configSettings['env-type']; // dev | pre-prod | prod
+        const awsRegion: string = configSettings['aws-region'];
+
+        await exportNuxtConfigurationSettings(awsRegion, envName, envType).catch((error) => {
+          throw error;
+        });
       }
-
-      const envType = configSettings['env-type']; // dev | pre-prod | prod
-      const awsRegion = configSettings['aws-region'];
-
-      await exportNuxtConfigurationSettings(awsRegion, envName, envType).catch((error) => {
-        throw error;
-      });
     }
   }
 })();

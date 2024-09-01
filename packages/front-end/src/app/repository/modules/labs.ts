@@ -3,6 +3,7 @@ import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/sc
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
+import { NFConnectionTest } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-connection-test';
 import HttpFactory from '../factory';
 import { DeletedResponse, EditUserResponse } from '@FE/types/api';
 
@@ -189,6 +190,24 @@ class LabsModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Failed to retrieve Laboratory users details');
+    }
+
+    return res;
+  }
+
+  /**
+   * Verify Lab credentials
+   * @param workspaceId
+   * @param accessToken
+   */
+  async verifyLabCredentials(workspaceId: string, accessToken: string): Promise<NFConnectionTest> {
+    const res = await this.callNextflowTower<NFConnectionTest[]>('POST', '/connection/request-connection-test', {
+      WorkspaceId: workspaceId,
+      AccessToken: accessToken,
+    });
+
+    if (!res) {
+      throw new Error('Failed to verify Lab connection credentials');
     }
 
     return res;

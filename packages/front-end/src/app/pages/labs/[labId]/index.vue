@@ -59,6 +59,9 @@
     },
   ]);
 
+  /**
+   * Fetch Lab details, pipelines, workflows and Lab users before component mount
+   */
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
     await getLab();
@@ -84,7 +87,7 @@
     });
   }
 
-  function displayRemoveUserDialog(user: LabUser) {
+  function showRemoveUserDialog(user: LabUser) {
     userToRemove.value = user;
     primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName}?`;
     isOpen.value = true;
@@ -487,7 +490,7 @@
                 :disabled="useUiStore().isRequestPending"
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"
-                @remove-user-from-lab="displayRemoveUserDialog($event.user)"
+                @remove-user-from-lab="showRemoveUserDialog($event.user)"
               />
             </div>
           </template>

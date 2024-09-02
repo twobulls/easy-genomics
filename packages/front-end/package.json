@@ -1,7 +1,7 @@
 {
   "name": "@easy-genomics/front-end",
   "scripts": {
-    "build": "pnpm run nuxt-prepare && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-generate",
+    "build": "pnpm run nuxt-reset && pnpm run nuxt-prepare && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-load-settings && pnpm run nuxt-generate",
     "bundle": "pnpm dlx projen bundle",
     "compile": "pnpm dlx projen compile",
     "default": "pnpm dlx projen default",
@@ -21,8 +21,8 @@
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
     "build-and-deploy": "pnpm -w run build-front-end && pnpm run deploy",
-    "nuxt-build": "nuxt build",
-    "nuxt-dev": "pnpm kill-port 3000 && nuxt dev",
+    "nuxt-dev": "pnpm run build && pnpm kill-port 3000 && nuxt dev",
+    "nuxt-load-settings": "npx esrun nuxt-load-configuration-settings.ts",
     "nuxt-generate": "nuxt generate",
     "nuxt-prepare": "nuxt prepare",
     "nuxt-preview": "nuxt preview",
@@ -31,6 +31,7 @@
     "test-e2e-local:headed": "npx playwright test --project=local --ui --reporter=html",
     "test-e2e": "npx playwright test --project=quality --reporter=html",
     "test-e2e:headed": "npx playwright test --project=quality --ui --reporter=html",
+    "nuxt-reset": "nuxt cleanup",
     "nftower-spec-to-zod": "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
     "lint": "eslint 'src/**/*.{js,ts}' --fix"
   },
@@ -82,6 +83,7 @@
     "constructs": "^10.0.5",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
+    "esrun": "^3.2.26",
     "jwt-decode": "^4.0.0",
     "nuxt": "^3.12.4",
     "pinia": "^2.2.0",

@@ -23,13 +23,13 @@
 
   const tabItems = [
     {
+      key: 'runs',
+      label: 'Runs',
+    },
+    {
       key: 'pipelines',
 
       label: 'Pipelines',
-    },
-    {
-      key: 'runs',
-      label: 'Runs',
     },
     {
       key: 'users',

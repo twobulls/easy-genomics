@@ -42,11 +42,6 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     return buildResponse(200, JSON.stringify({ Status: 'success' }), event);
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        Status: 'success', // Return false positive to prevent snooping
-      }),
-    };
+    return buildResponse(400, JSON.stringify({ Status: 'success' }), event); // Return false positive to prevent snooping
   }
 };

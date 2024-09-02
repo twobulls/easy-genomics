@@ -19,9 +19,11 @@ export const handler: Handler = async (
     }
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: `Error: ${err.message}`,
-    };
+    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
   }
 };
+
+// Used for customising error messages by exception types
+function getErrorMessage(err: any) {
+  return err.message;
+}

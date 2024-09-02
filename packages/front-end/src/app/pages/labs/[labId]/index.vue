@@ -48,8 +48,8 @@
   const tabItems = computed(() => [
     ...(hasWorkspaceIDAndPAT.value
       ? [
-          { key: 'pipelines', label: 'Pipelines' },
           { key: 'runs', label: 'Runs' },
+          { key: 'pipelines', label: 'Pipelines' },
           { key: 'users', label: 'Lab Users' },
         ]
       : []),

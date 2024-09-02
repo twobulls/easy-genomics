@@ -1,5 +1,17 @@
 # Easy Genomics
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Installation Quick Start Guide](#installation-quick-start-guide)
+  - [Prerequisites and Preparation](#prerequisites-and-preparation)
+  - [Configuration and Installation](#configuration-and-installation)
+  - [Test Runners](#test-runners)
+    - [End-to-End Tests](#end-to-end-tests)
+  - [Contributions](#contributions)
+- [Branch Naming Convention](#branch-naming-convention)
+- [Conventional Commit Syntax](#conventional-commit-syntax)
+
 ## Introduction
 
 This open-source web application project aims to help simplify genomic analysis of sequenced genetic data for
@@ -309,6 +321,31 @@ obtain the Easy Genomics project source code and install the project dependencie
    ```
 
 ---
+
+## Test Runners
+
+### End-to-End Tests
+
+End-to-End tests validates the entire application from start to finish by simulating real user scenarios. The tests are
+written in TypeScript and use the Playwright library to automate a headless browser instance interacting with the
+application.
+
+End-to-End tests (`*.spec.e2e.ts`) are located in the `packages/front-end/test/e2e` directory and are executed using
+[Playwright](https://playwright.dev/).
+
+Run the following commands from the root directory of the project. The headless commands will run via a CLI only,
+whereas the headed browser instance will open a browser window simulating user interaction with the application.
+
+```bash
+# The following commands are used to run the end-to-end tests against a local browser instance of Nuxt - you must first be
+# running the Nuxt application locally using the `pnpm dev` command in a separate terminal.
+$ pnpm `test-e2e-local` # headless
+$ pnpm `test-e2e-local:headed`: # a headed browser instance ("UI mode")
+
+# The following commands are used to run the end-to-end tests on an environment specified inn the `easy-genomics.yaml` file.
+$ pnpm `test-e2e`  # headless
+$ pnpm `test-e2e:headed ` # a headed browser instance ("UI mode")
+```
 
 ## Contributions
 

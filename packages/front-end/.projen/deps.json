@@ -188,6 +188,14 @@
       "type": "runtime"
     },
     {
+      "name": "playwright",
+      "type": "runtime"
+    },
+    {
+      "name": "playwright-core",
+      "type": "runtime"
+    },
+    {
       "name": "prettier-plugin-tailwindcss",
       "type": "runtime"
     },

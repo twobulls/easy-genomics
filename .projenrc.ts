@@ -384,6 +384,9 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'jwt-decode',
     'nuxt',
     'pinia',
+    '@pinia-plugin-persistedstate/nuxt',
+    'playwright',
+    'playwright-core',
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
@@ -418,6 +421,10 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare',
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
+  ['test-e2e-local']: 'npx playwright test --project=local --reporter=html',
+  ['test-e2e-local:headed']: 'npx playwright test --project=local --ui --reporter=html',
+  ['test-e2e']: 'npx playwright test --project=quality --reporter=html',
+  ['test-e2e:headed']: 'npx playwright test --project=quality --ui --reporter=html',
   ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
 });
@@ -456,12 +463,15 @@ root.gitignore.addPatterns(
   '.env.*',
   '.idea',
   '.DS_Store',
-  'test-reports/*',
+  'test-reports',
   '.nuxt',
   '.output',
   'dist',
   'config/easy-genomics.yaml',
   'packages/back-end/cdk.context.json',
+  '*/front-end/test-results',
+  '*/front-end/tests/e2e/.auth/user.json',
+  'packages/front-end/playwright-report',
 );
 
 // Synthesize the project

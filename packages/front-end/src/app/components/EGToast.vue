@@ -47,6 +47,7 @@
 
   const variantInfoUi = {
     ...baseUi,
+    container: 'relative overflow-hidden test-toast-info',
     background: 'bg-alert-blue-muted',
     icon: 'i-heroicons-information-circle',
     ring: 'ring-1 ring-blue-900',
@@ -56,7 +57,8 @@
   };
   const variantSuccessUi = {
     ...baseUi,
-    background: 'bg-alert-success-muted',
+    container: 'relative overflow-hidden ',
+    background: 'bg-alert-success-muted test-toast-success',
     icon: 'i-heroicons-check-20-solid',
     ring: 'ring-1 ring-alert-success',
     progress: {
@@ -65,6 +67,7 @@
   };
   const variantWarningUi = {
     ...baseUi,
+    container: 'relative overflow-hidden test-toast-warning',
     background: 'bg-alert-caution-muted',
     icon: 'i-heroicons-information-circle',
     ring: 'ring-1 ring-alert-caution',
@@ -74,6 +77,7 @@
   };
   const variantErrorUi = {
     ...baseUi,
+    container: 'relative overflow-hidden test-toast-error',
     background: 'bg-alert-danger-muted',
     icon: 'i-heroicons-exclamation-triangle',
     ring: 'ring-1 ring-alert-danger',

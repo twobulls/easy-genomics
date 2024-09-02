@@ -66,9 +66,15 @@
         <EGText v-if="showEmail" tag="small" color-class="text-muted">{{ UserEmail }}</EGText>
       </div>
     </div>
-    <div class="flex items-center">
+    <div class="flex cursor-pointer items-center" @click="toggleOrgAdminPerm()">
       <span class="text-xs">Organization Admin</span>
-      <UToggle :model-value="toggleVal" @click="toggleOrgAdminPerm()" class="ml-2" />
+      <UToggle
+        class="ml-2"
+        :model-value="toggleVal"
+        :ui="{
+          base: 'test-org-admin-toggle',
+        }"
+      />
     </div>
   </div>
 </template>

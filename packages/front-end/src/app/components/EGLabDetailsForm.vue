@@ -150,10 +150,18 @@
       if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
         await handleCreateLab();
       } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
-        await handleUpdateLabDetails();
+        const res = await $api.labs.verifyLabCredentials(
+          state.value.NextFlowTowerWorkspaceId,
+          state.value.NextFlowTowerAccessToken,
+        );
+        if (res) {
+          await handleUpdateLabDetails();
+        } else {
+          useToastStore().error(`Failed to verify details for ${state.value.Name}`);
+        }
       }
     } catch (error) {
-      useToastStore().error(`Failed to ${formMode.value} lab: ${state.value.Name}`);
+      useToastStore().error(`Invalid Workspace ID or Personal Access Token. Please try again.`);
     } finally {
       isSubmittingFormData.value = false;
       useUiStore().setRequestPending(false);
@@ -207,7 +215,7 @@
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
     await getLabDetails();
 
-    useToastStore().success(`Successfully updated lab: ${lab.Name}`);
+    useToastStore().success(`${lab.Name} successfully updated`);
   }
 
   const validate = (state: LabDetails): FormError[] => {

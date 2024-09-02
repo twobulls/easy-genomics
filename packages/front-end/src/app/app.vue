@@ -11,6 +11,7 @@
     <NuxtPage />
     <EGBuildInfo v-if="ENV_TYPE !== 'prod'" />
   </NuxtLayout>
+  <UModals />
 </template>
 
 <style lang="scss">

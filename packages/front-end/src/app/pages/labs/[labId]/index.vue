@@ -1,48 +1,32 @@
 <script setup lang="ts">
   import { LabUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
+  import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import {
     LaboratoryRolesEnum,
     LaboratoryRolesEnumSchema,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useLabsStore, useOrgsStore, useToastStore, useUiStore, usePipelineRunStore } from '@FE/stores';
+  import { useLabsStore, useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
+  import EGModal from '@FE/components/EGModal';
   import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
-  const router = useRouter();
+  const $router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const labId = $route.params.labId;
-  const labName = $route.query.name;
+  const modal = useModal();
 
-  const tabItems = [
-    {
-      key: 'runs',
-      label: 'Runs',
-    },
-    {
-      key: 'pipelines',
-
-      label: 'Pipelines',
-    },
-    {
-      key: 'users',
-      label: 'Lab Users',
-    },
-    {
-      key: 'details',
-      label: 'Details',
-    },
-  ];
-
+  const tabIndex = ref(0);
   const defaultTabIndex = 0;
 
+  const lab = ref<Laboratory>();
   const labUsers = ref<LabUser[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
@@ -55,14 +39,55 @@
   const primaryMessage = ref('');
   const userToRemove = ref();
 
+  const labName = computed(() => lab.value?.Name);
+
+  const hasWorkspaceIDAndPAT = computed(() => {
+    return !!(lab.value?.NextFlowTowerWorkspaceId && lab.value?.HasNextFlowTowerAccessToken);
+  });
+
+  const tabItems = computed(() => [
+    ...(hasWorkspaceIDAndPAT.value
+      ? [
+          { key: 'runs', label: 'Runs' },
+          { key: 'pipelines', label: 'Pipelines' },
+          { key: 'users', label: 'Lab Users' },
+        ]
+      : []),
+    {
+      key: 'details',
+      label: 'Details',
+    },
+  ]);
+
+  /**
+   * Fetch Lab details, pipelines, workflows and Lab users before component mount
+   */
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
-    await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
-    canAddUsers.value = true;
+    await getLab();
+    if (!hasWorkspaceIDAndPAT.value) {
+      showRedirectModal();
+    } else {
+      await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+      canAddUsers.value = true;
+    }
     useUiStore().setRequestPending(false);
   });
 
-  function displayRemoveUserDialog(user: LabUser) {
+  function showRedirectModal() {
+    modal.open(EGModal, {
+      title: `No Workspace ID or Personal Access Token found`,
+      message: "Both of these are required to run a pipeline. Please click 'Edit' in the next screen to set these up.",
+      confirmLabel: 'Okay',
+      confirmAction() {
+        tabIndex.value = 0;
+        $router.push({ query: { ...$router.currentRoute.query, tab: tabItems.value[tabIndex.value].label } });
+        modal.close();
+      },
+    });
+  }
+
+  function showRemoveUserDialog(user: LabUser) {
     userToRemove.value = user;
     primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName}?`;
     isOpen.value = true;
@@ -182,7 +207,7 @@
         label: 'View Results',
         click: () => {
           useLabsStore().setSelectedWorkflow(row.workflow);
-          router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+          $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
         },
       },
     ],
@@ -225,6 +250,14 @@
     } catch (error) {
       console.error('Error retrieving lab users', error);
       useToastStore().error('Failed to retrieve lab users');
+    }
+  }
+
+  async function getLab(): Promise<void> {
+    try {
+      lab.value = await $api.labs.getLabDetails(labId);
+    } catch (error) {
+      console.error('Error retrieving Lab', error);
     }
   }
 
@@ -293,15 +326,23 @@
     usePipelineRunStore().setPipelineId(pipelineId);
     usePipelineRunStore().setPipelineName(pipelineName);
     usePipelineRunStore().setPipelineDescription(pipelineDescription);
-    router.push({
+    $router.push({
       path: `/labs/${labId}/${pipelineId}/run-pipeline`,
     });
   }
 
   function viewRunDetails(row) {
     useLabsStore().setSelectedWorkflow(row.workflow);
-    router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
+    $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
   }
+
+  // watch route change to correspondingly change selected tab
+  watch(
+    () => $router.currentRoute.value.query.tab,
+    (newVal) => {
+      tabIndex.value = newVal ? tabItems.value.findIndex((tab) => tab.label === newVal) : 0;
+    },
+  );
 </script>
 
 <template>
@@ -322,7 +363,19 @@
     />
   </EGPageHeader>
 
-  <UTabs :ui="EGTabsStyles" :default-index="defaultTabIndex" :items="tabItems">
+  <UTabs
+    v-if="lab"
+    :ui="EGTabsStyles"
+    :default-index="defaultTabIndex"
+    :items="tabItems"
+    :model-value="tabIndex"
+    @update:model-value="
+      (newIndex) => {
+        $router.push({ query: { ...$router.currentRoute.query, tab: tabItems[newIndex].label } });
+        tabIndex = newIndex;
+      }
+    "
+  >
     <template #item="{ item }">
       <div v-if="item.key === 'pipelines'" class="space-y-3">
         <EGTable
@@ -437,7 +490,7 @@
                 :disabled="useUiStore().isRequestPending"
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"
-                @remove-user-from-lab="displayRemoveUserDialog($event.user)"
+                @remove-user-from-lab="showRemoveUserDialog($event.user)"
               />
             </div>
           </template>

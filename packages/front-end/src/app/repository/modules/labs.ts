@@ -3,13 +3,11 @@ import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/sc
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
-import { useRuntimeConfig } from 'nuxt/app';
+import { NFConnectionTest } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-connection-test';
 import HttpFactory from '../factory';
 import { DeletedResponse, EditUserResponse } from '@FE/types/api';
 
 class LabsModule extends HttpFactory {
-  $config = useRuntimeConfig();
-
   async create(lab: CreateLaboratory): Promise<Laboratory | undefined> {
     const res = await this.call<Laboratory>('POST', '/laboratory/create-laboratory', lab);
 
@@ -20,6 +18,10 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  /**
+   * List all laboratories for an organization
+   * @param orgId
+   */
   async list(orgId: string): Promise<Laboratory[]> {
     const res = await this.call<Laboratory[]>('GET', `/laboratory/list-laboratories?organizationId=${orgId}`);
 
@@ -30,6 +32,10 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  /**
+   * Get a Laboratory's details
+   * @param labId
+   */
   async getLabDetails(labId: string): Promise<Laboratory> {
     const res = await this.call<Laboratory>('GET', `/laboratory/read-laboratory/${labId}`);
 
@@ -40,6 +46,11 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  /**
+   * Update a Laboratory
+   * @param labId
+   * @param lab
+   */
   async update(labId: string, lab: UpdateLaboratory): Promise<Laboratory> {
     const res = await this.call<Laboratory>('PUT', `/laboratory/update-laboratory/${labId}`, lab);
 
@@ -50,6 +61,10 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  /**
+   * Delete a laboratory
+   * @param labId
+   */
   async delete(labId: string): Promise<DeletedResponse> {
     const res = await this.call<DeletedResponse>('DELETE', `/laboratory/delete-laboratory/${labId}`);
 
@@ -103,6 +118,10 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  /**
+   * List all users in a Laboratory
+   * @param labId
+   */
   async listLabUsersByLabId(labId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>(
       'GET',
@@ -116,6 +135,10 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  /**
+   * List all Laboratories for a user
+   * @param userId
+   */
   async listLabUsersByUserId(userId: string): Promise<LaboratoryUser[]> {
     const res = await this.call<LaboratoryUser[]>('GET', `/laboratory/user/list-laboratory-users?userId=${userId}`);
 
@@ -126,6 +149,11 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  /**
+   * Remove a user from a Laboratory
+   * @param labId
+   * @param userId
+   */
   async removeUser(labId: string, userId: string): Promise<DeletedResponse> {
     const input = {
       LaboratoryId: labId,
@@ -150,6 +178,10 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
+  /**
+   * Get details for all a Laboratory users
+   * @param labId
+   */
   async usersDetails(labId: string): Promise<LaboratoryUserDetails[]> {
     const res = await this.call<LaboratoryUserDetails[]>(
       'GET',
@@ -158,6 +190,24 @@ class LabsModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Failed to retrieve Laboratory users details');
+    }
+
+    return res;
+  }
+
+  /**
+   * Verify Lab credentials
+   * @param workspaceId
+   * @param accessToken
+   */
+  async verifyLabCredentials(workspaceId: string, accessToken: string): Promise<NFConnectionTest> {
+    const res = await this.callNextflowTower<NFConnectionTest[]>('POST', '/connection/request-connection-test', {
+      WorkspaceId: workspaceId,
+      AccessToken: accessToken,
+    });
+
+    if (!res) {
+      throw new Error('Failed to verify Lab connection credentials');
     }
 
     return res;

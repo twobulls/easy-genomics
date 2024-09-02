@@ -26,7 +26,6 @@
  * }
  */
 import { BaseAttributes, Status } from '../base-entity';
-import { z } from 'zod';
 
 export interface Laboratory extends BaseAttributes {
   OrganizationId: string; // DynamoDB Partition Key (String)
@@ -38,4 +37,5 @@ export interface Laboratory extends BaseAttributes {
   AwsHealthOmicsEnabled?: boolean;
   NextFlowTowerEnabled?: boolean;
   NextFlowTowerWorkspaceId?: string;
+  HasNextFlowTowerAccessToken?: boolean;
 }

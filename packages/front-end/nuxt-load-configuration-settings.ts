@@ -33,7 +33,7 @@ export async function exportNuxtConfigurationSettings(awsRegion: string, envName
   const cognitoUserPoolName: string = `${namePrefix}-easy-genomics-auth-user-pool`;
   const cognitoUserPoolClientName: string = `${namePrefix}-easy-genomics-auth-user-pool-client`;
 
-  // Set the AWS Region for the SDK calls to correctly query the correct region.
+  // Ensure the AWS Region for the SDK calls to correctly query the correct region.
   process.env.AWS_REGION = awsRegion;
   const apiGatewayInfo: ApiGatewayInfo = await getApiGatewayInfo(apiGatewayRestApiName, awsRegion);
   const cognitoIdpInfo: CognitoIdpInfo = await getCognitoIdpInfo(cognitoUserPoolName, cognitoUserPoolClientName);

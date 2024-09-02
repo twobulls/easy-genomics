@@ -104,6 +104,9 @@ if (process.env.CI_CD === 'true') {
   }
 }
 
+// Ensure the AWS Region for the CDK calls to correctly query the correct region.
+process.env.AWS_REGION = awsRegion;
+
 const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
 const constructNamespace: string = `${namePrefix}-easy-genomics`;
 

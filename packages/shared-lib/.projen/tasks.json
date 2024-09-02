@@ -76,7 +76,7 @@
           "exec": "mkdir -p dist/js"
         },
         {
-          "exec": "pnpm pack --pack-destination dist/js"
+          "exec": "mv $(pnpm pack) dist/js/"
         }
       ]
     },
@@ -97,7 +97,7 @@
       "description": "Run tests",
       "steps": [
         {
-          "exec": "jest --passWithNoTests --updateSnapshot",
+          "exec": "jest --passWithNoTests --coverageProvider=v8 --updateSnapshot",
           "receiveArgs": true
         },
         {
@@ -122,13 +122,13 @@
       },
       "steps": [
         {
-          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/aws-lambda,@types/jest,@types/js-yaml,@types/uuid,aws-cdk-lib,eslint-import-resolver-typescript,eslint-plugin-import,jest,openapi-typescript,ts-jest,typescript,@aws-sdk/client-api-gateway,@aws-sdk/client-cognito-identity-provider,@nestjs/config,aws-cdk,aws-lambda,js-yaml,uuid,zod"
+          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/aws-lambda,@types/jest,@types/js-yaml,@types/uuid,aws-cdk-lib,eslint-import-resolver-typescript,eslint-plugin-import,jest,openapi-typescript,projen,ts-jest,typescript,@aws-sdk/client-api-gateway,@aws-sdk/client-cognito-identity-provider,@nestjs/config,aws-cdk,aws-lambda,js-yaml,uuid,zod"
         },
         {
           "exec": "pnpm i --no-frozen-lockfile"
         },
         {
-          "exec": "pnpm update @types/aws-lambda @types/jest @types/js-yaml @types/node @types/uuid @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit openapi-typescript ts-jest typescript @aws-sdk/client-api-gateway @aws-sdk/client-cognito-identity-provider @nestjs/config aws-cdk aws-lambda js-yaml uuid zod"
+          "exec": "pnpm update @types/aws-lambda @types/jest @types/js-yaml @types/node @types/uuid @typescript-eslint/eslint-plugin @typescript-eslint/parser aws-cdk-lib constructs eslint-import-resolver-typescript eslint-plugin-import eslint jest jest-junit openapi-typescript projen ts-jest typescript @aws-sdk/client-api-gateway @aws-sdk/client-cognito-identity-provider @nestjs/config aws-cdk aws-lambda js-yaml uuid zod"
         },
         {
           "exec": "pnpm dlx projen"

@@ -18,8 +18,8 @@
   },
   "extends": [
     "plugin:import/typescript",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended"
+    "plugin:prettier/recommended",
+    "plugin:@typescript-eslint/recommended"
   ],
   "settings": {
     "import/parsers": {
@@ -78,7 +78,7 @@
         }
       }
     ],
-    "import/no-duplicates": [
+    "no-duplicate-imports": [
       "error"
     ],
     "no-shadow": [

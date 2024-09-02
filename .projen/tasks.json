@@ -122,7 +122,7 @@
           "exec": "mkdir -p dist/js"
         },
         {
-          "exec": "pnpm pack --pack-destination dist/js"
+          "exec": "mv $(pnpm pack) dist/js/"
         }
       ]
     },
@@ -143,7 +143,7 @@
       "description": "Run tests",
       "steps": [
         {
-          "exec": "jest --passWithNoTests --detectOpenHandles --updateSnapshot",
+          "exec": "jest --passWithNoTests --detectOpenHandles --coverageProvider=v8 --updateSnapshot",
           "receiveArgs": true
         },
         {

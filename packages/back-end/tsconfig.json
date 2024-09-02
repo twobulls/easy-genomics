@@ -39,5 +39,7 @@
     "packages/front-end/src/**/*.ts",
     "packages/shared-lib/src/**/*.ts"
   ],
-  "exclude": []
+  "exclude": [
+    "cdk.out"
+  ]
 }

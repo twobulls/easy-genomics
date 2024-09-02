@@ -2,7 +2,6 @@
   "name": "@easy-genomics/root",
   "description": "Easy Genomics web application to help simplify genomic analysis of sequenced genetic data for bioinformaticians utilizing AWS HealthOmics & NextFlow Tower",
   "scripts": {
-    "build": "pnpm dlx projen build",
     "clobber": "pnpm dlx projen clobber",
     "compile": "pnpm dlx projen compile",
     "default": "pnpm dlx projen default",
@@ -41,8 +40,8 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20",
     "@types/uuid": "^9.0.8",
-    "@typescript-eslint/eslint-plugin": "^7",
-    "@typescript-eslint/parser": "^7",
+    "@typescript-eslint/eslint-plugin": "^6",
+    "@typescript-eslint/parser": "^6",
     "aws-cdk-lib": "^2.155.0",
     "aws-sdk-client-mock": "^3.1.0",
     "aws-sdk-client-mock-jest": "^3.1.0",
@@ -73,7 +72,6 @@
   "homepage": "https://github.com/twobulls/easy-genomics",
   "version": "0.0.0",
   "jest": {
-    "coverageProvider": "v8",
     "moduleNameMapper": {
       "^@BE/(.*)$": "<rootDir>/packages/back-end/src/app/$1",
       "^@FE/(.*)$": "<rootDir>/packages/front-end/src/app/$1",
@@ -83,10 +81,8 @@
       "/node_modules/"
     ],
     "testMatch": [
-      "<rootDir>/@(src|test)/**/*(*.)@(spec|test).ts?(x)",
-      "<rootDir>/@(src|test)/**/__tests__/**/*.ts?(x)",
-      "<rootDir>/@(projenrc)/**/*(*.)@(spec|test).ts?(x)",
-      "<rootDir>/@(projenrc)/**/__tests__/**/*.ts?(x)"
+      "<rootDir>/src/**/__tests__/**/*.ts?(x)",
+      "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)"
     ],
     "clearMocks": true,
     "collectCoverage": true,

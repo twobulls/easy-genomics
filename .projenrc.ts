@@ -191,6 +191,7 @@ if (root.eslint) {
   root.eslint.addPlugins('prettier');
   root.eslint.addExtends('plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended');
 }
+root.removeScript('build');
 root.addScripts({
   // Development convenience scripts
   ['build-back-end']:

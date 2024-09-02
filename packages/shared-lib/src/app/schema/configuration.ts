@@ -6,9 +6,9 @@ export const ConfigurationSettingsSchema = z
     ['aws-region']: z.string(),
     ['env-type']: z.enum(['dev', 'pre-prod', 'prod']),
     ['app-domain-name']: z.string(),
-    // The following settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
-    ['aws-hosted-zone-id']: z.string().nullable(), // Not required when env-type: 'dev', but must exist if configured
-    ['aws-certificate-arn']: z.string().nullable(), // Not required when env-type: 'dev', but must exist if configured
+    // The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
+    ['aws-hosted-zone-id']: z.string().nullable(), // Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
+    ['aws-certificate-arn']: z.string().nullable(), // Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
 
     // Back-End specific settings
     ['back-end']: z.object({

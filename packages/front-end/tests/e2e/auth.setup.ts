@@ -14,8 +14,9 @@ setup('Authenticate user', async ({ page, baseURL }) => {
   await page.getByRole('button', { name: 'Sign In' }).click();
   console.log('Waiting for navigation to complete...');
 
-  await page.waitForLoadState('networkidle', { timeout: 60000 }).catch((err) => {
+  await page.waitForLoadState('networkidle', { timeout: 30000 }).catch((err) => {
     console.log('Load state error:', err);
+    throw new Error('Failed to sign in');
   });
   console.log('Sign-in process completed.');
 

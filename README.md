@@ -50,13 +50,11 @@ platform in the meantime.
 
 ## Installation Quick Start Guide
 
-The configuration deployment consists of five steps:
+The configuration deployment consists 3 simple steps:
 
 1. Configure the AWS Credentials on your local machine.
 2. Configure the `easy-genomics.yaml` shared settings and back-end specific settings.
-3. Deploy the Easy Genomics back-end logic.
-4. Configure the `easy-genomics.yaml` front-end specific settings, including details generated from the previous step.
-5. Deploy the Easy Genomics front-end logic.
+3. Deploy the Easy Genomics.
 
 Skip to [Configuration and Installation](#configuration-and-installation) section if you already have satisfied the
 [Prerequisites and Preparation](#prerequisites-and-preparation) tasks below.
@@ -157,6 +155,9 @@ obtain the Easy Genomics project source code and install the project dependencie
    Default output format [None]:
    ```
 
+   NOTE: If you are manually configuring the AWS CLI credentials, please ensure the AWS Region set matches the
+   `aws-region` setting in the `easy-genomics.yaml` configuration file.
+
    Alternatively, if you have access to the AWS access portal copy and paste the temporary credentials provided into
    your shell/terminal:
 
@@ -174,43 +175,34 @@ obtain the Easy Genomics project source code and install the project dependencie
 
    Please ensure each of the settings are enclosed with quotes `'...'` to enforce explicit string values.
 
-   - NOTE: The quotation for the `aws-account-id` setting is mandatory if the AWS Account ID starts with `00...`.
+   - NOTE:
 
-   For convenience, the `easy-genomics.yaml` configuration file can support multiple configurations, but each will
-   require a Unique Identifier for the collection of configuration settings. The example below illustrates the `dev` and
-   `prod` configuration settings.
+     - The quotation for the `aws-account-id` setting is mandatory if the AWS Account ID starts with `00...`.
+
+     - The `easy-genomics.yaml` configuration validation logic has been updated to only support one configuration
+       collection in order to simplify the build and deployment workflow. As a result, if there are multiple
+       configuration collections you will need to remove or comment the remaining configuration collections.
 
    ```
    e.g.
 
    easy-genomics:
       configurations:
-         - demo: # Unique identifier for the following collection of configuration settings (e.g. dev, uat, demo, prod)
+         - demo: # Unique 'env-name' identifier for the following collection of configuration settings (e.g. dev, uat, demo, prod)
             # Shared settings common to Back-End and Front-End sub-packages
             aws-account-id: '123456789' # e.g. '123456789'
             aws-region: 'us-east-1' # e.g. 'us-east-1'
             env-type: 'dev' # e.g. 'dev' | 'pre-prod' | 'prod'; only 'dev' env-type can have AWS CloudFormation resources destroyed
             app-domain-name: 'demo.easy-genomics.mycompany.com' # e.g. demo.easy-genomics.myinstitution.org
+            # The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
             aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
+            aws-certificate-arn: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
 
             # Back-End specific settings
             back-end:
                test-user-email: 'demouser@easygenomics.com'
                test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
                seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
-
-            # Front-End specific settings
-               front-end:
-                  # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
-                  aws-api-gateway-url:
-                  aws-cognito-user-pool-id:
-                  aws-cognito-user-pool-client-id:
-
-                  # The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
-                  aws-certificate-arn: # Not required when env-type: 'dev'
-
-         - prod:
-            ...
    ```
 
    - Please consult the
@@ -219,93 +211,26 @@ obtain the Easy Genomics project source code and install the project dependencie
    - Each configuration is validated at run-time, if a configuration is incomplete or invalid it will be ignored as part
      of the build and deployment.
 
-3. Deploy the Easy Genomics Back-End sub-package to AWS using the following command options.
-
-   - If you have a single collection of configuration settings defined in the `easy-genomics.yaml`, you can use the
-     `build-and-deploy` short-cut command:
-
-     ```
-     [easy-genomics]$ cd packages/back-end
-     [easy-genomics/packages/back-end]$ pnpm run build-and-deploy
-     ```
-
-   - NOTE: If the `easy-genomics.yaml` has multiple collections of configuration settings, you can supply the
-     configuration collection's `{Unique identifier}-main-back-end-stack` to specifically build and deploy it.
-
-     ```
-     e.g.
-
-     [easy-genomics/packages/back-end]$ pnpm run build dev-main-back-end-stack
-     [easy-genomics/packages/back-end]$ pnpm run deploy dev-main-back-end-stack
-     ```
-
-   Once Back-End deployment is completed, it will generate the following AWS configurations details, which will be
-   required for the Front-End configuration settings.
+3. Deploy the entire Easy Genomics solution to AWS using the following command.
 
    ```
-   [easy-genomics/packages/back-end]$ pnpm run build-and-deploy
+   [easy-genomics]$ pnpm run build-and-deploy
+   ```
+
+   Once the deployment is completed, it will output the `ApplicationUrl` which can then be accessed from your web
+   browser.
+
+   ```
+   [easy-genomics]$ pnpm run build-and-deploy
    ...
 
    Outputs:
-   dev-main-back-end-stack.ApiGatewayRestApiUrl = {AWS_API_GATEWAY_URL}
-   dev-main-back-end-stack.CognitoUserPoolClientId = {AWS_COGNITO_USER_POOL_CLIENT_ID}
-   dev-main-back-end-stack.CognitoUserPoolId = {AWS_COGNITO_USER_POOL_ID}
+   dev-main-front-end-stack.ApplicationUrl = https://abcdef12345.cloudfront.net
+   dev-main-front-end-stack.HostingBucketName = {app-domain-name}
    ```
 
-4. Update the `${easy-genomics root-dir}/config/easy-genomics.yaml` Front-End specific settings with the AWS
-   configuration details generated from the Back-End deployment.
-
-   Please ensure each of the settings are enclosed with quotes `'...'` to enforce explicit string values.
-
-   ```
-            ...
-            # Front-End specific settings
-               front-end:
-                  # The following Front-End Web UI / Nuxt Config settings will need to be sourced from the Back-End deployment.
-                  aws-api-gateway-url: '{AWS_API_GATEWAY_URL}'
-                  aws-cognito-user-pool-id: '{AWS_COGNITO_USER_POOL_ID}'
-                  aws-cognito-user-pool-client-id: '{AWS_COGNITO_USER_POOL_CLIENT_ID}'
-
-                   # The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
-                   aws-certificate-arn: # Not required when env-type: 'dev'
-   ```
-
-5. Deploy the Easy Genomics Front-End sub-package to AWS using the following command options.
-
-   - If you have a single collection of configuration settings defined in the `easy-genomics.yaml`, you can use the
-     `build-and-deploy` short-cut command:
-
-     ```
-     e.g.
-
-     [easy-genomics/packages/back-end]$ cd ../front-end
-     [easy-genomics/packages/front-end]$ pnpm run build-and-deploy
-     ```
-
-   - Otherwise, if the `easy-genomics.yaml` has multiple collections of configuration settings, you can supply the
-     configuration collection's `{Unique identifier}-main-front-end-stack` to specifically build and deploy it. You will
-     also need to explicitly specify the `{Unique identifier}` to prepare and generate the Nuxt UI content.
-
-     ```
-     e.g.
-
-     [easy-genomics/packages/front-end]$ pnpm run build dev-main-front-end-stack
-     [easy-genomics/packages/front-end]$ pnpm run nuxt-prepare --stack dev
-     [easy-genomics/packages/front-end]$ pnpm run nuxt-generate --stack dev
-     [easy-genomics/packages/front-end]$ pnpm run deploy dev-main-front-end-stack
-     ```
-
-     Once Front-End deployment is completed, it will output the `ApplicationUrl` which can then be accessed from your
-     web browser.
-
-     ```
-     Outputs:
-     dev-main-front-end-stack.ApplicationUrl = https://abcdef12345.cloudfront.net
-     dev-main-front-end-stack.HostingBucketName = {app-domain-name}
-     ```
-
-     - NOTE: If the `aws-hosted-zone-id` and/or the `aws-certificate-arn` are not defined in the `easy-genomics.yaml`,
-       the `ApplicationUrl` returned will be the CloudFront Distribution URL.
+   - NOTE: If the `aws-hosted-zone-id` and/or the `aws-certificate-arn` are not defined in the `easy-genomics.yaml`, the
+     `ApplicationUrl` returned will be the CloudFront Distribution URL.
 
    Finally, use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured`test-user-email` and
    `test-user-password` account details to log in into Easy Genomics to test the functionality.

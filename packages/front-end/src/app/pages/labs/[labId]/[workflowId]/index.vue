@@ -56,7 +56,7 @@
 </script>
 
 <template>
-  <EGPageHeader :title="workflow.runName" description="View your Lab users, details and pipelines" />
+  <EGPageHeader :title="workflow.runName" :description="workflow.manifest.name" />
   <UTabs
     :ui="EGTabsStyles"
     :model-value="tabIndex"

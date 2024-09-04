@@ -38,7 +38,7 @@ export const handler: Handler = async (
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(200, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
   }
 };
 

@@ -347,7 +347,7 @@
 
 <template>
   <EGPageHeader
-    :title="labName"
+    :title="labName || ''"
     description="View your Lab users, details and pipelines"
     :back-action="() => $router.push('/labs')"
   >

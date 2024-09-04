@@ -81,6 +81,7 @@ export class GithubActionsCICDRelease extends Component {
       'ENV_NAME': '${{ vars.ENV_NAME }}',
       'APP_DOMAIN_NAME': '${{ vars.APP_DOMAIN_NAME }}',
       'AWS_HOSTED_ZONE_ID': '${{ secrets.AWS_HOSTED_ZONE_ID }}', // Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
+      'AWS_CERTIFICATE_ARN': '${{ secrets.AWS_CERTIFICATE_ARN }}', // Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
       // Back-End specific settings
       'JWT_SECRET_KEY': '${{ secrets.JWT_SECRET_KEY }}',
       'SYSTEM_ADMIN_EMAIL': '${{ vars.SYSTEM_ADMIN_EMAIL }}',
@@ -88,10 +89,6 @@ export class GithubActionsCICDRelease extends Component {
       'TEST_USER_EMAIL': '${{ vars.TEST_USER_EMAIL }}',
       'TEST_USER_PASSWORD': '${{ secrets.TEST_USER_PASSWORD }}',
       // Front-End specific settings
-      'AWS_API_GATEWAY_URL': '${{ secrets.AWS_API_GATEWAY_URL }}', // Sourced from Back-End deployment
-      'AWS_COGNITO_USER_POOL_ID': '${{ secrets.AWS_COGNITO_USER_POOL_ID }}', // Sourced from Back-End deployment
-      'AWS_COGNITO_USER_POOL_CLIENT_ID': '${{ secrets.AWS_COGNITO_USER_POOL_CLIENT_ID }}', // Sourced from Back-End deployment
-      'AWS_CERTIFICATE_ARN': '${{ secrets.AWS_CERTIFICATE_ARN }}', // Not required when env-type: 'dev'
     };
   }
 

@@ -17,7 +17,7 @@ export class AuthNestedStack extends NestedStack {
   cognito: CognitoIdpConstruct;
 
   constructor(scope: Construct, id: string, props: AuthNestedStackProps) {
-    super(scope, id, props);
+    super(scope, id);
     this.props = props;
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {

@@ -38,7 +38,7 @@ export class BackEndStack extends Stack {
   protected apiGateway!: ApiGatewayConstruct;
 
   constructor(scope: Construct, id: string, props: BackEndStackProps) {
-    super(scope, id, props);
+    super(scope, id);
     this.props = props;
 
     // Create KMS symmetric encryption key for Cognito to generate secrets - temporary passwords, verification codes, confirmation codes

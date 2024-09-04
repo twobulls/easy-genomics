@@ -15,7 +15,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
   lambda: LambdaConstruct;
 
   constructor(scope: Construct, id: string, props: AwsHealthOmicsNestedStackProps) {
-    super(scope, id, props);
+    super(scope, id);
     this.props = props;
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {

@@ -79,6 +79,14 @@
       "type": "build"
     },
     {
+      "name": "@aws-sdk/client-api-gateway",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/client-cognito-identity-provider",
+      "type": "runtime"
+    },
+    {
       "name": "@nestjs/config",
       "type": "runtime"
     },

@@ -191,6 +191,7 @@ if (root.eslint) {
   root.eslint.addPlugins('prettier');
   root.eslint.addExtends('plugin:@typescript-eslint/recommended', 'plugin:prettier/recommended');
 }
+root.removeScript('build');
 root.addScripts({
   // Development convenience scripts
   ['build-back-end']:
@@ -198,8 +199,9 @@ root.addScripts({
   ['build-front-end']:
     'nx reset && pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['build-and-deploy']:
-    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end --verbose=true && ' +
+    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
+    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   // CI/CD convenience scripts
@@ -208,7 +210,7 @@ root.addScripts({
   ['cicd-build-deploy-front-end']:
     'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
-  ['projen']: 'pnpm dlx projen; nx reset', // Clear NX cache each time projen is synthesized to avoid cache disk-space overconsumption
+  ['projen']: 'nx reset; pnpm dlx projen', // Clear NX cache each time projen is synthesized to avoid cache disk-space overconsumption
   ['pre-commit']: 'lint-staged',
 });
 
@@ -236,7 +238,17 @@ const sharedLib = new typescript.TypeScriptProject({
   packageManager: root.package.packageManager,
   projenCommand: root.projenCommand,
   minNodeVersion: root.minNodeVersion,
-  deps: ['@nestjs/config', 'aws-cdk', 'aws-cdk-lib', 'aws-lambda', 'js-yaml', 'uuid', 'zod'],
+  deps: [
+    '@aws-sdk/client-api-gateway',
+    '@aws-sdk/client-cognito-identity-provider',
+    '@nestjs/config',
+    'aws-cdk',
+    'aws-cdk-lib',
+    'aws-lambda',
+    'js-yaml',
+    'uuid',
+    'zod',
+  ],
   devDeps: ['@types/aws-lambda', '@types/js-yaml', '@types/uuid', 'aws-cdk-lib', 'openapi-typescript'],
   tsconfig: {
     ...tsConfigOptions,
@@ -381,6 +393,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'clsx',
     'date-fns',
     'dotenv',
+    'esrun',
     'jwt-decode',
     'nuxt',
     'pinia',
@@ -412,19 +425,20 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
 });
 frontEndApp.addScripts({
   ['build']:
-    'pnpm run nuxt-prepare && pnpm run nuxt-generate && pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
+    'pnpm run nuxt-reset && pnpm run nuxt-prepare && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-load-settings && pnpm run nuxt-generate',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy', // Run root build-front-end script to inc shared-lib
-  ['nuxt-build']: 'nuxt build',
-  ['nuxt-dev']: 'pnpm kill-port 3000 && nuxt dev',
-  ['nuxt-generate']: 'nuxt generate', // Required to create front-end/.nuxt/tsconfig.json
-  ['nuxt-prepare']: 'nuxt prepare',
+  ['nuxt-dev']: 'pnpm run build && pnpm kill-port 3000 && nuxt dev',
+  ['nuxt-load-settings']: 'npx esrun nuxt-load-configuration-settings.ts',
+  ['nuxt-generate']: 'nuxt generate',
+  ['nuxt-prepare']: 'nuxt prepare', // Required to create front-end/.nuxt/tsconfig.json
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
   ['test-e2e-local']: 'npx playwright test --project=local --reporter=html',
   ['test-e2e-local:headed']: 'npx playwright test --project=local --ui --reporter=html',
   ['test-e2e']: 'npx playwright test --project=quality --reporter=html',
   ['test-e2e:headed']: 'npx playwright test --project=quality --ui --reporter=html',
+  ['nuxt-reset']: 'nuxt cleanup',
   ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
 });

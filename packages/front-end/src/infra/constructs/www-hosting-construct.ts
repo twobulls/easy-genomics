@@ -93,7 +93,7 @@ export class WwwHostingConstruct extends Construct {
   // WWW S3 Bucket for static web pages
   private setupS3Buckets = () => {
     const appDomainName: string = this.props.appDomainName;
-    const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3`, {});
+    const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-www`, {});
 
     // Using the configured domainName for the WWW S3 Bucket
     const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
@@ -238,10 +238,7 @@ export class WwwHostingConstruct extends Construct {
 
   private getCertificate = (awsCertificateArn: string): ICertificate => {
     // Retrieve TLS certificate
-    const certificate: ICertificate = Certificate.fromCertificateArn(this, 'SiteCertificate', awsCertificateArn);
-
-    new CfnOutput(this, 'CertificateArn', { key: 'CertificateArn', value: certificate.certificateArn });
-    return certificate;
+    return Certificate.fromCertificateArn(this, 'SiteCertificate', awsCertificateArn);
   };
 
   private applySecurityHeaders = (): ResponseHeadersPolicy | undefined => {

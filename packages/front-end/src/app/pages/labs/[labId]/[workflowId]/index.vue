@@ -56,7 +56,7 @@
 </script>
 
 <template>
-  <EGPageHeader :title="workflow.runName" :description="workflow.manifest.name" />
+  <EGPageHeader :title="workflow.runName" :description="workflow.projectName" />
   <UTabs
     :ui="EGTabsStyles"
     :model-value="tabIndex"

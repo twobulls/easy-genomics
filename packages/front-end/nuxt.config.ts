@@ -3,42 +3,10 @@ import path from 'path';
 import IconsResolver from 'unplugin-icons/resolver';
 import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
-import * as dotenv from 'dotenv';
+import { loadNuxtSettings } from './env.nuxt.config';
 
-/**
- * Read the following environmental variables from {easy-genomics root dir}/config/.env.nuxt file.
- */
-dotenv.config({
-  path: '../../config/.env.nuxt',
-});
-
-const awsRegion: string | undefined = process.env.AWS_REGION;
-const envType: string | undefined = process.env.ENV_TYPE;
-const awsApiGatewayUrl: string | undefined = process.env.AWS_API_GATEWAY_URL;
-const awsCognitoUserPoolId: string | undefined = process.env.AWS_COGNITO_USER_POOL_ID;
-const awsCognitoUserPoolClientId: string | undefined = process.env.AWS_COGNITO_USER_POOL_CLIENT_ID;
-
-if (
-  process.env.npm_lifecycle_script === 'nuxt dev' ||
-  process.env.npm_lifecycle_script === 'nuxt generate' ||
-  process.env.npm_lifecycle_script === 'nuxt build'
-) {
-  if (!awsRegion) {
-    throw new Error('AWS_REGION undefined, please check the environment configuration');
-  }
-  if (!envType) {
-    throw new Error('ENV_TYPE undefined, please check the environment configuration');
-  }
-  if (!awsApiGatewayUrl) {
-    throw new Error('AWS_API_GATEWAY_URL undefined, please check the environment configuration');
-  }
-  if (!awsCognitoUserPoolId) {
-    throw new Error('AWS_COGNITO_USER_POOL_ID undefined, please check the environment configuration');
-  }
-  if (!awsCognitoUserPoolClientId) {
-    throw new Error('AWS_COGNITO_USER_POOL_CLIENT_ID undefined, please check the environment configuration');
-  }
-}
+// Loads the Nuxt Settings from ../../config/env.nuxt file
+loadNuxtSettings();
 
 // @ts-ignore
 export default defineNuxtConfig({
@@ -62,11 +30,11 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      AWS_REGION: awsRegion,
-      AWS_USER_POOL_ID: awsCognitoUserPoolId,
-      AWS_CLIENT_ID: awsCognitoUserPoolClientId,
-      BASE_API_URL: awsApiGatewayUrl?.replace(/\/+$/, ''), // Remove trailing slashes
-      ENV_TYPE: envType || 'dev',
+      AWS_REGION: process.env.AWS_REGION,
+      AWS_USER_POOL_ID: process.env.AWS_COGNITO_USER_POOL_ID,
+      AWS_CLIENT_ID: process.env.AWS_COGNITO_USER_POOL_CLIENT_ID,
+      BASE_API_URL: process.env.AWS_API_GATEWAY_URL?.replace(/\/+$/, ''), // Remove trailing slashes
+      ENV_TYPE: process.env.ENV_TYPE || 'dev',
       GITHUB_RUN_NUMBER: process.env.GITHUB_RUN_NUMBER || 'Unknown',
     },
   },

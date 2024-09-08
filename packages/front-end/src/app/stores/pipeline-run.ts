@@ -7,6 +7,7 @@ export const pipelineRunStateSchema = z.object({
   pipelineId: z.number(),
   pipelineName: z.string(),
   pipelineDescription: z.string(),
+  transactionId: z.string(),
   userPipelineRunName: z.string(),
   params: z.object({}),
   sampleSheetCsv: z.string(),
@@ -28,6 +29,7 @@ const initialState = (): PipeLineRunState => ({
   pipelineId: 0,
   pipelineName: '',
   pipelineDescription: '',
+  transactionId: '',
   userPipelineRunName: '',
   params: {},
   sampleSheetCsv: '',
@@ -56,6 +58,10 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
 
     setPipelineDescription(pipelineDescription: string) {
       this.pipelineDescription = pipelineDescription;
+    },
+
+    setTransactionId(transactionId: string) {
+      this.transactionId = transactionId;
     },
 
     setUserPipelineRunName(userPipelineRunName: string) {

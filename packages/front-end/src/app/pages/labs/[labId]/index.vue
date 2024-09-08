@@ -18,7 +18,6 @@
   import { v4 as uuidv4 } from 'uuid';
 
   const { $api } = useNuxtApp();
-  const $route = useRoute();
   const $router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const labId = useLabsStore().labId;
@@ -326,10 +325,10 @@
     usePipelineRunStore().setPipelineId(pipelineId);
     usePipelineRunStore().setPipelineName(pipelineName);
     usePipelineRunStore().setPipelineDescription(pipelineDescription);
-    usePipelineRunStore().setTransactionId(uuidv4()),
-      $router.push({
-        path: `/labs/${labId}/${pipelineId}/run-pipeline`,
-      });
+    usePipelineRunStore().setTransactionId(uuidv4());
+    $router.push({
+      path: `/labs/${labId}/${pipelineId}/run-pipeline`,
+    });
   }
 
   function viewRunDetails(row) {

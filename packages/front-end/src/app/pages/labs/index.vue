@@ -4,7 +4,7 @@
   import { useToastStore, useUiStore } from '@FE/stores';
   import { DeletedResponse } from '@FE/types/api';
   import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
-  import useLabsStore from '../../stores/labs';
+  import useLabsStore from '@FE/stores/labs';
 
   const { $api } = useNuxtApp();
   const router = useRouter();

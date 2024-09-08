@@ -21,7 +21,8 @@
   const $route = useRoute();
   const $router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
-  const labId = $route.params.labId;
+  const labId = useLabsStore().labId;
+  const labName = useLabsStore().labName;
   const modal = useModal();
 
   const tabIndex = ref(0);
@@ -39,8 +40,6 @@
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
-
-  const labName = computed(() => lab.value?.Name);
 
   const hasWorkspaceIDAndPAT = computed(() => {
     return !!(lab.value?.NextFlowTowerWorkspaceId && lab.value?.HasNextFlowTowerAccessToken);

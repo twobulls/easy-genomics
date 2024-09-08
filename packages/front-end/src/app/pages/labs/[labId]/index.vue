@@ -15,6 +15,7 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
+  import { v4 as uuidv4 } from 'uuid';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -326,9 +327,10 @@
     usePipelineRunStore().setPipelineId(pipelineId);
     usePipelineRunStore().setPipelineName(pipelineName);
     usePipelineRunStore().setPipelineDescription(pipelineDescription);
-    $router.push({
-      path: `/labs/${labId}/${pipelineId}/run-pipeline`,
-    });
+    usePipelineRunStore().setTransactionId(uuidv4()),
+      $router.push({
+        path: `/labs/${labId}/${pipelineId}/run-pipeline`,
+      });
   }
 
   function viewRunDetails(row) {

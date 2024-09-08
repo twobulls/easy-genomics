@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import axios from 'axios';
-  import { v4 as uuidv4 } from 'uuid';
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import {
     FileInfo,
@@ -41,9 +40,6 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const labId = $route.params.labId as string;
-
-  // TODO: Move transactionId to store and generate at step 01
-  const transactionId = uuidv4();
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -327,7 +323,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: transactionId,
+      TransactionId: usePipelineRunStore().transactionId,
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -347,7 +343,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: transactionId,
+      TransactionId: usePipelineRunStore().transactionId,
       Files: files,
     };
 

@@ -28,6 +28,12 @@
     "paths": {
       "@BE/*": [
         "src/app/*"
+      ],
+      "@FE/*": [
+        "../packages/front-end/src/app/*"
+      ],
+      "@SharedLib/*": [
+        "../packages/shared-lib/src/app/*"
       ]
     }
   },

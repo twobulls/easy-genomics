@@ -255,6 +255,8 @@ const sharedLib = new typescript.TypeScriptProject({
     compilerOptions: {
       baseUrl: '.',
       paths: {
+        '@BE/*': ['../packages/back-end/src/app/*'],
+        '@FE/*': ['../packages/front-end/src/app/*'],
         '@SharedLib/*': ['src/app/*'],
       },
     },
@@ -293,6 +295,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
       baseUrl: '.',
       paths: {
         '@BE/*': ['src/app/*'],
+        '@FE/*': ['../packages/front-end/src/app/*'],
+        '@SharedLib/*': ['../packages/shared-lib/src/app/*'],
       },
     },
   },

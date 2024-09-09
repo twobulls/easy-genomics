@@ -28,6 +28,12 @@
     "target": "ES2019",
     "baseUrl": ".",
     "paths": {
+      "@BE/*": [
+        "../packages/back-end/src/app/*"
+      ],
+      "@FE/*": [
+        "../packages/front-end/src/app/*"
+      ],
       "@SharedLib/*": [
         "src/app/*"
       ]

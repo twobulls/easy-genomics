@@ -176,27 +176,23 @@ jobs:
           fail-on-cache-miss: false
           key: nx-${{ github.repository_id }}-${{ github.sha }}
 
+      # Clear Playwright Cache before installing
       - name: Clear Playwright Cache
         run: rm -rf /home/runner/.cache/ms-playwright
 
-      # Ensure Correct Playwright and Install Browsers
-      - name: Install Playwright
+      # Install Playwright and its dependencies (browsers)
+      - name: Install Playwright and Browsers
         run: |
-          pnpm add -Dw @playwright/test
+          pnpm add -Dw @playwright/test@1.46.1
           npx playwright install --with-deps
 
-      - name: Verify Playwright Installation and Cache
+      # Verify the correct Playwright and Browser versions
+      - name: Verify Playwright Installation
         run: |
           npx playwright --version
-          ls -R /home/runner/.cache || true
           ls -R /home/runner/.cache/ms-playwright || true
-          ls -R /home/runner/.cache/ms-playwright/chromium-* || true
 
-      - name: Derive SHAs for nx affected commands
-        uses: nrwl/nx-set-shas@v4
-        with:
-          main-branch-name: main
-
+      # Run E2E Tests
       - name: Run E2E Tests
         run: pnpm run test-e2e
         working-directory: packages/front-end

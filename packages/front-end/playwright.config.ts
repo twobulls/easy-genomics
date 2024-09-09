@@ -57,7 +57,7 @@ const config: PlaywrightTestConfig = {
         [
           './node_modules/playwright-slack-report/dist/src/SlackReporter.js',
           {
-            channels: [process.env.SLACK_E2E_TEST_REPORT_CHANNEL],
+            slackWebHookUrl: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX', // TODO
             sendResults: 'on-failure',
           },
         ],

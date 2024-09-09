@@ -79,6 +79,14 @@
       "type": "build"
     },
     {
+      "name": "playwright",
+      "type": "build"
+    },
+    {
+      "name": "playwright-core",
+      "type": "build"
+    },
+    {
       "name": "projen",
       "type": "build"
     },
@@ -189,14 +197,6 @@
     },
     {
       "name": "pinia",
-      "type": "runtime"
-    },
-    {
-      "name": "playwright",
-      "type": "runtime"
-    },
-    {
-      "name": "playwright-core",
       "type": "runtime"
     },
     {

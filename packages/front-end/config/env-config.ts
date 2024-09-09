@@ -11,9 +11,6 @@ import {
 const getAppDomainName = (): string => {
   let domainName: string | undefined;
 
-  console.log(process.env);
-  console.log(process.env.CI);
-
   if (process.env.CI === 'true') {
     // CI/CD Pipeline uses ENV parameters
     domainName = process.env.APP_DOMAIN_NAME;

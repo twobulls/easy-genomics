@@ -303,12 +303,6 @@ importers:
       pinia:
         specifier: ^2.2.0
         version: 2.2.0(typescript@5.5.4)(vue@3.4.34(typescript@5.5.4))
-      playwright:
-        specifier: ^1.46.1
-        version: 1.46.1
-      playwright-core:
-        specifier: ^1.46.1
-        version: 1.46.1
       prettier-plugin-tailwindcss:
         specifier: ^0.6.5
         version: 0.6.5(prettier@3.3.3)
@@ -388,6 +382,12 @@ importers:
       kill-port:
         specifier: ^2.0.1
         version: 2.0.1
+      playwright:
+        specifier: ^1.46.1
+        version: 1.46.1
+      playwright-core:
+        specifier: ^1.46.1
+        version: 1.46.1
       projen:
         specifier: ^0.80.20
         version: 0.80.20(constructs@10.3.0)
@@ -9795,7 +9795,7 @@ packages:
     resolution: {integrity: sha512-kZf/K6hEIrWHI6XqOFUiiMa+79wE/D8Q+NCNAWclkyg3b4d2k7s0QGepNjiABc+aR3N1PAyHL7p6UcLY6LmrnA==}
 
   utils-merge@1.0.1:
-    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
+    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
     engines: {node: '>= 0.4.0'}
 
   uuid@3.4.0:

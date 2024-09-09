@@ -375,6 +375,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
       verbatimModuleSyntax: false,
       paths: {
         '@FE/*': ['src/app/*'],
+        '@BE/*': ['../packages/back-end/src/app/*'],
+        '@SharedLib/*': ['../packages/shared-lib/src/app/*'],
         '#app': ['node_modules/nuxt/dist/app'], // Nuxt
         '#ui/*': ['node_modules/@nuxt/ui/dist/runtime/*'], // NuxtUI
       },

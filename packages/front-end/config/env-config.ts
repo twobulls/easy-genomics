@@ -3,9 +3,8 @@ import {
   findConfiguration,
   getStackEnvName,
   loadConfigurations,
-} from '@easy-genomics/shared-lib/lib/app/utils/configuration';
+} from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
-
 /**
  * Extracts the configuration settings for the current environment from the master YAML configuration
  */

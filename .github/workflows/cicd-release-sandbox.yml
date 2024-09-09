@@ -172,7 +172,7 @@ jobs:
           fail-on-cache-miss: false
           key: nx-${{ github.repository_id }}-${{ github.sha }}
       - name: Install Playwright
-        run: pnpm add -D @playwright/test
+        run: pnpm add -Dw @playwright/test
         shell: /usr/bin/bash -e {0}
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps

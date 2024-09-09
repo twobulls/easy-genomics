@@ -19,7 +19,7 @@ function getConfigurationSettings(): EnvConfig {
   let testUserEmail: string | undefined;
   let testUserPassword: string | undefined;
 
-  if (process.env.CI_CD === 'true') {
+  if (process.env.CI === 'true') {
     // CI/CD Pipeline uses ENV parameters
     appDomainName = process.env.APP_DOMAIN_NAME;
     testUserEmail = process.env.TEST_USER_EMAIL;

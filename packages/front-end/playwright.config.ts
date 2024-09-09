@@ -52,7 +52,18 @@ const config: PlaywrightTestConfig = {
       dependencies: ['setup'],
     },
   ],
-  reporter: [['html', { outputDir: './playwright-report' }]],
+  reporter: process.env.CI
+    ? [
+        [
+          './node_modules/playwright-slack-report/dist/src/SlackReporter.js',
+          {
+            channels: [process.env.SLACK_E2E_TEST_REPORT_CHANNEL],
+            sendResults: 'on-failure',
+          },
+        ],
+        ['dot'],
+      ]
+    : [['html', { outputDir: './playwright-report' }]],
 };
 
 export default config;

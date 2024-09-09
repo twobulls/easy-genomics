@@ -60,6 +60,7 @@
     "kill-port": "^2.0.1",
     "playwright": "^1.46.1",
     "playwright-core": "^1.46.1",
+    "playwright-slack-report": "^1.1.86",
     "projen": "^0.80.20",
     "ts-jest": "^29.2.3",
     "ts-node": "^10.9.2",

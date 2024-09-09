@@ -87,6 +87,10 @@
       "type": "build"
     },
     {
+      "name": "playwright-slack-report",
+      "type": "build"
+    },
+    {
       "name": "projen",
       "type": "build"
     },

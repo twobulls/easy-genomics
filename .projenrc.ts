@@ -427,6 +427,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'kill-port',
     'playwright',
     'playwright-core',
+    'playwright-slack-report',
     'typed-openapi',
     'vue-eslint-parser',
   ],

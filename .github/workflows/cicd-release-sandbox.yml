@@ -173,14 +173,16 @@ jobs:
           key: nx-${{ github.repository_id }}-${{ github.sha }}
       - name: Clear Playwright Cache
         run: rm -rf /home/runner/.cache/ms-playwright
-      - name: Install Playwright for E2E Testing
-        run: pnpm add -Dw @playwright/test
+      - name: Install Playwright
+        run: pnpm add -D @playwright/test
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
-        shell: /usr/bin/bash -e {0}
+        run: npx playwright install --with-deps
       - name: Verify Playwright Installation
         run: npx playwright --version
-        shell: /usr/bin/bash -e {0}
+      - name: List Playwright Cache Directory
+        run: ls -R /home/runner/.cache/ms-playwright || true
+      - name: Check Chromium Directory
+        run: ls -R /home/runner/.cache/ms-playwright/chromium-1129 || true
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v4
         with:

@@ -13,6 +13,10 @@
       "type": "build"
     },
     {
+      "name": "@playwright/test",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -76,14 +80,6 @@
     },
     {
       "name": "kill-port",
-      "type": "build"
-    },
-    {
-      "name": "playwright",
-      "type": "build"
-    },
-    {
-      "name": "playwright-core",
       "type": "build"
     },
     {

@@ -177,12 +177,12 @@ jobs:
         run: pnpm add -Dw @playwright/test
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
-      - name: Verify Playwright Installation
-        run: npx playwright --version
-      - name: List Playwright Cache Directory
-        run: ls -R /home/runner/.cache/ms-playwright || true
-      - name: Check Chromium Directory
-        run: ls -R /home/runner/.cache/ms-playwright/chromium-1129 || true
+      - name: Verify Playwright Installation and Cache
+        run: |
+          npx playwright --version
+          ls -R /home/runner/.cache || true
+          ls -R /home/runner/.cache/ms-playwright || true
+          ls -R /home/runner/.cache/ms-playwright/chromium-* || true
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v4
         with:

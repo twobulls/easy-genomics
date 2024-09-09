@@ -5,25 +5,32 @@ import {
   loadConfigurations,
 } from '@easy-genomics/shared-lib/src/app/utils/configuration';
 
+interface EnvConfig {
+  appDomainName: string | undefined;
+  testUserEmail: string | undefined;
+  testUserPassword: string | undefined;
+}
+
 /**
  * Extracts the configuration settings for the current environment from the master YAML configuration
  */
-const getAppDomainName = (): string => {
-  let domainName: string | undefined;
+function getConfigurationSettings(): EnvConfig {
+  let appDomainName: string | undefined;
+  let testUserEmail: string | undefined;
+  let testUserPassword: string | undefined;
 
-  if (process.env.CI === 'true') {
+  if (process.env.CI_CD === 'true') {
     // CI/CD Pipeline uses ENV parameters
-    domainName = process.env.APP_DOMAIN_NAME;
-    if (!domainName) {
-      throw new Error('APP_DOMAIN_NAME is not set in the environment variables.');
-    }
+    appDomainName = process.env.APP_DOMAIN_NAME;
+    testUserEmail = process.env.TEST_USER_EMAIL;
+    testUserPassword = process.env.TEST_USER_PASSWORD;
   } else {
-    // Load the configurations from the file
-    const configPath = join(__dirname, '../../../config/easy-genomics.yaml');
-    const configurations = loadConfigurations(configPath);
+    // Load the configurations from local configuration file
+    const configurations = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));
+    console.log('configurations', configurations);
 
     if (configurations.length === 0) {
-      throw new Error(`Easy Genomics Configuration(s) missing or invalid in: ${configPath}`);
+      throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
     }
 
     // Determine the stack environment name
@@ -31,7 +38,7 @@ const getAppDomainName = (): string => {
 
     if (configurations.length > 1 && !stackEnvName) {
       throw new Error(
-        'Multiple configurations found in easy-genomics.yaml, please specify the argument: --stack {env-name}',
+        'Multiple configurations found in easy-genomics.yaml, please specify argument: --stack {env-name}',
       );
     }
 
@@ -39,14 +46,23 @@ const getAppDomainName = (): string => {
     const configuration =
       configurations.length > 1 ? findConfiguration(stackEnvName!, configurations) : configurations[0];
 
-    domainName = configuration['app-domain-name'].toString();
+    // Extract and validate the environment configuration
+    const envConfig = Object.values(configuration)[0];
 
-    if (!domainName) {
-      throw new Error('app-domain-name is not defined in the selected configuration.');
+    if (!envConfig) {
+      throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');
     }
+
+    appDomainName = envConfig['app-domain-name'];
+    testUserEmail = envConfig['back-end']['test-user-email'];
+    testUserPassword = envConfig['back-end']['test-user-password'];
   }
 
-  return domainName;
-};
+  return {
+    appDomainName,
+    testUserEmail,
+    testUserPassword,
+  };
+}
 
-export const appDomainName = getAppDomainName();
+export const envConfig = getConfigurationSettings();

@@ -3,7 +3,7 @@ import {
   findConfiguration,
   getStackEnvName,
   loadConfigurations,
-} from '@easy-genomics/shared-lib/lib/app/utils/configuration';
+} from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 
 /**

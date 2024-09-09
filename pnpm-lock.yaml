@@ -26,9 +26,6 @@ importers:
       '@nrwl/workspace':
         specifier: ^15
         version: 15.9.7
-      '@playwright/test':
-        specifier: ^1.47.0
-        version: 1.47.0
       '@types/aws-lambda':
         specifier: ^8.10.145
         version: 8.10.145
@@ -264,6 +261,9 @@ importers:
       '@pinia/nuxt':
         specifier: ^0.5.2
         version: 0.5.2(magicast@0.3.4)(rollup@4.19.1)(typescript@5.5.4)(vue@3.4.34(typescript@5.5.4))
+      '@playwright/test':
+        specifier: ^1.47.0
+        version: 1.47.0
       '@smithy/types':
         specifier: ^3.3.0
         version: 3.3.0
@@ -306,6 +306,15 @@ importers:
       pinia:
         specifier: ^2.2.0
         version: 2.2.0(typescript@5.5.4)(vue@3.4.34(typescript@5.5.4))
+      playwright:
+        specifier: ^1.47.0
+        version: 1.47.0
+      playwright-core:
+        specifier: ^1.47.0
+        version: 1.47.0
+      playwright-slack-report:
+        specifier: ^1.1.86
+        version: 1.1.86(@types/node@20.14.13)(typescript@5.5.4)
       prettier-plugin-tailwindcss:
         specifier: ^0.6.5
         version: 0.6.5(prettier@3.3.3)
@@ -385,15 +394,6 @@ importers:
       kill-port:
         specifier: ^2.0.1
         version: 2.0.1
-      playwright:
-        specifier: ^1.46.1
-        version: 1.46.1
-      playwright-core:
-        specifier: ^1.46.1
-        version: 1.46.1
-      playwright-slack-report:
-        specifier: ^1.1.86
-        version: 1.1.86(@types/node@20.14.13)(typescript@5.5.4)
       projen:
         specifier: ^0.80.20
         version: 0.80.20(constructs@10.3.0)
@@ -8247,11 +8247,6 @@ packages:
   pkg-types@1.1.3:
     resolution: {integrity: sha512-+JrgthZG6m3ckicaOB74TwQ+tBWsFl3qVQg7mN8ulwSOElJ7gBhKzj2VkCPnZ4NlF6kEquYU+RIYNVAvzd54UA==}
 
-  playwright-core@1.46.1:
-    resolution: {integrity: sha512-h9LqIQaAv+CYvWzsZ+h3RsrqCStkBHlgo6/TJlFst3cOTlLghBQlJwPOZKQJTKNaD3QIB7aAVQ+gfWbN3NXB7A==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright-core@1.47.0:
     resolution: {integrity: sha512-1DyHT8OqkcfCkYUD9zzUTfg7EfTd+6a8MkD/NWOvjo0u/SCNd5YmY/lJwFvUZOxJbWNds+ei7ic2+R/cRz/PDg==}
     engines: {node: '>=18'}
@@ -8259,11 +8254,6 @@ packages:
 
   playwright-slack-report@1.1.86:
     resolution: {integrity: sha512-Jl/R0fP3XdGvw693TABt9ttNBsPY41QQBwQaT6E9X01hZ81jA/T5lskwVuGmlfQpf+A5Eqsjg64BpjFg0p762g==}
-    hasBin: true
-
-  playwright@1.46.1:
-    resolution: {integrity: sha512-oPcr1yqoXLCkgKtD5eNUPLiN40rYEM39odNpIb6VE6S7/15gJmA1NzVv6zJYusV0e7tzvkU/utBFNa/Kpxmwng==}
-    engines: {node: '>=18'}
     hasBin: true
 
   playwright@1.47.0:
@@ -21904,8 +21894,6 @@ snapshots:
       mlly: 1.7.1
       pathe: 1.1.2
 
-  playwright-core@1.46.1: {}
-
   playwright-core@1.47.0: {}
 
   playwright-slack-report@1.1.86(@types/node@20.14.13)(typescript@5.5.4):
@@ -21923,12 +21911,6 @@ snapshots:
       - debug
       - supports-color
       - typescript
-
-  playwright@1.46.1:
-    dependencies:
-      playwright-core: 1.46.1
-    optionalDependencies:
-      fsevents: 2.3.2
 
   playwright@1.47.0:
     dependencies:

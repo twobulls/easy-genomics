@@ -13,10 +13,6 @@
       "type": "build"
     },
     {
-      "name": "@playwright/test",
-      "type": "build"
-    },
-    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -83,10 +79,6 @@
       "type": "build"
     },
     {
-      "name": "playwright-slack-report",
-      "type": "build"
-    },
-    {
       "name": "projen",
       "type": "build"
     },
@@ -138,6 +130,10 @@
     },
     {
       "name": "@pinia/nuxt",
+      "type": "runtime"
+    },
+    {
+      "name": "@playwright/test",
       "type": "runtime"
     },
     {
@@ -197,6 +193,18 @@
     },
     {
       "name": "pinia",
+      "type": "runtime"
+    },
+    {
+      "name": "playwright",
+      "type": "runtime"
+    },
+    {
+      "name": "playwright-core",
+      "type": "runtime"
+    },
+    {
+      "name": "playwright-slack-report",
       "type": "runtime"
     },
     {

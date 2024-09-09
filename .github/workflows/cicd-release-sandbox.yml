@@ -173,7 +173,9 @@ jobs:
           key: nx-${{ github.repository_id }}-${{ github.sha }}
       - name: Clear Playwright Cache
         run: rm -rf /home/runner/.cache/ms-playwright
-      - name: Install Playwright and browsers
+      - name: Install Playwright for E2E Testing
+        run: pnpm add -D @playwright/test
+      - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
         shell: /usr/bin/bash -e {0}
       - name: Verify Playwright Installation

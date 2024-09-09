@@ -4,129 +4,128 @@ on:
     branches:
       - feat/EG-677_playwright_cicd
 jobs:
-#  build-deploy-back-end:
-#    name: Build & Deploy Back-End
-#    runs-on: ubuntu-latest
-#    permissions:
-#      id-token: write
-#      contents: write
-#      actions: read
-#    environment: sandbox
-#    env:
-#      NODE_OPTIONS: --max-old-space-size=8192
-#      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-#      AWS_REGION: ${{ secrets.AWS_REGION }}
-#      ENV_TYPE: ${{ vars.ENV_TYPE }}
-#      ENV_NAME: ${{ vars.ENV_NAME }}
-#      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
-#      AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
-#      AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
-#      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-#      SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
-#      SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
-#      TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
-#      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
-#      - name: Install pnpm
-#        uses: pnpm/action-setup@v4
-#        with:
-#          version: 9.6.0
-#      - name: Setup node
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: 20.15.0
-#          cache: pnpm
-#      - name: Nx cache
-#        uses: actions/cache@v4
-#        with:
-#          path: node_modules/.cache/nx
-#          fail-on-cache-miss: false
-#          key: nx-${{ github.repository_id }}-${{ github.sha }}
-#      - name: Install dependencies
-#        run: pnpm install
-#      - name: Derive SHAs for nx affected commands
-#        uses: nrwl/nx-set-shas@v4
-#        with:
-#          main-branch-name: main
-#      - name: Configure AWS Credentials
-#        id: configure_iam_credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
-#          role-session-name: GitHub_to_AWS_via_FederatedOIDC
-#          role-duration-seconds: 3600
-#          aws-region: ${{ secrets.AWS_REGION }}
-#          audience: sts.amazonaws.com
-#      - name: Run CI/CD Build & Deploy Back-End
-#        run: pnpm run cicd-build-deploy-back-end
-#  build-deploy-front-end:
-#    name: Build & Deploy Front-End
-#    needs: build-deploy-back-end
-#    runs-on: ubuntu-latest
-#    permissions:
-#      id-token: write
-#      contents: write
-#      actions: read
-#    environment: sandbox
-#    env:
-#      NODE_OPTIONS: --max-old-space-size=8192
-#      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-#      AWS_REGION: ${{ secrets.AWS_REGION }}
-#      ENV_TYPE: ${{ vars.ENV_TYPE }}
-#      ENV_NAME: ${{ vars.ENV_NAME }}
-#      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
-#      AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
-#      AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
-#      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-#      SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
-#      SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
-#      TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
-#      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
-#      - name: Install pnpm
-#        uses: pnpm/action-setup@v4
-#        with:
-#          version: 9.6.0
-#      - name: Setup node
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: 20.15.0
-#          cache: pnpm
-#      - name: Nx cache
-#        uses: actions/cache@v4
-#        with:
-#          path: node_modules/.cache/nx
-#          fail-on-cache-miss: false
-#          key: nx-${{ github.repository_id }}-${{ github.sha }}
-#      - name: Install dependencies
-#        run: pnpm install
-#      - name: Derive SHAs for nx affected commands
-#        uses: nrwl/nx-set-shas@v4
-#        with:
-#          main-branch-name: main
-#      - name: Configure AWS Credentials
-#        id: configure_iam_credentials
-#        uses: aws-actions/configure-aws-credentials@v4
-#        with:
-#          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
-#          role-session-name: GitHub_to_AWS_via_FederatedOIDC
-#          role-duration-seconds: 3600
-#          aws-region: ${{ secrets.AWS_REGION }}
-#          audience: sts.amazonaws.com
-#      - name: Run CI/CD Build & Deploy Front-End
-#        run: pnpm cicd-build-deploy-front-end
+  build-deploy-back-end:
+    name: Build & Deploy Back-End
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    environment: sandbox
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ENV_TYPE: ${{ vars.ENV_TYPE }}
+      ENV_NAME: ${{ vars.ENV_NAME }}
+      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
+      AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
+      AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
+      SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
+      TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.6.0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.15.0
+          cache: pnpm
+      - name: Nx cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/nx
+          fail-on-cache-miss: false
+          key: nx-${{ github.repository_id }}-${{ github.sha }}
+      - name: Install dependencies
+        run: pnpm install
+      - name: Derive SHAs for nx affected commands
+        uses: nrwl/nx-set-shas@v4
+        with:
+          main-branch-name: main
+      - name: Configure AWS Credentials
+        id: configure_iam_credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          role-duration-seconds: 3600
+          aws-region: ${{ secrets.AWS_REGION }}
+          audience: sts.amazonaws.com
+      - name: Run CI/CD Build & Deploy Back-End
+        run: pnpm run cicd-build-deploy-back-end
+  build-deploy-front-end:
+    name: Build & Deploy Front-End
+    needs: build-deploy-back-end
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+    environment: sandbox
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ENV_TYPE: ${{ vars.ENV_TYPE }}
+      ENV_NAME: ${{ vars.ENV_NAME }}
+      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
+      AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
+      AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
+      SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
+      TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.6.0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.15.0
+          cache: pnpm
+      - name: Nx cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/.cache/nx
+          fail-on-cache-miss: false
+          key: nx-${{ github.repository_id }}-${{ github.sha }}
+      - name: Install dependencies
+        run: pnpm install
+      - name: Derive SHAs for nx affected commands
+        uses: nrwl/nx-set-shas@v4
+        with:
+          main-branch-name: main
+      - name: Configure AWS Credentials
+        id: configure_iam_credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          role-duration-seconds: 3600
+          aws-region: ${{ secrets.AWS_REGION }}
+          audience: sts.amazonaws.com
+      - name: Run CI/CD Build & Deploy Front-End
+        run: pnpm cicd-build-deploy-front-end
   run-e2e-tests:
     name: Run E2E Tests
-    # debug
-#    needs: build-deploy-front-end
+    needs: build-deploy-front-end
     runs-on: ubuntu-latest
     permissions:
       id-token: write

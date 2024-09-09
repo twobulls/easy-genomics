@@ -1,5 +1,5 @@
 import type { PlaywrightTestConfig } from 'playwright/test';
-import { appDomainName } from './config/env-config';
+import { envConfig } from '@/packages/front-end/config/env-config';
 
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',
@@ -30,7 +30,7 @@ const config: PlaywrightTestConfig = {
       name: 'setup',
       testMatch: /.*\.setup.ts/,
       use: {
-        baseURL: `https://${appDomainName}`,
+        baseURL: `https://${envConfig.appDomainName}`,
       },
     },
     {
@@ -46,7 +46,7 @@ const config: PlaywrightTestConfig = {
       name: 'quality',
       testMatch: '**/*.spec.e2e.ts',
       use: {
-        baseURL: `https://${appDomainName}`,
+        baseURL: `https://${envConfig.appDomainName}`,
         storageState: './tests/e2e/.auth/user.json',
       },
       dependencies: ['setup'],

@@ -174,7 +174,7 @@ jobs:
       - name: Clear Playwright Cache
         run: rm -rf /home/runner/.cache/ms-playwright
       - name: Install Playwright
-        run: pnpm add -D @playwright/test
+        run: pnpm add -Dw @playwright/test
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Verify Playwright Installation

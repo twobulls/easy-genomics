@@ -171,6 +171,8 @@ jobs:
           key: nx-${{ github.repository_id }}-${{ github.sha }}
       - name: Install dependencies
         run: pnpm install
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v4
         with:
@@ -178,7 +180,7 @@ jobs:
       - name: Run E2E Tests
         run: pnpm run test-e2e
         working-directory: packages/front-end
-        continue-on-error: true # ensures the job continues even if this step fails
+        continue-on-error: true
       - name: Always Succeed Step
         if: failure()
         run: echo "E2E tests failed, but we are allowing the pipeline to succeed."

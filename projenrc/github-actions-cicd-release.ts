@@ -86,7 +86,7 @@ export class GithubActionsCICDRelease extends Component {
           ...this.bootstrapSteps(),
           {
             name: 'Run E2E Tests',
-            run: 'pnpm run test-e2',
+            run: 'pnpm run test-e2e',
           },
         ],
       };

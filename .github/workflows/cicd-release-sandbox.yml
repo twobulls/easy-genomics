@@ -171,11 +171,31 @@ jobs:
           path: node_modules/.cache/nx
           fail-on-cache-miss: false
           key: nx-${{ github.repository_id }}-${{ github.sha }}
+      - name: Clear Playwright Cache
+        run: rm -rf /home/runner/.cache/ms-playwright
       - name: Install Playwright
         run: pnpm add -Dw @playwright/test
         shell: /usr/bin/bash -e {0}
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          ENV_TYPE: dev
+          ENV_NAME: sandbox
+          APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
+          AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
+          AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
+          SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
+          TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
       - name: Install Playwright Browsers
-        run: npx playwright install chromium --with-deps
+        run: npx playwright install --with-deps
+        shell: /usr/bin/bash -e {0}
+      - name: Verify Playwright Installation
+        run: npx playwright --version
         shell: /usr/bin/bash -e {0}
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v4

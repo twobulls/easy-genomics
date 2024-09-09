@@ -374,6 +374,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
       types: ['vue'],
       verbatimModuleSyntax: false,
       paths: {
+        '@': ['../..'],
         '@FE/*': ['src/app/*'],
         '@BE/*': ['../packages/back-end/src/app/*'],
         '@SharedLib/*': ['../packages/shared-lib/src/app/*'],

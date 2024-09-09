@@ -163,16 +163,20 @@ jobs:
         with:
           node-version: 20.15.0
           cache: pnpm
+      - name: Install dependencies
+        run: pnpm install
       - name: Nx cache
         uses: actions/cache@v4
         with:
           path: node_modules/.cache/nx
           fail-on-cache-miss: false
           key: nx-${{ github.repository_id }}-${{ github.sha }}
-      - name: Install dependencies
-        run: pnpm install
+      - name: Install Playwright
+        run: pnpm add -D @playwright/test
+        shell: /usr/bin/bash -e {0}
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+        shell: /usr/bin/bash -e {0}
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v4
         with:

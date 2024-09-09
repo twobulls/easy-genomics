@@ -138,6 +138,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Display project directory structure
+        run: |
+          echo "Listing entire directory structure for debugging"
+          ls -R # List entire directory structure
+
+      - name: Display config directory contents
+        run: |
+          ls config # Specifically list the config directory
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:

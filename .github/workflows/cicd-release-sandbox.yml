@@ -174,7 +174,7 @@ jobs:
       - name: Clear Playwright Cache
         run: rm -rf /home/runner/.cache/ms-playwright
       - name: Install Playwright for E2E Testing
-        run: pnpm add -D @playwright/test
+        run: pnpm add -Dw @playwright/test
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps
         shell: /usr/bin/bash -e {0}

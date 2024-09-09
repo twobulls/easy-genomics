@@ -73,6 +73,7 @@
   "version": "0.0.0",
   "jest": {
     "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/../../$1",
       "^@BE/(.*)$": "<rootDir>/packages/back-end/src/app/$1",
       "^@FE/(.*)$": "<rootDir>/packages/front-end/src/app/$1",
       "^@SharedLib/(.*)$": "<rootDir>/packages/shared-lib/src/app/$1"

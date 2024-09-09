@@ -10,7 +10,7 @@ import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/c
  */
 function getConfigurationSettings(): ConfigurationSettings {
   // Load the configurations from the file
-  const configurations = loadConfigurations(join(__dirname, '../../../../config/easy-genomics.yaml'));
+  const configurations = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));
 
   if (configurations.length === 0) {
     throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');

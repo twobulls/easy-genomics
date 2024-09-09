@@ -35,8 +35,8 @@
     ],
     "verbatimModuleSyntax": false,
     "paths": {
-      "@": [
-        "../.."
+      "@/*": [
+        "../../*"
       ],
       "@FE/*": [
         "src/app/*"

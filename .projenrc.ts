@@ -460,12 +460,11 @@ new VscodeSettings(root);
 new Nx(root);
 new Husky(root);
 new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion });
-new GithubActionsCICDRelease(root, { environment: 'sandbox', pnpmVersion: pnpmVersion, onPushBranch: 'infra/*' });
 new GithubActionsCICDRelease(root, {
-  environment: 'build',
+  environment: 'sandbox',
   pnpmVersion: pnpmVersion,
   onPushBranch: 'feat/EG-677_playwright_cicd',
-}); // TODO: testing new pipeline actions
+});
 new ApacheLicense(root, licenseOptions);
 new ApacheLicense(backEndApp, licenseOptions);
 new ApacheLicense(frontEndApp, licenseOptions);

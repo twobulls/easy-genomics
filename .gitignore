@@ -48,7 +48,6 @@ jspm_packages/
 !/.husky/pre-commit
 !/.github/workflows/cicd-release-quality.yml
 !/.github/workflows/cicd-release-sandbox.yml
-!/.github/workflows/cicd-release-build.yml
 !/LICENSE
 !/packages/back-end/src/app/README.md
 !/packages/back-end/src/app/controllers/README.md

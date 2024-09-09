@@ -160,4 +160,4 @@ jobs:
         with:
           main-branch-name: main
       - name: Run E2E Tests
-        run: pnpm run test-e2
+        run: pnpm run test-e2e

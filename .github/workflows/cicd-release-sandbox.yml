@@ -127,23 +127,41 @@ jobs:
 #        run: pnpm cicd-build-deploy-front-end
   run-e2e-tests:
     name: Run E2E Tests
+    # debug
 #    needs: build-deploy-front-end
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: write
       actions: read
+    environment: sandbox
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      ENV_TYPE: ${{ vars.ENV_TYPE }}
+      ENV_NAME: ${{ vars.ENV_NAME }}
+      APP_DOMAIN_NAME: ${{ vars.APP_DOMAIN_NAME }}
+      AWS_HOSTED_ZONE_ID: ${{ secrets.AWS_HOSTED_ZONE_ID }}
+      AWS_CERTIFICATE_ARN: ${{ secrets.AWS_CERTIFICATE_ARN }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      SYSTEM_ADMIN_EMAIL: ${{ vars.SYSTEM_ADMIN_EMAIL }}
+      SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
+      TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
+      TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # debug
       - name: Display project directory structure
         run: |
           echo "Listing entire directory structure for debugging"
           ls -R # List entire directory structure
 
+      # debug
       - name: Display config directory contents
         run: |
           ls config # Specifically list the config directory

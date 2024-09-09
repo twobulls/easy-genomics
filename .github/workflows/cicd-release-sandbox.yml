@@ -6,6 +6,7 @@ on:
 jobs:
   build-deploy-back-end:
     name: Build & Deploy Back-End
+    if: false
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -65,6 +66,7 @@ jobs:
         run: pnpm run cicd-build-deploy-back-end
   build-deploy-front-end:
     name: Build & Deploy Front-End
+    if: false
     needs: build-deploy-back-end
     runs-on: ubuntu-latest
     permissions:
@@ -125,7 +127,7 @@ jobs:
         run: pnpm cicd-build-deploy-front-end
   run-e2e-tests:
     name: Run E2E Tests
-    needs: build-deploy-front-end
+#    needs: build-deploy-front-end
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -173,15 +175,15 @@ jobs:
           fail-on-cache-miss: false
           key: nx-${{ github.repository_id }}-${{ github.sha }}
 
-      # Clear Playwright Cache before installing
-      - name: Clear Playwright Cache
-        run: rm -rf /home/runner/.cache/ms-playwright
-
-      # Install Playwright and Chromium Only
-      - name: Install Playwright and Chromium Only
-        run: |
-          pnpm add -Dw @playwright/test@1.46.1
-          npx playwright install chromium
+#      # Clear Playwright Cache before installing
+#      - name: Clear Playwright Cache
+#        run: rm -rf /home/runner/.cache/ms-playwright
+#
+#      # Install Playwright and Chromium Only
+#      - name: Install Playwright and Chromium Only
+#        run: |
+#          pnpm add -Dw @playwright/test
+#          npx playwright install chromium
 
       # Verify the correct Playwright and Browser versions
       - name: Verify Playwright Installation

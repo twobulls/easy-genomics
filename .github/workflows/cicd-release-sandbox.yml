@@ -175,7 +175,7 @@ jobs:
         run: pnpm add -Dw @playwright/test
         shell: /usr/bin/bash -e {0}
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install chromium --with-deps
         shell: /usr/bin/bash -e {0}
       - name: Derive SHAs for nx affected commands
         uses: nrwl/nx-set-shas@v4

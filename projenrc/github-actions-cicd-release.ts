@@ -132,6 +132,7 @@ export class GithubActionsCICDRelease extends Component {
       'TEST_USER_EMAIL': '${{ vars.TEST_USER_EMAIL }}',
       'TEST_USER_PASSWORD': '${{ secrets.TEST_USER_PASSWORD }}',
       // Front-End specific settings
+      'SLACK_E2E_TEST_WEBHOOK_URL': '${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}',
     };
   }
 

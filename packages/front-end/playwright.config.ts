@@ -2,6 +2,7 @@ import type { PlaywrightTestConfig } from 'playwright/test';
 import { envConfig } from '@/packages/front-end/config/env-config';
 
 console.log('process.env.SLACK_E2E_TEST_WEBHOOK_URL', process.env.SLACK_E2E_TEST_WEBHOOK_URL);
+console.log(' process.env.CI', process.env.CI);
 
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',

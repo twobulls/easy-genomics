@@ -28,6 +28,7 @@ jobs:
       SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
       TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
       TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      SLACK_E2E_TEST_WEBHOOK_URL: ${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -88,6 +89,7 @@ jobs:
       SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
       TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
       TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      SLACK_E2E_TEST_WEBHOOK_URL: ${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -148,6 +150,7 @@ jobs:
       SYSTEM_ADMIN_PASSWORD: ${{ secrets.SYSTEM_ADMIN_PASSWORD }}
       TEST_USER_EMAIL: ${{ vars.TEST_USER_EMAIL }}
       TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+      SLACK_E2E_TEST_WEBHOOK_URL: ${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

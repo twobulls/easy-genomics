@@ -175,16 +175,16 @@ jobs:
           fail-on-cache-miss: false
           key: nx-${{ github.repository_id }}-${{ github.sha }}
 
-#      # Clear Playwright Cache before installing
-#      - name: Clear Playwright Cache
-#        run: rm -rf /home/runner/.cache/ms-playwright
-#
-#      # Install Playwright and Chromium Only
-#      - name: Install Playwright + Chromium Only and Slack Reporter
-#        run: |
-#          pnpm add -Dw @playwright/test
-#          pnpm add -Dw playwright-slack-report
-#          npx playwright install chromium
+      # Clear Playwright Cache before installing
+      - name: Clear Playwright Cache
+        run: rm -rf /home/runner/.cache/ms-playwright
+
+      # Install Playwright and Chromium Only
+      - name: Install Playwright + Chromium Only and Slack Reporter
+        run: |
+          pnpm add -Dw @playwright/test
+          pnpm add -Dw playwright-slack-report
+          npx playwright install chromium
 
       # Verify the correct Playwright and Browser versions
       - name: Verify Playwright Installation

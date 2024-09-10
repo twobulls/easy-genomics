@@ -473,7 +473,7 @@ new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVe
 new GithubActionsCICDRelease(root, {
   environment: 'sandbox',
   pnpmVersion: pnpmVersion,
-  onPushBranch: 'feat/EG-677_playwright_cicd',
+  onPushBranch: 'main',
 });
 new ApacheLicense(root, licenseOptions);
 new ApacheLicense(backEndApp, licenseOptions);

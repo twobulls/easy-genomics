@@ -70,14 +70,13 @@ export class GithubActionsCICDRelease extends Component {
       },
     };
 
-    if (this.onPushBranch === 'feat/EG-677_playwright_cicd' || !this.onPushBranch) {
-      // if (this.onPushBranch === 'main' || !this.onPushBranch) {
+    // Add the E2E tests job only for the quality environment
+    if (this.environment === 'quality') {
       jobs['run-e2e-tests'] = {
         name: 'Run E2E Tests',
         needs: ['build-deploy-front-end'],
         runsOn,
         permissions: {
-          // Adding permissions here
           idToken: github.workflows.JobPermission.WRITE,
           contents: github.workflows.JobPermission.WRITE,
           actions: github.workflows.JobPermission.READ,

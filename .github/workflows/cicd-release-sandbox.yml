@@ -4,7 +4,7 @@ name: cicd-release-sandbox
 on:
   push:
     branches:
-      - main
+      - feat/EG-677_playwright_cicd
 jobs:
   build-deploy-back-end:
     name: Build & Deploy Back-End

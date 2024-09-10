@@ -1,11 +1,6 @@
 /**
  * These are the types for the workflow report endpoint which is not published as part
  * of the nextflow tower openapi.
- *
- * {
- *   WorkspaceId: <string>,
- *   AccessToken: <string>,
- * }
  */
 
 export interface WorkflowReport {

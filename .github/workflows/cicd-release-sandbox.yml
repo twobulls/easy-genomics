@@ -129,7 +129,7 @@ jobs:
         run: pnpm cicd-build-deploy-front-end
   run-e2e-tests:
     name: Run E2E Tests
-    needs: build-deploy-front-end
+#    needs: build-deploy-front-end
     runs-on: ubuntu-latest
     permissions:
       id-token: write

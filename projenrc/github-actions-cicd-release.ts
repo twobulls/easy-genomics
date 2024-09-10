@@ -73,7 +73,6 @@ export class GithubActionsCICDRelease extends Component {
       },
     };
 
-    // Add the E2E tests job only if e2e is true
     if (this.e2e) {
       jobs['run-e2e-tests'] = {
         name: 'Run E2E Tests',

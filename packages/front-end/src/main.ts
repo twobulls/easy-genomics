@@ -15,8 +15,6 @@ let awsHostedZoneId: string | undefined;
 let awsCertificateArn: string | undefined;
 let devEnv: boolean = true;
 
-console.log('Logging CI/CD env in Frontend package: ', process.env);
-
 if (process.env.CI_CD === 'true') {
   console.log('Loading Front-End environment settings for CI/CD Pipeline...');
 

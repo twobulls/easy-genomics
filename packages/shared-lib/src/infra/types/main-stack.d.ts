@@ -1,4 +1,5 @@
 import { Environment, StackProps } from 'aws-cdk-lib';
+import { IVpc } from "aws-cdk-lib/aws-ec2";
 
 // Defines the BaseStack shared props for Front-End & Back-End subprojects
 export interface BaseStackProps extends StackProps {
@@ -25,4 +26,5 @@ export interface BackEndStackProps extends BaseStackProps {
     testUserEmail?: string;
     testUserPassword?: string;
     seqeraApiBaseUrl: string;
+    vpc?: IVpc,
 }

@@ -5,6 +5,7 @@ import { Component, github, typescript } from 'projen';
 export class GithubActionsCICDRelease extends Component {
   private readonly environment: string;
   private readonly pnpmVersion: string;
+  private readonly e2e: boolean;
   private readonly onPushBranch?: string;
 
   constructor(
@@ -13,12 +14,14 @@ export class GithubActionsCICDRelease extends Component {
       environment: string;
       pnpmVersion: string;
       onPushBranch?: string;
+      e2e: boolean;
     },
   ) {
     super(<IConstruct>rootProject);
     this.environment = options.environment;
     this.pnpmVersion = options.pnpmVersion;
     this.onPushBranch = options.onPushBranch;
+    this.e2e = options.e2e;
 
     const wf = new github.GithubWorkflow(rootProject.github!, `cicd-release-${this.environment}`);
     const runsOn = ['ubuntu-latest'];
@@ -70,8 +73,8 @@ export class GithubActionsCICDRelease extends Component {
       },
     };
 
-    // Add the E2E tests job only for the quality environment
-    if (this.environment === 'quality') {
+    // Add the E2E tests job only if e2e is true
+    if (this.e2e) {
       jobs['run-e2e-tests'] = {
         name: 'Run E2E Tests',
         needs: ['build-deploy-front-end'],

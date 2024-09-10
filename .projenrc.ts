@@ -469,11 +469,12 @@ new PnpmWorkspace(root);
 new VscodeSettings(root);
 new Nx(root);
 new Husky(root);
-new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion });
+new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion, e2e: true });
 new GithubActionsCICDRelease(root, {
   environment: 'sandbox',
   pnpmVersion: pnpmVersion,
   onPushBranch: 'main',
+  e2e: false,
 });
 new ApacheLicense(root, licenseOptions);
 new ApacheLicense(backEndApp, licenseOptions);

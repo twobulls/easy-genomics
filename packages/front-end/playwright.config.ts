@@ -59,7 +59,7 @@ const config: PlaywrightTestConfig = {
           [
             './node_modules/playwright-slack-report/dist/src/SlackReporter.js',
             {
-              slackWebHookUrl: process.env.SLACK_E2E_TEST_WEBHOOK_URL,
+              slackWebHookUrl: 'https://hooks.slack.com/services/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',
               sendResults: 'always',
               'showInThread': true,
               'meta': [

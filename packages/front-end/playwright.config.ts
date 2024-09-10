@@ -60,15 +60,6 @@ const config: PlaywrightTestConfig = {
             './node_modules/playwright-slack-report/dist/src/SlackReporter.js',
             {
               slackWebHookUrl: process.env.SLACK_E2E_TEST_WEBHOOK_URL,
-
-              sendResults: 'always',
-              'showInThread': true,
-              'meta': [
-                { 'key': 'runNumber', 'value': '__ENV_GITHUB_RUN_NUMBER' },
-                { 'key': 'sha', 'value': '__ENV_GITHUB_SHA' },
-                { 'key': 'ref', 'value': '__ENV_GITHUB_REF' },
-                { 'key': 'env', 'value': '__ENV_GITHUB_ENV' },
-              ],
             },
           ],
           ['dot'],

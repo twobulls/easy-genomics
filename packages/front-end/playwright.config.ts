@@ -61,6 +61,12 @@ const config: PlaywrightTestConfig = {
             {
               slackWebHookUrl: process.env.SLACK_E2E_TEST_WEBHOOK_URL,
               sendResults: 'always',
+              'showInThread': true,
+              'meta': [
+                { 'key': 'build', 'value': 'GITHUB_RUN_NUMBER' },
+                { 'key': 'branch', 'value': '__ENV_BRANCH_NAME' },
+                { 'key': 'commit', 'value': '__ENV_COMMIT_ID' },
+              ],
             },
           ],
           ['dot'],

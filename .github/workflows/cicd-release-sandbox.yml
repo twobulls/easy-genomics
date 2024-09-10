@@ -8,6 +8,7 @@ on:
 jobs:
   build-deploy-back-end:
     name: Build & Deploy Back-End
+    if: false
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -67,6 +68,7 @@ jobs:
         run: pnpm run cicd-build-deploy-back-end
   build-deploy-front-end:
     name: Build & Deploy Front-End
+    if: false
     needs: build-deploy-back-end
     runs-on: ubuntu-latest
     permissions:

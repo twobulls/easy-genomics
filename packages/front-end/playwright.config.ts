@@ -64,8 +64,6 @@ const config: PlaywrightTestConfig = {
               'meta': [
                 { 'key': 'runNumber', 'value': process.env.GITHUB_RUN_NUMBER },
                 { 'key': 'sha', 'value': process.env.GITHUB_SHA },
-                { 'key': 'ref', 'value': process.env.GITHUB_REF },
-                { 'key': 'env', 'value': process.env.GITHUB_ENV },
               ],
             },
           ],

@@ -1,9 +1,6 @@
 import type { PlaywrightTestConfig } from 'playwright/test';
 import { envConfig } from '@/packages/front-end/config/env-config';
 
-console.log('process.env.SLACK_E2E_TEST_WEBHOOK_URL', process.env.SLACK_E2E_TEST_WEBHOOK_URL);
-console.log(' process.env.CI', process.env.CI);
-
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',
   timeout: 100 * 1000,
@@ -64,7 +61,6 @@ const config: PlaywrightTestConfig = {
             {
               slackWebHookUrl: process.env.SLACK_E2E_TEST_WEBHOOK_URL,
               sendResults: 'always',
-              'showInThread': true,
               'meta': [
                 { 'key': 'runNumber', 'value': '__ENV_GITHUB_RUN_NUMBER' },
                 { 'key': 'sha', 'value': '__ENV_GITHUB_SHA' },

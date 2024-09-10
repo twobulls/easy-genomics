@@ -312,6 +312,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/types',
     '@aws-sdk/util-dynamodb',
     '@easy-genomics/shared-lib@workspace:*',
+    'aws-cdk-lib',
     'aws-lambda',
     'base64-js',
     'dotenv',

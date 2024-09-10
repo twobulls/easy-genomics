@@ -3,6 +3,8 @@ import { envConfig } from '../../config/env-config';
 
 const authFile = './tests/e2e/.auth/user.json';
 
+console.log('------// Authenticating user //------');
+
 setup('Authenticate user', async ({ page, baseURL }) => {
   console.log('------// Authenticating user //------');
   console.log('Navigating to Sign In page @ ' + baseURL + '/signin');

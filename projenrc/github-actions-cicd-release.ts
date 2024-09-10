@@ -78,6 +78,8 @@ export class GithubActionsCICDRelease extends Component {
         name: 'Run E2E Tests',
         needs: ['build-deploy-front-end'],
         runsOn,
+        environment: this.environment,
+        env: this.loadEnv(),
         permissions: {
           idToken: github.workflows.JobPermission.WRITE,
           contents: github.workflows.JobPermission.WRITE,

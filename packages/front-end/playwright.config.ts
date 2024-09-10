@@ -1,8 +1,6 @@
 import type { PlaywrightTestConfig } from 'playwright/test';
 import { envConfig } from '@/packages/front-end/config/env-config';
 
-console.log('SLACK_E2E_TEST_WEBHOOK_URL', process.env.SLACK_E2E_TEST_WEBHOOK_URL);
-
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',
   timeout: 100 * 1000,
@@ -54,18 +52,20 @@ const config: PlaywrightTestConfig = {
       dependencies: ['setup'],
     },
   ],
-  reporter: process.env.CI
-    ? [
-        [
-          './node_modules/playwright-slack-report/dist/src/SlackReporter.js',
-          {
-            slackWebHookUrl: process.env.SLACK_E2E_TEST_WEBHOOK_URL,
-            sendResults: 'on-failure',
-          },
-        ],
-        ['dot'],
-      ]
-    : [['html', { outputDir: './playwright-report' }]],
+
+  reporter:
+    process.env.CI && process.env.SLACK_E2E_TEST_WEBHOOK_URL
+      ? [
+          [
+            './node_modules/playwright-slack-report/dist/src/SlackReporter.js',
+            {
+              slackWebHookUrl: process.env.SLACK_E2E_TEST_WEBHOOK_URL,
+              sendResults: 'always',
+            },
+          ],
+          ['dot'],
+        ]
+      : [['html', { outputDir: './playwright-report' }]],
 };
 
 export default config;

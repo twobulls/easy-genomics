@@ -3,12 +3,20 @@ import { envConfig } from '../../config/env-config';
 
 const authFile = './tests/e2e/.auth/user.json';
 
+console.log('------// Authenticating user //------');
+
 setup('Authenticate user', async ({ page, baseURL }) => {
+  console.log('Navigating to Sign In page @ ' + baseURL + '/signin');
+
   await page.goto(`${baseURL}/signin`);
   await page.getByLabel('Email').click();
-  await page.keyboard.type(envConfig['back-end']['test-user-email']);
+  if (typeof envConfig.testUserEmail === 'string') {
+    await page.keyboard.type(envConfig.testUserEmail);
+  }
   await page.getByLabel('Password').click();
-  await page.keyboard.type(envConfig['back-end']['test-user-password']);
+  if (typeof envConfig.testUserPassword === 'string') {
+    await page.keyboard.type(envConfig.testUserPassword);
+  }
   console.log('Clicking Sign In...');
 
   await page.getByRole('button', { name: 'Sign In' }).click();

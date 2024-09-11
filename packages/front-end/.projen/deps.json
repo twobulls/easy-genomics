@@ -133,6 +133,10 @@
       "type": "runtime"
     },
     {
+      "name": "@playwright/test",
+      "type": "runtime"
+    },
+    {
       "name": "@smithy/types",
       "type": "runtime"
     },
@@ -197,6 +201,10 @@
     },
     {
       "name": "playwright-core",
+      "type": "runtime"
+    },
+    {
+      "name": "playwright-slack-report",
       "type": "runtime"
     },
     {

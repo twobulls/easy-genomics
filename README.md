@@ -11,6 +11,7 @@
   - [Contributions](#contributions)
 - [Branch Naming Convention](#branch-naming-convention)
 - [Conventional Commit Syntax](#conventional-commit-syntax)
+- [Upgrading Packages](#upgrading-packages)
 
 ## Introduction
 
@@ -350,4 +351,12 @@ git commit -m "feat(EG-XXX): add hat wobble"
 |              +--> Commit Type: chore, docs, feat, fix, refactor, style, or test.
 |
 +-------> Create a commit to the current branch with a message.
+```
+
+## Upgrading Packages
+
+To upgrade the node packages across the entire project using Projen simply run the following command:
+
+```sh
+pnpm projen upgrade
 ```

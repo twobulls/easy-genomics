@@ -46,8 +46,8 @@
     "@types/jest": "^29.5.12",
     "@types/node": "^20",
     "@types/uuid": "^9.0.8",
-    "@typescript-eslint/eslint-plugin": "^6",
-    "@typescript-eslint/parser": "^6",
+    "@typescript-eslint/eslint-plugin": "^7",
+    "@typescript-eslint/parser": "^7",
     "aws-cdk": "^2.124.0",
     "esbuild": "^0.20.2",
     "eslint": "^8",
@@ -58,7 +58,6 @@
     "jest": "^29.7.0",
     "jest-junit": "^15",
     "kill-port": "^2.0.1",
-    "projen": "^0.80.20",
     "ts-jest": "^29.2.3",
     "ts-node": "^10.9.2",
     "typed-openapi": "^0.5.0",
@@ -106,9 +105,10 @@
   "license": "Apache-2.0",
   "version": "0.0.0",
   "jest": {
+    "coverageProvider": "v8",
     "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.ts?(x)",
-      "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)"
+      "<rootDir>/@(src|test)/**/*(*.)@(spec|test).ts?(x)",
+      "<rootDir>/@(src|test)/**/__tests__/**/*.ts?(x)"
     ],
     "clearMocks": true,
     "collectCoverage": true,

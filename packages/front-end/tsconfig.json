@@ -64,7 +64,5 @@
     "**/*d.ts",
     "**/*.vue"
   ],
-  "exclude": [
-    "cdk.out"
-  ]
+  "exclude": []
 }

@@ -15,12 +15,13 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
+  import { v4 as uuidv4 } from 'uuid';
 
   const { $api } = useNuxtApp();
-  const $route = useRoute();
   const $router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
-  const labId = $route.params.labId;
+  const labId = useLabsStore().labId;
+  const labName = useLabsStore().labName;
   const modal = useModal();
 
   const tabIndex = ref(0);
@@ -38,8 +39,6 @@
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
-
-  const labName = computed(() => lab.value?.Name);
 
   const hasWorkspaceIDAndPAT = computed(() => {
     return !!(lab.value?.NextFlowTowerWorkspaceId && lab.value?.HasNextFlowTowerAccessToken);
@@ -179,6 +178,10 @@
     {
       key: 'status',
       label: 'Status',
+    },
+    {
+      key: 'owner',
+      label: 'Owner',
     },
     {
       key: 'actions',
@@ -326,6 +329,7 @@
     usePipelineRunStore().setPipelineId(pipelineId);
     usePipelineRunStore().setPipelineName(pipelineName);
     usePipelineRunStore().setPipelineDescription(pipelineDescription);
+    usePipelineRunStore().setTransactionId(uuidv4());
     $router.push({
       path: `/labs/${labId}/${pipelineId}/run-pipeline`,
     });
@@ -428,6 +432,10 @@
 
           <template #status-data="{ row: workflow }">
             <EGStatusChip :status="workflow?.workflow.status" />
+          </template>
+
+          <template #owner-data="{ row: workflow }">
+            <div class="text-body text-sm font-medium">{{ workflow?.workflow?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">

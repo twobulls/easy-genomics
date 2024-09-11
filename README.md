@@ -353,7 +353,7 @@ git commit -m "feat(EG-XXX): add hat wobble"
 +-------> Create a commit to the current branch with a message.
 ```
 
-## Upgrading Packages
+### Upgrading Packages
 
 To upgrade the node packages across the entire project using Projen simply run the following command:
 

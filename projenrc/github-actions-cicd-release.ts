@@ -5,6 +5,8 @@ import { Component, github, typescript } from 'projen';
 export class GithubActionsCICDRelease extends Component {
   private readonly environment: string;
   private readonly pnpmVersion: string;
+  private readonly e2e: boolean;
+  private readonly onPushBranch?: string;
 
   constructor(
     rootProject: typescript.TypeScriptProject,
@@ -12,22 +14,24 @@ export class GithubActionsCICDRelease extends Component {
       environment: string;
       pnpmVersion: string;
       onPushBranch?: string;
+      e2e: boolean;
     },
   ) {
     super(<IConstruct>rootProject);
     this.environment = options.environment;
     this.pnpmVersion = options.pnpmVersion;
+    this.onPushBranch = options.onPushBranch;
+    this.e2e = options.e2e;
 
     const wf = new github.GithubWorkflow(rootProject.github!, `cicd-release-${this.environment}`);
     const runsOn = ['ubuntu-latest'];
-    const onPushBranch: string | undefined = options.onPushBranch;
-    if (onPushBranch) {
-      wf.on({ push: { branches: [onPushBranch] } });
+    if (this.onPushBranch) {
+      wf.on({ push: { branches: [this.onPushBranch] } });
     } else {
       wf.on({ push: { branches: ['main'] } });
     }
 
-    wf.addJobs({
+    const jobs: Record<string, github.workflows.Job> = {
       ['build-deploy-back-end']: {
         name: 'Build & Deploy Back-End',
         runsOn,
@@ -67,7 +71,46 @@ export class GithubActionsCICDRelease extends Component {
           },
         ],
       },
-    });
+    };
+
+    if (this.e2e) {
+      jobs['run-e2e-tests'] = {
+        name: 'Run E2E Tests',
+        needs: ['build-deploy-front-end'],
+        runsOn,
+        environment: this.environment,
+        env: this.loadEnv(),
+        permissions: {
+          idToken: github.workflows.JobPermission.WRITE,
+          contents: github.workflows.JobPermission.WRITE,
+          actions: github.workflows.JobPermission.READ,
+        },
+        steps: [
+          ...this.bootstrapSteps(),
+          {
+            name: 'Clear Playwright Cache',
+            run: 'rm -rf /home/runner/.cache/ms-playwright',
+          },
+          {
+            name: 'Install Playwright + Chromium Only and Slack Reporter',
+            run: 'pnpm add -Dw @playwright/test && pnpm add -Dw playwright-slack-report && npx playwright install chromium',
+          },
+          {
+            name: 'Run E2E Tests',
+            workingDirectory: 'packages/front-end',
+            run: 'pnpm run test-e2e',
+            continueOnError: true,
+          },
+          {
+            name: 'Always Succeed Step',
+            if: 'failure()',
+            run: 'echo "E2E tests failed, but we are allowing the pipeline to succeed."',
+          },
+        ],
+      };
+    }
+
+    wf.addJobs(jobs);
   }
 
   private loadEnv(): Record<string, string> {
@@ -89,6 +132,7 @@ export class GithubActionsCICDRelease extends Component {
       'TEST_USER_EMAIL': '${{ vars.TEST_USER_EMAIL }}',
       'TEST_USER_PASSWORD': '${{ secrets.TEST_USER_PASSWORD }}',
       // Front-End specific settings
+      'SLACK_E2E_TEST_WEBHOOK_URL': '${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}',
     };
   }
 
@@ -113,7 +157,6 @@ export class GithubActionsCICDRelease extends Component {
           cache: 'pnpm',
         },
       },
-
       // Ensures the nx cache for the current commit sha is restored
       // before running any subsequent commands. This allows outputs
       // from any previous target executions to become available and
@@ -135,7 +178,7 @@ export class GithubActionsCICDRelease extends Component {
       },
       // This determines the sha of the last successful build on the main branch
       // (known as the base sha) and adds to env vars along with the current (head) sha.
-      // The commits between the base and head sha's is used by subesquent 'nx affected'
+      // The commits between the base and head sha's is used by subsequent 'nx affected'
       // commands to determine what packages have changed so targets only run
       // against those packages.
       {

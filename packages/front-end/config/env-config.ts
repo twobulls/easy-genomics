@@ -4,7 +4,6 @@ import {
   getStackEnvName,
   loadConfigurations,
 } from '@easy-genomics/shared-lib/src/app/utils/configuration';
-import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 
 interface EnvConfig {
   appDomainName: string | undefined;

@@ -27,12 +27,12 @@
     },
     {
       "name": "@typescript-eslint/eslint-plugin",
-      "version": "^6",
+      "version": "^7",
       "type": "build"
     },
     {
       "name": "@typescript-eslint/parser",
-      "version": "^6",
+      "version": "^7",
       "type": "build"
     },
     {
@@ -76,10 +76,6 @@
     },
     {
       "name": "kill-port",
-      "type": "build"
-    },
-    {
-      "name": "projen",
       "type": "build"
     },
     {
@@ -130,6 +126,10 @@
     },
     {
       "name": "@pinia/nuxt",
+      "type": "runtime"
+    },
+    {
+      "name": "@playwright/test",
       "type": "runtime"
     },
     {
@@ -197,6 +197,10 @@
     },
     {
       "name": "playwright-core",
+      "type": "runtime"
+    },
+    {
+      "name": "playwright-slack-report",
       "type": "runtime"
     },
     {

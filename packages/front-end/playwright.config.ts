@@ -1,5 +1,5 @@
 import type { PlaywrightTestConfig } from 'playwright/test';
-import { envConfig } from './config/env-config';
+import { envConfig } from '@/packages/front-end/config/env-config';
 
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',
@@ -30,7 +30,7 @@ const config: PlaywrightTestConfig = {
       name: 'setup',
       testMatch: /.*\.setup.ts/,
       use: {
-        baseURL: `https://${envConfig['app-domain-name']}`,
+        baseURL: `https://${envConfig.appDomainName}`,
       },
     },
     {
@@ -46,13 +46,30 @@ const config: PlaywrightTestConfig = {
       name: 'quality',
       testMatch: '**/*.spec.e2e.ts',
       use: {
-        baseURL: `https://${envConfig['app-domain-name']}`,
+        baseURL: `https://${envConfig.appDomainName}`,
         storageState: './tests/e2e/.auth/user.json',
       },
       dependencies: ['setup'],
     },
   ],
-  reporter: [['html', { outputDir: './playwright-report' }]],
+
+  reporter:
+    process.env.CI && process.env.SLACK_E2E_TEST_WEBHOOK_URL
+      ? [
+          [
+            './node_modules/playwright-slack-report/dist/src/SlackReporter.js',
+            {
+              slackWebHookUrl: process.env.SLACK_E2E_TEST_WEBHOOK_URL,
+              sendResults: 'always',
+              'meta': [
+                { 'key': 'runNumber', 'value': process.env.GITHUB_RUN_NUMBER },
+                { 'key': 'sha', 'value': process.env.GITHUB_SHA },
+              ],
+            },
+          ],
+          ['dot'],
+        ]
+      : [['html', { outputDir: './playwright-report' }]],
 };
 
 export default config;

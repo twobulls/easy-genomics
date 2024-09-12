@@ -51,6 +51,6 @@ test('Update a Laboratory Successfully', async ({ page, baseURL }) => {
 
     // confirm update
     await expect(page.getByText('Automation Lab successfully updated').nth(0)).toBeVisible();
-    await expect(page.getByText('Automation Lab')).toBeVisible();
+    await expect(page.getByText('Automation Lab').nth(0)).toBeVisible();
   }
 });

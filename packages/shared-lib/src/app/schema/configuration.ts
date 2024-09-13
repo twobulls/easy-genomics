@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+export const VpcPeeringSchema = z.object({
+  ['external-vpc-id']: z.string(), // External peering VPC Id
+  ['external-aws-account-id']: z.string(), // AWS Account Id of external peering VPC
+  ['external-aws-region']: z.string(), // AWS Region of external peering VPC
+  ['external-role-arn']: z.string(), // Role ARN to assume
+});
+
 export const ConfigurationSettingsSchema = z
   .object({
     ['aws-account-id']: z.string(),
@@ -18,6 +25,7 @@ export const ConfigurationSettingsSchema = z
       ['test-user-email']: z.string(),
       ['test-user-password']: z.string(), // Initial Cognito password
       ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+      ['vpc-peering']: z.object(VpcPeeringSchema.shape).nullable().optional(), // Optional: VPC Peering Accepter details
     }),
 
     // Front-End specific settings

@@ -1,3 +1,11 @@
+export interface VpcPeeringSettings {
+  ['external-vpc-id']: string, // External peering VPC Id
+  ['external-aws-account-id']: string, // AWS Account Id of external peering VPC
+  ['external-aws-region']: string, // AWS Region of external peering VPC
+  ['external-role-arn']: string, // Role ARN to assume
+  ['external-cidr-block']: string, // External peering VPC Cidr Block
+}
+
 export interface ConfigurationSettings {
   ['aws-account-id']: string,
   ['aws-region']: string,
@@ -15,6 +23,7 @@ export interface ConfigurationSettings {
     ['test-user-email']: string,
     ['test-user-password']: string,
     ['seqera-api-base-url']?: string, // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+    ['vpc-peering']?: VpcPeeringSettings, // Optional: VPC Peering Accepter details
   }
 
   // Front-End specific settings

@@ -30,6 +30,9 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "paths": {
+      "@/*": [
+        "../../*"
+      ],
       "@BE/*": [
         "packages/back-end/src/app/*"
       ],

@@ -180,6 +180,10 @@
       label: 'Status',
     },
     {
+      key: 'owner',
+      label: 'Owner',
+    },
+    {
       key: 'actions',
       label: 'Actions',
     },
@@ -428,6 +432,10 @@
 
           <template #status-data="{ row: workflow }">
             <EGStatusChip :status="workflow?.workflow.status" />
+          </template>
+
+          <template #owner-data="{ row: workflow }">
+            <div class="text-body text-sm font-medium">{{ workflow?.workflow?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">

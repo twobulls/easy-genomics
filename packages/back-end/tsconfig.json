@@ -30,6 +30,12 @@
     "paths": {
       "@BE/*": [
         "src/app/*"
+      ],
+      "@FE/*": [
+        "../packages/front-end/src/app/*"
+      ],
+      "@SharedLib/*": [
+        "../packages/shared-lib/src/app/*"
       ]
     }
   },
@@ -39,7 +45,5 @@
     "packages/front-end/src/**/*.ts",
     "packages/shared-lib/src/**/*.ts"
   ],
-  "exclude": [
-    "cdk.out"
-  ]
+  "exclude": []
 }

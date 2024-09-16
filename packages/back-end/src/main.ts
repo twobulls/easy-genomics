@@ -4,6 +4,7 @@ import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/c
 import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import { VpcPeering } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { App } from 'aws-cdk-lib';
+import { cognitoPasswordRegex } from './infra/constants/cognito';
 import { BackEndStack } from './infra/stacks/back-end-stack';
 
 const SEQERA_API_BASE_URL = 'https://api.cloud.seqera.io';
@@ -86,6 +87,19 @@ if (process.env.CI_CD === 'true') {
     }
     if (!testUserPassword) {
       throw new Error('"TEST_USER_PASSWORD" undefined, please check the CI/CD environment configuration');
+    } else if (!cognitoPasswordRegex.test(testUserPassword)) {
+      throw new Error(
+        '"TEST_USER_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
+      );
+    }
+  }
+  if (systemAdminEmail) {
+    if (!systemAdminPassword) {
+      throw new Error('"SYSTEM_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
+    } else if (!cognitoPasswordRegex.test(systemAdminPassword)) {
+      throw new Error(
+        '"SYSTEM_ADMIN_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
+      );
     }
   }
 } else {
@@ -147,7 +161,7 @@ if (process.env.CI_CD === 'true') {
   // AWS infrastructure resources can be destroyed only when devEnv is true
   devEnv = envType === 'dev';
   if (!awsAccountId) {
-    throw new Error('"AWS_ACCOUNT_ID" undefined, please check the easy-genomics.yaml configuration');
+    throw new Error('"aws-account-id" undefined, please check the easy-genomics.yaml configuration');
   }
   if (!awsRegion) {
     throw new Error('"aws-region" undefined, please check the easy-genomics.yaml configuration');
@@ -170,6 +184,19 @@ if (process.env.CI_CD === 'true') {
     }
     if (!testUserPassword) {
       throw new Error('"test-user-password" undefined, please check the easy-genomics.yaml configuration');
+    } else if (!cognitoPasswordRegex.test(testUserPassword)) {
+      throw new Error(
+        '"test-user-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
+      );
+    }
+  }
+  if (systemAdminEmail) {
+    if (!systemAdminPassword) {
+      throw new Error('"system-admin-password" undefined, please check the easy-genomics.yaml configuration');
+    } else if (!cognitoPasswordRegex.test(systemAdminPassword)) {
+      throw new Error(
+        '"system-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
+      );
     }
   }
 }

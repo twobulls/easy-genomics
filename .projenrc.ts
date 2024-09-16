@@ -94,6 +94,7 @@ const tsConfigOptions: TypescriptConfigOptions = {
     noImplicitAny: true,
     strict: true,
     paths: {
+      '@/*': ['../../*'],
       '@BE/*': ['packages/back-end/src/app/*'],
       '@FE/*': ['packages/front-end/src/app/*'],
       '@SharedLib/*': ['packages/shared-lib/src/app/*'],
@@ -259,6 +260,8 @@ const sharedLib = new typescript.TypeScriptProject({
     compilerOptions: {
       baseUrl: '.',
       paths: {
+        '@BE/*': ['../packages/back-end/src/app/*'],
+        '@FE/*': ['../packages/front-end/src/app/*'],
         '@SharedLib/*': ['src/app/*'],
       },
     },
@@ -297,6 +300,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
       baseUrl: '.',
       paths: {
         '@BE/*': ['src/app/*'],
+        '@FE/*': ['../packages/front-end/src/app/*'],
+        '@SharedLib/*': ['../packages/shared-lib/src/app/*'],
       },
     },
   },
@@ -375,7 +380,10 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
       types: ['vue'],
       verbatimModuleSyntax: false,
       paths: {
+        '@/*': ['../../*'],
         '@FE/*': ['src/app/*'],
+        '@BE/*': ['../packages/back-end/src/app/*'],
+        '@SharedLib/*': ['../packages/shared-lib/src/app/*'],
         '#app': ['node_modules/nuxt/dist/app'], // Nuxt
         '#ui/*': ['node_modules/@nuxt/ui/dist/runtime/*'], // NuxtUI
       },
@@ -403,8 +411,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'nuxt',
     'pinia',
     '@pinia-plugin-persistedstate/nuxt',
-    'playwright',
-    'playwright-core',
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwindcss',
@@ -413,6 +419,10 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'unplugin-vue-components',
     'uuid',
     'zod',
+    '@playwright/test',
+    'playwright',
+    'playwright-core',
+    'playwright-slack-report',
   ],
   devDeps: [
     '@aws-sdk/types',
@@ -440,10 +450,10 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare', // Required to create front-end/.nuxt/tsconfig.json
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
-  ['test-e2e-local']: 'npx playwright test --project=local --reporter=html',
-  ['test-e2e-local:headed']: 'npx playwright test --project=local --ui --reporter=html',
-  ['test-e2e']: 'npx playwright test --project=quality --reporter=html',
-  ['test-e2e:headed']: 'npx playwright test --project=quality --ui --reporter=html',
+  ['test-e2e-local']: 'npx playwright test --project=local',
+  ['test-e2e-local:headed']: 'npx playwright test --project=local --ui',
+  ['test-e2e']: 'npx playwright test --project=quality',
+  ['test-e2e:headed']: 'npx playwright test --project=quality --ui',
   ['nuxt-reset']: 'nuxt cleanup',
   ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
@@ -465,8 +475,13 @@ new PnpmWorkspace(root);
 new VscodeSettings(root);
 new Nx(root);
 new Husky(root);
-new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion });
-new GithubActionsCICDRelease(root, { environment: 'sandbox', pnpmVersion: pnpmVersion, onPushBranch: 'infra/*' });
+new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion, e2e: true });
+new GithubActionsCICDRelease(root, {
+  environment: 'sandbox',
+  pnpmVersion: pnpmVersion,
+  onPushBranch: 'main',
+  e2e: false,
+});
 new ApacheLicense(root, licenseOptions);
 new ApacheLicense(backEndApp, licenseOptions);
 new ApacheLicense(frontEndApp, licenseOptions);

@@ -16,6 +16,14 @@ export interface BaseStackProps extends StackProps {
 export interface FrontEndStackProps extends BaseStackProps {
 }
 
+export interface VpcPeering {
+    externalVpcId: string;
+    externalAwsAccountId: string;
+    externalAwsRegion: string;
+    externalRoleArn: string;
+    externalCidrBlock: string;
+}
+
 // Defines Back-End Stack props
 export interface BackEndStackProps extends BaseStackProps {
     namePrefix: string;
@@ -25,4 +33,5 @@ export interface BackEndStackProps extends BaseStackProps {
     testUserEmail?: string;
     testUserPassword?: string;
     seqeraApiBaseUrl: string;
+    vpcPeering?: VpcPeering;
 }

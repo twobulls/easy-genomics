@@ -20,7 +20,7 @@
     "upgrade": "pnpm dlx projen upgrade",
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
-    "build-and-deploy": "pnpm -w run build-back-end && pnpm run deploy",
+    "build-and-deploy": "pnpm -w run build-back-end && pnpm run deploy --require-approval any-change",
     "lint": "eslint 'src/**/*.{js,ts}' --fix"
   },
   "author": {

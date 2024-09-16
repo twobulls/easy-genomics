@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { join } from 'path';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
+import { VpcPeering } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { App } from 'aws-cdk-lib';
 import { cognitoPasswordRegex } from './infra/constants/cognito';
 import { BackEndStack } from './infra/stacks/back-end-stack';
@@ -22,6 +23,8 @@ let systemAdminPassword: string | undefined;
 let testUserEmail: string | undefined;
 let testUserPassword: string | undefined;
 let seqeraApiBaseUrl: string;
+let vpcPeering: VpcPeering | undefined;
+
 let devEnv: boolean = true;
 
 if (process.env.CI_CD === 'true') {
@@ -41,6 +44,22 @@ if (process.env.CI_CD === 'true') {
   testUserEmail = process.env.TEST_USER_EMAIL;
   testUserPassword = process.env.TEST_USER_PASSWORD;
   seqeraApiBaseUrl = process.env.SEQERA_API_BASE_URL || SEQERA_API_BASE_URL;
+
+  if (
+    process.env.EXTERNAL_VPC_ID &&
+    process.env.EXTERNAL_AWS_ACCOUNT_ID &&
+    process.env.EXTERNAL_AWS_REGION &&
+    process.env.EXTERNAL_ROLE_ARN &&
+    process.env.EXTERNAL_CIDR_BLOCK
+  ) {
+    vpcPeering = {
+      externalVpcId: process.env.EXTERNAL_VPC_ID,
+      externalAwsAccountId: process.env.EXTERNAL_AWS_ACCOUNT_ID,
+      externalAwsRegion: process.env.EXTERNAL_AWS_REGION,
+      externalRoleArn: process.env.EXTERNAL_ROLE_ARN,
+      externalCidrBlock: process.env.EXTERNAL_CIDR_BLOCK,
+    };
+  }
 
   // AWS infrastructure resources can be destroyed only when devEnv is true
   devEnv = envType === 'dev';
@@ -122,6 +141,23 @@ if (process.env.CI_CD === 'true') {
   testUserPassword = configSettings['back-end']['test-user-password'];
   seqeraApiBaseUrl = configSettings['back-end']['seqera-api-base-url'] || SEQERA_API_BASE_URL;
 
+  if (
+    configSettings['back-end']['vpc-peering'] &&
+    configSettings['back-end']['vpc-peering']['external-vpc-id'] &&
+    configSettings['back-end']['vpc-peering']['external-aws-account-id'] &&
+    configSettings['back-end']['vpc-peering']['external-aws-region'] &&
+    configSettings['back-end']['vpc-peering']['external-role-arn'] &&
+    configSettings['back-end']['vpc-peering']['external-cidr-block']
+  ) {
+    vpcPeering = {
+      externalVpcId: configSettings['back-end']['vpc-peering']['external-vpc-id'],
+      externalAwsAccountId: configSettings['back-end']['vpc-peering']['external-aws-account-id'],
+      externalAwsRegion: configSettings['back-end']['vpc-peering']['external-aws-region'],
+      externalRoleArn: configSettings['back-end']['vpc-peering']['external-role-arn'],
+      externalCidrBlock: configSettings['back-end']['vpc-peering']['external-cidr-block'],
+    };
+  }
+
   // AWS infrastructure resources can be destroyed only when devEnv is true
   devEnv = envType === 'dev';
   if (!awsAccountId) {
@@ -191,6 +227,7 @@ new BackEndStack(app, `${envName}-main-back-end-stack`, {
   testUserEmail: testUserEmail,
   testUserPassword: testUserPassword,
   seqeraApiBaseUrl: seqeraApiBaseUrl.replace(/\/+$/, ''), // Remove trailing slashes
+  vpcPeering: vpcPeering,
 });
 
 app.synth();

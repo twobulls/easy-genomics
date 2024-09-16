@@ -201,15 +201,19 @@ root.addScripts({
     'nx reset && pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
   ['build-and-deploy']:
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
-    'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
+    'pnpm nx run-many --targets=deploy --projects=@easy-genomics/back-end --verbose=true && ' +
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true && ' +
-    'pnpm nx run-many --targets=deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
+    'pnpm nx run-many --targets=deploy --projects=@easy-genomics/front-end --verbose=true',
   ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:
-    'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true',
+    'export CI_CD=true && ' +
+    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true && ' +
+    'pnpm nx run-many --targets=deploy --projects=@easy-genomics/back-end --verbose=true',
   ['cicd-build-deploy-front-end']:
-    'export CI_CD=true && pnpm nx run-many --targets=build-and-deploy --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
+    'export CI_CD=true && ' +
+    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true && ' +
+    'pnpm nx run-many --targets=deploy --projects=@easy-genomics/front-end --verbose=true',
   ['prepare']: 'husky || true', // Enable Husky each time projen is synthesized
   ['projen']: 'nx reset; pnpm dlx projen', // Clear NX cache each time projen is synthesized to avoid cache disk-space overconsumption
   ['pre-commit']: 'lint-staged',
@@ -317,6 +321,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/types',
     '@aws-sdk/util-dynamodb',
     '@easy-genomics/shared-lib@workspace:*',
+    'aws-cdk-lib',
     'aws-lambda',
     'base64-js',
     'dotenv',
@@ -337,7 +342,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
 backEndApp.addScripts({
   ['build']: 'pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
-  ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy', // Run root build-back-end script to inc shared-lib
+  ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy --require-approval any-change', // Run root build-back-end script to inc shared-lib
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
 });
 
@@ -437,7 +442,8 @@ frontEndApp.addScripts({
   ['build']:
     'pnpm run nuxt-reset && pnpm run nuxt-prepare && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-load-settings && pnpm run nuxt-generate',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
-  ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy', // Run root build-front-end script to inc shared-lib
+  ['build-and-deploy']:
+    'pnpm -w run build-front-end && pnpm cdk bootstrap && pnpm dlx projen deploy --require-approval any-change', // Run root build-front-end script to inc shared-lib
   ['nuxt-dev']: 'pnpm run build && pnpm kill-port 3000 && nuxt dev',
   ['nuxt-load-settings']: 'npx esrun nuxt-load-configuration-settings.ts',
   ['nuxt-generate']: 'nuxt generate',

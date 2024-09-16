@@ -8,6 +8,7 @@ import { DataProvisioningNestedStack } from './data-provisioning-nested-stack';
 import { EasyGenomicsNestedStack } from './easy-genomics-nested-stack';
 import { NFTowerNestedStack } from './nf-tower-nested-stack';
 import { ApiGatewayConstruct } from '../constructs/api-gateway-construct';
+import { VpcConstruct, VpcConstructProps } from '../constructs/vpc-construct';
 import {
   AuthNestedStackProps,
   AwsHealthOmicsNestedStackProps,
@@ -36,6 +37,7 @@ export class BackEndStack extends Stack {
   readonly kmsKeys: Map<string, Key> = new Map();
   readonly props: BackEndStackProps;
   protected apiGateway!: ApiGatewayConstruct;
+  protected vpcConstruct: VpcConstruct;
 
   constructor(scope: Construct, id: string, props: BackEndStackProps) {
     super(scope, id);
@@ -50,6 +52,12 @@ export class BackEndStack extends Stack {
         removalPolicy: RemovalPolicy.DESTROY,
       }),
     );
+
+    // Setup VPC
+    const vpcConstructProps: VpcConstructProps = {
+      ...this.props,
+    };
+    this.vpcConstruct = new VpcConstruct(this, `${this.props.constructNamespace}-vpc`, vpcConstructProps);
 
     // API Gateway for REST APIs
     this.apiGateway = new ApiGatewayConstruct(this, `${this.props.constructNamespace}-apigw`, {
@@ -75,6 +83,7 @@ export class BackEndStack extends Stack {
       userPool: authNestedStack.cognito.userPool,
       userPoolClient: authNestedStack.cognito.userPoolClient,
       cognitoIdpKmsKey: this.kmsKeys.get('cognito-idp-kms-key'),
+      vpc: this.vpcConstruct.vpc,
     };
     const easyGenomicsNestedStack = new EasyGenomicsNestedStack(
       this,

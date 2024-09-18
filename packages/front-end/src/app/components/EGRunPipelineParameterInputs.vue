@@ -2,6 +2,11 @@
   import StringField from './EGParametersStringField.vue';
   import NumberField from './EGParametersNumberField.vue';
   import BooleanField from './EGParametersBooleanField.vue';
+  import {
+    SampleSheetResponse,
+    UploadedFilePairInfo,
+  } from '@/packages/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
+  import { usePipelineRunStore } from '@FE/stores';
 
   const props = defineProps<{
     section: object;
@@ -39,22 +44,8 @@
     }
   });
 
-  function downloadSampleSheet() {
-    const csvString = usePipelineRunStore().sampleSheetCsv;
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute('href', url);
-    link.setAttribute(
-      'download',
-      `samplesheet-${usePipelineRunStore().pipelineName}--${usePipelineRunStore().userPipelineRunName}.csv`,
-    );
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+  const filePathSelections = [usePipelineRunStore().S3Url, 'Canada', 'Mexico'];
+  const country = ref(filePathSelections[0]);
 </script>
 
 <template>
@@ -69,7 +60,9 @@
           v-model="usePipelineRunStore().S3Url"
           :hide-description="true"
         />
-        <EGButton label="Download sample sheet" class="mt-2" @click="downloadSampleSheet()" />
+        <!--        <EGButton label="Download sample sheet" class="mt-2" @click="downloadSampleSheet()" />-->
+        <USelect v-model="country" :options="filePathSelections" />
+        <EGButton label="Upload sample sheet" class="mt-2" @click="uploadSampleSheet()" />
       </template>
       <!-- ignore Seqera "file upload" input types  -->
       <template v-if="!propertyDetail?.hidden && propertyDetail.format !== 'file-path'">

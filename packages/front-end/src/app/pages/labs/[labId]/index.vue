@@ -352,7 +352,7 @@
     usePipelineRunStore().setLabName(labName);
     usePipelineRunStore().setPipelineId(pipelineId);
     usePipelineRunStore().setPipelineName(pipelineName);
-    usePipelineRunStore().setPipelineDescription(pipelineDescription);
+    usePipelineRunStore().setPipelineDescription(pipelineDescription || '');
     usePipelineRunStore().setTransactionId(uuidv4());
     $router.push({
       path: `/labs/${labId}/${pipelineId}/run-pipeline`,

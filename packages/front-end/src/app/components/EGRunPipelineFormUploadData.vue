@@ -529,11 +529,17 @@
     </UTable>
     <div class="flex justify-end pt-4">
       <EGButton
+        v-if="uploadStatus === 'success'"
+        variant="secondary"
+        class="mr-2"
+        label="Download sample sheet"
+        @click="usePipeline().downloadSampleSheet()"
+      />
+      <EGButton
         @click="startUploadProcess"
         :disabled="isUploadButtonDisabled"
         :loading="uploadStatus === 'uploading'"
         label="Upload Files"
-        size="md"
       />
     </div>
   </EGCard>

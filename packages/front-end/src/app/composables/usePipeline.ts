@@ -19,7 +19,13 @@ export default function usePipeline() {
     link.click();
     document.body.removeChild(link);
   }
+
+  const doesFileUrlExist = computed(() => {
+    return !!(usePipelineRunStore().S3Url || usePipelineRunStore().params?.input);
+  });
+
   return {
+    doesFileUrlExist,
     downloadSampleSheet,
   };
 }

@@ -2,16 +2,13 @@
   import StringField from './EGParametersStringField.vue';
   import NumberField from './EGParametersNumberField.vue';
   import BooleanField from './EGParametersBooleanField.vue';
-  import {
-    SampleSheetResponse,
-    UploadedFilePairInfo,
-  } from '@/packages/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-  import { usePipelineRunStore } from '@FE/stores';
 
   const props = defineProps<{
     section: object;
     params: object;
   }>();
+
+  const emit = defineEmits(['next-step', 'step-validated']);
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -44,25 +41,33 @@
     }
   });
 
-  const filePathSelections = [usePipelineRunStore().S3Url, 'Canada', 'Mexico'];
-  const country = ref(filePathSelections[0]);
+  /**
+   * Lists a file previously uploaded and/or use the default file path if exists
+   */
+  const filePathSelections = computed(() => {
+    const uploadedS3Url = usePipelineRunStore().S3Url;
+    const defaultUrl = usePipelineRunStore().params?.input;
+
+    const selections = uploadedS3Url ? [uploadedS3Url, defaultUrl].filter(Boolean) : [defaultUrl ?? 'N/A'];
+    return selections;
+  });
+
+  const defaultFileUrl = computed({
+    get: () => filePathSelections.value[0],
+    set: (value) => {
+      currentValue.value = value;
+    },
+  });
 </script>
 
 <template>
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
       <template v-if="!propertyDetail?.hidden && propertyDetail.format === 'file-path' && propertyName === 'input'">
-        <component
-          :is="components[propertyType(propertyDetail)]"
-          name="input"
-          :disabled="true"
-          :details="propertyDetail"
-          v-model="usePipelineRunStore().S3Url"
-          :hide-description="true"
-        />
-        <!--        <EGButton label="Download sample sheet" class="mt-2" @click="downloadSampleSheet()" />-->
-        <USelect v-model="country" :options="filePathSelections" />
-        <EGButton label="Upload sample sheet" class="mt-2" @click="uploadSampleSheet()" />
+        <p class="text-alert-danger pb-2 text-sm" v-if="!usePipeline().doesFileUrlExist">
+          No file found. Please upload files in the previous step in order to proceed.
+        </p>
+        <EGSelect v-model="defaultFileUrl" :options="filePathSelections" :disabled="!usePipeline().doesFileUrlExist" />
       </template>
       <!-- ignore Seqera "file upload" input types  -->
       <template v-if="!propertyDetail?.hidden && propertyDetail.format !== 'file-path'">

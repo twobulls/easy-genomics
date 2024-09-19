@@ -65,6 +65,7 @@
     usePipelineRunStore().setParams({});
     initializePipelineData();
     resetStepperKey.value++;
+    hasLaunched.value = false;
   }
 
   watch([isDialogOpen, backNavigationInProgress], ([dialogOpen, navigatingBack]) => {
@@ -83,7 +84,7 @@
   <EGPageHeader
     title="Run Pipeline"
     :description="labName"
-    :show-back-button="!hasLaunched"
+    :show-back="!hasLaunched"
     :back-action="handleExitRun"
     back-button-label="Exit Run"
   />

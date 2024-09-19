@@ -17,7 +17,6 @@
 
   const selectedIndex = ref(0);
   const hasLaunched = ref(false);
-  const resetKey = ref(0);
 
   const emit = defineEmits(['has-launched', 'reset-run-pipeline']);
 
@@ -156,79 +155,78 @@
 </script>
 
 <template>
-  <div :key="resetKey">
-    <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" class="UTabs">
-      <template #default="{ item, index, selected }">
-        <div class="relative flex items-center gap-2 truncate">
-          <UIcon
-            v-if="selectedIndex > index || hasLaunched"
-            name="i-heroicons-check-20-solid"
-            class="text-primary h-4 w-4 flex-shrink-0"
-          />
-          <span :class="selectedIndex > index || hasLaunched ? 'text-primary' : ''">{{ item.label }}</span>
-          <span v-if="selected" class="bg-primary-500 dark:bg-primary-400 absolute -right-4 h-2 w-2 rounded-full" />
-        </div>
-      </template>
-
-      <template #item="{ item, index }">
-        <div v-if="!hasLaunched">
-          <!-- Run Details -->
-          <template v-if="items[selectedIndex].key === 'details'">
-            <EGRunPipelineFormRunDetails
-              :labId="labId"
-              :labName="labName"
-              :pipelineId="pipelineId"
-              :pipelineName="pipelineName"
-              :pipelineDescription="pipelineDescription"
-              @next-step="() => nextStep('upload')"
-              @step-validated="setStepEnabled('upload', $event)"
-            />
-          </template>
-
-          <!-- Upload Data -->
-          <template v-if="items[selectedIndex].key === 'upload'">
-            <EGRunPipelineFormUploadData
-              @next-step="() => nextStep('parameters')"
-              @previous-step="() => previousStep()"
-              @step-validated="setStepEnabled('parameters', $event)"
-            />
-          </template>
-
-          <template v-if="items[selectedIndex].key === 'parameters'">
-            <EGRunPipelineFormEditParameters
-              :params="params"
-              :schema="schema"
-              @next-step="() => nextStep('review')"
-              @previous-step="() => previousStep()"
-            />
-          </template>
-
-          <!-- Review Pipeline -->
-          <template v-if="items[selectedIndex].key === 'review'">
-            <EGRunPipelineFormReviewPipeline
-              :can-launch="true"
-              :lab-id="labId"
-              :lab-name="labName"
-              :params="usePipelineRunStore().params"
-              :pipeline-name="usePipelineRunStore().pipelineName"
-              :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
-              @has-launched="handleLaunchSuccess()"
-              @previous-tab="() => previousStep()"
-            />
-          </template>
-        </div>
-      </template>
-    </UTabs>
-
-    <template v-if="hasLaunched">
-      <EGEmptyDataCTA
-        message="Your Workflow Run has Launched! Check on your progress via Runs."
-        :primary-button-action="() => $router.push(useUiStore().previousPageRoute)"
-        primary-button-label="Back to Runs"
-        :secondary-button-action="() => emit('reset-run-pipeline')"
-        secondary-button-label="Launch Another Workflow Run"
-        img-src="/images/empty-state-launched.jpg"
-      />
+  <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" class="UTabs">
+    <template #default="{ item, index, selected }">
+      <div class="relative flex items-center gap-2 truncate">
+        <UIcon
+          v-if="selectedIndex > index || hasLaunched"
+          name="i-heroicons-check-20-solid"
+          class="text-primary h-4 w-4 flex-shrink-0"
+        />
+        <span :class="selectedIndex > index || hasLaunched ? 'text-primary' : ''">{{ item.label }}</span>
+        <span v-if="selected" class="bg-primary-500 dark:bg-primary-400 absolute -right-4 h-2 w-2 rounded-full" />
+      </div>
     </template>
-  </div>
+
+    <template #item="{ item, index }">
+      <div v-if="!hasLaunched">
+        <!-- Run Details -->
+        <template v-if="items[selectedIndex].key === 'details'">
+          <EGRunPipelineFormRunDetails
+            :labId="labId"
+            :labName="labName"
+            :pipelineId="pipelineId"
+            :pipelineName="pipelineName"
+            :pipelineDescription="pipelineDescription"
+            @next-step="() => nextStep('upload')"
+            @step-validated="setStepEnabled('upload', $event)"
+          />
+        </template>
+
+        <!-- Upload Data -->
+        <template v-if="items[selectedIndex].key === 'upload'">
+          <EGRunPipelineFormUploadData
+            @next-step="() => nextStep('parameters')"
+            @previous-step="() => previousStep()"
+            @step-validated="setStepEnabled('parameters', $event)"
+          />
+        </template>
+
+        <template v-if="items[selectedIndex].key === 'parameters'">
+          <EGRunPipelineFormEditParameters
+            :params="params"
+            :schema="schema"
+            @next-step="() => nextStep('review')"
+            @previous-step="() => previousStep()"
+            @step-validated="setStepEnabled('review', $event)"
+          />
+        </template>
+
+        <!-- Review Pipeline -->
+        <template v-if="items[selectedIndex].key === 'review'">
+          <EGRunPipelineFormReviewPipeline
+            :can-launch="true"
+            :lab-id="labId"
+            :lab-name="labName"
+            :params="usePipelineRunStore().params"
+            :pipeline-name="usePipelineRunStore().pipelineName"
+            :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
+            @has-launched="handleLaunchSuccess()"
+            @previous-tab="() => previousStep()"
+          />
+        </template>
+      </div>
+    </template>
+  </UTabs>
+
+  <template v-if="hasLaunched">
+    <EGEmptyDataCTA
+      message="Your Workflow Run has Launched! Check on your progress via Runs."
+      :primary-button-action="() => $router.push(useUiStore().previousPageRoute)"
+      primary-button-label="Back to Runs"
+      :secondary-button-action="() => emit('reset-run-pipeline')"
+      secondary-button-label="Launch Another Workflow Run"
+      img-src="/images/empty-state-launched.jpg"
+    />
+  </template>
 </template>

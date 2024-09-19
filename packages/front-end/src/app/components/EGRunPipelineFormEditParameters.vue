@@ -16,6 +16,14 @@
     params: props.params,
   });
 
+  const doesFileUrlExist = computed(() => {
+    return !!(usePipelineRunStore().S3Url || usePipelineRunStore().params?.input);
+  });
+
+  watch(usePipeline().doesFileUrlExist, (val) => {
+    emit('step-validated', val);
+  });
+
   onMounted(() => {
     // set first section in side panel of UI to active
     const definitions = props.schema.definitions;
@@ -129,7 +137,13 @@
           label="Previous step"
           @click="emit('previous-step')"
         />
-        <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="emit('next-step')" />
+        <EGButton
+          :disabled="!doesFileUrlExist"
+          :size="ButtonSizeEnum.enum.sm"
+          type="submit"
+          label="Save & Continue"
+          @click="emit('next-step')"
+        />
       </div>
     </div>
   </div>

@@ -2,6 +2,7 @@
   import StringField from './EGParametersStringField.vue';
   import NumberField from './EGParametersNumberField.vue';
   import BooleanField from './EGParametersBooleanField.vue';
+  import { usePipelineRunStore } from '@FE/stores';
 
   const props = defineProps<{
     section: Record<string, any>;

@@ -5,15 +5,25 @@ import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
+import { validateSystemAdminAccess } from '@BE/utils/auth-utils';
 
 const organizationService = new OrganizationService();
 
+/**
+ * This API is restricted to only the System Admin User who will oversee the
+ * creation of one or more Organizations in the Easy Genomics platform.
+ *
+ * @param event
+ */
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     const userId = event.requestContext.authorizer.claims['cognito:username'];
+    if (!validateSystemAdminAccess(event)) {
+      throw new Error('Unauthorized access');
+    }
     // Post Request Body
     const request: Organization = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check

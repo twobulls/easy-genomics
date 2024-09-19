@@ -4,7 +4,6 @@ export default function usePipeline() {
    */
   function downloadSampleSheet() {
     const csvString = usePipelineRunStore().sampleSheetCsv;
-    debugger;
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);

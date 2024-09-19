@@ -20,10 +20,6 @@
     return !!(usePipelineRunStore().S3Url || usePipelineRunStore().params?.input);
   });
 
-  watch(usePipeline().doesFileUrlExist, (val) => {
-    emit('step-validated', val);
-  });
-
   onMounted(() => {
     // set first section in side panel of UI to active
     const definitions = props.schema.definitions;
@@ -68,6 +64,10 @@
     },
     { deep: true },
   );
+
+  watch(usePipeline().doesFileUrlExist, (val) => {
+    emit('step-validated', val);
+  });
 </script>
 
 <template>

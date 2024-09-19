@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { usePipelineRunStore } from '@FE/stores';
 
   const props = defineProps<{
     schema: object;
@@ -13,8 +14,10 @@
 
   const localProps = reactive({
     schema: props.schema,
-    params: props.params,
+    params: { ...props.params },
   });
+
+  const pipelineRunStore = usePipelineRunStore();
 
   onMounted(() => {
     // set first section in side panel of UI to active
@@ -55,7 +58,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        usePipelineRunStore().setParams(val);
+        pipelineRunStore.setParams(val);
       }
     },
     { deep: true },
@@ -98,7 +101,7 @@
           :params="localProps.params"
           @update:params="
             (val) => {
-              localProps.params = val;
+              localProps.params = { ...val }; // Ensure reactivity on update
             }
           "
         />

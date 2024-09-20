@@ -34,6 +34,22 @@ class PipelinesModule extends HttpFactory {
 
     return res;
   }
+
+  async cancelPipelineRun(labId: string, workflowId: string): Promise<any> {
+    const res = await this.callNextflowTower<any>(
+      'PUT',
+      `/workflow/cancel-workflow-execution/${workflowId}?laboratoryId=${labId}`,
+    );
+
+    console.log('cancelPipelineRun response:', res);
+
+    if (!res) {
+      console.error('Error calling cancel pipeline run API');
+      throw new Error('Failed to cancel pipeline run');
+    }
+
+    return res;
+  }
 }
 
 export default PipelinesModule;

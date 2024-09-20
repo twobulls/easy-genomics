@@ -14,7 +14,7 @@
       />
     </div>
     <template #item="{ item }">
-      <span class="truncate" :class="{ 'is-highlighted': item.isHiglighted }">{{ item.label }}</span>
+      <span class="truncate" :class="{ 'is-highlighted': item.isHighlighted }">{{ item.label }}</span>
     </template>
   </UDropdown>
 </template>
@@ -27,12 +27,7 @@
   }
 
   .is-highlighted {
-    button {
-      color: #ef5c45;
-    }
-    &:hover {
-      color: #ef5c45;
-    }
+    color: #ef5c45;
   }
 
   .active {

@@ -16,6 +16,7 @@
   import EGModal from '@FE/components/EGModal';
   import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
   import { v4 as uuidv4 } from 'uuid';
+  import { DescribeWorkflowResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -198,23 +199,40 @@
     ],
   ];
 
-  const workflowsActionItems = (row: any) => [
-    [
-      {
-        label: 'View Details',
-        click: () => viewRunDetails(row),
-      },
-    ],
-    [
-      {
-        label: 'View Results',
-        click: () => {
-          useLabsStore().setSelectedWorkflow(row.workflow);
-          $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+  function workflowsActionItems(row: DescribeWorkflowResponse): object[] {
+    const buttons: object[][] = [
+      [
+        {
+          label: 'View Details',
+          click: () => viewRunDetails(row),
         },
-      },
-    ],
-  ];
+      ],
+      [
+        {
+          label: 'View Results',
+          click: () => {
+            useLabsStore().setSelectedWorkflow(row.workflow);
+            $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+          },
+        },
+      ],
+    ];
+
+    if (['SUBMITTED', 'RUNNING'].includes(row.workflow.status)) {
+      buttons.push([
+        {
+          label: 'Cancel Run',
+          click: () => {
+            runToCancel.value = row;
+            isCancelDialogOpen.value = true;
+          },
+          isHighlighted: true,
+        },
+      ]);
+    }
+
+    return buttons;
+  }
 
   function getAssignedLabRole(labUserDetails: LaboratoryUserDetails): LaboratoryRolesEnum {
     if (labUserDetails.LabManager) {
@@ -289,6 +307,13 @@
     useUiStore().setRequestPending(false);
   }
 
+  // update UI with latest list of workflow runs
+  async function refreshWorkflows() {
+    useUiStore().setRequestPending(true);
+    await getWorkflows();
+    useUiStore().setRequestPending(false);
+  }
+
   function updateSearchOutput(newVal: any) {
     searchOutput.value = newVal;
   }
@@ -347,6 +372,30 @@
       tabIndex.value = newVal ? tabItems.value.findIndex((tab) => tab.label === newVal) : 0;
     },
   );
+
+  const isCancelDialogOpen = ref<boolean>(false);
+  const runToCancel = ref<DescribeWorkflowResponse | null>(null);
+
+  async function handleCancelDialogAction() {
+    const runId = runToCancel.value?.workflow?.id;
+    const runName = runToCancel.value?.workflow?.runName;
+
+    if (!runId) {
+      throw new Error("runToCancel workflow id should have a value but doesn't");
+    }
+
+    try {
+      await $api.workflows.cancelPipelineRun(labId, runId);
+      useToastStore().success(`${runName} has been successfully cancelled`);
+    } catch (e) {
+      useToastStore().error('Failed to cancel run');
+    }
+
+    isCancelDialogOpen.value = false;
+    runToCancel.value = null;
+
+    await refreshWorkflows();
+  }
 </script>
 
 <template>
@@ -515,4 +564,13 @@
       </div>
     </template>
   </UTabs>
+
+  <EGDialog
+    action-label="Cancel Run"
+    :action-variant="ButtonVariantEnum.enum.destructive"
+    @action-triggered="handleCancelDialogAction"
+    :primary-message="`Are you sure you would like to cancel ${runToCancel?.workflow.runName}?`"
+    secondary-message="This will stop any progress made."
+    v-model="isCancelDialogOpen"
+  />
 </template>

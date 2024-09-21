@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '@FE/stores';
-  import { ButtonSizeEnum } from '@FE/types/buttons';
 
   const props = defineProps<{
     schema: object;
@@ -209,6 +208,7 @@
               :can-launch="true"
               :lab-id="labId"
               :lab-name="labName"
+              :schema="props.schema"
               :params="usePipelineRunStore().params"
               :pipeline-name="usePipelineRunStore().pipelineName"
               :userPipelineRunName="usePipelineRunStore().userPipelineRunName"

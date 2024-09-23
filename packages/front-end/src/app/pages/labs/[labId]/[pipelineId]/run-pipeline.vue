@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { usePipelineRunStore } from '@FE/stores';
+  import { usePipelineRunStore, useUiStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
@@ -39,7 +39,10 @@
   async function initializePipelineData() {
     const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
     schema.value = JSON.parse(res.schema);
-    usePipelineRunStore().setParams(JSON.parse(<string>res.params));
+    usePipelineRunStore().setPipelineDescription(schema.value.description);
+    if (res.params) {
+      usePipelineRunStore().setParams(JSON.parse(res.params));
+    }
   }
 
   function handleDialogAction() {
@@ -62,6 +65,7 @@
    */
   function resetRunPipeline() {
     usePipelineRunStore().setUserPipelineRunName('');
+    usePipelineRunStore().setPipelineDescription('');
     usePipelineRunStore().setParams({});
     initializePipelineData();
     resetStepperKey.value++;

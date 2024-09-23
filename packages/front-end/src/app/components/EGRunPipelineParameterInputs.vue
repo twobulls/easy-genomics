@@ -4,9 +4,11 @@
   import BooleanField from './EGParametersBooleanField.vue';
 
   const props = defineProps<{
-    section: object;
-    params: object;
+    section: Record<string, any>;
+    params: Record<string, any>;
   }>();
+
+  const pipelineRunStore = usePipelineRunStore();
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -19,9 +21,9 @@
   }
 
   const components = {
-    'EGParametersStringField': StringField,
-    'EGParametersNumberField': NumberField,
-    'EGParametersBooleanField': BooleanField,
+    EGParametersStringField: StringField,
+    EGParametersNumberField: NumberField,
+    EGParametersBooleanField: BooleanField,
   };
 
   const propValues = reactive({});
@@ -38,13 +40,19 @@
       propValues[propName] = props.params[propName];
     }
   });
+
+  watchEffect(() => {
+    for (const key in propValues) {
+      pipelineRunStore.params[key] = propValues[key];
+    }
+  });
 </script>
 
 <template>
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
       <template v-if="!propertyDetail?.hidden && propertyDetail.format === 'file-path' && propertyName === 'input'">
-        <EGInput name="input" v-model="usePipelineRunStore().S3Url" />
+        <EGInput name="input" v-model="pipelineRunStore.S3Url" />
       </template>
       <!-- ignore Seqera "file upload" input types  -->
       <template v-if="!propertyDetail?.hidden && propertyDetail.format !== 'file-path'">

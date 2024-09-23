@@ -18,6 +18,20 @@ export function validateSystemAdminAccess(event: APIGatewayProxyWithCognitoAutho
 }
 
 /**
+ * Helper function to return the User's OrganizationAccess OrganizationIds.
+ * @param event
+ */
+export function getOrganizationAccessOrganizationIds(event: APIGatewayProxyEvent): string[] {
+  const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims.OrganizationAccess;
+  if (!orgAccessMetadata) {
+    return [];
+  }
+
+  const organizationAccess: OrganizationAccess = JSON.parse(orgAccessMetadata);
+  return Object.keys(organizationAccess);
+}
+
+/**
  * Helper function to check if an authenticated User's JWT OrganizationAccess
  * metadata allows access to the requested Organization / Laboratory.
  * @param event

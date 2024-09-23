@@ -4,9 +4,11 @@
   import BooleanField from './EGParametersBooleanField.vue';
 
   const props = defineProps<{
-    section: object;
-    params: object;
+    section: Record<string, any>;
+    params: Record<string, any>;
   }>();
+
+  const store = usePipelineRunStore();
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -19,9 +21,9 @@
   }
 
   const components = {
-    'EGParametersStringField': StringField,
-    'EGParametersNumberField': NumberField,
-    'EGParametersBooleanField': BooleanField,
+    EGParametersStringField: StringField,
+    EGParametersNumberField: NumberField,
+    EGParametersBooleanField: BooleanField,
   };
 
   const propValues = reactive({});
@@ -36,6 +38,12 @@
       }
     } else {
       propValues[propName] = props.params[propName];
+    }
+  });
+
+  watchEffect(() => {
+    for (const key in propValues) {
+      store.params[key] = propValues[key];
     }
   });
 </script>

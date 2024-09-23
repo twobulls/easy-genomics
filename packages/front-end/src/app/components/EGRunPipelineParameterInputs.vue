@@ -8,7 +8,7 @@
     params: Record<string, any>;
   }>();
 
-  const store = usePipelineRunStore();
+  const pipelineRunStore = usePipelineRunStore();
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -43,7 +43,7 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      store.params[key] = propValues[key];
+      pipelineRunStore.params[key] = propValues[key];
     }
   });
 </script>
@@ -52,7 +52,7 @@
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
       <template v-if="!propertyDetail?.hidden && propertyDetail.format === 'file-path' && propertyName === 'input'">
-        <EGInput name="input" v-model="usePipelineRunStore().S3Url" />
+        <EGInput name="input" v-model="pipelineRunStore.S3Url" />
       </template>
       <!-- ignore Seqera "file upload" input types  -->
       <template v-if="!propertyDetail?.hidden && propertyDetail.format !== 'file-path'">

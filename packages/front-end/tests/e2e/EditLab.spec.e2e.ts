@@ -48,6 +48,7 @@ test('Update a Laboratory Successfully', async ({ page, baseURL }) => {
       .fill('eyJ0aWQiOiA5NjY5fS5jNTYxOGNmNmVmNzY4ZWU4M2JhZWUzMTQ0MGMxNjRjNTYwYWZlZmRm');
 
     await page.getByRole('button', { name: 'Save Changes' }).click();
+    await page.waitForTimeout(2000);
 
     // confirm update
     await expect(page.getByText('Automation Lab successfully updated').nth(0)).toBeVisible();

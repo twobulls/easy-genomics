@@ -41,12 +41,10 @@
   const primaryMessage = ref('');
   const userToRemove = ref();
 
-  const hasWorkspaceIDAndPAT = computed(() => {
-    return !!(lab.value?.NextFlowTowerWorkspaceId && lab.value?.HasNextFlowTowerAccessToken);
-  });
+  const hasPAT = computed(() => !!lab.value?.HasNextFlowTowerAccessToken);
 
   const tabItems = computed(() => [
-    ...(hasWorkspaceIDAndPAT.value
+    ...(hasPAT.value
       ? [
           { key: 'runs', label: 'Runs' },
           { key: 'pipelines', label: 'Pipelines' },
@@ -65,7 +63,7 @@
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
     await getLab();
-    if (!hasWorkspaceIDAndPAT.value) {
+    if (!hasPAT.value) {
       showRedirectModal();
     } else {
       await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
@@ -76,8 +74,9 @@
 
   function showRedirectModal() {
     modal.open(EGModal, {
-      title: `No Workspace ID or Personal Access Token found`,
-      message: "Both of these are required to run a pipeline. Please click 'Edit' in the next screen to set these up.",
+      title: `No Personal Access Token found`,
+      message:
+        "A Personal Access Token is required to run a pipeline. Please click 'Edit' in the next screen to set it.",
       confirmLabel: 'Okay',
       confirmAction() {
         tabIndex.value = 0;

@@ -11,13 +11,15 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const activeSection = ref<string | null>(null);
+  const pipelineRunStore = usePipelineRunStore();
 
   const localProps = reactive({
     schema: props.schema,
-    params: { ...props.params },
+    params: {
+      ...props.params,
+      input: pipelineRunStore.S3Url,
+    },
   });
-
-  const pipelineRunStore = usePipelineRunStore();
 
   onMounted(() => {
     // set first section in side panel of UI to active

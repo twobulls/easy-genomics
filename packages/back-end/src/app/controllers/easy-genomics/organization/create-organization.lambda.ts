@@ -1,7 +1,12 @@
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
 import { CreateOrganizationSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  InvalidRequestError,
+  OrganizationAlreadyExistsError,
+  OrganizationNameTakenError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
@@ -27,30 +32,29 @@ export const handler: Handler = async (
     // Post Request Body
     const request: Organization = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!CreateOrganizationSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!CreateOrganizationSchema.safeParse(request).success) throw new InvalidRequestError();
 
-    const response: Organization = await organizationService.add({
-      ...request,
-      OrganizationId: uuidv4(),
-      AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || false,
-      NextFlowTowerEnabled: request.NextFlowTowerEnabled || false,
-      CreatedAt: new Date().toISOString(),
-      CreatedBy: userId,
-    });
+    const response: Organization = await organizationService
+      .add({
+        ...request,
+        OrganizationId: uuidv4(),
+        AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || false,
+        NextFlowTowerEnabled: request.NextFlowTowerEnabled || false,
+        CreatedAt: new Date().toISOString(),
+        CreatedBy: userId,
+      })
+      .catch((error: any) => {
+        if (error instanceof ConditionalCheckFailedException) {
+          throw new OrganizationAlreadyExistsError();
+        } else if (error instanceof TransactionCanceledException) {
+          throw new OrganizationNameTakenError();
+        } else {
+          throw error;
+        }
+      });
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  if (err instanceof ConditionalCheckFailedException) {
-    return 'Organization already exists';
-  } else if (err instanceof TransactionCanceledException) {
-    return 'Organization Name already taken';
-  } else {
-    return err.message;
-  }
-}

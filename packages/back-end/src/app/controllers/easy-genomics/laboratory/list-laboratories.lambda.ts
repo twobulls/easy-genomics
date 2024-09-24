@@ -1,5 +1,6 @@
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { NoLabratoriesFoundError, RequiredIdNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 
@@ -12,22 +13,17 @@ export const handler: Handler = async (
   try {
     // Get Query Parameter
     const organizationId: string | undefined = event.queryStringParameters?.organizationId;
-    if (!organizationId) throw new Error('Required organizationId is missing');
+    if (!organizationId) throw new RequiredIdNotFoundError();
 
     const response: Laboratory[] = await laboratoryService.queryByOrganizationId(organizationId);
 
     if (response) {
       return buildResponse(200, JSON.stringify(response), event);
     } else {
-      throw new Error(`Unable to find Laboratories: ${JSON.stringify(response)}`);
+      throw new NoLabratoriesFoundError();
     }
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

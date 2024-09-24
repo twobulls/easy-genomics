@@ -26,9 +26,6 @@ export const handler: Handler = async (
       return buildResponse(200, JSON.stringify(response), event);
     } else {
       const organizationIds = getOrganizationAccessOrganizationIds(event);
-      if (organizationIds.length === 0) {
-        throw new Error('Unauthorized access');
-      }
 
       const response: Organization[] = await organizationService.list();
       const userOrganizations: Organization[] = response.filter((org: Organization) =>

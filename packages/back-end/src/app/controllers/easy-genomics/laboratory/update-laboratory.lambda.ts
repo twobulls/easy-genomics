@@ -61,7 +61,6 @@ export const handler: Handler = async (
         }
       });
 
-
     // Update NextFlow AccessToken in SSM if new value supplied
     if (request.NextFlowTowerAccessToken) {
       await ssmService.putParameter({

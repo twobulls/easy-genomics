@@ -30,23 +30,36 @@
 </script>
 
 <template>
-  <div class="">
-    <USelectMenu
-      :ui="{
-        icon: { trailing: { pointer: '' } },
-        base: 'h-13 !shadow-none border-background-stroke-dark text-body bg-white disabled:text-muted disabled:bg-background-light-grey disabled:opacity-100',
-        rounded: 'rounded-md',
-        placeholder: 'text-muted',
-        padding: {
-          sm: 'p-4',
+  <USelectMenu
+    :ui="{
+      base: ' !shadow-none border-background-stroke-dark text-body bg-white disabled:text-muted disabled:bg-background-light-grey disabled:opacity-100',
+      padding: {
+        sm: 'p-4',
+      },
+    }"
+    :uiMenu="{
+      base: 'ml-0',
+      option: {
+        size: 'text-sm',
+        active: 'bg-primary-muted !text-body',
+        inactive: 'text-muted',
+        selected: '!text-body',
+        icon: {
+          active: 'text-primary',
         },
-      }"
-      :disabled="disabled"
-      :options="options"
-      :searchable-placeholder="placeholder"
-      :model-value="modelValue"
-      @update:modelValue="updateModelValue"
-      searchable
-    />
-  </div>
+        selectedIcon: {
+          wrapper: 'absolute inset-y-0 end-0 flex items-center',
+          padding: 'pe-2',
+          base: 'h-5 w-5 text-primary',
+        },
+      },
+      select: 'cursor-hand',
+    }"
+    :disabled="disabled"
+    :options="options"
+    :searchable-placeholder="placeholder"
+    :model-value="modelValue"
+    @update:modelValue="updateModelValue"
+    searchable
+  />
 </template>

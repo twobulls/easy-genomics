@@ -7,11 +7,11 @@
   const $route = useRoute();
   const labName = usePipelineRunStore().labName;
 
-  const isDialogOpen = ref(false);
-  const hasLaunched = ref(false);
-  const exitConfirmed = ref(false);
-  const backNavigationInProgress = ref(false);
-  const nextRoute = ref(null);
+  const isDialogOpen = ref<boolean>(false);
+  const hasLaunched = ref<boolean>(false);
+  const exitConfirmed = ref<boolean>(false);
+  const backNavigationInProgress = ref<boolean>(false);
+  const nextRoute = ref<string | null>(null);
   const schema = ref({});
   const resetStepperKey = ref(0);
 

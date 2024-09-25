@@ -17,6 +17,7 @@ test('Update a Laboratory Successfully', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: 'Automation Lab' }).locator('button').click();
     await page.getByRole('menuitem', { name: 'Remove' }).click();
     await page.getByRole('button', { name: 'Remove Lab' }).click();
+    await page.waitForTimeout(5000);
     await expect(page.getByText("Lab 'Automation Lab' has been removed").nth(0)).toBeVisible();
   }
 
@@ -48,7 +49,8 @@ test('Update a Laboratory Successfully', async ({ page, baseURL }) => {
       .fill('eyJ0aWQiOiA5NjY5fS5jNTYxOGNmNmVmNzY4ZWU4M2JhZWUzMTQ0MGMxNjRjNTYwYWZlZmRm');
 
     await page.getByRole('button', { name: 'Save Changes' }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
+
 
     // confirm update
     await expect(page.getByText('Automation Lab successfully updated').nth(0)).toBeVisible();

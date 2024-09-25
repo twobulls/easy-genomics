@@ -3,7 +3,7 @@ import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/sc
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
-import { NFConnectionTest } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-connection-test';
+import { NextFlowConnectionTestResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-connection-test-request';
 import HttpFactory from '../factory';
 import { DeletedResponse, EditUserResponse } from '@FE/types/api';
 
@@ -197,20 +197,31 @@ class LabsModule extends HttpFactory {
 
   /**
    * Verify Lab credentials
+   *
+   * @param organizationId
+   * @param laboratoryId
    * @param workspaceId
    * @param accessToken
    */
-  async verifyLabCredentials(workspaceId: string, accessToken: string): Promise<NFConnectionTest> {
-    const res = await this.callNextflowTower<NFConnectionTest[]>('POST', '/connection/request-connection-test', {
-      WorkspaceId: workspaceId,
-      AccessToken: accessToken,
-    });
+  async verifyLabCredentials(
+    organizationId: string,
+    laboratoryId: string,
+    workspaceId: string,
+    accessToken?: string,
+  ): Promise<Boolean> {
+    const res: NextFlowConnectionTestResponse | undefined =
+      await this.callNextflowTower<NextFlowConnectionTestResponse>('POST', '/connection/request-connection-test', {
+        OrganizationId: organizationId,
+        LaboratoryId: laboratoryId,
+        WorkspaceId: workspaceId,
+        AccessToken: accessToken,
+      });
 
     if (!res) {
       throw new Error('Failed to verify Lab connection credentials');
     }
 
-    return res;
+    return res.Status === 'Success';
   }
 }
 

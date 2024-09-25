@@ -51,6 +51,7 @@ test('Update a Laboratory Successfully', async ({ page, baseURL }) => {
     await page.getByRole('button', { name: 'Save Changes' }).click();
     await page.waitForTimeout(5000);
 
+
     // confirm update
     await expect(page.getByText('Automation Lab successfully updated').nth(0)).toBeVisible();
     await expect(page.getByText('Automation Lab').nth(0)).toBeVisible();

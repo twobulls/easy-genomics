@@ -15,7 +15,7 @@ import {
   ConfirmUserForgotPasswordRequest,
   CreateUserForgotPasswordRequest,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
-import HttpFactory from '../factory';
+import HttpFactory from '@FE/repository/factory';
 
 class UsersModule extends HttpFactory {
   async list(): Promise<User | undefined> {

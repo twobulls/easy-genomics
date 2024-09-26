@@ -1,36 +1,51 @@
 import { test, expect } from 'playwright/test';
 
-test('Update a Laboratory Successfully', async ({ page, baseURL }) => {
-  await page.goto(`${baseURL}/labs`);
-  await page.waitForTimeout(2000);
+test.describe('Laboratory workflow', () => {
+  test('Clean up existing test lab', async ({ page, baseURL }) => {
+    await page.goto(`${baseURL}/labs`);
+    await page.waitForTimeout(2000);
 
-  // Check if the updated test lab exists and handle the result gracefully
-  let hasUpdatedLab = false;
-  try {
-    hasUpdatedLab = await page.getByRole('row', { name: 'Automation Lab' }).isVisible();
-  } catch (error) {
-    console.log('Automation Lab not found', error);
-  }
+    // Check if the updated test lab exists and remove it if found
+    let hasUpdatedLab = false;
+    try {
+      hasUpdatedLab = await page.getByRole('row', { name: 'Automation Lab' }).isVisible();
+    } catch (error) {
+      console.log('Automation Lab not found', error);
+    }
 
-  // cleanup: remove the updated test lab from previous test run to avoid failure due to existing Lab name
-  if (hasUpdatedLab) {
-    await page.getByRole('row', { name: 'Automation Lab' }).locator('button').click();
-    await page.getByRole('menuitem', { name: 'Remove' }).click();
-    await page.getByRole('button', { name: 'Remove Lab' }).click();
-    await expect(page.getByText("Lab 'Automation Lab' has been removed").nth(0)).toBeVisible();
-  }
+    if (hasUpdatedLab) {
+      await page.getByRole('row', { name: 'Automation Lab' }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Remove' }).click();
+      await page.getByRole('button', { name: 'Remove Lab' }).click();
+      await page.waitForTimeout(5000);
+      await expect(page.getByText("Lab 'Automation Lab' has been removed").nth(0)).toBeVisible();
+    }
+  });
 
-  // Check if the 'Playwright test lab' which was created in another test
-  let hasTestLab = false;
-  try {
-    hasTestLab = await page.getByRole('row', { name: 'Playwright test lab' }).isVisible();
-  } catch (error) {
-    console.log('Playwright test lab not found', error);
-  }
+  test('Verify the existence of Playwright test lab', async ({ page, baseURL }) => {
+    await page.goto(`${baseURL}/labs`);
+    await page.waitForTimeout(2000);
 
-  // Check if a 'Playwright test lab' is existing then update can proceed
-  if (hasTestLab) {
-    // update Laboratory
+    // Check if the 'Playwright test lab' exists
+    let hasTestLab = false;
+    try {
+      hasTestLab = await page.getByRole('row', { name: 'Playwright test lab' }).isVisible();
+    } catch (error) {
+      console.log('Playwright test lab not found', error);
+    }
+
+    expect(hasTestLab).toBe(true);
+  });
+
+  test('Update Playwright test lab to Automation Lab', async ({ page, baseURL }) => {
+    await page.goto(`${baseURL}/labs`);
+    await page.waitForTimeout(2000);
+
+    // Ensure 'Playwright test lab' exists before proceeding
+    const hasTestLab = await page.getByRole('row', { name: 'Playwright test lab' }).isVisible();
+    expect(hasTestLab).toBe(true);
+
+    // Update Laboratory
     await page.getByRole('row', { name: 'Playwright test lab' }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.getByRole('button', { name: 'Okay' }).click();
@@ -48,10 +63,10 @@ test('Update a Laboratory Successfully', async ({ page, baseURL }) => {
       .fill('eyJ0aWQiOiA5NjY5fS5jNTYxOGNmNmVmNzY4ZWU4M2JhZWUzMTQ0MGMxNjRjNTYwYWZlZmRm');
 
     await page.getByRole('button', { name: 'Save Changes' }).click();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
-    // confirm update
+    // Confirm update
     await expect(page.getByText('Automation Lab successfully updated').nth(0)).toBeVisible();
     await expect(page.getByText('Automation Lab').nth(0)).toBeVisible();
-  }
+  });
 });

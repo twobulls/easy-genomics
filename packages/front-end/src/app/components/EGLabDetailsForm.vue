@@ -14,6 +14,7 @@
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { ButtonSizeEnum, ButtonVariantEnum } from '@FE/types/buttons';
   import { useToastStore, useUiStore } from '@FE/stores';
+  import useUserStore from '@FE/stores/user';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import {
     CreateLaboratory,
@@ -204,6 +205,8 @@
         await handleCreateLab();
       } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
         const res = await $api.labs.verifyLabCredentials(
+          state.value.OrganizationId,
+          state.value.LaboratoryId,
           state.value.NextFlowTowerWorkspaceId,
           state.value.NextFlowTowerAccessToken,
         );

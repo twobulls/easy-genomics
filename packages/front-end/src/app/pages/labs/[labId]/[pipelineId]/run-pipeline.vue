@@ -38,7 +38,26 @@
    */
   async function initializePipelineData() {
     const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
-    schema.value = JSON.parse(res.schema);
+    const originalSchema = JSON.parse(res.schema);
+
+    // Filter Schema to exclude any sections that do not have any visible parameters for user input
+    const filteredDefinitions = Object.keys(originalSchema.definitions)
+      .flatMap((key) => {
+        const section = originalSchema.definitions[key];
+        const hasAllHiddenSettings: boolean = Object.values(section.properties).every((x) => x?.hidden === true);
+        if (!hasAllHiddenSettings) {
+          return {
+            [key]: section,
+          };
+        }
+      })
+      .filter((_) => _)
+      .reduce((acc, cur) => ({ ...acc, [Object.keys(cur)[0]]: Object.values(cur)[0] }), {});
+
+    schema.value = {
+      ...originalSchema,
+      definitions: filteredDefinitions,
+    };
     usePipelineRunStore().setPipelineDescription(schema.value.description);
     if (res.params) {
       usePipelineRunStore().setParams(JSON.parse(res.params));

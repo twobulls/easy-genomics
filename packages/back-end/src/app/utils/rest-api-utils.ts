@@ -44,7 +44,7 @@ export async function httpRequest<T>(
       case 204: // No Content
         return <T>{};
       default:
-        throw new Error(`${response.status} ${response.body?.toString()}`.trim());
+        throw new Error(`${response.status} ${JSON.stringify(response.body)}`.trim());
     }
   } catch (error: any) {
     console.error(error.message);

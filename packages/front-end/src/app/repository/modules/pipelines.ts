@@ -7,7 +7,7 @@ import {
   ListPipelinesResponse as ListPipelinesResponseSchema,
   PipelineSchemaResponse as PipelineSchemaResponseSchema,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-zod-schemas.client';
-import HttpFactory from '../factory';
+import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse, stripNullProperties } from '@FE/utils/api-utils';
 
 class PipelinesModule extends HttpFactory {

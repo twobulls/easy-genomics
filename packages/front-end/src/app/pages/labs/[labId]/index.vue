@@ -275,7 +275,7 @@
 
   async function getLab(): Promise<void> {
     try {
-      lab.value = await $api.labs.getLabDetails(labId);
+      lab.value = await $api.labs.labDetails(labId);
     } catch (error) {
       console.error('Error retrieving Lab', error);
     }

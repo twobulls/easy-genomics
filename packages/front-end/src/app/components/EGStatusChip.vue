@@ -52,7 +52,7 @@
       solid: 'bg-alert-danger-muted text-alert-danger',
     },
     [StatusEnum.enum.CANCELLED]: {
-      solid: 'bg-alert-danger-muted text-alert-danger',
+      solid: 'bg-background-light-grey text-body',
     },
     [StatusEnum.enum.RUNNING]: {
       solid: 'bg-primary-muted text-primary',

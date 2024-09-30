@@ -497,6 +497,7 @@ root.gitignore.addPatterns(
   '.env',
   '.env.*',
   '.idea',
+  '.vscode',
   '.DS_Store',
   'test-reports',
   '.nuxt',

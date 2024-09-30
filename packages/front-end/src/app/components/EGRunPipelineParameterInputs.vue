@@ -13,7 +13,8 @@
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
     if (property.type === 'string' && property.format === 'path') return 'EGParametersStringField';
-    if (property.type === 'string' && property.format === 'file-path') return 'EGParametersStringField';
+    if (property.type === 'string' && usePipeline().isParamsFormatFilePath(property.format))
+      return 'EGParametersStringField';
     if (property.type === 'string' && property.format === 'directory-path') return 'EGParametersStringField';
     if (property.type === 'boolean') return 'EGParametersBooleanField';
     if (property.type === 'integer') return 'EGParametersNumberField';
@@ -51,17 +52,26 @@
 <template>
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
-      <template v-if="!propertyDetail?.hidden && propertyDetail.format === 'file-path' && propertyName === 'input'">
-        <EGInput name="input" v-model="pipelineRunStore.S3Url" />
-      </template>
-      <!-- ignore Seqera "file upload" input types  -->
-      <template v-if="!propertyDetail?.hidden && propertyDetail.format !== 'file-path'">
+      <!-- ignore Seqera "file upload" input types -->
+      <template v-if="!propertyDetail?.hidden && !usePipeline().isParamsFormatFilePath(propertyDetail.format)">
         <component
           :is="components[propertyType(propertyDetail)]"
           :name="propertyName"
           :details="propertyDetail"
           v-model="propValues[propertyName]"
         />
+      </template>
+
+      <!-- Special exception for Seqera "file upload" input type at this point in the schema, used as an S3 bucket
+      directory input field -->
+      <template
+        v-if="
+          !propertyDetail?.hidden &&
+          usePipeline().isParamsFormatFilePath(propertyDetail.format) &&
+          propertyName === 'input'
+        "
+      >
+        <EGInput name="input" v-model="pipelineRunStore.S3Url" />
       </template>
     </div>
   </div>

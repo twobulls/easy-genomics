@@ -61,7 +61,7 @@
    */
   function checkIfAllSectionParametersHidden(section: object): boolean {
     const filteredProperties = Object.values(section.properties).filter(
-      (property: any) => !usePipeline().isPropertyFormatFilePath(property.format),
+      (property: any) => !usePipeline().isParamsFormatFilePath(property.format),
     );
 
     return filteredProperties.every((property: any) => property.hidden);

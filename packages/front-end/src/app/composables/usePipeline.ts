@@ -29,13 +29,13 @@ export default function usePipeline() {
    *
    * @format property
    */
-  function isPropertyFormatFilePath(format: string) {
+  function isParamsFormatFilePath(format: string) {
     return format === 'file-path';
   }
 
   return {
     doesFileUrlExist,
     downloadSampleSheet,
-    isPropertyFormatFilePath,
+    isParamsFormatFilePath,
   };
 }

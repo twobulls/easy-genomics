@@ -13,7 +13,7 @@
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
     if (property.type === 'string' && property.format === 'path') return 'EGParametersStringField';
-    if (property.type === 'string' && usePipeline().isPropertyFormatFilePath(property.format))
+    if (property.type === 'string' && usePipeline().isParamsFormatFilePath(property.format))
       return 'EGParametersStringField';
     if (property.type === 'string' && property.format === 'directory-path') return 'EGParametersStringField';
     if (property.type === 'boolean') return 'EGParametersBooleanField';
@@ -53,7 +53,7 @@
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
       <!-- ignore Seqera "file upload" input types -->
-      <template v-if="!propertyDetail?.hidden && !usePipeline().isPropertyFormatFilePath(propertyDetail.format)">
+      <template v-if="!propertyDetail?.hidden && !usePipeline().isParamsFormatFilePath(propertyDetail.format)">
         <component
           :is="components[propertyType(propertyDetail)]"
           :name="propertyName"
@@ -67,7 +67,7 @@
       <template
         v-if="
           !propertyDetail?.hidden &&
-          usePipeline().isPropertyFormatFilePath(propertyDetail.format) &&
+          usePipeline().isParamsFormatFilePath(propertyDetail.format) &&
           propertyName === 'input'
         "
       >

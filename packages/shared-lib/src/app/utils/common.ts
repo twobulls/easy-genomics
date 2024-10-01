@@ -1,5 +1,6 @@
 import { aws_apigateway } from 'aws-cdk-lib';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, APIGatewayProxyResult, APIGatewayProxyEvent } from 'aws-lambda';
+import HttpError from './HttpError';
 
 /**
  * This defines the HTTP Request types supported for the REST APIs.
@@ -24,6 +25,34 @@ export function buildResponse(
   body: string,
   event: APIGatewayProxyWithCognitoAuthorizerEvent | APIGatewayProxyEvent,
 ): APIGatewayProxyResult {
+  return {
+    statusCode,
+    body,
+    headers: {
+      'Access-Control-Allow-Origin': event.headers?.origin || '*',
+      'Access-Control-Allow-Methods': aws_apigateway.Cors.ALL_METHODS.join(','),
+      'Access-Control-Allow-Headers': ACCESS_CONTROL_ALLOW_HEADERS.join(','),
+    },
+  };
+}
+
+export function buildErrorResponse(
+  error: Error,
+  event: APIGatewayProxyWithCognitoAuthorizerEvent | APIGatewayProxyEvent,
+): APIGatewayProxyResult {
+  let statusCode: number = 400;
+  let errorCode: string = 'EG-100';
+  let message: string = error.message;
+
+  if (error instanceof HttpError) {
+    errorCode = error.errorCode;
+    statusCode = error.statusCode;
+  }
+
+  const body = JSON.stringify({
+    Error: message,
+    ErrorCode: errorCode,
+  });
   return {
     statusCode,
     body,

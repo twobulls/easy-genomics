@@ -1,7 +1,12 @@
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
 import { CreateUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  InvalidRequestError,
+  UserAlreadyExistsError,
+  UserNameTakenError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import { UserService } from '@BE/services/easy-genomics/user-service';
@@ -20,33 +25,32 @@ export const handler: Handler = async (
     console.log('DEBUG: request = ', request);
 
     // Data validation safety check
-    if (!CreateUserSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!CreateUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     // Create new User record in Easy-Genomics User table
-    const response: User = await userService.add({
-      ...request,
-      UserId: uuidv4(),
-      Status: 'Invited',
-      CreatedAt: new Date().toISOString(),
-      CreatedBy: userId,
-    });
+    const response: User = await userService
+      .add({
+        ...request,
+        UserId: uuidv4(),
+        Status: 'Invited',
+        CreatedAt: new Date().toISOString(),
+        CreatedBy: userId,
+      })
+      .catch((error: any) => {
+        if (error instanceof ConditionalCheckFailedException) {
+          throw new UserAlreadyExistsError();
+        } else if (error instanceof TransactionCanceledException) {
+          throw new UserNameTakenError();
+        } else {
+          throw error;
+        }
+      });
 
     // TODO: Create Cognito User account for user and send invitation email
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  if (err instanceof ConditionalCheckFailedException) {
-    return 'User already exists';
-  } else if (err instanceof TransactionCanceledException) {
-    return 'User Name already taken';
-  } else {
-    return err.message;
-  }
-}

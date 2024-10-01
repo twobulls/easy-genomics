@@ -1,7 +1,8 @@
 import { RemoveOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
@@ -20,7 +21,7 @@ export const handler: Handler = async (
     // Post Request Body
     const request: OrganizationUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!RemoveOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!RemoveOrganizationUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     // Verify User has access to the Organization - throws error if not found
     const organizationUser: OrganizationUser = await organizationUserService.get(
@@ -43,11 +44,6 @@ export const handler: Handler = async (
     }
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

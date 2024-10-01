@@ -3,7 +3,12 @@ import { AddOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/sch
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  InvalidRequestError,
+  OrganizationNotFoundError,
+  OrganizationUserAlreadyExistsError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
 import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
@@ -25,13 +30,12 @@ export const handler: Handler = async (
     // Post Request Body
     const request: OrganizationUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!AddOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!AddOrganizationUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     const organizationUser: OrganizationUser | void = await organizationUserService
       .get(request.OrganizationId, request.UserId)
       .catch((error: any) => {
-        if (error.message.endsWith('Resource not found')) {
-          // TODO - improve error to handle ResourceNotFoundException instead of checking error message
+        if (error instanceof OrganizationNotFoundError) {
           // Do nothing - allow new Organization-User access mapping to proceed.
         } else {
           throw error;
@@ -39,7 +43,7 @@ export const handler: Handler = async (
       });
 
     if (organizationUser) {
-      throw new Error('Organization User already exists');
+      throw new OrganizationUserAlreadyExistsError();
     }
 
     // Check if Organization & User records exists
@@ -48,39 +52,38 @@ export const handler: Handler = async (
 
     // Attempt to add the User to the Organization in one transaction
     if (
-      await platformUserService.addExistingUserToOrganization(
-        {
-          ...user,
-          OrganizationAccess: {
-            ...user.OrganizationAccess,
-            [organization.OrganizationId]: {
-              Status: request.Status,
-              LaboratoryAccess: {},
+      await platformUserService
+        .addExistingUserToOrganization(
+          {
+            ...user,
+            OrganizationAccess: {
+              ...user.OrganizationAccess,
+              [organization.OrganizationId]: {
+                Status: request.Status,
+                LaboratoryAccess: {},
+              },
             },
+            ModifiedAt: new Date().toISOString(),
+            ModifiedBy: currentUserId,
           },
-          ModifiedAt: new Date().toISOString(),
-          ModifiedBy: currentUserId,
-        },
-        {
-          ...request,
-          CreatedAt: new Date().toISOString(),
-          CreatedBy: currentUserId,
-        },
-      )
+          {
+            ...request,
+            CreatedAt: new Date().toISOString(),
+            CreatedBy: currentUserId,
+          },
+        )
+        .catch((error: any) => {
+          if (error instanceof ConditionalCheckFailedException) {
+            throw new OrganizationUserAlreadyExistsError();
+          } else {
+            throw error;
+          }
+        })
     ) {
       return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
     }
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  if (err instanceof ConditionalCheckFailedException) {
-    return 'Organization User already exists';
-  } else {
-    return err.message;
-  }
-}

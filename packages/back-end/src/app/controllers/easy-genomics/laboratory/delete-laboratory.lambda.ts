@@ -1,6 +1,10 @@
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  LaboratoryDeleteFailedError,
+  RequiredIdNotFoundError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
@@ -17,7 +21,7 @@ export const handler: Handler = async (
   try {
     // Get Path Parameter
     const id: string = event.pathParameters?.id || '';
-    if (id === '') throw new Error('Required id is missing');
+    if (id === '') throw new RequiredIdNotFoundError();
 
     // Lookup by LaboratoryId to confirm existence before deletion
     const existingLaboratory: Laboratory = await laboratoryService.queryByLaboratoryId(id);
@@ -33,7 +37,7 @@ export const handler: Handler = async (
     const isDeleted: boolean = await laboratoryService.delete(existingLaboratory);
 
     if (!isDeleted) {
-      throw new Error('Laboratory deletion failed');
+      throw new LaboratoryDeleteFailedError();
     }
 
     await ssmService
@@ -45,11 +49,6 @@ export const handler: Handler = async (
     return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

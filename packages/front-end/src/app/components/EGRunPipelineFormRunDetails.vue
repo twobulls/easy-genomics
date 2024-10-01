@@ -39,7 +39,7 @@
     .max(maxRunNameLength.value, `Pipeline run name must be ${maxRunNameLength.value} characters or less`);
 
   const formStateSchema = z.object({
-    pipelineDescription: z.string().default(''), // Seqera API spec doesn't define a max length for pipeline description
+    pipelineDescription: z.string(), // Seqera API spec doesn't define a max length for pipeline description
     pipelineName: z.string(), // Seqera API spec doesn't define a max length for pipeline name a.k.a action name e.g. nf-core-viralrecon
     runName: runNameSchema,
   });
@@ -66,6 +66,7 @@
    */
   onBeforeMount(async () => {
     formState.runName = usePipelineRunStore().userPipelineRunName;
+    formState.pipelineDescription = usePipelineRunStore().pipelineDescription;
     validate(formState);
   });
 

@@ -1,10 +1,12 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { usePipelineRunStore, useToastStore } from '@FE/stores';
 
   const props = defineProps<{
     canLaunch?: boolean;
     labId: string;
     labName: string;
+    schema: object;
     params: object;
     pipelineName: string;
     userPipelineRunName: string;
@@ -14,6 +16,10 @@
   const isLaunchingWorkflow = ref(false);
   const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
 
+  const paramsText = JSON.stringify(props.params);
+  const schema = JSON.parse(JSON.stringify(props.schema));
+  const params = JSON.parse(paramsText);
+
   async function launchWorkflow() {
     try {
       isLaunchingWorkflow.value = true;
@@ -22,7 +28,7 @@
         props.labId,
       );
       if (launchDetails.launch) {
-        launchDetails.launch.paramsText = JSON.stringify(props.params);
+        launchDetails.launch.paramsText = paramsText;
         launchDetails.launch.runName = props.userPipelineRunName;
       }
       await $api.workflows.createPipelineRun(props.labId, launchDetails);
@@ -57,6 +63,20 @@
         </div>
       </dl>
     </section>
+    <div v-for="(section, sectionName) in schema.definitions" :key="`section-${sectionName}`">
+      <EGText tag="h4" class="mb-0">{{ section.title }}</EGText>
+      <UDivider class="py-4" />
+      <section class="stroke-light flex flex-col bg-white">
+        <dl>
+          <div v-for="(property, propertyKey) in section.properties" :key="`property-${propertyKey}`">
+            <div class="flex border-b px-4 py-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">{{ propertyKey }}</dt>
+              <dd class="text-muted text-left">{{ params[propertyKey] }}</dd>
+            </div>
+          </div>
+        </dl>
+      </section>
+    </div>
   </EGCard>
 
   <div class="mt-6 flex justify-between">

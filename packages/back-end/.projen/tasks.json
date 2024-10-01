@@ -165,7 +165,7 @@
       },
       "steps": [
         {
-          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@types/aws-lambda,@types/jest,@types/jsonwebtoken,@types/uuid,aws-sdk-client-mock,esbuild,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,jest,prettier,ts-jest,ts-node,typescript,@aws-crypto/client-node,@aws-crypto/decrypt-node,@aws-crypto/encrypt-node,@aws-sdk/client-cognito-identity-provider,@aws-sdk/client-dynamodb,@aws-sdk/client-s3,@aws-sdk/client-ses,@aws-sdk/client-ssm,@aws-sdk/client-sso-oidc,@aws-sdk/client-sts,@aws-sdk/lib-dynamodb,@aws-sdk/s3-request-presigner,@aws-sdk/util-dynamodb,aws-lambda,base64-js,dotenv,jsonwebtoken,uuid"
+          "exec": "pnpm dlx npm-check-updates@16 --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@aws-sdk/types,@types/aws-lambda,@types/jest,@types/jsonwebtoken,@types/node,@types/uuid,aws-sdk-client-mock,esbuild,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,jest,prettier,ts-jest,ts-node,typescript,@aws-crypto/client-node,@aws-crypto/decrypt-node,@aws-crypto/encrypt-node,@aws-sdk/client-cognito-identity-provider,@aws-sdk/client-dynamodb,@aws-sdk/client-s3,@aws-sdk/client-ses,@aws-sdk/client-ssm,@aws-sdk/client-sso-oidc,@aws-sdk/client-sts,@aws-sdk/lib-dynamodb,@aws-sdk/s3-request-presigner,@aws-sdk/util-dynamodb,aws-lambda,base64-js,dotenv,jsonwebtoken,uuid"
         },
         {
           "exec": "pnpm i --no-frozen-lockfile"

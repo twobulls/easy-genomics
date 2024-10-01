@@ -2,6 +2,8 @@
   import { useOrgsStore, useToastStore, useUiStore } from '@FE/stores';
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
+  import { DeletedResponse } from '@FE/types/api';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -22,6 +24,25 @@
   ];
 
   const buttonLoadingStates = ref<object>({});
+
+  type LabIdents = { id: string; name: string };
+  const labToRemoveFrom = ref<LabIdents | null>(null);
+  const removeUserDialogIsOpen = computed<boolean>({
+    get() {
+      return !!labToRemoveFrom.value;
+    },
+    set(value: boolean) {
+      labToRemoveFrom.value = null;
+    },
+  });
+
+  // this is needed to prevent the lab name in the dialog visibly changing to undefined before the out animation is over
+  const lastLabToRemoveFromName = ref<string>('');
+  watch(labToRemoveFrom, (value) => {
+    if (value?.name) {
+      lastLabToRemoveFromName.value = value.name;
+    }
+  });
 
   onBeforeMount(async () => {
     await fetchOrgLabs(); // wait for lab data to load
@@ -163,6 +184,36 @@
       useUiStore().setRequestPending(false);
     }
   }
+
+  function showRemoveUserDialog(lab: LabIdents) {
+    labToRemoveFrom.value = lab;
+  }
+
+  async function handleRemoveUserFromLab() {
+    const labName = labToRemoveFrom.value?.name;
+    const labId = labToRemoveFrom.value?.id;
+    labToRemoveFrom.value = null;
+
+    const { UserId } = useOrgsStore().selectedUser;
+    const displayName = useOrgsStore().getSelectedUserDisplayName;
+
+    try {
+      useUiStore().setRequestPending(true);
+
+      const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
+
+      if (res?.Status !== 'Success') {
+        throw new Error(`Failed to remove ${displayName} from ${labName}`);
+      }
+
+      useToastStore().success(`Successfully removed ${displayName} from ${labName}`);
+    } catch (error) {
+      useToastStore().error(`Failed to remove ${displayName} from ${labName}`);
+    } finally {
+      await Promise.all([updateSelectedUser(), fetchUserLabs()]);
+      useUiStore().setRequestPending(false);
+    }
+  }
 </script>
 
 <template>
@@ -205,6 +256,8 @@
           :disabled="useUiStore().isRequestPending"
           :user="row"
           @assign-role="handleAssignRole($event.labUser)"
+          :show-remove-from-lab="true"
+          @remove-user-from-lab="() => showRemoveUserDialog({ id: row.LaboratoryId, name: row.Name })"
         />
       </div>
       <EGButton
@@ -223,6 +276,16 @@
       <EGActionButton v-else-if="actionItems" :items="actionItems(row)" />
     </template>
   </EGTable>
+
+  <EGDialog
+    actionLabel="Remove User"
+    :actionVariant="ButtonVariantEnum.enum.destructive"
+    cancelLabel="Cancel"
+    :cancelVariant="ButtonVariantEnum.enum.secondary"
+    @action-triggered="handleRemoveUserFromLab"
+    :primaryMessage="`Are you sure you want to remove ${useOrgsStore().getSelectedUserDisplayName} from ${lastLabToRemoveFromName}?`"
+    v-model="removeUserDialogIsOpen"
+  />
 </template>
 
 <style scoped></style>

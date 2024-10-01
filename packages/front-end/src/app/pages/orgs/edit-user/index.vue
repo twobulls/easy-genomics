@@ -21,6 +21,8 @@
     },
   ];
 
+  const buttonLoadingStates = ref<object>({});
+
   onBeforeMount(async () => {
     await fetchOrgLabs(); // wait for lab data to load
     await Promise.all([updateSelectedUser(), fetchUserLabs()]);
@@ -109,6 +111,8 @@
   async function handleAddUser(lab: { labId: string; name: string }) {
     try {
       useUiStore().setRequestPending(true);
+      buttonLoadingStates.value[lab.labId] = true;
+
       const res = await $api.labs.addLabUser(lab.labId, useOrgsStore().selectedUser?.UserId);
 
       if (res?.Status === 'Success') {
@@ -126,6 +130,7 @@
       throw error;
     } finally {
       useUiStore().setRequestPending(false);
+      delete buttonLoadingStates.value[lab.labId];
     }
   }
 
@@ -203,7 +208,7 @@
         />
       </div>
       <EGButton
-        :loading="useUiStore().isRequestPending"
+        :loading="!!buttonLoadingStates[row.LaboratoryId]"
         v-else-if="row.access"
         @click="
           handleAddUser({

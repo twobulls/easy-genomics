@@ -275,7 +275,7 @@
 
   async function getLab(): Promise<void> {
     try {
-      lab.value = await $api.labs.getLabDetails(labId);
+      lab.value = await $api.labs.labDetails(labId);
     } catch (error) {
       console.error('Error retrieving Lab', error);
     }
@@ -403,7 +403,7 @@
     description="View your Lab users, details and pipelines"
     :back-action="() => $router.push('/labs')"
   >
-    <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = true" />
+    <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = !showAddUserModule" />
     <EGAddLabUsersModule
       v-if="showAddUserModule"
       @added-user-to-lab="handleUserAddedToLab()"

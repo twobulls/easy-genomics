@@ -7,7 +7,8 @@ import {
   SampleSheetResponse,
   UploadedFilePairInfo,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { S3Service } from '@BE/services/s3-service';
@@ -40,7 +41,7 @@ export const handler: Handler = async (
     const requestParseResult = SampleSheetRequestSchema.safeParse(request);
     if (!requestParseResult.success) {
       requestParseResult.error.issues.forEach((issue) => console.error(issue));
-      throw new Error('Invalid request');
+      throw new InvalidRequestError();
     }
 
     const laboratoryId: string = request.LaboratoryId;
@@ -93,14 +94,9 @@ export const handler: Handler = async (
     }
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}
 
 /**
  * Helper function to generate CSV Sample-Sheet from supplied array of

@@ -55,6 +55,20 @@
     }
   }
 
+  /**
+   * Check if all parameters in a section are hidden; this is a helper to
+   * hide the section in the side panel
+   * @param section
+   * @returns boolean
+   */
+  function checkIfAllSectionParametersHidden(section: object): boolean {
+    const filteredProperties = Object.values(section.properties).filter(
+      (property: any) => !usePipeline().isParamsFormatFilePath(property.format),
+    );
+
+    return filteredProperties.every((property: any) => property.hidden);
+  }
+
   watch(
     // watches for input changes in the local params object and updates the store with the new value
     () => localProps.params,
@@ -74,7 +88,11 @@
         <EGText tag="small" class="mb-4">Step 03</EGText>
         <EGText tag="h4" class="mb-0">Edit Parameters</EGText>
         <UDivider class="py-4" />
-        <div v-for="(section, sectionIndex) in schema.definitions" :key="`section-${sectionIndex}`">
+        <div
+          v-show="!checkIfAllSectionParametersHidden(section)"
+          v-for="(section, sectionIndex) in schema.definitions"
+          :key="`section-${sectionIndex}`"
+        >
           <div
             class="mb-4 cursor-pointer text-sm"
             :class="{

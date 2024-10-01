@@ -1,5 +1,5 @@
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
 
@@ -24,7 +24,7 @@ export const handler: Handler = async (
     }
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
 
@@ -39,8 +39,3 @@ const listOrganizationUsers = (organizationId?: string, userId?: string): Promis
     );
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

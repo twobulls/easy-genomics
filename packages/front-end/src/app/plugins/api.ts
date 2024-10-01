@@ -1,4 +1,5 @@
 import { defineNuxtPlugin } from '#app';
+import InfraModules from '@FE/repository/modules/infra';
 import LabsModule from '@FE/repository/modules/labs';
 import OrgsModule from '@FE/repository/modules/orgs';
 import PipelinesModule from '@FE/repository/modules/pipelines';
@@ -7,6 +8,7 @@ import UsersModule from '@FE/repository/modules/users';
 import WorkflowsModules from '@FE/repository/modules/workflows';
 
 interface IApiInstance {
+  infra: InfraModules;
   labs: LabsModule;
   orgs: OrgsModule;
   pipelines: PipelinesModule;
@@ -15,24 +17,28 @@ interface IApiInstance {
   workflows: WorkflowsModules;
 }
 
-class FetchOptions {}
+interface FetchOptions {
+  baseURL: string;
+}
+
+const createFetchOptions = (nuxtApp): FetchOptions => ({
+  baseURL: nuxtApp.$config.public.BASE_API_URL,
+});
+
+const createApiInstance = (apiFetcher: any): IApiInstance => ({
+  infra: new InfraModules(apiFetcher),
+  labs: new LabsModule(apiFetcher),
+  orgs: new OrgsModule(apiFetcher),
+  pipelines: new PipelinesModule(apiFetcher),
+  uploads: new UploadsModule(apiFetcher),
+  users: new UsersModule(apiFetcher),
+  workflows: new WorkflowsModules(apiFetcher),
+});
 
 export default defineNuxtPlugin((nuxtApp) => {
-  const fetchOptions: FetchOptions = {
-    baseURL: nuxtApp.$config.public.BASE_API_URL,
-  };
-
+  const fetchOptions: FetchOptions = createFetchOptions(nuxtApp);
   const apiFetcher = $fetch.create(fetchOptions);
-
-  // expose any repositories here
-  const modules: IApiInstance = {
-    labs: new LabsModule(apiFetcher),
-    orgs: new OrgsModule(apiFetcher),
-    pipelines: new PipelinesModule(apiFetcher),
-    uploads: new UploadsModule(apiFetcher),
-    users: new UsersModule(apiFetcher),
-    workflows: new WorkflowsModules(apiFetcher),
-  };
+  const modules: IApiInstance = createApiInstance(apiFetcher);
 
   return {
     provide: {

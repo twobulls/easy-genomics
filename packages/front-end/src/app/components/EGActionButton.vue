@@ -5,10 +5,10 @@
 
 <template>
   <UDropdown class="EGActionButton" v-model:open="isOpen" :items="items" :popper="{ placement: 'bottom-start' }">
-    <div class="rounded-full border">
+    <div class="h-10 w-10 rounded-full border">
       <UButton
         :class="{ active: isOpen }"
-        class="hover:bg-null h-10 w-10 justify-center text-black"
+        class="hover:bg-null h-full w-full justify-center text-black"
         variant="ghost"
         icon="i-heroicons-ellipsis-horizontal-20-solid"
       />

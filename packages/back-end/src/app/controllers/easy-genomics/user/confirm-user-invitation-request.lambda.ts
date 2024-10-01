@@ -13,7 +13,8 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { ConfirmUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { toByteArray } from 'base64-js';
 import { JwtPayload } from 'jsonwebtoken';
@@ -42,7 +43,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
       : JSON.parse(event.body!);
 
     // Data validation safety check
-    if (!ConfirmUpdateUserInvitationRequestSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!ConfirmUpdateUserInvitationRequestSchema.safeParse(request).success) throw new InvalidRequestError();
 
     // Verify JWT has not expired and signature is valid
     const jwtPayload: JwtPayload | string = verifyJwt(request.Token, process.env.JWT_SECRET_KEY);
@@ -135,7 +136,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
 
@@ -177,9 +178,4 @@ function updatePlatformUserOrganizationAccess(user: User, organizationUser: Orga
       ModifiedBy: user.UserId,
     },
   );
-}
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
 }

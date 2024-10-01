@@ -23,8 +23,19 @@ export default function usePipeline() {
     return !!(usePipelineRunStore().S3Url || usePipelineRunStore().params?.input);
   });
 
+  /**
+   * Checks if the property format is 'file-path'; currently used as a helper
+   * to hide this special-case for all occurences in the UI except for the S3 bucket input path
+   *
+   * @format property
+   */
+  function isParamsFormatFilePath(format: string) {
+    return format === 'file-path';
+  }
+
   return {
     doesFileUrlExist,
     downloadSampleSheet,
+    isParamsFormatFilePath,
   };
 }

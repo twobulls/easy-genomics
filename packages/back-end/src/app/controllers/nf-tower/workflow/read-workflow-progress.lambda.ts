@@ -1,7 +1,12 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { WorkflowProgressResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  LaboratoryAccessTokenUnavailableError,
+  LaboratoryWorkspaceIdUnavailableError,
+  RequiredIdNotFoundError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
@@ -28,25 +33,34 @@ export const handler: Handler = async (
   try {
     // Get required path parameter
     const id: string = event.pathParameters?.id || '';
-    if (id === '') throw new Error('Required id is missing');
+    if (id === '') throw new RequiredIdNotFoundError();
 
     // Get required query parameter
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
-    if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
+    if (laboratoryId === '') throw new RequiredIdNotFoundError('laboratoryId');
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!laboratory.NextFlowTowerWorkspaceId) {
-      throw new Error('Laboratory Workspace Id unavailable');
+      throw new LaboratoryWorkspaceIdUnavailableError();
     }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-    const getParameterResponse: GetParameterCommandOutput = await ssmService.getParameter({
-      Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
-      WithDecryption: true,
-    });
+    const getParameterResponse: GetParameterCommandOutput = await ssmService
+      .getParameter({
+        Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
+        WithDecryption: true,
+      })
+      .catch((error: any) => {
+        if (error instanceof ParameterNotFound) {
+          throw new LaboratoryAccessTokenUnavailableError();
+        } else {
+          throw error;
+        }
+      });
+
     const accessToken: string | undefined = getParameterResponse.Parameter?.Value;
     if (!accessToken) {
-      throw new Error('Laboratory Access Token unavailable');
+      throw new LaboratoryAccessTokenUnavailableError();
     }
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
@@ -61,15 +75,6 @@ export const handler: Handler = async (
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  if (err instanceof ParameterNotFound) {
-    return 'Laboratory Access Token unavailable';
-  } else {
-    return err.message;
-  }
-}

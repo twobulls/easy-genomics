@@ -7,7 +7,8 @@ import {
   FileInfo,
   FileUploadInfo,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-manifest';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { S3Service } from '@BE/services/s3-service';
@@ -41,7 +42,7 @@ export const handler: Handler = async (
     // Post Request Body
     const request: FileUploadRequest = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!FileUploadRequestSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!FileUploadRequestSchema.safeParse(request).success) throw new InvalidRequestError();
 
     const laboratoryId: string = request.LaboratoryId;
     /**
@@ -121,11 +122,6 @@ export const handler: Handler = async (
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

@@ -1,5 +1,5 @@
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
 
@@ -10,6 +10,7 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
+    // TODO: Check the query parameters
     // Get Query Parameter
     const laboratoryId: string | undefined = event.queryStringParameters?.laboratoryId;
     const userId: string | undefined = event.queryStringParameters?.userId;
@@ -23,12 +24,7 @@ export const handler: Handler = async (
     }
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        Error: getErrorMessage(err),
-      }),
-    };
+    return buildErrorResponse(err, event);
   }
 };
 
@@ -41,8 +37,3 @@ const listLaboratoryUsers = (laboratoryId?: string, userId?: string): Promise<La
     throw new Error('Specify either laboratoryId or userId query parameter to retrieve the list of laboratory-users');
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

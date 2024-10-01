@@ -2,7 +2,7 @@ import {
   CreateWorkflowLaunchRequest,
   ListWorkflowsResponse,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-import HttpFactory from '../factory';
+import HttpFactory from '@FE/repository/factory';
 
 class PipelinesModule extends HttpFactory {
   async createPipelineRun(labId: string, pipelineLaunchRequest: CreateWorkflowLaunchRequest): Promise<any> {

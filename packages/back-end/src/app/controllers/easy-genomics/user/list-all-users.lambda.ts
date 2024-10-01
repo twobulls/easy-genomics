@@ -1,5 +1,6 @@
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { NoUsersFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { UserService } from '@BE/services/easy-genomics/user-service';
 
@@ -15,15 +16,10 @@ export const handler: Handler = async (
     if (response) {
       return buildResponse(200, JSON.stringify(response), event);
     } else {
-      throw new Error(`Unable to find Users: ${JSON.stringify(response)}`);
+      throw new NoUsersFoundError();
     }
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

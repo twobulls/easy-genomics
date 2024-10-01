@@ -7,6 +7,7 @@ import {
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { LaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { LaboratoryNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
@@ -107,12 +108,12 @@ export class LaboratoryService extends DynamoDBService implements Service {
         if (response.Items.length === 1) {
           return <Laboratory>unmarshall(response.Items.shift()!);
         } else if (response.Items.length === 0) {
-          throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+          throw new LaboratoryNotFoundError();
         } else {
           throw new Error(`${logRequestMessage} unsuccessful: Returned unexpected ${response.Items.length} items`);
         }
       } else {
-        throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+        throw new LaboratoryNotFoundError();
       }
     } else {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);

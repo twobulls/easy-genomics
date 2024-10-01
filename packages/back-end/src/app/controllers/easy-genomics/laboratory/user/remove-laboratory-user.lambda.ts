@@ -8,7 +8,8 @@ import {
   OrganizationAccessDetails,
   User,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
@@ -29,7 +30,7 @@ export const handler: Handler = async (
     // Post Request Body
     const request: LaboratoryUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!RemoveLaboratoryUserSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!RemoveLaboratoryUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     // Verify User has access to the Laboratory - throws error if not found
     await laboratoryUserService.get(request.LaboratoryId, request.UserId);
@@ -74,16 +75,6 @@ export const handler: Handler = async (
     }
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        Error: getErrorMessage(err),
-      }),
-    };
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

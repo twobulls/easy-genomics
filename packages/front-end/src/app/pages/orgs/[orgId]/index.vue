@@ -362,7 +362,7 @@
             <span class="text-muted">{{ labsCount(row) }}</span>
           </template>
           <template #actions-data="{ row, index }">
-            <div class="flex justify-end">
+            <div class="flex items-center justify-end">
               <EGButton
                 class="relative z-10"
                 size="sm"
@@ -376,12 +376,7 @@
                 :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"
                 :loading="isButtonRequestPending(index)"
               />
-              <EGActionButton
-                @click="$event.stopPropagation()"
-                v-if="row.OrganizationUserStatus === 'Active'"
-                :items="actionItems(row)"
-                class="ml-2"
-              />
+              <EGActionButton @click="$event.stopPropagation()" :items="actionItems(row)" class="ml-2" />
             </div>
           </template>
         </EGTable>

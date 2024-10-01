@@ -1,7 +1,8 @@
 import { GetParameterCommandOutput } from '@aws-sdk/client-ssm';
 import { ReadLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { RequiredIdNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
@@ -16,7 +17,7 @@ export const handler: Handler = async (
   try {
     // Get Path Parameter
     const id: string = event.pathParameters?.id || '';
-    if (id === '') throw new Error('Required id is missing');
+    if (id === '') throw new RequiredIdNotFoundError();
 
     // Lookup by GSI Id for convenience
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
@@ -38,11 +39,6 @@ export const handler: Handler = async (
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

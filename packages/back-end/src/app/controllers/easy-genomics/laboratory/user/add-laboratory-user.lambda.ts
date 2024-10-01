@@ -10,7 +10,14 @@ import {
   OrganizationAccessDetails,
   User,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  InvalidRequestError,
+  LaboratoryUserAlreadyExistsError,
+  LaboratoryUserNotFoundError,
+  OrganizationUserNotFoundError,
+  UserNotInOrganizationError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
@@ -33,7 +40,7 @@ export const handler: Handler = async (
     // Post Request Body
     const request: LaboratoryUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!AddLaboratoryUserSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!AddLaboratoryUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     const status: Status = request.Status === 'Inactive' ? 'Inactive' : 'Active';
 
@@ -41,7 +48,7 @@ export const handler: Handler = async (
     const laboratoryUser: LaboratoryUser | void = await laboratoryUserService
       .get(request.LaboratoryId, request.UserId)
       .catch((error: unknown) => {
-        if (error.message.endsWith('Resource not found')) {
+        if (error instanceof LaboratoryUserNotFoundError) {
           // Do nothing - allow new Laboratory-User access mapping to proceed.
         } else {
           throw error;
@@ -49,7 +56,7 @@ export const handler: Handler = async (
       });
 
     if (laboratoryUser) {
-      throw new Error('Laboratory User already exists');
+      throw new LaboratoryUserAlreadyExistsError();
     }
 
     // Retrieve existing Laboratory and User record details
@@ -58,8 +65,8 @@ export const handler: Handler = async (
 
     // Verify User has access to the Organization - throws error if not found
     await organizationUserService.get(laboratory.OrganizationId, user.UserId).catch((error: unknown) => {
-      if (error.message.endsWith('Resource not found')) {
-        throw new Error('User not permitted access to the Laboratory without first granted access to the Organization');
+      if (error instanceof OrganizationUserNotFoundError) {
+        throw new UserNotInOrganizationError();
       } else {
         throw error;
       }
@@ -77,48 +84,42 @@ export const handler: Handler = async (
         ? user.OrganizationAccess[laboratory.OrganizationId].LaboratoryAccess
         : undefined;
 
-    const response: boolean = await platformUserService.addExistingUserToLaboratory(
-      {
-        ...user,
-        OrganizationAccess: {
-          ...user.OrganizationAccess,
-          [laboratory.OrganizationId]: <OrganizationAccessDetails>{
-            Status: organizationStatus,
-            LaboratoryAccess: <LaboratoryAccessDetails>{
-              ...(laboratoryAccess ? laboratoryAccess : {}),
-              [laboratory.LaboratoryId]: { Status: status },
+    const response: boolean = await platformUserService
+      .addExistingUserToLaboratory(
+        {
+          ...user,
+          OrganizationAccess: {
+            ...user.OrganizationAccess,
+            [laboratory.OrganizationId]: <OrganizationAccessDetails>{
+              Status: organizationStatus,
+              LaboratoryAccess: <LaboratoryAccessDetails>{
+                ...(laboratoryAccess ? laboratoryAccess : {}),
+                [laboratory.LaboratoryId]: { Status: status },
+              },
             },
           },
+          ModifiedAt: new Date().toISOString(),
+          ModifiedBy: currentUserId,
         },
-        ModifiedAt: new Date().toISOString(),
-        ModifiedBy: currentUserId,
-      },
-      {
-        ...request,
-        CreatedAt: new Date().toISOString(),
-        CreatedBy: currentUserId,
-      },
-    );
+        {
+          ...request,
+          CreatedAt: new Date().toISOString(),
+          CreatedBy: currentUserId,
+        },
+      )
+      .catch((error: any) => {
+        if (error instanceof ConditionalCheckFailedException) {
+          throw new LaboratoryUserAlreadyExistsError();
+        } else {
+          throw error;
+        }
+      });
 
     if (response) {
       return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
     }
   } catch (err: any) {
     console.error(err);
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        Error: getErrorMessage(err),
-      }),
-    };
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  if (err instanceof ConditionalCheckFailedException) {
-    return 'Laboratory User already exists';
-  } else {
-    return err.message;
-  }
-}

@@ -6,7 +6,7 @@ import {
   SampleSheetRequest,
   SampleSheetResponse,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-import HttpFactory from '../factory';
+import HttpFactory from '@FE/repository/factory';
 
 class UploadsModule extends HttpFactory {
   async getSampleSheetCsv(req: SampleSheetRequest): Promise<SampleSheetResponse> {

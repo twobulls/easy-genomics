@@ -57,3 +57,14 @@ export function getUrlParamValue(param: string): string | null {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(param);
 }
+
+/**
+ * Compares string values for sorting in a linguistically intuitive way
+ *
+ * @param {string} a
+ * @param {string} b
+ * @return {number} comparison result
+ */
+export function stringSortCompare(a: string, b: string) {
+  return a.toLowerCase().localeCompare(b.toLowerCase(), undefined, { numeric: true });
+}

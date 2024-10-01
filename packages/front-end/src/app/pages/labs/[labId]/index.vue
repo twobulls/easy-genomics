@@ -329,7 +329,16 @@
         .map((labUser) => labUser);
     }
 
-    return filteredLabUsers;
+    return filteredLabUsers.sort((userA, userB) => {
+      // Lab Manager users first
+      if (userA.LabManager && !userB.LabManager) return -1;
+      if (!userA.LabManager && userB.LabManager) return 1;
+      // then Lab Technicians
+      if (userA.LabTechnician && !userB.LabTechnician) return -1;
+      if (!userA.LabTechnician && userB.LabTechnician) return 1;
+      // then sort by name
+      return stringSortCompare(userA.displayName, userB.displayName);
+    });
   });
 
   async function handleUserAddedToLab() {

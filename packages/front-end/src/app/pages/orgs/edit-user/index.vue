@@ -6,7 +6,7 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const orgLabsData = ref([] as Laboratory[]);
-  const selectedUserLabsData = ref([] as LaboratoryUserDetails[]);
+  const selectedUserLabsData = ref<LaboratoryUserDetails[] | null>(null);
   const isLoading = ref(true);
   const hasNoData = ref(false);
   const searchOutput = ref('');
@@ -85,6 +85,11 @@
    * Filter rows based on search input for laboratory name
    */
   const filteredTableData = computed(() => {
+    if (selectedUserLabsData.value === null) {
+      // wait till selectedUserLabsData is available to prevent jank as the table reorders the rows in front of the user
+      return [];
+    }
+
     return orgLabsData.value
       .filter((lab) => {
         const labName = String(lab.Name).toLowerCase();
@@ -105,6 +110,16 @@
           Name: lab.Name,
           LaboratoryId: lab.LaboratoryId,
         };
+      })
+      .sort((labA, labB) => {
+        // Lab Manager labs first
+        if (labA.LabManager && !labB.LabManager) return -1;
+        if (!labA.LabManager && labB.LabManager) return 1;
+        // then Lab Technician
+        if (labA.LabTechnician && !labB.LabTechnician) return -1;
+        if (!labA.LabTechnician && labB.LabTechnician) return 1;
+        // then sort by name
+        return stringSortCompare(labA.Name, labB.Name);
       });
   });
 

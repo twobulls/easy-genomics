@@ -105,16 +105,18 @@
    * Filter rows based on search input for both name and email
    */
   const filteredTableData = computed(() => {
-    if (!searchOutput.value && !hasNoData.value) {
-      return orgUsersDetailsData.value;
+    let data = orgUsersDetailsData.value;
+
+    if (searchOutput.value || hasNoData.value) {
+      data = data.filter((user: OrgUser) => {
+        const fullName = user.displayName.toLowerCase();
+        const email = String(user.UserEmail).toLowerCase();
+
+        return fullName.includes(lowerCasedSearch.value) || email.includes(lowerCasedSearch.value);
+      });
     }
-    return orgUsersDetailsData.value.filter((user: OrgUser) => {
-      const fullName = user.displayName.toLowerCase();
 
-      const email = String(user.UserEmail).toLowerCase();
-
-      return fullName.includes(lowerCasedSearch.value) || email.includes(lowerCasedSearch.value);
-    });
+    return data.sort((userA, userB) => stringSortCompare(userA.displayName, userB.displayName));
   });
 
   const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());

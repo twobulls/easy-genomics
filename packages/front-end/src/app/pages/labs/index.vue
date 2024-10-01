@@ -105,7 +105,9 @@
   async function getLabs() {
     try {
       useUiStore().setRequestPending(true);
-      labData.value = await $api.labs.list(useUserStore().currentOrgId);
+      labData.value = (await $api.labs.list(useUserStore().currentOrgId)).sort((labA, labB) =>
+        stringSortCompare(labA.Name, labB.Name),
+      );
 
       if (!labData.value.length) {
         hasNoData.value = true;

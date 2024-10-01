@@ -123,7 +123,8 @@
    *
    * - The getter checks if there are any S3 directories available.
    *   - If no directories are available, it returns 'No S3 Buckets found'.
-   *   - Otherwise, it returns the matched bucket if it exists or a call to action
+   *   - Otherwise, it returns a matched bucket; if none found, a call to action
+   *     is displayed.
    *
    * - The setter updates the application's state with the new S3 bucket value.
    */

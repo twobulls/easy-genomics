@@ -57,6 +57,7 @@
     }"
     :disabled="disabled"
     :options="options"
+    :placeholder="placeholder"
     :searchable-placeholder="placeholder"
     :model-value="modelValue"
     @update:modelValue="updateModelValue"

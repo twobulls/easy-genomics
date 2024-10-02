@@ -71,7 +71,7 @@
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
         <EGText tag="p" class="pt-4">
-          Please log into NextFlower / Seqera Cloud to download the results for this run.
+          Please log into NextFlow / Seqera Cloud to download the results for this run.
         </EGText>
       </div>
       <div v-if="item.key === 'runDetails'" class="space-y-3">

@@ -4,7 +4,12 @@ import {
   UpdateLaboratorySchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  InvalidRequestError,
+  LaboratoryNameTakenError,
+  RequiredIdNotFoundError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
@@ -19,34 +24,43 @@ export const handler: Handler = async (
   try {
     // Get Path Parameter
     const id: string = event.pathParameters?.id || '';
-    if (id === '') throw new Error('Required id is missing');
+    if (id === '') throw new RequiredIdNotFoundError();
 
     const userId: string = event.requestContext.authorizer.claims['cognito:username'];
     // Put Request Body
     const request: UpdateLaboratory = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!UpdateLaboratorySchema.safeParse(request).success) {
-      throw new Error('Invalid request');
+      throw new InvalidRequestError();
     }
 
     // Lookup by LaboratoryId to confirm existence before updating
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
 
-    const response: Laboratory = await laboratoryService.update(
-      {
-        ...existing,
-        Name: request.Name,
-        Description: request.Description,
-        Status: 'Active',
-        S3Bucket: request.S3Bucket, // S3 Bucket Full Name
-        AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled,
-        NextFlowTowerEnabled: request.NextFlowTowerEnabled,
-        NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
-        ModifiedAt: new Date().toISOString(),
-        ModifiedBy: userId,
-      },
-      existing,
-    );
+    const response: Laboratory = await laboratoryService
+      .update(
+        {
+          ...existing,
+          Name: request.Name,
+          Description: request.Description,
+          Status: 'Active',
+          S3Bucket: request.S3Bucket, // S3 Bucket Full Name
+          AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled,
+          NextFlowTowerEnabled: request.NextFlowTowerEnabled,
+          NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
+          ModifiedAt: new Date().toISOString(),
+          ModifiedBy: userId,
+        },
+        existing,
+      )
+      .catch((error: any) => {
+        if (error instanceof TransactionCanceledException) {
+          throw new LaboratoryNameTakenError();
+        } else {
+          throw error;
+        }
+      });
+
 
     // Update NextFlow AccessToken in SSM if new value supplied
     if (request.NextFlowTowerAccessToken) {
@@ -62,15 +76,6 @@ export const handler: Handler = async (
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customizing error messages by exception types
-function getErrorMessage(err: any) {
-  if (err instanceof TransactionCanceledException) {
-    return 'Laboratory Name already taken';
-  } else {
-    return err.message;
-  }
-}

@@ -5,7 +5,7 @@ import {
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { CreateOrganization, Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-import HttpFactory from '../factory';
+import HttpFactory from '@FE/repository/factory';
 import { DeletedResponse } from '@FE/types/api';
 
 class OrgsModule extends HttpFactory {

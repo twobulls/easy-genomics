@@ -2,11 +2,13 @@
   import { useOrgsStore, useToastStore, useUiStore } from '@FE/stores';
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
+  import { DeletedResponse } from '@FE/types/api';
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const orgLabsData = ref([] as Laboratory[]);
-  const selectedUserLabsData = ref([] as LaboratoryUserDetails[]);
+  const selectedUserLabsData = ref<LaboratoryUserDetails[] | null>(null);
   const isLoading = ref(true);
   const hasNoData = ref(false);
   const searchOutput = ref('');
@@ -20,6 +22,27 @@
       label: 'Lab Access',
     },
   ];
+
+  const buttonLoadingStates = ref<object>({});
+
+  type LabIdents = { id: string; name: string };
+  const labToRemoveFrom = ref<LabIdents | null>(null);
+  const removeUserDialogIsOpen = computed<boolean>({
+    get() {
+      return !!labToRemoveFrom.value;
+    },
+    set(value: boolean) {
+      labToRemoveFrom.value = null;
+    },
+  });
+
+  // this is needed to prevent the lab name in the dialog visibly changing to undefined before the out animation is over
+  const lastLabToRemoveFromName = ref<string>('');
+  watch(labToRemoveFrom, (value) => {
+    if (value?.name) {
+      lastLabToRemoveFromName.value = value.name;
+    }
+  });
 
   onBeforeMount(async () => {
     await fetchOrgLabs(); // wait for lab data to load
@@ -83,6 +106,11 @@
    * Filter rows based on search input for laboratory name
    */
   const filteredTableData = computed(() => {
+    if (selectedUserLabsData.value === null) {
+      // wait till selectedUserLabsData is available to prevent jank as the table reorders the rows in front of the user
+      return [];
+    }
+
     return orgLabsData.value
       .filter((lab) => {
         const labName = String(lab.Name).toLowerCase();
@@ -103,16 +131,29 @@
           Name: lab.Name,
           LaboratoryId: lab.LaboratoryId,
         };
+      })
+      .sort((labA, labB) => {
+        // Lab Manager labs first
+        if (labA.LabManager && !labB.LabManager) return -1;
+        if (!labA.LabManager && labB.LabManager) return 1;
+        // then Lab Technician
+        if (labA.LabTechnician && !labB.LabTechnician) return -1;
+        if (!labA.LabTechnician && labB.LabTechnician) return 1;
+        // then sort by name
+        return useSort().stringSortCompare(labA.Name, labB.Name);
       });
   });
 
   async function handleAddUser(lab: { labId: string; name: string }) {
     try {
       useUiStore().setRequestPending(true);
+      buttonLoadingStates.value[lab.labId] = true;
+
       const res = await $api.labs.addLabUser(lab.labId, useOrgsStore().selectedUser?.UserId);
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
+        await fetchUserLabs();
         useToastStore().success(
           `${lab.name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`,
         );
@@ -126,6 +167,7 @@
       throw error;
     } finally {
       useUiStore().setRequestPending(false);
+      delete buttonLoadingStates.value[lab.labId];
     }
   }
 
@@ -155,6 +197,36 @@
       throw error;
     } finally {
       // update UI with latest data
+      useUiStore().setRequestPending(false);
+    }
+  }
+
+  function showRemoveUserDialog(lab: LabIdents) {
+    labToRemoveFrom.value = lab;
+  }
+
+  async function handleRemoveUserFromLab() {
+    const labName = labToRemoveFrom.value?.name;
+    const labId = labToRemoveFrom.value?.id;
+    labToRemoveFrom.value = null;
+
+    const { UserId } = useOrgsStore().selectedUser;
+    const displayName = useOrgsStore().getSelectedUserDisplayName;
+
+    try {
+      useUiStore().setRequestPending(true);
+
+      const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
+
+      if (res?.Status !== 'Success') {
+        throw new Error(`Failed to remove ${displayName} from ${labName}`);
+      }
+
+      useToastStore().success(`Successfully removed ${displayName} from ${labName}`);
+    } catch (error) {
+      useToastStore().error(`Failed to remove ${displayName} from ${labName}`);
+    } finally {
+      await Promise.all([updateSelectedUser(), fetchUserLabs()]);
       useUiStore().setRequestPending(false);
     }
   }
@@ -200,10 +272,12 @@
           :disabled="useUiStore().isRequestPending"
           :user="row"
           @assign-role="handleAssignRole($event.labUser)"
+          :show-remove-from-lab="true"
+          @remove-user-from-lab="() => showRemoveUserDialog({ id: row.LaboratoryId, name: row.Name })"
         />
       </div>
       <EGButton
-        :loading="useUiStore().isRequestPending"
+        :loading="!!buttonLoadingStates[row.LaboratoryId]"
         v-else-if="row.access"
         @click="
           handleAddUser({
@@ -218,6 +292,16 @@
       <EGActionButton v-else-if="actionItems" :items="actionItems(row)" />
     </template>
   </EGTable>
+
+  <EGDialog
+    actionLabel="Remove User"
+    :actionVariant="ButtonVariantEnum.enum.destructive"
+    cancelLabel="Cancel"
+    :cancelVariant="ButtonVariantEnum.enum.secondary"
+    @action-triggered="handleRemoveUserFromLab"
+    :primaryMessage="`Are you sure you want to remove ${useOrgsStore().getSelectedUserDisplayName} from ${lastLabToRemoveFromName}?`"
+    v-model="removeUserDialogIsOpen"
+  />
 </template>
 
 <style scoped></style>

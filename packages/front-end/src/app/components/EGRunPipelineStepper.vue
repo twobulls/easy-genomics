@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { usePipelineRunStore } from '@FE/stores';
-  import { ButtonSizeEnum } from '@FE/types/buttons';
 
   const props = defineProps<{
     schema: object;
@@ -209,6 +208,7 @@
               :can-launch="true"
               :lab-id="labId"
               :lab-name="labName"
+              :schema="props.schema"
               :params="usePipelineRunStore().params"
               :pipeline-name="usePipelineRunStore().pipelineName"
               :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
@@ -223,7 +223,7 @@
     <template v-if="hasLaunched">
       <EGEmptyDataCTA
         message="Your Workflow Run has Launched! Check on your progress via Runs."
-        :primary-button-action="() => $router.push(useUiStore().previousPageRoute)"
+        :primary-button-action="() => $router.push(`/labs/${useLabsStore().labId}?tab=Runs`)"
         primary-button-label="Back to Runs"
         :secondary-button-action="() => emit('reset-run-pipeline')"
         secondary-button-label="Launch Another Workflow Run"

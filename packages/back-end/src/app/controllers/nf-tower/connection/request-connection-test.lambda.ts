@@ -5,7 +5,8 @@ import {
   NextFlowConnectionTestResponse,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-connection-test-request';
 import { ListComputeEnvsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { SsmService } from '@BE/services/ssm-service';
 import { httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
@@ -23,7 +24,7 @@ export const handler: Handler = async (
       : JSON.parse(event.body!);
 
     // Data validation safety check
-    if (!NextFlowConnectionTestRequestSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!NextFlowConnectionTestRequestSchema.safeParse(request).success) throw new InvalidRequestError();
 
     const workspaceId: string = request.WorkspaceId;
     let accessToken: string | undefined = request.AccessToken;
@@ -57,12 +58,6 @@ export const handler: Handler = async (
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  console.log('Error', err);
-  return err.message;
-}

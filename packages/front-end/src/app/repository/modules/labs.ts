@@ -4,7 +4,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 import { NextFlowConnectionTestResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-connection-test-request';
-import HttpFactory from '../factory';
+import HttpFactory from '@FE/repository/factory';
 import { DeletedResponse, EditUserResponse } from '@FE/types/api';
 
 class LabsModule extends HttpFactory {
@@ -36,7 +36,7 @@ class LabsModule extends HttpFactory {
    * Get a Laboratory's details
    * @param labId
    */
-  async getLabDetails(labId: string): Promise<Laboratory> {
+  async labDetails(labId: string): Promise<Laboratory> {
     const res = await this.call<Laboratory>('GET', `/laboratory/read-laboratory/${labId}`);
 
     if (!res) {

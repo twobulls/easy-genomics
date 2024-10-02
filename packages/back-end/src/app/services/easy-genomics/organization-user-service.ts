@@ -8,6 +8,7 @@ import {
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { OrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
+import { OrganizationUserNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
@@ -58,7 +59,7 @@ export class OrganizationUserService extends DynamoDBService implements Service 
       if (response.Item) {
         return <OrganizationUser>unmarshall(response.Item);
       } else {
-        throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+        throw new OrganizationUserNotFoundError('organization user', userId, organizationId);
       }
     } else {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);

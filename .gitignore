@@ -81,6 +81,7 @@ jspm_packages/
 .env
 .env.*
 .idea
+.vscode
 .DS_Store
 test-reports
 .nuxt

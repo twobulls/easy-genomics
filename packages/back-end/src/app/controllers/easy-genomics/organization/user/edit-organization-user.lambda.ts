@@ -7,7 +7,8 @@ import {
   OrganizationAccessDetails,
   User,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { InvalidRequestError, OrganizationUserStatusError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
@@ -26,7 +27,7 @@ export const handler: Handler = async (
     // Post Request Body
     const request: OrganizationUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
-    if (!EditOrganizationUserSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!EditOrganizationUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     // Lookup by OrganizationId & UserId to confirm existence before updating
     const organizationUser: OrganizationUser = await organizationUserService.get(
@@ -37,9 +38,7 @@ export const handler: Handler = async (
 
     // Prevent reverting OrganizationUser Status to 'Invited' if already 'Active' or 'Inactive'
     if (organizationUser.Status !== 'Invited' && request.Status === 'Invited') {
-      throw new Error(
-        `User Organization Status already '${organizationUser.Status}', cannot update Status to 'Invited'`,
-      );
+      throw new OrganizationUserStatusError(organizationUser.Status);
     }
 
     // Retrieve the User's OrganizationAccess metadata to update
@@ -79,11 +78,6 @@ export const handler: Handler = async (
     }
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  return err.message;
-}

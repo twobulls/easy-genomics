@@ -1,5 +1,9 @@
 import { createHmac } from 'crypto';
-import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import {
+  ConditionalCheckFailedException,
+  ResourceNotFoundException,
+  TransactionCanceledException,
+} from '@aws-sdk/client-dynamodb';
 import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
@@ -7,6 +11,7 @@ import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { OrganizationUserNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { CognitoIdpService } from '@BE/services/cognito-idp-service';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
@@ -76,6 +81,7 @@ export const handler: Handler = async (
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
         }
       } catch (error: unknown) {
+        // TODO - Check to see if we should be returning 200 for errors here
         console.error(error);
         return buildResponse(200, JSON.stringify({ Status: 'Error', Message: error.message }), event);
       }
@@ -87,8 +93,7 @@ export const handler: Handler = async (
         const existingOrganizationUser: OrganizationUser | void = await organizationUserService
           .get(organization.OrganizationId, existingUser.UserId)
           .catch((error: any) => {
-            if (error.message.endsWith('Resource not found')) {
-              // TODO - improve error to handle ResourceNotFoundException instead of checking error message
+            if (error instanceof ResourceNotFoundException || error instanceof OrganizationUserNotFoundError) {
               // Do nothing - allow new Organization-User access mapping to proceed.
             } else {
               throw error;

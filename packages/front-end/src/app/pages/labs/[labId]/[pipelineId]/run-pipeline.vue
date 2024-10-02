@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { usePipelineRunStore } from '@FE/stores';
+  import { usePipelineRunStore, useUiStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
@@ -7,11 +7,9 @@
   const $route = useRoute();
   const labName = usePipelineRunStore().labName;
 
-  const isDialogOpen = ref(false);
-  const hasLaunched = ref(false);
-  const exitConfirmed = ref(false);
-  const backNavigationInProgress = ref(false);
-  const nextRoute = ref(null);
+  const hasLaunched = ref<boolean>(false);
+  const exitConfirmed = ref<boolean>(false);
+  const nextRoute = ref<string | null>(null);
   const schema = ref({});
   const resetStepperKey = ref(0);
 
@@ -23,12 +21,18 @@
    * Intercept any navigation away from the page (including the browser back button) and present the modal
    */
   onBeforeRouteLeave((to, from, next) => {
-    if (hasLaunched.value) next(true);
-    else if (!exitConfirmed.value) {
-      handleExitRun();
+    if (hasLaunched.value) {
+      // if the pipeline has launched no need to confirm cancel
+      next(true);
+    } else if (!nextRoute.value) {
+      // if there's currently no nextRoute, don't navigate yet and show the confirm cancel dialog
       nextRoute.value = to.path;
       next(false);
+    } else if (!exitConfirmed.value) {
+      // don't go if exit hasn't been confirmed
+      next(false);
     } else {
+      // go if exit confirmed
       next(true);
     }
   });
@@ -38,20 +42,35 @@
    */
   async function initializePipelineData() {
     const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
-    schema.value = JSON.parse(res.schema);
-    usePipelineRunStore().setParams(JSON.parse(<string>res.params));
+    const originalSchema = JSON.parse(res.schema);
+
+    // Filter Schema to exclude any sections that do not have any visible parameters for user input
+    const filteredDefinitions = Object.keys(originalSchema.definitions)
+      .flatMap((key) => {
+        const section = originalSchema.definitions[key];
+        const hasAllHiddenSettings: boolean = Object.values(section.properties).every((x) => x?.hidden === true);
+        if (!hasAllHiddenSettings) {
+          return {
+            [key]: section,
+          };
+        }
+      })
+      .filter((_) => _)
+      .reduce((acc, cur) => ({ ...acc, [Object.keys(cur)[0]]: Object.values(cur)[0] }), {});
+
+    schema.value = {
+      ...originalSchema,
+      definitions: filteredDefinitions,
+    };
+    usePipelineRunStore().setPipelineDescription(schema.value.description);
+    if (res.params) {
+      usePipelineRunStore().setParams(JSON.parse(res.params));
+    }
   }
 
-  function handleDialogAction() {
+  function confirmCancel() {
     exitConfirmed.value = true;
-    isDialogOpen.value = false;
-    backNavigationInProgress.value = true;
-    $router.push(useUiStore().previousPageRoute);
-    backNavigationInProgress.value = false;
-  }
-
-  function handleExitRun() {
-    isDialogOpen.value = true;
+    $router.push(nextRoute.value!);
   }
 
   /**
@@ -62,21 +81,11 @@
    */
   function resetRunPipeline() {
     usePipelineRunStore().setUserPipelineRunName('');
+    usePipelineRunStore().setPipelineDescription('');
     usePipelineRunStore().setParams({});
     initializePipelineData();
     resetStepperKey.value++;
   }
-
-  watch([isDialogOpen, backNavigationInProgress], ([dialogOpen, navigatingBack]) => {
-    if (dialogOpen) {
-      nextRoute.value = null;
-      return; // If the dialog is still open, return and don't execute the routing logic
-    }
-    if (!navigatingBack && nextRoute.value && isDialogOpen.value) {
-      $router.push(nextRoute.value);
-      nextRoute.value = null;
-    }
-  });
 </script>
 
 <template>
@@ -84,7 +93,7 @@
     title="Run Pipeline"
     :description="labName"
     :show-back-button="!hasLaunched"
-    :back-action="handleExitRun"
+    :back-action="() => (nextRoute = `/labs/${useLabsStore().labId}?tab=Pipelines`)"
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper
@@ -97,9 +106,10 @@
   <EGDialog
     action-label="Cancel Pipeline Run"
     :action-variant="ButtonVariantEnum.enum.destructive"
-    @action-triggered="handleDialogAction"
+    @action-triggered="confirmCancel"
     primary-message="Are you sure you would like to cancel?"
     secondary-message="Any changes made or files uploaded will not be saved."
-    v-model="isDialogOpen"
+    :model-value="!!nextRoute"
+    @update:modelValue="nextRoute = null"
   />
 </template>

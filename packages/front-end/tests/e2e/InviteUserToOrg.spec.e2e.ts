@@ -27,15 +27,7 @@ test('Remove Invited user to an Org Successfully', async ({ page, baseURL }) => 
   await page.getByRole('row', { name: 'Default Organization' }).locator('button').click();
   await page.getByRole('menuitem', { name: 'View / Edit' }).click();
   await page.waitForTimeout(2000);
-  //await page.getByRole('row', { name: 'marvin.umali+eg99@deptagency.com' }).locator('button').click();
   await page.getByRole('row', { name: 'marvin.umali+eg99@deptagency.com' }).locator('button').nth(1).click();
-  /*
-    await page
-        .getByRole('row')
-        .filter({ hasText: 'marvin.umali+eg99@deptagency.com' })
-        .getByRole('button', { name: '...' })
-    .click();
-    */
   await page.getByRole('menuitem', { name: 'Remove From Org' }).click();
   await page.getByRole('button', { name: 'Remove User' }).nth(1).click();
 

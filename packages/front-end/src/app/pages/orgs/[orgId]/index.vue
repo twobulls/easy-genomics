@@ -338,6 +338,7 @@
           :is-loading="isLoading"
           :action-items="actionItems"
           :show-pagination="!isLoading"
+          :row-click-action="onRowClicked"
         >
           <template #Name-data="{ user: row }">
             <div class="flex items-center">

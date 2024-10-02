@@ -208,7 +208,7 @@ class LabsModule extends HttpFactory {
     laboratoryId: string,
     workspaceId: string,
     accessToken?: string,
-  ): Promise<Boolean> {
+  ): Promise<boolean> {
     const res: NextFlowConnectionTestResponse | undefined =
       await this.callNextflowTower<NextFlowConnectionTestResponse>('POST', '/connection/request-connection-test', {
         OrganizationId: organizationId,

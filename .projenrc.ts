@@ -20,9 +20,9 @@ import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
 
 const defaultReleaseBranch = 'main';
-const cdkVersion = '2.124.0';
+const cdkVersion = '2.160.0';
 const nodeVersion = '20.15.0';
-const pnpmVersion = '9.6.0';
+const pnpmVersion = '9.11.0';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
@@ -167,7 +167,6 @@ const root = new typescript.TypeScriptProject({
     '@types/uuid',
     '@typescript-eslint/eslint-plugin@^7',
     '@typescript-eslint/parser@^7',
-    'aws-cdk-lib',
     'aws-sdk-client-mock',
     'aws-sdk-client-mock-jest',
     'cz-conventional-changelog',
@@ -324,6 +323,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     'aws-cdk-lib',
     'aws-lambda',
     'base64-js',
+    'cdk-nag',
     'dotenv',
     'jsonwebtoken',
     'uuid',
@@ -402,6 +402,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@smithy/url-parser',
     'aws-amplify@5.3.18',
     'axios',
+    'cdk-nag',
     'class-variance-authority',
     'clsx',
     'date-fns',

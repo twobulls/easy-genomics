@@ -1,5 +1,12 @@
 <script setup lang="ts">
   import { LabDetailsFormModeEnum } from '@FE/types/labs';
+
+  const router = useRouter();
+
+  // only allow org admins to access this page
+  if (!useOrgsStore().isOrgAdmin) {
+    router.push({ path: '/labs' });
+  }
 </script>
 
 <template>

@@ -49,6 +49,10 @@ const useOrgsStore = defineStore('orgsStore', {
     getUserLabAccess(): OrganizationAccessDetails | undefined {
       return this.selectedUser?.OrganizationAccess?.LaboratoryAccess;
     },
+
+    isOrgAdmin(): boolean {
+      return this.getUserLabAccess?.OrganizationAdmin || false;
+    },
   },
 
   persist: true,

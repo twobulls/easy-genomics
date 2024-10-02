@@ -20,6 +20,7 @@
     "upgrade": "pnpm dlx projen upgrade",
     "watch": "pnpm dlx projen watch",
     "projen": "pnpm dlx projen",
+    "cdk-audit": "export CDK_AUDIT=true && pnpm dlx projen build",
     "build-and-deploy": "pnpm -w run build-front-end && pnpm cdk bootstrap && pnpm dlx projen deploy --require-approval any-change",
     "nuxt-dev": "pnpm -w run build-front-end && pnpm kill-port 3000 && nuxt dev",
     "nuxt-load-settings": "npx esrun nuxt-load-configuration-settings.ts",

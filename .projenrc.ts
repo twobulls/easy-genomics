@@ -343,6 +343,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
 });
 backEndApp.addScripts({
+  ['cdk-audit']: 'export CDK_AUDIT=true && pnpm dlx projen build',
   ['build']: 'pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy --require-approval any-change', // Run root build-back-end script to inc shared-lib
@@ -443,6 +444,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
 });
 frontEndApp.addScripts({
+  ['cdk-audit']: 'export CDK_AUDIT=true && pnpm dlx projen build',
   ['build']:
     'pnpm run nuxt-reset && pnpm run nuxt-prepare && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-load-settings && pnpm run nuxt-generate',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',

@@ -8,6 +8,7 @@ import {
   AllowedMethods,
   CachePolicy,
   Distribution,
+  GeoRestriction,
   HeadersFrameOption,
   HeadersReferrerPolicy,
   IOrigin,
@@ -21,7 +22,7 @@ import { S3BucketOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { ARecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
-import { Bucket, BucketAccessControl } from 'aws-cdk-lib/aws-s3';
+import { Bucket, BucketAccessControl, ObjectOwnership } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
@@ -96,6 +97,26 @@ export class WwwHostingConstruct extends Construct {
     const appDomainName: string = this.props.appDomainName;
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-www`, {});
 
+    // Using the configured domainName for the CloudFront distribution access log
+    const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
+    // Create Access Log Bucket for CloudFront distribution access logging
+    const accessLogBucket: Bucket = s3.createBucket(
+      accessLogBucketName,
+      {
+        accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
+        removalPolicy: RemovalPolicy.DESTROY,
+        lifecycleRules: [
+          {
+            expiration: Duration.days(2),
+          },
+        ],
+        serverAccessLogsPrefix: 'cloudfront-access-log-',
+        objectOwnership: ObjectOwnership.OBJECT_WRITER,
+      },
+      this.props.devEnv,
+    );
+    this.s3Buckets.set(accessLogBucketName, accessLogBucket); // Add Bucket to Map collection
+
     // Using the configured domainName for the WWW S3 Bucket
     const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
 
@@ -105,6 +126,8 @@ export class WwwHostingConstruct extends Construct {
       {
         accessControl: BucketAccessControl.PRIVATE,
         removalPolicy: RemovalPolicy.DESTROY,
+        serverAccessLogsPrefix: 'www-s3-log-',
+        serverAccessLogsBucket: accessLogBucket,
       },
       this.props.devEnv,
     );
@@ -115,10 +138,16 @@ export class WwwHostingConstruct extends Construct {
   private setupCloudFrontDistribution = () => {
     const appDomainName: string = this.props.appDomainName;
     const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
+    const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
 
     const wwwBucket: Bucket | undefined = this.s3Buckets.get(wwwBucketName);
     if (!wwwBucket) {
       throw new Error(`S3 Bucket not found: ${wwwBucketName}`);
+    }
+
+    const accessLogBucket: Bucket | undefined = this.s3Buckets.get(accessLogBucketName);
+    if (!accessLogBucket) {
+      throw new Error(`S3 Bucket not found: ${accessLogBucketName}`);
     }
 
     // Grant CloudFront access to WWW S3 Bucket
@@ -165,6 +194,9 @@ export class WwwHostingConstruct extends Construct {
       domainNames,
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
       webAclId: this.props.webAclId, // Optional AWS WAF web ACL
+      geoRestriction: GeoRestriction.allowlist(...['AU', 'US']),
+      enableLogging: true,
+      logBucket: accessLogBucket,
       defaultBehavior: {
         origin: s3Origin,
         cachePolicy: CachePolicy.CACHING_OPTIMIZED,

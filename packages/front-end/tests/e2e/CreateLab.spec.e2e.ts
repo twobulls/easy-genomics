@@ -27,6 +27,8 @@ test('Should create a Laboratory', async ({ page, baseURL }) => {
   await page.getByPlaceholder('Enter lab name (required and').fill('Playwright test lab');
   await page.getByPlaceholder('Describe your lab and what').click();
   await page.getByPlaceholder('Describe your lab and what').fill('Playwright test lab description');
+  await page.getByLabel('Default S3 bucket directory').click();
+  await page.getByText('851725267090-quality.dev.easygenomics.org').click();
   await page.getByLabel('Workspace ID').click();
   await page.getByLabel('Workspace ID').fill('');
   await page.getByLabel('Personal Access Token').click();

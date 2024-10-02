@@ -9,10 +9,12 @@ import {
   InvalidRequestError,
   LaboratoryNameTakenError,
   RequiredIdNotFoundError,
+  UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
+import { validateOrganizationAdminAccess, validateLaboratoryManagerAccess } from '@BE/utils/auth-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -36,6 +38,16 @@ export const handler: Handler = async (
 
     // Lookup by LaboratoryId to confirm existence before updating
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
+
+    // TODO: check if lab not found
+
+    // Only Organisation Admins and Laboratory Managers are allowed to edit laboratories
+    if (
+      !validateOrganizationAdminAccess(event, existing.OrganizationId) ||
+      !validateLaboratoryManagerAccess(event, existing.OrganizationId, existing.LaboratoryId)
+    ) {
+      throw new UnauthorizedAccessError();
+    }
 
     const response: Laboratory = await laboratoryService
       .update(

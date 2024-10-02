@@ -6,9 +6,11 @@ import {
   InvalidRequestError,
   RequiredIdNotFoundError,
   OrganizationNameTakenError,
+  UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
+import { validateOrganizationAdminAccess, validateSystemAdminAccess } from '@BE/utils/auth-utils';
 
 const organizationService = new OrganizationService();
 
@@ -20,6 +22,11 @@ export const handler: Handler = async (
     // Get Path Parameter
     const id: string = event.pathParameters?.id || '';
     if (id === '') throw new RequiredIdNotFoundError();
+
+    // Only System Admins or Organisation Admins allowed
+    if (!validateSystemAdminAccess(event) && !validateOrganizationAdminAccess(event, id)) {
+      throw new UnauthorizedAccessError();
+    }
 
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Put Request Body

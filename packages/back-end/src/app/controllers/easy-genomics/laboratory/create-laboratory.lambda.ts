@@ -11,12 +11,14 @@ import {
   LaboratoryAlreadyExistsError,
   LaboratoryNameTakenError,
   OrganizationNotFoundError,
+  UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
 import { S3Service } from '@BE/services/s3-service';
 import { SsmService } from '@BE/services/ssm-service';
+import { validateOrganizationAdminAccess } from '@BE/utils/auth-utils';
 
 const organizationService = new OrganizationService();
 const laboratoryService = new LaboratoryService();
@@ -34,6 +36,11 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!CreateLaboratorySchema.safeParse(request).success) {
       throw new InvalidRequestError();
+    }
+
+    // Only Organisation Admins are allowed create laboratories
+    if (!validateOrganizationAdminAccess(event, request.OrganizationId)) {
+      throw new UnauthorizedAccessError();
     }
 
     // Validate OrganizationId exists before creating Laboratory

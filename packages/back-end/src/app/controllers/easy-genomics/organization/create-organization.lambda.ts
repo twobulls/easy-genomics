@@ -6,6 +6,7 @@ import {
   InvalidRequestError,
   OrganizationAlreadyExistsError,
   OrganizationNameTakenError,
+  UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,7 +28,7 @@ export const handler: Handler = async (
   try {
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     if (!validateSystemAdminAccess(event)) {
-      throw new Error('Unauthorized access');
+      throw new UnauthorizedAccessError();
     }
     // Post Request Body
     const request: Organization = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);

@@ -3,7 +3,6 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { useToastStore, useUiStore } from '@FE/stores';
   import { DeletedResponse } from '@FE/types/api';
-  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
   import useLabsStore from '@FE/stores/labs';
 
   const { $api } = useNuxtApp();
@@ -16,7 +15,7 @@
       key: 'Name',
       label: 'Name',
       sortable: true,
-      sort: caseInsensitiveSortFn,
+      sort: useSort().stringSortCompare,
     },
     {
       key: 'Description',
@@ -106,7 +105,7 @@
     try {
       useUiStore().setRequestPending(true);
       labData.value = (await $api.labs.list(useUserStore().currentOrgId)).sort((labA, labB) =>
-        stringSortCompare(labA.Name, labB.Name),
+        useSort().stringSortCompare(labA.Name, labB.Name),
       );
 
       if (!labData.value.length) {

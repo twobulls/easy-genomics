@@ -140,7 +140,7 @@
         if (labA.LabTechnician && !labB.LabTechnician) return -1;
         if (!labA.LabTechnician && labB.LabTechnician) return 1;
         // then sort by name
-        return stringSortCompare(labA.Name, labB.Name);
+        return useSort().stringSortCompare(labA.Name, labB.Name);
       });
   });
 

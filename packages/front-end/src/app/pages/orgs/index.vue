@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { useOrgsStore } from '@FE/stores';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const { $api } = useNuxtApp();
   const hasNoData = ref(false);
@@ -13,7 +12,7 @@
       key: 'Name',
       label: 'Name',
       sortable: true,
-      sort: caseInsensitiveSortFn,
+      sort: useSort().stringSortCompare,
     },
     {
       key: 'Description',
@@ -53,7 +52,7 @@
 
   onBeforeMount(async () => {
     try {
-      orgData.value = (await $api.orgs.list())?.sort((orgA, orgB) => stringSortCompare(orgA.Name, orgB.Name));
+      orgData.value = (await $api.orgs.list())?.sort((orgA, orgB) => useSort().stringSortCompare(orgA.Name, orgB.Name));
 
       if (!orgData.value.length) {
         hasNoData.value = true;

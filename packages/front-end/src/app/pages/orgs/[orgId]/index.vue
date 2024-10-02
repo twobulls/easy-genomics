@@ -11,7 +11,6 @@
   import { OrgDetailsForm } from '@FE/types/forms';
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
-  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const router = useRouter();
   const $route = useRoute();
@@ -51,7 +50,7 @@
       key: 'displayName',
       label: 'Name',
       sortable: true,
-      sort: caseInsensitiveSortFn,
+      sort: useSort().stringSortCompare,
     },
     {
       key: 'status',
@@ -116,7 +115,7 @@
       });
     }
 
-    return data.sort((userA, userB) => stringSortCompare(userA.displayName, userB.displayName));
+    return data.sort((userA, userB) => useSort().stringSortCompare(userA.displayName, userB.displayName));
   });
 
   const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());

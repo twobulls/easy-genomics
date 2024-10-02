@@ -153,6 +153,7 @@
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
+        await fetchUserLabs();
         useToastStore().success(
           `${lab.name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`,
         );

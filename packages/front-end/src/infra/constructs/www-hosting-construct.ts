@@ -10,13 +10,14 @@ import {
   Distribution,
   HeadersFrameOption,
   HeadersReferrerPolicy,
+  IOrigin,
   OriginAccessIdentity,
   ResponseHeadersPolicy,
   ResponseSecurityHeadersBehavior,
   SecurityPolicyProtocol,
   ViewerProtocolPolicy,
 } from 'aws-cdk-lib/aws-cloudfront';
-import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
+import { S3BucketOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { ARecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
@@ -148,7 +149,7 @@ export class WwwHostingConstruct extends Construct {
       enableAcceptEncodingBrotli: true,
     });
 
-    const s3Origin: S3Origin = new S3Origin(wwwBucket, { originAccessIdentity });
+    const s3Origin: IOrigin = S3BucketOrigin.withOriginAccessIdentity(wwwBucket, { originAccessIdentity });
     const indexPath: string = `/${this.props.webSiteIndexDocument}`;
 
     const certificate: ICertificate | undefined =

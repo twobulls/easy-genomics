@@ -358,5 +358,5 @@ git commit -m "feat(EG-XXX): add hat wobble"
 To upgrade the node packages across the entire project using Projen simply run the following command:
 
 ```sh
-pnpm projen upgrade
+pnpm run upgrade
 ```

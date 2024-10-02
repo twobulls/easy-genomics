@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { usePipelineRunStore } from '@FE/stores';
+  import { usePipelineRunStore, useUiStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
@@ -42,8 +42,30 @@
    */
   async function initializePipelineData() {
     const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
-    schema.value = JSON.parse(res.schema);
-    usePipelineRunStore().setParams(JSON.parse(<string>res.params));
+    const originalSchema = JSON.parse(res.schema);
+
+    // Filter Schema to exclude any sections that do not have any visible parameters for user input
+    const filteredDefinitions = Object.keys(originalSchema.definitions)
+      .flatMap((key) => {
+        const section = originalSchema.definitions[key];
+        const hasAllHiddenSettings: boolean = Object.values(section.properties).every((x) => x?.hidden === true);
+        if (!hasAllHiddenSettings) {
+          return {
+            [key]: section,
+          };
+        }
+      })
+      .filter((_) => _)
+      .reduce((acc, cur) => ({ ...acc, [Object.keys(cur)[0]]: Object.values(cur)[0] }), {});
+
+    schema.value = {
+      ...originalSchema,
+      definitions: filteredDefinitions,
+    };
+    usePipelineRunStore().setPipelineDescription(schema.value.description);
+    if (res.params) {
+      usePipelineRunStore().setParams(JSON.parse(res.params));
+    }
   }
 
   function confirmCancel() {
@@ -59,6 +81,7 @@
    */
   function resetRunPipeline() {
     usePipelineRunStore().setUserPipelineRunName('');
+    usePipelineRunStore().setPipelineDescription('');
     usePipelineRunStore().setParams({});
     initializePipelineData();
     resetStepperKey.value++;

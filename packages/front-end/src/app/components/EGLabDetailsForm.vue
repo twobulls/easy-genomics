@@ -33,13 +33,13 @@
     },
   );
 
-  const formMode = ref(props.formMode);
-
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const router = useRouter();
 
+  const formMode = ref(props.formMode);
   const s3Directories = ref([]);
+  const isLoadingBuckets = ref(false);
   const isLoadingFormData = ref(false);
   const canSubmit = ref(false);
   const isSubmittingFormData = ref(false);
@@ -123,28 +123,36 @@
    *
    * - The getter checks if there are any S3 directories available.
    *   - If no directories are available, it returns 'No S3 Buckets found'.
-   *   - Otherwise, it returns the matched bucket if it exists, or the first bucket in the list.
+   *   - Otherwise, it returns a matched bucket; if none found, a call to action
+   *     is displayed.
    *
    * - The setter updates the application's state with the new S3 bucket value.
    */
   const selectedS3Bucket = computed({
     get() {
-      if (!s3Directories.value.length) {
+      if (isLoadingBuckets.value) {
+        return 'Retrieving S3 Buckets...';
+      } else if (!s3Directories.value.length && !isLoadingBuckets.value) {
         return 'No S3 Buckets found';
       }
       const matchedBucket = s3Directories.value.find((dir) => dir === state.value.S3Bucket);
-      return matchedBucket || s3Directories.value[0];
+      return matchedBucket || undefined;
     },
     set(newValue) {
       state.value.S3Bucket = newValue;
     },
   });
 
+  const isS3BucketSelected = computed(() => selectedS3Bucket.value);
+
   async function getS3Buckets() {
     try {
+      isLoadingBuckets.value = true;
       s3Directories.value = await $api.infra.s3Buckets().then((res) => res.map((bucket) => bucket.Name));
     } catch (error) {
       useToastStore().error('Failed to retrieve S3 buckets');
+    } finally {
+      isLoadingBuckets.value = false;
     }
   }
 
@@ -315,14 +323,6 @@
     }
   }
 
-  watch(
-    state,
-    (newState) => {
-      validate(newState);
-    },
-    { deep: true },
-  );
-
   /**
    * Determines if the form data has changed from the original lab details.
    * @returns {boolean} True if the form data has changed, otherwise false.
@@ -341,6 +341,14 @@
     }
     return false;
   }
+
+  watch(
+    state,
+    (newState) => {
+      validate(newState);
+    },
+    { deep: true },
+  );
 </script>
 
 <template>
@@ -372,7 +380,8 @@
           :options="s3Directories"
           v-model="selectedS3Bucket"
           :disabled="isNextFlowTowerWorkspaceIdFieldDisabled"
-          placeholder="Search existing S3 buckets..."
+          placeholder="Please select an S3 bucket from the list below"
+          searchable-placeholder="Search existing S3 buckets..."
         />
       </EGFormGroup>
 
@@ -412,7 +421,7 @@
     <!-- Form Buttons: Create Mode -->
     <div v-if="formMode === LabDetailsFormModeEnum.enum.Create" class="mt-6 flex space-x-2">
       <EGButton
-        :disabled="!canSubmit"
+        :disabled="!canSubmit || !isS3BucketSelected"
         :loading="isSubmittingFormData"
         :size="ButtonSizeEnum.enum.sm"
         type="submit"
@@ -441,7 +450,7 @@
     <!-- Form Buttons: Edit Mode -->
     <div v-if="formMode === LabDetailsFormModeEnum.enum.Edit" class="mt-6 flex space-x-2">
       <EGButton
-        :disabled="!canSubmit"
+        :disabled="!canSubmit || !isS3BucketSelected"
         :loading="isSubmittingFormData"
         :size="ButtonSizeEnum.enum.sm"
         type="submit"

@@ -117,6 +117,7 @@
     },
     {
       "name": "@nuxt/ui",
+      "version": "2.18.4",
       "type": "runtime"
     },
     {

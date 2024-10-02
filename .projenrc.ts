@@ -398,7 +398,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/s3-request-presigner',
     '@aws-sdk/util-format-url',
     '@easy-genomics/shared-lib@workspace:*',
-    '@nuxt/ui',
+    '@nuxt/ui@2.18.4', // Lock to version 2.18.4 due to input text bug
     '@pinia-plugin-persistedstate/nuxt',
     '@pinia/nuxt',
     '@smithy/types',

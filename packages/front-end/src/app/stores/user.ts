@@ -1,9 +1,25 @@
+import { OrganizationAccess } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { defineStore } from 'pinia';
 
-const initialState = () => ({
+interface UserStoreState {
+  currentOrg: {
+    OrganizationId: string;
+    OrganizationName: string;
+  };
+  currentUserPermissions: {
+    isSuperuser: boolean | null;
+    orgPermissions: OrganizationAccess | null;
+  };
+}
+
+const initialState = (): UserStoreState => ({
   currentOrg: {
     OrganizationId: '',
     OrganizationName: '',
+  },
+  currentUserPermissions: {
+    isSuperuser: null,
+    orgPermissions: null,
   },
 });
 
@@ -24,6 +40,42 @@ const useUserStore = defineStore('userStore', {
     },
     reset() {
       Object.assign(this, initialState());
+    },
+
+    async loadCurrentUserPermissions(): Promise<void> {
+      const token = await useAuth().getToken();
+      // TODO: set superuser
+      const decodedToken: any = decodeJwt(token);
+      const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
+      this.currentUserPermissions = parsedOrgAccess;
+    },
+
+    isSuperuser(): boolean {
+      return !!this.currentUserPermissions.isSuperuser;
+    },
+    isOrgAdmin(orgId: string): boolean {
+      return !!this.currentUserPermissions.orgPermissions?.[orgId].OrganizationAdmin;
+    },
+    isLabMember(orgId: string, labId: string): boolean {
+      return !!this.currentUserPermissions.orgPermissions?.[orgId].LaboratoryAccess?.[labId];
+    },
+    isLabManager(orgId: string, labId: string): boolean {
+      return !!this.currentUserPermissions.orgPermissions?.[orgId].LaboratoryAccess?.[labId].LabManager;
+    },
+    mayEditOrg(orgId: string): boolean {
+      return this.isSuperuser() || this.isOrgAdmin(orgId);
+    },
+    mayCreateLab(orgId: string): boolean {
+      return this.isSuperuser() || this.isOrgAdmin(orgId);
+    },
+    mayViewLab(orgId: string, labId: string): boolean {
+      return this.isSuperuser() || this.isLabMember(orgId, labId);
+    },
+    mayEditLab(orgId: string, labId: string): boolean {
+      return this.isSuperuser() || this.isLabManager(orgId, labId);
+    },
+    mayDeleteLab(orgId: string): boolean {
+      return this.isSuperuser() || this.isOrgAdmin(orgId);
     },
   },
 

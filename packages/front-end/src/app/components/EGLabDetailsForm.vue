@@ -387,7 +387,11 @@
 
       <!-- Next Flow Tower Workspace ID -->
       <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId" eager-validation>
-        <EGInput v-model="state.NextFlowTowerWorkspaceId" :disabled="isNextFlowTowerWorkspaceIdFieldDisabled" />
+        <EGInput
+          v-model="state.NextFlowTowerWorkspaceId"
+          placeholder="Defaults to the Next Flow Tower personal workspace if not specified."
+          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled"
+        />
       </EGFormGroup>
 
       <!-- Next Flow Tower Access Token -->

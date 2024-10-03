@@ -86,6 +86,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
           },
         },
+        '/easy-genomics/laboratory/update-laboratory': {
+          environment: {
+            SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
+          },
+        },
       },
       environment: {
         // Defines the common environment settings for all lambda functions
@@ -369,7 +374,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         resources: [
           `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
         ],
-        actions: ['ssm:PutParameter'],
+        actions: ['ssm:GetParameter', 'ssm:PutParameter'],
         effect: Effect.ALLOW,
       }),
     ]);

@@ -267,7 +267,11 @@
     const labId: string = $route.params.labId;
     const lab: UpdateLaboratory = parseResult.data;
 
-    await $api.labs.update(labId, lab);
+    const res = await $api.labs.update(labId, lab);
+    if (!res) {
+      useToastStore().error(`Failed to verify details for ${state.value.Name}`);
+    }
+
     isEditingNextFlowTowerAccessToken.value = false;
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
     await getLabDetails();

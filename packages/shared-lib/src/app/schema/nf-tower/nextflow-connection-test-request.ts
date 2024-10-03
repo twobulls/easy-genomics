@@ -4,7 +4,7 @@ export const NextFlowConnectionTestRequestSchema = z
   .object({
     OrganizationId: z.string().uuid(),
     LaboratoryId: z.string().uuid(),
-    WorkspaceId: z.string().min(1),
+    WorkspaceId: z.string().optional(),
     AccessToken: z.string().optional(),
   })
   .strict();

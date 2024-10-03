@@ -212,17 +212,7 @@
       if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
         await handleCreateLab();
       } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
-        const res = await $api.labs.verifyLabCredentials(
-          state.value.OrganizationId,
-          state.value.LaboratoryId,
-          state.value.NextFlowTowerWorkspaceId,
-          state.value.NextFlowTowerAccessToken,
-        );
-        if (res) {
-          await handleUpdateLabDetails();
-        } else {
-          useToastStore().error(`Failed to verify details for ${state.value.Name}`);
-        }
+        await handleUpdateLabDetails();
       }
     } catch (error) {
       useToastStore().error(`Invalid Workspace ID or Personal Access Token. Please try again.`);
@@ -250,7 +240,10 @@
 
     const newLab = parseResult.data as CreateLaboratory;
 
-    await $api.labs.create(newLab);
+    const res = await $api.labs.create(newLab);
+    if (!res) {
+      useToastStore().error(`Failed to verify details for ${state.value.Name}`);
+    }
 
     useToastStore().success(`Successfully created lab: ${newLab.Name}`);
     router.push({ path: '/labs' });

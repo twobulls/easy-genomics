@@ -81,6 +81,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
+        '/easy-genomics/laboratory/create-laboratory': {
+          environment: {
+            SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
+          },
+        },
       },
       environment: {
         // Defines the common environment settings for all lambda functions

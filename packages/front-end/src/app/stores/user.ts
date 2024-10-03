@@ -44,8 +44,15 @@ const useUserStore = defineStore('userStore', {
 
     async loadCurrentUserPermissions(): Promise<void> {
       const token = await useAuth().getToken();
-      // TODO: set superuser
       const decodedToken: any = decodeJwt(token);
+
+      if (decodedToken['cognito:groups']?.includes('SystemAdmin')) {
+        this.currentUserPermissions.isSuperuser = true;
+        return;
+      }
+
+      this.currentUserPermissions.isSuperuser = false;
+
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
       this.currentUserPermissions = parsedOrgAccess;
     },

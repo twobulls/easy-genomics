@@ -551,7 +551,9 @@
               <EGUserRoleDropdownNew
                 :show-remove-from-lab="true"
                 :key="labUser?.LabManager"
-                :disabled="useUiStore().isRequestPending"
+                :disabled="
+                  useUiStore().isRequestPending || !useUserStore().mayEditLab(useUserStore().currentOrgId, labId)
+                "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"
                 @remove-user-from-lab="showRemoveUserDialog($event.user)"

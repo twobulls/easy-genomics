@@ -55,6 +55,7 @@
             Labs
           </ULink>
           <ULink
+            v-if="useUserStore().isOrgAdmin(useUserStore().currentOrgId)"
             to="/orgs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"

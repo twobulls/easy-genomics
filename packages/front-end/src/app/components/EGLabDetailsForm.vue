@@ -373,7 +373,11 @@
         />
       </EGFormGroup>
 
-      <EGFormGroup label="Default S3 bucket directory" name="DefaultS3BucketDirectory">
+      <EGFormGroup
+        v-if="useUserStore().isOrgAdmin(useUserStore().currentOrgId)"
+        label="Default S3 bucket directory"
+        name="DefaultS3BucketDirectory"
+      >
         <EGSelect
           :options="s3Directories"
           v-model="selectedS3Bucket"

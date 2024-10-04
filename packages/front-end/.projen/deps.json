@@ -36,7 +36,7 @@
     },
     {
       "name": "aws-cdk",
-      "version": "^2.124.0",
+      "version": "^2.160.0",
       "type": "build"
     },
     {
@@ -117,6 +117,7 @@
     },
     {
       "name": "@nuxt/ui",
+      "version": "2.18.4",
       "type": "runtime"
     },
     {
@@ -146,11 +147,15 @@
     },
     {
       "name": "aws-cdk-lib",
-      "version": "^2.124.0",
+      "version": "^2.160.0",
       "type": "runtime"
     },
     {
       "name": "axios",
+      "type": "runtime"
+    },
+    {
+      "name": "cdk-nag",
       "type": "runtime"
     },
     {

@@ -358,5 +358,18 @@ git commit -m "feat(EG-XXX): add hat wobble"
 To upgrade the node packages across the entire project using Projen simply run the following command:
 
 ```sh
-pnpm projen upgrade
+pnpm run upgrade
+```
+
+### CDK Infrastructure Security Audit
+
+To audit the Back-End or Front-End CDK infrastructure against AWS Security guidelines defined by CDK-Nag, run the
+`pnpm run cdk-audit` command within the `back-end` or `front-end` sub-package folder.
+
+```
+[easy-genomics/packages/back-end]$ pnpm run cdk-audit
+
+or
+
+[easy-genomics/packages/front-end]$ pnpm run cdk-audit
 ```

@@ -54,10 +54,6 @@
       "type": "build"
     },
     {
-      "name": "aws-cdk-lib",
-      "type": "build"
-    },
-    {
       "name": "aws-sdk-client-mock",
       "type": "build"
     },

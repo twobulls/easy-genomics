@@ -20,9 +20,9 @@ import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
 
 const defaultReleaseBranch = 'main';
-const cdkVersion = '2.124.0';
+const cdkVersion = '2.160.0';
 const nodeVersion = '20.15.0';
-const pnpmVersion = '9.6.0';
+const pnpmVersion = '9.11.0';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
@@ -167,7 +167,6 @@ const root = new typescript.TypeScriptProject({
     '@types/uuid',
     '@typescript-eslint/eslint-plugin@^7',
     '@typescript-eslint/parser@^7',
-    'aws-cdk-lib',
     'aws-sdk-client-mock',
     'aws-sdk-client-mock-jest',
     'cz-conventional-changelog',
@@ -205,6 +204,9 @@ root.addScripts({
     'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/front-end --verbose=true',
   ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
+  ['upgrade']:
+    'pnpm dlx projen upgrade && ' +
+    'pnpm nx run-many --targets=upgrade --projects=@easy-genomics/shared-lib,@easy-genomics/back-end,@easy-genomics/front-end',
   // CI/CD convenience scripts
   ['cicd-build-deploy-back-end']:
     'export CI_CD=true && ' +
@@ -324,6 +326,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     'aws-cdk-lib',
     'aws-lambda',
     'base64-js',
+    'cdk-nag',
     'dotenv',
     'jsonwebtoken',
     'uuid',
@@ -340,6 +343,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
 });
 backEndApp.addScripts({
+  ['cdk-audit']: 'export CDK_AUDIT=true && pnpm dlx projen build',
   ['build']: 'pnpm dlx projen compile && pnpm dlx projen test && pnpm dlx projen build',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',
   ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy --require-approval any-change', // Run root build-back-end script to inc shared-lib
@@ -395,13 +399,14 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/s3-request-presigner',
     '@aws-sdk/util-format-url',
     '@easy-genomics/shared-lib@workspace:*',
-    '@nuxt/ui',
+    '@nuxt/ui@2.18.4', // Lock to version 2.18.4 due to input text bug
     '@pinia-plugin-persistedstate/nuxt',
     '@pinia/nuxt',
     '@smithy/types',
     '@smithy/url-parser',
     'aws-amplify@5.3.18',
     'axios',
+    'cdk-nag',
     'class-variance-authority',
     'clsx',
     'date-fns',
@@ -439,6 +444,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   ],
 });
 frontEndApp.addScripts({
+  ['cdk-audit']: 'export CDK_AUDIT=true && pnpm dlx projen build',
   ['build']:
     'pnpm run nuxt-reset && pnpm run nuxt-prepare && pnpm dlx projen test && pnpm dlx projen build && pnpm run nuxt-load-settings && pnpm run nuxt-generate',
   ['deploy']: 'pnpm cdk bootstrap && pnpm dlx projen deploy',

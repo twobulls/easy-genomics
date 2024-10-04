@@ -11,7 +11,6 @@
   import { OrgDetailsForm } from '@FE/types/forms';
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
-  import { caseInsensitiveSortFn } from '@FE/utils/sort-utils';
 
   const router = useRouter();
   const $route = useRoute();
@@ -51,7 +50,7 @@
       key: 'displayName',
       label: 'Name',
       sortable: true,
-      sort: caseInsensitiveSortFn,
+      sort: useSort().stringSortCompare,
     },
     {
       key: 'status',
@@ -105,16 +104,18 @@
    * Filter rows based on search input for both name and email
    */
   const filteredTableData = computed(() => {
-    if (!searchOutput.value && !hasNoData.value) {
-      return orgUsersDetailsData.value;
+    let data = orgUsersDetailsData.value;
+
+    if (searchOutput.value || hasNoData.value) {
+      data = data.filter((user: OrgUser) => {
+        const fullName = user.displayName.toLowerCase();
+        const email = String(user.UserEmail).toLowerCase();
+
+        return fullName.includes(lowerCasedSearch.value) || email.includes(lowerCasedSearch.value);
+      });
     }
-    return orgUsersDetailsData.value.filter((user: OrgUser) => {
-      const fullName = user.displayName.toLowerCase();
 
-      const email = String(user.UserEmail).toLowerCase();
-
-      return fullName.includes(lowerCasedSearch.value) || email.includes(lowerCasedSearch.value);
-    });
+    return data.sort((userA, userB) => useSort().stringSortCompare(userA.displayName, userB.displayName));
   });
 
   const lowerCasedSearch = computed(() => searchOutput.value.toLowerCase());

@@ -7,7 +7,7 @@ import {
   RequiredIdNotFoundError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
-import { getApiParameters, httpRequest, REST_API_METHOD } from '../../../utils/rest-api-utils';
+import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '../../../utils/rest-api-utils';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
 
@@ -58,7 +58,7 @@ export const handler: Handler = async (
     }
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiQueryParameters: string = getApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
+    const apiQueryParameters: string = getNextFlowApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
     const response: ListComputeEnvsResponse = await httpRequest<ListComputeEnvsResponse>(
       `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiQueryParameters}`,
       REST_API_METHOD.GET,
@@ -70,11 +70,3 @@ export const handler: Handler = async (
     return buildErrorResponse(err, event);
   }
 };
-
-function getApiQueryParameters(event: APIGatewayProxyWithCognitoAuthorizerEvent, workspaceId?: string): string {
-  const apiParameters: URLSearchParams = getApiParameters(event);
-  if (workspaceId && workspaceId !== '') {
-    apiParameters.set('workspaceId', workspaceId);
-  }
-  return apiParameters.toString();
-}

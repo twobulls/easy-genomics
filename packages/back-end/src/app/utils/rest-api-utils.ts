@@ -75,3 +75,16 @@ export function getApiParameters(event: APIGatewayProxyEvent): URLSearchParams {
 
   return parameters;
 }
+
+/**
+ * Helper utility function to set the NextFlow Tower API query parameters.
+ * @param event
+ * @param workspaceId
+ */
+export function getNextFlowApiQueryParameters(event: APIGatewayProxyEvent, workspaceId?: string): string {
+  const apiParameters: URLSearchParams = getApiParameters(event);
+  if (workspaceId) {
+    apiParameters.set('workspaceId', workspaceId);
+  }
+  return apiParameters.toString();
+}

@@ -12,7 +12,7 @@ import {
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
-import { getApiParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
+import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -68,7 +68,7 @@ export const handler: Handler = async (
     }
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiQueryParameters: string = getApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
+    const apiQueryParameters: string = getNextFlowApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
 
     console.log('Next Flow Tower API create workflow launch API Parameters:', apiQueryParameters);
     console.log('Next Flow Tower API create workflow launch request:', createWorkflowLaunchRequest);
@@ -87,11 +87,3 @@ export const handler: Handler = async (
     return buildErrorResponse(err, event);
   }
 };
-
-function getApiQueryParameters(event: APIGatewayProxyWithCognitoAuthorizerEvent, workspaceId?: string): string {
-  const apiParameters: URLSearchParams = getApiParameters(event);
-  if (workspaceId && workspaceId !== '') {
-    apiParameters.set('workspaceId', workspaceId);
-  }
-  return apiParameters.toString();
-}

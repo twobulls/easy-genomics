@@ -1,7 +1,8 @@
 import { join } from 'path';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
-import { App } from 'aws-cdk-lib';
+import { App, Aspects } from 'aws-cdk-lib';
+import { AwsSolutionsChecks } from 'cdk-nag';
 import { FrontEndStack } from './infra/stacks/front-end-stack';
 
 const app = new App();
@@ -124,5 +125,10 @@ new FrontEndStack(app, `${envName}-main-front-end-stack`, {
   awsHostedZoneId,
   awsCertificateArn,
 });
+
+if (process.env.CDK_AUDIT === 'true') {
+  // Perform AWS Security check on FE CDK infrastructure
+  Aspects.of(app).add(new AwsSolutionsChecks({ verbose: false }));
+}
 
 app.synth();

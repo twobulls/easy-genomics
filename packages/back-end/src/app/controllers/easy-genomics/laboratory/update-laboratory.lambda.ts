@@ -1,4 +1,6 @@
 import { TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import { GetParameterCommandOutput } from '@aws-sdk/client-ssm';
+import { ListComputeEnvsResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import {
   UpdateLaboratory,
   UpdateLaboratorySchema,
@@ -15,6 +17,7 @@ import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handl
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
 import { validateOrganizationAdminAccess, validateLaboratoryManagerAccess } from '@BE/utils/auth-utils';
+import { httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -39,8 +42,6 @@ export const handler: Handler = async (
     // Lookup by LaboratoryId to confirm existence before updating
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
 
-    // TODO: check if lab not found
-
     // Only Organisation Admins and Laboratory Managers are allowed to edit laboratories
     if (
       !validateOrganizationAdminAccess(event, existing.OrganizationId) ||
@@ -49,7 +50,17 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
-    const response: Laboratory = await laboratoryService
+    if (
+      !(await validateExistingNextFlowIntegration(
+        existing,
+        request.NextFlowTowerWorkspaceId,
+        request.NextFlowTowerAccessToken,
+      ))
+    ) {
+      throw new InvalidRequestError();
+    }
+
+    const response = await laboratoryService
       .update(
         {
           ...existing,
@@ -90,3 +101,31 @@ export const handler: Handler = async (
     return buildErrorResponse(err, event);
   }
 };
+
+async function validateExistingNextFlowIntegration(
+  laboratory: Laboratory,
+  workspaceId?: string,
+  accessToken?: string,
+): Promise<boolean> {
+  if (!accessToken || accessToken === '') {
+    const getNextFlowAccessToken: GetParameterCommandOutput = await ssmService.getParameter({
+      Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
+      WithDecryption: true,
+    });
+    if (!getNextFlowAccessToken.Parameter || !getNextFlowAccessToken.Parameter.Value) {
+      throw new InvalidRequestError();
+    }
+    accessToken = getNextFlowAccessToken.Parameter.Value;
+  }
+
+  // Build Query Parameters for calling NextFlow Tower
+  const apiParameters: URLSearchParams = new URLSearchParams();
+  apiParameters.set('workspaceId', `${workspaceId || ''}`); // WorkspaceId can be empty
+
+  const nfResponse: ListComputeEnvsResponse = await httpRequest<ListComputeEnvsResponse>(
+    `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiParameters.toString()}`,
+    REST_API_METHOD.GET,
+    { Authorization: `Bearer ${accessToken}` },
+  );
+  return !!nfResponse;
+}

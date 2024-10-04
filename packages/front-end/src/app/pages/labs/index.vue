@@ -122,18 +122,25 @@
   onMounted(async () => {
     await getLabs();
   });
+
+  const isOrgAdmin = computed<boolean>(() => useUserStore().mayCreateLab(useUserStore().currentOrgId));
 </script>
 
 <template>
-  <EGPageHeader title="Labs" :show-back="false" :back-action="() => $router.push('/')">
-    <EGButton label="Create a new Lab" class="self-end" @click="() => $router.push({ path: `/labs/create` })" />
+  <EGPageHeader title="Labs" :show-back="false">
+    <EGButton
+      v-if="isOrgAdmin"
+      label="Create a new Lab"
+      class="self-end"
+      @click="() => $router.push({ path: `/labs/create` })"
+    />
   </EGPageHeader>
 
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Labs set up yet."
-    :primary-button-action="() => $router.push({ path: `/labs/create` })"
-    primary-button-label="Create a new Lab"
+    :primary-button-action="isOrgAdmin ? () => $router.push({ path: `/labs/create` }) : null"
+    :primary-button-label="isOrgAdmin ? 'Create a new Lab' : null"
   />
 
   <EGTable

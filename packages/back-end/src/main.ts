@@ -3,7 +3,8 @@ import { join } from 'path';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import { VpcPeering } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
-import { App } from 'aws-cdk-lib';
+import { App, Aspects } from 'aws-cdk-lib';
+import { AwsSolutionsChecks } from 'cdk-nag';
 import { cognitoPasswordRegex } from './infra/constants/cognito';
 import { BackEndStack } from './infra/stacks/back-end-stack';
 
@@ -229,5 +230,10 @@ new BackEndStack(app, `${envName}-main-back-end-stack`, {
   seqeraApiBaseUrl: seqeraApiBaseUrl.replace(/\/+$/, ''), // Remove trailing slashes
   vpcPeering: vpcPeering,
 });
+
+if (process.env.CDK_AUDIT === 'true') {
+  // Perform AWS Security check on FE CDK infrastructure
+  Aspects.of(app).add(new AwsSolutionsChecks({ verbose: false }));
+}
 
 app.synth();

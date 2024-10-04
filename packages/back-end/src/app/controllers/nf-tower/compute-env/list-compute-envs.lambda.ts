@@ -37,9 +37,6 @@ export const handler: Handler = async (
     if (laboratoryId === '') throw new RequiredIdNotFoundError('laboratoryId');
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
-    if (!laboratory.NextFlowTowerWorkspaceId) {
-      throw new Error('Laboratory Workspace Id unavailable');
-    }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
     const getParameterResponse: GetParameterCommandOutput = await ssmService

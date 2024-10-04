@@ -4,7 +4,6 @@ import { ListWorkflowsResponse } from '@easy-genomics/shared-lib/src/app/types/n
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   LaboratoryAccessTokenUnavailableError,
-  LaboratoryWorkspaceIdUnavailableError,
   RequiredIdNotFoundError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -38,10 +37,6 @@ export const handler: Handler = async (
     if (laboratoryId === '') throw new RequiredIdNotFoundError('laboratoryId');
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
-
-    if (!laboratory.NextFlowTowerWorkspaceId) {
-      throw new LaboratoryWorkspaceIdUnavailableError();
-    }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
     const getParameterResponse: GetParameterCommandOutput = await ssmService

@@ -18,6 +18,7 @@ export default function useAuth() {
       useUiStore().setRequestPending(true);
       const user = await Auth.signIn(username, password);
       if (user) {
+        await useUserStore().loadCurrentUserPermissions();
         await navigateTo('/labs');
       }
     } catch (error: any) {
@@ -41,6 +42,7 @@ export default function useAuth() {
   async function signOut() {
     try {
       await Auth.signOut();
+      await useUserStore().reset();
       await navigateTo('/signin');
       useToastStore().success('You have been signed out.');
     } catch (error) {

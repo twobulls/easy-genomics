@@ -27,21 +27,28 @@
     },
   ];
 
-  const actionItems = (lab: Laboratory) => [
-    [
-      {
-        label: 'View / Edit',
-        click: () => viewLab(lab.LaboratoryId, lab.Name),
-      },
-    ],
-    [
-      {
-        label: 'Remove',
-        class: 'text-alert-danger-dark',
-        click: () => deleteLab(lab.LaboratoryId, lab.Name),
-      },
-    ],
-  ];
+  function actionItems(lab: Laboratory) {
+    const items: object[] = [
+      [
+        {
+          label: 'View / Edit',
+          click: () => viewLab(lab.LaboratoryId, lab.Name),
+        },
+      ],
+    ];
+
+    if (useUserStore().mayDeleteLab(useUserStore().currentOrgId)) {
+      items.push([
+        {
+          label: 'Remove',
+          class: 'text-alert-danger-dark',
+          click: () => deleteLab(lab.LaboratoryId, lab.Name),
+        },
+      ]);
+    }
+
+    return items;
+  }
 
   // Dynamic delete lab dialog values
   const isOpen = ref(false);

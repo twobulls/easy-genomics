@@ -485,7 +485,7 @@ new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVe
 new GithubActionsCICDRelease(root, {
   environment: 'sandbox',
   pnpmVersion: pnpmVersion,
-  onPushBranch: 'main',
+  onPushBranch: 'infra/*',
   e2e: false,
 });
 new ApacheLicense(root, licenseOptions);

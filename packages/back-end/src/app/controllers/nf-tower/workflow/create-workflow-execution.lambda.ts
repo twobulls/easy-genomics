@@ -7,13 +7,12 @@ import {
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   LaboratoryAccessTokenUnavailableError,
-  LaboratoryWorkspaceIdUnavailableError,
   RequiredIdNotFoundError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
-import { httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
+import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -48,9 +47,6 @@ export const handler: Handler = async (
     console.log('createWorkflowLaunchRequest:', createWorkflowLaunchRequest);
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
-    if (!laboratory.NextFlowTowerWorkspaceId) {
-      throw new LaboratoryWorkspaceIdUnavailableError();
-    }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
     const getParameterResponse: GetParameterCommandOutput = await ssmService
@@ -72,14 +68,13 @@ export const handler: Handler = async (
     }
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiParameters: URLSearchParams = new URLSearchParams();
-    apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
+    const apiQueryParameters: string = getNextFlowApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
 
-    console.log('Next Flow Tower API create workflow launch API Parameters:', apiParameters);
+    console.log('Next Flow Tower API create workflow launch API Parameters:', apiQueryParameters);
     console.log('Next Flow Tower API create workflow launch request:', createWorkflowLaunchRequest);
 
     const response: CreateWorkflowLaunchResponse = await httpRequest<CreateWorkflowLaunchResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/workflow/launch?${apiParameters.toString()}`,
+      `${process.env.SEQERA_API_BASE_URL}/workflow/launch?${apiQueryParameters}`,
       REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },
       createWorkflowLaunchRequest, // Delegate request body validation to Seqera Cloud / NextFlow Tower

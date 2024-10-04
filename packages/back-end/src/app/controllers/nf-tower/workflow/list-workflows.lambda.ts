@@ -4,13 +4,12 @@ import { ListWorkflowsResponse } from '@easy-genomics/shared-lib/src/app/types/n
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   LaboratoryAccessTokenUnavailableError,
-  LaboratoryWorkspaceIdUnavailableError,
   RequiredIdNotFoundError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
-import { getApiParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
+import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -39,10 +38,6 @@ export const handler: Handler = async (
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
 
-    if (!laboratory.NextFlowTowerWorkspaceId) {
-      throw new LaboratoryWorkspaceIdUnavailableError();
-    }
-
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
     const getParameterResponse: GetParameterCommandOutput = await ssmService
       .getParameter({
@@ -63,11 +58,9 @@ export const handler: Handler = async (
     }
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiParameters: URLSearchParams = getApiParameters(event);
-    apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
-
+    const apiQueryParameters: string = getNextFlowApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
     const response: ListWorkflowsResponse = await httpRequest<ListWorkflowsResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/workflow?${apiParameters.toString()}`,
+      `${process.env.SEQERA_API_BASE_URL}/workflow?${apiQueryParameters}`,
       REST_API_METHOD.GET,
       { Authorization: `Bearer ${accessToken}` },
     );

@@ -1,11 +1,11 @@
-import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
+import { GetParameterCommandOutput } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { DescribeWorkflowReportsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/workflow-reports';
-import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
-import { httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
+import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -35,9 +35,6 @@ export const handler: Handler = async (
     if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
-    if (!laboratory.NextFlowTowerWorkspaceId) {
-      throw new Error('Laboratory Workspace Id unavailable');
-    }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
     const getParameterResponse: GetParameterCommandOutput = await ssmService.getParameter({
@@ -50,26 +47,15 @@ export const handler: Handler = async (
     }
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiParameters: URLSearchParams = new URLSearchParams();
-    apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
-
+    const apiQueryParameters: string = getNextFlowApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
     const response: DescribeWorkflowReportsResponse = await httpRequest<DescribeWorkflowReportsResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/workflow/${id}/reports?${apiParameters.toString()}`,
+      `${process.env.SEQERA_API_BASE_URL}/workflow/${id}/reports?${apiQueryParameters}`,
       REST_API_METHOD.GET,
       { Authorization: `Bearer ${accessToken}` },
     );
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Error: getErrorMessage(err) }), event);
+    return buildErrorResponse(err, event);
   }
 };
-
-// Used for customising error messages by exception types
-function getErrorMessage(err: any) {
-  if (err instanceof ParameterNotFound) {
-    return 'Laboratory Access Token unavailable';
-  } else {
-    return err.message;
-  }
-}

@@ -41,7 +41,7 @@
     "organization": true
   },
   "devDependencies": {
-    "@aws-sdk/types": "^3.662.0",
+    "@aws-sdk/types": "^3.664.0",
     "@nuxt/types": "^2.18.1",
     "@nuxtjs/eslint-config-typescript": "^12.1.0",
     "@types/jest": "^29.5.13",
@@ -53,7 +53,7 @@
     "esbuild": "^0.24.0",
     "eslint": "^8",
     "eslint-import-resolver-typescript": "^3.6.3",
-    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-vue": "^9.28.0",
     "jest": "^29.7.0",
@@ -67,8 +67,8 @@
   },
   "dependencies": {
     "@aws-amplify/ui-vue": "3.1.30",
-    "@aws-sdk/s3-request-presigner": "^3.662.0",
-    "@aws-sdk/util-format-url": "^3.662.0",
+    "@aws-sdk/s3-request-presigner": "^3.664.0",
+    "@aws-sdk/util-format-url": "^3.664.0",
     "@easy-genomics/shared-lib": "workspace:*",
     "@nuxt/ui": "2.18.4",
     "@pinia-plugin-persistedstate/nuxt": "^1.2.1",
@@ -94,7 +94,7 @@
     "playwright-slack-report": "^1.1.88",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "sass": "^1.79.4",
-    "tailwind-merge": "^2.5.2",
+    "tailwind-merge": "^2.5.3",
     "tailwindcss": "^3.4.13",
     "unplugin-icons": "^0.19.3",
     "unplugin-vue-components": "^0.27.4",

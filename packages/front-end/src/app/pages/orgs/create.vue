@@ -7,6 +7,11 @@
   const router = useRouter();
   const { $api } = useNuxtApp();
 
+  // require superuser to create orgs
+  if (!useUserStore().isSuperuser()) {
+    router.push({ path: '/orgs' });
+  }
+
   async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
       useUiStore().setRequestPending(true);
@@ -19,10 +24,6 @@
     } finally {
       useUiStore().setRequestPending(false);
     }
-  }
-
-  if (!useUserStore().isSuperuser()) {
-    router.push({ path: '/orgs' });
   }
 </script>
 

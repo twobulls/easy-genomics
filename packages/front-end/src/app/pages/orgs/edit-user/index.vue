@@ -6,6 +6,7 @@
   import { DeletedResponse } from '@FE/types/api';
 
   const { $api } = useNuxtApp();
+  const $router = useRouter();
   const $route = useRoute();
   const orgLabsData = ref([] as Laboratory[]);
   const selectedUserLabsData = ref<LaboratoryUserDetails[] | null>(null);
@@ -22,6 +23,11 @@
       label: 'Lab Access',
     },
   ];
+
+  // require org admin for this page
+  if (!useUserStore().isOrgAdmin(useUserStore().currentOrgId)) {
+    $router.push({ path: '/' });
+  }
 
   const buttonLoadingStates = ref<object>({});
 

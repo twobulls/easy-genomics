@@ -25,6 +25,11 @@
   const { $api } = useNuxtApp();
   const { resendInvite, labsCount } = useUser($api);
 
+  // require org admin for this page
+  if (!useUserStore().isOrgAdmin(useUserStore().currentOrgId)) {
+    router.push({ path: '/' });
+  }
+
   // Dynamic remove user dialog values
   const isOpen = ref(false);
   const primaryMessage = ref('');

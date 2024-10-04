@@ -6,6 +6,12 @@
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgData = ref([]);
+  const $router = useRouter();
+
+  // require org admin for this page
+  if (!useUserStore().isOrgAdmin(useUserStore().currentOrgId)) {
+    $router.push({ path: '/' });
+  }
 
   const tableColumns = [
     {

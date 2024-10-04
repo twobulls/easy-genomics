@@ -58,11 +58,9 @@ export const handler: Handler = async (
     }
 
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
-    const apiParameters: URLSearchParams = getApiParameters(event);
-    apiParameters.set('workspaceId', `${laboratory.NextFlowTowerWorkspaceId}`);
-
+    const apiQueryParameters: string = getApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
     const response: ListPipelinesResponse = await httpRequest<ListPipelinesResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/pipelines?${apiParameters.toString()}`,
+      `${process.env.SEQERA_API_BASE_URL}/pipelines?${apiQueryParameters}`,
       REST_API_METHOD.GET,
       { Authorization: `Bearer ${accessToken}` },
     );
@@ -72,3 +70,11 @@ export const handler: Handler = async (
     return buildErrorResponse(err, event);
   }
 };
+
+function getApiQueryParameters(event: APIGatewayProxyWithCognitoAuthorizerEvent, workspaceId?: string): string {
+  const apiParameters: URLSearchParams = getApiParameters(event);
+  if (workspaceId && workspaceId !== '') {
+    apiParameters.set('workspaceId', workspaceId);
+  }
+  return apiParameters.toString();
+}

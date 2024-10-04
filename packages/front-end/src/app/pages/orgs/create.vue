@@ -20,6 +20,10 @@
       useUiStore().setRequestPending(false);
     }
   }
+
+  if (!useUserStore().isSuperuser()) {
+    router.push({ path: '/orgs' });
+  }
 </script>
 
 <template>

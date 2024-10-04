@@ -54,7 +54,7 @@ const useUserStore = defineStore('userStore', {
       this.currentUserPermissions.isSuperuser = false;
 
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
-      this.currentUserPermissions = parsedOrgAccess;
+      this.currentUserPermissions.orgPermissions = parsedOrgAccess;
     },
 
     isSuperuser(): boolean {

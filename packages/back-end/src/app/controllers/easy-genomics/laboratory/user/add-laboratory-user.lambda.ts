@@ -16,6 +16,7 @@ import {
   LaboratoryUserAlreadyExistsError,
   LaboratoryUserNotFoundError,
   OrganizationUserNotFoundError,
+  UnauthorizedAccessError,
   UserNotInOrganizationError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -24,6 +25,7 @@ import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-use
 import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
 import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
 import { UserService } from '@BE/services/easy-genomics/user-service';
+import { validateLaboratoryManagerAccess, validateOrganizationAdminAccess } from '@BE/utils/auth-utils';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryUserService = new LaboratoryUserService();
@@ -42,6 +44,18 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!AddLaboratoryUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
+    // Retrieve existing Laboratory and User record details
+    const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
+    const user: User = await userService.get(request.UserId);
+
+    // Only Organisation Admins and Laboratory Managers are allowed to edit laboratories
+    if (
+      !validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+      !validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
+    ) {
+      throw new UnauthorizedAccessError();
+    }
+
     const status: Status = request.Status === 'Inactive' ? 'Inactive' : 'Active';
 
     // Verify User does not have an existing LaboratoryUser access mapping
@@ -58,10 +72,6 @@ export const handler: Handler = async (
     if (laboratoryUser) {
       throw new LaboratoryUserAlreadyExistsError();
     }
-
-    // Retrieve existing Laboratory and User record details
-    const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
-    const user: User = await userService.get(request.UserId);
 
     // Verify User has access to the Organization - throws error if not found
     await organizationUserService.get(laboratory.OrganizationId, user.UserId).catch((error: unknown) => {

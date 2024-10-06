@@ -1,9 +1,10 @@
 import { RequestLaboratorySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { InvalidRequestError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { validateOrganizationAccess } from '@BE/utils/auth-utils';
 
 const laboratoryService = new LaboratoryService();
 
@@ -16,6 +17,11 @@ export const handler: Handler = async (
     const request: Laboratory = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!RequestLaboratorySchema.safeParse(request).success) throw new InvalidRequestError();
+
+    //  Users with access to the Laboratory can view the organization
+    if (!validateOrganizationAccess(event, request.OrganizationId, request.LaboratoryId)) {
+      throw new UnauthorizedAccessError();
+    }
 
     const response: Laboratory = await laboratoryService.get(request.OrganizationId, request.LaboratoryId);
     return buildResponse(200, JSON.stringify(response), event);

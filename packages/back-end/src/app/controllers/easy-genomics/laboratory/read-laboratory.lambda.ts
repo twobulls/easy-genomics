@@ -2,10 +2,11 @@ import { GetParameterCommandOutput } from '@aws-sdk/client-ssm';
 import { ReadLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { RequiredIdNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { RequiredIdNotFoundError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
+import { validateOrganizationAccess } from '@BE/utils/auth-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -21,6 +22,12 @@ export const handler: Handler = async (
 
     // Lookup by GSI Id for convenience
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
+
+    // TODO: Laboratory not found
+    // Users with access to the Laboratory can view the organization
+    if (!validateOrganizationAccess(event, existing.OrganizationId, existing.LaboratoryId)) {
+      throw new UnauthorizedAccessError();
+    }
 
     const hasNextFlowAccessToken: boolean = await ssmService
       .getParameter({

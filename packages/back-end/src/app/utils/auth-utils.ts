@@ -33,6 +33,124 @@ export function getOrganizationAccessOrganizationIds(event: APIGatewayProxyEvent
 
 /**
  * Helper function to check if an authenticated User's JWT OrganizationAccess
+ * metadata allows access to administrate the requested Organization
+ * @param event
+ * @param organizationId
+ */
+export function validateOrganizationAdminAccess(event: APIGatewayProxyEvent, organizationId: string): Boolean {
+  try {
+    const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims.OrganizationAccess;
+    if (!orgAccessMetadata) {
+      return false;
+    }
+
+    const organizationAccess: OrganizationAccess = JSON.parse(orgAccessMetadata);
+    const organizationAccessDetails: OrganizationAccessDetails | undefined = organizationAccess[organizationId];
+    if (
+      !organizationAccessDetails ||
+      (organizationAccessDetails && organizationAccessDetails.OrganizationAdmin !== true)
+    ) {
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
+/**
+ * Helper function to check if an authenticated User's JWT OrganizationAccess
+ * metadata allows access to Laboratory Management
+ * @param event
+ * @param organizationId
+ * @param laboratoryId
+ */
+export function validateLaboratoryManagerAccess(
+  event: APIGatewayProxyEvent,
+  organizationId: string,
+  laboratoryId: string,
+): Boolean {
+  try {
+    const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims.OrganizationAccess;
+    if (!orgAccessMetadata) {
+      return false;
+    }
+
+    const organizationAccess: OrganizationAccess = JSON.parse(orgAccessMetadata);
+    const organizationAccessDetails: OrganizationAccessDetails | undefined = organizationAccess[organizationId];
+    if (!organizationAccessDetails) {
+      return false;
+    }
+
+    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails.LaboratoryAccess;
+    if (!laboratoryAccess) {
+      return false;
+    }
+
+    const laboratoryAccessDetails: LaboratoryAccessDetails | undefined = laboratoryAccess[laboratoryId];
+    if (
+      !laboratoryAccessDetails ||
+      (laboratoryAccessDetails && laboratoryAccessDetails.Status !== 'Active') ||
+      (laboratoryAccessDetails && laboratoryAccessDetails.LabManager)
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
+/**
+ * Helper function to check if an authenticated User's JWT OrganizationAccess
+ * metadata allows access to Laboratory Technician
+ * @param event
+ * @param organizationId
+ * @param laboratoryId
+ */
+export function validateLaboratoryTechnicianAccess(
+  event: APIGatewayProxyEvent,
+  organizationId: string,
+  laboratoryId: string,
+): Boolean {
+  try {
+    const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims.OrganizationAccess;
+    if (!orgAccessMetadata) {
+      return false;
+    }
+
+    const organizationAccess: OrganizationAccess = JSON.parse(orgAccessMetadata);
+    const organizationAccessDetails: OrganizationAccessDetails | undefined = organizationAccess[organizationId];
+    if (!organizationAccessDetails) {
+      return false;
+    }
+
+    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails.LaboratoryAccess;
+    if (!laboratoryAccess) {
+      return false;
+    }
+
+    const laboratoryAccessDetails: LaboratoryAccessDetails | undefined = laboratoryAccess[laboratoryId];
+    if (
+      !laboratoryAccessDetails ||
+      (laboratoryAccessDetails && laboratoryAccessDetails.Status !== 'Active') ||
+      (laboratoryAccessDetails && laboratoryAccessDetails.LabTechnician)
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
+/**
+ * Helper function to check if an authenticated User's JWT OrganizationAccess
  * metadata allows access to the requested Organization / Laboratory.
  * @param event
  * @param organizationId

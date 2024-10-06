@@ -10,12 +10,13 @@ import {
   User,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { InvalidRequestError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
 import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
 import { UserService } from '@BE/services/easy-genomics/user-service';
+import { validateLaboratoryManagerAccess, validateOrganizationAdminAccess } from '@BE/utils/auth-utils';
 
 const laboratoryUserService = new LaboratoryUserService();
 const laboratoryService = new LaboratoryService();
@@ -41,6 +42,14 @@ export const handler: Handler = async (
     // Lookup by LaboratoryId & UserId to confirm existence before updating
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
     const user: User = await userService.get(request.UserId);
+
+    // Only Organisation Admins and Laboratory Managers are allowed to create workflows
+    if (
+      !validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+      !validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
+    ) {
+      throw new UnauthorizedAccessError();
+    }
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;

@@ -4,11 +4,13 @@ import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src
 import {
   LaboratoryDeleteFailedError,
   RequiredIdNotFoundError,
+  UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
 import { SsmService } from '@BE/services/ssm-service';
+import { validateOrganizationAdminAccess } from '@BE/utils/auth-utils';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryUserService = new LaboratoryUserService();
@@ -25,6 +27,13 @@ export const handler: Handler = async (
 
     // Lookup by LaboratoryId to confirm existence before deletion
     const existingLaboratory: Laboratory = await laboratoryService.queryByLaboratoryId(id);
+
+    // TODO: lab can not be found
+
+    // Only Organisation Admins are allowed delete laboratories
+    if (!validateOrganizationAdminAccess(event, existingLaboratory.OrganizationId)) {
+      throw new UnauthorizedAccessError();
+    }
 
     // Check LaboratoryUsers are empty before deletion
     const existingLaboratoryUsers: LaboratoryUser[] = await laboratoryUserService.queryByLaboratoryId(

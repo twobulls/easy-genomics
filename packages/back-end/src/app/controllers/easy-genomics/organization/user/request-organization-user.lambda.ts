@@ -1,9 +1,10 @@
 import { RequestOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { InvalidRequestError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationUserService } from '@BE/services/easy-genomics/organization-user-service';
+import { validateOrganizationAdminAccess, validateSystemAdminAccess } from '@BE/utils/auth-utils';
 
 const organizationUserService = new OrganizationUserService();
 
@@ -16,6 +17,10 @@ export const handler: Handler = async (
     const request: OrganizationUser = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
     if (!RequestOrganizationUserSchema.safeParse(request).success) throw new InvalidRequestError();
+
+    if (!validateSystemAdminAccess(event) && !validateOrganizationAdminAccess(event, request.OrganizationId)) {
+      throw new UnauthorizedAccessError();
+    }
 
     const existing: OrganizationUser = await organizationUserService.get(request.OrganizationId, request.UserId);
     return buildResponse(200, JSON.stringify(existing), event);

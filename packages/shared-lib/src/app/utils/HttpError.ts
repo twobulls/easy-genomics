@@ -45,6 +45,17 @@ export class InvalidRequestError extends HttpError {
   }
 }
 
+// User Access
+
+/**
+ * User name does not have the required access for the endpoint
+ */
+export class UnauthorizedAccessError extends HttpError {
+  constructor() {
+    super('Unauthorized access', 403, 'EG-103');
+  }
+}
+
 // Organization Errors
 
 /**

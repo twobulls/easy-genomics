@@ -76,10 +76,10 @@ const useUserStore = defineStore('userStore', {
       return this.isSuperuser() || this.isOrgAdmin(orgId);
     },
     mayViewLab(orgId: string, labId: string): boolean {
-      return this.isSuperuser() || this.isLabMember(orgId, labId);
+      return this.isSuperuser() || this.isOrgAdmin(orgId) || this.isLabMember(orgId, labId);
     },
     mayEditLab(orgId: string, labId: string): boolean {
-      return this.isSuperuser() || this.isLabManager(orgId, labId);
+      return this.isSuperuser() || this.isOrgAdmin(orgId) || this.isLabManager(orgId, labId);
     },
     mayDeleteLab(orgId: string): boolean {
       return this.isSuperuser() || this.isOrgAdmin(orgId);

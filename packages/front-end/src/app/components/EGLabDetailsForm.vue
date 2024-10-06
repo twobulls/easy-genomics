@@ -37,6 +37,8 @@
   const $route = useRoute();
   const router = useRouter();
 
+  const labId: string = $route.params.labId as string;
+
   const formMode = ref(props.formMode);
   const s3Directories = ref([]);
   const isLoadingBuckets = ref(false);
@@ -264,7 +266,6 @@
       throw new Error(message);
     }
 
-    const labId: string = $route.params.labId;
     const lab: UpdateLaboratory = parseResult.data;
 
     const res = await $api.labs.update(labId, lab);
@@ -372,7 +373,11 @@
         />
       </EGFormGroup>
 
-      <EGFormGroup label="Default S3 bucket directory" name="DefaultS3BucketDirectory">
+      <EGFormGroup
+        v-if="useUserStore().isOrgAdmin(useUserStore().currentOrgId)"
+        label="Default S3 bucket directory"
+        name="DefaultS3BucketDirectory"
+      >
         <EGSelect
           :options="s3Directories"
           v-model="selectedS3Bucket"
@@ -444,6 +449,7 @@
         :size="ButtonSizeEnum.enum.sm"
         type="submit"
         label="Edit"
+        :disabled="!useUserStore().mayEditLab(useUserStore().currentOrgId, labId)"
         @click="switchToFormMode(LabDetailsFormModeEnum.enum.Edit)"
       />
     </div>

@@ -69,8 +69,9 @@ const useUserStore = defineStore('userStore', {
     isLabManager(orgId: string, labId: string): boolean {
       return !!this.currentUserPermissions.orgPermissions?.[orgId].LaboratoryAccess?.[labId].LabManager;
     },
-    canEditOrg(orgId: string): boolean {
-      return this.isSuperuser() || this.isOrgAdmin(orgId);
+    canManageOrgs(): boolean {
+      // currently we don't have any granular org permission logic so this is it
+      return this.isSuperuser() || this.isOrgAdmin(this.currentOrgId);
     },
     canCreateLab(orgId: string): boolean {
       return this.isSuperuser() || this.isOrgAdmin(orgId);

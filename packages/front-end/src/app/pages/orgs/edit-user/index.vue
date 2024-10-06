@@ -24,8 +24,7 @@
     },
   ];
 
-  // require org admin for this page
-  if (!useUserStore().isOrgAdmin(useUserStore().currentOrgId)) {
+  if (!useUserStore().canManageOrgs()) {
     $router.push({ path: '/' });
   }
 

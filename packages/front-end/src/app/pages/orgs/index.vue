@@ -6,6 +6,12 @@
   const hasNoData = ref(false);
   const isLoading = ref(true);
   const orgData = ref([]);
+  const $router = useRouter();
+
+  // require org admin for this page
+  if (!useUserStore().isOrgAdmin(useUserStore().currentOrgId)) {
+    $router.push({ path: '/' });
+  }
 
   const tableColumns = [
     {
@@ -68,9 +74,12 @@
 
 <template>
   <EGPageHeader title="Organizations" :show-back="false" :back-action="() => $router.push('/')">
-    <!-- TODO: temporarily disabled for Pilot 1 - see: https://dept-au.atlassian.net/browse/EG-547 -->
-    <!--    <EGButton label="Create a new Organization" to="/orgs/create" />-->
-    <EGButton label="Create a new Organization" :disabled="true" />
+    <!-- TODO: https://dept-au.atlassian.net/browse/EG-547 -->
+    <EGButton
+      label="Create a new Organization"
+      :disabled="!useUserStore().isSuperuser()"
+      :to="useUserStore().isSuperuser() ? '/orgs/create' : undefined"
+    />
   </EGPageHeader>
 
   <EGEmptyDataCTA

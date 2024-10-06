@@ -145,12 +145,21 @@
   }
 
   function addFiles(files: FileList) {
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      addFile(file);
-    }
+    const invalidFiles = Array.from(files).filter((file) => !isValidGzFile(file));
+    const validFiles = Array.from(files).filter((file) => isValidGzFile(file));
+
+    invalidFiles.forEach((file) => {
+      const message = `File ${file.name} is not a .gz file`;
+      useToastStore().error(message);
+    });
+
+    validFiles.forEach((file) => addFile(file));
 
     validateFilePairs();
+  }
+
+  function isValidGzFile(file: File): boolean {
+    return file.name.endsWith('.gz');
   }
 
   /**

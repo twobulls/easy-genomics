@@ -69,19 +69,19 @@ const useUserStore = defineStore('userStore', {
     isLabManager(orgId: string, labId: string): boolean {
       return !!this.currentUserPermissions.orgPermissions?.[orgId].LaboratoryAccess?.[labId].LabManager;
     },
-    mayEditOrg(orgId: string): boolean {
+    canEditOrg(orgId: string): boolean {
       return this.isSuperuser() || this.isOrgAdmin(orgId);
     },
-    mayCreateLab(orgId: string): boolean {
+    canCreateLab(orgId: string): boolean {
       return this.isSuperuser() || this.isOrgAdmin(orgId);
     },
-    mayViewLab(orgId: string, labId: string): boolean {
+    canViewLab(orgId: string, labId: string): boolean {
       return this.isSuperuser() || this.isOrgAdmin(orgId) || this.isLabMember(orgId, labId);
     },
-    mayEditLab(orgId: string, labId: string): boolean {
+    canEditLab(orgId: string, labId: string): boolean {
       return this.isSuperuser() || this.isOrgAdmin(orgId) || this.isLabManager(orgId, labId);
     },
-    mayDeleteLab(orgId: string): boolean {
+    canDeleteLab(orgId: string): boolean {
       return this.isSuperuser() || this.isOrgAdmin(orgId);
     },
   },

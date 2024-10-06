@@ -37,7 +37,7 @@
       ],
     ];
 
-    if (useUserStore().mayDeleteLab(useUserStore().currentOrgId)) {
+    if (useUserStore().canDeleteLab(useUserStore().currentOrgId)) {
       items.push([
         {
           label: 'Remove',
@@ -130,7 +130,7 @@
     await getLabs();
   });
 
-  const isOrgAdmin = computed<boolean>(() => useUserStore().mayCreateLab(useUserStore().currentOrgId));
+  const isOrgAdmin = computed<boolean>(() => useUserStore().canCreateLab(useUserStore().currentOrgId));
 </script>
 
 <template>

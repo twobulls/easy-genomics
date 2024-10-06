@@ -552,7 +552,7 @@
                 :show-remove-from-lab="true"
                 :key="labUser?.LabManager"
                 :disabled="
-                  useUiStore().isRequestPending || !useUserStore().mayEditLab(useUserStore().currentOrgId, labId)
+                  useUiStore().isRequestPending || !useUserStore().canEditLab(useUserStore().currentOrgId, labId)
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

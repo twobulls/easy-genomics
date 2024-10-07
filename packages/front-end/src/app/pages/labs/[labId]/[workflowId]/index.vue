@@ -1,14 +1,18 @@
 <script setup lang="ts">
-  import { useLabsStore, useOrgsStore } from '@FE/stores';
+  import { useLabsStore } from '@FE/stores';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
 
-  const { $api } = useNuxtApp();
-  const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const workflow = useLabsStore().workflow;
   const $router = useRouter();
-  const schema = ref({});
-  const params = ref({});
+  const $route = useRoute();
+
+  const labId = $route.params.labId as string;
+
+  // check permissions to be on this page
+  if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
+    $router.push('/labs');
+  }
 
   const tabItems = [
     {

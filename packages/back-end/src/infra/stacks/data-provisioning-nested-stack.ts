@@ -62,8 +62,10 @@ export class DataProvisioningNestedStack extends NestedStack {
       });
 
       // S3 Bucket Names must be globally unique and less than 63 in length
-      const s3BucketId = laboratory.LaboratoryId.toLowerCase().replace(/-+/g, '');
-      const s3BucketFullName = `${this.props.env.account!}-${this.props.namePrefix}-lab-${s3BucketId}`.substring(0, 63);
+      const s3BucketFullName = `${this.props.env.account!}-${this.props.namePrefix}-lab-bucket`;
+      if (s3BucketFullName.length > 63) {
+        throw new Error(`S3 Bucket Name: "${s3BucketFullName}" is too long`);
+      }
       this.addDynamoDBSeedData<Laboratory>(`${this.props.namePrefix}-laboratory-table`, {
         ...laboratory,
         S3Bucket: s3BucketFullName, // Save the S3 Bucket's Full Name in Laboratory DynamoDB record

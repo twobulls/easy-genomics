@@ -61,7 +61,7 @@ const useUserStore = defineStore('userStore', {
       return !!this.currentUserPermissions.isSuperuser;
     },
     isOrgAdmin(orgId: string): boolean {
-      return !!this.currentUserPermissions.orgPermissions?.[orgId].OrganizationAdmin;
+      return this.isSuperuser() || !!this.currentUserPermissions.orgPermissions?.[orgId].OrganizationAdmin;
     },
     isLabMember(orgId: string, labId: string): boolean {
       return !!this.currentUserPermissions.orgPermissions?.[orgId].LaboratoryAccess?.[labId];
@@ -69,20 +69,21 @@ const useUserStore = defineStore('userStore', {
     isLabManager(orgId: string, labId: string): boolean {
       return !!this.currentUserPermissions.orgPermissions?.[orgId].LaboratoryAccess?.[labId].LabManager;
     },
-    mayEditOrg(orgId: string): boolean {
-      return this.isSuperuser() || this.isOrgAdmin(orgId);
+    canManageOrgs(): boolean {
+      // currently we don't have any granular org permission logic so this is it
+      return this.isOrgAdmin(this.currentOrgId);
     },
-    mayCreateLab(orgId: string): boolean {
-      return this.isSuperuser() || this.isOrgAdmin(orgId);
+    canCreateLab(orgId: string): boolean {
+      return this.isOrgAdmin(orgId);
     },
-    mayViewLab(orgId: string, labId: string): boolean {
-      return this.isSuperuser() || this.isOrgAdmin(orgId) || this.isLabMember(orgId, labId);
+    canViewLab(orgId: string, labId: string): boolean {
+      return this.isOrgAdmin(orgId) || this.isLabMember(orgId, labId);
     },
-    mayEditLab(orgId: string, labId: string): boolean {
-      return this.isSuperuser() || this.isOrgAdmin(orgId) || this.isLabManager(orgId, labId);
+    canEditLab(orgId: string, labId: string): boolean {
+      return this.isOrgAdmin(orgId) || this.isLabManager(orgId, labId);
     },
-    mayDeleteLab(orgId: string): boolean {
-      return this.isSuperuser() || this.isOrgAdmin(orgId);
+    canDeleteLab(orgId: string): boolean {
+      return this.isOrgAdmin(orgId);
     },
   },
 

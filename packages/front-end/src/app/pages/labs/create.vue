@@ -4,7 +4,7 @@
   const router = useRouter();
 
   // only allow org admins to access this page
-  if (!useUserStore().mayCreateLab(useUserStore().currentOrgId)) {
+  if (!useUserStore().canCreateLab(useUserStore().currentOrgId)) {
     router.push({ path: '/labs' });
   }
 </script>

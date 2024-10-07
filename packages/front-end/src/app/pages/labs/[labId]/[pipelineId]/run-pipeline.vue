@@ -1,17 +1,23 @@
 <script setup lang="ts">
-  import { usePipelineRunStore, useUiStore } from '@FE/stores';
+  import { usePipelineRunStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
   const labName = usePipelineRunStore().labName;
+  const labId = $route.params.labId as string;
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
   const nextRoute = ref<string | null>(null);
   const schema = ref({});
   const resetStepperKey = ref(0);
+
+  // check permissions to be on this page
+  if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
+    $router.push('/labs');
+  }
 
   onBeforeMount(async () => {
     await initializePipelineData();
@@ -41,7 +47,7 @@
    * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
    */
   async function initializePipelineData() {
-    const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, $route.params.labId);
+    const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, labId);
     const originalSchema = JSON.parse(res.schema);
 
     // Filter Schema to exclude any sections that do not have any visible parameters for user input
@@ -93,7 +99,7 @@
     title="Run Pipeline"
     :description="labName"
     :show-back-button="!hasLaunched"
-    :back-action="() => (nextRoute = `/labs/${useLabsStore().labId}?tab=Pipelines`)"
+    :back-action="() => (nextRoute = `/labs/${labId}?tab=Pipelines`)"
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper

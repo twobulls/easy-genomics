@@ -61,13 +61,13 @@ const useUserStore = defineStore('userStore', {
       return !!this.currentUserPermissions.isSuperuser;
     },
     isOrgAdmin(orgId: string): boolean {
-      return this.isSuperuser() || !!this.currentUserPermissions.orgPermissions?.[orgId].OrganizationAdmin;
+      return this.isSuperuser() || !!this.currentUserPermissions.orgPermissions?.[orgId]?.OrganizationAdmin;
     },
     isLabMember(orgId: string, labId: string): boolean {
-      return !!this.currentUserPermissions.orgPermissions?.[orgId].LaboratoryAccess?.[labId];
+      return !!this.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId];
     },
     isLabManager(orgId: string, labId: string): boolean {
-      return !!this.currentUserPermissions.orgPermissions?.[orgId].LaboratoryAccess?.[labId].LabManager;
+      return !!this.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId]?.LabManager;
     },
     canManageOrgs(): boolean {
       // currently we don't have any granular org permission logic so this is it

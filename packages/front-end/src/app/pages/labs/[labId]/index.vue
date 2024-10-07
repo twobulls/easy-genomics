@@ -40,6 +40,11 @@
   const primaryMessage = ref('');
   const userToRemove = ref();
 
+  // check permissions to be on this page
+  if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
+    $router.push('/labs');
+  }
+
   const hasPAT = computed(() => !!lab.value?.HasNextFlowTowerAccessToken);
 
   const tabItems = computed(() => [

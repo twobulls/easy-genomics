@@ -23,7 +23,7 @@ import { S3BucketOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { CanonicalUserPrincipal, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { ARecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
-import { Bucket, BucketAccessControl } from 'aws-cdk-lib/aws-s3';
+import { Bucket, BucketAccessControl, BucketProps, ObjectOwnership } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
@@ -98,42 +98,46 @@ export class WwwHostingConstruct extends Construct {
     const appDomainName: string = this.props.appDomainName;
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-www`, {});
 
-    // // Using the configured domainName for the CloudFront distribution access log
-    // const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
-    // // Create Access Log Bucket for CloudFront distribution access logging
-    // const accessLogBucket: Bucket = s3.createBucket(
-    //   accessLogBucketName,
-    //   {
-    //     accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
-    //     removalPolicy: RemovalPolicy.DESTROY,
-    //     autoDeleteObjects: true,
-    //     lifecycleRules: [
-    //       {
-    //         expiration: Duration.hours(1),
-    //       },
-    //     ],
-    //     serverAccessLogsPrefix: 'cloudfront-access-log-',
-    //     objectOwnership: ObjectOwnership.OBJECT_WRITER,
-    //   },
-    //   this.props.devEnv,
-    // );
-    // this.s3Buckets.set(accessLogBucketName, accessLogBucket); // Add Bucket to Map collection
+    let bucketProps: BucketProps = {
+      accessControl: BucketAccessControl.PRIVATE,
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    };
+
+    if (!this.props.devEnv) {
+      // Using the configured domainName for the CloudFront distribution access log
+      const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
+      // Create Access Log Bucket for CloudFront distribution access logging
+      const accessLogBucket: Bucket = s3.createBucket(
+        accessLogBucketName,
+        {
+          accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
+          removalPolicy: RemovalPolicy.DESTROY,
+          autoDeleteObjects: true,
+          lifecycleRules: [
+            {
+              expiration: Duration.days(1),
+            },
+          ],
+          serverAccessLogsPrefix: 'cloudfront-access-log-',
+          objectOwnership: ObjectOwnership.OBJECT_WRITER,
+        },
+        this.props.devEnv,
+      );
+      this.s3Buckets.set(accessLogBucketName, accessLogBucket); // Add Bucket to Map collection
+
+      bucketProps = {
+        ...bucketProps,
+        serverAccessLogsPrefix: 'www-s3-log-',
+        serverAccessLogsBucket: accessLogBucket,
+      };
+    }
 
     // Using the configured domainName for the WWW S3 Bucket
     const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
 
     // Create S3 Bucket for static website hosting through CloudFront distribution
-    const wwwBucket: Bucket = s3.createBucket(
-      wwwBucketName,
-      {
-        accessControl: BucketAccessControl.PRIVATE,
-        removalPolicy: RemovalPolicy.DESTROY,
-        // serverAccessLogsPrefix: 'www-s3-log-',
-        // serverAccessLogsBucket: accessLogBucket,
-        autoDeleteObjects: true,
-      },
-      this.props.devEnv,
-    );
+    const wwwBucket: Bucket = s3.createBucket(wwwBucketName, bucketProps, this.props.devEnv);
     this.s3Buckets.set(wwwBucketName, wwwBucket); // Add Bucket to Map collection
   };
 
@@ -185,7 +189,7 @@ export class WwwHostingConstruct extends Construct {
     const domainNames: string[] = this.props.awsHostedZoneId && certificate ? [this.props.appDomainName] : [];
 
     // Configure CloudFront distribution settings
-    const distributionProps: DistributionProps = {
+    let distributionProps: DistributionProps = {
       certificate,
       defaultRootObject: this.props.webSiteIndexDocument,
       domainNames,
@@ -223,18 +227,19 @@ export class WwwHostingConstruct extends Construct {
       ],
     };
 
-    // const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
-    // const accessLogBucket: Bucket | undefined = this.s3Buckets.get(accessLogBucketName);
-    // if (!accessLogBucket) {
-    //   throw new Error(`S3 Bucket not found: ${accessLogBucketName}`);
-    // }
-    //
-    // // Enable CloudFront distribution logging
-    // distributionProps = {
-    //   ...distributionProps,
-    //   enableLogging: true,
-    //   logBucket: accessLogBucket,
-    // };
+    if (!this.props.devEnv) {
+      const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
+      const accessLogBucket: Bucket | undefined = this.s3Buckets.get(accessLogBucketName);
+
+      if (accessLogBucket) {
+        // Enable CloudFront distribution logging
+        distributionProps = {
+          ...distributionProps,
+          enableLogging: true,
+          logBucket: accessLogBucket,
+        };
+      }
+    }
 
     // Create CloudFront distribution
     const distribution: Distribution = new Distribution(this, 'SiteDistribution', distributionProps);

@@ -104,34 +104,34 @@ export class WwwHostingConstruct extends Construct {
       autoDeleteObjects: true,
     };
 
-    if (!this.props.devEnv) {
-      // Using the configured domainName for the CloudFront distribution access log
-      const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
-      // Create Access Log Bucket for CloudFront distribution access logging
-      const accessLogBucket: Bucket = s3.createBucket(
-        accessLogBucketName,
-        {
-          accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
-          removalPolicy: RemovalPolicy.DESTROY,
-          autoDeleteObjects: true,
-          lifecycleRules: [
-            {
-              expiration: Duration.days(1),
-            },
-          ],
-          serverAccessLogsPrefix: 'cloudfront-access-log-',
-          objectOwnership: ObjectOwnership.OBJECT_WRITER,
-        },
-        this.props.devEnv,
-      );
-      this.s3Buckets.set(accessLogBucketName, accessLogBucket); // Add Bucket to Map collection
+    // if (!this.props.devEnv) {
+    // Using the configured domainName for the CloudFront distribution access log
+    const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
+    // Create Access Log Bucket for CloudFront distribution access logging
+    const accessLogBucket: Bucket = s3.createBucket(
+      accessLogBucketName,
+      {
+        accessControl: BucketAccessControl.LOG_DELIVERY_WRITE,
+        removalPolicy: RemovalPolicy.DESTROY,
+        autoDeleteObjects: true,
+        lifecycleRules: [
+          {
+            expiration: Duration.days(1),
+          },
+        ],
+        serverAccessLogsPrefix: 'cloudfront-access-log-',
+        objectOwnership: ObjectOwnership.OBJECT_WRITER,
+      },
+      this.props.devEnv,
+    );
+    this.s3Buckets.set(accessLogBucketName, accessLogBucket); // Add Bucket to Map collection
 
-      bucketProps = {
-        ...bucketProps,
-        serverAccessLogsPrefix: 'www-s3-log-',
-        serverAccessLogsBucket: accessLogBucket,
-      };
-    }
+    bucketProps = {
+      ...bucketProps,
+      serverAccessLogsPrefix: 'www-s3-log-',
+      serverAccessLogsBucket: accessLogBucket,
+    };
+    // }
 
     // Using the configured domainName for the WWW S3 Bucket
     const wwwBucketName: string = `${this.props.env.account}-${appDomainName}`; // Must be globally unique
@@ -227,19 +227,19 @@ export class WwwHostingConstruct extends Construct {
       ],
     };
 
-    if (!this.props.devEnv) {
-      const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
-      const accessLogBucket: Bucket | undefined = this.s3Buckets.get(accessLogBucketName);
+    // if (!this.props.devEnv) {
+    const accessLogBucketName: string = `${this.props.env.account}-${appDomainName}-access-logs`; // Must be globally unique
+    const accessLogBucket: Bucket | undefined = this.s3Buckets.get(accessLogBucketName);
 
-      if (accessLogBucket) {
-        // Enable CloudFront distribution logging
-        distributionProps = {
-          ...distributionProps,
-          enableLogging: true,
-          logBucket: accessLogBucket,
-        };
-      }
+    if (accessLogBucket) {
+      // Enable CloudFront distribution logging
+      distributionProps = {
+        ...distributionProps,
+        enableLogging: true,
+        logBucket: accessLogBucket,
+      };
     }
+    // }
 
     // Create CloudFront distribution
     const distribution: Distribution = new Distribution(this, 'SiteDistribution', distributionProps);

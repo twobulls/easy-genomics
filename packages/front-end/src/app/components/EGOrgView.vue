@@ -292,7 +292,7 @@
   <EGPageHeader
     :title="useOrgsStore().selectedOrg!.Name"
     :description="useOrgsStore().selectedOrg!.Description"
-    :back-action="() => $router.push('/orgs')"
+    :back-action="() => $router.push(adminPrefix + '/orgs')"
   >
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">

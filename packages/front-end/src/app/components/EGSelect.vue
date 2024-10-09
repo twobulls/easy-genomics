@@ -2,7 +2,7 @@
   const props = withDefaults(
     defineProps<{
       disabled?: boolean;
-      modelValue: string;
+      modelValue: string | undefined;
       placeholder?: string;
       options: any[];
     }>(),

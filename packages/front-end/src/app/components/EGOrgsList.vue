@@ -2,8 +2,19 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
+  const props = withDefaults(
+    defineProps<{
+      admin: boolean;
+    }>(),
+    {
+      admin: false,
+    },
+  );
+
   const { $api } = useNuxtApp();
   const $router = useRouter();
+
+  const adminPrefix = computed<string>(() => (props.admin ? '/admin' : ''));
 
   onBeforeMount(loadOrgs);
 
@@ -41,27 +52,34 @@
     },
   ];
 
-  const actionItems = (row: Organization) => [
-    [
-      {
-        label: 'View / Edit',
-        click: async () => viewOrg(row),
-      },
-    ],
-    [
-      {
-        label: 'Remove',
-        class: 'text-alert-danger-dark',
-        click: () => {
-          orgToRemove.value = row;
-          isRemoveOrgDialogOpen.value = true;
+  function actionItems(org: Organization): object[] {
+    const items: object[] = [
+      [
+        {
+          label: 'View / Edit',
+          click: async () => viewOrg(org),
         },
-      },
-    ],
-  ];
+      ],
+    ];
+
+    if (props.admin) {
+      items.push([
+        {
+          label: 'Remove',
+          class: 'text-alert-danger-dark',
+          click: () => {
+            orgToRemove.value = org;
+            isRemoveOrgDialogOpen.value = true;
+          },
+        },
+      ]);
+    }
+
+    return items;
+  }
 
   function viewOrg(org: Organization) {
-    $router.push({ path: '/admin/orgs/' + org.OrganizationId });
+    $router.push({ path: adminPrefix.value + '/orgs/' + org.OrganizationId });
   }
 
   // delete org stuff
@@ -73,6 +91,11 @@
   });
 
   async function handleDeleteOrg() {
+    // double check
+    if (!props.admin) {
+      return;
+    }
+
     try {
       await $api.orgs.remove(orgToRemove.value?.OrganizationId!);
       useToastStore().success('Organization deleted');
@@ -92,7 +115,7 @@
 
 <template>
   <EGPageHeader title="Organizations" :show-back="false">
-    <EGButton label="Create a new Organization" to="/admin/orgs/create" />
+    <EGButton v-if="admin" label="Create a new Organization" :to="adminPrefix + '/orgs/create'" />
   </EGPageHeader>
 
   <EGTable

@@ -3,5 +3,5 @@
 <template>
   <EGAdminAlert />
 
-  <EGOrgsList />
+  <EGOrgsList admin />
 </template>

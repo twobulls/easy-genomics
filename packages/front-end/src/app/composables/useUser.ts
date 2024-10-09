@@ -83,6 +83,11 @@ export default function useUser($api?: any) {
    */
   async function setCurrentUserOrg() {
     try {
+      if (useUserStore().isSuperuser()) {
+        // superuser won't have org access data so we can't do this, and it shouldn't need it anyway
+        return;
+      }
+
       const token = await useAuth().getToken();
       const decodedToken: any = decodeJwt(token);
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);

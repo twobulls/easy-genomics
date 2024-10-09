@@ -36,14 +36,6 @@
         click: async () => viewOrg(row),
       },
     ],
-    // TODO: temporarily disabled; see: https://dept-au.atlassian.net/browse/EG-575
-    // [
-    //   {
-    //     label: 'Remove',
-    //     class: 'text-alert-danger-dark',
-    //     click: () => {},
-    //   },
-    // ],
   ];
 
   function viewOrg(org: Organization) {
@@ -72,14 +64,7 @@
 </script>
 
 <template>
-  <EGPageHeader title="Organizations" :show-back="false" :back-action="() => $router.push('/')">
-    <!-- TODO: https://dept-au.atlassian.net/browse/EG-547 -->
-    <EGButton
-      label="Create a new Organization"
-      :disabled="!useUserStore().isSuperuser()"
-      :to="useUserStore().isSuperuser() ? '/orgs/create' : undefined"
-    />
-  </EGPageHeader>
+  <EGPageHeader title="Organizations" :show-back="false" :back-action="() => $router.push('/')" />
 
   <EGEmptyDataCTA
     v-if="hasNoData"

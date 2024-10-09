@@ -157,7 +157,7 @@ export class S3Service {
   };
 
   public getPreSignedDownloadUrl = async (getObjectInput: GetObjectCommandInput): Promise<string> => {
-    return getSignedUrl(this.s3Client, this.getS3Command(S3Command.GET_OBJECT, getObjectInput), { expiresIn: 3600 });
+    return getSignedUrl(this.s3Client, this.getS3Command(S3Command.GET_OBJECT, getObjectInput), { expiresIn: 60 });
   };
 
   public doesObjectExist = async (headObjectInput: HeadObjectCommandInput): Promise<boolean> => {

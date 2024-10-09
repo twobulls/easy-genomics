@@ -13,6 +13,7 @@
   const isLoading = ref(true);
   const hasNoData = ref(false);
   const searchOutput = ref('');
+
   const tableColumns = [
     {
       key: 'Name',
@@ -23,10 +24,6 @@
       label: 'Lab Access',
     },
   ];
-
-  if (!useUserStore().canManageOrgs()) {
-    $router.push({ path: '/' });
-  }
 
   const buttonLoadingStates = ref<object>({});
 
@@ -238,6 +235,8 @@
 </script>
 
 <template>
+  <EGAdminAlert />
+
   <EGPageHeader title="Edit User Access" />
   <div class="mb-4">
     <EGUserOrgAdminToggle
@@ -259,7 +258,7 @@
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="There are no labs in your Organization"
-    :primary-button-action="() => $router.push({ path: '/labs/create' })"
+    :primary-button-action="() => $router.push({ path: '/admin/labs/create' })"
     primary-button-label="Create a Lab"
   />
 

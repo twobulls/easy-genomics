@@ -25,10 +25,6 @@
   const { $api } = useNuxtApp();
   const { resendInvite, labsCount } = useUser($api);
 
-  if (!useUserStore().canManageOrgs()) {
-    router.push({ path: '/' });
-  }
-
   // Dynamic remove user dialog values
   const isOpen = ref(false);
   const primaryMessage = ref('');
@@ -72,7 +68,7 @@
 
   function editUser(userId: string) {
     router.push({
-      path: '/orgs/edit-user',
+      path: '/admin/orgs/edit-user',
       query: {
         userId,
         orgId,
@@ -282,10 +278,12 @@
 </script>
 
 <template>
+  <EGAdminAlert />
+
   <EGPageHeader
     :title="useOrgsStore().selectedOrg!.Name"
     :description="useOrgsStore().selectedOrg!.Description"
-    :back-action="() => $router.push('/orgs')"
+    :back-action="() => $router.push('/admin/orgs')"
   >
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">

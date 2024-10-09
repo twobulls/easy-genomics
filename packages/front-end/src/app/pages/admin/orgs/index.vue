@@ -1,15 +1,29 @@
 <script setup lang="ts">
-  import { useOrgsStore } from '@FE/stores';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
   const { $api } = useNuxtApp();
-  const hasNoData = ref(false);
-  const isLoading = ref(true);
-  const orgData = ref([]);
   const $router = useRouter();
 
-  if (!useUserStore().canManageOrgs()) {
-    $router.push({ path: '/' });
+  const orgs = ref<Organization[]>([]);
+  const isLoading = ref(false);
+
+  const isRemoveOrgDialogOpen = ref<boolean>(false);
+  const orgToRemove = ref<Organization | null>(null);
+
+  onBeforeMount(loadOrgs);
+
+  async function loadOrgs() {
+    isLoading.value = true;
+    try {
+      orgs.value = (await $api.orgs.list())?.sort((orgA, orgB) => useSort().stringSortCompare(orgA.Name, orgB.Name));
+    } catch (error) {
+      console.error(error);
+      useToastStore().error('Something went wrong while loading orgs');
+      throw error;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   const tableColumns = [
@@ -36,49 +50,67 @@
         click: async () => viewOrg(row),
       },
     ],
+    [
+      {
+        label: 'Remove',
+        class: 'text-alert-danger-dark',
+        click: () => {
+          orgToRemove.value = row;
+          isRemoveOrgDialogOpen.value = true;
+        },
+      },
+    ],
   ];
 
   function viewOrg(org: Organization) {
-    useOrgsStore().setSelectedOrg(org);
-    navigateTo(`/orgs/${org.OrganizationId}`);
+    $router.push({ path: '/admin/orgs/' + org.OrganizationId });
   }
 
-  function onRowClicked(org: Organization) {
-    viewOrg(org);
-  }
-
-  onBeforeMount(async () => {
-    try {
-      orgData.value = (await $api.orgs.list())?.sort((orgA, orgB) => useSort().stringSortCompare(orgA.Name, orgB.Name));
-
-      if (!orgData.value.length) {
-        hasNoData.value = true;
-      }
-      isLoading.value = false;
-    } catch (error) {
-      isLoading.value = false;
-      console.error(error);
-      throw error;
-    }
+  const removeOrgModalMessage = computed<string>(() => {
+    return `Are you sure you want to remove organization '${orgToRemove.value?.Name}'?`;
   });
+
+  async function handleDeleteOrg() {
+    try {
+      await $api.orgs.remove(orgToRemove.value?.OrganizationId!);
+      useToastStore().success('Organization deleted');
+    } catch (error) {
+      console.error(error);
+      useToastStore().error('Something went wrong while removing org');
+      throw error;
+    } finally {
+      isLoading.value = false;
+    }
+
+    isRemoveOrgDialogOpen.value = false;
+
+    await loadOrgs();
+  }
 </script>
 
 <template>
-  <EGPageHeader title="Organizations" :show-back="false" :back-action="() => $router.push('/')" />
+  <EGAdminAlert />
 
-  <EGEmptyDataCTA
-    v-if="hasNoData"
-    message="You don't have any Organization set up yet."
-    :primary-button-action="() => {}"
-    primary-button-label="Create a new Organization"
-  />
+  <EGPageHeader title="Organizations" :show-back="false">
+    <EGButton label="Create a new Organization" to="/admin/orgs/create" />
+  </EGPageHeader>
 
   <EGTable
-    :row-click-action="onRowClicked"
-    :table-data="orgData"
+    :row-click-action="viewOrg"
+    :table-data="orgs"
     :columns="tableColumns"
     :is-loading="isLoading"
     :action-items="actionItems"
-    :show-pagination="!isLoading && !hasNoData"
+    :show-pagination="!isLoading"
+  />
+
+  <EGDialog
+    actionLabel="Remove Organization"
+    :actionVariant="ButtonVariantEnum.enum.destructive"
+    cancelLabel="Cancel"
+    :cancelVariant="ButtonVariantEnum.enum.secondary"
+    @action-triggered="handleDeleteOrg"
+    :primaryMessage="removeOrgModalMessage"
+    v-model="isRemoveOrgDialogOpen"
   />
 </template>

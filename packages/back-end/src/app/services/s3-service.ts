@@ -153,8 +153,7 @@ export class S3Service {
   };
 
   public getPreSignedUploadUrl = async (putObjectInput: PutObjectCommandInput): Promise<string> => {
-    const putObjectCommand: PutObjectCommand = new PutObjectCommand(putObjectInput);
-    return getSignedUrl(this.s3Client, putObjectCommand, { expiresIn: 3600 });
+    return getSignedUrl(this.s3Client, this.getS3Command(S3Command.PUT_OBJECT, putObjectInput), { expiresIn: 3600 });
   };
 
   public doesObjectExist = async (headObjectInput: HeadObjectCommandInput): Promise<boolean> => {

@@ -1,8 +1,9 @@
 <script setup lang="ts">
-  import { useLabsStore } from '@FE/stores';
+  import { useLabsStore, useUiStore } from '@FE/stores';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
 
+  const { $api } = useNuxtApp();
   const workflow = useLabsStore().workflow;
   const $router = useRouter();
   const $route = useRoute();
@@ -25,6 +26,15 @@
     },
   ];
 
+  const runResultsColumns = [
+    {
+      key: 'fileName',
+      label: 'File Names',
+      sortable: true,
+      sort: useSort().stringSortCompare,
+    },
+  ];
+
   let tabIndex = 0;
 
   const createdDate = getDate(workflow?.dateCreated);
@@ -44,10 +54,14 @@
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
 
+  const workflowReports = ref([]);
+
   onBeforeMount(async () => {
     let paramTab = $router.currentRoute.value.query?.tab;
     if (!paramTab) paramTab = 'Run Results'; // fallback for no query param to default to first tab
     tabIndex = paramTab ? tabItems.findIndex((tab) => tab.label === paramTab) : 0;
+    const response = await $api.workflows.readWorkflowReports(workflow.id, labId);
+    workflowReports.value = response.reports;
   });
 
   // watch route change to correspondingly change selected tab
@@ -74,9 +88,12 @@
   >
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
-        <EGText tag="p" class="pt-4">
-          Please log into NextFlow / Seqera Cloud to download the results for this run.
-        </EGText>
+        <EGTable
+          :table-data="workflowReports"
+          :columns="runResultsColumns"
+          :is-loading="useUiStore().isRequestPending"
+          no-results-msg="No results have been generated yet."
+        />
       </div>
       <div v-if="item.key === 'runDetails'" class="space-y-3">
         <section

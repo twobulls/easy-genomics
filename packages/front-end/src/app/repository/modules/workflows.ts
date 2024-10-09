@@ -4,7 +4,7 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import HttpFactory from '@FE/repository/factory';
 
-class PipelinesModule extends HttpFactory {
+class WorkflowsModule extends HttpFactory {
   async createPipelineRun(labId: string, pipelineLaunchRequest: CreateWorkflowLaunchRequest): Promise<any> {
     const res = await this.callNextflowTower<any>(
       'POST',
@@ -50,6 +50,20 @@ class PipelinesModule extends HttpFactory {
 
     return res;
   }
+
+  async readWorkflowReports(workspaceId: string, labId: string): Promise<any> {
+    const res = await this.callNextflowTower<any>(
+      'GET',
+      `/workflow/read-workflow-reports/${workspaceId}?laboratoryId=${labId}`,
+    );
+
+    if (!res) {
+      console.error('Error calling read workflow reports API');
+      throw new Error('Failed to read workflow reports');
+    }
+
+    return res;
+  }
 }
 
-export default PipelinesModule;
+export default WorkflowsModule;

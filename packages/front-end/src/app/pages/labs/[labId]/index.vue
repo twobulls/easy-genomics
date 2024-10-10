@@ -7,7 +7,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useLabsStore, useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -17,17 +17,19 @@
   import { v4 as uuidv4 } from 'uuid';
   import { DescribeWorkflowResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 
+  const $route = useRoute();
+
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
-  const labId = useLabsStore().labId;
-  const labName = useLabsStore().labName;
   const modal = useModal();
 
   const tabIndex = ref(0);
   const defaultTabIndex = 0;
 
-  const lab = ref<Laboratory>();
+  const labId = $route.params.labId as string;
+  const lab = ref<Laboratory | null>(null);
+  const labName = computed<string>(() => lab.value?.Name || '');
   const labUsers = ref<LabUser[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
@@ -412,7 +414,7 @@
 
 <template>
   <EGPageHeader
-    :title="labName || ''"
+    :title="labName"
     description="View your Lab users, details and pipelines"
     :back-action="() => $router.push('/labs')"
   >

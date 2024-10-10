@@ -53,14 +53,4 @@ export default defineNuxtRouteMiddleware(async (to) => {
       }
     }
   }
-
-  /**
-   * @description guard /admin against non-superusers
-   */
-  if (url.pathname.startsWith('/admin')) {
-    const isSuperuser = useUserStore().isSuperuser();
-    if (!isSuperuser) {
-      return navigateTo('/labs');
-    }
-  }
 });

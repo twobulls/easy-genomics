@@ -5799,8 +5799,8 @@ packages:
   deep-is@0.1.4:
     resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
 
-  deep-pick-omit@1.2.0:
-    resolution: {integrity: sha512-2CGvfTM2c+IP/MhdRZMpaHhTc6zIlgz3tQXJ/VGAkc7mjMrjqSU28qiI63yEcy+fcYfd/K+NNJcGRzap4M4bqw==}
+  deep-pick-omit@1.2.1:
+    resolution: {integrity: sha512-2J6Kc/m3irCeqVG42T+SaUMesaK7oGWaedGnQQK/+O0gYc+2SP5bKh/KKTE7d7SJ+GCA9UUE1GRzh6oDe0EnGw==}
 
   deepmerge@4.3.1:
     resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
@@ -8453,8 +8453,8 @@ packages:
     resolution: {integrity: sha512-uB80kBFb/tfd68bVleG9T5GGsGPjJrLAUpR5PZIrhBnIaRTQRjqdJSsIKkOP6OAIFbj7GOrcudc5pNjZ+geV2g==}
     engines: {node: '>=6'}
 
-  pinia-plugin-persistedstate@4.0.0:
-    resolution: {integrity: sha512-yTly/5XMwgd4hQmZOTAdeK3Kfz89h9TMS2/d0VzVJEL9v2LanZdjhckpwnE+jelL+vsT7DnRLmSOtkzSJjO6Ng==}
+  pinia-plugin-persistedstate@4.1.1:
+    resolution: {integrity: sha512-fUiUsbfBetGUZzX28z+ImAZw7FDXzwRrk+fN+ljF5OhQMhsSYfYeUzI9FLLtpjekYbfFHWvJiECkLI60RIuiPA==}
     peerDependencies:
       '@pinia/nuxt': '>=0.5.0'
       pinia: '>=2.0.0'
@@ -10096,7 +10096,7 @@ packages:
     resolution: {integrity: sha512-kZf/K6hEIrWHI6XqOFUiiMa+79wE/D8Q+NCNAWclkyg3b4d2k7s0QGepNjiABc+aR3N1PAyHL7p6UcLY6LmrnA==}
 
   utils-merge@1.0.1:
-    resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
+    resolution: {integrity: sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=}
     engines: {node: '>= 0.4.0'}
 
   uuid@3.4.0:
@@ -15816,7 +15816,7 @@ snapshots:
       std-env: 3.7.0
       ufo: 1.5.4
       uncrypto: 0.1.3
-      unimport: 3.11.1(rollup@4.21.2)
+      unimport: 3.13.1(rollup@4.21.2)
       untyped: 1.4.2
     transitivePeerDependencies:
       - rollup
@@ -16128,10 +16128,10 @@ snapshots:
 
   '@pinia-plugin-persistedstate/nuxt@1.2.1(@pinia/nuxt@0.5.5(magicast@0.3.5)(rollup@4.21.2)(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(magicast@0.3.5)(pinia@2.2.4(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(rollup@4.21.2)':
     dependencies:
-      '@nuxt/kit': 3.13.1(magicast@0.3.5)(rollup@4.21.2)
+      '@nuxt/kit': 3.13.2(magicast@0.3.5)(rollup@4.21.2)
       '@pinia/nuxt': 0.5.5(magicast@0.3.5)(rollup@4.21.2)(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2))
       defu: 6.1.4
-      pinia-plugin-persistedstate: 4.0.0(@pinia/nuxt@0.5.5(magicast@0.3.5)(rollup@4.21.2)(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(magicast@0.3.5)(pinia@2.2.4(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(rollup@4.21.2)
+      pinia-plugin-persistedstate: 4.1.1(@pinia/nuxt@0.5.5(magicast@0.3.5)(rollup@4.21.2)(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(magicast@0.3.5)(pinia@2.2.4(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(rollup@4.21.2)
     transitivePeerDependencies:
       - magicast
       - pinia
@@ -18921,7 +18921,7 @@ snapshots:
 
   deep-is@0.1.4: {}
 
-  deep-pick-omit@1.2.0: {}
+  deep-pick-omit@1.2.1: {}
 
   deepmerge@4.3.1: {}
 
@@ -22374,10 +22374,10 @@ snapshots:
 
   pify@4.0.1: {}
 
-  pinia-plugin-persistedstate@4.0.0(@pinia/nuxt@0.5.5(magicast@0.3.5)(rollup@4.21.2)(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(magicast@0.3.5)(pinia@2.2.4(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(rollup@4.21.2):
+  pinia-plugin-persistedstate@4.1.1(@pinia/nuxt@0.5.5(magicast@0.3.5)(rollup@4.21.2)(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(magicast@0.3.5)(pinia@2.2.4(typescript@5.6.2)(vue@3.5.10(typescript@5.6.2)))(rollup@4.21.2):
     dependencies:
-      '@nuxt/kit': 3.13.1(magicast@0.3.5)(rollup@4.21.2)
-      deep-pick-omit: 1.2.0
+      '@nuxt/kit': 3.13.2(magicast@0.3.5)(rollup@4.21.2)
+      deep-pick-omit: 1.2.1
       defu: 6.1.4
       destr: 2.0.3
     optionalDependencies:
@@ -23863,7 +23863,7 @@ snapshots:
       acorn: 8.12.1
       estree-walker: 3.0.3
       magic-string: 0.30.11
-      unplugin: 1.14.0
+      unplugin: 1.14.1
     transitivePeerDependencies:
       - webpack-sources
 

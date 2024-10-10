@@ -1,17 +1,21 @@
 <script setup lang="ts">
-  const props = withDefaults(
-    defineProps<{
-      title: string;
-      description?: string;
-      showBack?: boolean;
-      backButtonLabel?: string;
-      backAction: () => void;
-    }>(),
-    {
-      description: '',
-      showBack: true,
-    },
-  );
+  const props = defineProps<{
+    title: string;
+    description?: string;
+    showBack: boolean;
+    backButtonLabel?: string;
+    backAction?: () => void;
+  }>();
+
+  const router = useRouter();
+
+  const defaultBackAction = () => {
+    router.go(-1);
+  };
+
+  const description = computed(() => props.description || '');
+  const backAction = computed(() => props.backAction || defaultBackAction);
+  const backButtonLabel = computed(() => props.backButtonLabel || 'Back');
 </script>
 
 <template>

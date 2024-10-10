@@ -257,7 +257,6 @@
   // e.g, LaboratoryId or CreatedAt
   async function handleUpdateLabDetails() {
     useUiStore().setRequestPending(true);
-
     const parseResult = UpdateLaboratorySchema.safeParse(state.value);
 
     if (!parseResult.success) {
@@ -267,8 +266,8 @@
     }
 
     const lab: UpdateLaboratory = parseResult.data;
-
     const res = await $api.labs.update(labId, lab);
+
     if (!res) {
       useToastStore().error(`Failed to verify details for ${state.value.Name}`);
     }

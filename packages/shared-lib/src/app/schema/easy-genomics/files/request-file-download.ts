@@ -11,3 +11,5 @@ export const RequestFileDownloadSchema = z
     Size: z.number().optional(),
   })
   .strict();
+
+export const FileDownloadResponseSchema = z.object({ DownloadUrl: z.string() }).strict();

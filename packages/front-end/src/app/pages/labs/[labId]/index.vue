@@ -214,8 +214,7 @@
         {
           label: 'View Results',
           click: () => {
-            useLabsStore().setSelectedWorkflow(row.workflow);
-            $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+            viewRunResults(row);
           },
         },
       ],
@@ -376,6 +375,10 @@
     useLabsStore().setSelectedWorkflow(row.workflow);
     $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
   }
+  function viewRunResults(row) {
+    useLabsStore().setSelectedWorkflow(row.workflow);
+    $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+  }
 
   // watch route change to correspondingly change selected tab
   watch(
@@ -415,6 +418,7 @@
     :title="labName || ''"
     description="View your Lab users, details and pipelines"
     :back-action="() => $router.push('/labs')"
+    :show-back="true"
   >
     <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = !showAddUserModule" />
     <EGAddLabUsersModule
@@ -566,7 +570,7 @@
             </div>
           </template>
 
-          <template #empty-state>
+          <template #empty-state v-if="!useUiStore().isRequestPending">
             <div class="text-muted flex h-24 items-center justify-center font-normal">
               There are no users in your Lab
             </div>

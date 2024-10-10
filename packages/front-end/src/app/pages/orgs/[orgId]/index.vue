@@ -10,5 +10,5 @@
 </script>
 
 <template>
-  <EGOrgView :org-id="orgId" />
+  <EGOrgView :admin="false" :org-id="orgId" />
 </template>

@@ -7,5 +7,5 @@
 </script>
 
 <template>
-  <EGOrgsList />
+  <EGOrgsList :admin="false" />
 </template>

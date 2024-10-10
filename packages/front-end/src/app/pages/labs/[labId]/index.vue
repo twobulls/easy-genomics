@@ -214,8 +214,7 @@
         {
           label: 'View Results',
           click: () => {
-            useLabsStore().setSelectedWorkflow(row.workflow);
-            $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+            viewRunResults(row);
           },
         },
       ],
@@ -375,6 +374,10 @@
   function viewRunDetails(row) {
     useLabsStore().setSelectedWorkflow(row.workflow);
     $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
+  }
+  function viewRunResults(row) {
+    useLabsStore().setSelectedWorkflow(row.workflow);
+    $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
   }
 
   // watch route change to correspondingly change selected tab

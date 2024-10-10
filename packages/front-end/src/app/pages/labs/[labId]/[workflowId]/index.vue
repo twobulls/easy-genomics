@@ -4,11 +4,8 @@
   import { getDate, getTime } from '@FE/utils/date-time';
 
   const { $api } = useNuxtApp();
-  const workflow = useLabsStore().workflow;
+  const { labId, workflow } = useLabsStore();
   const $router = useRouter();
-  const $route = useRoute();
-
-  const labId = $route.params.labId as string;
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
@@ -60,8 +57,11 @@
     let paramTab = $router.currentRoute.value.query?.tab;
     if (!paramTab) paramTab = 'Run Results'; // fallback for no query param to default to first tab
     tabIndex = paramTab ? tabItems.findIndex((tab) => tab.label === paramTab) : 0;
+
+    useUiStore().setRequestPending(true);
     const response = await $api.workflows.readWorkflowReports(workflow.id, labId);
     workflowReports.value = response.reports;
+    useUiStore().setRequestPending(false);
   });
 
   // watch route change to correspondingly change selected tab
@@ -73,7 +73,7 @@
   );
 </script>
 
-<template>
+<template v-if="!useUiStore().isRequestPending">
   <EGPageHeader :title="workflow.runName" :description="workflow.projectName" />
   <UTabs
     :ui="EGTabsStyles"

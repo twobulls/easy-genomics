@@ -1,6 +1,7 @@
 import {
   CreateWorkflowLaunchRequest,
   ListWorkflowsResponse,
+  DescribeWorkflowResponse,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import HttpFactory from '@FE/repository/factory';
 
@@ -46,6 +47,22 @@ class PipelinesModule extends HttpFactory {
     if (!res) {
       console.error('Error calling cancel pipeline run API');
       throw new Error('Failed to cancel pipeline run');
+    }
+
+    return res;
+  }
+
+  async get(labId: string, workflowId: string): Promise<DescribeWorkflowResponse> {
+    const res = await this.callNextflowTower<DescribeWorkflowResponse>(
+      'GET',
+      `/workflow/read-workflow/${workflowId}?laboratoryId=${labId}`,
+    );
+
+    console.log('getWorkflow response:', res);
+
+    if (!res) {
+      console.error('Error calling get pipeline run API');
+      throw new Error('Failed to get pipeline run');
     }
 
     return res;

@@ -216,7 +216,6 @@
         {
           label: 'View Results',
           click: () => {
-            useLabsStore().setSelectedWorkflow(row.workflow);
             $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
           },
         },
@@ -375,7 +374,6 @@
   }
 
   function viewRunDetails(row) {
-    useLabsStore().setSelectedWorkflow(row.workflow);
     $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
   }
 

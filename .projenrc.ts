@@ -262,8 +262,8 @@ const sharedLib = new typescript.TypeScriptProject({
     compilerOptions: {
       baseUrl: '.',
       paths: {
-        '@BE/*': ['../../packages/back-end/src/app/*'],
-        '@FE/*': ['../../packages/front-end/src/app/*'],
+        '@BE/*': ['../packages/back-end/src/app/*'],
+        '@FE/*': ['../packages/front-end/src/app/*'],
         '@SharedLib/*': ['src/app/*'],
       },
     },
@@ -302,8 +302,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
       baseUrl: '.',
       paths: {
         '@BE/*': ['src/app/*'],
-        '@FE/*': ['../../packages/front-end/src/app/*'],
-        '@SharedLib/*': ['../../packages/shared-lib/src/app/*'],
+        '@FE/*': ['../packages/front-end/src/app/*'],
+        '@SharedLib/*': ['../packages/shared-lib/src/app/*'],
       },
     },
   },
@@ -386,8 +386,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
       paths: {
         '@/*': ['../../*'],
         '@FE/*': ['src/app/*'],
-        '@BE/*': ['../../packages/back-end/src/app/*'],
-        '@SharedLib/*': ['../../packages/shared-lib/src/app/*'],
+        '@BE/*': ['../packages/back-end/src/app/*'],
+        '@SharedLib/*': ['../packages/shared-lib/src/app/*'],
         '#app': ['node_modules/nuxt/dist/app'], // Nuxt
         '#ui/*': ['node_modules/@nuxt/ui/dist/runtime/*'], // NuxtUI
       },

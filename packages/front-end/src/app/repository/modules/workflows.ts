@@ -1,5 +1,5 @@
-import { RequestFileDownloadSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/files/request-file-download';
-import { RequestFileDownload } from '@SharedLib/types/easy-genomics/files/request-file-download';
+import { FileDownloadResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/files/request-file-download';
+import { RequestFileDownload, FileDownloadResponse } from '@SharedLib/types/easy-genomics/files/request-file-download';
 import { CreateWorkflowLaunchRequest, ListWorkflowsResponse } from '@SharedLib/types/nf-tower/nextflow-tower-api';
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse } from '@FE/utils/api-utils';
@@ -55,7 +55,7 @@ class WorkflowsModule extends HttpFactory {
     return res;
   }
 
-  async downloadReport(labId: string, filePath: string): Promise<RequestFileDownload> {
+  async downloadReport(labId: string, filePath: string): Promise<FileDownloadResponse> {
     const res = await this.call<RequestFileDownload>('POST', '/files/request-file-download', {
       LaboratoryId: labId,
       Path: filePath,
@@ -64,7 +64,7 @@ class WorkflowsModule extends HttpFactory {
       console.error('Error calling download report API');
       throw new Error('Failed to download report');
     }
-    validateApiResponse(RequestFileDownloadSchema, res);
+    validateApiResponse(FileDownloadResponseSchema, res);
     return res;
   }
 }

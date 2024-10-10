@@ -2,7 +2,6 @@
   import { useLabsStore, useUiStore } from '@FE/stores';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
-  import { OrgUser } from '@/packages/shared-lib/src/app/types/easy-genomics/user-unified';
 
   const { $api } = useNuxtApp();
   const { labId, workflow } = useLabsStore();
@@ -69,12 +68,12 @@
     useUiStore().setRequestPending(false);
   });
 
-  function downloadReport(row: any) {
-    const report = $api.workflows.downloadReport(labId, row.filePath);
+  async function downloadReport(path: string) {
+    const report = await $api.workflows.downloadReport(labId, path);
     if (report) {
       const link = document.createElement('a');
       link.href = report.url;
-      link.download = report.name;
+      link.download = report.DownloadUrl;
       link.click();
     }
   }
@@ -111,20 +110,14 @@
         >
           <template #actions-data="{ row, index }">
             <div class="flex items-center justify-end">
-              <EGButton label="Download" variant="secondary" size="sm" @click="downloadReport(row)" />
-              <!--              <EGButton-->
-              <!--                class="relative z-10"-->
-              <!--                size="sm"-->
-              <!--                variant="secondary"-->
-              <!--                label="Resend Invite"-->
-              <!--                v-if="isInvited((row as OrgUser).OrganizationUserStatus)"-->
-              <!--                @click="-->
-              <!--                  $event.stopPropagation();-->
-              <!--                  resend(row as OrgUser, index);-->
-              <!--                "-->
-              <!--                :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"-->
-              <!--                :loading="isButtonRequestPending(index)"-->
-              <!--              />-->
+              <EGButton
+                label="Download"
+                variant="secondary"
+                size="sm"
+                @click="downloadReport(row.externalPath)"
+                :icon-right="false"
+                icon="i-heroicons-arrow-down-tray"
+              />
             </div>
           </template>
         </EGTable>

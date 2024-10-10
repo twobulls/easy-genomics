@@ -19,6 +19,9 @@ import {
   GetBucketLocationCommand,
   GetBucketLocationCommandInput,
   GetBucketLocationCommandOutput,
+  GetObjectCommand,
+  GetObjectCommandInput,
+  GetObjectCommandOutput,
   HeadObjectCommand,
   HeadObjectCommandInput,
   HeadObjectCommandOutput,
@@ -64,6 +67,7 @@ export enum S3Command {
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
   LIST_BUCKET_OBJECTS = 'list-bucket-objects',
   HEAD_OBJECT = 'head-object',
+  GET_OBJECT = 'get-object',
   PUT_OBJECT = 'put-object',
   // Multi-Part S3 Uploads
   CREATE_MULTI_PART_UPLOAD = 'create-multi-part-upload',
@@ -149,8 +153,11 @@ export class S3Service {
   };
 
   public getPreSignedUploadUrl = async (putObjectInput: PutObjectCommandInput): Promise<string> => {
-    const putObjectCommand: PutObjectCommand = new PutObjectCommand(putObjectInput);
-    return getSignedUrl(this.s3Client, putObjectCommand, { expiresIn: 3600 });
+    return getSignedUrl(this.s3Client, this.getS3Command(S3Command.PUT_OBJECT, putObjectInput), { expiresIn: 3600 });
+  };
+
+  public getPreSignedDownloadUrl = async (getObjectInput: GetObjectCommandInput): Promise<string> => {
+    return getSignedUrl(this.s3Client, this.getS3Command(S3Command.GET_OBJECT, getObjectInput), { expiresIn: 60 });
   };
 
   public doesObjectExist = async (headObjectInput: HeadObjectCommandInput): Promise<boolean> => {
@@ -163,6 +170,10 @@ export class S3Service {
     } catch (error: any) {
       return false;
     }
+  };
+
+  public getObject = async (getObjectInput: GetObjectCommandInput): Promise<GetObjectCommandOutput> => {
+    return this.s3Request<GetObjectCommandInput, GetObjectCommandOutput>(S3Command.GET_OBJECT, getObjectInput);
   };
 
   public putObject = async (putObjectInput: PutObjectCommandInput): Promise<PutObjectCommandOutput> => {
@@ -236,6 +247,8 @@ export class S3Service {
         return new ListObjectsV2Command(data as ListObjectsV2CommandInput);
       case S3Command.HEAD_OBJECT:
         return new HeadObjectCommand(data as HeadObjectCommandInput);
+      case S3Command.GET_OBJECT:
+        return new GetObjectCommand(data as GetObjectCommandInput);
       case S3Command.PUT_OBJECT:
         return new PutObjectCommand(data as PutObjectCommandInput);
       // Multi-Part S3 Upload Commands

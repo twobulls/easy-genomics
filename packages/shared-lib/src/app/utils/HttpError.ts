@@ -239,6 +239,17 @@ export class LaboratoryUserNotFoundError extends HttpError {
   }
 }
 
+/**
+ * Laboratory Bucket not found
+ *
+ * @param laboratoryId
+ */
+export class LaboratoryBucketNotFoundError extends HttpError {
+  constructor(laboratoryId: string) {
+    super(`Laboratory '${laboratoryId}' S3 Bucket could not be found`, 404, 'EG-314');
+  }
+}
+
 // User Errors
 
 /**

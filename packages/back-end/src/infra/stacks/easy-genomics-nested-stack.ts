@@ -292,15 +292,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
         actions: ['dynamodb:PutItem'],
         effect: Effect.ALLOW,
       }),
-      // IMPORTANT
-      // This IAM policy prevents creation of Lab S3 buckets where the bucket name
-      // doesn't begin with the name component of the  'resources' prefix.
-      // e.g. 123456789012-dev-build2-lab-*
-      new PolicyStatement({
-        resources: [`arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-*`],
-        actions: ['s3:CreateBucket', 's3:*'], // TODO: Lock down S3 permissions for PutBucketLifecycleConfiguration
-        effect: Effect.ALLOW,
-      }),
       new PolicyStatement({
         resources: [
           `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
@@ -697,6 +688,22 @@ export class EasyGenomicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: ['arn:aws:s3:::*'],
         actions: ['s3:ListAllMyBuckets'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/files/request-file-download
+    this.iam.addPolicyStatements('/easy-genomics/files/request-file-download', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*/*'],
+        actions: ['s3:GetObject'], // Required to generate pre-signed S3 Urls for uploading with GetObject request
         effect: Effect.ALLOW,
       }),
     ]);

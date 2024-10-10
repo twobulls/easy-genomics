@@ -37,6 +37,7 @@ export const user: User = {
   OrganizationAccess: {
     [organizationId]: {
       Status: 'Active',
+      OrganizationAdmin: true,
       LaboratoryAccess: {
         [laboratoryId]: {
           Status: 'Active',

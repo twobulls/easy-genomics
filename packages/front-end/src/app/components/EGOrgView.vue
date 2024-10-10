@@ -12,15 +12,10 @@
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
 
-  const props = withDefaults(
-    defineProps<{
-      admin: boolean;
-      orgId: string;
-    }>(),
-    {
-      admin: false,
-    },
-  );
+  const props = defineProps<{
+    admin: boolean;
+    orgId: string;
+  }>();
 
   const { $api } = useNuxtApp();
   const router = useRouter();

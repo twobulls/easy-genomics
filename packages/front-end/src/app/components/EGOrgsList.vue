@@ -2,14 +2,9 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
-  const props = withDefaults(
-    defineProps<{
-      admin: boolean;
-    }>(),
-    {
-      admin: false,
-    },
-  );
+  const props = defineProps<{
+    admin: boolean;
+  }>();
 
   const { $api } = useNuxtApp();
   const $router = useRouter();

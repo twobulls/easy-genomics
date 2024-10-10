@@ -5,16 +5,10 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse } from '@FE/types/api';
 
-  const props = withDefaults(
-    defineProps<{
-      admin: boolean;
-      orgAdmin: boolean;
-    }>(),
-    {
-      admin: false,
-      orgAdmin: false,
-    },
-  );
+  const props = defineProps<{
+    admin: boolean;
+    orgAdmin: boolean;
+  }>();
 
   const { $api } = useNuxtApp();
   const $router = useRouter();

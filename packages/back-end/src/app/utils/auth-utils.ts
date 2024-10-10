@@ -32,6 +32,31 @@ export function getOrganizationAccessOrganizationIds(event: APIGatewayProxyEvent
 }
 
 /**
+ * Helper function to return the User's LaboratoryAccess LaboratoryIds.
+ * @param event
+ */
+export function getLaboratoryAccessLaboratoryIds(event: APIGatewayProxyEvent, organizationId: string): string[] {
+  const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims?.OrganizationAccess;
+  if (!orgAccessMetadata) {
+    return [];
+  }
+
+  const organizationAccess: OrganizationAccess = JSON.parse(orgAccessMetadata);
+  const organizationAccessDetails: OrganizationAccessDetails | undefined = organizationAccess[organizationId];
+  if (
+    !organizationAccessDetails ||
+    organizationAccessDetails.Status != 'Active' ||
+    !organizationAccessDetails.LaboratoryAccess
+  ) {
+    return [];
+  }
+
+  const laboratoryAccess = organizationAccessDetails.LaboratoryAccess;
+
+  return Object.keys(laboratoryAccess).filter((key) => laboratoryAccess[key].Status == 'Active');
+}
+
+/**
  * Helper function to check if an authenticated User's JWT OrganizationAccess
  * metadata allows access to administrate the requested Organization
  * @param event

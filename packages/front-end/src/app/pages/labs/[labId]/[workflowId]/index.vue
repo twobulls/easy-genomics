@@ -2,6 +2,7 @@
   import { useLabsStore, useUiStore } from '@FE/stores';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
+  import { OrgUser } from '@/packages/shared-lib/src/app/types/easy-genomics/user-unified';
 
   const { $api } = useNuxtApp();
   const { labId, workflow } = useLabsStore();
@@ -29,6 +30,10 @@
       label: 'File Names',
       sortable: true,
       sort: useSort().stringSortCompare,
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
     },
   ];
 
@@ -64,6 +69,16 @@
     useUiStore().setRequestPending(false);
   });
 
+  function downloadReport(row: any) {
+    const report = $api.workflows.downloadReport(labId, row.filePath);
+    if (report) {
+      const link = document.createElement('a');
+      link.href = report.url;
+      link.download = report.name;
+      link.click();
+    }
+  }
+
   // watch route change to correspondingly change selected tab
   watch(
     () => $router.currentRoute.value.query.tab,
@@ -93,7 +108,26 @@
           :columns="runResultsColumns"
           :is-loading="useUiStore().isRequestPending"
           no-results-msg="No results have been generated yet."
-        />
+        >
+          <template #actions-data="{ row, index }">
+            <div class="flex items-center justify-end">
+              <EGButton label="Download" variant="secondary" size="sm" @click="downloadReport(row)" />
+              <!--              <EGButton-->
+              <!--                class="relative z-10"-->
+              <!--                size="sm"-->
+              <!--                variant="secondary"-->
+              <!--                label="Resend Invite"-->
+              <!--                v-if="isInvited((row as OrgUser).OrganizationUserStatus)"-->
+              <!--                @click="-->
+              <!--                  $event.stopPropagation();-->
+              <!--                  resend(row as OrgUser, index);-->
+              <!--                "-->
+              <!--                :disabled="isButtonDisabled(index) || isButtonRequestPending(index)"-->
+              <!--                :loading="isButtonRequestPending(index)"-->
+              <!--              />-->
+            </div>
+          </template>
+        </EGTable>
       </div>
       <div v-if="item.key === 'runDetails'" class="space-y-3">
         <section

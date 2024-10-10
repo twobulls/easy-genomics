@@ -570,7 +570,7 @@
             </div>
           </template>
 
-          <template #empty-state>
+          <template #empty-state v-if="!useUiStore().isRequestPending">
             <div class="text-muted flex h-24 items-center justify-center font-normal">
               There are no users in your Lab
             </div>

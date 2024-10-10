@@ -42,10 +42,10 @@
         "src/app/*"
       ],
       "@BE/*": [
-        "../packages/back-end/src/app/*"
+        "../../packages/back-end/src/app/*"
       ],
       "@SharedLib/*": [
-        "../packages/shared-lib/src/app/*"
+        "../../packages/shared-lib/src/app/*"
       ],
       "#app": [
         "node_modules/nuxt/dist/app"

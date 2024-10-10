@@ -73,7 +73,9 @@
         <EGActionButton v-if="actionItems" :items="actionItems(row)" @click="$event.stopPropagation()" />
       </template>
       <template #empty-state>
-        <div class="text-muted flex h-12 items-center justify-center font-normal">{{ noResultsMsg }}</div>
+        <div class="text-muted flex h-12 items-center justify-center font-normal" v-if="!isLoading">
+          {{ noResultsMsg }}
+        </div>
       </template>
     </UTable>
   </UCard>

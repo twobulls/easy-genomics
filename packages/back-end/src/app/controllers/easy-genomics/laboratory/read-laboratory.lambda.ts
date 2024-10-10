@@ -25,8 +25,10 @@ export const handler: Handler = async (
 
     // Users with access to the Laboratory can view the organization
     if (
-      !validateOrganizationAdminAccess(event, existing.OrganizationId) &&
-      !validateOrganizationAccess(event, existing.OrganizationId, existing.LaboratoryId)
+      !(
+        validateOrganizationAdminAccess(event, existing.OrganizationId) ||
+        validateOrganizationAccess(event, existing.OrganizationId, existing.LaboratoryId)
+      )
     ) {
       throw new UnauthorizedAccessError();
     }

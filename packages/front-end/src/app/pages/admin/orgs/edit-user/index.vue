@@ -1,7 +1,7 @@
 <template>
   <EGAdminAlert />
 
-  <EGUserAccess />
+  <EGUserAccess admin />
 </template>
 
 <style scoped></style>

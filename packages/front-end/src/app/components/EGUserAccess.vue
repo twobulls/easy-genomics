@@ -8,17 +8,17 @@
   const props = withDefaults(
     defineProps<{
       admin: boolean;
+      orgAdmin: boolean;
     }>(),
     {
       admin: false,
+      orgAdmin: false,
     },
   );
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-
-  const adminPrefix = computed<string>(() => (props.admin ? '/admin' : ''));
 
   const orgLabsData = ref([] as Laboratory[]);
   const selectedUserLabsData = ref<LaboratoryUserDetails[] | null>(null);
@@ -35,6 +35,8 @@
       label: 'Lab Access',
     },
   ];
+
+  const canCreateLabs = computed<boolean>(() => !props.admin && props.orgAdmin);
 
   const buttonLoadingStates = ref<object>({});
 
@@ -254,8 +256,8 @@
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="There are no labs in your Organization"
-    :primary-button-action="() => $router.push({ path: adminPrefix + '/labs/create' })"
-    primary-button-label="Create a Lab"
+    :primary-button-action="canCreateLabs ? () => $router.push({ path: '/labs/create' }) : null"
+    :primary-button-label="canCreateLabs ? 'Create a Lab' : null"
   />
 
   <EGTable
@@ -299,7 +301,7 @@
     cancelLabel="Cancel"
     :cancelVariant="ButtonVariantEnum.enum.secondary"
     @action-triggered="handleRemoveUserFromLab"
-    :primaryMessage="`Are you sure you want to remove ${useOrgsStore().getSelectedUserDisplayName} from ${labToRemoveFrom?.Name}?`"
+    :primaryMessage="`Are you sure you want to remove ${useOrgsStore().getSelectedUserDisplayName} from ${labToRemoveFrom?.name}?`"
     v-model="isRemoveUserDialogOpen"
   />
 </template>

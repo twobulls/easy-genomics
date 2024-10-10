@@ -24,7 +24,7 @@ export const handler: Handler = async (
     if (id === '') throw new RequiredIdNotFoundError();
 
     // Only System Admins or Organisation Admins allowed
-    if (!validateSystemAdminAccess(event) && !validateOrganizationAdminAccess(event, id)) {
+    if (!(validateSystemAdminAccess(event) || validateOrganizationAdminAccess(event, id))) {
       throw new UnauthorizedAccessError();
     }
 

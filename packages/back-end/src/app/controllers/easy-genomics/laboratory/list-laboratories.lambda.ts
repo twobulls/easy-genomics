@@ -25,7 +25,7 @@ export const handler: Handler = async (
     const organizationId: string | undefined = event.queryStringParameters?.organizationId;
     if (!organizationId) throw new RequiredIdNotFoundError();
 
-    if (!validateSystemAdminAccess(event) && !validateOrganizationAccess(event, organizationId)) {
+    if (!(validateSystemAdminAccess(event) || validateOrganizationAccess(event, organizationId))) {
       throw new UnauthorizedAccessError();
     }
 

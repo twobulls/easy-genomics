@@ -42,8 +42,10 @@ export const handler: Handler = async (
 
     // Only Organisation Admins and Laboratory Managers are allowed to edit laboratories
     if (
-      !validateOrganizationAdminAccess(event, laboratory.OrganizationId) &&
-      !validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
+      !(
+        validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+        validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
+      )
     ) {
       throw new UnauthorizedAccessError();
     }

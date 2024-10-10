@@ -18,7 +18,7 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!RequestOrganizationUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
-    if (!validateSystemAdminAccess(event) && !validateOrganizationAdminAccess(event, request.OrganizationId)) {
+    if (!(validateSystemAdminAccess(event) || validateOrganizationAdminAccess(event, request.OrganizationId))) {
       throw new UnauthorizedAccessError();
     }
 

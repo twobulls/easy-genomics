@@ -286,6 +286,7 @@
     :title="useOrgsStore().selectedOrg!.Name"
     :description="useOrgsStore().selectedOrg!.Description"
     :back-action="() => $router.push('/orgs')"
+    :show-back="true"
   >
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">

@@ -74,7 +74,7 @@
 </script>
 
 <template v-if="!useUiStore().isRequestPending">
-  <EGPageHeader :title="workflow.runName" :description="workflow.projectName" />
+  <EGPageHeader :title="workflow.runName" :description="workflow.projectName" :show-back="true" />
   <UTabs
     :ui="EGTabsStyles"
     :model-value="tabIndex"

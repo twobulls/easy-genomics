@@ -238,7 +238,7 @@
 </script>
 
 <template>
-  <EGPageHeader title="Edit User Access" />
+  <EGPageHeader title="Edit User Access" :show-back="true" />
   <div class="mb-4">
     <EGUserOrgAdminToggle
       v-if="useOrgsStore().selectedUser"

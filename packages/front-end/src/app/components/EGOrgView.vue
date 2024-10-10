@@ -290,8 +290,8 @@
 
 <template>
   <EGPageHeader
-    :title="useOrgsStore().selectedOrg!.Name"
-    :description="useOrgsStore().selectedOrg!.Description"
+    :title="useOrgsStore().selectedOrg?.Name"
+    :description="useOrgsStore().selectedOrg?.Description"
     :back-action="() => $router.push(adminPrefix + '/orgs')"
   >
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />

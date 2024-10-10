@@ -45,7 +45,7 @@ export const handler: Handler = async (
 
     // Only Organisation Admins and Laboratory Managers are allowed to create workflows
     if (
-      !validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+      !validateOrganizationAdminAccess(event, laboratory.OrganizationId) &&
       !validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
     ) {
       throw new UnauthorizedAccessError();

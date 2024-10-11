@@ -284,6 +284,8 @@
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     usePipelineRunStore().setSampleSheetCsv(sampleSheetResponse.SampleSheetContents);
     usePipelineRunStore().setSampleSheetS3Url(sampleSheetResponse.SampleSheetInfo.S3Url);
+    usePipelineRunStore().setS3Bucket(sampleSheetResponse.SampleSheetInfo.Bucket);
+    usePipelineRunStore().setS3Path(sampleSheetResponse.SampleSheetInfo.Path);
     canProceed.value = true;
   }
 

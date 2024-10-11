@@ -2,7 +2,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { defineStore } from 'pinia';
 
 interface LabsStoreState {
-  // indexed by orgId then labId
+  // indexed by labId
   labs: Record<string, Laboratory>;
 }
 

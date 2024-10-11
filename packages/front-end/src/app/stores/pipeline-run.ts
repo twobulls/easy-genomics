@@ -1,17 +1,17 @@
 import { defineStore } from 'pinia';
-import { z } from 'zod';
 
-export const pipelineRunStateSchema = z.object({
-  labId: z.string(),
-  labName: z.string(),
-  pipelineId: z.number(),
-  pipelineName: z.string(),
-  pipelineDescription: z.string(),
-  transactionId: z.string(),
-  userPipelineRunName: z.string(),
-  params: z.object({}),
-  sampleSheetCsv: z.string(),
-  S3Url: z.string(),
+interface PipeLineRunState {
+  //
+  labId: string;
+  labName: string;
+  pipelineId: number;
+  pipelineName: string;
+  pipelineDescription: string;
+  transactionId: string;
+  userPipelineRunName: string;
+  params: object;
+  sampleSheetCsv: string;
+  S3Url: string;
   // s3 path of uploaded file
   // csv file
   // org
@@ -20,8 +20,7 @@ export const pipelineRunStateSchema = z.object({
   // date and time?
   // pipeline default parameters
   // run parameters
-});
-export type PipeLineRunState = z.infer<typeof pipelineRunStateSchema>;
+}
 
 const initialState = (): PipeLineRunState => ({
   labId: '',

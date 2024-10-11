@@ -20,6 +20,8 @@
 
   const $route = useRoute();
 
+  const pipelineRunStore = usePipelineRunStore();
+
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
@@ -41,7 +43,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const pipelines = ref<[]>([]);
-  const workflows = ref<Workflow[]>([]);
+  const workflows = computed<Workflow[]>(() => pipelineRunStore.getPipelineRunsForLab(labId));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -204,7 +206,7 @@
     ],
   ];
 
-  function workflowsActionItems(row: DescribeWorkflowResponse): object[] {
+  function workflowsActionItems(row: Workflow): object[] {
     const buttons: object[][] = [
       [
         {
@@ -216,13 +218,13 @@
         {
           label: 'View Results',
           click: () => {
-            $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+            $router.push({ path: `/labs/${labId}/${row.id}`, query: { tab: 'Run Results' } });
           },
         },
       ],
     ];
 
-    if (['SUBMITTED', 'RUNNING'].includes(row.workflow.status)) {
+    if (['SUBMITTED', 'RUNNING'].includes(row.status || '')) {
       buttons.push([
         {
           label: 'Cancel Run',
@@ -306,8 +308,7 @@
 
   async function getWorkflows(): Promise<void> {
     try {
-      const res = await $api.workflows.list(labId);
-      workflows.value = res;
+      await pipelineRunStore.loadPipelineRunsForLab(labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
     }
@@ -360,30 +361,30 @@
     await refreshLabUsers();
   }
 
-  function onRunsRowClicked(row) {
+  function onRunsRowClicked(row: Workflow) {
     viewRunDetails(row);
   }
 
-  function onPipelinesRowClicked(row) {
+  function onPipelinesRowClicked(row: Workflow) {
     viewRunPipeline(row);
   }
 
-  function viewRunPipeline(pipeline) {
-    usePipelineRunStore().reset();
+  function viewRunPipeline(pipeline: Workflow) {
+    pipelineRunStore.reset();
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
-    usePipelineRunStore().setLabId(labId);
-    usePipelineRunStore().setLabName(labName);
-    usePipelineRunStore().setPipelineId(pipelineId);
-    usePipelineRunStore().setPipelineName(pipelineName);
-    usePipelineRunStore().setPipelineDescription(pipelineDescription || '');
-    usePipelineRunStore().setTransactionId(uuidv4());
+    pipelineRunStore.setLabId(labId);
+    pipelineRunStore.setLabName(labName);
+    pipelineRunStore.setPipelineId(pipelineId);
+    pipelineRunStore.setPipelineName(pipelineName);
+    pipelineRunStore.setPipelineDescription(pipelineDescription || '');
+    pipelineRunStore.setTransactionId(uuidv4());
     $router.push({
       path: `/labs/${labId}/${pipelineId}/run-pipeline`,
     });
   }
 
-  function viewRunDetails(row) {
-    $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
+  function viewRunDetails(row: Workflow) {
+    $router.push({ path: `/labs/${labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 
   // watch route change to correspondingly change selected tab
@@ -395,11 +396,11 @@
   );
 
   const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<DescribeWorkflowResponse | null>(null);
+  const runToCancel = ref<Workflow | null>(null);
 
   async function handleCancelDialogAction() {
-    const runId = runToCancel.value?.workflow?.id;
-    const runName = runToCancel.value?.workflow?.runName;
+    const runId = runToCancel.value?.id;
+    const runName = runToCancel.value?.runName;
 
     if (!runId) {
       throw new Error("runToCancel workflow id should have a value but doesn't");
@@ -491,21 +492,21 @@
           :show-pagination="!useUiStore().isRequestPending"
         >
           <template #runName-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow.workflow.runName }}</div>
-            <div class="text-muted text-xs font-normal">{{ workflow?.workflow.projectName }}</div>
+            <div class="text-body text-sm font-medium">{{ workflow.runName }}</div>
+            <div class="text-muted text-xs font-normal">{{ workflow.projectName }}</div>
           </template>
 
           <template #lastUpdated-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ getDate(workflow?.workflow.lastUpdated) }}</div>
-            <div class="text-muted">{{ getTime(workflow?.workflow.lastUpdated) }}</div>
+            <div class="text-body text-sm font-medium">{{ getDate(workflow.lastUpdated) }}</div>
+            <div class="text-muted">{{ getTime(workflow.lastUpdated) }}</div>
           </template>
 
           <template #status-data="{ row: workflow }">
-            <EGStatusChip :status="workflow?.workflow.status" />
+            <EGStatusChip :status="workflow.status" />
           </template>
 
           <template #owner-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow?.workflow?.userName ?? '-' }}</div>
+            <div class="text-body text-sm font-medium">{{ workflow?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">
@@ -592,7 +593,7 @@
     action-label="Cancel Run"
     :action-variant="ButtonVariantEnum.enum.destructive"
     @action-triggered="handleCancelDialogAction"
-    :primary-message="`Are you sure you would like to cancel ${runToCancel?.workflow.runName}?`"
+    :primary-message="`Are you sure you would like to cancel ${runToCancel?.runName}?`"
     secondary-message="This will stop any progress made."
     v-model="isCancelDialogOpen"
   />

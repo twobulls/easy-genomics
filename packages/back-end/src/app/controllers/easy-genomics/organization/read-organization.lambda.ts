@@ -17,7 +17,7 @@ export const handler: Handler = async (
     if (id === '') throw new RequiredIdNotFoundError();
 
     // Only System Admins or Users with access to the Organization can view the organization
-    if (!validateSystemAdminAccess(event) && !validateOrganizationAccess(event, id)) {
+    if (!(validateSystemAdminAccess(event) || validateOrganizationAccess(event, id))) {
       throw new UnauthorizedAccessError();
     }
 

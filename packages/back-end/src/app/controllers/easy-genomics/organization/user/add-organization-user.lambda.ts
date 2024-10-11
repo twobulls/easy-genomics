@@ -35,7 +35,7 @@ export const handler: Handler = async (
     if (!AddOrganizationUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     // Only System Admins or Organisation Admins are allowed to add Org users
-    if (!validateSystemAdminAccess(event) && !validateOrganizationAdminAccess(event, request.OrganizationId)) {
+    if (!(validateSystemAdminAccess(event) || validateOrganizationAdminAccess(event, request.OrganizationId))) {
       throw new UnauthorizedAccessError();
     }
 

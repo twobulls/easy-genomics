@@ -113,7 +113,9 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
     },
   },
 
-  persist: true,
+  persist: {
+    storage: localStorage,
+  },
 });
 
 export default usePipelineRunStore;

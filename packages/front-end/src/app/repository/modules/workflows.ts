@@ -57,7 +57,7 @@ class PipelinesModule extends HttpFactory {
     return res;
   }
 
-  async get(labId: string, workflowId: string): Promise<DescribeWorkflowResponse> {
+  async get(labId: string, workflowId: string): Promise<Workflow> {
     const res = await this.callNextflowTower<DescribeWorkflowResponse>(
       'GET',
       `/workflow/read-workflow/${workflowId}?laboratoryId=${labId}`,
@@ -70,7 +70,8 @@ class PipelinesModule extends HttpFactory {
       throw new Error('Failed to get pipeline run');
     }
 
-    return res;
+    // as noted in list(...), coercing to get the right type back
+    return res.workflow as Workflow;
   }
 }
 

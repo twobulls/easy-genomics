@@ -98,14 +98,25 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
       this.pipelineRuns[labId] = {};
       this.pipelineRunIdsOrders[labId] = [];
 
-      const pipelines = await $api.workflows.list(labId);
+      const pipelineRuns: Workflow[] = await $api.workflows.list(labId);
 
-      for (const pipeline of pipelines) {
-        if (pipeline.id !== undefined) {
-          this.pipelineRuns[labId][pipeline.id] = pipeline;
-          this.pipelineRunIdsOrders[labId].push(pipeline.id);
+      for (const pipelineRun of pipelineRuns) {
+        if (pipelineRun.id !== undefined) {
+          this.pipelineRuns[labId][pipelineRun.id] = pipelineRun;
+          this.pipelineRunIdsOrders[labId].push(pipelineRun.id);
         }
       }
+    },
+
+    async loadSinglePipelineRun(labId: string, workflowId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+
+      const pipelineRun: Workflow = await $api.workflows.get(labId, workflowId);
+
+      if (!this.pipelineRuns[labId]) {
+        this.pipelineRuns[labId] = {};
+      }
+      this.pipelineRuns[labId][pipelineRun.id] = pipelineRun;
     },
 
     getPipelineRunsForLab(labId: string): Workflow[] {

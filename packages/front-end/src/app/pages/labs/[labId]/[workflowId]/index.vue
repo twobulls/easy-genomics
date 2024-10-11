@@ -5,7 +5,8 @@
 
   const $router = useRouter();
   const $route = useRoute();
-  const { $api } = useNuxtApp();
+
+  const pipelineRunStore = usePipelineRunStore();
 
   const labId = $route.params.labId as string;
   const workflowId = $route.params.workflowId as string;
@@ -15,11 +16,11 @@
     $router.push('/labs');
   }
 
-  const workflow = ref<Workflow | null>(null);
+  const workflow = computed<Workflow | null>(() => pipelineRunStore.pipelineRuns[labId][workflowId]);
 
   async function loadWorkflow() {
     try {
-      workflow.value = (await $api.workflows.get(labId, workflowId)).workflow;
+      pipelineRunStore.loadSinglePipelineRun(labId, workflowId);
     } catch (e: any) {
       console.error('Failed to get workflow from API:', e);
     }

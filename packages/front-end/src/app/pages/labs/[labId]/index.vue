@@ -15,7 +15,6 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
-  import { DescribeWorkflowResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
   import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const $route = useRoute();

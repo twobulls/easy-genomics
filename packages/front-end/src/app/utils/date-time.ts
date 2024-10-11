@@ -18,6 +18,10 @@ function parseAndValidateDate(input: string | null | undefined) {
  * @param input
  */
 export function getDate(input: string | null | undefined): string | null {
+  if (!input) {
+    return null;
+  }
+
   const date = parseAndValidateDate(input);
   if (!date) return null;
 
@@ -29,6 +33,10 @@ export function getDate(input: string | null | undefined): string | null {
  * @param input
  */
 export function getTime(input: string | null | undefined): string | null {
+  if (!input) {
+    return null;
+  }
+
   const date = parseAndValidateDate(input);
   if (!date) return null;
 

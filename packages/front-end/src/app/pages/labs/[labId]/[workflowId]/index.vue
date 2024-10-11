@@ -1,18 +1,31 @@
 <script setup lang="ts">
-  import { useLabsStore } from '@FE/stores';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
+  import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 
-  const workflow = useLabsStore().workflow;
   const $router = useRouter();
   const $route = useRoute();
+  const { $api } = useNuxtApp();
 
   const labId = $route.params.labId as string;
+  const workflowId = $route.params.workflowId as string;
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
     $router.push('/labs');
   }
+
+  const workflow = ref<Workflow | null>(null);
+
+  async function loadWorkflow() {
+    try {
+      workflow.value = (await $api.workflows.get(labId, workflowId)).workflow;
+    } catch (e: any) {
+      console.error('Failed to get workflow from API:', e);
+    }
+  }
+
+  onBeforeMount(loadWorkflow);
 
   const tabItems = [
     {
@@ -27,20 +40,19 @@
 
   let tabIndex = 0;
 
-  const createdDate = getDate(workflow?.dateCreated);
-  const createdTime = getTime(workflow?.dateCreated);
-  const startedDate = getDate(workflow?.start);
-  const startedTime = getTime(workflow?.start);
-  const stoppedDate = getDate(workflow?.complete);
-  const stoppedTime = getTime(workflow?.complete);
-
   const createdDateTime = computed(() => {
+    const createdDate = getDate(workflow.value?.dateCreated);
+    const createdTime = getTime(workflow.value?.dateCreated);
     return createdDate && createdTime ? `${createdTime} ⋅ ${createdDate}` : '—';
   });
   const startedDateTime = computed(() => {
+    const startedDate = getDate(workflow.value?.start);
+    const startedTime = getTime(workflow.value?.start);
     return startedDate && startedTime ? `${startedTime} ⋅ ${startedDate}` : '—';
   });
   const stoppedDateTime = computed(() => {
+    const stoppedDate = getDate(workflow.value?.complete);
+    const stoppedTime = getTime(workflow.value?.complete);
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
 
@@ -60,7 +72,7 @@
 </script>
 
 <template>
-  <EGPageHeader :title="workflow.runName" :description="workflow.projectName" />
+  <EGPageHeader :title="workflow?.runName" :description="workflow?.projectName" />
   <UTabs
     :ui="EGTabsStyles"
     :model-value="tabIndex"
@@ -85,7 +97,7 @@
           <dl class="mt-4">
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Workflow Run Status</dt>
-              <dd class="text-muted text-left"><EGStatusChip :status="workflow.status" /></dd>
+              <dd class="text-muted text-left"><EGStatusChip :status="workflow?.status" /></dd>
             </div>
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Creation Time</dt>

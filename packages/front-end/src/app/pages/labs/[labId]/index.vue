@@ -7,7 +7,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useLabsStore, useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -17,17 +17,24 @@
   import { v4 as uuidv4 } from 'uuid';
   import { DescribeWorkflowResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 
+  const $route = useRoute();
+
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const orgId = useOrgsStore().selectedOrg?.OrganizationId;
-  const labId = useLabsStore().labId;
-  const labName = useLabsStore().labName;
   const modal = useModal();
 
   const tabIndex = ref(0);
   const defaultTabIndex = 0;
 
-  const lab = ref<Laboratory>();
+  const labId = $route.params.labId as string;
+  // on page load, load the cached version from the labs store, for immediate population of the lab name etc
+  // for page function, we also need HasNextFlowTowerAccessToken which only comes from the individual loadLabData endpoint
+  // so we also load up to date data from that endpoint and overwrite the lab variable when it's ready
+  const lab = ref<Laboratory | null>(useLabsStore().labs[labId] || null);
+
+  const labName = computed<string>(() => lab.value?.Name || '');
+
   const labUsers = ref<LabUser[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
@@ -45,10 +52,10 @@
     $router.push('/labs');
   }
 
-  const hasPAT = computed(() => !!lab.value?.HasNextFlowTowerAccessToken);
+  const missingPAT = ref<boolean>(false);
 
   const tabItems = computed(() => [
-    ...(hasPAT.value
+    ...(!missingPAT.value
       ? [
           { key: 'runs', label: 'Runs' },
           { key: 'pipelines', label: 'Pipelines' },
@@ -66,13 +73,7 @@
    */
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
-    await getLab();
-    if (!hasPAT.value) {
-      showRedirectModal();
-    } else {
-      await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
-      canAddUsers.value = true;
-    }
+    await loadLabData();
     useUiStore().setRequestPending(false);
   });
 
@@ -214,7 +215,6 @@
         {
           label: 'View Results',
           click: () => {
-            useLabsStore().setSelectedWorkflow(row.workflow);
             $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
           },
         },
@@ -277,11 +277,20 @@
     }
   }
 
-  async function getLab(): Promise<void> {
+  async function loadLabData(): Promise<void> {
     try {
       lab.value = await $api.labs.labDetails(labId);
+
+      missingPAT.value = !lab.value.HasNextFlowTowerAccessToken;
+
+      if (missingPAT.value) {
+        showRedirectModal();
+      } else {
+        await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+        canAddUsers.value = true;
+      }
     } catch (error) {
-      console.error('Error retrieving Lab', error);
+      console.error('Error retrieving Lab data', error);
     }
   }
 
@@ -373,7 +382,6 @@
   }
 
   function viewRunDetails(row) {
-    useLabsStore().setSelectedWorkflow(row.workflow);
     $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
   }
 
@@ -412,7 +420,7 @@
 
 <template>
   <EGPageHeader
-    :title="labName || ''"
+    :title="labName"
     description="View your Lab users, details and pipelines"
     :back-action="() => $router.push('/labs')"
   >

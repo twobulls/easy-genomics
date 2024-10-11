@@ -53,7 +53,8 @@ export const handler: Handler = async (
       throw new Error(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
     }
 
-    const s3Key: string = `uploads/${laboratoryId}/${transactionId}/sample-sheet.csv`;
+    const s3Path: string = `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/next-flow/${transactionId}`;
+    const s3Key: string = `${s3Path}/sample-sheet.csv`;
     const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
     const bucketLocation = (await s3Service.getBucketLocation({ Bucket: s3Bucket })).LocationConstraint;
 
@@ -85,6 +86,7 @@ export const handler: Handler = async (
           Checksum: sampleSheetCsvChecksum,
           Bucket: s3Bucket,
           Key: s3Key,
+          Path: s3Path,
           Region: s3Region,
           S3Url: s3Url,
         },

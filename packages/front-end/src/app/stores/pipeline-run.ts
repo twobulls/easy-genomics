@@ -11,15 +11,7 @@ export const pipelineRunStateSchema = z.object({
   userPipelineRunName: z.string(),
   params: z.object({}),
   sampleSheetCsv: z.string(),
-  S3Url: z.string(),
-  // s3 path of uploaded file
-  // csv file
-  // org
-  // lab
-  // user
-  // date and time?
-  // pipeline default parameters
-  // run parameters
+  sampleSheetS3Url: z.string(),
 });
 export type PipeLineRunState = z.infer<typeof pipelineRunStateSchema>;
 
@@ -33,7 +25,7 @@ const initialState = (): PipeLineRunState => ({
   userPipelineRunName: '',
   params: {},
   sampleSheetCsv: '',
-  S3Url: '',
+  sampleSheetS3Url: '',
 });
 
 const usePipelineRunStore = defineStore('pipelineRunStore', {
@@ -76,8 +68,8 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
       this.sampleSheetCsv = sampleSheetCsv;
     },
 
-    setS3Url(path: string) {
-      this.S3Url = path;
+    setSampleSheetS3Url(path: string) {
+      this.sampleSheetS3Url = path;
     },
 
     reset() {

@@ -17,7 +17,7 @@
     schema: props.schema,
     params: {
       ...props.params,
-      input: pipelineRunStore.S3Url,
+      input: pipelineRunStore.sampleSheetS3Url,
     },
   });
 

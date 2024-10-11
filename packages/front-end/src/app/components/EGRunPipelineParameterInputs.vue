@@ -72,7 +72,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="pipelineRunStore.S3Url" />
+        <EGInput name="input" v-model="pipelineRunStore.sampleSheetS3Url" />
       </template>
     </div>
   </div>

@@ -43,7 +43,7 @@ export const handler: Handler = async (
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
 
     // Only Organisation Admins are allowed to edit laboratories
-    if (validateOrganizationAdminAccess(event, existing.OrganizationId)) {
+    if (!validateOrganizationAdminAccess(event, existing.OrganizationId)) {
       throw new UnauthorizedAccessError();
     }
 

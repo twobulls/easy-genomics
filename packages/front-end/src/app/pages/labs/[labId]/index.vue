@@ -28,8 +28,13 @@
   const defaultTabIndex = 0;
 
   const labId = $route.params.labId as string;
-  const lab = ref<Laboratory | null>(null);
+  // on page load, load the cached version from the labs store, for immediate population of the lab name etc
+  // for page function, we also need HasNextFlowTowerAccessToken which only comes from the individual loadLabData endpoint
+  // so we also load up to date data from that endpoint and overwrite the lab variable when it's ready
+  const lab = ref<Laboratory | null>(useLabsStore().labs[labId] || null);
+
   const labName = computed<string>(() => lab.value?.Name || '');
+
   const labUsers = ref<LabUser[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
@@ -47,10 +52,10 @@
     $router.push('/labs');
   }
 
-  const hasPAT = computed(() => !!lab.value?.HasNextFlowTowerAccessToken);
+  const missingPAT = ref<boolean>(false);
 
   const tabItems = computed(() => [
-    ...(hasPAT.value
+    ...(!missingPAT.value
       ? [
           { key: 'runs', label: 'Runs' },
           { key: 'pipelines', label: 'Pipelines' },
@@ -68,13 +73,7 @@
    */
   onBeforeMount(async () => {
     useUiStore().setRequestPending(true);
-    await getLab();
-    if (!hasPAT.value) {
-      showRedirectModal();
-    } else {
-      await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
-      canAddUsers.value = true;
-    }
+    await loadLabData();
     useUiStore().setRequestPending(false);
   });
 
@@ -278,11 +277,20 @@
     }
   }
 
-  async function getLab(): Promise<void> {
+  async function loadLabData(): Promise<void> {
     try {
       lab.value = await $api.labs.labDetails(labId);
+
+      missingPAT.value = !lab.value.HasNextFlowTowerAccessToken;
+
+      if (missingPAT.value) {
+        showRedirectModal();
+      } else {
+        await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+        canAddUsers.value = true;
+      }
     } catch (error) {
-      console.error('Error retrieving Lab', error);
+      console.error('Error retrieving Lab data', error);
     }
   }
 

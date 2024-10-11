@@ -9,6 +9,9 @@
   const hasNoData = ref(false);
   const labData = ref([] as Laboratory[]);
 
+  // fetch lab data into store
+  onBeforeMount(useLabsStore().loadAllLabsForCurrentUser);
+
   const tableColumns = [
     {
       key: 'Name',

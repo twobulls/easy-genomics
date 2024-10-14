@@ -15,16 +15,15 @@
     {
       backButtonLabel: 'Back',
       isLoading: false,
-      skeletonConfig: {
-        titleLines: 1,
-        descriptionLines: 2,
-      },
       backAction: () => {},
       description: '',
     },
   );
 
   const router = useRouter();
+
+  const skeletonTitleLines = computed(() => props.skeletonConfig?.titleLines ?? 1);
+  const skeletonDescriptionLines = computed(() => props.skeletonConfig?.descriptionLines ?? 1);
 </script>
 
 <template>

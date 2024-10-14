@@ -1,19 +1,36 @@
 <script setup lang="ts">
-  const props = defineProps<{
-    title: string;
-    description?: string;
-    showBack: boolean;
-    backButtonLabel?: string;
-    backAction?: () => void;
-    isLoading?: boolean;
-  }>();
+  import { defineProps, computed } from 'vue';
+  import { useRouter } from 'vue-router';
+
+  const props = withDefaults(
+    defineProps<{
+      title: string;
+      description?: string;
+      showBack: boolean;
+      backButtonLabel?: string;
+      backAction?: () => void;
+      isLoading?: boolean;
+      skeletonConfig?: {
+        titleLines?: number;
+        descriptionLines?: number;
+      };
+    }>(),
+    {
+      backButtonLabel: 'Back',
+      isLoading: false,
+      skeletonConfig: {
+        titleLines: 1,
+        descriptionLines: 2,
+      },
+      backAction: () => {},
+      description: '',
+    },
+  );
 
   const router = useRouter();
 
-  const defaultBackAction = () => {};
-  const description = computed(() => props.description || '');
-  const backAction = computed(() => props.backAction || defaultBackAction);
-  const backButtonLabel = computed(() => props.backButtonLabel || 'Back');
+  const skeletonTitleLines = computed(() => props.skeletonConfig?.titleLines ?? 1);
+  const skeletonDescriptionLines = computed(() => props.skeletonConfig?.descriptionLines ?? 1);
 </script>
 
 <template>
@@ -24,12 +41,13 @@
     <div class="flex items-start justify-between">
       <div class="w-full">
         <template v-if="isLoading">
-          <USkeleton class="mb-1 min-h-10 w-3/4 rounded-3xl" />
-          <USkeleton v-if="isLoading" class="min-h-10 w-1/2 rounded-3xl" />
+          <USkeleton v-for="line in skeletonTitleLines" class="mb-2 min-h-10 w-3/4 rounded-3xl" :key="line" />
+          <USkeleton v-for="line in skeletonDescriptionLines" class="mt-4 min-h-4 w-[150px] rounded-3xl" :key="line" />
         </template>
-        <EGText v-else tag="h1" class="mb-0">{{ title }}</EGText>
-        <USkeleton v-if="isLoading" class="mt-4 min-h-4 w-[150px] rounded-3xl" />
-        <EGText v-else v-if="description" tag="p" class="text-muted mt-4">{{ description }}</EGText>
+        <template v-else>
+          <EGText tag="h1" class="mb-0">{{ title }}</EGText>
+          <EGText v-if="description" tag="p" class="text-muted mt-4 rounded-3xl">{{ description }}</EGText>
+        </template>
       </div>
       <div class="relative flex flex-col items-end">
         <!-- Right-aligned content  -->
@@ -39,4 +57,11 @@
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+  .skeleton {
+    background: #e0e0e0;
+    height: 1em;
+    margin-bottom: 0.5em;
+    border-radius: 4px;
+  }
+</style>

@@ -109,6 +109,7 @@
     :show-back="true"
     :back-action="() => $router.push('/labs')"
     :is-loading="useUiStore().isRequestPending"
+    :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />
 
   <UTabs

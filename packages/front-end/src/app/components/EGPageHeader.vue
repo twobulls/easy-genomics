@@ -1,7 +1,4 @@
 <script setup lang="ts">
-  import { defineProps, computed } from 'vue';
-  import { useRouter } from 'vue-router';
-
   const props = withDefaults(
     defineProps<{
       title: string;
@@ -28,9 +25,6 @@
   );
 
   const router = useRouter();
-
-  const skeletonTitleLines = computed(() => props.skeletonConfig?.titleLines ?? 1);
-  const skeletonDescriptionLines = computed(() => props.skeletonConfig?.descriptionLines ?? 1);
 </script>
 
 <template>

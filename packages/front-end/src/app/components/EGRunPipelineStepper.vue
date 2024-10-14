@@ -6,8 +6,6 @@
     params: object;
   }>();
 
-  const router = useRouter();
-
   const labId = usePipelineRunStore().labId;
   const labName = usePipelineRunStore().labName;
   const pipelineId = usePipelineRunStore().pipelineId;
@@ -223,7 +221,7 @@
     <template v-if="hasLaunched">
       <EGEmptyDataCTA
         message="Your Workflow Run has Launched! Check on your progress via Runs."
-        :primary-button-action="() => $router.push(`/labs/${useLabsStore().labId}?tab=Runs`)"
+        :primary-button-action="() => $router.push(`/labs/${labId}?tab=Runs`)"
         primary-button-label="Back to Runs"
         :secondary-button-action="() => emit('reset-run-pipeline')"
         secondary-button-label="Launch Another Workflow Run"

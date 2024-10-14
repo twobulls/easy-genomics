@@ -131,6 +131,16 @@ class OrgsModule extends HttpFactory {
 
     return res;
   }
+
+  async remove(orgId: string): Promise<void> {
+    const res = await this.call<void>('DELETE', `/organization/delete-organization/${orgId}`);
+
+    if (!res) {
+      throw new Error('Failed to delete Organization');
+    }
+
+    return res;
+  }
 }
 
 export default OrgsModule;

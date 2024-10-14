@@ -7,9 +7,11 @@
   const router = useRouter();
   const { $api } = useNuxtApp();
 
-  // require superuser to create orgs
+  const $router = useRouter();
+
+  // require superuser for admin page
   if (!useUserStore().isSuperuser()) {
-    router.push({ path: '/orgs' });
+    $router.push('/');
   }
 
   async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
@@ -18,7 +20,7 @@
       const { Name, Description } = event.data;
       await $api.orgs.create({ Name, Description });
       useToastStore().success('Organization created');
-      router.push({ path: '/orgs' });
+      router.push({ path: '/admin/orgs' });
     } catch (error) {
       useToastStore().error(VALIDATION_MESSAGES.network);
     } finally {
@@ -28,8 +30,10 @@
 </script>
 
 <template>
+  <EGAdminAlert />
+
   <div class="w-full">
-    <EGBack :back-action="() => $router.push({ path: '/orgs' })" />
+    <EGBack :back-action="() => $router.push({ path: '/admin/orgs' })" />
     <EGText tag="h1" class="mb-6">Create a new Organization</EGText>
     <EGText tag="h4" class="mb-4">Organization details</EGText>
     <EGFormOrgDetails @submit-form-org-details="onSubmit($event)" />

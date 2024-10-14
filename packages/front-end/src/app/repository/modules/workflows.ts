@@ -1,6 +1,13 @@
 import { FileDownloadResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/files/request-file-download';
-import { RequestFileDownload, FileDownloadResponse } from '@SharedLib/types/easy-genomics/files/request-file-download';
-import { CreateWorkflowLaunchRequest, ListWorkflowsResponse } from '@SharedLib/types/nf-tower/nextflow-tower-api';
+import {
+  RequestFileDownload,
+  FileDownloadResponse,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/files/request-file-download';
+import {
+  CreateWorkflowLaunchRequest,
+  ListWorkflowsResponse,
+  DescribeWorkflowResponse,
+} from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse } from '@FE/utils/api-utils';
 
@@ -35,7 +42,7 @@ class WorkflowsModule extends HttpFactory {
       'PUT',
       `/workflow/cancel-workflow-execution/${workflowId}?laboratoryId=${labId}`,
     );
-    console.log('cancelPipelineRun response:', res);
+
     if (!res) {
       console.error('Error calling cancel pipeline run API');
       throw new Error('Failed to cancel pipeline run');
@@ -60,11 +67,30 @@ class WorkflowsModule extends HttpFactory {
       LaboratoryId: labId,
       Path: filePath,
     });
+
     if (!res) {
       console.error('Error calling download report API');
       throw new Error('Failed to download report');
     }
+
     validateApiResponse(FileDownloadResponseSchema, res);
+
+    return res;
+  }
+
+  async get(labId: string, workflowId: string): Promise<DescribeWorkflowResponse> {
+    const res = await this.callNextflowTower<DescribeWorkflowResponse>(
+      'GET',
+      `/workflow/read-workflow/${workflowId}?laboratoryId=${labId}`,
+    );
+
+    console.log('getWorkflow response:', res);
+
+    if (!res) {
+      console.error('Error calling get pipeline run API');
+      throw new Error('Failed to get pipeline run');
+    }
+
     return res;
   }
 }

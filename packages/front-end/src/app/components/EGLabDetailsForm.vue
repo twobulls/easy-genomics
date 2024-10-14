@@ -357,7 +357,7 @@
         <EGInput
           v-model="state.Name"
           :disabled="isNameFieldDisabled"
-          placeholder="Enter lab name (required and must be unique)"
+          placeholder="Enter lab name (required and must be unique)*"
           required
           autofocus
         />
@@ -374,7 +374,7 @@
 
       <EGFormGroup
         v-if="useUserStore().isOrgAdmin(useUserStore().currentOrgId)"
-        label="Default S3 bucket directory"
+        label="Default S3 bucket directory*"
         name="DefaultS3BucketDirectory"
       >
         <EGSelect

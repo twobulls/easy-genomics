@@ -25,7 +25,7 @@ export const handler: Handler = async (
     if (!RemoveOrganizationUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     // Only System Admins or Organisation Admins are allowed to remove Org users
-    if (!validateSystemAdminAccess(event) && !validateOrganizationAdminAccess(event, request.OrganizationId)) {
+    if (!(validateSystemAdminAccess(event) || validateOrganizationAdminAccess(event, request.OrganizationId))) {
       throw new UnauthorizedAccessError();
     }
 

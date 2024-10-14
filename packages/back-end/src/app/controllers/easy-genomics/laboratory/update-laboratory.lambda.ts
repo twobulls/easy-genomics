@@ -16,7 +16,7 @@ import {
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
-import { validateOrganizationAdminAccess, validateLaboratoryManagerAccess } from '@BE/utils/auth-utils';
+import { validateOrganizationAdminAccess } from '@BE/utils/auth-utils';
 import { httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
@@ -42,11 +42,8 @@ export const handler: Handler = async (
     // Lookup by LaboratoryId to confirm existence before updating
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
 
-    // Only Organisation Admins and Laboratory Managers are allowed to edit laboratories
-    if (
-      !validateOrganizationAdminAccess(event, existing.OrganizationId) ||
-      !validateLaboratoryManagerAccess(event, existing.OrganizationId, existing.LaboratoryId)
-    ) {
+    // Only Organisation Admins are allowed to edit laboratories
+    if (!validateOrganizationAdminAccess(event, existing.OrganizationId)) {
       throw new UnauthorizedAccessError();
     }
 

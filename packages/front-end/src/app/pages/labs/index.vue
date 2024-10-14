@@ -3,12 +3,14 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { useToastStore, useUiStore } from '@FE/stores';
   import { DeletedResponse } from '@FE/types/api';
-  import useLabsStore from '@FE/stores/labs';
 
   const { $api } = useNuxtApp();
   const router = useRouter();
   const hasNoData = ref(false);
   const labData = ref([] as Laboratory[]);
+
+  // fetch lab data into store
+  onBeforeMount(useLabsStore().loadAllLabsForCurrentUser);
 
   const tableColumns = [
     {
@@ -57,15 +59,11 @@
   const displayName = ref('');
 
   function viewLab(labId: string, name: string) {
-    useLabsStore().setLabId(labId);
-    useLabsStore().setLabName(name);
     router.push({ path: `/labs/${labId}`, query: { name } });
   }
 
   function onRowClicked(row: any) {
     const { LaboratoryId: labId, Name: name } = row;
-    useLabsStore().setLabId(labId);
-    useLabsStore().setLabName(name);
     router.push({ path: `/labs/${labId}`, query: { name } });
   }
 

@@ -2,13 +2,16 @@
   const $router = useRouter();
   const $route = useRoute();
 
-  if (!useUserStore().canManageOrgs()) {
-    $router.push({ path: '/' });
+  // require superuser for admin page
+  if (!useUserStore().isSuperuser()) {
+    $router.push('/');
   }
 
   const orgId = $route.params.orgId;
 </script>
 
 <template>
-  <EGOrgView :admin="false" :org-id="orgId" />
+  <EGAdminAlert />
+
+  <EGOrgView admin :org-id="orgId" />
 </template>

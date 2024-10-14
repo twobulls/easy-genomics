@@ -19,7 +19,7 @@ export default function useAuth() {
       const user = await Auth.signIn(username, password);
       if (user) {
         await useUserStore().loadCurrentUserPermissions();
-        await navigateTo('/labs');
+        await navigateTo(useUserStore().isSuperuser() ? '/admin/orgs' : '/labs');
       }
     } catch (error: any) {
       if (error.code === 'NotAuthorizedException') {

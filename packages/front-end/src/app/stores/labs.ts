@@ -1,36 +1,40 @@
-import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { defineStore } from 'pinia';
 
 interface LabsStoreState {
-  labId: string;
-  labName: string;
-  workflow: Workflow | undefined;
+  // indexed by labId
+  labs: Record<string, Laboratory>;
 }
 
 const initialState = (): LabsStoreState => ({
-  labId: '',
-  labName: '',
-  workflow: undefined,
+  labs: {},
 });
 
 const useLabsStore = defineStore('labsStore', {
   state: initialState,
 
   actions: {
-    setLabId(labId: string) {
-      this.labId = labId;
-    },
-
-    setLabName(labName: string) {
-      this.labName = labName;
-    },
-
-    setSelectedWorkflow(workflow: Workflow) {
-      this.workflow = workflow;
-    },
-
     reset() {
       Object.assign(this, initialState());
+    },
+
+    async loadLabsForOrg(orgId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+      const labs = await $api.labs.list(orgId);
+
+      for (const lab of labs) {
+        this.labs[lab.LaboratoryId] = lab;
+      }
+    },
+
+    async loadAllLabsForCurrentUser(): Promise<void> {
+      const currentUserPermissions = useUserStore().currentUserPermissions.orgPermissions;
+      if (currentUserPermissions === null) {
+        return;
+      }
+
+      const orgIds = Object.keys(currentUserPermissions);
+      await Promise.all(orgIds.map(this.loadLabsForOrg));
     },
   },
 

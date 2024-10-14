@@ -89,7 +89,8 @@
   async function initData() {
     useUiStore().setRequestPending(true);
     await loadWorkflow();
-    workflowReports.value = workflow.value?.reports || [];
+    const res = await $api.workflows.readWorkflowReports(workflowId, labId);
+    workflowReports.value = res.reports;
     useUiStore().setRequestPending(false);
   }
 

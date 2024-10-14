@@ -18,6 +18,7 @@
     params: {
       ...props.params,
       input: pipelineRunStore.sampleSheetS3Url,
+      outdir: `s3://${usePipelineRunStore().s3Bucket}/${usePipelineRunStore().s3Path}/results`,
     },
   });
 

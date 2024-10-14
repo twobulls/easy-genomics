@@ -20,7 +20,7 @@ export default function usePipeline() {
   }
 
   const doesFileUrlExist = computed(() => {
-    return !!(usePipelineRunStore().S3Url || usePipelineRunStore().params?.input);
+    return !!(usePipelineRunStore().sampleSheetS3Url || usePipelineRunStore().params?.input);
   });
 
   /**

@@ -32,6 +32,7 @@ export type SampleSheetInfo = {
   Size: number;
   Checksum: string;
   Bucket: string;
+  Path: string;
   Key: string;
   Region: string;
   S3Url: string;

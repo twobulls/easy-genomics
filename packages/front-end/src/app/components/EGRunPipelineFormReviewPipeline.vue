@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { usePipelineRunStore, useToastStore } from '@FE/stores';
+  import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
     canLaunch?: boolean;
@@ -18,7 +19,6 @@
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
-  const params = JSON.parse(paramsText);
 
   async function launchWorkflow() {
     try {
@@ -27,11 +27,20 @@
         usePipelineRunStore().pipelineId,
         props.labId,
       );
-      if (launchDetails.launch) {
-        launchDetails.launch.paramsText = paramsText;
-        launchDetails.launch.runName = props.userPipelineRunName;
-      }
-      await $api.workflows.createPipelineRun(props.labId, launchDetails);
+
+      const workDir: string = `s3://${usePipelineRunStore().s3Bucket}/${usePipelineRunStore().s3Path}/work`;
+      const launchRequest: CreateWorkflowLaunchRequest = {
+        launch: {
+          computeEnvId: launchDetails.launch?.computeEnv?.id,
+          runName: props.userPipelineRunName,
+          pipeline: launchDetails.launch?.pipeline,
+          revision: launchDetails.launch?.revision,
+          configProfiles: launchDetails.launch?.configProfiles,
+          workDir: workDir,
+          paramsText: paramsText,
+        },
+      };
+      await $api.workflows.createPipelineRun(props.labId, launchRequest);
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');

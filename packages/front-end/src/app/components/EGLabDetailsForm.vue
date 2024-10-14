@@ -354,11 +354,11 @@
   <UForm v-else :validate="validate" :schema="LabDetailsSchema" :state="state" @submit="onSubmit">
     <EGCard>
       <!-- Lab Name -->
-      <EGFormGroup label="Lab Name" name="Name" eager-validation>
+      <EGFormGroup label="Lab Name*" name="Name" eager-validation>
         <EGInput
           v-model="state.Name"
           :disabled="isNameFieldDisabled"
-          placeholder="Enter lab name (required and must be unique)*"
+          placeholder="Enter lab name (required and must be unique)"
           required
           autofocus
         />

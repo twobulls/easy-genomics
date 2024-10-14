@@ -40,6 +40,7 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const labId = $route.params.labId as string;
+  const workflowTempId = $route.query.workflowTempId as string;
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -282,8 +283,10 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    usePipelineRunStore().setSampleSheetCsv(sampleSheetResponse.SampleSheetContents);
-    usePipelineRunStore().setS3Url(sampleSheetResponse.SampleSheetInfo.S3Url);
+    usePipelineRunStore().updateWipPipelineRun(workflowTempId, {
+      sampleSheetCsv: sampleSheetResponse.SampleSheetContents,
+      S3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
+    });
 
     canProceed.value = true;
   }
@@ -327,7 +330,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: usePipelineRunStore().transactionId,
+      TransactionId: usePipelineRunStore().wipPipelineRuns[workflowTempId].transactionId,
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -347,7 +350,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: usePipelineRunStore().transactionId,
+      TransactionId: usePipelineRunStore().wipPipelineRuns[workflowTempId].transactionId,
       Files: files,
     };
 

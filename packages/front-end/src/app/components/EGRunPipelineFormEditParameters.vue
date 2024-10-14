@@ -7,8 +7,11 @@
     params: object;
   }>();
 
-  const { $api } = useNuxtApp();
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
+  const { $api } = useNuxtApp();
+  const $route = useRoute();
+
+  const workflowTempId = $route.query.workflowTempId as string;
 
   const activeSection = ref<string | null>(null);
   const pipelineRunStore = usePipelineRunStore();
@@ -17,7 +20,7 @@
     schema: props.schema,
     params: {
       ...props.params,
-      input: pipelineRunStore.S3Url,
+      input: pipelineRunStore.wipPipelineRuns[workflowTempId].S3Url,
     },
   });
 
@@ -74,7 +77,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        pipelineRunStore.setParams(val);
+        pipelineRunStore.updateWipPipelineRun(workflowTempId, { params: val });
       }
     },
     { deep: true },

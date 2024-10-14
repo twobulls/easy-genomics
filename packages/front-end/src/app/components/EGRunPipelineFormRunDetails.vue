@@ -10,8 +10,11 @@
     pipelineDescription: string;
   }>();
 
-  const { $api } = useNuxtApp();
   const emit = defineEmits(['next-step', 'step-validated']);
+
+  const $route = useRoute();
+
+  const workflowTempId = $route.query.workflowTempId as string;
 
   /**
    * Seqera API spec
@@ -65,8 +68,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = usePipelineRunStore().userPipelineRunName;
-    formState.pipelineDescription = usePipelineRunStore().pipelineDescription;
+    formState.runName = usePipelineRunStore().wipPipelineRuns[workflowTempId].userPipelineRunName || '';
+    formState.pipelineDescription = usePipelineRunStore().wipPipelineRuns[workflowTempId].pipelineDescription;
     validate(formState);
   });
 
@@ -86,7 +89,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    usePipelineRunStore().setUserPipelineRunName(safeRunName);
+    usePipelineRunStore().updateWipPipelineRun(workflowTempId, { userPipelineRunName: safeRunName });
     emit('next-step');
   }
 

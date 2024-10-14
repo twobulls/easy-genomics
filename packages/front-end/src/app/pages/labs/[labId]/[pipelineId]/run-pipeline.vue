@@ -5,8 +5,12 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-  const labName = usePipelineRunStore().labName;
+
+  const workflowTempId = $route.query.workflowTempId as string;
+
   const labId = $route.params.labId as string;
+  const pipelineId = $route.params.pipelineId as string;
+  const labName = usePipelineRunStore().pipelineRuns[labId][pipelineId];
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
@@ -47,7 +51,7 @@
    * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
    */
   async function initializePipelineData() {
-    const res = await $api.pipelines.readPipelineSchema($route.params.pipelineId, labId);
+    const res = await $api.pipelines.readPipelineSchema(pipelineId, labId);
     const originalSchema = JSON.parse(res.schema);
 
     // Filter Schema to exclude any sections that do not have any visible parameters for user input
@@ -68,9 +72,9 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    usePipelineRunStore().setPipelineDescription(schema.value.description);
+    usePipelineRunStore().updateWipPipelineRun(workflowTempId, { pipelineDescription: schema.value.description });
     if (res.params) {
-      usePipelineRunStore().setParams(JSON.parse(res.params));
+      usePipelineRunStore().updateWipPipelineRun(workflowTempId, { params: JSON.parse(res.params) });
     }
   }
 
@@ -86,9 +90,11 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    usePipelineRunStore().setUserPipelineRunName('');
-    usePipelineRunStore().setPipelineDescription('');
-    usePipelineRunStore().setParams({});
+    usePipelineRunStore().updateWipPipelineRun(workflowTempId, {
+      userPipelineRunName: '',
+      pipelineDescription: '',
+      params: {},
+    });
     initializePipelineData();
     resetStepperKey.value++;
   }
@@ -105,7 +111,7 @@
   <EGRunPipelineStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="usePipelineRunStore().params"
+    :params="usePipelineRunStore().wipPipelineRuns[workflowTempId].params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
   />

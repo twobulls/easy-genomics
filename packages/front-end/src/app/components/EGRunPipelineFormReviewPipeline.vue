@@ -13,6 +13,9 @@
   }>();
 
   const { $api } = useNuxtApp();
+  const $route = useRoute();
+
+  const workflowTempId = $route.query.workflowTempId as string;
   const isLaunchingWorkflow = ref(false);
   const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
 
@@ -24,7 +27,7 @@
     try {
       isLaunchingWorkflow.value = true;
       const launchDetails = await $api.pipelines.readPipelineLaunchDetails(
-        usePipelineRunStore().pipelineId,
+        usePipelineRunStore().wipPipelineRuns[workflowTempId].pipelineId,
         props.labId,
       );
       if (launchDetails.launch) {

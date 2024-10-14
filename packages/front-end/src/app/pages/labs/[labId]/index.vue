@@ -369,16 +369,21 @@
   }
 
   function viewRunPipeline(pipeline: Workflow) {
-    pipelineRunStore.reset();
+    const pipelineRunTempId = uuidv4();
+
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
-    pipelineRunStore.setLabId(labId);
-    pipelineRunStore.setLabName(labName);
-    pipelineRunStore.setPipelineId(pipelineId);
-    pipelineRunStore.setPipelineName(pipelineName);
-    pipelineRunStore.setPipelineDescription(pipelineDescription || '');
-    pipelineRunStore.setTransactionId(uuidv4());
+
+    pipelineRunStore.updateWipPipelineRun(pipelineRunTempId, {
+      labId,
+      labName: labName.value,
+      pipelineId,
+      pipelineName,
+      pipelineDescription: pipelineDescription || '',
+      transactionId: uuidv4(),
+    });
+
     $router.push({
-      path: `/labs/${labId}/${pipelineId}/run-pipeline`,
+      path: `/labs/${labId}/${pipelineId}/run-pipeline?pipelineRunTempId=${pipelineRunTempId}`,
     });
   }
 

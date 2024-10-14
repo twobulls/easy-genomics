@@ -9,7 +9,10 @@
     params: Record<string, any>;
   }>();
 
+  const $route = useRoute();
   const pipelineRunStore = usePipelineRunStore();
+
+  const pipelineRunTempId = $route.query.pipelineRunTempId as string;
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -45,7 +48,7 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      pipelineRunStore.params[key] = propValues[key];
+      pipelineRunStore.wipPipelineRuns[pipelineRunTempId].params[key] = propValues[key];
     }
   });
 </script>
@@ -72,7 +75,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="pipelineRunStore.S3Url" />
+        <EGInput name="input" v-model="pipelineRunStore.wipPipelineRuns[pipelineRunTempId].S3Url" />
       </template>
     </div>
   </div>

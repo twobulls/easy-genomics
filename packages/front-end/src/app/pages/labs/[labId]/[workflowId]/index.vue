@@ -21,7 +21,6 @@
   async function loadWorkflow() {
     try {
       workflow.value = (await $api.workflows.get(labId, workflowId)).workflow;
-      debugger;
     } catch (e: any) {
       console.error('Failed to get workflow from API:', e);
     }
@@ -70,11 +69,7 @@
   });
 
   onBeforeMount(async () => {
-    useUiStore().setRequestPending(true);
-    await loadWorkflow();
-    useUiStore().setRequestPending(false);
-
-    workflowReports.value = workflow.value?.reports || [];
+    await initData();
 
     let paramTab = $router.currentRoute.value.query?.tab;
     if (!paramTab) paramTab = 'Run Results'; // fallback for no query param to default to first tab
@@ -91,6 +86,13 @@
     }
   }
 
+  async function initData() {
+    useUiStore().setRequestPending(true);
+    await loadWorkflow();
+    workflowReports.value = workflow.value?.reports || [];
+    useUiStore().setRequestPending(false);
+  }
+
   // watch route change to correspondingly change selected tab
   watch(
     () => $router.currentRoute.value.query.tab,
@@ -100,8 +102,14 @@
   );
 </script>
 
-<template v-if="!useUiStore().isRequestPending">
-  <EGPageHeader :title="workflow?.runName" :description="workflow?.projectName" :show-back="true" />
+<template>
+  <EGPageHeader
+    :title="workflow?.runName || ''"
+    :description="workflow?.projectName || ''"
+    :show-back="true"
+    :back-action="() => $router.push('/labs')"
+    :is-loading="useUiStore().isRequestPending"
+  />
 
   <UTabs
     :ui="EGTabsStyles"

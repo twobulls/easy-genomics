@@ -84,8 +84,6 @@ class WorkflowsModule extends HttpFactory {
       `/workflow/read-workflow/${workflowId}?laboratoryId=${labId}`,
     );
 
-    console.log('getWorkflow response:', res);
-
     if (!res) {
       console.error('Error calling get pipeline run API');
       throw new Error('Failed to get pipeline run');

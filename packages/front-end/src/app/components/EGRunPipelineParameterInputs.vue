@@ -75,7 +75,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="pipelineRunStore.wipWorkflows[workflowTempId].S3Url" />
+        <EGInput name="input" v-model="pipelineRunStore.wipWorkflows[workflowTempId].sampleSheetS3Url" />
       </template>
     </div>
   </div>

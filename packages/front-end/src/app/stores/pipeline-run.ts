@@ -12,7 +12,9 @@ interface WipPipelineRunData {
   userPipelineRunName?: string;
   params?: object;
   sampleSheetCsv?: string;
-  S3Url?: string;
+  sampleSheetS3Url?: string; // mark
+  s3Bucket?: string; // mark
+  s3Path?: string; // mark
 }
 
 interface PipeLineRunState {

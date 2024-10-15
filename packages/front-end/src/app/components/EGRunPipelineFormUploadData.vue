@@ -285,7 +285,9 @@
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     usePipelineRunStore().updateWipPipelineRun(workflowTempId, {
       sampleSheetCsv: sampleSheetResponse.SampleSheetContents,
-      S3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
+      sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
+      s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
+      s3Path: sampleSheetResponse.SampleSheetInfo.Path,
     });
 
     canProceed.value = true;

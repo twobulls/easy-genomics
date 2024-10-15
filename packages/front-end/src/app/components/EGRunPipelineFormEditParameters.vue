@@ -20,7 +20,8 @@
     schema: props.schema,
     params: {
       ...props.params,
-      input: pipelineRunStore.wipWorkflows[workflowTempId].S3Url,
+      input: pipelineRunStore.wipWorkflows[workflowTempId].sampleSheetS3Url,
+      outdir: `s3://${pipelineRunStore.wipWorkflows[workflowTempId].s3Bucket}/${pipelineRunStore.wipWorkflows[workflowTempId].s3Path}/results`,
     },
   });
 

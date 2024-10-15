@@ -12,12 +12,14 @@
   const adminPrefix = computed<string>(() => (props.admin ? '/admin' : ''));
 
   onBeforeMount(loadOrgs);
+  onBeforeMount(async () => useOrgsStore().loadOrgs());
 
   // table data stuff
   const isLoading = ref(false);
   const orgs = ref<Organization[]>([]);
 
   async function loadOrgs() {
+    // TODO: this component should read from the orgs store
     isLoading.value = true;
     try {
       orgs.value = (await $api.orgs.list())?.sort((orgA, orgB) => useSort().stringSortCompare(orgA.Name, orgB.Name));

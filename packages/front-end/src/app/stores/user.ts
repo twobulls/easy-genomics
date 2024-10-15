@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 
 interface UserStoreState {
   currentOrg: {
+    // this is a temporary thing while there is no actual multi org handling
     OrganizationId: string;
   };
   currentUserPermissions: {

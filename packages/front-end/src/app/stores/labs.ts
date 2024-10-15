@@ -25,6 +25,8 @@ const useLabsStore = defineStore('labsStore', {
       for (const lab of labs) {
         this.labs[lab.LaboratoryId] = lab;
       }
+
+      // TODO: clear out stale entries
     },
 
     async loadAllLabsForCurrentUser(): Promise<void> {
@@ -40,7 +42,9 @@ const useLabsStore = defineStore('labsStore', {
 
   getters: {},
 
-  persist: true,
+  persist: {
+    storage: localStorage,
+  },
 });
 
 export default useLabsStore;

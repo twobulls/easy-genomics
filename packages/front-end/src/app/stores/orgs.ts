@@ -6,12 +6,14 @@ import useUser from '@FE/composables/useUser';
 
 interface OrgsStoreState {
   selectedUser: OrganizationUserDetails | undefined;
-  selectedOrg: Organization | undefined;
+
+  // indexed by labId
+  orgs: Record<string, Organization>;
 }
 
 const initialState = (): OrgsStoreState => ({
   selectedUser: undefined,
-  selectedOrg: undefined,
+  orgs: {},
 });
 
 const useOrgsStore = defineStore('orgsStore', {
@@ -22,14 +24,28 @@ const useOrgsStore = defineStore('orgsStore', {
       this.selectedUser = user;
     },
 
-    setSelectedOrg(org: Organization) {
-      this.selectedOrg = {
-        ...org,
-      };
-    },
-
     reset() {
       Object.assign(this, initialState());
+    },
+
+    async loadOrgs(): Promise<void> {
+      const { $api } = useNuxtApp();
+      const orgs = await $api.orgs.list();
+
+      for (const org of orgs) {
+        console.log('updated', new Date());
+        this.orgs[org.OrganizationId] = org;
+      }
+
+      // TODO: clear out stale entries
+    },
+
+    async loadOrg(orgId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+      const org = await $api.orgs.orgSettings(orgId);
+
+      console.log('updated', new Date());
+      this.orgs[org.OrganizationId] = org;
     },
   },
 
@@ -51,7 +67,9 @@ const useOrgsStore = defineStore('orgsStore', {
     },
   },
 
-  persist: true,
+  persist: {
+    storage: localStorage,
+  },
 });
 
 export default useOrgsStore;

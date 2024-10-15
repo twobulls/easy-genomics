@@ -23,13 +23,14 @@
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
-  const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const modal = useModal();
+
+  const labId = $route.params.labId as string;
+  const orgId = useLabsStore().labs[labId].OrganizationId;
 
   const tabIndex = ref(0);
   const defaultTabIndex = 0;
 
-  const labId = $route.params.labId as string;
   // on page load, load the cached version from the labs store, for immediate population of the lab name etc
   // for page function, we also need HasNextFlowTowerAccessToken which only comes from the individual loadLabData endpoint
   // so we also load up to date data from that endpoint and overwrite the lab variable when it's ready

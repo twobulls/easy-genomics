@@ -107,6 +107,7 @@
   }
 
   async function getLabs() {
+    // TODO: this page should read from the labs store
     try {
       useUiStore().setRequestPending(true);
       labData.value = (await $api.labs.list(useUserStore().currentOrgId))

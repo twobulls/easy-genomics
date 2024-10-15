@@ -9,20 +9,22 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
 
+  const orgsStore = useOrgsStore();
+
   const adminPrefix = computed<string>(() => (props.admin ? '/admin' : ''));
 
   onBeforeMount(loadOrgs);
-  onBeforeMount(async () => useOrgsStore().loadOrgs());
 
   // table data stuff
   const isLoading = ref(false);
-  const orgs = ref<Organization[]>([]);
+  const orgsDisplayList = computed<Organization[]>(() =>
+    Object.values(orgsStore.orgs).sort((orgA, orgB) => useSort().stringSortCompare(orgA.Name, orgB.Name)),
+  );
 
   async function loadOrgs() {
-    // TODO: this component should read from the orgs store
     isLoading.value = true;
     try {
-      orgs.value = (await $api.orgs.list())?.sort((orgA, orgB) => useSort().stringSortCompare(orgA.Name, orgB.Name));
+      await orgsStore.loadOrgs();
     } catch (error) {
       console.error(error);
       useToastStore().error('Something went wrong while loading orgs');
@@ -117,7 +119,7 @@
 
   <EGTable
     :row-click-action="viewOrg"
-    :table-data="orgs"
+    :table-data="orgsDisplayList"
     :columns="tableColumns"
     :is-loading="isLoading"
     :action-items="actionItems"

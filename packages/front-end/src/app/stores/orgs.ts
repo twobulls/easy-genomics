@@ -33,7 +33,6 @@ const useOrgsStore = defineStore('orgsStore', {
       const orgs = await $api.orgs.list();
 
       for (const org of orgs) {
-        console.log('updated', new Date());
         this.orgs[org.OrganizationId] = org;
       }
 
@@ -44,7 +43,6 @@ const useOrgsStore = defineStore('orgsStore', {
       const { $api } = useNuxtApp();
       const org = await $api.orgs.orgSettings(orgId);
 
-      console.log('updated', new Date());
       this.orgs[org.OrganizationId] = org;
     },
   },

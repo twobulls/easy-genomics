@@ -540,7 +540,7 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="usePipeline().downloadSampleSheet()"
+        @click="usePipeline().downloadSampleSheet(workflowTempId)"
       />
       <EGButton
         @click="startUploadProcess"

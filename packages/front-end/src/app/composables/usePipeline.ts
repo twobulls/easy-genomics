@@ -2,8 +2,8 @@ export default function usePipeline() {
   /**
    * Downloads the sample sheet as a CSV file.
    */
-  function downloadSampleSheet() {
-    const csvString = usePipelineRunStore().sampleSheetCsv;
+  function downloadSampleSheet(workflowTempId: string) {
+    const csvString = usePipelineRunStore().wipPipelineRuns[workflowTempId].sampleSheetCsv;
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -11,17 +11,13 @@ export default function usePipeline() {
     link.setAttribute('href', url);
     link.setAttribute(
       'download',
-      `samplesheet-${usePipelineRunStore().pipelineName}--${usePipelineRunStore().userPipelineRunName}.csv`,
+      `samplesheet-${usePipelineRunStore().wipPipelineRuns[workflowTempId].pipelineName}--${usePipelineRunStore().wipPipelineRuns[workflowTempId].userPipelineRunName}.csv`,
     );
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
-
-  const doesFileUrlExist = computed(() => {
-    return !!(usePipelineRunStore().S3Url || usePipelineRunStore().params?.input);
-  });
 
   /**
    * Checks if the property format is 'file-path'; currently used as a helper
@@ -34,7 +30,6 @@ export default function usePipeline() {
   }
 
   return {
-    doesFileUrlExist,
     downloadSampleSheet,
     isParamsFormatFilePath,
   };

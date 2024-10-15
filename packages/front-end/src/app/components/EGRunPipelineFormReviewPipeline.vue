@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { usePipelineRunStore, useToastStore } from '@FE/stores';
+  import { useWorkflowStore, useToastStore } from '@FE/stores';
   import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
@@ -27,11 +27,11 @@
     try {
       isLaunchingWorkflow.value = true;
       const launchDetails = await $api.pipelines.readPipelineLaunchDetails(
-        usePipelineRunStore().wipWorkflows[workflowTempId].pipelineId,
+        useWorkflowStore().wipWorkflows[workflowTempId].pipelineId,
         props.labId,
       );
 
-      const workDir: string = `s3://${usePipelineRunStore().wipWorkflows[workflowTempId].s3Bucket}/${usePipelineRunStore().wipWorkflows[workflowTempId].s3Path}/work`;
+      const workDir: string = `s3://${useWorkflowStore().wipWorkflows[workflowTempId].s3Bucket}/${useWorkflowStore().wipWorkflows[workflowTempId].s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
           computeEnvId: launchDetails.launch?.computeEnv?.id,

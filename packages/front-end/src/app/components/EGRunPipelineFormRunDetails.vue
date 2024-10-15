@@ -3,7 +3,7 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { usePipelineRunStore } from '@FE/stores';
+  import { useWorkflowStore } from '@FE/stores';
 
   const props = defineProps<{
     pipelineName: string;
@@ -68,8 +68,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = usePipelineRunStore().wipWorkflows[workflowTempId].userPipelineRunName || '';
-    formState.pipelineDescription = usePipelineRunStore().wipWorkflows[workflowTempId].pipelineDescription;
+    formState.runName = useWorkflowStore().wipWorkflows[workflowTempId].userPipelineRunName || '';
+    formState.pipelineDescription = useWorkflowStore().wipWorkflows[workflowTempId].pipelineDescription;
     validate(formState);
   });
 
@@ -89,7 +89,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    usePipelineRunStore().updateWipPipelineRun(workflowTempId, { userPipelineRunName: safeRunName });
+    useWorkflowStore().updateWipPipelineRun(workflowTempId, { userPipelineRunName: safeRunName });
     emit('next-step');
   }
 

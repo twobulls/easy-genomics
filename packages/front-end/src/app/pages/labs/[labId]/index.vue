@@ -7,7 +7,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useOrgsStore, useWorkflowStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -19,7 +19,7 @@
 
   const $route = useRoute();
 
-  const pipelineRunStore = usePipelineRunStore();
+  const workflowStore = useWorkflowStore();
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -42,7 +42,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const pipelines = ref<[]>([]);
-  const workflows = computed<Workflow[]>(() => pipelineRunStore.getPipelineRunsForLab(labId));
+  const workflows = computed<Workflow[]>(() => workflowStore.getPipelineRunsForLab(labId));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -307,7 +307,7 @@
 
   async function getWorkflows(): Promise<void> {
     try {
-      await pipelineRunStore.loadPipelineRunsForLab(labId);
+      await workflowStore.loadPipelineRunsForLab(labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
     }
@@ -373,7 +373,7 @@
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    pipelineRunStore.updateWipPipelineRun(workflowTempId, {
+    workflowStore.updateWipPipelineRun(workflowTempId, {
       labId,
       labName: labName.value,
       pipelineId,

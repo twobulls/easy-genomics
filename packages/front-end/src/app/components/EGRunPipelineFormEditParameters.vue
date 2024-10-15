@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { usePipelineRunStore } from '@FE/stores';
+  import { useWorkflowStore } from '@FE/stores';
 
   const props = defineProps<{
     schema: object;
@@ -14,14 +14,14 @@
   const workflowTempId = $route.query.workflowTempId as string;
 
   const activeSection = ref<string | null>(null);
-  const pipelineRunStore = usePipelineRunStore();
+  const workflowStore = useWorkflowStore();
 
   const localProps = reactive({
     schema: props.schema,
     params: {
       ...props.params,
-      input: pipelineRunStore.wipWorkflows[workflowTempId].sampleSheetS3Url,
-      outdir: `s3://${pipelineRunStore.wipWorkflows[workflowTempId].s3Bucket}/${pipelineRunStore.wipWorkflows[workflowTempId].s3Path}/results`,
+      input: workflowStore.wipWorkflows[workflowTempId].sampleSheetS3Url,
+      outdir: `s3://${workflowStore.wipWorkflows[workflowTempId].s3Bucket}/${workflowStore.wipWorkflows[workflowTempId].s3Path}/results`,
     },
   });
 
@@ -78,7 +78,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        pipelineRunStore.updateWipPipelineRun(workflowTempId, { params: val });
+        workflowStore.updateWipPipelineRun(workflowTempId, { params: val });
       }
     },
     { deep: true },

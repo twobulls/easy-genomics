@@ -1,7 +1,7 @@
 import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import { defineStore } from 'pinia';
 
-interface WipPipelineRunData {
+interface WipWorkflowData {
   // TODO: can we refactor the lab info out because it's always in the url?
   labId?: string;
   labName?: string;
@@ -17,22 +17,22 @@ interface WipPipelineRunData {
   s3Path?: string; // mark
 }
 
-interface PipeLineRunState {
+interface WorkflowState {
   // lookup object for pipeline runs
   workflows: Record<string, Record<string, Workflow>>;
   // ordered lists for pipelines by lab
   workflowIdsByLab: Record<string, string[]>;
   // configs of new pipeline runs yet to be launched
-  wipWorkflows: Record<string, WipPipelineRunData>;
+  wipWorkflows: Record<string, WipWorkflowData>;
 }
 
-const initialState = (): PipeLineRunState => ({
+const initialState = (): WorkflowState => ({
   workflows: {},
   workflowIdsByLab: {},
   wipWorkflows: {},
 });
 
-const usePipelineRunStore = defineStore('pipelineRunStore', {
+const useWorkflowStore = defineStore('workflowStore', {
   state: initialState,
 
   actions: {
@@ -71,7 +71,7 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
       return this.workflowIdsByLab[labId]?.map((pipelineId) => this.workflows[labId][pipelineId]) || [];
     },
 
-    updateWipPipelineRun(tempId: string, updates: Partial<WipPipelineRunData>): void {
+    updateWipPipelineRun(tempId: string, updates: Partial<WipWorkflowData>): void {
       this.wipWorkflows[tempId] = {
         ...(this.wipWorkflows[tempId] || {}),
         ...updates,
@@ -84,4 +84,4 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
   },
 });
 
-export default usePipelineRunStore;
+export default useWorkflowStore;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { usePipelineRunStore } from '@FE/stores';
+  import { useWorkflowStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
@@ -10,7 +10,7 @@
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
-  const labName = usePipelineRunStore().workflows[labId][pipelineId];
+  const labName = useWorkflowStore().workflows[labId][pipelineId];
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
@@ -72,9 +72,9 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    usePipelineRunStore().updateWipPipelineRun(workflowTempId, { pipelineDescription: schema.value.description });
+    useWorkflowStore().updateWipPipelineRun(workflowTempId, { pipelineDescription: schema.value.description });
     if (res.params) {
-      usePipelineRunStore().updateWipPipelineRun(workflowTempId, { params: JSON.parse(res.params) });
+      useWorkflowStore().updateWipPipelineRun(workflowTempId, { params: JSON.parse(res.params) });
     }
   }
 
@@ -90,7 +90,7 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    usePipelineRunStore().updateWipPipelineRun(workflowTempId, {
+    useWorkflowStore().updateWipPipelineRun(workflowTempId, {
       userPipelineRunName: '',
       pipelineDescription: '',
       params: {},
@@ -111,7 +111,7 @@
   <EGRunPipelineStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="usePipelineRunStore().wipWorkflows[workflowTempId].params"
+    :params="useWorkflowStore().wipWorkflows[workflowTempId].params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
   />

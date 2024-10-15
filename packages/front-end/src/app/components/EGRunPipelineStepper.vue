@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { usePipelineRunStore } from '@FE/stores';
+  import { useWorkflowStore } from '@FE/stores';
 
   const props = defineProps<{
     schema: object;
@@ -10,11 +10,11 @@
 
   const workflowTempId = $route.query.workflowTempId as string;
 
-  const labId = usePipelineRunStore().wipWorkflows[workflowTempId].labId;
-  const labName = usePipelineRunStore().wipWorkflows[workflowTempId].labName;
-  const pipelineId = usePipelineRunStore().wipWorkflows[workflowTempId].pipelineId;
-  const pipelineName = usePipelineRunStore().wipWorkflows[workflowTempId].pipelineName;
-  const pipelineDescription = usePipelineRunStore().wipWorkflows[workflowTempId].pipelineDescription;
+  const labId = useWorkflowStore().wipWorkflows[workflowTempId].labId;
+  const labName = useWorkflowStore().wipWorkflows[workflowTempId].labName;
+  const pipelineId = useWorkflowStore().wipWorkflows[workflowTempId].pipelineId;
+  const pipelineName = useWorkflowStore().wipWorkflows[workflowTempId].pipelineName;
+  const pipelineDescription = useWorkflowStore().wipWorkflows[workflowTempId].pipelineDescription;
 
   const selectedIndex = ref(0);
   const hasLaunched = ref(false);
@@ -211,9 +211,9 @@
               :lab-id="labId"
               :lab-name="labName"
               :schema="props.schema"
-              :params="usePipelineRunStore().wipWorkflows[workflowTempId].params"
-              :pipeline-name="usePipelineRunStore().wipWorkflows[workflowTempId].pipelineName"
-              :userPipelineRunName="usePipelineRunStore().wipWorkflows[workflowTempId].userPipelineRunName"
+              :params="useWorkflowStore().wipWorkflows[workflowTempId].params"
+              :pipeline-name="useWorkflowStore().wipWorkflows[workflowTempId].pipelineName"
+              :userPipelineRunName="useWorkflowStore().wipWorkflows[workflowTempId].userPipelineRunName"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"
             />

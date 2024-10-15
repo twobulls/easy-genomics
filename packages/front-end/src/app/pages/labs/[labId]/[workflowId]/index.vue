@@ -6,7 +6,7 @@
   const $router = useRouter();
   const $route = useRoute();
 
-  const pipelineRunStore = usePipelineRunStore();
+  const workflowStore = useWorkflowStore();
 
   const labId = $route.params.labId as string;
   const workflowId = $route.params.workflowId as string;
@@ -16,11 +16,11 @@
     $router.push('/labs');
   }
 
-  const workflow = computed<Workflow | null>(() => pipelineRunStore.workflows[labId][workflowId]);
+  const workflow = computed<Workflow | null>(() => workflowStore.workflows[labId][workflowId]);
 
   async function loadWorkflow() {
     try {
-      pipelineRunStore.loadSinglePipelineRun(labId, workflowId);
+      workflowStore.loadSinglePipelineRun(labId, workflowId);
     } catch (e: any) {
       console.error('Failed to get workflow from API:', e);
     }

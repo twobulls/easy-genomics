@@ -13,7 +13,7 @@
     UploadedFileInfo,
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-  import { usePipelineRunStore, useToastStore } from '@FE/stores';
+  import { useWorkflowStore, useToastStore } from '@FE/stores';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -283,7 +283,7 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    usePipelineRunStore().updateWipPipelineRun(workflowTempId, {
+    useWorkflowStore().updateWipPipelineRun(workflowTempId, {
       sampleSheetCsv: sampleSheetResponse.SampleSheetContents,
       sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
@@ -332,7 +332,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: usePipelineRunStore().wipWorkflows[workflowTempId].transactionId,
+      TransactionId: useWorkflowStore().wipWorkflows[workflowTempId].transactionId,
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -352,7 +352,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: usePipelineRunStore().wipWorkflows[workflowTempId].transactionId,
+      TransactionId: useWorkflowStore().wipWorkflows[workflowTempId].transactionId,
       Files: files,
     };
 

@@ -78,7 +78,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        workflowStore.updateWipPipelineRun(workflowTempId, { params: val });
+        workflowStore.updateWipWorkflow(workflowTempId, { params: val });
       }
     },
     { deep: true },

@@ -89,7 +89,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    useWorkflowStore().updateWipPipelineRun(workflowTempId, { userPipelineRunName: safeRunName });
+    useWorkflowStore().updateWipWorkflow(workflowTempId, { userPipelineRunName: safeRunName });
     emit('next-step');
   }
 

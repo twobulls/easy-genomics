@@ -42,7 +42,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const pipelines = ref<[]>([]);
-  const workflows = computed<Workflow[]>(() => workflowStore.getPipelineRunsForLab(labId));
+  const workflows = computed<Workflow[]>(() => workflowStore.getWorkflowsForLab(labId));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -307,7 +307,7 @@
 
   async function getWorkflows(): Promise<void> {
     try {
-      await workflowStore.loadPipelineRunsForLab(labId);
+      await workflowStore.loadWorkflowsForLab(labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
     }
@@ -373,7 +373,7 @@
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    workflowStore.updateWipPipelineRun(workflowTempId, {
+    workflowStore.updateWipWorkflow(workflowTempId, {
       labId,
       labName: labName.value,
       pipelineId,

@@ -72,9 +72,9 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    useWorkflowStore().updateWipPipelineRun(workflowTempId, { pipelineDescription: schema.value.description });
+    useWorkflowStore().updateWipWorkflow(workflowTempId, { pipelineDescription: schema.value.description });
     if (res.params) {
-      useWorkflowStore().updateWipPipelineRun(workflowTempId, { params: JSON.parse(res.params) });
+      useWorkflowStore().updateWipWorkflow(workflowTempId, { params: JSON.parse(res.params) });
     }
   }
 
@@ -90,7 +90,7 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    useWorkflowStore().updateWipPipelineRun(workflowTempId, {
+    useWorkflowStore().updateWipWorkflow(workflowTempId, {
       userPipelineRunName: '',
       pipelineDescription: '',
       params: {},

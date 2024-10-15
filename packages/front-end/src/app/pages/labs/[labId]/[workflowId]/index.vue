@@ -20,7 +20,7 @@
 
   async function loadWorkflow() {
     try {
-      workflowStore.loadSinglePipelineRun(labId, workflowId);
+      workflowStore.loadSingleWorkflow(labId, workflowId);
     } catch (e: any) {
       console.error('Failed to get workflow from API:', e);
     }

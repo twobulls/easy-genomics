@@ -283,7 +283,7 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    useWorkflowStore().updateWipPipelineRun(workflowTempId, {
+    useWorkflowStore().updateWipWorkflow(workflowTempId, {
       sampleSheetCsv: sampleSheetResponse.SampleSheetContents,
       sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,

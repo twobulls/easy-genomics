@@ -7,7 +7,7 @@ import useUser from '@FE/composables/useUser';
 interface OrgsStoreState {
   selectedUser: OrganizationUserDetails | undefined;
 
-  // indexed by labId
+  // indexed by orgId
   orgs: Record<string, Organization>;
 }
 
@@ -30,13 +30,13 @@ const useOrgsStore = defineStore('orgsStore', {
 
     async loadOrgs(): Promise<void> {
       const { $api } = useNuxtApp();
-      const orgs = await $api.orgs.list();
+      const freshOrgs: Record<string, Organization> = {};
 
-      for (const org of orgs) {
-        this.orgs[org.OrganizationId] = org;
+      for (const org of await $api.orgs.list()) {
+        freshOrgs[org.OrganizationId] = org;
       }
 
-      // TODO: clear out stale entries
+      this.orgs = freshOrgs;
     },
 
     async loadOrg(orgId: string): Promise<void> {

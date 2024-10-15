@@ -1,7 +1,7 @@
 import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import { defineStore } from 'pinia';
 
-interface WipWorkflowData {
+export interface WipWorkflowData {
   pipelineId?: number;
   pipelineName?: string;
   pipelineDescription?: string;

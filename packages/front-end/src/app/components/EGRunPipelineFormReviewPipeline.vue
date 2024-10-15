@@ -17,9 +17,13 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
 
+  const workflowStore = useWorkflowStore();
+
   const workflowTempId = $route.query.workflowTempId as string;
   const isLaunchingWorkflow = ref(false);
   const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
+
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -27,14 +31,14 @@
   async function launchWorkflow() {
     try {
       isLaunchingWorkflow.value = true;
-      const pipelineId = useWorkflowStore().wipWorkflows[workflowTempId].pipelineId;
+      const pipelineId = wipWorkflow.value?.pipelineId;
       if (pipelineId === undefined) {
         throw new Error('pipeline id not found in wip workflow config');
       }
 
       const launchDetails = await $api.pipelines.readPipelineLaunchDetails(pipelineId, props.labId);
 
-      const workDir: string = `s3://${useWorkflowStore().wipWorkflows[workflowTempId].s3Bucket}/${useWorkflowStore().wipWorkflows[workflowTempId].s3Path}/work`;
+      const workDir: string = `s3://${wipWorkflow.value?.s3Bucket}/${wipWorkflow.value?.s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
           computeEnvId: launchDetails.launch?.computeEnv?.id,

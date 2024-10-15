@@ -36,11 +36,14 @@
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
+  const workflowStore = useWorkflowStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const labId = $route.params.labId as string;
   const workflowTempId = $route.query.workflowTempId as string;
+
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -332,7 +335,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: useWorkflowStore().wipWorkflows[workflowTempId].transactionId,
+      TransactionId: wipWorkflow.value?.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -352,7 +355,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: useWorkflowStore().wipWorkflows[workflowTempId].transactionId,
+      TransactionId: wipWorkflow.value?.transactionId || '',
       Files: files,
     };
 

@@ -5,8 +5,11 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
+  const workflowStore = useWorkflowStore();
 
   const workflowTempId = $route.query.workflowTempId as string;
+
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -109,7 +112,7 @@
   <EGRunPipelineStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="useWorkflowStore().wipWorkflows[workflowTempId].params"
+    :params="wipWorkflow?.params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
   />

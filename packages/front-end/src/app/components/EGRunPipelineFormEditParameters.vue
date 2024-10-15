@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useWorkflowStore } from '@FE/stores';
+  import { WipWorkflowData } from '@FE/stores/workflow';
 
   const props = defineProps<{
     schema: object;
@@ -16,12 +17,14 @@
   const activeSection = ref<string | null>(null);
   const workflowStore = useWorkflowStore();
 
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+
   const localProps = reactive({
     schema: props.schema,
     params: {
       ...props.params,
-      input: workflowStore.wipWorkflows[workflowTempId].sampleSheetS3Url,
-      outdir: `s3://${workflowStore.wipWorkflows[workflowTempId].s3Bucket}/${workflowStore.wipWorkflows[workflowTempId].s3Path}/results`,
+      input: wipWorkflow.value?.sampleSheetS3Url,
+      outdir: `s3://${wipWorkflow.value?.s3Bucket}/${wipWorkflow.value?.s3Path}/results`,
     },
   });
 

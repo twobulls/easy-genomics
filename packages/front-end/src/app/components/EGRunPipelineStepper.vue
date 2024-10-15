@@ -7,14 +7,17 @@
   }>();
 
   const $route = useRoute();
+  const workflowStore = useWorkflowStore();
 
   const workflowTempId = $route.query.workflowTempId as string;
 
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
-  const pipelineId = useWorkflowStore().wipWorkflows[workflowTempId].pipelineId;
-  const pipelineName = useWorkflowStore().wipWorkflows[workflowTempId].pipelineName;
-  const pipelineDescription = useWorkflowStore().wipWorkflows[workflowTempId].pipelineDescription;
+  const pipelineId = wipWorkflow.value?.pipelineId;
+  const pipelineName = wipWorkflow.value?.pipelineName;
+  const pipelineDescription = wipWorkflow.value?.pipelineDescription;
 
   const selectedIndex = ref(0);
   const hasLaunched = ref(false);
@@ -211,9 +214,9 @@
               :lab-id="labId"
               :lab-name="labName"
               :schema="props.schema"
-              :params="useWorkflowStore().wipWorkflows[workflowTempId].params"
-              :pipeline-name="useWorkflowStore().wipWorkflows[workflowTempId].pipelineName"
-              :userPipelineRunName="useWorkflowStore().wipWorkflows[workflowTempId].userPipelineRunName"
+              :params="wipWorkflow?.params"
+              :pipeline-name="wipWorkflow?.pipelineName"
+              :userPipelineRunName="wipWorkflow?.userPipelineRunName"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"
             />

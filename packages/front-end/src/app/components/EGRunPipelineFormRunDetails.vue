@@ -14,8 +14,11 @@
   const emit = defineEmits(['next-step', 'step-validated']);
 
   const $route = useRoute();
+  const workflowStore = useWorkflowStore();
 
   const workflowTempId = $route.query.workflowTempId as string;
+
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   /**
    * Seqera API spec
@@ -69,8 +72,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = useWorkflowStore().wipWorkflows[workflowTempId].userPipelineRunName || '';
-    formState.pipelineDescription = useWorkflowStore().wipWorkflows[workflowTempId].pipelineDescription;
+    formState.runName = wipWorkflow.value?.userPipelineRunName || '';
+    formState.pipelineDescription = wipWorkflow.value?.pipelineDescription || '';
     validate(formState);
   });
 

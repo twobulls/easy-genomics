@@ -10,8 +10,8 @@
 
   const workflowTempId = $route.query.workflowTempId as string;
 
-  const labId = useWorkflowStore().wipWorkflows[workflowTempId].labId;
-  const labName = useWorkflowStore().wipWorkflows[workflowTempId].labName;
+  const labId = $route.params.labId as string;
+  const labName = useLabsStore().labs[labId].Name;
   const pipelineId = useWorkflowStore().wipWorkflows[workflowTempId].pipelineId;
   const pipelineName = useWorkflowStore().wipWorkflows[workflowTempId].pipelineName;
   const pipelineDescription = useWorkflowStore().wipWorkflows[workflowTempId].pipelineDescription;

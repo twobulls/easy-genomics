@@ -2,9 +2,6 @@ import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextf
 import { defineStore } from 'pinia';
 
 interface WipWorkflowData {
-  // TODO: can we refactor the lab info out because it's always in the url?
-  labId?: string;
-  labName?: string;
   pipelineId?: number;
   pipelineName?: string;
   pipelineDescription?: string;
@@ -12,9 +9,9 @@ interface WipWorkflowData {
   userPipelineRunName?: string;
   params?: object;
   sampleSheetCsv?: string;
-  sampleSheetS3Url?: string; // mark
-  s3Bucket?: string; // mark
-  s3Path?: string; // mark
+  sampleSheetS3Url?: string;
+  s3Bucket?: string;
+  s3Path?: string;
 }
 
 interface WorkflowState {

@@ -10,7 +10,6 @@
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
-  const labName = useWorkflowStore().workflows[labId][pipelineId];
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
@@ -103,7 +102,6 @@
 <template>
   <EGPageHeader
     title="Run Pipeline"
-    :description="labName"
     :show-back-button="!hasLaunched"
     :back-action="() => (nextRoute = `/labs/${labId}?tab=Pipelines`)"
     back-button-label="Exit Run"

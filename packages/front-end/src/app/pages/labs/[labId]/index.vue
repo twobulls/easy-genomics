@@ -374,8 +374,6 @@
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
     workflowStore.updateWipWorkflow(workflowTempId, {
-      labId,
-      labName: labName.value,
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',

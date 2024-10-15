@@ -423,6 +423,7 @@
     :title="labName"
     description="View your Lab users, details and pipelines"
     :back-action="() => $router.push('/labs')"
+    :show-back="true"
   >
     <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = !showAddUserModule" />
     <EGAddLabUsersModule

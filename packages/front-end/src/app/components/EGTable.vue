@@ -12,10 +12,12 @@
       actionItems?: () => ActionItem[];
       showPagination?: boolean;
       rowClickAction?: (rowItem: any) => void | undefined;
+      noResultsMsg?: string;
     }>(),
     {
       isLoading: false,
       showPagination: true,
+      noResultsMsg: 'No results found',
     },
   );
 
@@ -71,7 +73,9 @@
         <EGActionButton v-if="actionItems" :items="actionItems(row)" @click="$event.stopPropagation()" />
       </template>
       <template #empty-state>
-        <div class="text-muted flex h-12 items-center justify-center font-normal">No results found</div>
+        <div class="text-muted flex h-12 items-center justify-center font-normal" v-if="!isLoading">
+          {{ noResultsMsg }}
+        </div>
       </template>
     </UTable>
   </UCard>
@@ -107,7 +111,7 @@
           width: 320px;
         }
 
-        th:last-child {
+        th:not(:only-child):last-child {
           text-align: right;
           padding-right: 40px;
         }
@@ -129,12 +133,12 @@
     }
 
     tbody tr td:not(:first-child) {
-      font-size: 12px; // FIXME
+      font-size: 12px;
       color: #818181;
       white-space: normal;
     }
 
-    tbody tr td:last-child {
+    tbody tr td:not(:only-child):last-child {
       width: 50px;
       padding-right: 40px;
       text-align: right;

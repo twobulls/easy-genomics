@@ -5,6 +5,7 @@
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useWorkflowStore } from '@FE/stores';
 
+  // TODO: remove duplicated prop values that are also stored in the store?
   const props = defineProps<{
     pipelineName: string;
     pipelineDescription: string;

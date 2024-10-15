@@ -3,6 +3,7 @@
   import { useWorkflowStore, useToastStore } from '@FE/stores';
   import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
+  // TODO: remove duplicated prop values that are also stored in the store?
   const props = defineProps<{
     canLaunch?: boolean;
     labId: string;
@@ -26,10 +27,12 @@
   async function launchWorkflow() {
     try {
       isLaunchingWorkflow.value = true;
-      const launchDetails = await $api.pipelines.readPipelineLaunchDetails(
-        useWorkflowStore().wipWorkflows[workflowTempId].pipelineId,
-        props.labId,
-      );
+      const pipelineId = useWorkflowStore().wipWorkflows[workflowTempId].pipelineId;
+      if (pipelineId === undefined) {
+        throw new Error('pipeline id not found in wip workflow config');
+      }
+
+      const launchDetails = await $api.pipelines.readPipelineLaunchDetails(pipelineId, props.labId);
 
       const workDir: string = `s3://${useWorkflowStore().wipWorkflows[workflowTempId].s3Bucket}/${useWorkflowStore().wipWorkflows[workflowTempId].s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {

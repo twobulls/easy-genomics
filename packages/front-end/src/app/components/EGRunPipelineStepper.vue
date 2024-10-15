@@ -14,10 +14,6 @@
   const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   const labId = $route.params.labId as string;
-  const labName = useLabsStore().labs[labId].Name;
-  const pipelineId = wipWorkflow.value?.pipelineId;
-  const pipelineName = wipWorkflow.value?.pipelineName;
-  const pipelineDescription = wipWorkflow.value?.pipelineDescription;
 
   const selectedIndex = ref(0);
   const hasLaunched = ref(false);
@@ -179,11 +175,6 @@
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunPipelineFormRunDetails
-              :labId="labId"
-              :labName="labName"
-              :pipelineId="pipelineId"
-              :pipelineName="pipelineName"
-              :pipelineDescription="pipelineDescription"
               @next-step="() => nextStep('upload')"
               @step-validated="setStepEnabled('upload', $event)"
             />
@@ -211,12 +202,8 @@
           <template v-if="items[selectedIndex].key === 'review'">
             <EGRunPipelineFormReviewPipeline
               :can-launch="true"
-              :lab-id="labId"
-              :lab-name="labName"
               :schema="props.schema"
               :params="wipWorkflow?.params"
-              :pipeline-name="wipWorkflow?.pipelineName"
-              :userPipelineRunName="wipWorkflow?.userPipelineRunName"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"
             />

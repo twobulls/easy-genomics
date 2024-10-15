@@ -5,12 +5,6 @@
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useWorkflowStore } from '@FE/stores';
 
-  // TODO: remove duplicated prop values that are also stored in the store?
-  const props = defineProps<{
-    pipelineName: string;
-    pipelineDescription: string;
-  }>();
-
   const emit = defineEmits(['next-step', 'step-validated']);
 
   const $route = useRoute();
@@ -37,7 +31,14 @@
    * viralrecon-illumina_community-showcase_20240712_5686910e783b4b2
    */
   const MAX_TOTAL_LENGTH = 80;
-  const maxRunNameLength = ref(MAX_TOTAL_LENGTH - props.pipelineName.length - 8 - 15 - 2);
+  const maxRunNameLength = computed<number>(() => {
+    const pipelineNameLength = wipWorkflow.value?.pipelineName?.length;
+    if (pipelineNameLength === undefined) {
+      // if wipWorkflow hasn't loaded in yet, don't accept anything
+      return 0;
+    }
+    return MAX_TOTAL_LENGTH - pipelineNameLength - 8 - 15 - 2;
+  });
 
   const runNameSchema = z
     .string()
@@ -53,8 +54,8 @@
   type FormState = z.infer<typeof formStateSchema>;
 
   const formState = reactive<FormState>({
-    pipelineDescription: props.pipelineDescription,
-    pipelineName: props.pipelineName,
+    pipelineDescription: wipWorkflow.value?.pipelineDescription || '',
+    pipelineName: wipWorkflow.value?.pipelineName || '',
     runName: '',
   });
 

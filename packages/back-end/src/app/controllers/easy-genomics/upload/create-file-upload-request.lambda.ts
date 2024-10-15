@@ -95,9 +95,11 @@ export const handler: Handler = async (
           throw new Error(`File size is too large: '${file.Name}'`);
         } else {
           /**
-           * The S3 Key will consist of: uploads/{laboratoryId}/{transactionId}/{file name}
+           * The S3 Key will consist of: {organizationId}/{laboratoryId}/next-flow/{transactionId}/{file name}
            */
-          const s3Key: string = `uploads/${laboratoryId}/${transactionId}/${file.Name}`;
+          const s3Path: string = `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/next-flow/${transactionId}`;
+          const s3Key: string = `${s3Path}/${file.Name}`;
+
           const preSignedUrl = await s3Service.getPreSignedUploadUrl({
             Bucket: s3Bucket,
             Key: s3Key,

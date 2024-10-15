@@ -4,7 +4,6 @@ import { defineStore } from 'pinia';
 interface UserStoreState {
   currentOrg: {
     OrganizationId: string;
-    OrganizationName: string;
   };
   currentUserPermissions: {
     isSuperuser: boolean | null;
@@ -15,7 +14,6 @@ interface UserStoreState {
 const initialState = (): UserStoreState => ({
   currentOrg: {
     OrganizationId: '',
-    OrganizationName: '',
   },
   currentUserPermissions: {
     isSuperuser: null,
@@ -30,7 +28,6 @@ const useUserStore = defineStore('userStore', {
   state: initialState,
 
   getters: {
-    currentOrgName: (state) => state.currentOrg.OrganizationName,
     currentOrgId: (state) => state.currentOrg.OrganizationId,
   },
 

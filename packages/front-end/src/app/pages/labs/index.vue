@@ -6,8 +6,17 @@
 
   const { $api } = useNuxtApp();
   const router = useRouter();
-  const hasNoData = ref(false);
-  const labData = ref([] as Laboratory[]);
+  const labsStore = useLabsStore();
+
+  const labsDisplayList = computed<Laboratory[]>(() =>
+    labsStore
+      .getLabsForOrg(useUserStore().currentOrgId)
+      // arguably this filter step shouldn't need to exist on the frontend because the backend shouldn't send us labs
+      // that the user doesn't have access to, so maybe it should be taken out at some point
+      .filter((lab) => useUserStore().canViewLab(useUserStore().currentOrgId, lab.LaboratoryId))
+      .sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name)),
+  );
+  const hasNoData = computed<boolean>(() => labsDisplayList.value.length === 0);
 
   // fetch lab data into store
   onBeforeMount(useLabsStore().loadAllLabsForCurrentUser);
@@ -107,18 +116,9 @@
   }
 
   async function getLabs() {
-    // TODO: this page should read from the labs store
     try {
       useUiStore().setRequestPending(true);
-      labData.value = (await $api.labs.list(useUserStore().currentOrgId))
-        // arguably this filter step shouldn't need to exist on the frontend because the backend shouldn't send us labs
-        // that the user doesn't have access to, so maybe it should be taken out at some point
-        .filter((lab) => useUserStore().canViewLab(useUserStore().currentOrgId, lab.LaboratoryId))
-        .sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name));
-
-      if (!labData.value.length) {
-        hasNoData.value = true;
-      }
+      labsStore.loadLabsForOrg(useUserStore().currentOrgId);
     } catch (error) {
       console.error(error);
       throw error;
@@ -154,7 +154,7 @@
   <EGTable
     :row-click-action="onRowClicked"
     v-else
-    :table-data="labData"
+    :table-data="labsDisplayList"
     :columns="tableColumns"
     :is-loading="useUiStore().isRequestPending"
     :action-items="actionItems"

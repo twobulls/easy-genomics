@@ -7,7 +7,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useOrgsStore, useWorkflowStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useWorkflowStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -20,21 +20,19 @@
   const $route = useRoute();
 
   const workflowStore = useWorkflowStore();
+  const labStore = useLabsStore();
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const modal = useModal();
 
   const labId = $route.params.labId as string;
-  const orgId = useLabsStore().labs[labId].OrganizationId;
+  const orgId = labStore.labs[labId].OrganizationId;
 
   const tabIndex = ref(0);
   const defaultTabIndex = 0;
 
-  // on page load, load the cached version from the labs store, for immediate population of the lab name etc
-  // for page function, we also need HasNextFlowTowerAccessToken which only comes from the individual loadLabData endpoint
-  // so we also load up to date data from that endpoint and overwrite the lab variable when it's ready
-  const lab = ref<Laboratory | null>(useLabsStore().labs[labId] || null);
+  const lab = computed<Laboratory | null>(() => labStore.labs[labId] ?? null);
 
   const labName = computed<string>(() => lab.value?.Name || '');
 
@@ -75,9 +73,8 @@
    * Fetch Lab details, pipelines, workflows and Lab users before component mount
    */
   onBeforeMount(async () => {
-    useUiStore().setRequestPending(true);
+    // TODO: make loading appear again
     await loadLabData();
-    useUiStore().setRequestPending(false);
   });
 
   function showRedirectModal() {
@@ -282,20 +279,24 @@
 
   async function loadLabData(): Promise<void> {
     try {
-      lab.value = await $api.labs.labDetails(labId);
-
-      missingPAT.value = !lab.value.HasNextFlowTowerAccessToken;
-
-      if (missingPAT.value) {
-        showRedirectModal();
-      } else {
-        await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
-        canAddUsers.value = true;
-      }
+      await labStore.loadLab(labId);
     } catch (error) {
       console.error('Error retrieving Lab data', error);
     }
   }
+
+  watch(lab, async (lab) => {
+    if (lab !== null) {
+      if (lab.HasNextFlowTowerAccessToken) {
+        // load pipelines/workflows/labUsers after lab loads
+        await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+      } else {
+        // missing personal access token message
+        missingPAT.value = true;
+        showRedirectModal();
+      }
+    }
+  });
 
   async function getPipelines(): Promise<void> {
     try {

@@ -4,10 +4,13 @@ import { defineStore } from 'pinia';
 interface LabsStoreState {
   // indexed by labId
   labs: Record<string, Laboratory>;
+  // ordered lists for pipelines by lab
+  labIdsByOrg: Record<string, string[]>;
 }
 
 const initialState = (): LabsStoreState => ({
   labs: {},
+  labIdsByOrg: {},
 });
 
 const useLabsStore = defineStore('labsStore', {
@@ -18,15 +21,23 @@ const useLabsStore = defineStore('labsStore', {
       Object.assign(this, initialState());
     },
 
+    async loadLab(labId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+      const lab = await $api.labs.labDetails(labId);
+
+      this.labs[lab.LaboratoryId] = lab;
+    },
+
     async loadLabsForOrg(orgId: string): Promise<void> {
       const { $api } = useNuxtApp();
       const labs = await $api.labs.list(orgId);
 
+      this.labIdsByOrg[orgId] = [];
+
       for (const lab of labs) {
         this.labs[lab.LaboratoryId] = lab;
+        this.labIdsByOrg[orgId].push(lab.LaboratoryId);
       }
-
-      // TODO: clear out stale entries
     },
 
     async loadAllLabsForCurrentUser(): Promise<void> {
@@ -37,6 +48,10 @@ const useLabsStore = defineStore('labsStore', {
 
       const orgIds = Object.keys(currentUserPermissions);
       await Promise.all(orgIds.map(this.loadLabsForOrg));
+    },
+
+    getLabsForOrg(orgId: string): Laboratory[] {
+      return this.labIdsByOrg[orgId]?.map((labId) => this.labs[labId]) || [];
     },
   },
 

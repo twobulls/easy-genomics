@@ -14,6 +14,7 @@ const useUiStore = defineStore('uiStore', {
   state: initialState,
 
   actions: {
+    // TODO: make this a keyed dict
     setRequestPending(val: boolean) {
       this.isRequestPending = val;
     },

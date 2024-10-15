@@ -48,7 +48,7 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      pipelineRunStore.wipPipelineRuns[workflowTempId].params[key] = propValues[key];
+      pipelineRunStore.wipWorkflows[workflowTempId].params[key] = propValues[key];
     }
   });
 </script>
@@ -75,7 +75,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="pipelineRunStore.wipPipelineRuns[workflowTempId].S3Url" />
+        <EGInput name="input" v-model="pipelineRunStore.wipWorkflows[workflowTempId].S3Url" />
       </template>
     </div>
   </div>

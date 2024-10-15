@@ -10,7 +10,7 @@
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
-  const labName = usePipelineRunStore().pipelineRuns[labId][pipelineId];
+  const labName = usePipelineRunStore().workflows[labId][pipelineId];
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
@@ -111,7 +111,7 @@
   <EGRunPipelineStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="usePipelineRunStore().wipPipelineRuns[workflowTempId].params"
+    :params="usePipelineRunStore().wipWorkflows[workflowTempId].params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
   />

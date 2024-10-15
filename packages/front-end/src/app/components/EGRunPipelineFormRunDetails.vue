@@ -68,8 +68,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = usePipelineRunStore().wipPipelineRuns[workflowTempId].userPipelineRunName || '';
-    formState.pipelineDescription = usePipelineRunStore().wipPipelineRuns[workflowTempId].pipelineDescription;
+    formState.runName = usePipelineRunStore().wipWorkflows[workflowTempId].userPipelineRunName || '';
+    formState.pipelineDescription = usePipelineRunStore().wipWorkflows[workflowTempId].pipelineDescription;
     validate(formState);
   });
 

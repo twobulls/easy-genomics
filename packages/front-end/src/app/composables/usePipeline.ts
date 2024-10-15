@@ -3,7 +3,7 @@ export default function usePipeline() {
    * Downloads the sample sheet as a CSV file.
    */
   function downloadSampleSheet(workflowTempId: string) {
-    const csvString = usePipelineRunStore().wipPipelineRuns[workflowTempId].sampleSheetCsv;
+    const csvString = usePipelineRunStore().wipWorkflows[workflowTempId].sampleSheetCsv;
     const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -11,7 +11,7 @@ export default function usePipeline() {
     link.setAttribute('href', url);
     link.setAttribute(
       'download',
-      `samplesheet-${usePipelineRunStore().wipPipelineRuns[workflowTempId].pipelineName}--${usePipelineRunStore().wipPipelineRuns[workflowTempId].userPipelineRunName}.csv`,
+      `samplesheet-${usePipelineRunStore().wipWorkflows[workflowTempId].pipelineName}--${usePipelineRunStore().wipWorkflows[workflowTempId].userPipelineRunName}.csv`,
     );
     link.style.visibility = 'hidden';
     document.body.appendChild(link);

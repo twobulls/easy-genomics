@@ -330,7 +330,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: usePipelineRunStore().wipPipelineRuns[workflowTempId].transactionId,
+      TransactionId: usePipelineRunStore().wipWorkflows[workflowTempId].transactionId,
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -350,7 +350,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: usePipelineRunStore().wipPipelineRuns[workflowTempId].transactionId,
+      TransactionId: usePipelineRunStore().wipWorkflows[workflowTempId].transactionId,
       Files: files,
     };
 

@@ -17,17 +17,17 @@ interface WipPipelineRunData {
 
 interface PipeLineRunState {
   // lookup object for pipeline runs
-  pipelineRuns: Record<string, Record<string, Workflow>>;
+  workflows: Record<string, Record<string, Workflow>>;
   // ordered lists for pipelines by lab
-  pipelineRunIdsOrders: Record<string, string[]>;
+  workflowIdsByLab: Record<string, string[]>;
   // configs of new pipeline runs yet to be launched
-  wipPipelineRuns: Record<string, WipPipelineRunData>;
+  wipWorkflows: Record<string, WipPipelineRunData>;
 }
 
 const initialState = (): PipeLineRunState => ({
-  pipelineRuns: {},
-  pipelineRunIdsOrders: {},
-  wipPipelineRuns: {},
+  workflows: {},
+  workflowIdsByLab: {},
+  wipWorkflows: {},
 });
 
 const usePipelineRunStore = defineStore('pipelineRunStore', {
@@ -41,15 +41,15 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
     async loadPipelineRunsForLab(labId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
-      this.pipelineRuns[labId] = {};
-      this.pipelineRunIdsOrders[labId] = [];
+      this.workflows[labId] = {};
+      this.workflowIdsByLab[labId] = [];
 
-      const pipelineRuns: Workflow[] = await $api.workflows.list(labId);
+      const workflows: Workflow[] = await $api.workflows.list(labId);
 
-      for (const pipelineRun of pipelineRuns) {
+      for (const pipelineRun of workflows) {
         if (pipelineRun.id !== undefined) {
-          this.pipelineRuns[labId][pipelineRun.id] = pipelineRun;
-          this.pipelineRunIdsOrders[labId].push(pipelineRun.id);
+          this.workflows[labId][pipelineRun.id] = pipelineRun;
+          this.workflowIdsByLab[labId].push(pipelineRun.id);
         }
       }
     },
@@ -59,19 +59,19 @@ const usePipelineRunStore = defineStore('pipelineRunStore', {
 
       const pipelineRun: Workflow = await $api.workflows.get(labId, workflowId);
 
-      if (!this.pipelineRuns[labId]) {
-        this.pipelineRuns[labId] = {};
+      if (!this.workflows[labId]) {
+        this.workflows[labId] = {};
       }
-      this.pipelineRuns[labId][pipelineRun.id] = pipelineRun;
+      this.workflows[labId][pipelineRun.id] = pipelineRun;
     },
 
     getPipelineRunsForLab(labId: string): Workflow[] {
-      return this.pipelineRunIdsOrders[labId]?.map((pipelineId) => this.pipelineRuns[labId][pipelineId]) || [];
+      return this.workflowIdsByLab[labId]?.map((pipelineId) => this.workflows[labId][pipelineId]) || [];
     },
 
     updateWipPipelineRun(tempId: string, updates: Partial<WipPipelineRunData>): void {
-      this.wipPipelineRuns[tempId] = {
-        ...(this.wipPipelineRuns[tempId] || {}),
+      this.wipWorkflows[tempId] = {
+        ...(this.wipWorkflows[tempId] || {}),
         ...updates,
       };
     },

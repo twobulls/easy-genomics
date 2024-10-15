@@ -20,7 +20,7 @@
     schema: props.schema,
     params: {
       ...props.params,
-      input: pipelineRunStore.wipPipelineRuns[workflowTempId].S3Url,
+      input: pipelineRunStore.wipWorkflows[workflowTempId].S3Url,
     },
   });
 

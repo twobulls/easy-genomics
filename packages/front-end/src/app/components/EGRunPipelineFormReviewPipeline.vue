@@ -27,7 +27,7 @@
     try {
       isLaunchingWorkflow.value = true;
       const launchDetails = await $api.pipelines.readPipelineLaunchDetails(
-        usePipelineRunStore().wipPipelineRuns[workflowTempId].pipelineId,
+        usePipelineRunStore().wipWorkflows[workflowTempId].pipelineId,
         props.labId,
       );
       if (launchDetails.launch) {

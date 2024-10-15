@@ -16,7 +16,7 @@
     $router.push('/labs');
   }
 
-  const workflow = computed<Workflow | null>(() => pipelineRunStore.pipelineRuns[labId][workflowId]);
+  const workflow = computed<Workflow | null>(() => pipelineRunStore.workflows[labId][workflowId]);
 
   async function loadWorkflow() {
     try {

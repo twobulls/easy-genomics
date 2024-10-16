@@ -25,21 +25,18 @@ export const handler: Handler = async (
     const organizationId: string | undefined = event.queryStringParameters?.organizationId;
     if (!organizationId) throw new RequiredIdNotFoundError();
 
-    if (!(validateSystemAdminAccess(event) || validateOrganizationAccess(event, organizationId))) {
+    const isSystemAdmin: boolean = validateSystemAdminAccess(event);
+    const isOrgAdmin: boolean = validateOrganizationAdminAccess(event, organizationId);
+    const isAdmin: boolean = isSystemAdmin || isOrgAdmin;
+
+    // Only the SystemAdmin or any User with access to the Organization is allowed access to this API
+    if (!(isSystemAdmin || validateOrganizationAccess(event, organizationId))) {
       throw new UnauthorizedAccessError();
     }
 
-    var response: Laboratory[] = await laboratoryService.queryByOrganizationId(organizationId);
-
-    if (validateSystemAdminAccess(event) || validateOrganizationAdminAccess(event, organizationId)) {
-      // System Admins and Organization admins see all laboratories for their organization
-    } else {
-      const laboratoryIds = getLaboratoryAccessLaboratoryIds(event, organizationId);
-      response = response.filter((lab: Laboratory) => laboratoryIds.includes(lab.LaboratoryId));
-    }
-
-    if (response) {
-      return buildResponse(200, JSON.stringify(response), event);
+    const laboratories: Laboratory[] = await getLaboratories(event, organizationId, isAdmin);
+    if (laboratories) {
+      return buildResponse(200, JSON.stringify(laboratories), event);
     } else {
       throw new NoLabratoriesFoundError();
     }
@@ -48,3 +45,19 @@ export const handler: Handler = async (
     return buildErrorResponse(err, event);
   }
 };
+
+async function getLaboratories(
+  event: APIGatewayProxyWithCognitoAuthorizerEvent,
+  organizationId: string,
+  isAdmin: boolean,
+): Promise<Laboratory[]> {
+  const laboratories: Laboratory[] = await laboratoryService.queryByOrganizationId(organizationId);
+
+  // If not SystemAdmin or OrganizationAdmin, then filter for the Laboratories the User has access to
+  if (!isAdmin) {
+    const laboratoryIds = getLaboratoryAccessLaboratoryIds(event, organizationId);
+    return laboratories.filter((lab: Laboratory) => laboratoryIds.includes(lab.LaboratoryId));
+  }
+
+  return laboratories;
+}

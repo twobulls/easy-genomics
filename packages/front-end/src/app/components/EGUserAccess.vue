@@ -29,7 +29,9 @@
 
   const orgLabsData = ref([] as Laboratory[]);
   const selectedUserLabsData = ref<LaboratoryUserDetails[] | null>(null);
-  const isLoading = ref(true);
+  const isLoading = computed<boolean>(() =>
+    useUiStore().anyRequestPending(['updateUser', 'fetchOrgLabs', 'fetchUserLabs']),
+  );
   const hasNoData = ref(false);
   const searchOutput = ref('');
   const tableColumns = [
@@ -54,7 +56,6 @@
   onBeforeMount(async () => {
     await fetchOrgLabs(); // wait for lab data to load
     await Promise.all([updateSelectedUser(), fetchUserLabs()]);
-    isLoading.value = false;
   });
 
   function updateSearchOutput(newVal: string) {
@@ -63,7 +64,7 @@
 
   async function updateSelectedUser() {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('updateUser');
       const user = await $api.orgs.usersDetailsByUserId($route.query.userId);
       if (user.length) {
         selectedUser.value = user[0];
@@ -71,13 +72,13 @@
     } catch (error) {
       console.error(error);
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('updateUser');
     }
   }
 
   async function fetchOrgLabs() {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('fetchOrgLabs');
       orgLabsData.value = await $api.labs.list($route.query.orgId);
 
       if (!orgLabsData.value.length) {
@@ -87,7 +88,7 @@
       console.error(error);
       throw error;
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('fetchOrgLabs');
     }
   }
 
@@ -96,7 +97,7 @@
    */
   async function fetchUserLabs() {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('fetchUserLabs');
       selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(selectedUser.value?.UserId);
       if (!orgLabsData.value.length) {
         hasNoData.value = true;
@@ -105,7 +106,7 @@
       console.error(error);
       throw error;
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('fetchUserLabs');
     }
   }
 
@@ -153,7 +154,7 @@
 
   async function handleAddUser(lab: { labId: string; name: string }) {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('addUserToLab');
       buttonLoadingStates.value[lab.labId] = true;
 
       const res = await $api.labs.addLabUser(lab.labId, selectedUser.value?.UserId);
@@ -173,14 +174,14 @@
       );
       throw error;
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('addUserToLab');
       delete buttonLoadingStates.value[lab.labId];
     }
   }
 
   async function handleAssignRole(user: LaboratoryUserDetails) {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('assignLabRole');
       const res = await $api.labs.editUserLabAccess(user.LaboratoryId, selectedUser.value?.UserId, user.LabManager);
       if (res?.Status === 'Success') {
         await fetchUserLabs();
@@ -200,7 +201,7 @@
       throw error;
     } finally {
       // update UI with latest data
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('assignLabRole');
     }
   }
 
@@ -218,7 +219,7 @@
     const displayName = getSelectedUserDisplayName.value; // mark
 
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('removeUserFromLab');
 
       const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
 
@@ -231,7 +232,7 @@
       useToastStore().error(`Failed to remove ${displayName} from ${labName}`);
     } finally {
       await Promise.all([updateSelectedUser(), fetchUserLabs()]);
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('removeUserFromLab');
     }
   }
 </script>
@@ -274,7 +275,16 @@
       <div class="flex items-center" v-if="row.labAccessOptionsEnabled">
         <EGUserRoleDropdown
           :key="row"
-          :disabled="useUiStore().isRequestPending"
+          :disabled="
+            useUiStore().anyRequestPending([
+              'updateUser',
+              'fetchOrgLabs',
+              'fetchUserLabs',
+              'addUserToLab',
+              'assignLabRole',
+              'removeUserFromLab',
+            ])
+          "
           :user="row"
           @assign-role="handleAssignRole($event.labUser)"
           :show-remove-from-lab="true"

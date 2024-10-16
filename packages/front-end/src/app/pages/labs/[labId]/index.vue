@@ -73,7 +73,6 @@
    * Fetch Lab details, pipelines, workflows and Lab users before component mount
    */
   onBeforeMount(async () => {
-    // TODO: make loading appear again
     await loadLabData();
   });
 
@@ -93,7 +92,7 @@
 
   function showRemoveUserDialog(user: LabUser) {
     userToRemove.value = user;
-    primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName}?`;
+    primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName.value}?`;
     isOpen.value = true;
   }
 
@@ -101,23 +100,23 @@
     let maybeDisplayName = 'user';
     try {
       isOpen.value = false;
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('removeUserFromLab');
       const { displayName, UserId } = userToRemove.value;
       maybeDisplayName = displayName;
 
       const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
 
       if (res?.Status !== 'Success') {
-        throw new Error(`Failed to remove ${displayName} from ${labName}`);
+        throw new Error(`Failed to remove ${displayName} from ${labName.value}`);
       }
 
-      useToastStore().success(`Successfully removed ${displayName} from ${labName}`);
+      useToastStore().success(`Successfully removed ${displayName} from ${labName.value}`);
     } catch (error) {
-      useToastStore().error(`Failed to remove ${maybeDisplayName} from ${labName}`);
+      useToastStore().error(`Failed to remove ${maybeDisplayName} from ${labName.value}`);
     } finally {
-      await refreshLabUsers();
+      await getLabUsers();
       userToRemove.value = undefined;
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('removeUserFromLab');
     }
   }
 
@@ -126,20 +125,20 @@
     const isLabManager = role === LaboratoryRolesEnumSchema.enum.LabManager;
 
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('assignLabRole');
 
       const res: EditUserResponse = await $api.labs.editUserLabAccess(labId, UserId, isLabManager);
 
       if (res?.Status !== 'Success') {
-        throw new Error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
+        throw new Error(`Failed to assign the ${role} role to ${displayName} in ${labName.value}`);
       }
 
-      useToastStore().success(`Successfully assigned the ${role} role to ${displayName} in ${labName}`);
+      useToastStore().success(`Successfully assigned the ${role} role to ${displayName} in ${labName.value}`);
     } catch (error) {
-      useToastStore().error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
+      useToastStore().error(`Failed to assign the ${role} role to ${displayName} in ${labName.value}`);
     } finally {
-      await refreshLabUsers();
-      useUiStore().setRequestPending(false);
+      await getLabUsers();
+      useUiStore().setRequestComplete('assignLabRole');
     }
   }
 
@@ -267,6 +266,7 @@
   }
 
   async function getLabUsers(): Promise<void> {
+    useUiStore().setRequestPending('getLabUsers');
     try {
       const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails(labId);
       const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId(labId);
@@ -274,14 +274,19 @@
     } catch (error) {
       console.error('Error retrieving lab users', error);
       useToastStore().error('Failed to retrieve lab users');
+    } finally {
+      useUiStore().setRequestComplete('getLabUsers');
     }
   }
 
   async function loadLabData(): Promise<void> {
+    useUiStore().setRequestPending('loadLabData');
     try {
       await labStore.loadLab(labId);
     } catch (error) {
       console.error('Error retrieving Lab data', error);
+    } finally {
+      useUiStore().setRequestComplete('loadLabData');
     }
   }
 
@@ -299,34 +304,26 @@
   });
 
   async function getPipelines(): Promise<void> {
+    useUiStore().setRequestPending('getPipelines');
     try {
       const res = await $api.pipelines.list(labId);
       pipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
+    } finally {
+      useUiStore().setRequestComplete('getPipelines');
     }
   }
 
   async function getWorkflows(): Promise<void> {
+    useUiStore().setRequestPending('getWorkflows');
     try {
       await workflowStore.loadWorkflowsForLab(labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
+    } finally {
+      useUiStore().setRequestComplete('getWorkflows');
     }
-  }
-
-  // update UI with latest list of lab users and their assigned role
-  async function refreshLabUsers() {
-    useUiStore().setRequestPending(true);
-    await getLabUsers();
-    useUiStore().setRequestPending(false);
-  }
-
-  // update UI with latest list of workflow runs
-  async function refreshWorkflows() {
-    useUiStore().setRequestPending(true);
-    await getWorkflows();
-    useUiStore().setRequestPending(false);
   }
 
   function updateSearchOutput(newVal: any) {
@@ -359,7 +356,7 @@
 
   async function handleUserAddedToLab() {
     showAddUserModule.value = false;
-    await refreshLabUsers();
+    await getLabUsers();
   }
 
   function onRunsRowClicked(row: Workflow) {
@@ -423,7 +420,7 @@
     isCancelDialogOpen.value = false;
     runToCancel.value = null;
 
-    await refreshWorkflows();
+    await getWorkflows();
   }
 </script>
 
@@ -464,8 +461,8 @@
           :row-click-action="onPipelinesRowClicked"
           :table-data="pipelines"
           :columns="pipelinesTableColumns"
-          :is-loading="useUiStore().isRequestPending"
-          :show-pagination="!useUiStore().isRequestPending"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getPipelines'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getPipelines'])"
         >
           <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
@@ -495,8 +492,8 @@
           :row-click-action="onRunsRowClicked"
           :table-data="workflows"
           :columns="workflowsTableColumns"
-          :is-loading="useUiStore().isRequestPending"
-          :show-pagination="!useUiStore().isRequestPending"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
         >
           <template #runName-data="{ row: workflow }">
             <div class="text-body text-sm font-medium">{{ workflow.runName }}</div>
@@ -533,7 +530,7 @@
         <EGSearchInput
           @input-event="updateSearchOutput"
           placeholder="Search user"
-          :disabled="useUiStore().isRequestPending"
+          :disabled="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'addUserToLab'])"
           class="my-6 w-[408px]"
         />
 
@@ -550,8 +547,8 @@
         <EGTable
           :table-data="filteredTableData"
           :columns="usersTableColumns"
-          :is-loading="useUiStore().isRequestPending"
-          :show-pagination="!useUiStore().isRequestPending"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
         >
           <template #Name-data="{ row: labUser }">
             <div class="flex items-center">
@@ -574,7 +571,8 @@
                 :show-remove-from-lab="true"
                 :key="labUser?.LabManager"
                 :disabled="
-                  useUiStore().isRequestPending || !useUserStore().canEditLab(useUserStore().currentOrgId, labId)
+                  useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
+                  !useUserStore().canEditLab(useUserStore().currentOrgId, labId)
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

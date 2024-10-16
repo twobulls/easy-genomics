@@ -8,7 +8,6 @@
   const isFormDisabled = ref(true);
   const state = ref({ email: '' });
   const { $api } = useNuxtApp();
-  const { signIn } = useAuth();
   const formSchema = z.object({
     email: z.string().email(VALIDATION_MESSAGES.email),
   });
@@ -29,7 +28,7 @@
    */
   async function onSubmit(email: string) {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('forgotPassword');
       await $api.users.forgotPasswordRequest(email);
       handleSuccess(email);
     } catch (error: any) {
@@ -42,7 +41,7 @@
         throw error;
       }
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('forgotPassword');
     }
   }
 </script>
@@ -54,12 +53,12 @@
       Enter in your email address below and we will send a link to your inbox to reset your password.
     </EGText>
     <EGFormGroup label="Email address" name="email">
-      <EGInput v-model="state.email" :disabled="useUiStore().isRequestPending" />
+      <EGInput v-model="state.email" :disabled="useUiStore().isRequestPending('forgotPassword')" />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton
-        :disabled="isFormDisabled || useUiStore().isRequestPending"
-        :loading="useUiStore().isRequestPending"
+        :disabled="isFormDisabled || useUiStore().isRequestPending('forgotPassword')"
+        :loading="useUiStore().isRequestPending('forgotPassword')"
         label="Send password reset link"
         @click="onSubmit(state.email)"
       />

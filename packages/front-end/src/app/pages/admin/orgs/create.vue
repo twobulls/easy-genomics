@@ -16,7 +16,7 @@
 
   async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('createOrg');
       const { Name, Description } = event.data;
       await $api.orgs.create({ Name, Description });
       useToastStore().success('Organization created');
@@ -24,7 +24,7 @@
     } catch (error) {
       useToastStore().error(VALIDATION_MESSAGES.network);
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('createOrg');
     }
   }
 </script>

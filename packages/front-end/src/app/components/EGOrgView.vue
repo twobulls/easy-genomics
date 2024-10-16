@@ -28,7 +28,7 @@
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
   const hasNoData = ref(false);
-  const isLoading = ref(true);
+  const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
   const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
@@ -171,7 +171,7 @@
    * @param shouldGetOrgSettings
    */
   async function fetchOrgData(shouldGetOrgSettings: boolean = true) {
-    isLoading.value = true;
+    useUiStore().setRequestPending('fetchOrgData');
     try {
       if (shouldGetOrgSettings) {
         useOrgsStore().loadOrg(props.orgId);
@@ -197,7 +197,7 @@
       console.error(error);
       throw error;
     } finally {
-      isLoading.value = false;
+      useUiStore().setRequestComplete('fetchOrgData');
     }
     return orgSettingsData.value;
   }
@@ -271,7 +271,7 @@
 
   async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('editOrg');
       const { Name, Description } = event.data;
       await $api.orgs.update(props.orgId, { Name, Description });
       await fetchOrgData();
@@ -279,7 +279,7 @@
     } catch (error) {
       useToastStore().error(VALIDATION_MESSAGES.network);
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('editOrg');
     }
   }
 </script>

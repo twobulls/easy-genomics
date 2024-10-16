@@ -15,7 +15,7 @@ export default function useAuth() {
 
   async function signIn(username: string, password: string) {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('signIn');
       const user = await Auth.signIn(username, password);
       if (user) {
         await useUserStore().loadCurrentUserPermissions();
@@ -31,7 +31,7 @@ export default function useAuth() {
       console.error('Error occurred during sign in.', error);
       throw error;
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('signIn');
     }
   }
 

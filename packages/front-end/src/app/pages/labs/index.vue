@@ -19,7 +19,7 @@
   const hasNoData = computed<boolean>(() => labsDisplayList.value.length === 0);
 
   // fetch lab data into store
-  onBeforeMount(useLabsStore().loadAllLabsForCurrentUser);
+  onBeforeMount(getLabs);
 
   const tableColumns = [
     {
@@ -91,7 +91,7 @@
 
   async function handleDeleteLab() {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('deleteLab');
       isOpen.value = false;
 
       if (!selectedId.value) {
@@ -107,29 +107,25 @@
       useToastStore().success(`Lab '${displayName.value}' has been removed`);
       await getLabs();
     } catch (error) {
-      useUiStore().setRequestPending(false);
       useToastStore().error(`Failed to remove lab '${displayName.value}'`);
       throw error;
     } finally {
+      useUiStore().setRequestComplete('deleteLab');
       resetSelectedLabValues();
     }
   }
 
   async function getLabs() {
+    useUiStore().setRequestPending('getLabs');
     try {
-      useUiStore().setRequestPending(true);
-      labsStore.loadLabsForOrg(useUserStore().currentOrgId);
+      await labsStore.loadAllLabsForCurrentUser();
     } catch (error) {
       console.error(error);
       throw error;
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('getLabs');
     }
   }
-
-  onMounted(async () => {
-    await getLabs();
-  });
 
   const canCreateLab = computed<boolean>(() => useUserStore().canCreateLab(useUserStore().currentOrgId));
 </script>
@@ -156,9 +152,9 @@
     v-else
     :table-data="labsDisplayList"
     :columns="tableColumns"
-    :is-loading="useUiStore().isRequestPending"
+    :is-loading="useUiStore().anyRequestPending(['getLabs', 'deleteLab'])"
     :action-items="actionItems"
-    :show-pagination="!useUiStore().isRequestPending && !hasNoData"
+    :show-pagination="!useUiStore().anyRequestPending(['getLabs', 'deleteLab']) && !hasNoData"
   />
 
   <EGDialog

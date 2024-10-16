@@ -1,9 +1,10 @@
 <script setup lang="ts">
-  import { useOrgsStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useToastStore, useUiStore } from '@FE/stores';
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse } from '@FE/types/api';
+  import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
   const props = defineProps<{
     admin: boolean;
@@ -13,6 +14,18 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
+
+  const selectedUser = ref<OrganizationUserDetails | null>(null);
+  const getSelectedUserDisplayName = computed<string>(() =>
+    String(
+      useUser().displayName({
+        preferredName: selectedUser.value?.PreferredName || '',
+        firstName: selectedUser.value?.FirstName || '',
+        lastName: selectedUser.value?.LastName || '',
+        email: selectedUser.value?.UserEmail || '',
+      }),
+    ),
+  );
 
   const orgLabsData = ref([] as Laboratory[]);
   const selectedUserLabsData = ref<LaboratoryUserDetails[] | null>(null);
@@ -53,7 +66,7 @@
       useUiStore().setRequestPending(true);
       const user = await $api.orgs.usersDetailsByUserId($route.query.userId);
       if (user.length) {
-        useOrgsStore().setSelectedUser(user[0]);
+        selectedUser.value = user[0];
       }
     } catch (error) {
       console.error(error);
@@ -84,7 +97,7 @@
   async function fetchUserLabs() {
     try {
       useUiStore().setRequestPending(true);
-      selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(useOrgsStore().selectedUser?.UserId);
+      selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(selectedUser.value?.UserId);
       if (!orgLabsData.value.length) {
         hasNoData.value = true;
       }
@@ -112,8 +125,8 @@
       })
       .map((lab) => {
         const hasAccess =
-          useOrgsStore().selectedUser?.OrganizationAccess?.[lab.OrganizationId]?.LaboratoryAccess?.[lab.LaboratoryId]
-            ?.Status === 'Active';
+          selectedUser.value?.OrganizationAccess?.[lab.OrganizationId]?.LaboratoryAccess?.[lab.LaboratoryId]?.Status ===
+          'Active';
         const labUser = selectedUserLabsData.value.find((user) => user.LaboratoryId === lab.LaboratoryId);
 
         return {
@@ -143,13 +156,13 @@
       useUiStore().setRequestPending(true);
       buttonLoadingStates.value[lab.labId] = true;
 
-      const res = await $api.labs.addLabUser(lab.labId, useOrgsStore().selectedUser?.UserId);
+      const res = await $api.labs.addLabUser(lab.labId, selectedUser.value?.UserId);
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
         await fetchUserLabs();
         useToastStore().success(
-          `${lab.name} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`,
+          `${lab.name} has been successfully updated for ${getSelectedUserDisplayName.value}`, // mark
         );
       } else {
         throw new Error('Failed to update lab access');
@@ -168,11 +181,7 @@
   async function handleAssignRole(user: LaboratoryUserDetails) {
     try {
       useUiStore().setRequestPending(true);
-      const res = await $api.labs.editUserLabAccess(
-        user.LaboratoryId,
-        useOrgsStore().selectedUser?.UserId,
-        user.LabManager,
-      );
+      const res = await $api.labs.editUserLabAccess(user.LaboratoryId, selectedUser.value?.UserId, user.LabManager);
       if (res?.Status === 'Success') {
         await fetchUserLabs();
         let maybeLabName = 'Lab';
@@ -181,13 +190,13 @@
           maybeLabName = lab.Name;
         }
         useToastStore().success(
-          `${maybeLabName} has been successfully updated for ${useOrgsStore().getSelectedUserDisplayName}`,
+          `${maybeLabName} has been successfully updated for ${getSelectedUserDisplayName.value}`, // mark
         );
       } else {
         throw new Error('Failed to update user role');
       }
     } catch (error) {
-      useToastStore().error(`Failed to update ${useOrgsStore().getSelectedUserDisplayName}`);
+      useToastStore().error(`Failed to update ${getSelectedUserDisplayName.value}`); // mark
       throw error;
     } finally {
       // update UI with latest data
@@ -205,8 +214,8 @@
     const labId = labToRemoveFrom.value?.id;
     isRemoveUserDialogOpen.value = false;
 
-    const { UserId } = useOrgsStore().selectedUser;
-    const displayName = useOrgsStore().getSelectedUserDisplayName;
+    const { UserId } = selectedUser.value;
+    const displayName = getSelectedUserDisplayName.value; // mark
 
     try {
       useUiStore().setRequestPending(true);
@@ -232,10 +241,10 @@
 
   <div class="mb-4">
     <EGUserOrgAdminToggle
-      v-if="useOrgsStore().selectedUser"
+      v-if="selectedUser"
       :is-loading="isLoading"
-      :key="useOrgsStore().selectedUser?.UserId"
-      :user="useOrgsStore().selectedUser"
+      :key="selectedUser?.UserId"
+      :user="selectedUser"
       @update-user="updateSelectedUser($event)"
     />
   </div>
@@ -295,7 +304,7 @@
     cancelLabel="Cancel"
     :cancelVariant="ButtonVariantEnum.enum.secondary"
     @action-triggered="handleRemoveUserFromLab"
-    :primaryMessage="`Are you sure you want to remove ${useOrgsStore().getSelectedUserDisplayName} from ${labToRemoveFrom?.name}?`"
+    :primaryMessage="`Are you sure you want to remove ${getSelectedUserDisplayName} from ${labToRemoveFrom?.name}?`"
     v-model="isRemoveUserDialogOpen"
   />
 </template>

@@ -1,18 +1,12 @@
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-import { OrganizationAccessDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { defineStore } from 'pinia';
-import useUser from '@FE/composables/useUser';
 
 interface OrgsStoreState {
-  selectedUser: OrganizationUserDetails | undefined;
-
   // indexed by orgId
   orgs: Record<string, Organization>;
 }
 
 const initialState = (): OrgsStoreState => ({
-  selectedUser: undefined,
   orgs: {},
 });
 
@@ -20,10 +14,6 @@ const useOrgsStore = defineStore('orgsStore', {
   state: initialState,
 
   actions: {
-    setSelectedUser(user: OrganizationUserDetails) {
-      this.selectedUser = user;
-    },
-
     reset() {
       Object.assign(this, initialState());
     },
@@ -47,23 +37,7 @@ const useOrgsStore = defineStore('orgsStore', {
     },
   },
 
-  getters: {
-    // return the selected user's display name
-    getSelectedUserDisplayName(): string {
-      return String(
-        useUser().displayName({
-          preferredName: this.selectedUser?.PreferredName || '',
-          firstName: this.selectedUser?.FirstName || '',
-          lastName: this.selectedUser?.LastName || '',
-          email: this.selectedUser?.UserEmail || '',
-        }),
-      );
-    },
-
-    getUserLabAccess(): OrganizationAccessDetails | undefined {
-      return this.selectedUser?.OrganizationAccess?.LaboratoryAccess;
-    },
-  },
+  getters: {},
 
   persist: {
     storage: localStorage,

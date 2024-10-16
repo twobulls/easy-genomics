@@ -74,14 +74,15 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    useWorkflowStore().updateWipWorkflow(workflowTempId, { pipelineDescription: schema.value.description });
+    workflowStore.updateWipWorkflow(workflowTempId, { pipelineDescription: schema.value.description });
     if (res.params) {
-      useWorkflowStore().updateWipWorkflow(workflowTempId, { params: JSON.parse(res.params) });
+      workflowStore.updateWipWorkflow(workflowTempId, { params: JSON.parse(res.params) });
     }
   }
 
   function confirmCancel() {
     exitConfirmed.value = true;
+    delete workflowStore.wipWorkflows[workflowTempId];
     $router.push(nextRoute.value!);
   }
 
@@ -92,7 +93,7 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    useWorkflowStore().updateWipWorkflow(workflowTempId, {
+    workflowStore.updateWipWorkflow(workflowTempId, {
       userPipelineRunName: '',
       pipelineDescription: '',
       params: {},

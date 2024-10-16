@@ -48,6 +48,7 @@
         },
       };
       await $api.workflows.createPipelineRun(labId, launchRequest);
+      delete workflowStore.wipWorkflows[workflowTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');

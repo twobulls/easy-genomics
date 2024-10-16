@@ -353,7 +353,7 @@
   <UForm v-else :validate="validate" :schema="LabDetailsSchema" :state="state" @submit="onSubmit">
     <EGCard>
       <!-- Lab Name -->
-      <EGFormGroup label="Lab Name*" name="Name" eager-validation>
+      <EGFormGroup label="Lab Name" name="Name" eager-validation required>
         <EGInput
           v-model="state.Name"
           :disabled="isNameFieldDisabled"
@@ -374,8 +374,9 @@
 
       <EGFormGroup
         v-if="useUserStore().isOrgAdmin(useUserStore().currentOrgId)"
-        label="Default S3 bucket directory*"
+        label="Default S3 bucket directory"
         name="DefaultS3BucketDirectory"
+        required
       >
         <EGSelect
           :options="s3Directories"

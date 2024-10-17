@@ -3,7 +3,7 @@
   const $route = useRoute();
 
   // require superuser for admin page
-  if (!useUserStore().isSuperuser()) {
+  if (!useUserStore().isSuperuser) {
     $router.push('/');
   }
 

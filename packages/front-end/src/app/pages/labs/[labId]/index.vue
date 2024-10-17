@@ -41,7 +41,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const pipelines = ref<[]>([]);
-  const workflows = computed<Workflow[]>(() => workflowStore.getWorkflowsForLab(labId));
+  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(labId));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);

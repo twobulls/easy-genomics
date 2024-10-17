@@ -162,9 +162,7 @@
       if (res?.Status === 'Success') {
         await updateSelectedUser();
         await fetchUserLabs();
-        useToastStore().success(
-          `${lab.name} has been successfully updated for ${getSelectedUserDisplayName.value}`, // mark
-        );
+        useToastStore().success(`${lab.name} has been successfully updated for ${getSelectedUserDisplayName.value}`);
       } else {
         throw new Error('Failed to update lab access');
       }
@@ -191,13 +189,13 @@
           maybeLabName = lab.Name;
         }
         useToastStore().success(
-          `${maybeLabName} has been successfully updated for ${getSelectedUserDisplayName.value}`, // mark
+          `${maybeLabName} has been successfully updated for ${getSelectedUserDisplayName.value}`,
         );
       } else {
         throw new Error('Failed to update user role');
       }
     } catch (error) {
-      useToastStore().error(`Failed to update ${getSelectedUserDisplayName.value}`); // mark
+      useToastStore().error(`Failed to update ${getSelectedUserDisplayName.value}`);
       throw error;
     } finally {
       // update UI with latest data
@@ -216,7 +214,7 @@
     isRemoveUserDialogOpen.value = false;
 
     const { UserId } = selectedUser.value;
-    const displayName = getSelectedUserDisplayName.value; // mark
+    const displayName = getSelectedUserDisplayName.value;
 
     try {
       useUiStore().setRequestPending('removeUserFromLab');

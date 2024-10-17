@@ -37,6 +37,18 @@ const initialState = (): UiStoreState => ({
 const useUiStore = defineStore('uiStore', {
   state: initialState,
 
+  getters: {
+    isRequestPending:
+      (state: UiStoreState) =>
+      (val: PendingRequest): boolean =>
+        state.pendingRequests.has(val),
+
+    anyRequestPending:
+      (state: UiStoreState) =>
+      (vals: PendingRequest[]): boolean =>
+        vals.some((val) => state.pendingRequests.has(val)),
+  },
+
   actions: {
     reset() {
       Object.assign(this, initialState());
@@ -47,12 +59,6 @@ const useUiStore = defineStore('uiStore', {
     },
     setRequestComplete(val: PendingRequest): void {
       this.pendingRequests.delete(val);
-    },
-    isRequestPending(val: PendingRequest): boolean {
-      return this.pendingRequests.has(val);
-    },
-    anyRequestPending(vals: PendingRequest[]): boolean {
-      return vals.some((val) => this.pendingRequests.has(val));
     },
 
     setPreviousPageRoute(route: string) {

@@ -37,6 +37,13 @@ const initialState = (): WorkflowState => ({
 const useWorkflowStore = defineStore('workflowStore', {
   state: initialState,
 
+  getters: {
+    workflowsForLab:
+      (state: WorkflowState) =>
+      (labId: string): Workflow[] =>
+        state.workflowIdsByLab[labId]?.map((pipelineId) => state.workflows[labId][pipelineId]) || [],
+  },
+
   actions: {
     reset() {
       Object.assign(this, initialState());
@@ -67,10 +74,6 @@ const useWorkflowStore = defineStore('workflowStore', {
         this.workflows[labId] = {};
       }
       this.workflows[labId][workflow.id] = workflow;
-    },
-
-    getWorkflowsForLab(labId: string): Workflow[] {
-      return this.workflowIdsByLab[labId]?.map((pipelineId) => this.workflows[labId][pipelineId]) || [];
     },
 
     updateWipWorkflow(tempId: string, updates: Partial<WipWorkflowData>): void {

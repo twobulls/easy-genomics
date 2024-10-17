@@ -10,7 +10,7 @@
 
   const labsDisplayList = computed<Laboratory[]>(() =>
     labsStore
-      .getLabsForOrg(useUserStore().currentOrgId)
+      .labsForOrg(useUserStore().currentOrgId)
       // arguably this filter step shouldn't need to exist on the frontend because the backend shouldn't send us labs
       // that the user doesn't have access to, so maybe it should be taken out at some point
       .filter((lab) => useUserStore().canViewLab(useUserStore().currentOrgId, lab.LaboratoryId))

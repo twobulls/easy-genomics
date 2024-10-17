@@ -16,6 +16,13 @@ const initialState = (): LabsStoreState => ({
 const useLabsStore = defineStore('labsStore', {
   state: initialState,
 
+  getters: {
+    labsForOrg:
+      (state: LabsStoreState) =>
+      (orgId: string): Laboratory[] =>
+        state.labIdsByOrg[orgId]?.map((labId) => state.labs[labId]) || [],
+  },
+
   actions: {
     reset() {
       Object.assign(this, initialState());
@@ -49,13 +56,7 @@ const useLabsStore = defineStore('labsStore', {
       const orgIds = Object.keys(currentUserPermissions);
       await Promise.all(orgIds.map(this.loadLabsForOrg));
     },
-
-    getLabsForOrg(orgId: string): Laboratory[] {
-      return this.labIdsByOrg[orgId]?.map((labId) => this.labs[labId]) || [];
-    },
   },
-
-  getters: {},
 
   persist: {
     storage: localStorage,

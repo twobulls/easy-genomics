@@ -64,8 +64,8 @@ const useUserStore = defineStore('userStore', {
 
     canEditLab:
       (_state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        useUserStore().isOrgAdmin(orgId) || useUserStore().isLabManager(orgId, labId),
+      (orgId: string): boolean =>
+        useUserStore().isOrgAdmin(orgId),
 
     canDeleteLab:
       (_state: UserStoreState) =>

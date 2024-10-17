@@ -21,6 +21,7 @@ test('Update an Org Successfully', async ({ page, baseURL }) => {
     await page.getByPlaceholder('Describe your organization').fill('This is the default Organization back to original');
     await page.getByRole('button', { name: 'Save changes' }).click();
     await page.getByText('Organization updated', { exact: true }).isVisible();
+    await page.waitForTimeout(5000);
     await expect(page.getByText('Default Organization').nth(0)).toBeVisible();
     await expect(page.getByText('This is the default Organization back to original').nth(0)).toBeVisible();
   } else {

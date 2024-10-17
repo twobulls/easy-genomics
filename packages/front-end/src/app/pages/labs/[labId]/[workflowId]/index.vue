@@ -10,6 +10,7 @@
 
   const labId = $route.params.labId as string;
   const workflowId = $route.params.workflowId as string;
+  const workflowReports = ref([]);
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
@@ -26,7 +27,18 @@
     }
   }
 
-  onBeforeMount(loadWorkflow);
+  const runResultsColumns = [
+    {
+      key: 'fileName',
+      label: 'File Names',
+      sortable: true,
+      sort: useSort().stringSortCompare,
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
 
   const tabItems = [
     {
@@ -58,10 +70,30 @@
   });
 
   onBeforeMount(async () => {
+    await initData();
+
     let paramTab = $router.currentRoute.value.query?.tab;
     if (!paramTab) paramTab = 'Run Results'; // fallback for no query param to default to first tab
     tabIndex = paramTab ? tabItems.findIndex((tab) => tab.label === paramTab) : 0;
   });
+
+  async function downloadReport(path: string) {
+    const report = await $api.workflows.downloadReport(labId, path);
+    if (report) {
+      const link = document.createElement('a');
+      link.href = report.url;
+      link.download = report.DownloadUrl;
+      link.click();
+    }
+  }
+
+  async function initData() {
+    useUiStore().setRequestPending(true);
+    await loadWorkflow();
+    const res = await $api.workflows.readWorkflowReports(workflowId, labId);
+    workflowReports.value = res.reports;
+    useUiStore().setRequestPending(false);
+  }
 
   // watch route change to correspondingly change selected tab
   watch(
@@ -73,7 +105,15 @@
 </script>
 
 <template>
-  <EGPageHeader :title="workflow?.runName" :description="workflow?.projectName" />
+  <EGPageHeader
+    :title="workflow?.runName || ''"
+    :description="workflow?.projectName || ''"
+    :show-back="true"
+    :back-action="() => $router.push('/labs')"
+    :is-loading="useUiStore().isRequestPending"
+    :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
+  />
+
   <UTabs
     :ui="EGTabsStyles"
     :model-value="tabIndex"
@@ -87,9 +127,25 @@
   >
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
-        <EGText tag="p" class="pt-4">
-          Please log into NextFlow / Seqera Cloud to download the results for this run.
-        </EGText>
+        <EGTable
+          :table-data="workflowReports"
+          :columns="runResultsColumns"
+          :is-loading="useUiStore().isRequestPending"
+          no-results-msg="No results have been generated yet."
+        >
+          <template #actions-data="{ row, index }">
+            <div class="flex items-center justify-end">
+              <EGButton
+                label="Download"
+                variant="secondary"
+                size="sm"
+                @click="downloadReport(row.externalPath)"
+                :icon-right="false"
+                icon="i-heroicons-arrow-down-tray"
+              />
+            </div>
+          </template>
+        </EGTable>
       </div>
       <div v-if="item.key === 'runDetails'" class="space-y-3">
         <section

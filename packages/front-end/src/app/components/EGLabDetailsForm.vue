@@ -257,7 +257,6 @@
   // e.g, LaboratoryId or CreatedAt
   async function handleUpdateLabDetails() {
     useUiStore().setRequestPending('createLab');
-
     const parseResult = UpdateLaboratorySchema.safeParse(state.value);
 
     if (!parseResult.success) {
@@ -267,8 +266,8 @@
     }
 
     const lab: UpdateLaboratory = parseResult.data;
-
     const res = await $api.labs.update(labId, lab);
+
     if (!res) {
       useToastStore().error(`Failed to verify details for ${state.value.Name}`);
     }
@@ -354,7 +353,7 @@
   <UForm v-else :validate="validate" :schema="LabDetailsSchema" :state="state" @submit="onSubmit">
     <EGCard>
       <!-- Lab Name -->
-      <EGFormGroup label="Lab Name*" name="Name" eager-validation>
+      <EGFormGroup label="Lab Name" name="Name" eager-validation required>
         <EGInput
           v-model="state.Name"
           :disabled="isNameFieldDisabled"
@@ -375,8 +374,9 @@
 
       <EGFormGroup
         v-if="useUserStore().isOrgAdmin(useUserStore().currentOrgId)"
-        label="Default S3 bucket directory*"
+        label="Default S3 bucket directory"
         name="DefaultS3BucketDirectory"
+        required
       >
         <EGSelect
           :options="s3Directories"

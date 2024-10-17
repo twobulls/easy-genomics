@@ -106,7 +106,8 @@
 <template>
   <EGPageHeader
     title="Run Pipeline"
-    :show-back-button="!hasLaunched"
+    :description="labName"
+    :show-back="!hasLaunched"
     :back-action="() => (nextRoute = `/labs/${labId}?tab=Pipelines`)"
     back-button-label="Exit Run"
   />

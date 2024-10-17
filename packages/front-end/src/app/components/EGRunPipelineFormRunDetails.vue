@@ -31,20 +31,13 @@
    * viralrecon-illumina_community-showcase_20240712_5686910e783b4b2
    */
   const MAX_TOTAL_LENGTH = 80;
-  const maxRunNameLength = computed<number>(() => {
-    const pipelineNameLength = wipWorkflow.value?.pipelineName?.length;
-    if (pipelineNameLength === undefined) {
-      // if wipWorkflow hasn't loaded in yet, don't accept anything
-      return 0;
-    }
-    return MAX_TOTAL_LENGTH - pipelineNameLength - 8 - 15 - 2;
-  });
+  const MAX_RUN_NAME_LENGTH = 50;
 
   const runNameSchema = z
     .string()
     .trim()
     .min(1, 'Pipeline run name must be at least 1 character')
-    .max(maxRunNameLength.value, `Pipeline run name must be ${maxRunNameLength.value} characters or less`);
+    .max(MAX_RUN_NAME_LENGTH, `Pipeline run name must be ${MAX_RUN_NAME_LENGTH} characters or less`);
 
   const formStateSchema = z.object({
     pipelineDescription: z.string(), // Seqera API spec doesn't define a max length for pipeline description
@@ -154,7 +147,7 @@
           @input.prevent="handleRunNameInput"
           autofocus
         />
-        <EGCharacterCounter :value="runNameCharCount" :max="maxRunNameLength" />
+        <EGCharacterCounter :value="runNameCharCount" :max="MAX_RUN_NAME_LENGTH" />
       </EGFormGroup>
 
       <EGFormGroup label="Description" name="pipelineDescription">

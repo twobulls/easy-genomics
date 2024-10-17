@@ -121,10 +121,6 @@
       "type": "runtime"
     },
     {
-      "name": "@pinia-plugin-persistedstate/nuxt",
-      "type": "runtime"
-    },
-    {
       "name": "@pinia/nuxt",
       "type": "runtime"
     },
@@ -193,6 +189,10 @@
     },
     {
       "name": "pinia",
+      "type": "runtime"
+    },
+    {
+      "name": "pinia-plugin-persistedstate",
       "type": "runtime"
     },
     {

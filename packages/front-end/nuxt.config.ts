@@ -15,7 +15,7 @@ export default defineNuxtConfig({
   },
 
   devtools: { enabled: true },
-  modules: ['@nuxt/ui', '@pinia/nuxt', '@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt'],
+  modules: ['@nuxt/ui', '@pinia/nuxt', '@pinia/nuxt', 'pinia-plugin-persistedstate/nuxt'],
   srcDir: 'src/app/',
   css: ['@/styles/main.scss'],
   ssr: false,
@@ -37,6 +37,10 @@ export default defineNuxtConfig({
       ENV_TYPE: process.env.ENV_TYPE || 'dev',
       GITHUB_RUN_NUMBER: process.env.GITHUB_RUN_NUMBER || 'Unknown',
     },
+  },
+
+  piniaPluginPersistedstate: {
+    storage: 'localStorage',
   },
 
   vite: {

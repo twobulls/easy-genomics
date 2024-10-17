@@ -415,7 +415,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'jwt-decode',
     'nuxt',
     'pinia',
-    '@pinia-plugin-persistedstate/nuxt',
+    'pinia-plugin-persistedstate',
     'playwright',
     'playwright-core',
     'playwright-slack-report',

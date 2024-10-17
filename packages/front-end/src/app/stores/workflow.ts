@@ -1,6 +1,11 @@
 import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import { defineStore } from 'pinia';
 
+/*
+The WIP Workflow is a construct for storing all of the data for a pipeline run that's being configured but hasn't been
+launched yet. They're addressed by workflowTempId which is generated on pipeline click and stored as a query parameter.
+This allows multiple workflows to be configured simultaneously without overwriting each other.
+*/
 export interface WipWorkflowData {
   pipelineId?: number;
   pipelineName?: string;

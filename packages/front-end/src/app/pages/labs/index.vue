@@ -16,7 +16,9 @@
       .filter((lab) => useUserStore().canViewLab(useUserStore().currentOrgId, lab.LaboratoryId))
       .sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name)),
   );
-  const hasNoData = computed<boolean>(() => labsDisplayList.value.length === 0);
+  const hasNoData = computed<boolean>(
+    () => labsDisplayList.value.length === 0 && !useUiStore().isRequestPending('getLabs'),
+  );
 
   // fetch lab data into store
   onBeforeMount(getLabs);
@@ -116,6 +118,7 @@
   }
 
   async function getLabs() {
+    debugger;
     useUiStore().setRequestPending('getLabs');
     try {
       await labsStore.loadAllLabsForCurrentUser();

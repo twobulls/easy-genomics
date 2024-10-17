@@ -3,15 +3,16 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { usePipelineRunStore } from '@FE/stores';
+  import { useWorkflowStore } from '@FE/stores';
 
-  const props = defineProps<{
-    pipelineName: string;
-    pipelineDescription: string;
-  }>();
-
-  const { $api } = useNuxtApp();
   const emit = defineEmits(['next-step', 'step-validated']);
+
+  const $route = useRoute();
+  const workflowStore = useWorkflowStore();
+
+  const workflowTempId = $route.query.workflowTempId as string;
+
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   /**
    * Seqera API spec
@@ -46,8 +47,8 @@
   type FormState = z.infer<typeof formStateSchema>;
 
   const formState = reactive<FormState>({
-    pipelineDescription: props.pipelineDescription,
-    pipelineName: props.pipelineName,
+    pipelineDescription: wipWorkflow.value?.pipelineDescription || '',
+    pipelineName: wipWorkflow.value?.pipelineName || '',
     runName: '',
   });
 
@@ -65,8 +66,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = usePipelineRunStore().userPipelineRunName;
-    formState.pipelineDescription = usePipelineRunStore().pipelineDescription;
+    formState.runName = wipWorkflow.value?.userPipelineRunName || '';
+    formState.pipelineDescription = wipWorkflow.value?.pipelineDescription || '';
     validate(formState);
   });
 
@@ -86,7 +87,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    usePipelineRunStore().setUserPipelineRunName(safeRunName);
+    useWorkflowStore().updateWipWorkflow(workflowTempId, { userPipelineRunName: safeRunName });
     emit('next-step');
   }
 

@@ -6,11 +6,20 @@
 
   const { $api } = useNuxtApp();
   const router = useRouter();
-  const hasNoData = ref(false);
-  const labData = ref([] as Laboratory[]);
+  const labsStore = useLabsStore();
+
+  const labsDisplayList = computed<Laboratory[]>(() =>
+    labsStore
+      .labsForOrg(useUserStore().currentOrgId)
+      // arguably this filter step shouldn't need to exist on the frontend because the backend shouldn't send us labs
+      // that the user doesn't have access to, so maybe it should be taken out at some point
+      .filter((lab) => useUserStore().canViewLab(useUserStore().currentOrgId, lab.LaboratoryId))
+      .sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name)),
+  );
+  const hasNoData = computed<boolean>(() => labsDisplayList.value.length === 0);
 
   // fetch lab data into store
-  onBeforeMount(useLabsStore().loadAllLabsForCurrentUser);
+  onBeforeMount(getLabs);
 
   const tableColumns = [
     {
@@ -82,7 +91,7 @@
 
   async function handleDeleteLab() {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('deleteLab');
       isOpen.value = false;
 
       if (!selectedId.value) {
@@ -98,37 +107,25 @@
       useToastStore().success(`Lab '${displayName.value}' has been removed`);
       await getLabs();
     } catch (error) {
-      useUiStore().setRequestPending(false);
       useToastStore().error(`Failed to remove lab '${displayName.value}'`);
       throw error;
     } finally {
+      useUiStore().setRequestComplete('deleteLab');
       resetSelectedLabValues();
     }
   }
 
   async function getLabs() {
+    useUiStore().setRequestPending('getLabs');
     try {
-      useUiStore().setRequestPending(true);
-      labData.value = (await $api.labs.list(useUserStore().currentOrgId))
-        // arguably this filter step shouldn't need to exist on the frontend because the backend shouldn't send us labs
-        // that the user doesn't have access to, so maybe it should be taken out at some point
-        .filter((lab) => useUserStore().canViewLab(useUserStore().currentOrgId, lab.LaboratoryId))
-        .sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name));
-
-      if (!labData.value.length) {
-        hasNoData.value = true;
-      }
+      await labsStore.loadAllLabsForCurrentUser();
     } catch (error) {
       console.error(error);
       throw error;
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('getLabs');
     }
   }
-
-  onMounted(async () => {
-    await getLabs();
-  });
 
   const canCreateLab = computed<boolean>(() => useUserStore().canCreateLab(useUserStore().currentOrgId));
 </script>
@@ -153,11 +150,11 @@
   <EGTable
     :row-click-action="onRowClicked"
     v-else
-    :table-data="labData"
+    :table-data="labsDisplayList"
     :columns="tableColumns"
-    :is-loading="useUiStore().isRequestPending"
+    :is-loading="useUiStore().anyRequestPending(['getLabs', 'deleteLab'])"
     :action-items="actionItems"
-    :show-pagination="!useUiStore().isRequestPending && !hasNoData"
+    :show-pagination="!useUiStore().anyRequestPending(['getLabs', 'deleteLab']) && !hasNoData"
   />
 
   <EGDialog

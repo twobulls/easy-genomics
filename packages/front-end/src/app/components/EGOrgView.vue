@@ -21,12 +21,14 @@
   const router = useRouter();
   const { resendInvite, labsCount } = useUser($api);
 
+  const org = useOrgsStore().orgs[props.orgId];
+
   const adminPrefix = computed<string>(() => (props.admin ? '/admin' : ''));
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
   const hasNoData = ref(false);
-  const isLoading = ref(true);
+  const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
   const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
@@ -99,7 +101,7 @@
         class: 'text-alert-danger-dark',
         click: () => {
           selectedUserId.value = user.UserId;
-          primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${useOrgsStore().selectedOrg!.Name}?`;
+          primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${org.Name}?`;
           isOpen.value = true;
         },
       },
@@ -145,13 +147,13 @@
       const res: DeletedResponse = await $api.orgs.removeUser(props.orgId, selectedUserId.value);
 
       if (res?.Status === 'Success') {
-        useToastStore().success(`${displayName} has been removed from ${useOrgsStore().selectedOrg!.Name}`);
+        useToastStore().success(`${displayName} has been removed from ${org.Name}`);
         await fetchOrgData(false);
       } else {
         throw new Error('User not removed from Organization');
       }
     } catch (error) {
-      useToastStore().error(`Failed to remove ${displayName} from  ${useOrgsStore().selectedOrg!.Name}`);
+      useToastStore().error(`Failed to remove ${displayName} from  ${org.Name}`);
       throw error;
     } finally {
       selectedUserId.value = '';
@@ -169,11 +171,10 @@
    * @param shouldGetOrgSettings
    */
   async function fetchOrgData(shouldGetOrgSettings: boolean = true) {
-    isLoading.value = true;
+    useUiStore().setRequestPending('fetchOrgData');
     try {
       if (shouldGetOrgSettings) {
-        orgSettingsData.value = await $api.orgs.orgSettings(props.orgId);
-        useOrgsStore().setSelectedOrg(orgSettingsData.value!);
+        useOrgsStore().loadOrg(props.orgId);
       }
 
       const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(props.orgId);
@@ -196,7 +197,7 @@
       console.error(error);
       throw error;
     } finally {
-      isLoading.value = false;
+      useUiStore().setRequestComplete('fetchOrgData');
     }
     return orgSettingsData.value;
   }
@@ -270,23 +271,23 @@
 
   async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('editOrg');
       const { Name, Description } = event.data;
-      await $api.orgs.update(useOrgsStore().selectedOrg?.OrganizationId, { Name, Description });
+      await $api.orgs.update(props.orgId, { Name, Description });
       await fetchOrgData();
       useToastStore().success('Organization updated');
     } catch (error) {
       useToastStore().error(VALIDATION_MESSAGES.network);
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('editOrg');
     }
   }
 </script>
 
 <template>
   <EGPageHeader
-    :title="useOrgsStore().selectedOrg?.Name"
-    :description="useOrgsStore().selectedOrg?.Description"
+    :title="org.Name"
+    :description="org.Description"
     :back-action="() => $router.push(adminPrefix + '/orgs')"
     :show-back="false"
     :is-loading="isLoading"
@@ -300,11 +301,7 @@
 
   <UTabs :ui="EGTabsStyles" :default-index="0" :items="tabItems">
     <template #details>
-      <EGFormOrgDetails
-        @submit-form-org-details="onSubmit($event)"
-        :name="useOrgsStore().selectedOrg?.Name"
-        :description="useOrgsStore().selectedOrg?.Description"
-      />
+      <EGFormOrgDetails @submit-form-org-details="onSubmit($event)" :name="org.Name" :description="org.Description" />
     </template>
 
     <template #users>

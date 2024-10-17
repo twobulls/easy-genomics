@@ -2,7 +2,7 @@ import { components, operations } from './nextflow-tower-openapi-spec';
 
 /** GET /workflow **/
 export type ListWorkflowsQuery = operations['ListWorkflows']['parameters']['query'];
-export type ListWorkflowsResponse = components['schemas']['ListActionsResponse'];
+export type ListWorkflowsResponse = components['schemas']['ListWorkflowsResponse'];
 
 /** GET /workflow/{workflowId}/progress **/
 export type WorkflowProgressQuery = operations['DescribeWorkflowProgress']['parameters']['query'];

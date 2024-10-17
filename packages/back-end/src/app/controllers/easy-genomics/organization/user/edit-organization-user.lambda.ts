@@ -1,8 +1,6 @@
 import { EditOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import {
-  LaboratoryAccess,
-  LaboratoryAccessDetails,
   OrganizationAccess,
   OrganizationAccessDetails,
   User,
@@ -53,22 +51,21 @@ export const handler: Handler = async (
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    const laboratoryAccess: LaboratoryAccess | undefined =
-      organizationAccess && organizationAccess[request.OrganizationId]
-        ? organizationAccess[request.OrganizationId].LaboratoryAccess
+    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
+    const organizationAccessDetails: OrganizationAccessDetails | undefined =
+      organizationAccess && organizationAccess[organizationUser.OrganizationId]
+        ? organizationAccess[organizationUser.OrganizationId]
         : undefined;
 
     const response: boolean = await platformUserService.editExistingUserAccessToOrganization(
       {
         ...user,
-        OrganizationAccess: {
+        OrganizationAccess: <OrganizationAccess>{
           ...organizationAccess,
           [request.OrganizationId]: <OrganizationAccessDetails>{
+            ...organizationAccessDetails,
             Status: request.Status,
             OrganizationAdmin: request.OrganizationAdmin,
-            LaboratoryAccess: <LaboratoryAccessDetails>{
-              ...(laboratoryAccess ? laboratoryAccess : {}),
-            },
           },
         },
         ModifiedAt: new Date().toISOString(),

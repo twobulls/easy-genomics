@@ -142,16 +142,15 @@ export class PlatformUserService extends DynamoDBService {
    *
    * @param user
    * @param organizationUser
+   * @param laboratoryAccess
    */
-  async removeExistingUserFromOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
+  async removeExistingUserFromOrganization(
+    user: User,
+    organizationUser: OrganizationUser,
+    laboratoryAccess?: LaboratoryAccess,
+  ): Promise<Boolean> {
     const logRequestMessage = `Remove Existing User From Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
-
-    // Find the current OrganizationAccess to identify the existing associated LaboratoryIds to remove
-    const laboratoryAccess: LaboratoryAccess | undefined =
-      user.OrganizationAccess && user.OrganizationAccess[organizationUser.OrganizationId]
-        ? user.OrganizationAccess[organizationUser.OrganizationId].LaboratoryAccess
-        : undefined;
 
     // Generate array of Delete transaction items to remove the User's associated LaboratoryUser mappings
     const laboratoryUserDeletions = laboratoryAccess
@@ -167,9 +166,6 @@ export class PlatformUserService extends DynamoDBService {
           };
         })
       : [];
-
-    // Update the current Organization Access to exclude the Organization to remove
-    user.OrganizationAccess ? delete user.OrganizationAccess[organizationUser.OrganizationId] : false;
 
     const response = await this.transactWriteItems({
       TransactItems: [

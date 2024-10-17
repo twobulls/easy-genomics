@@ -5,8 +5,6 @@ import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/erro
 import { ConfirmUpdateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import {
-  LaboratoryAccess,
-  LaboratoryAccessDetails,
   OrganizationAccess,
   OrganizationAccessDetails,
   User,
@@ -150,22 +148,21 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
 function updatePlatformUserOrganizationAccess(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
   // Retrieve the User's OrganizationAccess metadata to update
   const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-  const laboratoryAccess: LaboratoryAccess | undefined =
+  // Retrieve the current Organization's OrganizationAccessDetails for use in the update
+  const organizationAccessDetails: OrganizationAccessDetails | undefined =
     organizationAccess && organizationAccess[organizationUser.OrganizationId]
-      ? organizationAccess[organizationUser.OrganizationId].LaboratoryAccess
+      ? organizationAccess[organizationUser.OrganizationId]
       : undefined;
 
   return platformUserService.editExistingUserAccessToOrganization(
     {
       ...user,
       Status: 'Active',
-      OrganizationAccess: {
+      OrganizationAccess: <OrganizationAccess>{
         ...organizationAccess,
         [organizationUser.OrganizationId]: <OrganizationAccessDetails>{
+          ...organizationAccessDetails,
           Status: 'Active',
-          LaboratoryAccess: <LaboratoryAccessDetails>{
-            ...(laboratoryAccess ? laboratoryAccess : {}),
-          },
         },
       },
       ModifiedAt: new Date().toISOString(),

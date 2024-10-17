@@ -20,13 +20,12 @@
     email: z.string().email(VALIDATION_MESSAGES.email),
   });
   const isFormDisabled = ref(true);
-  const isRequestPending = ref(false);
   const state = ref({ email: '' });
   const { invite } = useUser($api);
 
   async function onSubmit() {
     try {
-      isRequestPending.value = true;
+      useUiStore().setRequestPending('sendInvite');
       await invite({
         Email: state.value.email,
         OrganizationId: props.orgId,
@@ -36,7 +35,7 @@
     } catch (error) {
       console.error(error);
     } finally {
-      isRequestPending.value = false;
+      useUiStore().setRequestComplete('sendInvite');
     }
   }
 
@@ -53,9 +52,9 @@
         <EGButton
           label="Invite"
           type="submit"
-          :disabled="isFormDisabled || isRequestPending"
+          :disabled="isFormDisabled || useUiStore().isRequestPending('sendInvite')"
           icon="i-heroicons-envelope"
-          :loading="isRequestPending"
+          :loading="useUiStore().isRequestPending('sendInvite')"
         />
       </div>
     </UForm>

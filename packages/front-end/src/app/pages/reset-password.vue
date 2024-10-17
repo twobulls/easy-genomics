@@ -72,7 +72,7 @@
    */
   async function onSubmit(password: string) {
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('resetPassword');
       await $api.users.confirmForgotPasswordRequest(forgotPasswordToken.value, password);
       useToastStore().success(`Password has been reset`);
       state.value.password = '';
@@ -82,7 +82,7 @@
       console.error('Error occurred during password reset.', error);
       throw error;
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('resetPassword');
     }
   }
 </script>
@@ -93,14 +93,14 @@
     <EGFormGroup label="New password" name="password">
       <EGPasswordInput
         v-model="state.password"
-        :disabled="useUiStore().isRequestPending"
+        :disabled="useUiStore().isRequestPending('resetPassword')"
         :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
       />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton
-        :disabled="isFormDisabled || useUiStore().isRequestPending"
-        :loading="useUiStore().isRequestPending"
+        :disabled="isFormDisabled || useUiStore().isRequestPending('resetPassword')"
+        :loading="useUiStore().isRequestPending('resetPassword')"
         label="Reset password"
         @click="onSubmit(state.password)"
       />

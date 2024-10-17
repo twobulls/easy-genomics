@@ -19,7 +19,7 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
-  async list(): Promise<Organization[] | undefined> {
+  async list(): Promise<Organization[]> {
     const res = await this.call<Organization[]>('GET', '/organization/list-organizations');
 
     if (!res) {
@@ -55,7 +55,7 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
-  async orgSettings(orgId: string): Promise<Organization | undefined> {
+  async orgSettings(orgId: string): Promise<Organization> {
     const res = await this.call<Organization>('GET', `/organization/read-organization/${orgId}`);
 
     if (!res) {

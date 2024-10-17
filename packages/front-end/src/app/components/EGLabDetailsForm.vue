@@ -220,12 +220,12 @@
       useToastStore().error(`Invalid Workspace ID or Personal Access Token. Please try again.`);
     } finally {
       isSubmittingFormData.value = false;
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('createLab');
     }
   }
 
   async function handleCreateLab() {
-    useUiStore().setRequestPending(true);
+    useUiStore().setRequestPending('createLab');
 
     const lab: CreateLaboratory = {
       ...state.value,
@@ -256,7 +256,7 @@
   // types can have more properties than the form fields.
   // e.g, LaboratoryId or CreatedAt
   async function handleUpdateLabDetails() {
-    useUiStore().setRequestPending(true);
+    useUiStore().setRequestPending('createLab');
     const parseResult = UpdateLaboratorySchema.safeParse(state.value);
 
     if (!parseResult.success) {
@@ -436,7 +436,7 @@
       <EGButton
         :size="ButtonSizeEnum.enum.sm"
         :variant="ButtonVariantEnum.enum.secondary"
-        :disabled="useUiStore().isRequestPending"
+        :disabled="useUiStore().isRequestPending('createLab')"
         label="Cancel"
         name="cancel"
         @click="$router.push(useUiStore().previousPageRoute)"

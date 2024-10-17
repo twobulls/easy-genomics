@@ -1,24 +1,30 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { usePipelineRunStore } from '@FE/stores';
+  import { useWorkflowStore } from '@FE/stores';
+  import { WipWorkflowData } from '@FE/stores/workflow';
 
   const props = defineProps<{
     schema: object;
     params: object;
   }>();
 
-  const { $api } = useNuxtApp();
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
+  const { $api } = useNuxtApp();
+  const $route = useRoute();
+
+  const workflowTempId = $route.query.workflowTempId as string;
 
   const activeSection = ref<string | null>(null);
-  const pipelineRunStore = usePipelineRunStore();
+  const workflowStore = useWorkflowStore();
+
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   const localProps = reactive({
     schema: props.schema,
     params: {
       ...props.params,
-      input: pipelineRunStore.sampleSheetS3Url,
-      outdir: `s3://${usePipelineRunStore().s3Bucket}/${usePipelineRunStore().s3Path}/results`,
+      input: wipWorkflow.value?.sampleSheetS3Url,
+      outdir: `s3://${wipWorkflow.value?.s3Bucket}/${wipWorkflow.value?.s3Path}/results`,
     },
   });
 
@@ -75,7 +81,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        pipelineRunStore.setParams(val);
+        workflowStore.updateWipWorkflow(workflowTempId, { params: val });
       }
     },
     { deep: true },

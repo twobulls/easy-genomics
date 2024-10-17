@@ -46,7 +46,7 @@
           <!--          Workflows-->
           <!--        </ULink>-->
           <ULink
-            v-if="!useUserStore().isSuperuser()"
+            v-if="!useUserStore().isSuperuser"
             to="/labs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
@@ -56,8 +56,8 @@
             Labs
           </ULink>
           <ULink
-            v-if="useUserStore().canManageOrgs()"
-            :to="useUserStore().isSuperuser() ? '/admin/orgs' : '/orgs'"
+            v-if="useUserStore().canManageOrgs"
+            :to="useUserStore().isSuperuser ? '/admin/orgs' : '/orgs'"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
             :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"

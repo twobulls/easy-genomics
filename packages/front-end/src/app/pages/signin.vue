@@ -41,8 +41,8 @@
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton
-        :disabled="isFormDisabled || useUiStore().isRequestPending"
-        :loading="useUiStore().isRequestPending"
+        :disabled="isFormDisabled || useUiStore().isRequestPending('signIn')"
+        :loading="useUiStore().isRequestPending('signIn')"
         label="Sign in"
         @click="signIn(state.email, state.password)"
       />

@@ -7,6 +7,7 @@ import {
   CreateWorkflowLaunchRequest,
   ListWorkflowsResponse,
   DescribeWorkflowResponse,
+  Workflow,
 } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse } from '@FE/utils/api-utils';
@@ -26,15 +27,20 @@ class WorkflowsModule extends HttpFactory {
     return res;
   }
 
-  async list(labId: string): Promise<ListWorkflowsResponse[]> {
-    const res = await this.callNextflowTower<ListWorkflowsResponse[]>(
+  async list(labId: string): Promise<Workflow[]> {
+    const res = await this.callNextflowTower<ListWorkflowsResponse>(
       'GET',
       `/workflow/list-workflows?laboratoryId=${labId}`,
     );
     if (!res) {
       throw new Error('Failed to retrieve workflows');
     }
-    return res;
+
+    // wfMeta.workflow is a WorkflowDbDto object, but we want a Workflow
+    // their schemas are not idential but they are close, so for now we're coercing them and hoping for the best
+    const workflows = res.workflows?.map((wfMeta) => wfMeta.workflow as Workflow);
+
+    return workflows || [];
   }
 
   async cancelPipelineRun(labId: string, workflowId: string): Promise<any> {
@@ -78,7 +84,7 @@ class WorkflowsModule extends HttpFactory {
     return res;
   }
 
-  async get(labId: string, workflowId: string): Promise<DescribeWorkflowResponse> {
+  async get(labId: string, workflowId: string): Promise<Workflow> {
     const res = await this.callNextflowTower<DescribeWorkflowResponse>(
       'GET',
       `/workflow/read-workflow/${workflowId}?laboratoryId=${labId}`,
@@ -89,7 +95,8 @@ class WorkflowsModule extends HttpFactory {
       throw new Error('Failed to get pipeline run');
     }
 
-    return res;
+    // as noted in list(...), coercing to get the right type back
+    return res.workflow as Workflow;
   }
 }
 

@@ -1,16 +1,19 @@
 <script setup lang="ts">
-  import { usePipelineRunStore } from '@FE/stores';
+  import { useWorkflowStore } from '@FE/stores';
 
   const props = defineProps<{
     schema: object;
     params: object;
   }>();
 
-  const labId = usePipelineRunStore().labId;
-  const labName = usePipelineRunStore().labName;
-  const pipelineId = usePipelineRunStore().pipelineId;
-  const pipelineName = usePipelineRunStore().pipelineName;
-  const pipelineDescription = usePipelineRunStore().pipelineDescription;
+  const $route = useRoute();
+  const workflowStore = useWorkflowStore();
+
+  const workflowTempId = $route.query.workflowTempId as string;
+
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+
+  const labId = $route.params.labId as string;
 
   const selectedIndex = ref(0);
   const hasLaunched = ref(false);
@@ -172,11 +175,6 @@
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunPipelineFormRunDetails
-              :labId="labId"
-              :labName="labName"
-              :pipelineId="pipelineId"
-              :pipelineName="pipelineName"
-              :pipelineDescription="pipelineDescription"
               @next-step="() => nextStep('upload')"
               @step-validated="setStepEnabled('upload', $event)"
             />
@@ -204,12 +202,8 @@
           <template v-if="items[selectedIndex].key === 'review'">
             <EGRunPipelineFormReviewPipeline
               :can-launch="true"
-              :lab-id="labId"
-              :lab-name="labName"
               :schema="props.schema"
-              :params="usePipelineRunStore().params"
-              :pipeline-name="usePipelineRunStore().pipelineName"
-              :userPipelineRunName="usePipelineRunStore().userPipelineRunName"
+              :params="wipWorkflow?.params"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"
             />

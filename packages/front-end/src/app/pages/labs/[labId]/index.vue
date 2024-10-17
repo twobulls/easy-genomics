@@ -7,7 +7,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useOrgsStore, usePipelineRunStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useWorkflowStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -15,23 +15,24 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
-  import { DescribeWorkflowResponse } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+  import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const $route = useRoute();
 
+  const workflowStore = useWorkflowStore();
+  const labStore = useLabsStore();
+
   const { $api } = useNuxtApp();
   const $router = useRouter();
-  const orgId = useOrgsStore().selectedOrg?.OrganizationId;
   const modal = useModal();
+
+  const labId = $route.params.labId as string;
+  const orgId = labStore.labs[labId].OrganizationId;
 
   const tabIndex = ref(0);
   const defaultTabIndex = 0;
 
-  const labId = $route.params.labId as string;
-  // on page load, load the cached version from the labs store, for immediate population of the lab name etc
-  // for page function, we also need HasNextFlowTowerAccessToken which only comes from the individual loadLabData endpoint
-  // so we also load up to date data from that endpoint and overwrite the lab variable when it's ready
-  const lab = ref<Laboratory | null>(useLabsStore().labs[labId] || null);
+  const lab = computed<Laboratory | null>(() => labStore.labs[labId] ?? null);
 
   const labName = computed<string>(() => lab.value?.Name || '');
 
@@ -40,7 +41,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const pipelines = ref<[]>([]);
-  const workflows = ref<[]>([]);
+  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(labId));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -72,9 +73,7 @@
    * Fetch Lab details, pipelines, workflows and Lab users before component mount
    */
   onBeforeMount(async () => {
-    useUiStore().setRequestPending(true);
     await loadLabData();
-    useUiStore().setRequestPending(false);
   });
 
   function showRedirectModal() {
@@ -93,7 +92,7 @@
 
   function showRemoveUserDialog(user: LabUser) {
     userToRemove.value = user;
-    primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName}?`;
+    primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName.value}?`;
     isOpen.value = true;
   }
 
@@ -101,23 +100,23 @@
     let maybeDisplayName = 'user';
     try {
       isOpen.value = false;
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('removeUserFromLab');
       const { displayName, UserId } = userToRemove.value;
       maybeDisplayName = displayName;
 
       const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
 
       if (res?.Status !== 'Success') {
-        throw new Error(`Failed to remove ${displayName} from ${labName}`);
+        throw new Error(`Failed to remove ${displayName} from ${labName.value}`);
       }
 
-      useToastStore().success(`Successfully removed ${displayName} from ${labName}`);
+      useToastStore().success(`Successfully removed ${displayName} from ${labName.value}`);
     } catch (error) {
-      useToastStore().error(`Failed to remove ${maybeDisplayName} from ${labName}`);
+      useToastStore().error(`Failed to remove ${maybeDisplayName} from ${labName.value}`);
     } finally {
-      await refreshLabUsers();
+      await getLabUsers();
       userToRemove.value = undefined;
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('removeUserFromLab');
     }
   }
 
@@ -126,20 +125,20 @@
     const isLabManager = role === LaboratoryRolesEnumSchema.enum.LabManager;
 
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('assignLabRole');
 
       const res: EditUserResponse = await $api.labs.editUserLabAccess(labId, UserId, isLabManager);
 
       if (res?.Status !== 'Success') {
-        throw new Error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
+        throw new Error(`Failed to assign the ${role} role to ${displayName} in ${labName.value}`);
       }
 
-      useToastStore().success(`Successfully assigned the ${role} role to ${displayName} in ${labName}`);
+      useToastStore().success(`Successfully assigned the ${role} role to ${displayName} in ${labName.value}`);
     } catch (error) {
-      useToastStore().error(`Failed to assign the ${role} role to ${displayName} in ${labName}`);
+      useToastStore().error(`Failed to assign the ${role} role to ${displayName} in ${labName.value}`);
     } finally {
-      await refreshLabUsers();
-      useUiStore().setRequestPending(false);
+      await getLabUsers();
+      useUiStore().setRequestComplete('assignLabRole');
     }
   }
 
@@ -203,7 +202,7 @@
     ],
   ];
 
-  function workflowsActionItems(row: DescribeWorkflowResponse): object[] {
+  function workflowsActionItems(row: Workflow): object[] {
     const buttons: object[][] = [
       [
         {
@@ -215,13 +214,13 @@
         {
           label: 'View Results',
           click: () => {
-            $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Results' } });
+            $router.push({ path: `/labs/${labId}/${row.id}`, query: { tab: 'Run Results' } });
           },
         },
       ],
     ];
 
-    if (['SUBMITTED', 'RUNNING'].includes(row.workflow.status)) {
+    if (['SUBMITTED', 'RUNNING'].includes(row.status || '')) {
       buttons.push([
         {
           label: 'Cancel Run',
@@ -267,6 +266,7 @@
   }
 
   async function getLabUsers(): Promise<void> {
+    useUiStore().setRequestPending('getLabUsers');
     try {
       const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails(labId);
       const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId(labId);
@@ -274,56 +274,56 @@
     } catch (error) {
       console.error('Error retrieving lab users', error);
       useToastStore().error('Failed to retrieve lab users');
+    } finally {
+      useUiStore().setRequestComplete('getLabUsers');
     }
   }
 
   async function loadLabData(): Promise<void> {
+    useUiStore().setRequestPending('loadLabData');
     try {
-      lab.value = await $api.labs.labDetails(labId);
-
-      missingPAT.value = !lab.value.HasNextFlowTowerAccessToken;
-
-      if (missingPAT.value) {
-        showRedirectModal();
-      } else {
-        await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
-        canAddUsers.value = true;
-      }
+      await labStore.loadLab(labId);
     } catch (error) {
       console.error('Error retrieving Lab data', error);
+    } finally {
+      useUiStore().setRequestComplete('loadLabData');
     }
   }
 
+  watch(lab, async (lab) => {
+    if (lab !== null) {
+      if (lab.HasNextFlowTowerAccessToken) {
+        // load pipelines/workflows/labUsers after lab loads
+        await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+      } else {
+        // missing personal access token message
+        missingPAT.value = true;
+        showRedirectModal();
+      }
+    }
+  });
+
   async function getPipelines(): Promise<void> {
+    useUiStore().setRequestPending('getPipelines');
     try {
       const res = await $api.pipelines.list(labId);
       pipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
+    } finally {
+      useUiStore().setRequestComplete('getPipelines');
     }
   }
 
   async function getWorkflows(): Promise<void> {
+    useUiStore().setRequestPending('getWorkflows');
     try {
-      const res = await $api.workflows.list(labId);
-      workflows.value = res?.workflows;
+      await workflowStore.loadWorkflowsForLab(labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
+    } finally {
+      useUiStore().setRequestComplete('getWorkflows');
     }
-  }
-
-  // update UI with latest list of lab users and their assigned role
-  async function refreshLabUsers() {
-    useUiStore().setRequestPending(true);
-    await getLabUsers();
-    useUiStore().setRequestPending(false);
-  }
-
-  // update UI with latest list of workflow runs
-  async function refreshWorkflows() {
-    useUiStore().setRequestPending(true);
-    await getWorkflows();
-    useUiStore().setRequestPending(false);
   }
 
   function updateSearchOutput(newVal: any) {
@@ -356,33 +356,39 @@
 
   async function handleUserAddedToLab() {
     showAddUserModule.value = false;
-    await refreshLabUsers();
+    await getLabUsers();
   }
 
-  function onRunsRowClicked(row) {
+  function onRunsRowClicked(row: Workflow) {
     viewRunDetails(row);
   }
 
-  function onPipelinesRowClicked(row) {
+  function onPipelinesRowClicked(row: Workflow) {
     viewRunPipeline(row);
   }
 
-  function viewRunPipeline(pipeline) {
-    usePipelineRunStore().reset();
+  function viewRunPipeline(pipeline: Workflow) {
+    const workflowTempId = uuidv4();
+
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
-    usePipelineRunStore().setLabId(labId);
-    usePipelineRunStore().setLabName(labName);
-    usePipelineRunStore().setPipelineId(pipelineId);
-    usePipelineRunStore().setPipelineName(pipelineName);
-    usePipelineRunStore().setPipelineDescription(pipelineDescription || '');
-    usePipelineRunStore().setTransactionId(uuidv4());
+
+    workflowStore.updateWipWorkflow(workflowTempId, {
+      pipelineId,
+      pipelineName,
+      pipelineDescription: pipelineDescription || '',
+      transactionId: uuidv4(),
+    });
+
     $router.push({
       path: `/labs/${labId}/${pipelineId}/run-pipeline`,
+      query: {
+        workflowTempId,
+      },
     });
   }
 
-  function viewRunDetails(row) {
-    $router.push({ path: `/labs/${labId}/${row.workflow.id}`, query: { tab: 'Run Details' } });
+  function viewRunDetails(row: Workflow) {
+    $router.push({ path: `/labs/${labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 
   // watch route change to correspondingly change selected tab
@@ -394,11 +400,11 @@
   );
 
   const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<DescribeWorkflowResponse | null>(null);
+  const runToCancel = ref<Workflow | null>(null);
 
   async function handleCancelDialogAction() {
-    const runId = runToCancel.value?.workflow?.id;
-    const runName = runToCancel.value?.workflow?.runName;
+    const runId = runToCancel.value?.id;
+    const runName = runToCancel.value?.runName;
 
     if (!runId) {
       throw new Error("runToCancel workflow id should have a value but doesn't");
@@ -414,7 +420,7 @@
     isCancelDialogOpen.value = false;
     runToCancel.value = null;
 
-    await refreshWorkflows();
+    await getWorkflows();
   }
 </script>
 
@@ -456,8 +462,8 @@
           :row-click-action="onPipelinesRowClicked"
           :table-data="pipelines"
           :columns="pipelinesTableColumns"
-          :is-loading="useUiStore().isRequestPending"
-          :show-pagination="!useUiStore().isRequestPending"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getPipelines'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getPipelines'])"
         >
           <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
@@ -487,25 +493,25 @@
           :row-click-action="onRunsRowClicked"
           :table-data="workflows"
           :columns="workflowsTableColumns"
-          :is-loading="useUiStore().isRequestPending"
-          :show-pagination="!useUiStore().isRequestPending"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
         >
           <template #runName-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow.workflow.runName }}</div>
-            <div class="text-muted text-xs font-normal">{{ workflow?.workflow.projectName }}</div>
+            <div class="text-body text-sm font-medium">{{ workflow.runName }}</div>
+            <div class="text-muted text-xs font-normal">{{ workflow.projectName }}</div>
           </template>
 
           <template #lastUpdated-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ getDate(workflow?.workflow.lastUpdated) }}</div>
-            <div class="text-muted">{{ getTime(workflow?.workflow.lastUpdated) }}</div>
+            <div class="text-body text-sm font-medium">{{ getDate(workflow.lastUpdated) }}</div>
+            <div class="text-muted">{{ getTime(workflow.lastUpdated) }}</div>
           </template>
 
           <template #status-data="{ row: workflow }">
-            <EGStatusChip :status="workflow?.workflow.status" />
+            <EGStatusChip :status="workflow.status" />
           </template>
 
           <template #owner-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow?.workflow?.userName ?? '-' }}</div>
+            <div class="text-body text-sm font-medium">{{ workflow?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">
@@ -525,7 +531,7 @@
         <EGSearchInput
           @input-event="updateSearchOutput"
           placeholder="Search user"
-          :disabled="useUiStore().isRequestPending"
+          :disabled="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'addUserToLab'])"
           class="my-6 w-[408px]"
         />
 
@@ -542,8 +548,8 @@
         <EGTable
           :table-data="filteredTableData"
           :columns="usersTableColumns"
-          :is-loading="useUiStore().isRequestPending"
-          :show-pagination="!useUiStore().isRequestPending"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
         >
           <template #Name-data="{ row: labUser }">
             <div class="flex items-center">
@@ -566,7 +572,8 @@
                 :show-remove-from-lab="true"
                 :key="labUser?.LabManager"
                 :disabled="
-                  useUiStore().isRequestPending || !useUserStore().canEditLab(useUserStore().currentOrgId, labId)
+                  useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
+                  !useUserStore().canEditLab(useUserStore().currentOrgId, labId)
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"
@@ -592,7 +599,7 @@
     action-label="Cancel Run"
     :action-variant="ButtonVariantEnum.enum.destructive"
     @action-triggered="handleCancelDialogAction"
-    :primary-message="`Are you sure you would like to cancel ${runToCancel?.workflow.runName}?`"
+    :primary-message="`Are you sure you would like to cancel ${runToCancel?.runName}?`"
     secondary-message="This will stop any progress made."
     v-model="isCancelDialogOpen"
   />

@@ -13,7 +13,7 @@
     UploadedFileInfo,
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-  import { usePipelineRunStore, useToastStore } from '@FE/stores';
+  import { useWorkflowStore, useToastStore } from '@FE/stores';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -36,10 +36,14 @@
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
+  const workflowStore = useWorkflowStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const labId = $route.params.labId as string;
+  const workflowTempId = $route.query.workflowTempId as string;
+
+  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -282,10 +286,13 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    usePipelineRunStore().setSampleSheetCsv(sampleSheetResponse.SampleSheetContents);
-    usePipelineRunStore().setSampleSheetS3Url(sampleSheetResponse.SampleSheetInfo.S3Url);
-    usePipelineRunStore().setS3Bucket(sampleSheetResponse.SampleSheetInfo.Bucket);
-    usePipelineRunStore().setS3Path(sampleSheetResponse.SampleSheetInfo.Path);
+    useWorkflowStore().updateWipWorkflow(workflowTempId, {
+      sampleSheetCsv: sampleSheetResponse.SampleSheetContents,
+      sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
+      s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
+      s3Path: sampleSheetResponse.SampleSheetInfo.Path,
+    });
+
     canProceed.value = true;
   }
 
@@ -328,7 +335,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: usePipelineRunStore().transactionId,
+      TransactionId: wipWorkflow.value?.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -348,7 +355,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: usePipelineRunStore().transactionId,
+      TransactionId: wipWorkflow.value?.transactionId || '',
       Files: files,
     };
 
@@ -538,7 +545,7 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="usePipeline().downloadSampleSheet()"
+        @click="usePipeline().downloadSampleSheet(workflowTempId)"
       />
       <EGButton
         @click="startUploadProcess"

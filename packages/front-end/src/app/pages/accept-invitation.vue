@@ -105,7 +105,7 @@
   async function onSubmit() {
     const { email, firstName, lastName, password } = state.value;
     try {
-      useUiStore().setRequestPending(true);
+      useUiStore().setRequestPending('acceptInvite');
       await $api.users.confirmUserInviteRequest(inviteToken.value, firstName, lastName, password);
       await signIn(email, password);
       handleSuccess();
@@ -119,7 +119,7 @@
         throw error;
       }
     } finally {
-      useUiStore().setRequestPending(false);
+      useUiStore().setRequestComplete('acceptInvite');
     }
   }
 
@@ -135,18 +135,18 @@
       <EGInput v-model="state.email" :disabled="true" />
     </EGFormGroup>
     <EGFormGroup label="First Name" name="firstName">
-      <EGInput v-model="state.firstName" :disabled="useUiStore().isRequestPending" />
+      <EGInput v-model="state.firstName" :disabled="useUiStore().isRequestPending('acceptInvite')" />
     </EGFormGroup>
     <EGFormGroup label="Last Name" name="lastName">
-      <EGInput v-model="state.lastName" :disabled="useUiStore().isRequestPending" />
+      <EGInput v-model="state.lastName" :disabled="useUiStore().isRequestPending('acceptInvite')" />
     </EGFormGroup>
     <EGFormGroup label="Create password" name="password">
-      <EGPasswordInput v-model="state.password" :disabled="useUiStore().isRequestPending" />
+      <EGPasswordInput v-model="state.password" :disabled="useUiStore().isRequestPending('acceptInvite')" />
     </EGFormGroup>
     <div class="flex items-center justify-between">
       <EGButton
-        :disabled="isFormDisabled || useUiStore().isRequestPending"
-        :loading="useUiStore().isRequestPending"
+        :disabled="isFormDisabled || useUiStore().isRequestPending('acceptInvite')"
+        :loading="useUiStore().isRequestPending('acceptInvite')"
         label="Complete setup & Sign In"
         @click="onSubmit()"
       />

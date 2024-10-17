@@ -43,7 +43,7 @@
 
   async function handleAddSelectedUserToLab() {
     // Update the UI to reflect the pending request
-    useUiStore().setRequestPending(true);
+    useUiStore().setRequestPending('addUserToLab');
     pendingApiRequest.value = true;
     isAddingUser.value = true;
 
@@ -110,7 +110,8 @@
 
   // Reset the UI request pending and loading states
   function resetUiLoadingState() {
-    useUiStore().setRequestPending(false);
+    useUiStore().setRequestComplete('getLabUsers');
+    useUiStore().setRequestComplete('addUserToLab');
     pendingApiRequest.value = false;
     loadingOrgUsers.value = false;
     isAddingUser.value = false;
@@ -118,7 +119,7 @@
 
   async function refreshOrgUsersWithoutLabAccess() {
     // Enable components in the parent page to reflect the pending request
-    useUiStore().setRequestPending(true);
+    useUiStore().setRequestPending('getLabUsers');
     pendingApiRequest.value = true;
     await getOrgUsersWithoutLabAccess();
   }

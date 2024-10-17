@@ -2,14 +2,17 @@
   import StringField from './EGParametersStringField.vue';
   import NumberField from './EGParametersNumberField.vue';
   import BooleanField from './EGParametersBooleanField.vue';
-  import { usePipelineRunStore } from '@FE/stores';
+  import { useWorkflowStore } from '@FE/stores';
 
   const props = defineProps<{
     section: Record<string, any>;
     params: Record<string, any>;
   }>();
 
-  const pipelineRunStore = usePipelineRunStore();
+  const $route = useRoute();
+  const workflowStore = useWorkflowStore();
+
+  const workflowTempId = $route.query.workflowTempId as string;
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -45,7 +48,7 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      pipelineRunStore.params[key] = propValues[key];
+      workflowStore.wipWorkflows[workflowTempId].params[key] = propValues[key];
     }
   });
 </script>
@@ -72,7 +75,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="pipelineRunStore.sampleSheetS3Url" />
+        <EGInput name="input" v-model="workflowStore.wipWorkflows[workflowTempId].sampleSheetS3Url" />
       </template>
     </div>
   </div>

@@ -118,7 +118,6 @@
   }
 
   async function getLabs() {
-    debugger;
     useUiStore().setRequestPending('getLabs');
     try {
       await labsStore.loadAllLabsForCurrentUser();

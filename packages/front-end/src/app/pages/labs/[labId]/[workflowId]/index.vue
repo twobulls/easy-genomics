@@ -110,7 +110,7 @@
     :title="workflow?.runName || ''"
     :description="workflow?.projectName || ''"
     :show-back="true"
-    :back-action="() => $router.push('/labs')"
+    :back-action="() => $router.push(`/labs/${labId}`)"
     :is-loading="useUiStore().isRequestPending('loadWorkflow')"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />

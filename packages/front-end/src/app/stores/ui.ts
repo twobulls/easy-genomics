@@ -19,6 +19,7 @@ type PendingRequest =
   | 'fetchOrgData'
   | 'editOrg'
   | 'createLab'
+  | 'updateLab'
   | 'getLabs'
   | 'deleteLab'
   | 'fetchOrgLabs'

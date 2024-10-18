@@ -9,11 +9,6 @@
 
   const $router = useRouter();
 
-  // require superuser for admin page
-  if (!useUserStore().isSuperuser) {
-    $router.push('/');
-  }
-
   async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
       useUiStore().setRequestPending('createOrg');

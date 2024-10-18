@@ -11,8 +11,6 @@
 
   const orgsStore = useOrgsStore();
 
-  const adminPrefix = computed<string>(() => (props.admin ? '/admin' : ''));
-
   onBeforeMount(loadOrgs);
 
   // table data stuff
@@ -78,7 +76,7 @@
   }
 
   function viewOrg(org: Organization) {
-    $router.push({ path: adminPrefix.value + '/orgs/' + org.OrganizationId });
+    $router.push({ path: '/orgs/' + org.OrganizationId });
   }
 
   // delete org stuff
@@ -114,7 +112,7 @@
 
 <template>
   <EGPageHeader title="Organizations" :show-back="false">
-    <EGButton v-if="admin" label="Create a new Organization" :to="adminPrefix + '/orgs/create'" />
+    <EGButton v-if="admin" label="Create a new Organization" :to="'/orgs/create'" />
   </EGPageHeader>
 
   <EGTable

@@ -53,4 +53,14 @@ export default defineNuxtRouteMiddleware(async (to) => {
       }
     }
   }
+
+  /**
+   * @description Redirects for superuser/non-superuser - non-superuser cannot access /admin, superuser can only access /admin
+   */
+  if (useUserStore().isSuperuser && !to.fullPath.startsWith('/admin')) {
+    return navigateTo('/admin' + to.fullPath);
+  }
+  if (!useUserStore().isSuperuser && to.fullPath.startsWith('/admin')) {
+    return navigateTo(to.fullPath.replace(/^\/admin/, ''));
+  }
 });

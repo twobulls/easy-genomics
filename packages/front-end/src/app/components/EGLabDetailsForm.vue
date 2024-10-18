@@ -449,7 +449,7 @@
         :size="ButtonSizeEnum.enum.sm"
         type="submit"
         label="Edit"
-        :disabled="!useUserStore().canEditLab(useUserStore().currentOrgId, labId)"
+        :disabled="!useUserStore().canEditLab(useUserStore().currentOrgId)"
         @click="switchToFormMode(LabDetailsFormModeEnum.enum.Edit)"
       />
     </div>

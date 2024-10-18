@@ -3,6 +3,7 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 
+  const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
 
@@ -110,7 +111,7 @@
     :description="workflow?.projectName || ''"
     :show-back="true"
     :back-action="() => $router.push('/labs')"
-    :is-loading="useUiStore().isRequestPending"
+    :is-loading="useUiStore().isRequestPending()"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />
 
@@ -130,7 +131,7 @@
         <EGTable
           :table-data="workflowReports"
           :columns="runResultsColumns"
-          :is-loading="useUiStore().isRequestPending"
+          :is-loading="useUiStore().isRequestPending()"
           no-results-msg="No results have been generated yet."
         >
           <template #actions-data="{ row, index }">

@@ -33,6 +33,10 @@
     },
   );
 
+  const emit = defineEmits<{
+    (event: 'updated'): void;
+  }>();
+
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const router = useRouter();
@@ -272,6 +276,8 @@
     if (!res) {
       useToastStore().error(`Failed to verify details for ${state.value.Name}`);
     }
+
+    emit('updated');
 
     isEditingNextFlowTowerAccessToken.value = false;
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);

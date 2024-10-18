@@ -2,6 +2,7 @@
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
   import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+  import { FileDownloadUrlResponse } from '@/packages/shared-lib/src/app/types/easy-genomics/file/download/request-file-download-url';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -78,12 +79,12 @@
 
   onBeforeMount(initData);
 
-  async function downloadReport(path: string) {
-    const report = await $api.workflows.downloadReport(labId, path);
+  async function downloadReport(fileName: string, path: string) {
+    const report: FileDownloadUrlResponse = await $api.workflows.downloadReport(labId, path);
     if (report) {
       const link = document.createElement('a');
-      link.href = report.url;
-      link.download = report.DownloadUrl;
+      link.href = report.DownloadUrl;
+      link.download = fileName;
       link.click();
     }
   }
@@ -132,7 +133,7 @@
                 label="Download"
                 variant="secondary"
                 size="sm"
-                @click="downloadReport(row.externalPath)"
+                @click="downloadReport(row.fileName, row.externalPath)"
                 :icon-right="false"
                 icon="i-heroicons-arrow-down-tray"
               />

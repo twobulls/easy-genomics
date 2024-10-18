@@ -19,36 +19,47 @@ const config: PlaywrightTestConfig = {
     screenshot: 'only-on-failure',
   },
   projects: [
+    // {
+    //   name: 'setup-local',
+    //   testMatch: /.*\.setup.ts/,
+    //   use: {
+    //     baseURL: 'http://localhost:3000',
+    //   },
+    // },
+    // {
+    //   name: 'setup',
+    //   testMatch: /.*\.setup.ts/,
+    //   use: {
+    //     baseURL: `https://${envConfig.appDomainName}`,
+    //   },
+    // },
+    // {
+    //   name: 'local',
+    //   testMatch: '**/*.spec.e2e.ts',
+    //   use: {
+    //     baseURL: 'http://localhost:3000',
+    //     storageState: './tests/e2e/.auth/org-admin.json',
+    //   },
+    //   dependencies: ['setup-local'],
+    // },
     {
-      name: 'setup-local',
-      testMatch: /.*\.setup.ts/,
-      use: {
-        baseURL: 'http://localhost:3000',
-      },
-    },
-    {
-      name: 'setup',
-      testMatch: /.*\.setup.ts/,
-      use: {
-        baseURL: `https://${envConfig.appDomainName}`,
-      },
-    },
-    {
-      name: 'local',
+      name: 'quality-sys-admin',
       testMatch: '**/*.spec.e2e.ts',
       use: {
-        baseURL: 'http://localhost:3000',
-        storageState: './tests/e2e/.auth/user.json',
+        baseURL: `https://${envConfig.appDomainName}`,
+        storageState: './tests/e2e/.auth/sys-admin.json',
       },
-      dependencies: ['setup-local'],
+      tests: './tests/e2e/sys-admin',
+      dependencies: ['setup'],
     },
     {
-      name: 'quality',
+      name: 'quality-org-admin',
       testMatch: '**/*.spec.e2e.ts',
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
-        storageState: './tests/e2e/.auth/user.json',
+        storageState: './tests/e2e/.auth/org-admin.json',
       },
+      tests: './tests/e2e/org-admin',
       dependencies: ['setup'],
     },
   ],

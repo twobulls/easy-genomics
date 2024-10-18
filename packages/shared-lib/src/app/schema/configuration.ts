@@ -22,8 +22,8 @@ export const ConfigurationSettingsSchema = z
       ['jwt-secret-key']: z.string().nullable().optional(), // Optional: If undefined, generate a random value on deployment for JWT Signature
       ['system-admin-email']: z.string().nullable().optional(),
       ['system-admin-password']: z.string().nullable().optional(), // Initial Cognito password
-      ['test-user-email']: z.string(),
-      ['test-user-password']: z.string(), // Initial Cognito password
+      ['org-admin-email']: z.string(),
+      ['org-admin-password']: z.string(), // Initial Cognito password
       ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
       ['vpc-peering']: z.object(VpcPeeringSchema.shape).nullable().optional(), // Optional: VPC Peering Accepter details
     }),

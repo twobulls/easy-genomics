@@ -1,0 +1,85 @@
+{
+  "cookies": [
+    {
+      "name": "pipelineRunStore",
+      "value": "%7B%22labId%22%3A%22%22%2C%22labName%22%3A%22%22%2C%22pipelineId%22%3A0%2C%22pipelineName%22%3A%22%22%2C%22pipelineDescription%22%3A%22%22%2C%22transactionId%22%3A%22%22%2C%22userPipelineRunName%22%3A%22%22%2C%22params%22%3A%7B%7D%2C%22sampleSheetCsv%22%3A%22%22%2C%22sampleSheetS3Url%22%3A%22%22%2C%22s3Bucket%22%3A%22%22%2C%22s3Path%22%3A%22%22%7D",
+      "domain": "quality.dev.easygenomics.org",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "userStore",
+      "value": "%7B%22currentOrg%22%3A%7B%22ModifiedBy%22%3A%2284881448-b061-7054-cd31-d5cd19e7d608%22%2C%22Country%22%3A%22USA%22%2C%22AwsHealthOmicsEnabled%22%3Afalse%2C%22Description%22%3A%22This%20is%20an%20update%20to%20the%20default%20Organization%22%2C%22ModifiedAt%22%3A%222024-10-16T03%3A23%3A54.681Z%22%2C%22NextFlowTowerEnabled%22%3Atrue%2C%22CreatedAt%22%3A%222024-10-08T03%3A27%3A38.004Z%22%2C%22Name%22%3A%22Default%20Organization%20Updated%22%2C%22OrganizationId%22%3A%2261c86013-74f2-4d30-916a-70b03a97ba14%22%7D%2C%22currentUserPermissions%22%3A%7B%22isSuperuser%22%3Afalse%2C%22orgPermissions%22%3A%7B%2261c86013-74f2-4d30-916a-70b03a97ba14%22%3A%7B%22Status%22%3A%22Active%22%2C%22LaboratoryAccess%22%3A%7B%22eea6e5de-7e9d-4275-ade4-4c7c6cb4123d%22%3A%7B%22Status%22%3A%22Active%22%7D%7D%7D%2C%2267faf449-ce1b-4bc0-99d2-9b913c6b2029%22%3A%7B%22Status%22%3A%22Invited%22%2C%22LaboratoryAccess%22%3A%7B%7D%7D%7D%7D%7D",
+      "domain": "quality.dev.easygenomics.org",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "uiStore",
+      "value": "%7B%22isRequestPending%22%3Afalse%2C%22previousPageRoute%22%3A%22%2Fsignin%22%7D",
+      "domain": "quality.dev.easygenomics.org",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://quality.dev.easygenomics.org",
+      "localStorage": [
+        {
+          "name": "CognitoIdentityServiceProvider.66ahs2bi3lv6hb74rqgef6d1c8.84881448-b061-7054-cd31-d5cd19e7d608.userData",
+          "value": "{\"UserAttributes\":[{\"Name\":\"email\",\"Value\":\"test.user@easygenomics.org\"},{\"Name\":\"email_verified\",\"Value\":\"true\"},{\"Name\":\"sub\",\"Value\":\"84881448-b061-7054-cd31-d5cd19e7d608\"}],\"Username\":\"84881448-b061-7054-cd31-d5cd19e7d608\"}"
+        },
+        {
+          "name": "labsStore",
+          "value": "{\"labs\":{\"eea6e5de-7e9d-4275-ade4-4c7c6cb4123d\":{\"S3Bucket\":\"851725267090-dev-quality-lab-bucket\",\"AwsHealthOmicsEnabled\":false,\"Status\":\"Active\",\"Description\":\"Configured to private DEPT-Health Workspace in cloud.seqera.io\",\"ModifiedAt\":\"2024-10-14T12:50:32.518Z\",\"OrganizationId\":\"61c86013-74f2-4d30-916a-70b03a97ba14\",\"ModifiedBy\":\"84881448-b061-7054-cd31-d5cd19e7d608\",\"NextFlowTowerWorkspaceId\":\"145709772014603\",\"LaboratoryId\":\"eea6e5de-7e9d-4275-ade4-4c7c6cb4123d\",\"CreatedBy\":\"84881448-b061-7054-cd31-d5cd19e7d608\",\"NextFlowTowerEnabled\":true,\"CreatedAt\":\"2024-10-14T12:48:34.414Z\",\"Name\":\"DEPT-Health Workspace Laboratory\"}}}"
+        },
+        {
+          "name": "iconify-count",
+          "value": "0"
+        },
+        {
+          "name": "iconify-version",
+          "value": "iconify2"
+        },
+        {
+          "name": "CognitoIdentityServiceProvider.66ahs2bi3lv6hb74rqgef6d1c8.84881448-b061-7054-cd31-d5cd19e7d608.accessToken",
+          "value": "eyJraWQiOiJTZnR3Rk1FRXJZb1wvTEhEK2VucHRUaFJtdXZaa1pkc3hmRFwvYVJIeW82bVk9IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiI4NDg4MTQ0OC1iMDYxLTcwNTQtY2QzMS1kNWNkMTllN2Q2MDgiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9iTGtuQWxTeWwiLCJjbGllbnRfaWQiOiI2NmFoczJiaTNsdjZoYjc0cnFnZWY2ZDFjOCIsIm9yaWdpbl9qdGkiOiIyMmM3YWFjMC04NDc3LTQyYzgtYWI2Yy1jZmI3YmRjZGNjNGYiLCJldmVudF9pZCI6IjRlZjNmZjU1LTdjYmQtNGJkYy1iMjNkLTRiOTY0OGI0OGY4MSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3MjkwNTg0MTUsImV4cCI6MTcyOTA2MjAxNCwiaWF0IjoxNzI5MDU4NDE1LCJqdGkiOiI5MzkzNDZjNi1hODRhLTQ4NWItOWIzNy1mYTNjNGYxYzYzMjkiLCJ1c2VybmFtZSI6Ijg0ODgxNDQ4LWIwNjEtNzA1NC1jZDMxLWQ1Y2QxOWU3ZDYwOCJ9.M5vJnCx-tUbAjQEPvo-xEvTfXETAsiTlvWoaLDtDR-ENoYGzuCdkZ8eeTLGFsvjvCYz1oyV29_grYqz11_5XDOiXRS50P8Aa2c-SGJZ4G6bj1j0ZZvIOrknq80pekuU52JaDW2FBlxH_MAgdXBEG5BxvE5uNFBQcsiOdUUvJu9WXTZNTNVzpqXhMi06j5ZpNXWBv2Qk0Q23VulN6xE2fBVz7V-XCtep9pmu2Y4j1Mu8KXu3Yd-6L4U_BwISBoFs6q4w7dqtc6SK3NR8I-G7606HHPwi3B7FVcJaA10gJmDj6W2onCda7Z2718xz1FVlE7hyXzog3E13XcBlhvwKvPg"
+        },
+        {
+          "name": "CognitoIdentityServiceProvider.66ahs2bi3lv6hb74rqgef6d1c8.84881448-b061-7054-cd31-d5cd19e7d608.clockDrift",
+          "value": "0"
+        },
+        {
+          "name": "CognitoIdentityServiceProvider.66ahs2bi3lv6hb74rqgef6d1c8.84881448-b061-7054-cd31-d5cd19e7d608.refreshToken",
+          "value": "eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.RFOFVoPCJukFEIwXh8X1HrDRVX3h2fQzXxanrAVzEYGB1A7HKuRbRIb09873Gj2_V_u-WeLk6gOHg_wxfhJEJL_bsd8xOxxO74ien45Uvrqb1NtSRxsrUIo0a3Xi0sxtS5zIp5qsBhDpZBvYzrhkkLJxP1zW3-Babv9zfQbvg-pdQ8mB2slNS-pGcHeHn8XeOxFYHwDfO68NE24Q4hIYU9byyBshjgyK155eM8CL5BcXDE85RRqUJr_otcVOC7pObQV7gL8O4dN0xBNMbGfqh4-I_qnLCT0oLQjPtWKRMYkJDa3utuGoi85jNvyCd4mFXxm5XW0W9dUvPP4kAwfgjA.XJK23RHQBhNHhhMy.IySecPGHwmB7_MaOw16eN8EOp_KHci0j3lygQ4JxijCJ_hRTF2jrlOUR_AyrfCfhIiXFVfazDFhloUDWOTeKWRJOpPLvr2uORDPDh0wIWMNNkiKWPGbT6zXxhoJ-gsOL_0qnTABHhWuTywXAEuD5N55MnUkWULObmJd-daiSzla8A9IH-yG01fLGVa3NiANyYHOVGmsjUUmKA4qMYhwlxqepQiEXH-98MAesn7fkmcjaEu879e81ajXVrD7YGThPRZKHurIOevECc6A8iLcQtommu4acmhzH76_hkpbEz8A9RnQmS3ZLszIzuyJgbY608Tip5DQWWfN_n-ETdlNik65AoMdkihBz4jrczp862dc_wCeazxsjjCM_He4YH3eYUhqEAax8Zfj7b4cpWjl9UT5QZLyng4tp66RAvpq2kzGNo_G6j_E2cNGNI3_7gxZWTJolJuPgmj_WioZpMQiKuUt0d9DuanP1d3M3ewhy6Lbxumnd6RXfKLK51eWak8XdF06MtTgeI-R_0KW086QcbfMhLtDhBLJ_SfyZUVPapMCvfDOYZf9iMR_3xFyWMTmWoKbUkmMZzwDaMs0dzgLBwYqQddzFJwHQtWHkRh8UDRmiyTr3ZqJh381bgq8GaPA_f5Vd1CECcrxc1OebxyUh4Fzu7mWlqMJa-ROAhYVwmYiJV8L9NEe-_vQH___a5quMvaerrdusVaWynLEPGajTMCX4HXh-pN00QsVqJeM11ALZwsDl___EkSvs29KyWoymTo55Ry0QUXGD59lZXg07FZ8OvwoOLSqemx1vgBZ0JsAnSCF8XMnMF634qluGl8HEwsgXgXUTVcn409PYyZgEqtcPtI4t44F7W0tW_U-OsXyqDIsBRgWXZhkEPX-SbH6s7lZdoLw7TmrPBmsGl_b6RJF6SWKOB7i2pjqHPhdS51wonzYRPMG80jpjLO_V6kFM1UHANWazailA6JetA_dtdmEI8KFbQI1ZkmWRaXkAYbbDIVQd6ilyghVbupE8QpKcvHEqamMUqTpbuWJiTUNdSwdZTVX303qRh03wp7BR6DOoUGj3df4HUWdnRrYtHGtp84SzU12wkkqJWg82EaicvP1mhFU_lsZvBxeLxiMArrSPP5CsXAzzP-JS5VSzJAfbxsiHhCyVlqoOkl9FEannVEsVUm-2uXiYC0rFz9aON5Ql6S9CHPHm1CDGmJPiibJ5kT6RTpNNRbJd2LPu3GjNQWIMBbdtox6iX3ZBu7KqAqe8bA_xs5I8XUwRbVWRxyWuOX04-Fy54v_VpYdyWqzVvnfQmRdIAKY82ZzgDDyokOwxKKkvgEeeqdXJv2Q.rhDLifmvoG35ufJkA79VSg"
+        },
+        {
+          "name": "amplify-signin-with-hostedUI",
+          "value": "false"
+        },
+        {
+          "name": "nuxt-color-mode",
+          "value": "light"
+        },
+        {
+          "name": "CognitoIdentityServiceProvider.66ahs2bi3lv6hb74rqgef6d1c8.84881448-b061-7054-cd31-d5cd19e7d608.idToken",
+          "value": "eyJraWQiOiI4WGpweUg2czZpYTRmSFBETFcxXC9RZ0w0YURqbFVlZnlGRnZlXC9VVGcwNWM9IiwiYWxnIjoiUlMyNTYifQ.eyJTdGF0dXMiOiJBY3RpdmUiLCJzdWIiOiI4NDg4MTQ0OC1iMDYxLTcwNTQtY2QzMS1kNWNkMTllN2Q2MDgiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiRmlyc3ROYW1lIjoiUmljayIsImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xX2JMa25BbFN5bCIsImNvZ25pdG86dXNlcm5hbWUiOiI4NDg4MTQ0OC1iMDYxLTcwNTQtY2QzMS1kNWNkMTllN2Q2MDgiLCJvcmlnaW5fanRpIjoiMjJjN2FhYzAtODQ3Ny00MmM4LWFiNmMtY2ZiN2JkY2RjYzRmIiwiYXVkIjoiNjZhaHMyYmkzbHY2aGI3NHJxZ2VmNmQxYzgiLCJldmVudF9pZCI6IjRlZjNmZjU1LTdjYmQtNGJkYy1iMjNkLTRiOTY0OGI0OGY4MSIsInRva2VuX3VzZSI6ImlkIiwiYXV0aF90aW1lIjoxNzI5MDU4NDE1LCJPcmdhbml6YXRpb25BY2Nlc3MiOiJ7XCI2MWM4NjAxMy03NGYyLTRkMzAtOTE2YS03MGIwM2E5N2JhMTRcIjp7XCJTdGF0dXNcIjpcIkFjdGl2ZVwiLFwiTGFib3JhdG9yeUFjY2Vzc1wiOntcImVlYTZlNWRlLTdlOWQtNDI3NS1hZGU0LTRjN2M2Y2I0MTIzZFwiOntcIlN0YXR1c1wiOlwiQWN0aXZlXCJ9fX0sXCI2N2ZhZjQ0OS1jZTFiLTRiYzAtOTlkMi05YjkxM2M2YjIwMjlcIjp7XCJTdGF0dXNcIjpcIkludml0ZWRcIixcIkxhYm9yYXRvcnlBY2Nlc3NcIjp7fX19IiwiUHJlZmVycmVkTmFtZSI6IiIsIkxhc3ROYW1lIjoiU2FuY2hleiIsImV4cCI6MTcyOTA2MjAxNCwiaWF0IjoxNzI5MDU4NDE1LCJqdGkiOiI0NWZiOTU2Mi1lZDIyLTQ4NmItOWU5MS1lNTZhOTQ3YzMyYTMiLCJlbWFpbCI6InRlc3QudXNlckBlYXN5Z2Vub21pY3Mub3JnIn0.FfnyNoCWbIeZzByYR0tEMTNfVPLUWRQp53gvoNDT9BRd4GC9V-JlyheJnIG99T8wFUru5AuIJJFOHQKX0lC27uxqksa9-b-B2CiS1lCAdnyrDVSXvimiWbjwJv6WcHiMIbJnRlbIwmRBPIwUESOyNjcWfLadYZy24YBfV5Hq5kp-lbzmflXIuzawO_86qSB17IkLKHOfMo8R8F5a8CVBy1oPu3P-Plx9oZ68tRPjHvlAyBpPYSuZukDOncFM9O3So1EeOVVlZTM2qO6nOQuqPR9ZN6AYGtLcG31rTK2xG-qaJdzWEJnU-50c_j9SGLdP7-QvHVbOnQpUOBRszJ6Yhw"
+        },
+        {
+          "name": "CognitoIdentityServiceProvider.66ahs2bi3lv6hb74rqgef6d1c8.LastAuthUser",
+          "value": "84881448-b061-7054-cd31-d5cd19e7d608"
+        }
+      ]
+    }
+  ]
+}

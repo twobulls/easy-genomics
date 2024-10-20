@@ -10,7 +10,6 @@ type PendingRequest =
   | 'assignLabRole'
   | 'getLabUsers'
   | 'addUserToLab'
-  | 'removeUserFromLab'
   | 'updateUser'
   | 'getPipelines'
   | 'getWorkflows'

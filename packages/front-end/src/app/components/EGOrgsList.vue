@@ -112,7 +112,7 @@
 
 <template>
   <EGPageHeader title="Organizations" :show-back="false">
-    <EGButton v-if="admin" label="Create a new Organization" :to="'/orgs/create'" />
+    <EGButton v-if="admin" label="Create a new Organization" to="/orgs/create" />
   </EGPageHeader>
 
   <EGTable

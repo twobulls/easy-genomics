@@ -15,15 +15,20 @@ const authFileMap: Record<UserType, string> = {
   'org-admin': './tests/e2e/.auth/org-admin.json',
 };
 
+const getCredentials = (email: string | undefined, password: string | undefined): Credentials => {
+  if (!email || !password) {
+    throw new Error('Email and password must not be null or empty.');
+  }
+
+  return {
+    email,
+    password,
+  };
+};
+
 const credentialsMap: Record<UserType, Credentials> = {
-  'sys-admin': {
-    email: envConfig.sysAdminEmail,
-    password: envConfig.sysAdminPassword,
-  },
-  'org-admin': {
-    email: envConfig.orgAdminEmail,
-    password: envConfig.orgAdminPassword,
-  },
+  'sys-admin': getCredentials(envConfig.sysAdminEmail, envConfig.sysAdminPassword),
+  'org-admin': getCredentials(envConfig.orgAdminEmail, envConfig.orgAdminPassword),
 };
 
 /**
@@ -67,7 +72,7 @@ async function signInAndSaveState(
   await page.getByRole('button', { name: 'Sign In' }).click();
 
   console.log('Waiting for navigation to complete...');
-  await page.waitForLoadState('networkidle', { timeout: 30000 }).catch((err) => {
+  await page.waitForLoadState('networkidle', { timeout: 30000 }).catch((err: any) => {
     console.log('Load state error:', err);
     throw new Error('Failed to sign in.');
   });
@@ -84,10 +89,7 @@ async function signInAndSaveState(
  * @param config Full Playwright test configuration.
  */
 async function globalSetup(config: FullConfig) {
-  console.log('FullConfig:', JSON.stringify(config, null, 2));
-
   const userType = process.env.USER_TYPE as UserType;
-  console.log('Determined userType:', userType);
 
   if (!userType || !['sys-admin', 'org-admin'].includes(userType)) {
     throw new Error(`Invalid or missing USER_TYPE environment variable: ${userType}`);

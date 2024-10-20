@@ -1,5 +1,5 @@
 import type { PlaywrightTestConfig } from 'playwright/test';
-import { envConfig } from '@/packages/front-end/config/env-config';
+import { envConfig } from './config/env-config';
 
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',
@@ -21,12 +21,18 @@ const config: PlaywrightTestConfig = {
   },
   projects: [
     {
+      name: 'setup',
+      testMatch: /.*\.setup.ts/,
+      use: {
+        baseURL: `https://${envConfig.appDomainName}`,
+      },
+    },
+    {
       name: 'quality-sys-admin',
-      testMatch: './tests/e2e/sys-admin/*.spec.e2e.ts',
+      testMatch: 'tests/e2e/sys-admin/*.spec.e2e.ts',
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
         storageState: './tests/e2e/.auth/sys-admin.json',
-        userType: 'sys-admin',
       },
       dependencies: ['setup'],
     },
@@ -36,7 +42,6 @@ const config: PlaywrightTestConfig = {
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
         storageState: './tests/e2e/.auth/org-admin.json',
-        userType: 'org-admin',
       },
       dependencies: ['setup'],
     },

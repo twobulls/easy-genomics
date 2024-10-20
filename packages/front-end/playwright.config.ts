@@ -21,32 +21,8 @@ const config: PlaywrightTestConfig = {
   },
   projects: [
     {
-      name: 'setup-local',
-      testMatch: /.*\.setup.ts/,
-      use: {
-        baseURL: 'http://localhost:3000',
-      },
-    },
-    {
-      name: 'setup',
-      testMatch: /.*\.setup.ts/,
-      use: {
-        baseURL: `https://${envConfig.appDomainName}`,
-      },
-    },
-    {
-      name: 'local',
-      testMatch: '**/*.spec.e2e.ts',
-      use: {
-        baseURL: 'http://localhost:3000',
-        storageState: './tests/e2e/.auth/user.json',
-      },
-      dependencies: ['setup-local'],
-    },
-    {
       name: 'quality-sys-admin',
       testMatch: './tests/e2e/sys-admin/*.spec.e2e.ts',
-      // testMatch: './tests/e2e/sys-admin/*.spec.e2e.ts',
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
         storageState: './tests/e2e/.auth/sys-admin.json',
@@ -57,7 +33,6 @@ const config: PlaywrightTestConfig = {
     {
       name: 'quality-org-admin',
       testMatch: 'tests/e2e/org-admin/*.spec.e2e.ts',
-      // testMatch: ['**/*.setup.ts', 'tests/e2e/org-admin/*.spec.e2e.ts'],
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
         storageState: './tests/e2e/.auth/org-admin.json',

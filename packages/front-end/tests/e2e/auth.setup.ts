@@ -5,6 +5,14 @@ import * as path from 'path';
 
 type UserType = 'sys-admin' | 'org-admin';
 
+/**
+ * Global setup for all tests:
+ * - Loads the configuration settings for the current environment from the master YAML configuration
+ * - Determines the user type (sys-admin or org-admin) based on the environment name
+ * - Loads the auth file for the specified user type
+ *
+ * @param config
+ */
 async function globalSetup(config: FullConfig) {
   console.log('FullConfig:', JSON.stringify(config, null, 2));
   let projectConfig;

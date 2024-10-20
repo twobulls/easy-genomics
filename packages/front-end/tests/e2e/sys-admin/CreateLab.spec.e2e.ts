@@ -1,7 +1,6 @@
 import { test, expect } from 'playwright/test';
 
 test('Should create a Laboratory', async ({ page, baseURL }) => {
-  console.log('baseURL', baseURL);
   await page.goto(`${baseURL}/labs`);
   await page.waitForTimeout(2000);
 

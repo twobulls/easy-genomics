@@ -13,7 +13,7 @@ easy-genomics:
         # Back-End specific settings
         back-end:
             jwt-secret-key: '123e4567-e89b-12d3-a456-426614174000'
-            system-admin-email:  'yoursysadmin@easygenomics.org',
-            system-admin-password: # System Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+            sys-admin-email:  'yoursysadmin@easygenomics.org',
+            sys-admin-password: # System Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
             test-user-email: 'yourtestuser@easygenomics.org'
             test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter

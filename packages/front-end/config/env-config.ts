@@ -60,8 +60,8 @@ function getConfigurationSettings(): EnvConfig {
     }
 
     appDomainName = envConfig['app-domain-name'];
-    sysAdminEmail = envConfig['back-end']['system-admin-email'];
-    sysAdminPassword = envConfig['back-end']['system-admin-password'];
+    sysAdminEmail = envConfig['back-end']['sys-admin-email'];
+    sysAdminPassword = envConfig['back-end']['sys-admin-password'];
     orgAdminEmail = envConfig['back-end']['org-admin-email'];
     orgAdminPassword = envConfig['back-end']['org-admin-password'];
   }

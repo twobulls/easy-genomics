@@ -136,8 +136,8 @@ if (process.env.CI_CD === 'true') {
 
   // Back-End configuration settings
   jwtSecretKey = configSettings['back-end']['jwt-secret-key'];
-  sysAdminEmail = configSettings['back-end']['system-admin-email'];
-  sysAdminPassword = configSettings['back-end']['system-admin-password'];
+  sysAdminEmail = configSettings['back-end']['sys-admin-email'];
+  sysAdminPassword = configSettings['back-end']['sys-admin-password'];
   orgAdminEmail = configSettings['back-end']['org-admin-email'];
   orgAdminPassword = configSettings['back-end']['org-admin-password'];
   seqeraApiBaseUrl = configSettings['back-end']['seqera-api-base-url'] || SEQERA_API_BASE_URL;
@@ -193,10 +193,10 @@ if (process.env.CI_CD === 'true') {
   }
   if (sysAdminEmail) {
     if (!sysAdminPassword) {
-      throw new Error('"system-admin-password" undefined, please check the easy-genomics.yaml configuration');
+      throw new Error('"sys-admin-password" undefined, please check the easy-genomics.yaml configuration');
     } else if (!cognitoPasswordRegex.test(sysAdminPassword)) {
       throw new Error(
-        '"system-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
+        '"sys-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
       );
     }
   }

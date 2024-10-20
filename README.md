@@ -263,14 +263,12 @@ Run the following commands from the root directory of the project. The headless 
 whereas the headed browser instance will open a browser window simulating user interaction with the application.
 
 ```bash
-# The following commands are used to run the end-to-end tests against a local browser instance of Nuxt - you must first be
-# running the Nuxt application locally using the `pnpm dev` command in a separate terminal.
-$ pnpm `test-e2e-local` # headless
-$ pnpm `test-e2e-local:headed`: # a headed browser instance ("UI mode")
-
 # The following commands are used to run the end-to-end tests on an environment specified inn the `easy-genomics.yaml` file.
-$ pnpm `test-e2e`  # headless
-$ pnpm `test-e2e:headed ` # a headed browser instance ("UI mode")
+$ pnpm `test-e2e`  # run all tests in headless mode - used for CI/CD execution
+$ pnpm `test-e2e:sys-admin ` # a headless browser instance to run System Admin tests
+$ pnpm `test-e2e:org-admin ` # a headless browser instance to run Org Admin tests
+$ pnpm `test-e2e:sys-admin:headed ` # a headed browser instance to run System Admin tests
+$ pnpm `test-e2e:org-admin:headed ` # a headed browser instance to run Org Admin tests
 ```
 
 ## Contributions

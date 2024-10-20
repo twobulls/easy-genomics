@@ -511,8 +511,8 @@ root.gitignore.addPatterns(
   'dist',
   'config/easy-genomics.yaml',
   'packages/back-end/cdk.context.json',
-  '*/front-end/test-results',
-  '*/front-end/tests/e2e/.auth/user.json',
+  'packages/front-end/test-results',
+  'packages/front-end/tests/e2e/.auth/*.json',
   'packages/front-end/playwright-report',
 );
 

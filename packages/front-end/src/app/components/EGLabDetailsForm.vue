@@ -33,6 +33,10 @@
     },
   );
 
+  const emit = defineEmits<{
+    (event: 'updated'): void;
+  }>();
+
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const router = useRouter();
@@ -221,6 +225,7 @@
     } finally {
       isSubmittingFormData.value = false;
       useUiStore().setRequestComplete('createLab');
+      useUiStore().setRequestComplete('updateLab');
     }
   }
 
@@ -256,7 +261,7 @@
   // types can have more properties than the form fields.
   // e.g, LaboratoryId or CreatedAt
   async function handleUpdateLabDetails() {
-    useUiStore().setRequestPending('createLab');
+    useUiStore().setRequestPending('updateLab');
     const parseResult = UpdateLaboratorySchema.safeParse(state.value);
 
     if (!parseResult.success) {
@@ -271,6 +276,8 @@
     if (!res) {
       useToastStore().error(`Failed to verify details for ${state.value.Name}`);
     }
+
+    emit('updated');
 
     isEditingNextFlowTowerAccessToken.value = false;
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
@@ -436,7 +443,7 @@
       <EGButton
         :size="ButtonSizeEnum.enum.sm"
         :variant="ButtonVariantEnum.enum.secondary"
-        :disabled="useUiStore().isRequestPending('createLab')"
+        :disabled="useUiStore().anyRequestPending(['createLab', 'updateLab'])"
         label="Cancel"
         name="cancel"
         @click="$router.push(useUiStore().previousPageRoute)"

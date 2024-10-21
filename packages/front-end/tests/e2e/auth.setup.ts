@@ -10,6 +10,9 @@ interface Credentials {
   password: string;
 }
 
+console.log(envConfig);
+console.log(envConfig.sysAdminEmail);
+
 const authFileMap: Record<UserType, string> = {
   'sys-admin': './tests/e2e/.auth/sys-admin.json',
   'org-admin': './tests/e2e/.auth/org-admin.json',

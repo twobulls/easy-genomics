@@ -84,9 +84,7 @@ const useWorkflowStore = defineStore('workflowStore', {
     },
   },
 
-  persist: {
-    storage: localStorage,
-  },
+  persist: true,
 });
 
 export default useWorkflowStore;

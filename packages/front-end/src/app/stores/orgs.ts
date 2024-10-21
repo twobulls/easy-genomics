@@ -39,9 +39,7 @@ const useOrgsStore = defineStore('orgsStore', {
 
   getters: {},
 
-  persist: {
-    storage: localStorage,
-  },
+  persist: true,
 });
 
 export default useOrgsStore;

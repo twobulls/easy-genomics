@@ -17,7 +17,10 @@
   import { v4 as uuidv4 } from 'uuid';
   import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
-  const $route = useRoute();
+  const props = defineProps<{
+    labId: string;
+    initialTab: string | undefined;
+  }>();
 
   const workflowStore = useWorkflowStore();
   const labStore = useLabsStore();
@@ -26,18 +29,16 @@
   const $router = useRouter();
   const modal = useModal();
 
-  const labId = $route.params.labId as string;
-  const orgId = labStore.labs[labId].OrganizationId;
+  const orgId = labStore.labs[props.labId].OrganizationId;
 
   const tabIndex = ref(0);
   // set tabIndex according to query param
   onMounted(() => {
-    const queryTab = $route.query.tab as string;
-    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
+    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
     tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
   });
 
-  const lab = computed<Laboratory | null>(() => labStore.labs[labId] ?? null);
+  const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
 
   const labName = computed<string>(() => lab.value?.Name || '');
 
@@ -46,7 +47,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const pipelines = ref<[]>([]);
-  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(labId));
+  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(props.labId));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -54,7 +55,7 @@
   const userToRemove = ref();
 
   // check permissions to be on this page
-  if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
+  if (!useUserStore().canViewLab(useUserStore().currentOrgId, props.labId)) {
     $router.push('/labs');
   }
 
@@ -107,7 +108,7 @@
       const { displayName, UserId } = userToRemove.value;
       maybeDisplayName = displayName;
 
-      const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
+      const res: DeletedResponse = await $api.labs.removeUser(props.labId, UserId);
 
       if (res?.Status !== 'Success') {
         throw new Error(`Failed to remove ${displayName} from ${labName.value}`);
@@ -130,7 +131,7 @@
     try {
       useUiStore().setRequestPending('assignLabRole');
 
-      const res: EditUserResponse = await $api.labs.editUserLabAccess(labId, UserId, isLabManager);
+      const res: EditUserResponse = await $api.labs.editUserLabAccess(props.labId, UserId, isLabManager);
 
       if (res?.Status !== 'Success') {
         throw new Error(`Failed to assign the ${role} role to ${displayName} in ${labName.value}`);
@@ -217,7 +218,7 @@
         {
           label: 'View Results',
           click: () => {
-            $router.push({ path: `/labs/${labId}/${row.id}`, query: { tab: 'Run Results' } });
+            $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Results' } });
           },
         },
       ],
@@ -271,8 +272,8 @@
   async function getLabUsers(): Promise<void> {
     useUiStore().setRequestPending('getLabUsers');
     try {
-      const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails(labId);
-      const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId(labId);
+      const _labUsersDetails: LaboratoryUserDetails[] = await $api.labs.usersDetails(props.labId);
+      const _labUsers: LaboratoryUser[] = await $api.labs.listLabUsersByLabId(props.labId);
       labUsers.value = _labUsersDetails.map((user) => getLabUser(user, _labUsers));
     } catch (error) {
       console.error('Error retrieving lab users', error);
@@ -285,7 +286,7 @@
   async function loadLabData(): Promise<void> {
     useUiStore().setRequestPending('loadLabData');
     try {
-      await labStore.loadLab(labId);
+      await labStore.loadLab(props.labId);
     } catch (error) {
       console.error('Error retrieving Lab data', error);
     } finally {
@@ -309,7 +310,7 @@
   async function getPipelines(): Promise<void> {
     useUiStore().setRequestPending('getPipelines');
     try {
-      const res = await $api.pipelines.list(labId);
+      const res = await $api.pipelines.list(props.labId);
       pipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
@@ -321,7 +322,7 @@
   async function getWorkflows(): Promise<void> {
     useUiStore().setRequestPending('getWorkflows');
     try {
-      await workflowStore.loadWorkflowsForLab(labId);
+      await workflowStore.loadWorkflowsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
     } finally {
@@ -383,7 +384,7 @@
     });
 
     $router.push({
-      path: `/labs/${labId}/${pipelineId}/run-pipeline`,
+      path: `/labs/${props.labId}/${pipelineId}/run-pipeline`,
       query: {
         workflowTempId,
       },
@@ -391,7 +392,7 @@
   }
 
   function viewRunDetails(row: Workflow) {
-    $router.push({ path: `/labs/${labId}/${row.id}`, query: { tab: 'Run Details' } });
+    $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 
   const isCancelDialogOpen = ref<boolean>(false);
@@ -406,7 +407,7 @@
     }
 
     try {
-      await $api.workflows.cancelPipelineRun(labId, runId);
+      await $api.workflows.cancelPipelineRun(props.labId, runId);
       useToastStore().success(`${runName} has been successfully cancelled`);
     } catch (e) {
       useToastStore().error('Failed to cancel run');

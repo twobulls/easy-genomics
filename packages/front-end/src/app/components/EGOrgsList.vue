@@ -76,7 +76,11 @@
   }
 
   function viewOrg(org: Organization) {
-    $router.push({ path: '/orgs/' + org.OrganizationId });
+    $router.push(
+      props.superuser
+        ? { path: '/labs', query: { orgId: org.OrganizationId } }
+        : { path: '/orgs/' + org.OrganizationId },
+    );
   }
 
   // delete org stuff

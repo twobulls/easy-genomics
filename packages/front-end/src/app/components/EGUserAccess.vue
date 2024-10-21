@@ -47,8 +47,6 @@
 
   const canCreateLabs = computed<boolean>(() => !props.admin && props.orgAdmin);
 
-  const buttonLoadingStates = ref<object>({});
-
   type LabIdents = { id: string; name: string };
   const labToRemoveFrom = ref<LabIdents | null>(null);
   const isRemoveUserDialogOpen = ref<boolean>(false);
@@ -153,11 +151,12 @@
   });
 
   async function handleAddUser(lab: { labId: string; name: string }) {
+    const userId = selectedUser.value!.UserId;
     try {
       useUiStore().setRequestPending('addUserToLab');
-      buttonLoadingStates.value[lab.labId] = true;
+      useUiStore().setRequestPending(`addUserToLabButton-${userId}-${lab.labId}`);
 
-      const res = await $api.labs.addLabUser(lab.labId, selectedUser.value?.UserId);
+      const res = await $api.labs.addLabUser(lab.labId, userId);
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
@@ -173,14 +172,15 @@
       throw error;
     } finally {
       useUiStore().setRequestComplete('addUserToLab');
-      delete buttonLoadingStates.value[lab.labId];
+      useUiStore().setRequestComplete(`addUserToLabButton-${userId}-${lab.labId}`);
     }
   }
 
   async function handleAssignRole(user: LaboratoryUserDetails) {
+    const userId = selectedUser.value!.UserId;
     try {
       useUiStore().setRequestPending('assignLabRole');
-      const res = await $api.labs.editUserLabAccess(user.LaboratoryId, selectedUser.value?.UserId, user.LabManager);
+      const res = await $api.labs.editUserLabAccess(user.LaboratoryId, userId, user.LabManager);
       if (res?.Status === 'Success') {
         await fetchUserLabs();
         let maybeLabName = 'Lab';
@@ -290,7 +290,7 @@
         />
       </div>
       <EGButton
-        :loading="!!buttonLoadingStates[row.LaboratoryId]"
+        :loading="useUiStore().isRequestPending(`addUserToLabButton-${selectedUser?.UserId}-${row.LaboratoryId}`)"
         v-else-if="row.access"
         @click="
           handleAddUser({

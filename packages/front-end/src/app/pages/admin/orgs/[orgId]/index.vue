@@ -7,5 +7,5 @@
 <template>
   <EGAdminAlert />
 
-  <EGOrgView admin :org-id="orgId" />
+  <EGOrgView :org-id="orgId" />
 </template>

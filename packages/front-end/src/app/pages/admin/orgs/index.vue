@@ -1,5 +1,5 @@
 <template>
   <EGAdminAlert />
 
-  <EGOrgsList admin />
+  <EGOrgsList superuser />
 </template>

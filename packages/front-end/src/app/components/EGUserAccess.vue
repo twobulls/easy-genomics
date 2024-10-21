@@ -7,7 +7,7 @@
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
   const props = defineProps<{
-    admin: boolean;
+    superuser: boolean;
     orgAdmin: boolean;
   }>();
 
@@ -45,7 +45,7 @@
     },
   ];
 
-  const canCreateLabs = computed<boolean>(() => !props.admin && props.orgAdmin);
+  const canCreateLabs = computed<boolean>(() => !props.superuser && props.orgAdmin);
 
   type LabIdents = { id: string; name: string };
   const labToRemoveFrom = ref<LabIdents | null>(null);

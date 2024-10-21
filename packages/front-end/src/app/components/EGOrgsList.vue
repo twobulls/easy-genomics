@@ -3,7 +3,7 @@
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
   const props = defineProps<{
-    admin: boolean;
+    superuser: boolean;
   }>();
 
   const { $api } = useNuxtApp();
@@ -59,7 +59,7 @@
       ],
     ];
 
-    if (props.admin) {
+    if (props.superuser) {
       items.push([
         {
           label: 'Remove',
@@ -89,7 +89,7 @@
 
   async function handleDeleteOrg() {
     // double check
-    if (!props.admin) {
+    if (!props.superuser) {
       return;
     }
 
@@ -112,7 +112,7 @@
 
 <template>
   <EGPageHeader title="Organizations" :show-back="false">
-    <EGButton v-if="admin" label="Create a new Organization" to="/orgs/create" />
+    <EGButton v-if="superuser" label="Create a new Organization" to="/orgs/create" />
   </EGPageHeader>
 
   <EGTable

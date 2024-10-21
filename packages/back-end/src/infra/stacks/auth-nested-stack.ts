@@ -44,7 +44,7 @@ export class AuthNestedStack extends NestedStack {
         },
         '/auth/process-pre-token-generation': {
           environment: {
-            SYSTEM_ADMIN_EMAIL: this.props.systemAdminEmail || '',
+            SYSTEM_ADMIN_EMAIL: this.props.sysAdminEmail || '',
           },
         },
       },

@@ -38,12 +38,12 @@ export class DataProvisioningNestedStack extends NestedStack {
     // Setup S3 Construct
     this.s3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-bucket`, {});
 
-    if (this.props.systemAdminEmail && this.props.systemAdminPassword) {
+    if (this.props.sysAdminEmail && this.props.sysAdminPassword) {
       try {
         // Add System Admin User Account
         this.cognitoUserConstruct.addUser(
-          this.props.systemAdminEmail,
-          this.props.systemAdminPassword,
+          this.props.sysAdminEmail,
+          this.props.sysAdminPassword,
           this.props.userPoolSystemAdminGroupName,
         );
       } catch (err: unknown) {
@@ -77,14 +77,14 @@ export class DataProvisioningNestedStack extends NestedStack {
       // Add shared S3 Bucket for seeded 'Test Laboratory'
       this.s3Construct.createBucket(s3BucketFullName, this.props.devEnv);
 
-      if (this.props.testUserEmail && this.props.testUserPassword) {
+      if (this.props.orgAdminEmail && this.props.orgAdminPassword) {
         try {
           // Add test user to Cognito User Pool
-          this.cognitoUserConstruct.addUser(this.props.testUserEmail, this.props.testUserPassword);
+          this.cognitoUserConstruct.addUser(this.props.orgAdminEmail, this.props.orgAdminPassword);
 
           this.addDynamoDBSeedData<User>(`${this.props.namePrefix}-user-table`, {
             ...user,
-            Email: this.props.testUserEmail,
+            Email: this.props.orgAdminEmail,
           });
 
           uniqueReferences.push({

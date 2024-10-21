@@ -52,8 +52,9 @@
   const isRemoveUserDialogOpen = ref<boolean>(false);
 
   onBeforeMount(async () => {
-    await fetchOrgLabs(); // wait for lab data to load
-    await Promise.all([updateSelectedUser(), fetchUserLabs()]);
+    await Promise.all([fetchOrgLabs(), updateSelectedUser()]);
+    // fetchUserLabs has to wait until updateSelectedUser has run
+    await fetchUserLabs();
   });
 
   function updateSearchOutput(newVal: string) {
@@ -94,6 +95,7 @@
    * Fetch the user's details for each lab
    */
   async function fetchUserLabs() {
+    // note: this needs to run after selectedUser has been set so the UserId is available
     try {
       useUiStore().setRequestPending('fetchUserLabs');
       selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(selectedUser.value?.UserId);

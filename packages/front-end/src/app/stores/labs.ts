@@ -58,9 +58,7 @@ const useLabsStore = defineStore('labsStore', {
     },
   },
 
-  persist: {
-    storage: localStorage,
-  },
+  persist: true,
 });
 
 export default useLabsStore;

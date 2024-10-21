@@ -6,6 +6,10 @@
     superuser: boolean;
   }>();
 
+  const emit = defineEmits<{
+    (event: 'click-org', org: Organization): void;
+  }>();
+
   const { $api } = useNuxtApp();
   const $router = useRouter();
 
@@ -76,11 +80,7 @@
   }
 
   function viewOrg(org: Organization) {
-    $router.push(
-      props.superuser
-        ? { path: '/labs', query: { orgId: org.OrganizationId } }
-        : { path: '/orgs/' + org.OrganizationId },
-    );
+    emit('click-org', org);
   }
 
   // delete org stuff

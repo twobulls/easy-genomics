@@ -7,5 +7,5 @@
 </script>
 
 <template>
-  <EGOrgsList :superuser="false" />
+  <EGOrgsList :superuser="false" @click-org="(org) => $router.push({ path: '/orgs/' + org.OrganizationId })" />
 </template>

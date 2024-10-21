@@ -5,7 +5,11 @@
 </script>
 
 <template>
-  <EGOrgsList v-if="orgId === null" superuser />
+  <EGOrgsList
+    v-if="orgId === null"
+    superuser
+    @click-org="(org) => $router.push({ path: '/labs', query: { orgId: org.OrganizationId } })"
+  />
 
   <EGLabsList v-if="orgId !== null" superuser :org-id="orgId" />
 </template>

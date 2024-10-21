@@ -21,7 +21,11 @@ export interface ConfigurationSettings {
     ['sys-admin-email']?: string;
     ['sys-admin-password']?: string; // Initial Cognito password
     ['org-admin-email']: string;
-    ['org-admin-password']: string;
+    ['org-admin-password']: string; // Initial Cognito password
+    ['lab-manager-email']?: string,
+    ['lab-manager-password']?: string, // Initial Cognito password
+    ['lab-technician-email']?: string,
+    ['lab-technician-password']?: string, // Initial Cognito password
     ['seqera-api-base-url']?: string; // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
     ['vpc-peering']?: VpcPeeringSettings; // Optional: VPC Peering Accepter details
   };

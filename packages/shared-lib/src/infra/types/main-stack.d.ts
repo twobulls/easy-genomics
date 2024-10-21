@@ -1,4 +1,5 @@
 import { Environment, StackProps } from 'aws-cdk-lib';
+import { OrganizationRoles } from "@SharedLib/types/easy-genomics/roles";
 
 // Defines the BaseStack shared props for Front-End & Back-End subprojects
 export interface BaseStackProps extends StackProps {
@@ -29,8 +30,14 @@ export interface BackEndStackProps extends BaseStackProps {
   jwtSecretKey: string;
   sysAdminEmail?: string;
   sysAdminPassword?: string;
-  orgAdminEmail?: string;
-  orgAdminPassword?: string;
+  testUsers?: TestUserDetails[];
   seqeraApiBaseUrl: string;
   vpcPeering?: VpcPeering;
+}
+
+// Defines Test User Accounts to provision for DevEnv deployments
+export interface TestUserDetails {
+    UserEmail: string;
+    UserPassword: string;
+    Access: 'OrganizationAdmin' | 'LabManager' | 'LabTechnician'
 }

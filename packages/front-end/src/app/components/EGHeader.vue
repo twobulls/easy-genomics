@@ -56,8 +56,8 @@
             Labs
           </ULink>
           <ULink
-            v-if="useUserStore().canManageOrgs"
-            :to="useUserStore().isSuperuser ? '/admin/orgs' : '/orgs'"
+            v-if="useUserStore().canManageOrgs()"
+            to="/orgs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
             :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"

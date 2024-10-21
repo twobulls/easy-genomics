@@ -30,7 +30,12 @@
   const orgId = labStore.labs[labId].OrganizationId;
 
   const tabIndex = ref(0);
-  const defaultTabIndex = 0;
+  // set tabIndex according to query param
+  onMounted(() => {
+    const queryTab = $route.query.tab as string;
+    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
+    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+  });
 
   const lab = computed<Laboratory | null>(() => labStore.labs[labId] ?? null);
 
@@ -72,9 +77,7 @@
   /**
    * Fetch Lab details, pipelines, workflows and Lab users before component mount
    */
-  onBeforeMount(async () => {
-    await loadLabData();
-  });
+  onBeforeMount(loadLabData);
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -391,14 +394,6 @@
     $router.push({ path: `/labs/${labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 
-  // watch route change to correspondingly change selected tab
-  watch(
-    () => $router.currentRoute.value.query.tab,
-    (newVal) => {
-      tabIndex.value = newVal ? tabItems.value.findIndex((tab) => tab.label === newVal) : 0;
-    },
-  );
-
   const isCancelDialogOpen = ref<boolean>(false);
   const runToCancel = ref<Workflow | null>(null);
 
@@ -446,7 +441,7 @@
   <UTabs
     v-if="lab"
     :ui="EGTabsStyles"
-    :default-index="defaultTabIndex"
+    :default-index="0"
     :items="tabItems"
     :model-value="tabIndex"
     @update:model-value="
@@ -573,7 +568,7 @@
                 :key="labUser?.LabManager"
                 :disabled="
                   useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
-                  !useUserStore().canEditLab(useUserStore().currentOrgId, labId)
+                  !useUserStore().canEditLab(useUserStore().currentOrgId)
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"
@@ -590,7 +585,7 @@
         </EGTable>
       </div>
       <div v-else-if="item.key === 'details'" class="space-y-3">
-        <EGLabDetailsForm />
+        <EGLabDetailsForm @updated="loadLabData" />
       </div>
     </template>
   </UTabs>

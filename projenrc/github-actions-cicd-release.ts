@@ -129,8 +129,8 @@ export class GithubActionsCICDRelease extends Component {
       'JWT_SECRET_KEY': '${{ secrets.JWT_SECRET_KEY }}',
       'SYSTEM_ADMIN_EMAIL': '${{ vars.SYSTEM_ADMIN_EMAIL }}',
       'SYSTEM_ADMIN_PASSWORD': '${{ secrets.SYSTEM_ADMIN_PASSWORD }}',
-      'TEST_USER_EMAIL': '${{ vars.TEST_USER_EMAIL }}',
-      'TEST_USER_PASSWORD': '${{ secrets.TEST_USER_PASSWORD }}',
+      'ORG_ADMIN_EMAIL': '${{ vars.ORG_ADMIN_EMAIL }}',
+      'ORG_ADMIN_PASSWORD': '${{ secrets.ORG_ADMIN_PASSWORD }}',
       // Front-End specific settings
       'SLACK_E2E_TEST_WEBHOOK_URL': '${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}',
     };

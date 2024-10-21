@@ -16,7 +16,9 @@
       .filter((lab) => useUserStore().canViewLab(useUserStore().currentOrgId, lab.LaboratoryId))
       .sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name)),
   );
-  const hasNoData = computed<boolean>(() => labsDisplayList.value.length === 0);
+  const hasNoData = computed<boolean>(
+    () => labsDisplayList.value.length === 0 && !useUiStore().isRequestPending('getLabs'),
+  );
 
   // fetch lab data into store
   onBeforeMount(getLabs);
@@ -43,7 +45,7 @@
       [
         {
           label: 'View / Edit',
-          click: () => viewLab(lab.LaboratoryId, lab.Name),
+          click: () => onRowClicked(lab),
         },
       ],
     ];
@@ -67,13 +69,8 @@
   const selectedId = ref('');
   const displayName = ref('');
 
-  function viewLab(labId: string, name: string) {
-    router.push({ path: `/labs/${labId}`, query: { name } });
-  }
-
-  function onRowClicked(row: any) {
-    const { LaboratoryId: labId, Name: name } = row;
-    router.push({ path: `/labs/${labId}`, query: { name } });
+  function onRowClicked(row: Laboratory) {
+    router.push({ path: `/labs/${row.LaboratoryId}` });
   }
 
   function resetSelectedLabValues() {

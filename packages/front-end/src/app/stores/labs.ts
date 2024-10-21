@@ -57,6 +57,10 @@ const useLabsStore = defineStore('labsStore', {
       await Promise.all(orgIds.map(this.loadLabsForOrg));
     },
   },
+
+  persist: {
+    storage: localStorage,
+  },
 });
 
 export default useLabsStore;

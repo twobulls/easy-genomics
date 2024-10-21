@@ -45,7 +45,7 @@
       [
         {
           label: 'View / Edit',
-          click: () => viewLab(lab.LaboratoryId, lab.Name),
+          click: () => onRowClicked(lab),
         },
       ],
     ];
@@ -69,13 +69,8 @@
   const selectedId = ref('');
   const displayName = ref('');
 
-  function viewLab(labId: string, name: string) {
-    router.push({ path: `/labs/${labId}`, query: { name } });
-  }
-
-  function onRowClicked(row: any) {
-    const { LaboratoryId: labId, Name: name } = row;
-    router.push({ path: `/labs/${labId}`, query: { name } });
+  function onRowClicked(row: Laboratory) {
+    router.push({ path: `/labs/${row.LaboratoryId}` });
   }
 
   function resetSelectedLabValues() {

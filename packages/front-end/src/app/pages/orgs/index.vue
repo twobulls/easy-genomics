@@ -1,7 +1,7 @@
 <script setup lang="ts">
   const $router = useRouter();
 
-  if (!useUserStore().canManageOrgs) {
+  if (!useUserStore().canManageOrgs()) {
     $router.push({ path: '/' });
   }
 </script>

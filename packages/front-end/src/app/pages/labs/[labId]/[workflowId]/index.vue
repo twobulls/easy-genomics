@@ -52,7 +52,13 @@
     },
   ];
 
-  let tabIndex = 0;
+  let tabIndex = ref(0);
+  // set tabIndex according to query param
+  onMounted(() => {
+    const queryTab = $route.query.tab as string;
+    const queryTabMatchIndex = tabItems.findIndex((tab) => tab.label === queryTab);
+    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+  });
 
   const createdDateTime = computed(() => {
     const createdDate = getDate(workflow.value?.dateCreated);
@@ -70,13 +76,7 @@
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
 
-  onBeforeMount(async () => {
-    await initData();
-
-    let paramTab = $router.currentRoute.value.query?.tab;
-    if (!paramTab) paramTab = 'Run Results'; // fallback for no query param to default to first tab
-    tabIndex = paramTab ? tabItems.findIndex((tab) => tab.label === paramTab) : 0;
-  });
+  onBeforeMount(initData);
 
   async function downloadReport(path: string) {
     const report = await $api.workflows.downloadReport(labId, path);
@@ -95,14 +95,6 @@
     workflowReports.value = res.reports;
     useUiStore().setRequestComplete('loadWorkflow');
   }
-
-  // watch route change to correspondingly change selected tab
-  watch(
-    () => $router.currentRoute.value.query.tab,
-    (newVal) => {
-      tabIndex = newVal ? tabItems.findIndex((tab) => tab.label === newVal) : 0;
-    },
-  );
 </script>
 
 <template>
@@ -110,7 +102,7 @@
     :title="workflow?.runName || ''"
     :description="workflow?.projectName || ''"
     :show-back="true"
-    :back-action="() => $router.push('/labs')"
+    :back-action="() => $router.push(`/labs/${labId}`)"
     :is-loading="useUiStore().isRequestPending('loadWorkflow')"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />

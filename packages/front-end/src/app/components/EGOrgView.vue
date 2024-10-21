@@ -23,8 +23,6 @@
 
   const org = useOrgsStore().orgs[props.orgId];
 
-  const adminPrefix = computed<string>(() => (props.admin ? '/admin' : ''));
-
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
   const hasNoData = ref(false);
@@ -76,7 +74,7 @@
 
   function editUser(userId: string) {
     router.push({
-      path: adminPrefix.value + '/orgs/edit-user',
+      path: '/orgs/edit-user',
       query: {
         userId,
         orgId: props.orgId,
@@ -288,7 +286,7 @@
   <EGPageHeader
     :title="org.Name"
     :description="org.Description"
-    :back-action="() => $router.push(adminPrefix + '/orgs')"
+    :back-action="() => $router.push('/orgs')"
     :show-back="false"
     :is-loading="isLoading"
     :skeleton-config="{ titleLines: 1, descriptionLines: 1 }"

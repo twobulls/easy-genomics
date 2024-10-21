@@ -72,9 +72,7 @@
   /**
    * Fetch Lab details, pipelines, workflows and Lab users before component mount
    */
-  onBeforeMount(async () => {
-    await loadLabData();
-  });
+  onBeforeMount(loadLabData);
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -573,7 +571,7 @@
                 :key="labUser?.LabManager"
                 :disabled="
                   useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
-                  !useUserStore().canEditLab(useUserStore().currentOrgId, labId)
+                  !useUserStore().canEditLab(useUserStore().currentOrgId)
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"
@@ -590,7 +588,7 @@
         </EGTable>
       </div>
       <div v-else-if="item.key === 'details'" class="space-y-3">
-        <EGLabDetailsForm />
+        <EGLabDetailsForm @updated="loadLabData" />
       </div>
     </template>
   </UTabs>

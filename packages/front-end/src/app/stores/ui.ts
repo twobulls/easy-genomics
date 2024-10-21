@@ -10,19 +10,21 @@ type PendingRequest =
   | 'assignLabRole'
   | 'getLabUsers'
   | 'addUserToLab'
-  | 'removeUserFromLab'
   | 'updateUser'
   | 'getPipelines'
   | 'getWorkflows'
+  | 'loadWorkflow'
   | 'createOrg'
   | 'fetchOrgData'
   | 'editOrg'
   | 'createLab'
+  | 'updateLab'
   | 'getLabs'
   | 'deleteLab'
   | 'fetchOrgLabs'
   | 'fetchUserLabs'
-  | 'loadLabData';
+  | 'loadLabData'
+  | `addUserToLabButton-${string}-${string}`;
 
 interface UiStoreState {
   pendingRequests: Set<string>;

@@ -289,7 +289,7 @@
     :back-action="() => $router.push('/orgs')"
     :show-back="false"
     :is-loading="isLoading"
-    :skeleton-config="{ titleLines: 1, descriptionLines: 0 }"
+    :skeleton-config="{ titleLines: 1, descriptionLines: 1 }"
   >
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">

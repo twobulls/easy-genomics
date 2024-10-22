@@ -7,8 +7,10 @@ import {
 
 interface EnvConfig {
   appDomainName: string | undefined;
-  testUserEmail: string | undefined;
-  testUserPassword: string | undefined;
+  sysAdminEmail: string | undefined;
+  sysAdminPassword: string | undefined;
+  orgAdminEmail: string | undefined;
+  orgAdminPassword: string | undefined;
 }
 
 /**
@@ -16,14 +18,18 @@ interface EnvConfig {
  */
 function getConfigurationSettings(): EnvConfig {
   let appDomainName: string | undefined;
-  let testUserEmail: string | undefined;
-  let testUserPassword: string | undefined;
+  let orgAdminEmail: string | undefined;
+  let orgAdminPassword: string | undefined;
+  let sysAdminEmail: string | undefined;
+  let sysAdminPassword: string | undefined;
 
   if (process.env.CI === 'true') {
     // CI/CD Pipeline uses ENV parameters
     appDomainName = process.env.APP_DOMAIN_NAME;
-    testUserEmail = process.env.TEST_USER_EMAIL;
-    testUserPassword = process.env.TEST_USER_PASSWORD;
+    orgAdminEmail = process.env.ORG_ADMIN_EMAIL;
+    orgAdminPassword = process.env.ORG_ADMIN_PASSWORD;
+    sysAdminEmail = process.env.SYSTEM_ADMIN_EMAIL;
+    sysAdminPassword = process.env.SYSTEM_ADMIN_PASSWORD;
   } else {
     // Load the configurations from local configuration file
     const configurations = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));
@@ -54,14 +60,18 @@ function getConfigurationSettings(): EnvConfig {
     }
 
     appDomainName = envConfig['app-domain-name'];
-    testUserEmail = envConfig['back-end']['test-user-email'];
-    testUserPassword = envConfig['back-end']['test-user-password'];
+    sysAdminEmail = envConfig['back-end']['sys-admin-email'];
+    sysAdminPassword = envConfig['back-end']['sys-admin-password'];
+    orgAdminEmail = envConfig['back-end']['org-admin-email'];
+    orgAdminPassword = envConfig['back-end']['org-admin-password'];
   }
 
   return {
     appDomainName,
-    testUserEmail,
-    testUserPassword,
+    sysAdminEmail,
+    sysAdminPassword,
+    orgAdminEmail,
+    orgAdminPassword,
   };
 }
 

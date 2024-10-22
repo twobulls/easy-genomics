@@ -4,14 +4,20 @@ import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-gen
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import {
+  labManagerUser,
+  labManagerUserLaboratoryMapping,
+  labManagerUserOrganizationMapping,
   laboratory,
-  laboratoryUser,
+  labTechnicianUser,
+  labTechnicianUserLaboratoryMapping,
+  labTechnicianUserOrganizationMapping,
+  orgAdminUser,
+  orgAdminUserOrganizationMapping,
   organization,
-  organizationUser,
-  user,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sample-data';
 import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/unique-reference';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { TestUserDetails } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { AwsCustomResource, AwsCustomResourcePolicy } from 'aws-cdk-lib/custom-resources';
@@ -24,6 +30,7 @@ export class DataProvisioningNestedStack extends NestedStack {
   private props: DataProvisioningNestedStackProps;
   private cognitoUserConstruct: CognitoUserConstruct;
   private s3Construct: S3Construct;
+  private uniqueReferences: UniqueReference[] = [];
 
   constructor(scope: Construct, id: string, props: DataProvisioningNestedStackProps) {
     super(scope, id);
@@ -38,12 +45,12 @@ export class DataProvisioningNestedStack extends NestedStack {
     // Setup S3 Construct
     this.s3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-bucket`, {});
 
-    if (this.props.systemAdminEmail && this.props.systemAdminPassword) {
+    if (this.props.sysAdminEmail && this.props.sysAdminPassword) {
       try {
         // Add System Admin User Account
         this.cognitoUserConstruct.addUser(
-          this.props.systemAdminEmail,
-          this.props.systemAdminPassword,
+          this.props.sysAdminEmail,
+          this.props.sysAdminPassword,
           this.props.userPoolSystemAdminGroupName,
         );
       } catch (err: unknown) {
@@ -52,11 +59,13 @@ export class DataProvisioningNestedStack extends NestedStack {
     }
 
     if (this.props.devEnv) {
-      const uniqueReferences: UniqueReference[] = [];
-
       // Add seed data to DynamoDB Tables
-      this.addDynamoDBSeedData<Organization>(`${this.props.namePrefix}-organization-table`, organization);
-      uniqueReferences.push({
+      this.addDynamoDBSeedData<Organization>(
+        organization.OrganizationId,
+        `${this.props.namePrefix}-organization-table`,
+        organization,
+      );
+      this.uniqueReferences.push({
         Value: organization.Name.toLowerCase(),
         Type: 'organization-name',
       });
@@ -66,56 +75,110 @@ export class DataProvisioningNestedStack extends NestedStack {
       if (s3BucketFullName.length > 63) {
         throw new Error(`S3 Bucket Name: "${s3BucketFullName}" is too long`);
       }
-      this.addDynamoDBSeedData<Laboratory>(`${this.props.namePrefix}-laboratory-table`, {
+      this.addDynamoDBSeedData<Laboratory>(laboratory.LaboratoryId, `${this.props.namePrefix}-laboratory-table`, {
         ...laboratory,
         S3Bucket: s3BucketFullName, // Save the shared S3 Bucket's Full Name in Laboratory DynamoDB record
       });
-      uniqueReferences.push({
+      this.uniqueReferences.push({
         Value: laboratory.Name.toLowerCase(),
         Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
       });
       // Add shared S3 Bucket for seeded 'Test Laboratory'
       this.s3Construct.createBucket(s3BucketFullName, this.props.devEnv);
 
-      if (this.props.testUserEmail && this.props.testUserPassword) {
-        try {
-          // Add test user to Cognito User Pool
-          this.cognitoUserConstruct.addUser(this.props.testUserEmail, this.props.testUserPassword);
+      // Seed User accounts for development and testing
+      const testUsers: TestUserDetails[] | undefined = this.props.testUsers;
+      if (testUsers) {
+        testUsers.forEach((testUser: TestUserDetails) => {
+          // Add Test User to Cognito User Pool
+          this.cognitoUserConstruct.addUser(testUser.UserEmail, testUser.UserPassword);
 
-          this.addDynamoDBSeedData<User>(`${this.props.namePrefix}-user-table`, {
-            ...user,
-            Email: this.props.testUserEmail,
-          });
+          // Add Test User's necessary User Record, OrganizationUser Mapping Record, LaboratoryUser Mapping Record
+          switch (testUser.Access) {
+            case 'OrganizationAdmin':
+              this.addOrgAdmin(testUser);
+              break;
+            case 'LabManager':
+              this.addLabManager(testUser);
+              break;
+            case 'LabTechnician':
+              this.addLabTechnician(testUser);
+              break;
+          }
 
-          uniqueReferences.push({
-            Value: user.Email.toLowerCase(),
+          // Add Test User's email to Unique References list to prevent duplicates
+          this.uniqueReferences.push({
+            Value: testUser.UserEmail.toLowerCase(),
             Type: 'user-email',
           });
-        } catch (err: unknown) {
-          console.error('Unable to create Test User Account: ', err);
-        }
-
-        // Add User mapping data to DynamoDB Tables
-        this.addDynamoDBSeedData<OrganizationUser>(
-          `${this.props.namePrefix}-organization-user-table`,
-          organizationUser,
-        );
-        this.addDynamoDBSeedData<LaboratoryUser>(`${this.props.namePrefix}-laboratory-user-table`, laboratoryUser);
+        });
       }
 
       // Bulk add unique references to UniqueReferences DynamoDB Table
       this.bulkAddDynamoDBSeedData<UniqueReference>(
         `${this.props.namePrefix}-unique-reference-table`,
-        uniqueReferences,
+        this.uniqueReferences,
       );
     }
   }
 
-  private addDynamoDBSeedData<T>(tableName: string, testRecord: T) {
+  // Seeds Org Admin User for development and testing
+  private addOrgAdmin(testUser: TestUserDetails) {
+    this.addDynamoDBSeedData<User>(orgAdminUser.UserId, `${this.props.namePrefix}-user-table`, {
+      ...orgAdminUser,
+      Email: testUser.UserEmail,
+    });
+    // Add User mapping data to DynamoDB Tables
+    this.addDynamoDBSeedData<OrganizationUser>(
+      orgAdminUser.UserId,
+      `${this.props.namePrefix}-organization-user-table`,
+      orgAdminUserOrganizationMapping,
+    );
+  }
+
+  // Seeded Lab Manager User for development and testing
+  private addLabManager(testUser: TestUserDetails) {
+    this.addDynamoDBSeedData<User>(labManagerUser.UserId, `${this.props.namePrefix}-user-table`, {
+      ...labManagerUser,
+      Email: testUser.UserEmail,
+    });
+    // Add User mapping data to DynamoDB Tables
+    this.addDynamoDBSeedData<OrganizationUser>(
+      labManagerUser.UserId,
+      `${this.props.namePrefix}-organization-user-table`,
+      labManagerUserOrganizationMapping,
+    );
+    this.addDynamoDBSeedData<LaboratoryUser>(
+      labManagerUser.UserId,
+      `${this.props.namePrefix}-laboratory-user-table`,
+      labManagerUserLaboratoryMapping,
+    );
+  }
+
+  // Seeded Lab Technician User for development and testing
+  private addLabTechnician(testUser: TestUserDetails) {
+    this.addDynamoDBSeedData<User>(labTechnicianUser.UserId, `${this.props.namePrefix}-user-table`, {
+      ...labTechnicianUser,
+      Email: testUser.UserEmail,
+    });
+    // Add User mapping data to DynamoDB Tables
+    this.addDynamoDBSeedData<OrganizationUser>(
+      labTechnicianUser.UserId,
+      `${this.props.namePrefix}-organization-user-table`,
+      labTechnicianUserOrganizationMapping,
+    );
+    this.addDynamoDBSeedData<LaboratoryUser>(
+      labTechnicianUser.UserId,
+      `${this.props.namePrefix}-laboratory-user-table`,
+      labTechnicianUserLaboratoryMapping,
+    );
+  }
+
+  private addDynamoDBSeedData<T>(recordId: string, tableName: string, testRecord: T) {
     const table: Table | undefined = this.props.dynamoDBTables.get(tableName);
 
     if (table) {
-      new AwsCustomResource(this, `${tableName}_InitData`, {
+      new AwsCustomResource(this, `${tableName}-${recordId}_InitData`, {
         onCreate: {
           service: 'DynamoDB',
           action: 'putItem',

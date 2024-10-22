@@ -23,14 +23,29 @@
     initialTab: string | undefined;
   }>();
 
-  const workflowStore = useWorkflowStore();
-  const labStore = useLabsStore();
-
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const modal = useModal();
 
+  const workflowStore = useWorkflowStore();
+  const labStore = useLabsStore();
+
   const orgId = labStore.labs[props.labId].OrganizationId;
+
+  const labUsers = ref<LabUser[]>([]);
+  const canAddUsers = ref(false);
+  const showAddUserModule = ref(false);
+  const searchOutput = ref('');
+  const pipelines = ref<[]>([]);
+
+  // Dynamic remove user dialog values
+  const isOpen = ref(false);
+  const primaryMessage = ref('');
+  const userToRemove = ref();
+
+  let intervalId: number | undefined;
+
+  const missingPAT = ref<boolean>(false);
 
   const tabIndex = ref(0);
   // set tabIndex according to query param
@@ -39,23 +54,100 @@
     tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
   });
 
-  const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
+  /**
+   * Fetch Lab details, pipelines, workflows and Lab users before component mount and start periodic fetching
+   */
+  onBeforeMount(loadLabData);
 
+  onUnmounted(() => {
+    if (intervalId) {
+      clearTimeout(intervalId);
+    }
+  });
+  async function pollFetchWorkflows() {
+    await getWorkflows();
+    intervalId = window.setTimeout(pollFetchWorkflows, 2 * 60 * 1000);
+  }
+
+  const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const labUsers = ref<LabUser[]>([]);
-  const canAddUsers = ref(false);
-  const showAddUserModule = ref(false);
-  const searchOutput = ref('');
-  const pipelines = ref<[]>([]);
   const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(props.labId));
 
-  // Dynamic remove user dialog values
-  const isOpen = ref(false);
-  const primaryMessage = ref('');
-  const userToRemove = ref();
+  const filteredTableData = computed(() => {
+    let filteredLabUsers = labUsers.value;
 
-  const missingPAT = ref<boolean>(false);
+    if (searchOutput.value.trim()) {
+      filteredLabUsers = labUsers.value
+        .filter((labUser: LabUser) => {
+          const searchString = `${labUser.displayName} ${labUser.UserEmail}`.toLowerCase();
+          return searchString.includes(searchOutput.value.toLowerCase());
+        })
+        .map((labUser) => labUser);
+    }
+
+    return filteredLabUsers.sort((userA, userB) => {
+      // Lab Manager users first
+      if (userA.LabManager && !userB.LabManager) return -1;
+      if (!userA.LabManager && userB.LabManager) return 1;
+      // then Lab Technicians
+      if (userA.LabTechnician && !userB.LabTechnician) return -1;
+      if (!userA.LabTechnician && userB.LabTechnician) return 1;
+      // then sort by name
+      return useSort().stringSortCompare(userA.displayName, userB.displayName);
+    });
+  });
+
+  const usersTableColumns = [
+    {
+      key: 'displayName',
+      label: 'Name',
+      sortable: true,
+      sort: useSort().stringSortCompare,
+    },
+    {
+      key: 'actions',
+      label: 'Lab Access',
+    },
+  ];
+
+  const pipelinesTableColumns = [
+    {
+      key: 'Name',
+      label: 'Name',
+    },
+    {
+      key: 'description',
+      label: 'Description',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
+
+  const workflowsTableColumns = [
+    {
+      key: 'runName',
+      label: 'Run Name',
+    },
+    {
+      key: 'lastUpdated',
+      label: 'Last Updated',
+    },
+    {
+      key: 'status',
+      label: 'Status',
+    },
+    {
+      key: 'owner',
+      label: 'Owner',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
 
   const tabItems = computed<{ key: string; label: string }[]>(() => {
     const items = [];
@@ -73,10 +165,66 @@
     return items;
   });
 
-  /**
-   * Fetch Lab details, pipelines, workflows and Lab users before component mount
-   */
-  onBeforeMount(loadLabData);
+  const pipelinesActionItems = (pipeline: any) => [
+    [
+      {
+        label: 'Run',
+        click: () => viewRunPipeline(pipeline),
+      },
+    ],
+  ];
+
+  function workflowsActionItems(row: Workflow): object[] {
+    const buttons: object[][] = [
+      [
+        {
+          label: 'View Details',
+          click: () => viewRunDetails(row),
+        },
+      ],
+      [
+        {
+          label: 'View Results',
+          click: () => {
+            $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Results' } });
+          },
+        },
+      ],
+    ];
+
+    if (['SUBMITTED', 'RUNNING'].includes(row.status || '')) {
+      buttons.push([
+        {
+          label: 'Cancel Run',
+          click: () => {
+            runToCancel.value = row;
+            isCancelDialogOpen.value = true;
+          },
+          isHighlighted: true,
+        },
+      ]);
+    }
+
+    return buttons;
+  }
+
+  watch(lab, async (lab) => {
+    if (lab !== null) {
+      if (lab.HasNextFlowTowerAccessToken) {
+        // load pipelines/workflows/labUsers after lab loads
+        if (props.superuser) {
+          // superuser doesn't view pipelines or workflows so don't fetch those
+          await getLabUsers();
+        } else {
+          await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
+        }
+      } else {
+        // missing personal access token message
+        missingPAT.value = true;
+        showRedirectModal();
+      }
+    }
+  });
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -144,100 +292,6 @@
     }
   }
 
-  const usersTableColumns = [
-    {
-      key: 'displayName',
-      label: 'Name',
-      sortable: true,
-      sort: useSort().stringSortCompare,
-    },
-    {
-      key: 'actions',
-      label: 'Lab Access',
-    },
-  ];
-
-  const pipelinesTableColumns = [
-    {
-      key: 'Name',
-      label: 'Name',
-    },
-    {
-      key: 'description',
-      label: 'Description',
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-    },
-  ];
-
-  const workflowsTableColumns = [
-    {
-      key: 'runName',
-      label: 'Run Name',
-    },
-    {
-      key: 'lastUpdated',
-      label: 'Last Updated',
-    },
-    {
-      key: 'status',
-      label: 'Status',
-    },
-    {
-      key: 'owner',
-      label: 'Owner',
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-    },
-  ];
-
-  const pipelinesActionItems = (pipeline: any) => [
-    [
-      {
-        label: 'Run',
-        click: () => viewRunPipeline(pipeline),
-      },
-    ],
-  ];
-
-  function workflowsActionItems(row: Workflow): object[] {
-    const buttons: object[][] = [
-      [
-        {
-          label: 'View Details',
-          click: () => viewRunDetails(row),
-        },
-      ],
-      [
-        {
-          label: 'View Results',
-          click: () => {
-            $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Results' } });
-          },
-        },
-      ],
-    ];
-
-    if (['SUBMITTED', 'RUNNING'].includes(row.status || '')) {
-      buttons.push([
-        {
-          label: 'Cancel Run',
-          click: () => {
-            runToCancel.value = row;
-            isCancelDialogOpen.value = true;
-          },
-          isHighlighted: true,
-        },
-      ]);
-    }
-
-    return buttons;
-  }
-
   function getAssignedLabRole(labUserDetails: LaboratoryUserDetails): LaboratoryRolesEnum {
     if (labUserDetails.LabManager) {
       return LaboratoryRolesEnumSchema.enum.LabManager;
@@ -292,24 +346,6 @@
     }
   }
 
-  watch(lab, async (lab) => {
-    if (lab !== null) {
-      if (lab.HasNextFlowTowerAccessToken) {
-        // load pipelines/workflows/labUsers after lab loads
-        if (props.superuser) {
-          // superuser doesn't view pipelines or workflows so don't fetch those
-          await getLabUsers();
-        } else {
-          await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
-        }
-      } else {
-        // missing personal access token message
-        missingPAT.value = true;
-        showRedirectModal();
-      }
-    }
-  });
-
   async function getPipelines(): Promise<void> {
     useUiStore().setRequestPending('getPipelines');
     try {
@@ -336,30 +372,6 @@
   function updateSearchOutput(newVal: any) {
     searchOutput.value = newVal;
   }
-
-  const filteredTableData = computed(() => {
-    let filteredLabUsers = labUsers.value;
-
-    if (searchOutput.value.trim()) {
-      filteredLabUsers = labUsers.value
-        .filter((labUser: LabUser) => {
-          const searchString = `${labUser.displayName} ${labUser.UserEmail}`.toLowerCase();
-          return searchString.includes(searchOutput.value.toLowerCase());
-        })
-        .map((labUser) => labUser);
-    }
-
-    return filteredLabUsers.sort((userA, userB) => {
-      // Lab Manager users first
-      if (userA.LabManager && !userB.LabManager) return -1;
-      if (!userA.LabManager && userB.LabManager) return 1;
-      // then Lab Technicians
-      if (userA.LabTechnician && !userB.LabTechnician) return -1;
-      if (!userA.LabTechnician && userB.LabTechnician) return 1;
-      // then sort by name
-      return useSort().stringSortCompare(userA.displayName, userB.displayName);
-    });
-  });
 
   async function handleUserAddedToLab() {
     showAddUserModule.value = false;

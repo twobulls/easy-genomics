@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { join } from 'path';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
 import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
-import { VpcPeering } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
+import { TestUserDetails, VpcPeering } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { App, Aspects } from 'aws-cdk-lib';
 import { AwsSolutionsChecks } from 'cdk-nag';
 import { cognitoPasswordRegex } from './infra/constants/cognito';
@@ -19,10 +19,14 @@ let appDomainName: string | undefined;
 let awsHostedZoneId: string | undefined;
 
 let jwtSecretKey: string | undefined;
-let systemAdminEmail: string | undefined;
-let systemAdminPassword: string | undefined;
-let testUserEmail: string | undefined;
-let testUserPassword: string | undefined;
+let sysAdminEmail: string | undefined;
+let sysAdminPassword: string | undefined;
+let orgAdminEmail: string | undefined;
+let orgAdminPassword: string | undefined;
+let labManagerEmail: string | undefined;
+let labManagerPassword: string | undefined;
+let labTechnicianEmail: string | undefined;
+let labTechnicianPassword: string | undefined;
 let seqeraApiBaseUrl: string;
 let vpcPeering: VpcPeering | undefined;
 
@@ -40,10 +44,19 @@ if (process.env.CI_CD === 'true') {
   awsHostedZoneId = process.env.AWS_HOSTED_ZONE_ID;
 
   jwtSecretKey = process.env.JWT_SECRET_KEY;
-  systemAdminEmail = process.env.SYSTEM_ADMIN_EMAIL;
-  systemAdminPassword = process.env.SYSTEM_ADMIN_PASSWORD;
-  testUserEmail = process.env.TEST_USER_EMAIL;
-  testUserPassword = process.env.TEST_USER_PASSWORD;
+  // System Admin
+  sysAdminEmail = process.env.SYSTEM_ADMIN_EMAIL;
+  sysAdminPassword = process.env.SYSTEM_ADMIN_PASSWORD;
+  // Org Admin
+  orgAdminEmail = process.env.ORG_ADMIN_EMAIL;
+  orgAdminPassword = process.env.ORG_ADMIN_PASSWORD;
+  // Lab Manager
+  labManagerEmail = process.env.LAB_MANAGER_EMAIL;
+  labManagerPassword = process.env.LAB_MANAGER_PASSWORD;
+  // Lab Technician
+  labTechnicianEmail = process.env.LAB_TECHNICIAN_EMAIL;
+  labTechnicianPassword = process.env.LAB_TECHNICIAN_PASSWORD;
+
   seqeraApiBaseUrl = process.env.SEQERA_API_BASE_URL || SEQERA_API_BASE_URL;
 
   if (
@@ -83,21 +96,21 @@ if (process.env.CI_CD === 'true') {
     throw new Error('"AWS_HOSTED_ZONE_ID" undefined, please check the CI/CD environment configuration');
   }
   if (devEnv) {
-    if (!testUserEmail) {
-      throw new Error('"TEST_USER_EMAIL" undefined, please check the CI/CD environment configuration');
+    if (!orgAdminEmail) {
+      throw new Error('"ORG_ADMIN_EMAIL" undefined, please check the CI/CD environment configuration');
     }
-    if (!testUserPassword) {
-      throw new Error('"TEST_USER_PASSWORD" undefined, please check the CI/CD environment configuration');
-    } else if (!cognitoPasswordRegex.test(testUserPassword)) {
+    if (!orgAdminPassword) {
+      throw new Error('"ORG_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
+    } else if (!cognitoPasswordRegex.test(orgAdminPassword)) {
       throw new Error(
-        '"TEST_USER_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
+        '"ORG_ADMIN_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
       );
     }
   }
-  if (systemAdminEmail) {
-    if (!systemAdminPassword) {
+  if (sysAdminEmail) {
+    if (!sysAdminPassword) {
       throw new Error('"SYSTEM_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
-    } else if (!cognitoPasswordRegex.test(systemAdminPassword)) {
+    } else if (!cognitoPasswordRegex.test(sysAdminPassword)) {
       throw new Error(
         '"SYSTEM_ADMIN_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
       );
@@ -136,10 +149,19 @@ if (process.env.CI_CD === 'true') {
 
   // Back-End configuration settings
   jwtSecretKey = configSettings['back-end']['jwt-secret-key'];
-  systemAdminEmail = configSettings['back-end']['system-admin-email'];
-  systemAdminPassword = configSettings['back-end']['system-admin-password'];
-  testUserEmail = configSettings['back-end']['test-user-email'];
-  testUserPassword = configSettings['back-end']['test-user-password'];
+  // System Admin
+  sysAdminEmail = configSettings['back-end']['sys-admin-email'];
+  sysAdminPassword = configSettings['back-end']['sys-admin-password'];
+  // Org Admin
+  orgAdminEmail = configSettings['back-end']['org-admin-email'];
+  orgAdminPassword = configSettings['back-end']['org-admin-password'];
+  // Lab Manager User
+  labManagerEmail = configSettings['back-end']['lab-manager-email'];
+  labManagerPassword = configSettings['back-end']['lab-manager-password'];
+  // Lab Technician User
+  labTechnicianEmail = configSettings['back-end']['lab-technician-email'];
+  labTechnicianPassword = configSettings['back-end']['lab-technician-password'];
+
   seqeraApiBaseUrl = configSettings['back-end']['seqera-api-base-url'] || SEQERA_API_BASE_URL;
 
   if (
@@ -180,23 +202,23 @@ if (process.env.CI_CD === 'true') {
     throw new Error('"aws-hosted-zone-id" undefined, please check the easy-genomics.yaml configuration');
   }
   if (devEnv) {
-    if (!testUserEmail) {
-      throw new Error('"test-user-email" undefined, please check the easy-genomics.yaml configuration');
+    if (!orgAdminEmail) {
+      throw new Error('"org-admin-email" undefined, please check the easy-genomics.yaml configuration');
     }
-    if (!testUserPassword) {
-      throw new Error('"test-user-password" undefined, please check the easy-genomics.yaml configuration');
-    } else if (!cognitoPasswordRegex.test(testUserPassword)) {
+    if (!orgAdminPassword) {
+      throw new Error('"org-admin-password" undefined, please check the easy-genomics.yaml configuration');
+    } else if (!cognitoPasswordRegex.test(orgAdminPassword)) {
       throw new Error(
-        '"test-user-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
+        '"org-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
       );
     }
   }
-  if (systemAdminEmail) {
-    if (!systemAdminPassword) {
-      throw new Error('"system-admin-password" undefined, please check the easy-genomics.yaml configuration');
-    } else if (!cognitoPasswordRegex.test(systemAdminPassword)) {
+  if (sysAdminEmail) {
+    if (!sysAdminPassword) {
+      throw new Error('"sys-admin-password" undefined, please check the easy-genomics.yaml configuration');
+    } else if (!cognitoPasswordRegex.test(sysAdminPassword)) {
       throw new Error(
-        '"system-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
+        '"sys-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
       );
     }
   }
@@ -207,6 +229,31 @@ process.env.AWS_REGION = awsRegion;
 
 const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
 const constructNamespace: string = `${namePrefix}-easy-genomics`;
+
+// Define Test User Accounts to seed for development and testing
+const testUsers: TestUserDetails[] = devEnv ? <TestUserDetails[]>[
+      orgAdminEmail && orgAdminPassword
+        ? <TestUserDetails>{
+            UserEmail: orgAdminEmail,
+            UserPassword: orgAdminPassword,
+            Access: 'OrganizationAdmin',
+          }
+        : undefined,
+      labManagerEmail && labManagerPassword
+        ? <TestUserDetails>{
+            UserEmail: labManagerEmail,
+            UserPassword: labManagerPassword,
+            Access: 'LabManager',
+          }
+        : undefined,
+      labTechnicianEmail && labTechnicianPassword
+        ? <TestUserDetails>{
+            UserEmail: labTechnicianEmail,
+            UserPassword: labTechnicianPassword,
+            Access: 'LabTechnician',
+          }
+        : undefined,
+    ].filter((item: TestUserDetails | undefined) => item != undefined) : [];
 
 // Setups Back-End Stack which initiates the nested stacks for Auth, Easy Genomics, AWS HealthOmics and NextFlow Tower
 new BackEndStack(app, `${envName}-main-back-end-stack`, {
@@ -223,10 +270,9 @@ new BackEndStack(app, `${envName}-main-back-end-stack`, {
   namePrefix: namePrefix,
   // Generate random value for JWT signature secret on deployment if jwt-secret-key configuration undefined
   jwtSecretKey: jwtSecretKey ? jwtSecretKey : randomUUID(),
-  systemAdminEmail: systemAdminEmail,
-  systemAdminPassword: systemAdminPassword,
-  testUserEmail: testUserEmail,
-  testUserPassword: testUserPassword,
+  sysAdminEmail: sysAdminEmail,
+  sysAdminPassword: sysAdminPassword,
+  testUsers: testUsers,
   seqeraApiBaseUrl: seqeraApiBaseUrl.replace(/\/+$/, ''), // Remove trailing slashes
   vpcPeering: vpcPeering,
 });

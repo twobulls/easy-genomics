@@ -201,8 +201,10 @@ obtain the Easy Genomics project source code and install the project dependencie
 
             # Back-End specific settings
             back-end:
-               test-user-email: 'demouser@easygenomics.com'
-               test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               sys-admin-email: 'sysadmin@easygenomics.org' # Replace with your institution's preferred System Admin account
+               sys-admin-password: # System Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               org-admin-email: 'admin@easygenomics.org' # Replace with your institution's preferred Admin account
+               org-admin-password: # Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
                seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
    ```
 
@@ -233,8 +235,8 @@ obtain the Easy Genomics project source code and install the project dependencie
    - NOTE: If the `aws-hosted-zone-id` and/or the `aws-certificate-arn` are not defined in the `easy-genomics.yaml`, the
      `ApplicationUrl` returned will be the CloudFront Distribution URL.
 
-   Finally, use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured`test-user-email` and
-   `test-user-password` account details to log in into Easy Genomics to test the functionality.
+   Finally, use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured `org-admin-email` and
+   `org-admin-password` account details to log in into Easy Genomics to test the functionality.
 
    Once you have completed an initial deployment of the Back-End and Front-End application logic, you can subsequently
    use the `build-and-deploy` short-cut command from the `${easy-genomics root-dir}` directory to conveniently complete
@@ -263,14 +265,12 @@ Run the following commands from the root directory of the project. The headless 
 whereas the headed browser instance will open a browser window simulating user interaction with the application.
 
 ```bash
-# The following commands are used to run the end-to-end tests against a local browser instance of Nuxt - you must first be
-# running the Nuxt application locally using the `pnpm dev` command in a separate terminal.
-$ pnpm `test-e2e-local` # headless
-$ pnpm `test-e2e-local:headed`: # a headed browser instance ("UI mode")
-
 # The following commands are used to run the end-to-end tests on an environment specified inn the `easy-genomics.yaml` file.
-$ pnpm `test-e2e`  # headless
-$ pnpm `test-e2e:headed ` # a headed browser instance ("UI mode")
+$ pnpm `test-e2e`  # run all tests in headless mode - used for CI/CD execution
+$ pnpm `test-e2e:sys-admin ` # a headless browser instance to run System Admin tests
+$ pnpm `test-e2e:org-admin ` # a headless browser instance to run Org Admin tests
+$ pnpm `test-e2e:sys-admin:headed ` # a headed browser instance to run System Admin tests
+$ pnpm `test-e2e:org-admin:headed ` # a headed browser instance to run Org Admin tests
 ```
 
 ## Contributions

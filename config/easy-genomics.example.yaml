@@ -12,6 +12,8 @@ easy-genomics:
 
         # Back-End specific settings
         back-end:
-            test-user-email: 'demouser@easygenomics.com'
-            test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
-            seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+            jwt-secret-key: '123e4567-e89b-12d3-a456-426614174000'
+            sys-admin-email:  'sysadmin@easygenomics.org', # Replace with your institution's preferred System Admin account
+            sys-admin-password: # System Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+            org-admin-email: 'admin@easygenomics.org' # Replace with your institution's preferred Admin account
+            org-admin-password: # Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter

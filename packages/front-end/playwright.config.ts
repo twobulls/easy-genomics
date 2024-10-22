@@ -1,8 +1,9 @@
 import type { PlaywrightTestConfig } from 'playwright/test';
-import { envConfig } from '@/packages/front-end/config/env-config';
+import { envConfig } from './config/env-config';
 
 const config: PlaywrightTestConfig = {
   testDir: './tests/e2e',
+  globalSetup: './tests/e2e/auth.setup.ts',
   timeout: 100 * 1000,
   expect: {
     timeout: 5000,
@@ -20,13 +21,6 @@ const config: PlaywrightTestConfig = {
   },
   projects: [
     {
-      name: 'setup-local',
-      testMatch: /.*\.setup.ts/,
-      use: {
-        baseURL: 'http://localhost:3000',
-      },
-    },
-    {
       name: 'setup',
       testMatch: /.*\.setup.ts/,
       use: {
@@ -34,25 +28,24 @@ const config: PlaywrightTestConfig = {
       },
     },
     {
-      name: 'local',
-      testMatch: '**/*.spec.e2e.ts',
-      use: {
-        baseURL: 'http://localhost:3000',
-        storageState: './tests/e2e/.auth/user.json',
-      },
-      dependencies: ['setup-local'],
-    },
-    {
-      name: 'quality',
-      testMatch: '**/*.spec.e2e.ts',
+      name: 'quality-sys-admin',
+      testMatch: 'tests/e2e/sys-admin/*.spec.e2e.ts',
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
-        storageState: './tests/e2e/.auth/user.json',
+        storageState: './tests/e2e/.auth/sys-admin.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'quality-org-admin',
+      testMatch: 'tests/e2e/org-admin/*.spec.e2e.ts',
+      use: {
+        baseURL: `https://${envConfig.appDomainName}`,
+        storageState: './tests/e2e/.auth/org-admin.json',
       },
       dependencies: ['setup'],
     },
   ],
-
   reporter:
     process.env.CI && process.env.SLACK_E2E_TEST_WEBHOOK_URL
       ? [
@@ -61,9 +54,9 @@ const config: PlaywrightTestConfig = {
             {
               slackWebHookUrl: process.env.SLACK_E2E_TEST_WEBHOOK_URL,
               sendResults: 'always',
-              'meta': [
-                { 'key': 'runNumber', 'value': process.env.GITHUB_RUN_NUMBER },
-                { 'key': 'sha', 'value': process.env.GITHUB_SHA },
+              meta: [
+                { key: 'runNumber', value: process.env.GITHUB_RUN_NUMBER },
+                { key: 'sha', value: process.env.GITHUB_SHA },
               ],
             },
           ],

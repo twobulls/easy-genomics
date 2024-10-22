@@ -3,7 +3,7 @@
   const $router = useRouter();
 
   const labId = $route.params.labId as string;
-  const initialTab = $route.params.tab as string;
+  const initialTab = $route.query.tab as string;
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {

@@ -5,6 +5,8 @@
 </script>
 
 <template>
+  <EGAdminAlert />
+
   <EGOrgsList
     v-if="orgId === null"
     superuser

@@ -6,5 +6,7 @@
 </script>
 
 <template>
+  <EGAdminAlert />
+
   <EGLabView superuser :lab-id="labId" :initial-tab="initialTab" />
 </template>

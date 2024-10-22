@@ -6,7 +6,11 @@ import { RequiredIdNotFoundError, UnauthorizedAccessError } from '@easy-genomics
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
-import { validateOrganizationAccess, validateOrganizationAdminAccess } from '@BE/utils/auth-utils';
+import {
+  validateOrganizationAccess,
+  validateOrganizationAdminAccess,
+  validateSystemAdminAccess,
+} from '@BE/utils/auth-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
@@ -23,9 +27,10 @@ export const handler: Handler = async (
     // Lookup by GSI Id for convenience
     const existing: Laboratory = await laboratoryService.queryByLaboratoryId(id);
 
-    // Users with access to the Laboratory can view the organization
+    // Only the SystemAdmin or any User with access to the Laboratory is allowed access to this API
     if (
       !(
+        validateSystemAdminAccess(event) ||
         validateOrganizationAdminAccess(event, existing.OrganizationId) ||
         validateOrganizationAccess(event, existing.OrganizationId, existing.LaboratoryId)
       )

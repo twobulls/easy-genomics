@@ -28,8 +28,8 @@ function getConfigurationSettings(): EnvConfig {
     appDomainName = process.env.APP_DOMAIN_NAME;
     orgAdminEmail = process.env.ORG_ADMIN_EMAIL;
     orgAdminPassword = process.env.ORG_ADMIN_PASSWORD;
-    sysAdminEmail = process.env.SYS_ADMIN_EMAIL;
-    sysAdminPassword = process.env.SYS_ADMIN_PASSWORD;
+    sysAdminEmail = process.env.SYSTEM_ADMIN_EMAIL;
+    sysAdminPassword = process.env.SYSTEM_ADMIN_PASSWORD;
   } else {
     // Load the configurations from local configuration file
     const configurations = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));

@@ -105,8 +105,7 @@
   const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(labId));
 
   /**
-   * Fetch Lab details, pipelines, workflows and Lab users
-   * before component mount and start periodic fetching
+   * Fetch Lab details, pipelines, workflows and Lab users before component mount and start periodic fetching
    */
   onBeforeMount(async () => {
     // Check permissions to be on this page
@@ -117,7 +116,7 @@
     await loadLabData();
   });
 
-  // Set tabIndex according to query param
+  // set tabIndex according to query param
   onMounted(() => {
     const queryTab = $route.query.tab as string;
     const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
@@ -305,10 +304,10 @@
   watch(lab, async (lab) => {
     if (lab !== null) {
       if (lab.HasNextFlowTowerAccessToken) {
-        // Load pipelines/workflows/labUsers after lab loads
+        // load pipelines/workflows/labUsers after lab loads
         await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
       } else {
-        // Missing personal access token message
+        // missing personal access token message
         missingPAT.value = true;
         showRedirectModal();
       }
@@ -358,10 +357,10 @@
       // Lab Manager users first
       if (userA.LabManager && !userB.LabManager) return -1;
       if (!userA.LabManager && userB.LabManager) return 1;
-      // Then Lab Technicians
+      // then Lab Technicians
       if (userA.LabTechnician && !userB.LabTechnician) return -1;
       if (!userA.LabTechnician && userB.LabTechnician) return 1;
-      // Then sort by name
+      // then sort by name
       return useSort().stringSortCompare(userA.displayName, userB.displayName);
     });
   });

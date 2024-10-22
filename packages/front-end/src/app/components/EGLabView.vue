@@ -54,11 +54,6 @@
   const primaryMessage = ref('');
   const userToRemove = ref();
 
-  // check permissions to be on this page
-  if (!useUserStore().canViewLab(useUserStore().currentOrgId, props.labId)) {
-    $router.push('/labs');
-  }
-
   const missingPAT = ref<boolean>(false);
 
   const tabItems = computed(() => [

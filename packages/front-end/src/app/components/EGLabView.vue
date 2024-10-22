@@ -18,6 +18,7 @@
   import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
+    superuser: boolean;
     labId: string;
     initialTab: string | undefined;
   }>();
@@ -56,19 +57,21 @@
 
   const missingPAT = ref<boolean>(false);
 
-  const tabItems = computed(() => [
-    ...(!missingPAT.value
-      ? [
-          { key: 'runs', label: 'Runs' },
-          { key: 'pipelines', label: 'Pipelines' },
-          { key: 'users', label: 'Lab Users' },
-        ]
-      : []),
-    {
-      key: 'details',
-      label: 'Details',
-    },
-  ]);
+  const tabItems = computed<{ key: string; label: string }[]>(() => {
+    const items = [];
+
+    if (!missingPAT.value) {
+      if (!props.superuser) {
+        items.push({ key: 'runs', label: 'Runs' });
+        items.push({ key: 'pipelines', label: 'Pipelines' });
+      }
+      items.push({ key: 'users', label: 'Lab Users' });
+    }
+
+    items.push({ key: 'details', label: 'Details' });
+
+    return items;
+  });
 
   /**
    * Fetch Lab details, pipelines, workflows and Lab users before component mount
@@ -293,7 +296,12 @@
     if (lab !== null) {
       if (lab.HasNextFlowTowerAccessToken) {
         // load pipelines/workflows/labUsers after lab loads
-        await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+        if (props.superuser) {
+          // superuser doesn't view pipelines or workflows so don't fetch those
+          await getLabUsers();
+        } else {
+          await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+        }
       } else {
         // missing personal access token message
         missingPAT.value = true;

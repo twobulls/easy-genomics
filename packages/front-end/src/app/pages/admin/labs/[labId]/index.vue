@@ -6,5 +6,5 @@
 </script>
 
 <template>
-  <EGLabView :lab-id="labId" :initial-tab="initialTab" />
+  <EGLabView superuser :lab-id="labId" :initial-tab="initialTab" />
 </template>

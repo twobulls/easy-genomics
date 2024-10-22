@@ -270,6 +270,8 @@ new BackEndStack(app, `${envName}-main-back-end-stack`, {
   namePrefix: namePrefix,
   // Generate random value for JWT signature secret on deployment if jwt-secret-key configuration undefined
   jwtSecretKey: jwtSecretKey ? jwtSecretKey : randomUUID(),
+  sysAdminEmail: sysAdminEmail,
+  sysAdminPassword: sysAdminPassword,
   testUsers: testUsers,
   seqeraApiBaseUrl: seqeraApiBaseUrl.replace(/\/+$/, ''), // Remove trailing slashes
   vpcPeering: vpcPeering,

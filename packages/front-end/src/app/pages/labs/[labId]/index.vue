@@ -17,49 +17,78 @@
   import { v4 as uuidv4 } from 'uuid';
   import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
-  const $route = useRoute();
-
-  const workflowStore = useWorkflowStore();
-  const labStore = useLabsStore();
-
   const { $api } = useNuxtApp();
+  const $route = useRoute();
   const $router = useRouter();
-  const modal = useModal();
-
   const labId = $route.params.labId as string;
-  const orgId = labStore.labs[labId].OrganizationId;
 
+  const labStore = useLabsStore();
+  const modal = useModal();
+  const workflowStore = useWorkflowStore();
+
+  // Table columns
+  const pipelinesTableColumns = [
+    {
+      key: 'Name',
+      label: 'Name',
+    },
+    {
+      key: 'description',
+      label: 'Description',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
+  const workflowsTableColumns = [
+    {
+      key: 'runName',
+      label: 'Run Name',
+    },
+    {
+      key: 'lastUpdated',
+      label: 'Last Updated',
+    },
+    {
+      key: 'status',
+      label: 'Status',
+    },
+    {
+      key: 'owner',
+      label: 'Owner',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
+  const pipelinesActionItems = (pipeline: any) => [
+    [
+      {
+        label: 'Run',
+        click: () => viewRunPipeline(pipeline),
+      },
+    ],
+  ];
+
+  const canAddUsers = ref(false);
+  const isCancelDialogOpen = ref<boolean>(false);
+  const isUserDialogOpen = ref(false);
+  const labUsers = ref<LabUser[]>([]);
+  const missingPAT = ref<boolean>(false);
+  const orgId = labStore.labs[labId].OrganizationId;
+  const pipelines = ref<[]>([]);
+  const primaryMessage = ref('');
+  const runToCancel = ref<Workflow | null>(null);
+  const searchOutput = ref('');
+  const showAddUserModule = ref(false);
   const tabIndex = ref(0);
-  // set tabIndex according to query param
-  onMounted(() => {
-    const queryTab = $route.query.tab as string;
-    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
-    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
-  });
+  const userToRemove = ref();
+  let intervalId: number | undefined;
 
   const lab = computed<Laboratory | null>(() => labStore.labs[labId] ?? null);
-
   const labName = computed<string>(() => lab.value?.Name || '');
-
-  const labUsers = ref<LabUser[]>([]);
-  const canAddUsers = ref(false);
-  const showAddUserModule = ref(false);
-  const searchOutput = ref('');
-  const pipelines = ref<[]>([]);
-  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(labId));
-
-  // Dynamic remove user dialog values
-  const isOpen = ref(false);
-  const primaryMessage = ref('');
-  const userToRemove = ref();
-
-  // check permissions to be on this page
-  if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
-    $router.push('/labs');
-  }
-
-  const missingPAT = ref<boolean>(false);
-
   const tabItems = computed(() => [
     ...(!missingPAT.value
       ? [
@@ -73,11 +102,37 @@
       label: 'Details',
     },
   ]);
+  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(labId));
 
   /**
-   * Fetch Lab details, pipelines, workflows and Lab users before component mount
+   * Fetch Lab details, pipelines, workflows and Lab users before component mount and start periodic fetching
    */
-  onBeforeMount(loadLabData);
+  onBeforeMount(async () => {
+    // Check permissions to be on this page
+    if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
+      await $router.push('/labs');
+    }
+
+    await loadLabData();
+  });
+
+  // set tabIndex according to query param
+  onMounted(() => {
+    const queryTab = $route.query.tab as string;
+    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
+    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+  });
+
+  onUnmounted(() => {
+    if (intervalId) {
+      clearTimeout(intervalId);
+    }
+  });
+
+  async function pollFetchWorkflows() {
+    await getWorkflows();
+    intervalId = window.setTimeout(pollFetchWorkflows, 2 * 60 * 5000);
+  }
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -96,13 +151,13 @@
   function showRemoveUserDialog(user: LabUser) {
     userToRemove.value = user;
     primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName.value}?`;
-    isOpen.value = true;
+    isUserDialogOpen.value = true;
   }
 
   async function handleRemoveUserFromLab() {
     let maybeDisplayName = 'user';
     try {
-      isOpen.value = false;
+      isUserDialogOpen.value = false;
       useUiStore().setRequestPending('removeUserFromLab');
       const { displayName, UserId } = userToRemove.value;
       maybeDisplayName = displayName;
@@ -156,53 +211,6 @@
       key: 'actions',
       label: 'Lab Access',
     },
-  ];
-
-  const pipelinesTableColumns = [
-    {
-      key: 'Name',
-      label: 'Name',
-    },
-    {
-      key: 'description',
-      label: 'Description',
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-    },
-  ];
-
-  const workflowsTableColumns = [
-    {
-      key: 'runName',
-      label: 'Run Name',
-    },
-    {
-      key: 'lastUpdated',
-      label: 'Last Updated',
-    },
-    {
-      key: 'status',
-      label: 'Status',
-    },
-    {
-      key: 'owner',
-      label: 'Owner',
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-    },
-  ];
-
-  const pipelinesActionItems = (pipeline: any) => [
-    [
-      {
-        label: 'Run',
-        click: () => viewRunPipeline(pipeline),
-      },
-    ],
   ];
 
   function workflowsActionItems(row: Workflow): object[] {
@@ -297,7 +305,7 @@
     if (lab !== null) {
       if (lab.HasNextFlowTowerAccessToken) {
         // load pipelines/workflows/labUsers after lab loads
-        await Promise.all([getPipelines(), getWorkflows(), getLabUsers()]);
+        await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
       } else {
         // missing personal access token message
         missingPAT.value = true;
@@ -393,9 +401,6 @@
   function viewRunDetails(row: Workflow) {
     $router.push({ path: `/labs/${labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
-
-  const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<Workflow | null>(null);
 
   async function handleCancelDialogAction() {
     const runId = runToCancel.value?.id;
@@ -537,7 +542,7 @@
           :cancelVariant="ButtonVariantEnum.enum.secondary"
           @action-triggered="handleRemoveUserFromLab"
           :primaryMessage="primaryMessage"
-          v-model="isOpen"
+          v-model="isUserDialogOpen"
         />
 
         <EGTable

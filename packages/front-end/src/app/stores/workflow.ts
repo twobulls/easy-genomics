@@ -52,17 +52,23 @@ const useWorkflowStore = defineStore('workflowStore', {
     async loadWorkflowsForLab(labId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
-      this.workflows[labId] = {};
-      this.workflowIdsByLab[labId] = [];
-
+      // fetch new workflows without modifying existing state
       const workflows: Workflow[] = await $api.workflows.list(labId);
+
+      // prepare temporary storage
+      const newWorkflows: Record<string, Workflow> = {};
+      const newWorkflowIds: string[] = [];
 
       for (const workflow of workflows) {
         if (workflow.id !== undefined) {
-          this.workflows[labId][workflow.id] = workflow;
-          this.workflowIdsByLab[labId].push(workflow.id);
+          newWorkflows[workflow.id] = workflow;
+          newWorkflowIds.push(workflow.id);
         }
       }
+
+      // update state with the new data
+      this.workflows[labId] = newWorkflows;
+      this.workflowIdsByLab[labId] = newWorkflowIds;
     },
 
     async loadSingleWorkflow(labId: string, workflowId: string): Promise<void> {

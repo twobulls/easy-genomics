@@ -93,3 +93,4 @@ packages/front-end/test-results
 packages/front-end/tests/e2e/.auth/*.json
 packages/front-end/playwright-report
 !/.projenrc.ts
+.nx

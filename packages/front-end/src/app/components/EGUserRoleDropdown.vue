@@ -26,25 +26,21 @@
     email: UserEmail,
   });
   const emit = defineEmits(['remove-user-from-lab', 'assign-role']);
-  const assignedRole = ref<LaboratoryRolesEnum>(LaboratoryRolesEnumSchema.enum.LabTechnician);
-  const roles = Object.values(LaboratoryRolesEnumSchema.enum).map((role) => role);
+  const roles = Object.values(LaboratoryRolesEnumSchema.enum);
 
-  if (props.user.assignedRole === LaboratoryRolesEnumSchema.enum.LabManager) {
-    assignedRole.value = LaboratoryRolesEnumSchema.enum.LabManager;
-  } else {
-    assignedRole.value = LaboratoryRolesEnumSchema.enum.LabTechnician;
-  }
-
-  const items: Array<Array<Object>> = roles.map((role: LaboratoryRolesEnum) => {
-    return [
-      {
-        label: role,
-        click: () => {
-          handleUpdateRole(role);
+  const items: Array<Array<Object>> = roles
+    // don't allow setting to Unknown, it's just for if the api sends us something strange
+    .filter((role) => role !== 'Unknown')
+    .map((role: LaboratoryRolesEnum) => {
+      return [
+        {
+          label: role,
+          click: () => {
+            handleUpdateRole(role);
+          },
         },
-      },
-    ];
-  });
+      ];
+    });
 
   if (props.showRemoveFromLab) {
     items.push([
@@ -61,7 +57,7 @@
   function handleUpdateRole(role) {
     const LabManager = role === LaboratoryRolesEnumSchema.enum.LabManager;
     const LabTechnician = role === LaboratoryRolesEnumSchema.enum.LabTechnician;
-    const { assignedRole, ...cleanUser } = props.user;
+    const { ...cleanUser } = props.user;
     const labUser = { ...cleanUser, LabManager, LabTechnician };
 
     emit('assign-role', { labUser, displayName });
@@ -72,7 +68,7 @@
   <div class="flex w-full justify-end">
     <UDropdown class="UDropdown" :items="items">
       <UButton :disabled="disabled" variant="ghost" color="gray" icon="i-heroicons-chevron-down" trailing>
-        {{ assignedRole }}
+        {{ props.user.assignedRole }}
       </UButton>
     </UDropdown>
   </div>

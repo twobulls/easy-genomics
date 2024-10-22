@@ -201,8 +201,10 @@ obtain the Easy Genomics project source code and install the project dependencie
 
             # Back-End specific settings
             back-end:
-               test-user-email: 'demouser@easygenomics.com'
-               test-user-password: # Demo User Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               sys-admin-email: 'sysadmin@easygenomics.org' # Replace with your institution's preferred System Admin account
+               sys-admin-password: # System Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               org-admin-email: 'admin@easygenomics.org' # Replace with your institution's preferred Admin account
+               org-admin-password: # Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
                seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
    ```
 
@@ -233,8 +235,8 @@ obtain the Easy Genomics project source code and install the project dependencie
    - NOTE: If the `aws-hosted-zone-id` and/or the `aws-certificate-arn` are not defined in the `easy-genomics.yaml`, the
      `ApplicationUrl` returned will be the CloudFront Distribution URL.
 
-   Finally, use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured`test-user-email` and
-   `test-user-password` account details to log in into Easy Genomics to test the functionality.
+   Finally, use the `${easy-genomics root-dir}/config/easy-genomics.yaml` file's configured `org-admin-email` and
+   `org-admin-password` account details to log in into Easy Genomics to test the functionality.
 
    Once you have completed an initial deployment of the Back-End and Front-End application logic, you can subsequently
    use the `build-and-deploy` short-cut command from the `${easy-genomics root-dir}` directory to conveniently complete

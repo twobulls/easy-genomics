@@ -1,65 +1,191 @@
 import { test, expect } from 'playwright/test';
+const invitemail = 'marvin.umali+eg99@deptagency.com';
+const orgName = 'Automated Org';
+const orgNameUpdated = 'Automated Org - Updated';
 
-test('01 - Create a new Organization Successfully', async ({ page, baseURL }) => {
+test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/orgs`);
   await page.waitForLoadState('networkidle');
-  await page.getByRole('link', { name: 'Create a new Organization' }).click();
-  await page.waitForTimeout(2000);
-  await page.getByPlaceholder('Enter organization name (').fill('Automation Org');
-  await page.getByPlaceholder('Describe your organization').fill('This is a description of the automated Org');
-  await page.getByLabel('Organization name*').dblclick();
-  await page.getByRole('button', { name: 'Save changes' }).click();
-  await page.waitForTimeout(2000);
-  await expect(page.getByText('Organization created').nth(0)).toBeVisible();
+
+  // Check if the org exists
+  let Org1Exists = true;
+  try {
+    Org1Exists = await page.getByRole('row', { name: orgName }).isVisible();
+  } catch (error) {
+    console.log('Org does not exists!', error);
+  }
+
+  if (Org1Exists) {
+    //this will Org if it exists
+    await page.getByRole('row', { name: orgName }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'Remove' }).click();
+    await page.getByRole('button', { name: 'Remove Organization' }).click();
+    await page.waitForTimeout(2000);
+    await expect(page.getByText('Organization deleted').nth(0)).toBeVisible();
+  }
+
+  let Org2Exists = true;
+  try {
+    Org2Exists = await page.getByRole('row', { name: orgNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Org does not exists!', error);
+  }
+
+  if (Org2Exists) {
+    //this will Org if it exists
+    await page.getByRole('row', { name: orgNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'Remove' }).click();
+    await page.getByRole('button', { name: 'Remove Organization' }).click();
+    await page.waitForTimeout(2000);
+    await expect(page.getByText('Organization deleted').nth(0)).toBeVisible();
+  }
 });
 
-test('02 - Update an Org Successfully', async ({ page, baseURL }) => {
+test('02 - Create a new Organization Successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/orgs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the org exists
+  let OrgExists = true;
+  try {
+    OrgExists = await page.getByRole('row', { name: orgName }).isHidden();
+  } catch (error) {
+    console.log('Org already exists!', error);
+  }
+
+  if (OrgExists) {
+    await page.getByRole('link', { name: 'Create a new Organization' }).click();
+    await page.waitForTimeout(2000);
+    await page.getByPlaceholder('Enter organization name (').fill(orgName);
+    await page.getByPlaceholder('Describe your organization').fill('This is a description of the automated Org');
+    await page.getByLabel('Organization name*').dblclick();
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await page.waitForTimeout(2000);
+    await expect(page.getByText('Organization created').nth(0)).toBeVisible();
+  }
+});
+
+test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/orgs`);
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('row', { name: orgName }).locator('button').click();
+  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+
+  // Check if the Org user exists
+  let UserExists = true;
+  try {
+    UserExists = await page.getByRole('row', { name: invitemail }).isHidden();
+  } catch (error) {
+    console.log('User already exists!', error);
+  }
+
+  if (UserExists) {
+    await page.getByRole('button', { name: 'Invite users' }).click();
+    await page.waitForTimeout(2000);
+    await page.getByPlaceholder('Enter Email').click();
+    await page.keyboard.type(invitemail);
+    await page.getByRole('button', { name: 'Invite', exact: true }).click();
+
+    // confirm
+    await expect(page.getByText(invitemail + ' has been sent an invite').nth(0)).toBeVisible();
+
+    await page.reload();
+    await page.waitForTimeout(2000);
+    const cell = page.getByRole('cell', {
+      name: invitemail,
+      exact: true,
+    });
+    await expect(cell).toBeVisible();
+  }
+});
+
+test("04 - Change a user's Organization Admin access", async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/orgs`);
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('row', { name: orgName }).locator('button').click();
+  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+  await page.waitForTimeout(2000);
+
+  // Check if the Org user exists
+  let UserExists = true;
+  try {
+    UserExists = await page.getByRole('row', { name: invitemail }).isVisible();
+  } catch (error) {
+    console.log('User does not exists!', error);
+  }
+
+  if (UserExists) {
+    await page.getByRole('row', { name: invitemail }).locator('button').nth(1).click();
+    await page.getByRole('menuitem', { name: 'Edit User Access' }).click();
+    await page.waitForLoadState('networkidle');
+    await page.locator('span').filter({ hasText: 'Organization Admin' }).click();
+    await page.getByRole('status').locator('div').nth(1).click();
+    const toastMessage = await page.locator('.test-toast-success').innerText();
+    expect(toastMessage).toContain(invitemail + '’s Lab Access has been successfully updated');
+  }
+});
+
+test('05 - Remove Invited user to an Org Successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/orgs`);
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('row', { name: orgName }).locator('button').click();
+  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+  await page.waitForTimeout(2000);
+
+  // Check if the Org user exists
+  let UserExists = true;
+  try {
+    UserExists = await page.getByRole('row', { name: invitemail }).isVisible();
+  } catch (error) {
+    console.log('Org already exists!', error);
+  }
+
+  if (UserExists) {
+    await page.getByRole('row', { name: invitemail }).locator('button').nth(1).click();
+    await page.getByRole('menuitem', { name: 'Remove From Org' }).click();
+    await page.getByRole('button', { name: 'Remove User' }).nth(1).click();
+
+    // confirm deletion
+    page.getByText(invitemail + ' has been removed from Default Organization');
+    const cell = page.getByRole('cell', {
+      name: invitemail,
+      exact: true,
+    });
+
+    await expect(cell).toBeHidden();
+  }
+});
+
+test('06 - Update an Org Successfully', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/orgs`);
   await page.waitForTimeout(2000);
 
   // Check if the 'updated' test org already exists then update it back to the original value
-  let hasUpdatedOrg = false;
+  let AutoOrgExists = true;
   try {
-    hasUpdatedOrg = await page.getByRole('row', { name: 'Default Organization Updated' }).isVisible();
+    AutoOrgExists = await page.getByRole('row', { name: orgName }).isVisible();
   } catch (error) {
     console.log('Updated Organization not found', error);
   }
 
-  if (hasUpdatedOrg) {
-    await page.getByRole('row', { name: 'Default Organization Update' }).locator('button').click();
+  if (AutoOrgExists) {
+    await page.getByRole('row', { name: orgName }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.getByRole('tab', { name: 'Details' }).click();
     await page.getByText('Organization name*').isVisible();
-    await page.getByLabel('Organization name*').fill('Default Organization');
-    await page.getByPlaceholder('Describe your organization').fill('This is the default Organization back to original');
+    await page.getByLabel('Organization name*').fill(orgNameUpdated);
+    await page.getByPlaceholder('Describe your organization').fill('This is an ORG created by Playwright');
     await page.getByRole('button', { name: 'Save changes' }).click();
     await page.getByText('Organization updated', { exact: true }).isVisible();
-    await page.waitForTimeout(5000);
-    await expect(page.getByText('Default Organization').nth(0)).toBeVisible();
-    await expect(page.getByText('This is the default Organization back to original').nth(0)).toBeVisible();
+    await page.waitForTimeout(2000);
+    await expect(page.getByText('Organization updated').nth(0)).toBeVisible();
+
+    await page.reload();
+    await page.waitForTimeout(2000);
+    await expect(page.getByText(orgNameUpdated).nth(0)).toBeVisible();
+    await expect(page.getByText('This is an ORG created by Playwright').nth(0)).toBeVisible();
   } else {
     console.log('Updated Organization not found');
-  }
-
-  // Check if the 'orginal/default' test org exists and update it
-  let hasTestOrg = false;
-  try {
-    hasTestOrg = await page.getByRole('row', { name: 'Default Organization' }).isVisible();
-  } catch (error) {
-    console.log('Default Organization updated Test not found', error);
-  }
-
-  if (hasTestOrg) {
-    await page.getByRole('row', { name: 'Default Organization' }).locator('button').click();
-    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Details' }).click();
-    await page.getByText('Organization name*').isVisible();
-    await page.getByLabel('Organization name*').fill('Default Organization Updated');
-    await page.getByPlaceholder('Describe your organization').fill('This is an update to the default Organization');
-    await page.getByRole('button', { name: 'Save changes' }).click();
-    await page.getByText('Organization updated', { exact: true }).isVisible();
-    await expect(page.getByText('Default Organization Updated').nth(0)).toBeVisible();
-    await expect(page.getByText('This is an update to the default Organization').nth(0)).toBeVisible();
   }
 });
 
@@ -121,45 +247,8 @@ test("002 - Change a user's Organization Admin access", async ({ page, baseURL }
   expect(toastMessage).toContain('Rick Sanchez’s Lab Access has been successfully updated');
 });
 
-test('003 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
-  await page.goto(`${baseURL}/orgs`);
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('row', { name: 'Default Organization' }).locator('button').click();
-  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-  await page.getByRole('button', { name: 'Invite users' }).click();
-  await page.waitForTimeout(2000);
-  await page.getByPlaceholder('Enter Email').click();
-  await page.keyboard.type('marvin.umali+eg99@deptagency.com');
-  await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
-  // confirm creation
-  page.getByText('marvin.umali+eg99@deptagency.com has been sent an invite');
-  const cell = page.getByRole('cell', {
-    name: 'marvin.umali+eg99@deptagency.com',
-    exact: true,
-  });
 
-  await expect(cell).toBeVisible();
-});
 
-test('004 - Remove Invited user to an Org Successfully', async ({ page, baseURL }) => {
-  await page.goto(`${baseURL}/orgs`);
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('row', { name: 'Default Organization' }).locator('button').click();
-  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-  await page.waitForTimeout(2000);
-  await page.getByRole('row', { name: 'marvin.umali+eg99@deptagency.com' }).locator('button').nth(1).click();
-  await page.getByRole('menuitem', { name: 'Remove From Org' }).click();
-  await page.getByRole('button', { name: 'Remove User' }).nth(1).click();
-
-  // confirm deletion
-  page.getByText('marvin.umali+eg99@deptagency.com has been removed from Default Organization');
-  const cell = page.getByRole('cell', {
-    name: 'marvin.umali+eg99@deptagency.com',
-    exact: true,
-  });
-
-  await expect(cell).toBeHidden();
-});
 
 */

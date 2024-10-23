@@ -455,12 +455,17 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare', // Required to create front-end/.nuxt/tsconfig.json
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
-  ['test-e2e']: 'pnpm run test-e2e:sys-admin && test-e2e:org-admin',
+  ['test-e2e']:
+    'pnpm run test-e2e:sys-admin && pnpm run test-e2e:org-admin && pnpm run test-e2e:lab-manager && pnpm run test-e2e:lab-technician',
   ['test-e2e:sys-admin']: 'USER_TYPE=sys-admin npx playwright test --project=quality-sys-admin',
   ['test-e2e:org-admin']: 'USER_TYPE=org-admin npx playwright test --project=quality-org-admin',
-  ['test-e2e:headed']: 'pnpm run test-e2e:org-admin:headed && pnpm run test-e2e:sys-admin:headed',
+  ['test-e2e:lab-manager']: 'USER_TYPE=lab-manager npx playwright test --project=quality-lab-manager',
+  ['test-e2e:lab-technician']: 'USER_TYPE=lab-technician npx playwright test --project=quality-lab-technician',
   ['test-e2e:sys-admin:headed']: 'USER_TYPE=sys-admin npx playwright test --project=quality-sys-admin --ui',
   ['test-e2e:org-admin:headed']: 'USER_TYPE=org-admin npx playwright test --project=quality-org-admin --ui',
+  ['test-e2e:lab-manager:headed']: 'USER_TYPE=lab-manager npx playwright test --project=quality-lab-manager --ui',
+  ['test-e2e:lab-technician:headed']:
+    'USER_TYPE=lab-technician npx playwright test --project=quality-lab-technician --ui',
   ['nuxt-reset']: 'nuxt cleanup',
   ['nftower-spec-to-zod']: "pnpm typed-openapi ../shared-lib/src/app/types/nf-tower/seqera-api-latest.yml -r 'zod'",
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",

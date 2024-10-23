@@ -11,6 +11,10 @@ interface EnvConfig {
   sysAdminPassword: string | undefined;
   orgAdminEmail: string | undefined;
   orgAdminPassword: string | undefined;
+  labManagerEmail: string | undefined;
+  labManagerPassword: string | undefined;
+  labTechnicianEmail: string | undefined;
+  labTechnicianPassword: string | undefined;
 }
 
 /**
@@ -22,6 +26,10 @@ function getConfigurationSettings(): EnvConfig {
   let orgAdminPassword: string | undefined;
   let sysAdminEmail: string | undefined;
   let sysAdminPassword: string | undefined;
+  let labManagerEmail: string | undefined;
+  let labManagerPassword: string | undefined;
+  let labTechnicianEmail: string | undefined;
+  let labTechnicianPassword: string | undefined;
 
   if (process.env.CI === 'true') {
     // CI/CD Pipeline uses ENV parameters
@@ -30,6 +38,10 @@ function getConfigurationSettings(): EnvConfig {
     orgAdminPassword = process.env.ORG_ADMIN_PASSWORD;
     sysAdminEmail = process.env.SYSTEM_ADMIN_EMAIL;
     sysAdminPassword = process.env.SYSTEM_ADMIN_PASSWORD;
+    labManagerEmail = process.env.LAB_MANAGER_EMAIL;
+    labManagerPassword = process.env.LAB_MANAGER_PASSWORD;
+    labTechnicianEmail = process.env.LAB_TECHNICIAN_EMAIL;
+    labTechnicianPassword = process.env.LAB_TECHNICIAN_PASSWORD;
   } else {
     // Load the configurations from local configuration file
     const configurations = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));
@@ -64,6 +76,10 @@ function getConfigurationSettings(): EnvConfig {
     sysAdminPassword = envConfig['back-end']['sys-admin-password'];
     orgAdminEmail = envConfig['back-end']['org-admin-email'];
     orgAdminPassword = envConfig['back-end']['org-admin-password'];
+    labManagerEmail = envConfig['back-end']['lab-manager-email'];
+    labManagerPassword = envConfig['back-end']['lab-manager-password'];
+    labTechnicianEmail = envConfig['back-end']['lab-technician-email'];
+    labTechnicianPassword = envConfig['back-end']['lab-technician-password'];
   }
 
   return {
@@ -72,6 +88,10 @@ function getConfigurationSettings(): EnvConfig {
     sysAdminPassword,
     orgAdminEmail,
     orgAdminPassword,
+    labManagerEmail,
+    labManagerPassword,
+    labTechnicianEmail,
+    labTechnicianPassword,
   };
 }
 

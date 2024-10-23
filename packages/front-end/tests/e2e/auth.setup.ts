@@ -3,7 +3,7 @@ import { envConfig } from '../../config/env-config';
 import * as fs from 'fs';
 import * as path from 'path';
 
-type UserType = 'sys-admin' | 'org-admin';
+type UserType = 'sys-admin' | 'org-admin' | 'lab-manager' | 'lab-technician';
 
 interface Credentials {
   email: string;
@@ -13,6 +13,8 @@ interface Credentials {
 const authFileMap: Record<UserType, string> = {
   'sys-admin': './tests/e2e/.auth/sys-admin.json',
   'org-admin': './tests/e2e/.auth/org-admin.json',
+  'lab-manager': './tests/e2e/.auth/lab-manager.json',
+  'lab-technician': './tests/e2e/.auth/lab-technician.json',
 };
 
 const getCredentials = (email: string | undefined, password: string | undefined): Credentials => {
@@ -29,6 +31,8 @@ const getCredentials = (email: string | undefined, password: string | undefined)
 const credentialsMap: Record<UserType, Credentials> = {
   'sys-admin': getCredentials(envConfig.sysAdminEmail, envConfig.sysAdminPassword),
   'org-admin': getCredentials(envConfig.orgAdminEmail, envConfig.orgAdminPassword),
+  'lab-manager': getCredentials(envConfig.labManagerEmail, envConfig.labManagerPassword),
+  'lab-technician': getCredentials(envConfig.labTechnicianEmail, envConfig.labTechnicianPassword),
 };
 
 /**
@@ -91,7 +95,7 @@ async function signInAndSaveState(
 async function globalSetup(config: FullConfig) {
   const userType = process.env.USER_TYPE as UserType;
 
-  if (!userType || !['sys-admin', 'org-admin'].includes(userType)) {
+  if (!userType || !['sys-admin', 'org-admin', 'lab-manager', 'lab-technician'].includes(userType)) {
     throw new Error(`Invalid or missing USER_TYPE environment variable: ${userType}`);
   }
 

@@ -45,6 +45,24 @@ const config: PlaywrightTestConfig = {
       },
       dependencies: ['setup'],
     },
+    {
+      name: 'quality-lab-manager',
+      testMatch: 'tests/e2e/lab-manager/*.spec.e2e.ts',
+      use: {
+        baseURL: `https://${envConfig.appDomainName}`,
+        storageState: './tests/e2e/.auth/lab-manager.json',
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'quality-lab-technician',
+      testMatch: 'tests/e2e/lab-technician/*.spec.e2e.ts',
+      use: {
+        baseURL: `https://${envConfig.appDomainName}`,
+        storageState: './tests/e2e/.auth/lab-technician.json',
+      },
+      dependencies: ['setup'],
+    },
   ],
   reporter:
     process.env.CI && process.env.SLACK_E2E_TEST_WEBHOOK_URL

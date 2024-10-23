@@ -2,7 +2,7 @@
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
   import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
-  import { FileDownloadUrlResponse } from '@/packages/shared-lib/src/app/types/easy-genomics/file/download/request-file-download-url';
+  import { FileDownloadResponse } from '@/packages/shared-lib/src/app/types/nf-tower/file/request-file-download';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -10,9 +10,10 @@
 
   const workflowStore = useWorkflowStore();
 
-  const labId = $route.params.labId as string;
-  const workflowId = $route.params.workflowId as string;
+  const labId: string = $route.params.labId;
+  const workflowId: string = $route.params.workflowId;
   const workflowReports = ref([]);
+  let workflowBasePath = '';
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
@@ -79,13 +80,14 @@
 
   onBeforeMount(initData);
 
-  async function downloadReport(fileName: string, path: string) {
-    const report: FileDownloadUrlResponse = await $api.workflows.downloadReport(labId, path);
-    if (report) {
+  async function downloadReport(fileName: string, path: string, size: number) {
+    const fileDownload: FileDownloadResponse = await $api.workflows.getNextFlowFileDownload(labId, path);
+    if (fileDownload) {
       const link = document.createElement('a');
-      link.href = report.DownloadUrl;
+      link.href = `data:${size};base64,${fileDownload.Data}`;
       link.download = fileName;
       link.click();
+      URL.revokeObjectURL(link.href);
     }
   }
 
@@ -94,6 +96,7 @@
     await loadWorkflow();
     const res = await $api.workflows.readWorkflowReports(workflowId, labId);
     workflowReports.value = res.reports;
+    workflowBasePath = res.basePath;
     useUiStore().setRequestComplete('loadWorkflow');
   }
 </script>
@@ -133,7 +136,7 @@
                 label="Download"
                 variant="secondary"
                 size="sm"
-                @click="downloadReport(row.fileName, row.externalPath)"
+                @click="downloadReport(row.fileName, `${workflowBasePath}${row.path}`, row.size)"
                 :icon-right="false"
                 icon="i-heroicons-arrow-down-tray"
               />

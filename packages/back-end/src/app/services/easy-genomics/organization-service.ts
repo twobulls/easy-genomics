@@ -207,7 +207,7 @@ export class OrganizationService extends DynamoDBService implements Service {
           Delete: {
             TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
             Key: {
-              Value: { S: organization.Name.toString() },
+              Value: { S: organization.Name.toLowerCase() },
               Type: { S: 'organization-name' },
             },
           },

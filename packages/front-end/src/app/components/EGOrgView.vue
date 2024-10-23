@@ -13,7 +13,6 @@
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
 
   const props = defineProps<{
-    admin: boolean;
     orgId: string;
   }>();
 

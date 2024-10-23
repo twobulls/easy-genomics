@@ -162,6 +162,8 @@
     }
   }
 
+  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLab(useUserStore().currentOrgId));
+
   /**
    * Retrieves the lab details from the server and sets the form state.
    */
@@ -456,7 +458,7 @@
         :size="ButtonSizeEnum.enum.sm"
         type="submit"
         label="Edit"
-        :disabled="!useUserStore().canEditLab(useUserStore().currentOrgId)"
+        :disabled="useUserStore().isSuperuser || !hasEditPermission"
         @click="switchToFormMode(LabDetailsFormModeEnum.enum.Edit)"
       />
     </div>

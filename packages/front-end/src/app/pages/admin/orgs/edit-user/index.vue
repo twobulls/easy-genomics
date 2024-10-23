@@ -1,5 +1,5 @@
 <template>
   <EGAdminAlert />
 
-  <EGUserAccess admin :org-admin="false" />
+  <EGUserAccess :org-admin="false" />
 </template>

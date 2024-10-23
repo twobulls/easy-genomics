@@ -7,7 +7,7 @@
 </script>
 
 <template>
-  <EGUserAccess :admin="false" :org-admin="useUserStore().isOrgAdmin(useUserStore().currentOrgId)" />
+  <EGUserAccess :org-admin="useUserStore().isOrgAdmin(useUserStore().currentOrgId)" />
 </template>
 
 <style scoped></style>

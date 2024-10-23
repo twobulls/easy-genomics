@@ -46,7 +46,6 @@
           <!--          Workflows-->
           <!--        </ULink>-->
           <ULink
-            v-if="!useUserStore().isSuperuser"
             to="/labs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"

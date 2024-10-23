@@ -455,7 +455,7 @@ frontEndApp.addScripts({
   ['nuxt-prepare']: 'nuxt prepare', // Required to create front-end/.nuxt/tsconfig.json
   ['nuxt-preview']: 'nuxt preview',
   ['nuxt-postinstall']: 'nuxt prepare',
-  ['test-e2e']: 'pnpm run pnpm run test-e2e:sys-admin && test-e2e:org-admin',
+  ['test-e2e']: 'pnpm run test-e2e:sys-admin && test-e2e:org-admin',
   ['test-e2e:sys-admin']: 'USER_TYPE=sys-admin npx playwright test --project=quality-sys-admin',
   ['test-e2e:org-admin']: 'USER_TYPE=org-admin npx playwright test --project=quality-org-admin',
   ['test-e2e:headed']: 'pnpm run test-e2e:org-admin:headed && pnpm run test-e2e:sys-admin:headed',

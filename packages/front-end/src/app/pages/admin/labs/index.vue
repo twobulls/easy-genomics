@@ -7,7 +7,7 @@
 <template>
   <EGAdminAlert />
 
-  <EGOrgsList
+  <EGLabsList
     v-if="orgId === null"
     superuser
     @click-org="(org) => $router.push({ path: '/labs', query: { orgId: org.OrganizationId } })"

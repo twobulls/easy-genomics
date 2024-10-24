@@ -71,6 +71,11 @@ const useUserStore = defineStore('userStore', {
       (_state: UserStoreState) =>
       (orgId: string): boolean =>
         useUserStore().isOrgAdmin(orgId),
+
+    canAddLabUsers:
+      (_state: UserStoreState) =>
+      (orgId: string, labId: string): boolean =>
+        useUserStore().isOrgAdmin(orgId) || useUserStore().isLabManager(orgId, labId),
   },
 
   actions: {

@@ -138,6 +138,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.iam.addPolicyStatements('/easy-genomics/organization/list-organizations', [
       new PolicyStatement({
         resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+        ],
+        actions: ['dynamodb:GetItem'],
+      }),
+      new PolicyStatement({
+        resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
         ],
         actions: ['dynamodb:Scan'],
@@ -330,6 +336,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
     ]);
     // /easy-genomics/laboratory/list-laboratories
     this.iam.addPolicyStatements('/easy-genomics/laboratory/list-laboratories', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+        ],
+        actions: ['dynamodb:GetItem'],
+      }),
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import path from 'path';
 import { S3Construct } from '@easy-genomics/shared-lib/src/infra/constructs/s3-construct';
 import { FrontEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
-import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy, Tags } from 'aws-cdk-lib';
 import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
@@ -97,6 +97,8 @@ export class WwwHostingConstruct extends Construct {
   private setupS3Buckets = () => {
     const appDomainName: string = this.props.appDomainName;
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-www`, {});
+    Tags.of(s3).add('easy-genomics:s3-bucket-type', 'www');
+    Tags.of(s3).add('easy-genomics:s3-bucket-region', this.props.env.region!);
 
     let wwwBucketProps: BucketProps = {
       accessControl: BucketAccessControl.PRIVATE,

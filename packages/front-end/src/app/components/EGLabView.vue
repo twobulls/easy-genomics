@@ -217,6 +217,7 @@
           await getLabUsers();
         } else {
           await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
+          canAddUsers.value = useUserStore().canAddLabUsers(orgId, props.labId);
         }
       } else {
         // missing personal access token message
@@ -442,7 +443,12 @@
     :back-action="() => $router.push('/labs')"
     :show-back="true"
   >
-    <EGButton label="Add Lab Users" :disabled="!canAddUsers" @click="showAddUserModule = !showAddUserModule" />
+    <EGButton
+      label="Add Lab Users"
+      v-if="!superuser"
+      :disabled="!canAddUsers"
+      @click="showAddUserModule = !showAddUserModule"
+    />
     <EGAddLabUsersModule
       v-if="showAddUserModule"
       @added-user-to-lab="handleUserAddedToLab()"

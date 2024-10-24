@@ -18,7 +18,7 @@ import {
 import { UniqueReference } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/unique-reference';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { TestUserDetails } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
-import { NestedStack, RemovalPolicy } from 'aws-cdk-lib';
+import { NestedStack, RemovalPolicy, Tags } from 'aws-cdk-lib';
 import { Table } from 'aws-cdk-lib/aws-dynamodb';
 import { AwsCustomResource, AwsCustomResourcePolicy } from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
@@ -44,6 +44,8 @@ export class DataProvisioningNestedStack extends NestedStack {
     });
     // Setup S3 Construct
     this.s3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-bucket`, {});
+    Tags.of(this.s3Construct).add('easy-genomics:s3-bucket-type', 'data');
+    Tags.of(this.s3Construct).add('easy-genomics:s3-bucket-region', this.props.env.region!);
 
     if (this.props.sysAdminEmail && this.props.sysAdminPassword) {
       try {

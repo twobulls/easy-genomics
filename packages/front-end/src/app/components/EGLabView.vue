@@ -217,6 +217,7 @@
           await getLabUsers();
         } else {
           await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
+          canAddUsers.value = useUserStore().canAddLabUsers(orgId, props.labId);
         }
       } else {
         // missing personal access token message

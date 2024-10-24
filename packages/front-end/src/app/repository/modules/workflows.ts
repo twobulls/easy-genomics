@@ -1,8 +1,7 @@
-import { FileDownloadResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/files/request-file-download';
-import {
-  RequestFileDownload,
-  FileDownloadResponse,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/files/request-file-download';
+import { FileDownloadUrlResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/file/request-file-download-url';
+import { FileDownloadResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/nf-tower/file/request-file-download';
+import { FileDownloadUrlResponse } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-file-download-url';
+import { FileDownloadResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/file/request-file-download';
 import {
   CreateWorkflowLaunchRequest,
   ListWorkflowsResponse,
@@ -68,19 +67,55 @@ class WorkflowsModule extends HttpFactory {
     return res;
   }
 
-  async downloadReport(labId: string, filePath: string): Promise<FileDownloadResponse> {
-    const res = await this.call<RequestFileDownload>('POST', '/files/request-file-download', {
+  /**
+   * Calls '/easy-genomics/file/download/request-file-download-url' API to
+   * retrieve pre-signed S3 Download URL for secure file download.
+   *
+   * This method and API is only suitable for us when downloading a file that
+   * exists within an S3 Bucket that the AWS Account has access to and is within
+   * the same AWS Region.
+   *
+   * @param labId
+   * @param s3Uri
+   */
+  async getFileDownloadUrl(labId: string, s3Uri: string): Promise<FileDownloadUrlResponse> {
+    const res = await this.call<FileDownloadUrlResponse>('POST', '/file/download/request-file-download-url', {
       LaboratoryId: labId,
-      Path: filePath,
+      S3Uri: s3Uri,
     });
 
     if (!res) {
-      console.error('Error calling download report API');
-      throw new Error('Failed to download report');
+      console.error('Error calling file download url API');
+      throw new Error('Failed to get file download url');
+    }
+
+    validateApiResponse(FileDownloadUrlResponseSchema, res);
+    return res;
+  }
+
+  /**
+   * Calls '/nf-tower/file/request-file-download' API to download the contents
+   * of a specified NextFlow Tower Workflow Run results file.
+   *
+   * @param labId
+   * @param contentUri
+   */
+  async getNextFlowFileDownload(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+    const res: FileDownloadResponse | undefined = await this.callNextflowTower<FileDownloadResponse>(
+      'POST',
+      '/file/request-file-download',
+      {
+        LaboratoryId: labId,
+        ContentUri: contentUri,
+      },
+    );
+
+    if (!res) {
+      console.error('Error calling file download API');
+      throw new Error('Failed to perform file download');
     }
 
     validateApiResponse(FileDownloadResponseSchema, res);
-
     return res;
   }
 

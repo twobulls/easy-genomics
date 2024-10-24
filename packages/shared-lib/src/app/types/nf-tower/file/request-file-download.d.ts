@@ -1,12 +1,9 @@
 // request-file-download API type definition
 export type RequestFileDownload = {
   LaboratoryId: string;
-  Path: string;
-  FileName?: string;
-  MimeType?: string;
-  Size?: number;
+  ContentUri: string;
 };
 
 export type FileDownloadResponse = {
-  DownloadUrl: string;
-}
+  Data: string; // Base64 encoded
+};

@@ -1,7 +1,7 @@
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { ExpiredOrganizationAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { ExpiredOrganizationAccessError, UserNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
 import { UserService } from '@BE/services/easy-genomics/user-service';
@@ -33,8 +33,12 @@ export const handler: Handler = async (
       const response: Organization[] = await organizationService.list();
       return buildResponse(200, JSON.stringify(response), event);
     } else {
-      const userId = event.requestContext.authorizer.claims['cognito:username'];
-      const user: User = await userService.get(userId);
+      const userEmail = event.requestContext.authorizer.claims.email;
+      const user: User | undefined = (await userService.queryByEmail(userEmail)).shift();
+
+      if (!user) {
+        throw new UserNotFoundError();
+      }
 
       if (!verifyCurrentOrganizationAccess(event, user)) {
         throw new ExpiredOrganizationAccessError();

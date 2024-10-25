@@ -6,6 +6,7 @@ import {
   NoLabratoriesFoundError,
   RequiredIdNotFoundError,
   UnauthorizedAccessError,
+  UserNotFoundError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
@@ -36,8 +37,12 @@ export const handler: Handler = async (
 
     if (!isSystemAdmin) {
       // For regular users only
-      const userId = event.requestContext.authorizer.claims['cognito:username'];
-      const user: User = await userService.get(userId);
+      const userEmail = event.requestContext.authorizer.claims.email;
+      const user: User | undefined = (await userService.queryByEmail(userEmail)).shift();
+
+      if (!user) {
+        throw new UserNotFoundError();
+      }
 
       // Check if users org access is current, if not let the FE know
       if (!verifyCurrentOrganizationAccess(event, user)) {

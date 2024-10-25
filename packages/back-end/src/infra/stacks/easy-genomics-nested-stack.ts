@@ -139,8 +139,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
         ],
-        actions: ['dynamodb:GetItem'],
+        actions: ['dynamodb:Query'],
       }),
       new PolicyStatement({
         resources: [
@@ -339,8 +340,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
         ],
-        actions: ['dynamodb:GetItem'],
+        actions: ['dynamodb:Query'],
       }),
       new PolicyStatement({
         resources: [

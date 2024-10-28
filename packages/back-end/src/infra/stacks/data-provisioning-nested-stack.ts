@@ -45,7 +45,6 @@ export class DataProvisioningNestedStack extends NestedStack {
     // Setup S3 Construct
     this.s3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-bucket`, {});
     Tags.of(this.s3Construct).add('easy-genomics:s3-bucket-type', 'data');
-    Tags.of(this.s3Construct).add('easy-genomics:s3-bucket-region', this.props.env.region!);
 
     if (this.props.sysAdminEmail && this.props.sysAdminPassword) {
       try {

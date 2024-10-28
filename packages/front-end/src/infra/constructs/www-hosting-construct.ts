@@ -98,7 +98,6 @@ export class WwwHostingConstruct extends Construct {
     const appDomainName: string = this.props.appDomainName;
     const s3: S3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-www`, {});
     Tags.of(s3).add('easy-genomics:s3-bucket-type', 'www');
-    Tags.of(s3).add('easy-genomics:s3-bucket-region', this.props.env.region!);
 
     let wwwBucketProps: BucketProps = {
       accessControl: BucketAccessControl.PRIVATE,

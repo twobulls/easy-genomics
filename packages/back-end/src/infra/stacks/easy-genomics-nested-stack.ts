@@ -138,6 +138,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.iam.addPolicyStatements('/easy-genomics/organization/list-organizations', [
       new PolicyStatement({
         resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
         ],
         actions: ['dynamodb:Scan'],
@@ -330,6 +337,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
     ]);
     // /easy-genomics/laboratory/list-laboratories
     this.iam.addPolicyStatements('/easy-genomics/laboratory/list-laboratories', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
@@ -687,13 +701,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.iam.addPolicyStatements('/easy-genomics/list-buckets', [
       new PolicyStatement({
         resources: ['arn:aws:s3:::*'],
-        actions: ['s3:ListAllMyBuckets'],
+        actions: ['s3:ListAllMyBuckets', 's3:GetBucketTagging'],
         effect: Effect.ALLOW,
       }),
     ]);
 
-    // /easy-genomics/files/request-file-download
-    this.iam.addPolicyStatements('/easy-genomics/files/request-file-download', [
+    // /easy-genomics/file/request-file-download-url
+    this.iam.addPolicyStatements('/easy-genomics/file/request-file-download-url', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
@@ -702,8 +716,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
         actions: ['dynamodb:Query'],
       }),
       new PolicyStatement({
+        resources: ['arn:aws:s3:::*'],
+        actions: ['s3:GetBucketLocation'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
         resources: ['arn:aws:s3:::*/*'],
-        actions: ['s3:GetObject'], // Required to generate pre-signed S3 Urls for uploading with GetObject request
+        actions: ['s3:GetObject', 's3:ListBucket'], // Required to generate pre-signed S3 Urls for downloading with GetObject request
         effect: Effect.ALLOW,
       }),
     ]);

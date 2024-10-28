@@ -24,23 +24,31 @@ export async function httpRequest<T>(
   body?: object | {},
 ): Promise<T> {
   try {
+    const requestHeaders: Record<string, string> = {
+      'Accept': '*/*',
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
+      ...headers,
+    };
+
     const request: RequestInit = {
       method: method,
-      headers: {
-        'accept': 'application/json',
-        'content-type': 'application/json',
-        'cache-control': 'no-cache',
-        ...headers,
-      },
+      headers: requestHeaders,
       ...(method === REST_API_METHOD.POST || method === REST_API_METHOD.PUT || method === REST_API_METHOD.PATCH
         ? { body: JSON.stringify(body) }
         : {}),
+      ...(requestHeaders['Content-Type'] === 'application/octet-stream' ? { responseType: 'arraybuffer' } : {}),
     };
 
     const response = await fetch(url, request);
     switch (response.status) {
       case 200:
-        return await response.json().then((data) => <T>data);
+        if (requestHeaders['Content-Type'] === 'application/octet-stream') {
+          const data: ArrayBuffer = await response.arrayBuffer();
+          return <T>data;
+        } else {
+          return await response.json().then((data) => <T>data);
+        }
       case 204: // No Content
         return <T>{};
       default:

@@ -56,6 +56,15 @@ export class UnauthorizedAccessError extends HttpError {
   }
 }
 
+/**
+ * The users organization access in Authorizer is out of date
+ */
+export class ExpiredOrganizationAccessError extends HttpError {
+  constructor() {
+    super('Expired organization access', 409, 'EG-110');
+  }
+}
+
 // Organization Errors
 
 /**

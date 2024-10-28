@@ -1,6 +1,4 @@
 import { test, expect } from 'playwright/test';
-//const invitemail = 'marvin.umali+eg99@deptagency.com';
-//const orgName = 'Automated Org';
 const orgName = 'Default Organization';
 const labName = 'Playwright test lab';
 const labNameUpdated = 'Automated Lab - Updated';
@@ -321,9 +319,9 @@ test('07 - Add a user to a Laboratory Successfully', async ({ page, baseURL }) =
   }
 });
 
+//TO DO
+//The scripts below are TO DO and will included in the file soon
 /*
-Other to follow
-
 test('Remove user from a Laboratory containing users', async ({ page, baseURL }) => {
 });
 

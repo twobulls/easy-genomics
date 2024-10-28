@@ -701,7 +701,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.iam.addPolicyStatements('/easy-genomics/list-buckets', [
       new PolicyStatement({
         resources: ['arn:aws:s3:::*'],
-        actions: ['s3:ListAllMyBuckets'],
+        actions: ['s3:ListAllMyBuckets', 's3:GetBucketTagging'],
         effect: Effect.ALLOW,
       }),
     ]);

@@ -19,6 +19,9 @@ import {
   GetBucketLocationCommand,
   GetBucketLocationCommandInput,
   GetBucketLocationCommandOutput,
+  GetBucketTaggingCommand,
+  GetBucketTaggingCommandInput,
+  GetBucketTaggingCommandOutput,
   GetObjectCommand,
   GetObjectCommandInput,
   GetObjectCommandOutput,
@@ -60,6 +63,7 @@ export enum S3Command {
   DELETE_BUCKET = 'delete-bucket',
   LIST_BUCKETS = 'list-buckets',
   GET_BUCKET_LOCATION = 'get-bucket-location',
+  GET_BUCKET_TAGGING = 'get-bucket-tagging',
   PUT_BUCKET_CORS = 'put-bucket-cors',
   PUT_BUCKET_LIFECYCLE_CONFIGURATION = 'put-bucket-lifecycle-configuration',
   // Manage S3 Bucket objects
@@ -152,6 +156,16 @@ export class S3Service {
     );
   };
 
+  public getBucketTagging = async (
+    getBucketTaggingInput: GetBucketTaggingCommandInput,
+  ): Promise<GetBucketTaggingCommandOutput> => {
+    return this.s3Request<GetBucketTaggingCommandInput, GetBucketTaggingCommandOutput>(
+      S3Command.GET_BUCKET_TAGGING,
+      getBucketTaggingInput,
+      true,
+    );
+  };
+
   public getPreSignedUploadUrl = async (putObjectInput: PutObjectCommandInput): Promise<string> => {
     return getSignedUrl(this.s3Client, this.getS3Command(S3Command.PUT_OBJECT, putObjectInput), { expiresIn: 3600 });
   };
@@ -183,6 +197,7 @@ export class S3Service {
   private s3Request = async <RequestType, ResponseType>(
     command: S3Command,
     data?: RequestType,
+    suppressError?: boolean,
   ): Promise<ResponseType> => {
     try {
       console.log(
@@ -191,11 +206,13 @@ export class S3Service {
 
       return await this.s3Client.send(this.getS3Command(command, data));
     } catch (error: any) {
-      console.error(
-        `[s3-service : s3Request] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
-        error,
-      );
-      throw this.handleError(error);
+      if (!(suppressError ? suppressError : false)) {
+        console.error(
+          `[s3-service : s3Request] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
+          error,
+        );
+        throw this.handleError(error);
+      }
     }
   };
 
@@ -234,6 +251,8 @@ export class S3Service {
         return new DeleteBucketCommand(data as DeleteBucketCommandInput);
       case S3Command.GET_BUCKET_LOCATION:
         return new GetBucketLocationCommand(data as GetBucketLocationCommandInput);
+      case S3Command.GET_BUCKET_TAGGING:
+        return new GetBucketTaggingCommand(data as GetBucketTaggingCommandInput);
       case S3Command.PUT_BUCKET_CORS:
         return new PutBucketCorsCommand(data as PutBucketCorsCommandInput);
       case S3Command.PUT_BUCKET_LIFECYCLE_CONFIGURATION:

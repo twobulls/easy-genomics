@@ -118,6 +118,14 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/client-sns",
+      "type": "runtime"
+    },
+    {
+      "name": "@aws-sdk/client-sqs",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/client-ssm",
       "type": "runtime"
     },

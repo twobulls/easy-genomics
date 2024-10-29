@@ -601,8 +601,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: [
           `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.appDomainName}`,
-          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@twobulls.com`, // TODO: remove (only for Dev/Quality testing purposes)
-          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@deptagency.com`, // TODO: remove (only for Dev/Quality testing purposes)
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@*`,
           `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
         ],
         actions: ['ses:SendTemplatedEmail'],

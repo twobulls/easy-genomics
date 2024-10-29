@@ -92,7 +92,7 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
     await page.getByRole('button', { name: 'Invite users' }).click();
     await page.waitForTimeout(2000);
     await page.getByPlaceholder('Enter Email').click();
-    await page.keyboard.type(envConfig.testInviteEmail);
+    await page.keyboard.type(`${envConfig.testInviteEmail}`);
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     // Confirm

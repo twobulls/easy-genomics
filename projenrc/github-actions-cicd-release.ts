@@ -135,6 +135,10 @@ export class GithubActionsCICDRelease extends Component {
       'LAB_MANAGER_PASSWORD': '${{ secrets.LAB_MANAGER_PASSWORD }}',
       'LAB_TECHNICIAN_EMAIL': '${{ vars.LAB_TECHNICIAN_EMAIL }}',
       'LAB_TECHNICIAN_PASSWORD': '${{ secrets.LAB_TECHNICIAN_PASSWORD }}',
+      'TEST_ACCESS_TOKEN': '${{ secrets.TEST_ACCESS_TOKEN }}',
+      'TEST_S3_URL': '${{ secrets.TEST_S3_URL }}',
+      'TEST_WORKSPACE_ID': '${{ secrets.TEST_WORKSPACE_ID }}',
+      'TEST_INVITE_EMAIL': '${{ vars.TEST_INVITE_EMAIL }}',
       // Front-End specific settings
       'SLACK_E2E_TEST_WEBHOOK_URL': '${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}',
     };

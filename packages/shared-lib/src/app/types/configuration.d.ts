@@ -29,6 +29,7 @@ export interface ConfigurationSettings {
     ['test-workspace-id']?: string;
     ['test-access-token']?: string;
     ['test-s3-url']?: string;
+    ['test-invite-email']?: string;
     ['seqera-api-base-url']?: string; // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
     ['vpc-peering']?: VpcPeeringSettings; // Optional: VPC Peering Accepter details
   };

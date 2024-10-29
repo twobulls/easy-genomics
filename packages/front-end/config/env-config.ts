@@ -57,7 +57,6 @@ function getConfigurationSettings(): EnvConfig {
   } else {
     // Load the configurations from local configuration file
     const configurations = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));
-    console.log('configurations', configurations);
 
     if (configurations.length === 0) {
       throw new Error('Easy Genomics Configuration(s) missing / invalid, please update: easy-genomics.yaml');

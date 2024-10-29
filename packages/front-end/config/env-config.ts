@@ -15,6 +15,9 @@ interface EnvConfig {
   labManagerPassword: string | undefined;
   labTechnicianEmail: string | undefined;
   labTechnicianPassword: string | undefined;
+  testWorkspaceId: string | undefined;
+  testAccessToken: string | undefined;
+  testS3Url: string | undefined;
 }
 
 /**
@@ -30,6 +33,9 @@ function getConfigurationSettings(): EnvConfig {
   let labManagerPassword: string | undefined;
   let labTechnicianEmail: string | undefined;
   let labTechnicianPassword: string | undefined;
+  let testWorkspaceId: string | undefined;
+  let testAccessToken: string | undefined;
+  let testS3Url: string | undefined;
 
   if (process.env.CI === 'true') {
     // CI/CD Pipeline uses ENV parameters
@@ -42,6 +48,9 @@ function getConfigurationSettings(): EnvConfig {
     labManagerPassword = process.env.LAB_MANAGER_PASSWORD;
     labTechnicianEmail = process.env.LAB_TECHNICIAN_EMAIL;
     labTechnicianPassword = process.env.LAB_TECHNICIAN_PASSWORD;
+    testWorkspaceId = process.env.TEST_WORKSPACE_ID;
+    testAccessToken = process.env.TEST_ACCESS_TOKEN;
+    testS3Url = process.env.TEST_S3_URL;
   } else {
     // Load the configurations from local configuration file
     const configurations = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));
@@ -80,6 +89,9 @@ function getConfigurationSettings(): EnvConfig {
     labManagerPassword = envConfig['back-end']['lab-manager-password'];
     labTechnicianEmail = envConfig['back-end']['lab-technician-email'];
     labTechnicianPassword = envConfig['back-end']['lab-technician-password'];
+    testWorkspaceId = envConfig['back-end']['test-workspace-id'];
+    testAccessToken = envConfig['back-end']['test-access-token'];
+    testS3Url = envConfig['back-end']['test-s3-url'];
   }
 
   return {
@@ -92,7 +104,9 @@ function getConfigurationSettings(): EnvConfig {
     labManagerPassword,
     labTechnicianEmail,
     labTechnicianPassword,
+    testWorkspaceId,
+    testAccessToken,
+    testS3Url,
   };
 }
-
 export const envConfig = getConfigurationSettings();

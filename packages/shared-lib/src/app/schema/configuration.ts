@@ -28,6 +28,9 @@ export const ConfigurationSettingsSchema = z
       ['lab-manager-password']: z.string().nullable().optional(), // Initial Cognito password
       ['lab-technician-email']: z.string().nullable().optional(),
       ['lab-technician-password']: z.string().nullable().optional(), // Initial Cognito password
+      ['test-workspace-id']: z.string().nullable().optional(),
+      ['test-access-token']: z.string().nullable().optional(),
+      ['test-s3-url']: z.string().nullable().optional(),
       ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
       ['vpc-peering']: z.object(VpcPeeringSchema.shape).nullable().optional(), // Optional: VPC Peering Accepter details
     }),

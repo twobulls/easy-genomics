@@ -17,3 +17,10 @@ easy-genomics:
             sys-admin-password: # System Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
             org-admin-email: 'admin@easygenomics.org' # Replace with your institution's preferred Admin account
             org-admin-password: # Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+            lab-manager-email: 'lab.manager@easygenomics.org'
+            lab-manager-password: # Lab Admin Password
+            lab-technician-email: 'lab.technician@easygenomics.org'
+            lab-technician-password: # Lab Technician Password
+            test-workspace-id: '12345678901234'
+            test-access-token: 'dummy-access-token-example-donotuse-1234567890'
+            test-s3-url: '123456789012-dev-example-lab-bucket'

@@ -28,7 +28,7 @@ const config: PlaywrightTestConfig = {
       },
     },
     {
-      name: 'quality-sys-admin',
+      name: 'sys-admin',
       testMatch: 'tests/e2e/sys-admin/*.spec.e2e.ts',
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
@@ -37,7 +37,7 @@ const config: PlaywrightTestConfig = {
       dependencies: ['setup'],
     },
     {
-      name: 'quality-org-admin',
+      name: 'org-admin',
       testMatch: 'tests/e2e/org-admin/*.spec.e2e.ts',
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
@@ -46,7 +46,7 @@ const config: PlaywrightTestConfig = {
       dependencies: ['setup'],
     },
     {
-      name: 'quality-lab-manager',
+      name: 'lab-manager',
       testMatch: 'tests/e2e/lab-manager/*.spec.e2e.ts',
       use: {
         baseURL: `https://${envConfig.appDomainName}`,
@@ -55,7 +55,7 @@ const config: PlaywrightTestConfig = {
       dependencies: ['setup'],
     },
     {
-      name: 'quality-lab-technician',
+      name: 'lab-technician',
       testMatch: 'tests/e2e/lab-technician/*.spec.e2e.ts',
       use: {
         baseURL: `https://${envConfig.appDomainName}`,

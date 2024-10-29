@@ -1,10 +1,9 @@
 import { test, expect } from 'playwright/test';
+import { envConfig } from '../../../config/env-config';
+
 const orgName = 'Default Organization';
 const labName = 'Playwright test lab';
 const labNameUpdated = 'Automated Lab - Updated';
-const s3URL = '851725267090-dev-quality-lab-bucket';
-const workspaceID = '40230138858677';
-const accessToken = 'eyJ0aWQiOiA5NjY5fS5jNTYxOGNmNmVmNzY4ZWU4M2JhZWUzMTQ0MGMxNjRjNTYwYWZlZmRm';
 
 const labManagerName = 'Lab Manager';
 
@@ -12,7 +11,6 @@ test('01 - Remove user from a Laboratory Successfully', async ({ page, baseURL }
   // Check if the user has been added already to a Lab
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
-
   let hasTestLab = true;
   try {
     hasTestLab = await page.getByRole('row', { name: labName }).isVisible();
@@ -162,7 +160,7 @@ test('03 - Create a Laboratory Successfully', async ({ page, baseURL }) => {
   await page.getByPlaceholder('Describe your lab and what').click();
   await page.getByPlaceholder('Describe your lab and what').fill('Playwright test lab description');
   await page.getByLabel('Default S3 bucket directory').click();
-  await page.getByText(s3URL).click();
+  await page.getByText(envConfig.testS3Url).click();
   await page.getByLabel('Workspace ID').click();
   await page.getByLabel('Workspace ID').fill('');
   await page.getByLabel('Personal Access Token').click();
@@ -206,9 +204,9 @@ test('04 - Update a Laboratory Successfully', async ({ page, baseURL }) => {
     await page.getByPlaceholder('Describe your lab and what').click();
     await page.getByPlaceholder('Describe your lab and what').fill('Automation test lab description');
     await page.getByLabel('Workspace ID').click();
-    await page.getByLabel('Workspace ID').fill(workspaceID);
+    await page.getByLabel('Workspace ID').fill(envConfig.testWorkspaceId);
     await page.getByLabel('Personal Access Token').click();
-    await page.getByLabel('Personal Access Token').fill(accessToken);
+    await page.getByLabel('Personal Access Token').fill(envConfig.testAccessToken);
 
     await page.getByRole('button', { name: 'Save Changes' }).click();
     await page.waitForTimeout(2000);

@@ -2,9 +2,15 @@ import { GetParameterCommandOutput } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { DescribeWorkflowReportsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/workflow-reports';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import { LaboratoryNotFoundError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
+import {
+  validateLaboratoryManagerAccess,
+  validateLaboratoryTechnicianAccess,
+  validateOrganizationAdminAccess,
+} from '@BE/utils/auth-utils';
 import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
@@ -35,6 +41,21 @@ export const handler: Handler = async (
     if (laboratoryId === '') throw new Error('Required laboratoryId is missing');
 
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
+
+    if (!laboratory) {
+      throw new LaboratoryNotFoundError();
+    }
+
+    // Only available for Org Admins or Laboratory Managers and Technicians
+    if (
+      !(
+        validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+        validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId) ||
+        validateLaboratoryTechnicianAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
+      )
+    ) {
+      throw new UnauthorizedAccessError();
+    }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
     const getParameterResponse: GetParameterCommandOutput = await ssmService.getParameter({

@@ -7,11 +7,18 @@ import {
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   LaboratoryAccessTokenUnavailableError,
+  LaboratoryNotFoundError,
   RequiredIdNotFoundError,
+  UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
+import {
+  validateLaboratoryManagerAccess,
+  validateLaboratoryTechnicianAccess,
+  validateOrganizationAdminAccess,
+} from '@BE/utils/auth-utils';
 import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
@@ -38,6 +45,23 @@ export const handler: Handler = async (
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
     if (laboratoryId === '') throw new RequiredIdNotFoundError('laboratoryId');
 
+    const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
+
+    if (!laboratory) {
+      throw new LaboratoryNotFoundError();
+    }
+
+    // Only available for Org Admins or Laboratory Managers and Technicians
+    if (
+      !(
+        validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+        validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId) ||
+        validateLaboratoryTechnicianAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
+      )
+    ) {
+      throw new UnauthorizedAccessError();
+    }
+
     console.log('event.isBase64Encoded:', event.isBase64Encoded);
 
     const rawBody = event.isBase64Encoded ? atob(event.body!) : event.body!;
@@ -45,8 +69,6 @@ export const handler: Handler = async (
 
     const createWorkflowLaunchRequest: CreateWorkflowLaunchRequest = JSON.parse(rawBody);
     console.log('createWorkflowLaunchRequest:', createWorkflowLaunchRequest);
-
-    const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
     const getParameterResponse: GetParameterCommandOutput = await ssmService

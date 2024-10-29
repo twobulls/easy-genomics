@@ -1,5 +1,5 @@
 import { test, expect } from 'playwright/test';
-const invitemail = 'marvin.umali+eg99@deptagency.com';
+const inviteEmail = 'marvin.umali+eg99@deptagency.com';
 const orgName = 'Automated Org';
 const orgNameUpdated = 'Automated Org - Updated';
 
@@ -8,32 +8,37 @@ test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
   await page.waitForLoadState('networkidle');
 
   // Check if the org exists
-  let Org1Exists = true;
+  let org1Exists = false;
+  let org2Exists = false;
+
   try {
-    Org1Exists = await page.getByRole('row', { name: orgName }).isVisible();
+    // Attempt to check the visibility of the element
+    org1Exists = await page.getByRole('row', { name: orgName, exact: true }).isVisible();
   } catch (error) {
-    console.log('Org does not exists!', error);
+    // This block will catch errors such as selector issues or other Playwright API errors
+    console.error(error);
   }
 
-  if (Org1Exists) {
+  if (org1Exists) {
     //this will Org if it exists
-    await page.getByRole('row', { name: orgName }).locator('button').click();
+    await page.getByRole('row', { name: orgName, exact: true }).locator('button').click();
     await page.getByRole('menuitem', { name: 'Remove' }).click();
     await page.getByRole('button', { name: 'Remove Organization' }).click();
     await page.waitForTimeout(2000);
     await expect(page.getByText('Organization deleted').nth(0)).toBeVisible();
   }
 
-  let Org2Exists = true;
   try {
-    Org2Exists = await page.getByRole('row', { name: orgNameUpdated }).isVisible();
+    // Attempt to check the visibility of the element
+    org2Exists = await page.getByRole('row', { name: orgName, exact: true }).isVisible();
   } catch (error) {
-    console.log('Org does not exists!', error);
+    // This block will catch errors such as selector issues or other Playwright API errors
+    console.error(error);
   }
 
-  if (Org2Exists) {
+  if (org2Exists) {
     //this will Org if it exists
-    await page.getByRole('row', { name: orgNameUpdated }).locator('button').click();
+    await page.getByRole('row', { name: orgNameUpdated, exact: true }).locator('button').click();
     await page.getByRole('menuitem', { name: 'Remove' }).click();
     await page.getByRole('button', { name: 'Remove Organization' }).click();
     await page.waitForTimeout(2000);
@@ -74,7 +79,7 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
   // Check if the Org user exists
   let UserExists = true;
   try {
-    UserExists = await page.getByRole('row', { name: invitemail }).isHidden();
+    UserExists = await page.getByRole('row', { name: inviteEmail }).isHidden();
   } catch (error) {
     console.log('User already exists!', error);
   }
@@ -83,16 +88,16 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
     await page.getByRole('button', { name: 'Invite users' }).click();
     await page.waitForTimeout(2000);
     await page.getByPlaceholder('Enter Email').click();
-    await page.keyboard.type(invitemail);
+    await page.keyboard.type(inviteEmail);
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     // confirm
-    await expect(page.getByText(invitemail + ' has been sent an invite').nth(0)).toBeVisible();
+    await expect(page.getByText(inviteEmail + ' has been sent an invite').nth(0)).toBeVisible();
 
     await page.reload();
     await page.waitForTimeout(2000);
     const cell = page.getByRole('cell', {
-      name: invitemail,
+      name: inviteEmail,
       exact: true,
     });
     await expect(cell).toBeVisible();
@@ -109,19 +114,19 @@ test("04 - Change a user's Organization Admin access", async ({ page, baseURL })
   // Check if the Org user exists
   let UserExists = true;
   try {
-    UserExists = await page.getByRole('row', { name: invitemail }).isVisible();
+    UserExists = await page.getByRole('row', { name: inviteEmail }).isVisible();
   } catch (error) {
     console.log('User does not exists!', error);
   }
 
   if (UserExists) {
-    await page.getByRole('row', { name: invitemail }).locator('button').nth(1).click();
+    await page.getByRole('row', { name: inviteEmail }).locator('button').nth(1).click();
     await page.getByRole('menuitem', { name: 'Edit User Access' }).click();
     await page.waitForLoadState('networkidle');
     await page.locator('span').filter({ hasText: 'Organization Admin' }).click();
     await page.getByRole('status').locator('div').nth(1).click();
     const toastMessage = await page.locator('.test-toast-success').innerText();
-    expect(toastMessage).toContain(invitemail + '’s Lab Access has been successfully updated');
+    expect(toastMessage).toContain(inviteEmail + '’s Lab Access has been successfully updated');
   }
 });
 
@@ -135,20 +140,20 @@ test('05 - Remove Invited user to an Org Successfully', async ({ page, baseURL }
   // Check if the Org user exists
   let UserExists = true;
   try {
-    UserExists = await page.getByRole('row', { name: invitemail }).isVisible();
+    UserExists = await page.getByRole('row', { name: inviteEmail }).isVisible();
   } catch (error) {
     console.log('Org already exists!', error);
   }
 
   if (UserExists) {
-    await page.getByRole('row', { name: invitemail }).locator('button').nth(1).click();
+    await page.getByRole('row', { name: inviteEmail }).locator('button').nth(1).click();
     await page.getByRole('menuitem', { name: 'Remove From Org' }).click();
     await page.getByRole('button', { name: 'Remove User' }).nth(1).click();
 
     // confirm deletion
-    page.getByText(invitemail + ' has been removed from Default Organization');
+    page.getByText(inviteEmail + ' has been removed from Default Organization');
     const cell = page.getByRole('cell', {
-      name: invitemail,
+      name: inviteEmail,
       exact: true,
     });
 

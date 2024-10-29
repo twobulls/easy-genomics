@@ -24,3 +24,4 @@ easy-genomics:
             test-workspace-id: '12345678901234'
             test-access-token: 'dummy-access-token-example-donotuse-1234567890'
             test-s3-url: '123456789012-dev-example-lab-bucket'
+            test-invite-email: 'your-test-email@your-domain.org'

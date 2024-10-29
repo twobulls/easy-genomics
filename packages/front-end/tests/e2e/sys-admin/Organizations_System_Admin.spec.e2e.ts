@@ -5,8 +5,6 @@ import { envConfig } from '../../../config/env-config';
 const orgName = 'Automated Org';
 const orgNameUpdated = 'Automated Org - Updated';
 
-console.log('envConfig.testInviteEmail: ', envConfig.testInviteEmail);
-
 test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/orgs`);
   await page.waitForLoadState('networkidle');

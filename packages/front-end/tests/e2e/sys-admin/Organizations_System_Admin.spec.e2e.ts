@@ -5,6 +5,8 @@ import { envConfig } from '../../../config/env-config';
 const orgName = 'Automated Org';
 const orgNameUpdated = 'Automated Org - Updated';
 
+console.log('envConfig.testInviteEmail: ', envConfig.testInviteEmail);
+
 test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/orgs`);
   await page.waitForLoadState('networkidle');
@@ -92,7 +94,7 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
     await page.getByRole('button', { name: 'Invite users' }).click();
     await page.waitForTimeout(2000);
     await page.getByPlaceholder('Enter Email').click();
-    await page.keyboard.type(envConfig.testInviteEmail);
+    await page.keyboard.type(`${envConfig.testInviteEmail}`);
     await page.getByRole('button', { name: 'Invite', exact: true }).click();
 
     // Confirm

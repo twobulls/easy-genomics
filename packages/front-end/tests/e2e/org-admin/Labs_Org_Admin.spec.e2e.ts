@@ -4,7 +4,6 @@ import { envConfig } from '../../../config/env-config';
 const orgName = 'Default Organization';
 const labName = 'Playwright test lab';
 const labNameUpdated = 'Automated Lab - Updated';
-
 const labManagerName = 'Lab Manager';
 
 test('01 - Remove user from a Laboratory Successfully', async ({ page, baseURL }) => {

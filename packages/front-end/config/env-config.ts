@@ -18,6 +18,7 @@ interface EnvConfig {
   testWorkspaceId: string | undefined;
   testAccessToken: string | undefined;
   testS3Url: string | undefined;
+  testInviteEmail: string | undefined;
 }
 
 /**
@@ -36,6 +37,7 @@ function getConfigurationSettings(): EnvConfig {
   let testWorkspaceId: string | undefined;
   let testAccessToken: string | undefined;
   let testS3Url: string | undefined;
+  let testInviteEmail: string | undefined;
 
   if (process.env.CI === 'true') {
     // CI/CD Pipeline uses ENV parameters
@@ -51,6 +53,7 @@ function getConfigurationSettings(): EnvConfig {
     testWorkspaceId = process.env.TEST_WORKSPACE_ID;
     testAccessToken = process.env.TEST_ACCESS_TOKEN;
     testS3Url = process.env.TEST_S3_URL;
+    testInviteEmail = process.env.TEST_INVITE_EMAIL;
   } else {
     // Load the configurations from local configuration file
     const configurations = loadConfigurations(join(__dirname, '../../../config/easy-genomics.yaml'));
@@ -92,6 +95,7 @@ function getConfigurationSettings(): EnvConfig {
     testWorkspaceId = envConfig['back-end']['test-workspace-id'];
     testAccessToken = envConfig['back-end']['test-access-token'];
     testS3Url = envConfig['back-end']['test-s3-url'];
+    testInviteEmail = envConfig['back-end']['test-invite-email'];
   }
 
   return {
@@ -107,6 +111,7 @@ function getConfigurationSettings(): EnvConfig {
     testWorkspaceId,
     testAccessToken,
     testS3Url,
+    testInviteEmail,
   };
 }
 export const envConfig = getConfigurationSettings();

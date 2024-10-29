@@ -1,6 +1,6 @@
 import { test, expect } from 'playwright/test';
 import { randomUUID } from 'node:crypto';
-const inviteEmail = 'marvin.umali+eg99@deptagency.com';
+const inviteEmail = 'easy.genomics-dp@au.deptagency.com';
 const orgName = 'Automated Org';
 const orgNameUpdated = 'Automated Org - Updated';
 

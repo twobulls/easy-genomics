@@ -15,6 +15,10 @@ test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
   const org1Exists = await page.getByRole('cell', { name: orgName, exact: true }).isVisible();
   const org2Exists = await page.getByRole('cell', { name: orgNameUpdated, exact: true }).isVisible();
 
+  if (!org1Exists && !org2Exists) {
+    throw new Error('No Organizations found to remove');
+  }
+
   if (org1Exists) {
     console.log(orgName + ' exists');
     // This will remove the org if it exists
@@ -32,9 +36,6 @@ test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
     await page.getByRole('button', { name: 'Remove Organization' }).click();
     await page.waitForTimeout(2000);
     await expect(page.getByText('Organization deleted').nth(0)).toBeVisible();
-  }
-  if (!org1Exists && !org2Exists) {
-    throw new Error('No Organizations found to remove');
   }
 });
 

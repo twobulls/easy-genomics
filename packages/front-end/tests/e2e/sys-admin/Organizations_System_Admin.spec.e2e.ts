@@ -32,7 +32,8 @@ test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
     await page.getByRole('button', { name: 'Remove Organization' }).click();
     await page.waitForTimeout(2000);
     await expect(page.getByText('Organization deleted').nth(0)).toBeVisible();
-  } else if (!org1Exists && !org2Exists) {
+  }
+  if (!org1Exists && !org2Exists) {
     throw new Error('No Organizations found to remove');
   }
 });

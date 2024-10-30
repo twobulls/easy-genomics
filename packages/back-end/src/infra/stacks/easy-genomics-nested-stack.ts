@@ -1,4 +1,4 @@
-import { NestedStack } from 'aws-cdk-lib';
+import { Duration, NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
@@ -6,6 +6,8 @@ import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-const
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
 import { SesConstruct } from '../constructs/ses-construct';
+import { SnsConstruct, TopicDetails } from '../constructs/sns-construct';
+import { QueueDetails, SqsConstruct } from '../constructs/sqs-construct';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
 export class EasyGenomicsNestedStack extends NestedStack {
@@ -16,10 +18,33 @@ export class EasyGenomicsNestedStack extends NestedStack {
   iam: IamConstruct;
   lambda: LambdaConstruct;
   ses: SesConstruct;
+  sns: SnsConstruct;
+  sqs: SqsConstruct;
 
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
     super(scope, id);
     this.props = props;
+
+    this.sns = new SnsConstruct(this, `${this.props.constructNamespace}-sns`, {
+      namePrefix: this.props.namePrefix,
+      topics: new Map<string, TopicDetails>([['organization-deletion-topic', <TopicDetails>{ fifo: true }]]),
+    });
+
+    this.sqs = new SqsConstruct(this, `${this.props.constructNamespace}-sqs`, {
+      namePrefix: this.props.namePrefix,
+      devEnv: this.props.devEnv,
+      queues: new Map<string, QueueDetails>([
+        [
+          'organization-management-queue',
+          <QueueDetails>{
+            fifo: true,
+            retentionPeriod: Duration.days(1),
+            visibilityTimeout: Duration.minutes(15),
+            snsTopics: [this.sns.snsTopics.get('organization-deletion-topic')],
+          },
+        ],
+      ]),
+    });
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
       ...(<IamConstructProps>props), // Typecast to IamConstructProps

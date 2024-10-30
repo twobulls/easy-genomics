@@ -106,6 +106,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
+        '/easy-genomics/organization/delete-organization': {
+          environment: {
+            SNS_ORGANIZATION_DELETION_TOPIC: this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || '',
+          },
+        },
         '/easy-genomics/laboratory/create-laboratory': {
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
@@ -199,14 +204,22 @@ export class EasyGenomicsNestedStack extends NestedStack {
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
         ],
-        actions: ['dynamodb:DeleteItem', 'dynamodb:GetItem'],
+        actions: ['dynamodb:GetItem'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
         resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table/index/*`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
         ],
-        actions: ['dynamodb:DeleteItem'],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
         effect: Effect.ALLOW,
       }),
     ]);

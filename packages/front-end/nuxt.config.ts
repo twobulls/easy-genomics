@@ -23,7 +23,8 @@ export default defineNuxtConfig({
   build: {
     loaders: {
       scss: {
-        additionalData: '@import "@/styles/helpers.scss";', // FIXME
+        // Replace additionalData with the new syntax
+        additionalData: '@use "@/styles/helpers" as *;', // Update this to match your @use import
       },
     },
   },
@@ -50,6 +51,13 @@ export default defineNuxtConfig({
     resolve: {
       alias: {
         '@FE': path.resolve(__dirname, './src/app'),
+      },
+    },
+    css: {
+      preprocessorOptions: {
+        scss: {
+          additionalData: '@use "@/styles/helpers" as *;', // Update this to match your @use import
+        },
       },
     },
     plugins: [

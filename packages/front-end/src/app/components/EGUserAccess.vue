@@ -238,7 +238,11 @@
 </script>
 
 <template>
-  <EGPageHeader title="Edit User Access" />
+  <EGPageHeader
+    title="Edit User Access"
+    :show-back="true"
+    :back-action="() => $router.push(`/orgs/${$route.query.orgId}`)"
+  />
 
   <div class="mb-4">
     <EGUserOrgAdminToggle

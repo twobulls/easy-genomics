@@ -37,7 +37,7 @@
 </template>
 
 <style scoped lang="scss">
-  @import '@/styles/helpers.scss';
+  @use '@/styles/helpers';
 
   h1,
   h2,

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useWorkflowStore, useToastStore } from '@FE/stores';
+  import { useWorkflowStore, useToastStore, useLabsStore } from '@FE/stores';
   import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import EGAccordion from '@FE/components/EGAccordion.vue';
+  import { ButtonSizeEnum } from '@FE/types/buttons';
 
   const props = defineProps<{
     canLaunch?: boolean;
@@ -19,6 +20,9 @@
   const workflowTempId = $route.query.workflowTempId as string;
   const isLaunchingWorkflow = ref(false);
   const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
+
+  const remountAccordionKey = ref(0);
+  const areAccordionsOpen = ref(true);
 
   const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
@@ -57,43 +61,84 @@
       isLaunchingWorkflow.value = false;
     }
   }
+
+  const accordionItems = computed(() => {
+    return Object.keys(schema.definitions).map((sectionName) => {
+      const section = schema.definitions[sectionName];
+      return {
+        label: section.title,
+        defaultOpen: true,
+        content: {
+          section,
+          sectionName,
+          properties: section.properties,
+        },
+      };
+    });
+  });
+
+  // there's no apparent 'open/close' UAccordion method to tap into, so instead
+  // we toggle the open state of each accordion it and re-initialize the
+  // accordion component with this updated state
+  function toggleAccordions() {
+    areAccordionsOpen.value = !areAccordionsOpen.value;
+
+    accordionItems.value.forEach((item) => {
+      item.defaultOpen = areAccordionsOpen.value;
+    });
+
+    remountAccordionKey.value++;
+  }
 </script>
 
 <template>
-  <EGCard>
+  <EGCard class="mb-6">
     <EGText tag="small" class="mb-4">Step 04</EGText>
     <EGText tag="h4" class="mb-0">Run Details</EGText>
     <UDivider class="py-4" />
     <section class="stroke-light flex flex-col bg-white">
       <dl>
-        <div class="flex border-b px-4 py-4 text-sm">
-          <dt class="w-[200px] font-medium text-black">Pipeline</dt>
+        <div class="text-md flex border-b px-4 py-4">
+          <dt class="w-48 text-black">Pipeline</dt>
           <dd class="text-muted text-left">{{ wipWorkflow?.pipelineName }}</dd>
         </div>
-        <div class="flex border-b px-4 py-4 text-sm">
-          <dt class="w-[200px] font-medium text-black">Laboratory</dt>
+        <div class="text-md flex border-b px-4 py-4">
+          <dt class="w-48 text-black">Laboratory</dt>
           <dd class="text-muted text-left">{{ labName }}</dd>
         </div>
-        <div class="flex px-4 py-4 text-sm">
-          <dt class="w-[200px] font-medium text-black">Run Name</dt>
+        <div class="text-md flex px-4 py-4">
+          <dt class="w-48 text-black">Run Name</dt>
           <dd class="text-muted text-left">{{ wipWorkflow?.userPipelineRunName }}</dd>
         </div>
       </dl>
     </section>
-    <div v-for="(section, sectionName) in schema.definitions" :key="`section-${sectionName}`">
-      <EGText tag="h4" class="mb-0">{{ section.title }}</EGText>
-      <UDivider class="py-4" />
-      <section class="stroke-light flex flex-col bg-white">
-        <dl>
-          <div v-for="(property, propertyKey) in section.properties" :key="`property-${propertyKey}`">
-            <div class="flex border-b px-4 py-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">{{ propertyKey }}</dt>
-              <dd class="text-muted text-left">{{ params[propertyKey] }}</dd>
-            </div>
-          </div>
-        </dl>
-      </section>
+  </EGCard>
+
+  <EGCard>
+    <div class="mb-4 flex items-center justify-between">
+      <EGText tag="h4" class="text-muted">Selected Workflow Parameters</EGText>
+      <EGButton
+        variant="secondary"
+        :label="areAccordionsOpen ? 'Collapse All' : 'Expand All'"
+        @click="toggleAccordions"
+      />
     </div>
+    <EGAccordion :items="accordionItems" :key="remountAccordionKey">
+      <template #item="{ item, open }">
+        <section class="stroke-light flex flex-col bg-white text-left">
+          <dl>
+            <div
+              v-for="(property, propertyKey, index) in item.content.properties"
+              :key="`property-${propertyKey}`"
+              class="property-row grid grid-cols-[auto_1fr] gap-x-4 border-b bg-white px-4 py-4 last:border-0 dark:bg-gray-800"
+            >
+              <dt class="w-56 whitespace-pre-wrap break-words font-medium text-black">{{ propertyKey }}</dt>
+              <dd class="text-muted whitespace-pre-wrap break-words">{{ params[propertyKey] }}</dd>
+            </div>
+          </dl>
+        </section>
+      </template>
+    </EGAccordion>
   </EGCard>
 
   <div class="mt-6 flex justify-between">
@@ -102,8 +147,17 @@
       :disabled="!canLaunch"
       :loading="isLaunchingWorkflow"
       :size="ButtonSizeEnum.enum.sm"
-      @click="() => launchWorkflow()"
+      @click="launchWorkflow"
       label="Launch Workflow Run"
     />
   </div>
 </template>
+
+<style scoped>
+  .property-row {
+    &:last-child {
+      border-bottom: none;
+      margin-bottom: 16px;
+    }
+  }
+</style>

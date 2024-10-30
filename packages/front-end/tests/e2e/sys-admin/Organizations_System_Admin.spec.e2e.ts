@@ -23,7 +23,8 @@ test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
     await page.getByRole('button', { name: 'Remove Organization' }).click();
     await page.waitForTimeout(2000);
     await expect(page.getByText('Organization deleted').nth(0)).toBeVisible();
-  } else if (org2Exists) {
+  }
+  if (org2Exists) {
     console.log(orgNameUpdated + ' exists');
     // This will remove the org if it exists
     await page.getByRole('row', { name: orgNameUpdatedSelector }).locator('button').click();

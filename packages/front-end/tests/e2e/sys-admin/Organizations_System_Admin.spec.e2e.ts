@@ -3,48 +3,36 @@ import { randomUUID } from 'node:crypto';
 import { envConfig } from '../../../config/env-config';
 
 const orgName = 'Automated Org';
+const orgNameSelector = 'Automated Org This is a';
 const orgNameUpdated = 'Automated Org - Updated';
+const orgNameUpdatedSelector = 'Automated Org - Updated This';
 
 test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/orgs`);
   await page.waitForLoadState('networkidle');
 
   // Check if the org exists
-  let org1Exists = false;
-  let org2Exists = false;
-
-  try {
-    // Attempt to check the visibility of the element
-    org1Exists = await page.getByRole('row', { name: orgName, exact: true }).isVisible();
-  } catch (error) {
-    // This block will catch errors such as selector issues or other Playwright API errors
-    console.error(error);
-  }
+  const org1Exists = await page.getByRole('cell', { name: orgName, exact: true }).isVisible();
+  const org2Exists = await page.getByRole('cell', { name: orgNameUpdated, exact: true }).isVisible();
 
   if (org1Exists) {
+    console.log(orgName + ' exists');
     // This will remove the org if it exists
-    await page.getByRole('row', { name: orgName, exact: true }).locator('button').click();
+    await page.getByRole('row', { name: orgNameSelector }).locator('button').click();
     await page.getByRole('menuitem', { name: 'Remove' }).click();
     await page.getByRole('button', { name: 'Remove Organization' }).click();
     await page.waitForTimeout(2000);
     await expect(page.getByText('Organization deleted').nth(0)).toBeVisible();
-  }
-
-  try {
-    // Attempt to check the visibility of the element
-    org2Exists = await page.getByRole('row', { name: orgNameUpdated, exact: true }).isVisible();
-  } catch (error) {
-    // This block will catch errors such as selector issues or other Playwright API errors
-    console.error(error);
-  }
-
-  if (org2Exists) {
+  } else if (org2Exists) {
+    console.log(orgNameUpdated + ' exists');
     // This will remove the org if it exists
-    await page.getByRole('row', { name: orgNameUpdated, exact: true }).locator('button').click();
+    await page.getByRole('row', { name: orgNameUpdatedSelector }).locator('button').click();
     await page.getByRole('menuitem', { name: 'Remove' }).click();
     await page.getByRole('button', { name: 'Remove Organization' }).click();
     await page.waitForTimeout(2000);
     await expect(page.getByText('Organization deleted').nth(0)).toBeVisible();
+  } else {
+    throw new Error('No Organizations found to remove');
   }
 });
 

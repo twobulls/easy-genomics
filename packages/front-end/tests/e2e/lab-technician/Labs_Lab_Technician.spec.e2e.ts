@@ -1,6 +1,6 @@
 import { test, expect } from 'playwright/test';
 
-test('01 - Create a Laboratory Unsuccessfully', async ({ page, baseURL }) => {
+test('01 - Hide Create a new Laboratory button', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
   await page.waitForTimeout(2000);
 
@@ -8,7 +8,7 @@ test('01 - Create a Laboratory Unsuccessfully', async ({ page, baseURL }) => {
   await expect(page.getByRole('button', { name: 'Create a new Lab' })).toBeHidden();
 });
 
-test('02 - Remove a Laboratory Unsuccessfully', async ({ page, baseURL }) => {
+test('02 - Hide Remove a Laboratory option', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
 
@@ -29,7 +29,7 @@ test('02 - Remove a Laboratory Unsuccessfully', async ({ page, baseURL }) => {
   }
 });
 
-test('03 - View Org Page Unsuccessfully', async ({ page, baseURL }) => {
+test('03 - Hide Organization link', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}`);
   await page.waitForLoadState('networkidle');
 

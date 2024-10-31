@@ -17,7 +17,7 @@ test('02 - Remove a Laboratory Unsuccessfully', async ({ page, baseURL }) => {
   try {
     hasTestLab = await page.getByRole('row').nth(1).isVisible();
   } catch (error) {
-    console.log('No lab not found:', error);
+    console.error('No labs found');
   }
 
   if (hasTestLab) {

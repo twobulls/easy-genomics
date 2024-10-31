@@ -33,8 +33,8 @@ export const handler: Handler = async (
     const existing: Organization = await organizationService.get(id);
 
     // Publish FIFO asynchronous events to delete the Organization's associated Users, Labs, and finally the Organization
-    await publishDeleteOrganizationUsers(id);
-    await publishDeleteOrganizationLabs(id);
+    await publishDeleteOrganizationUsers(existing.OrganizationId);
+    await publishDeleteOrganizationLabs(existing.OrganizationId);
     const isDeleted: boolean = await organizationService.delete(existing);
 
     if (!isDeleted) {

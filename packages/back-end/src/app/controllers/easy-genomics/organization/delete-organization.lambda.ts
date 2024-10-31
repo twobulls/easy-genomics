@@ -1,3 +1,4 @@
+import { OrganizationDeleteFailedError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
@@ -29,12 +30,16 @@ export const handler: Handler = async (
     if (id === '') throw new RequiredIdNotFoundError();
 
     // Lookup by OrganizationId to confirm existence before deletion
-    const organization: Organization = await organizationService.get(id);
+    const existing: Organization = await organizationService.get(id);
 
     // Publish FIFO asynchronous events to delete the Organization's associated Users, Labs, and finally the Organization
     await publishDeleteOrganizationUsers(id);
     await publishDeleteOrganizationLabs(id);
-    await publishDeleteOrganization(organization);
+    const isDeleted: boolean = await organizationService.delete(existing);
+
+    if (!isDeleted) {
+      throw new OrganizationDeleteFailedError();
+    }
 
     return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
   } catch (err: any) {
@@ -87,21 +92,4 @@ async function publishDeleteOrganizationLabs(organizationId: string): Promise<vo
       });
     }),
   );
-}
-
-/**
- * Publishes SNS notification message to delete the Organization
- * @param organization
- */
-async function publishDeleteOrganization(organization: Organization): Promise<void> {
-  await snsService.publish({
-    TopicArn: process.env.SNS_ORGANIZATION_DELETION_TOPIC,
-    Message: JSON.stringify({
-      Operation: 'DELETE',
-      Type: 'Organization',
-      Record: organization,
-    }),
-    MessageGroupId: `delete-organization-${organization.OrganizationId}`,
-    MessageDeduplicationId: uuidv4(),
-  });
 }

@@ -1,7 +1,13 @@
 import { marshall } from '@aws-sdk/util-dynamodb';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import { LaboratoryAccess, User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import {
+  LaboratoryAccess,
+  LaboratoryAccessDetails,
+  OrganizationAccess,
+  OrganizationAccessDetails,
+  User,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { DynamoDBService } from '../dynamodb-service';
 
 export class PlatformUserService extends DynamoDBService {
@@ -25,12 +31,22 @@ export class PlatformUserService extends DynamoDBService {
    *
    * If any part of the transaction fails, the whole transaction will be rejected in order to avoid data inconsistency.
    *
-   * @param user
+   * @param newUser
    * @param organizationUser
    */
-  async addNewUserToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
-    const logRequestMessage = `Add New User To Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
+  async addNewUserToOrganization(newUser: User, organizationUser: OrganizationUser): Promise<Boolean> {
+    const logRequestMessage = `Add New User To Organization UserId=${organizationUser.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
+
+    const user: User = {
+      ...newUser,
+      OrganizationAccess: {
+        [organizationUser.OrganizationId]: {
+          Status: organizationUser.Status,
+          LaboratoryAccess: {},
+        },
+      },
+    };
 
     const response = await this.transactWriteItems({
       TransactItems: [
@@ -53,7 +69,7 @@ export class PlatformUserService extends DynamoDBService {
               '#Type': 'Type',
             },
             Item: marshall({
-              Value: user.Email.toLowerCase(),
+              Value: newUser.Email.toLowerCase(),
               Type: 'user-email',
             }),
           },
@@ -90,12 +106,25 @@ export class PlatformUserService extends DynamoDBService {
    * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
    * data inconsistency.
    *
-   * @param user
+   * @param existingUser
    * @param organizationUser
    */
-  async addExistingUserToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
-    const logRequestMessage = `Add Existing User To Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
+  async addExistingUserToOrganization(existingUser: User, organizationUser: OrganizationUser): Promise<Boolean> {
+    const logRequestMessage = `Add Existing User To Organization UserId=${organizationUser.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
+
+    // Retrieve the User's OrganizationAccess metadata to update
+    const user: User = {
+      ...existingUser,
+      OrganizationAccess: <OrganizationAccess>{
+        ...existingUser.OrganizationAccess,
+        [organizationUser.OrganizationId]: <OrganizationAccessDetails>{
+          Status: organizationUser.Status,
+          OrganizationAdmin: organizationUser.OrganizationAdmin,
+          LaboratoryAccess: <LaboratoryAccess>{},
+        },
+      },
+    };
 
     const response = await this.transactWriteItems({
       TransactItems: [
@@ -140,17 +169,35 @@ export class PlatformUserService extends DynamoDBService {
    * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
    * data inconsistency.
    *
-   * @param user
+   * @param existingUser
    * @param organizationUser
-   * @param laboratoryAccess
    */
-  async removeExistingUserFromOrganization(
-    user: User,
-    organizationUser: OrganizationUser,
-    laboratoryAccess?: LaboratoryAccess,
-  ): Promise<Boolean> {
-    const logRequestMessage = `Remove Existing User From Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
+  async removeExistingUserFromOrganization(existingUser: User, organizationUser: OrganizationUser): Promise<Boolean> {
+    const logRequestMessage = `Remove Existing User From Organization UserId=${organizationUser.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
+
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = existingUser.OrganizationAccess;
+    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
+    const organizationAccessDetails: OrganizationAccessDetails | undefined =
+      organizationAccess && organizationAccess[organizationUser.OrganizationId]
+        ? organizationAccess[organizationUser.OrganizationId]
+        : undefined;
+    // Retrieve the current Organization's LaboratoryAccess details for use in the update
+    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
+      ? organizationAccessDetails.LaboratoryAccess
+      : undefined;
+
+    if (organizationAccess) {
+      delete organizationAccess[organizationUser.OrganizationId];
+    }
+
+    const user = {
+      ...existingUser,
+      OrganizationAccess: <OrganizationAccess>{
+        ...organizationAccess,
+      },
+    };
 
     // Generate array of Delete transaction items to remove the User's associated LaboratoryUser mappings
     const laboratoryUserDeletions = laboratoryAccess
@@ -185,7 +232,7 @@ export class PlatformUserService extends DynamoDBService {
             TableName: this.ORGANIZATION_USER_TABLE_NAME,
             Key: {
               OrganizationId: { S: organizationUser.OrganizationId },
-              UserId: { S: user.UserId },
+              UserId: { S: organizationUser.UserId },
             },
           },
         },
@@ -211,12 +258,32 @@ export class PlatformUserService extends DynamoDBService {
    * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
    * data inconsistency.
    *
-   * @param user
+   * @param existingUser
    * @param organizationUser
    */
-  async editExistingUserAccessToOrganization(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
-    const logRequestMessage = `Edit Existing User To Organization UserId=${user.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
+  async editExistingUserAccessToOrganization(existingUser: User, organizationUser: OrganizationUser): Promise<Boolean> {
+    const logRequestMessage = `Edit Existing User To Organization UserId=${organizationUser.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
+
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = existingUser.OrganizationAccess;
+    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
+    const organizationAccessDetails: OrganizationAccessDetails | undefined =
+      organizationAccess && organizationAccess[organizationUser.OrganizationId]
+        ? organizationAccess[organizationUser.OrganizationId]
+        : undefined;
+
+    const user: User = {
+      ...existingUser,
+      OrganizationAccess: <OrganizationAccess>{
+        ...organizationAccess,
+        [organizationUser.OrganizationId]: <OrganizationAccessDetails>{
+          ...organizationAccessDetails,
+          Status: organizationUser.Status,
+          OrganizationAdmin: organizationUser.OrganizationAdmin,
+        },
+      },
+    };
 
     const response = await this.transactWriteItems({
       TransactItems: [
@@ -264,12 +331,49 @@ export class PlatformUserService extends DynamoDBService {
    * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
    * data inconsistency.
    *
-   * @param user
+   * @param existingUser
    * @param laboratoryUser
    */
-  async addExistingUserToLaboratory(user: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
-    const logRequestMessage = `Add Existing User To Laboratory UserId=${user.UserId} LaboratoryId=${laboratoryUser.LaboratoryId} request`;
+  async addExistingUserToLaboratory(existingUser: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
+    const logRequestMessage = `Add Existing User To Laboratory UserId=${laboratoryUser.UserId} LaboratoryId=${laboratoryUser.LaboratoryId} request`;
     console.info(logRequestMessage);
+
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = existingUser.OrganizationAccess;
+
+    // Find the Laboratory's parent Organization's OrganizationAccessDetails for use in the update
+    const found: [string, OrganizationAccessDetails] | undefined = Object.entries(organizationAccess)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .filter(([orgId, orgAccessDetails]: [string, OrganizationAccessDetails]) => {
+        return orgAccessDetails.LaboratoryAccess
+          ? Object.keys(orgAccessDetails.LaboratoryAccess).includes(laboratoryUser.LaboratoryId)
+          : false;
+      })
+      .shift();
+    const [organizationId, organizationAccessDetails]: [string, OrganizationAccessDetails] = found ? found : undefined;
+
+    // Retrieve the current Organization's LaboratoryAccess details for use in the update
+    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
+      ? organizationAccessDetails.LaboratoryAccess
+      : undefined;
+
+    const user: User = {
+      ...existingUser,
+      OrganizationAccess: <OrganizationAccess>{
+        ...organizationAccess,
+        [organizationId]: <OrganizationAccessDetails>{
+          ...organizationAccessDetails,
+          LaboratoryAccess: <LaboratoryAccess>{
+            ...laboratoryAccess,
+            [laboratoryUser.LaboratoryId]: <LaboratoryAccessDetails>{
+              Status: laboratoryUser.Status,
+              LabManager: laboratoryUser.LabManager,
+              LabTechnician: laboratoryUser.LabTechnician,
+            },
+          },
+        },
+      },
+    };
 
     const response = await this.transactWriteItems({
       TransactItems: [
@@ -316,12 +420,47 @@ export class PlatformUserService extends DynamoDBService {
    * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
    * data inconsistency.
    *
-   * @param user
-   * @param LaboratoryUser
+   * @param existingUser
+   * @param laboratoryUser
    */
-  async removeExistingUserFromLaboratory(user: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
-    const logRequestMessage = `Remove Existing User From Laboratory UserId=${user.UserId} LaboratoryId=${laboratoryUser.LaboratoryId} request`;
+  async removeExistingUserFromLaboratory(existingUser: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
+    const logRequestMessage = `Remove Existing User From Laboratory UserId=${laboratoryUser.UserId} LaboratoryId=${laboratoryUser.LaboratoryId} request`;
     console.info(logRequestMessage);
+
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = existingUser.OrganizationAccess;
+
+    // Find the Laboratory's parent Organization's OrganizationAccessDetails for use in the update
+    const found: [string, OrganizationAccessDetails] | undefined = Object.entries(organizationAccess)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .filter(([orgId, orgAccessDetails]: [string, OrganizationAccessDetails]) => {
+        return orgAccessDetails.LaboratoryAccess
+          ? Object.keys(orgAccessDetails.LaboratoryAccess).includes(laboratoryUser.LaboratoryId)
+          : false;
+      })
+      .shift();
+    const [organizationId, organizationAccessDetails]: [string, OrganizationAccessDetails] = found ? found : undefined;
+
+    // Retrieve the current Organization's LaboratoryAccess details for use in the update
+    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
+      ? organizationAccessDetails.LaboratoryAccess
+      : undefined;
+    if (laboratoryAccess) {
+      delete laboratoryAccess[laboratoryUser.LaboratoryId];
+    }
+
+    const user = {
+      ...existingUser,
+      OrganizationAccess: <OrganizationAccess>{
+        ...organizationAccess,
+        [organizationId]: <OrganizationAccessDetails>{
+          ...organizationAccessDetails,
+          LaboratoryAccess: <LaboratoryAccess>{
+            ...laboratoryAccess,
+          },
+        },
+      },
+    };
 
     const response = await this.transactWriteItems({
       TransactItems: [
@@ -341,7 +480,7 @@ export class PlatformUserService extends DynamoDBService {
             TableName: this.LABORATORY_USER_TABLE_NAME,
             Key: {
               LaboratoryId: { S: laboratoryUser.LaboratoryId },
-              UserId: { S: user.UserId },
+              UserId: { S: laboratoryUser.UserId },
             },
           },
         },
@@ -366,12 +505,49 @@ export class PlatformUserService extends DynamoDBService {
    * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
    * data inconsistency.
    *
-   * @param user
+   * @param existingUser
    * @param LaboratoryUser
    */
-  async editExistingUserAccessToLaboratory(user: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
-    const logRequestMessage = `Edit Existing User To Laboratory UserId=${user.UserId} OrganizationId=${laboratoryUser.LaboratoryId} request`;
+  async editExistingUserAccessToLaboratory(existingUser: User, laboratoryUser: LaboratoryUser): Promise<Boolean> {
+    const logRequestMessage = `Edit Existing User To Laboratory UserId=${laboratoryUser.UserId} OrganizationId=${laboratoryUser.LaboratoryId} request`;
     console.info(logRequestMessage);
+
+    // Retrieve the User's OrganizationAccess metadata to update
+    const organizationAccess: OrganizationAccess | undefined = existingUser.OrganizationAccess;
+
+    // Find the Laboratory's parent Organization's OrganizationAccessDetails for use in the update
+    const found: [string, OrganizationAccessDetails] | undefined = Object.entries(organizationAccess)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      .filter(([orgId, orgAccessDetails]: [string, OrganizationAccessDetails]) => {
+        return orgAccessDetails.LaboratoryAccess
+          ? Object.keys(orgAccessDetails.LaboratoryAccess).includes(laboratoryUser.LaboratoryId)
+          : false;
+      })
+      .shift();
+    const [organizationId, organizationAccessDetails]: [string, OrganizationAccessDetails] = found ? found : undefined;
+
+    // Retrieve the current Organization's LaboratoryAccess details for use in the update
+    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
+      ? organizationAccessDetails.LaboratoryAccess
+      : undefined;
+
+    const user: User = {
+      ...existingUser,
+      OrganizationAccess: <OrganizationAccess>{
+        ...organizationAccess,
+        [organizationId]: <OrganizationAccessDetails>{
+          ...organizationAccessDetails,
+          LaboratoryAccess: <LaboratoryAccess>{
+            ...laboratoryAccess,
+            [laboratoryUser.LaboratoryId]: <LaboratoryAccessDetails>{
+              Status: laboratoryUser.Status,
+              LabManager: laboratoryUser.LabManager,
+              LabTechnician: laboratoryUser.LabTechnician,
+            },
+          },
+        },
+      },
+    };
 
     const response = await this.transactWriteItems({
       TransactItems: [

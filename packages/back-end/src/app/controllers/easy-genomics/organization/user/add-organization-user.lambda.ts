@@ -1,13 +1,7 @@
 import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { AddOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
-import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import {
-  LaboratoryAccess,
-  OrganizationAccess,
-  OrganizationAccessDetails,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
@@ -59,26 +53,15 @@ export const handler: Handler = async (
     }
 
     // Check if Organization & User records exists
-    const organization: Organization = await organizationService.get(request.OrganizationId);
-    const user: User = await userService.get(request.UserId);
-
-    // Retrieve the User's OrganizationAccess metadata to update
-    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
+    await organizationService.get(request.OrganizationId);
+    const existingUser: User = await userService.get(request.UserId);
 
     // Attempt to add the User to the Organization in one transaction
     if (
       await platformUserService
         .addExistingUserToOrganization(
           {
-            ...user,
-            OrganizationAccess: <OrganizationAccess>{
-              ...organizationAccess,
-              [organization.OrganizationId]: <OrganizationAccessDetails>{
-                Status: request.Status,
-                OrganizationAdmin: request.OrganizationAdmin,
-                LaboratoryAccess: <LaboratoryAccess>{},
-              },
-            },
+            ...existingUser,
             ModifiedAt: new Date().toISOString(),
             ModifiedBy: currentUserId,
           },

@@ -1,10 +1,6 @@
 import { EditOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import {
-  OrganizationAccess,
-  OrganizationAccessDetails,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
@@ -42,39 +38,22 @@ export const handler: Handler = async (
       request.OrganizationId,
       request.UserId,
     );
-    const user: User = await userService.get(request.UserId);
+    const existingUser: User = await userService.get(request.UserId);
 
     // Prevent reverting OrganizationUser Status to 'Invited' if already 'Active' or 'Inactive'
     if (organizationUser.Status !== 'Invited' && request.Status === 'Invited') {
       throw new OrganizationUserStatusError(organizationUser.Status);
     }
 
-    // Retrieve the User's OrganizationAccess metadata to update
-    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
-    const organizationAccessDetails: OrganizationAccessDetails | undefined =
-      organizationAccess && organizationAccess[organizationUser.OrganizationId]
-        ? organizationAccess[organizationUser.OrganizationId]
-        : undefined;
-
     const response: boolean = await platformUserService.editExistingUserAccessToOrganization(
       {
-        ...user,
-        OrganizationAccess: <OrganizationAccess>{
-          ...organizationAccess,
-          [request.OrganizationId]: <OrganizationAccessDetails>{
-            ...organizationAccessDetails,
-            Status: request.Status,
-            OrganizationAdmin: request.OrganizationAdmin,
-          },
-        },
+        ...existingUser,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
       },
       {
         ...organizationUser,
         ...request,
-        Status: request.Status,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
       },

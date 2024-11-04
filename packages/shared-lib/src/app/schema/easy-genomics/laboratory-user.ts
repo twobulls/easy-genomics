@@ -4,6 +4,7 @@ export const LaboratoryUserSchema = z
   .object({
     LaboratoryId: z.string().uuid(),
     UserId: z.string().uuid(),
+    OrganizationId: z.string().uuid(),
     Status: z.enum(['Active', 'Inactive']),
     LabManager: z.boolean(),
     LabTechnician: z.boolean(),
@@ -18,6 +19,7 @@ export const AddLaboratoryUserSchema = z
   .object({
     LaboratoryId: z.string().uuid(),
     UserId: z.string().uuid(),
+    OrganizationId: z.string().uuid(),
     Status: z.enum(['Active', 'Inactive']),
     LabManager: z.boolean(),
     LabTechnician: z.boolean(),

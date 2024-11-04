@@ -3,9 +3,13 @@ import { Construct } from 'constructs';
 
 export interface TopicDetails extends TopicProps {}
 
+export interface Topics {
+  [name: string]: TopicDetails;
+}
+
 export interface SnsConstructProps {
   namePrefix: string;
-  topics: Map<string, TopicDetails>;
+  topics: Topics;
 }
 
 export class SnsConstruct extends Construct {
@@ -16,7 +20,9 @@ export class SnsConstruct extends Construct {
     super(scope, id);
     this.props = props;
 
-    props.topics.forEach((topicDetails: TopicDetails, name: string) => this.createTopic(name, topicDetails));
+    Object.entries(props.topics).forEach(([name, topicDetails]: [string, TopicDetails]) => {
+      this.createTopic(name, topicDetails);
+    });
   }
 
   private createTopic(name: string, topicDetails: TopicDetails) {

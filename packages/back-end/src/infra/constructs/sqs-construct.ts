@@ -8,10 +8,14 @@ export interface QueueDetails extends QueueProps {
   snsTopics: Topic[];
 }
 
+export interface Queues {
+  [name: string]: QueueDetails;
+}
+
 export interface SqsConstructProps {
   namePrefix: string;
   devEnv?: boolean;
-  queues: Map<string, QueueDetails>;
+  queues: Queues;
 }
 
 export class SqsConstruct extends Construct {
@@ -22,7 +26,7 @@ export class SqsConstruct extends Construct {
     super(scope, id);
     this.props = props;
 
-    this.props.queues.forEach((queueDetails: QueueDetails, name: string) => {
+    Object.entries(this.props.queues).forEach(([name, queueDetails]: [string, QueueDetails]) => {
       this.createQueue(name, queueDetails);
     });
   }

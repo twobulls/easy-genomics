@@ -340,18 +340,11 @@ export class PlatformUserService extends DynamoDBService {
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = existingUser.OrganizationAccess;
-
-    // Find the Laboratory's parent Organization's OrganizationAccessDetails for use in the update
-    const found: [string, OrganizationAccessDetails] | undefined = Object.entries(organizationAccess)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .filter(([orgId, orgAccessDetails]: [string, OrganizationAccessDetails]) => {
-        return orgAccessDetails.LaboratoryAccess
-          ? Object.keys(orgAccessDetails.LaboratoryAccess).includes(laboratoryUser.LaboratoryId)
-          : false;
-      })
-      .shift();
-    const [organizationId, organizationAccessDetails]: [string, OrganizationAccessDetails] = found ? found : undefined;
-
+    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
+    const organizationAccessDetails: OrganizationAccessDetails | undefined =
+      organizationAccess && organizationAccess[laboratoryUser.OrganizationId]
+        ? organizationAccess[laboratoryUser.OrganizationId]
+        : undefined;
     // Retrieve the current Organization's LaboratoryAccess details for use in the update
     const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
       ? organizationAccessDetails.LaboratoryAccess
@@ -361,7 +354,7 @@ export class PlatformUserService extends DynamoDBService {
       ...existingUser,
       OrganizationAccess: <OrganizationAccess>{
         ...organizationAccess,
-        [organizationId]: <OrganizationAccessDetails>{
+        [laboratoryUser.OrganizationId]: <OrganizationAccessDetails>{
           ...organizationAccessDetails,
           LaboratoryAccess: <LaboratoryAccess>{
             ...laboratoryAccess,
@@ -429,17 +422,11 @@ export class PlatformUserService extends DynamoDBService {
 
     // Retrieve the User's OrganizationAccess metadata to update
     const organizationAccess: OrganizationAccess | undefined = existingUser.OrganizationAccess;
-
-    // Find the Laboratory's parent Organization's OrganizationAccessDetails for use in the update
-    const found: [string, OrganizationAccessDetails] | undefined = Object.entries(organizationAccess)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      .filter(([orgId, orgAccessDetails]: [string, OrganizationAccessDetails]) => {
-        return orgAccessDetails.LaboratoryAccess
-          ? Object.keys(orgAccessDetails.LaboratoryAccess).includes(laboratoryUser.LaboratoryId)
-          : false;
-      })
-      .shift();
-    const [organizationId, organizationAccessDetails]: [string, OrganizationAccessDetails] = found ? found : undefined;
+    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
+    const organizationAccessDetails: OrganizationAccessDetails | undefined =
+      organizationAccess && organizationAccess[laboratoryUser.OrganizationId]
+        ? organizationAccess[laboratoryUser.OrganizationId]
+        : undefined;
 
     // Retrieve the current Organization's LaboratoryAccess details for use in the update
     const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
@@ -453,7 +440,7 @@ export class PlatformUserService extends DynamoDBService {
       ...existingUser,
       OrganizationAccess: <OrganizationAccess>{
         ...organizationAccess,
-        [organizationId]: <OrganizationAccessDetails>{
+        [laboratoryUser.OrganizationId]: <OrganizationAccessDetails>{
           ...organizationAccessDetails,
           LaboratoryAccess: <LaboratoryAccess>{
             ...laboratoryAccess,

@@ -2,6 +2,7 @@ import { OrganizationDeleteFailedError } from '@easy-genomics/shared-lib/lib/app
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
+import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sns-processing-event';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { RequiredIdNotFoundError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -57,13 +58,14 @@ async function publishDeleteOrganizationUsers(organizationId: string): Promise<v
 
   await Promise.all(
     organizationUsers.map(async (organizationUser: OrganizationUser) => {
+      const record: SnsProcessingEvent = {
+        Operation: 'DELETE',
+        Type: 'OrganizationUser',
+        Record: organizationUser,
+      };
       return snsService.publish({
         TopicArn: process.env.SNS_ORGANIZATION_DELETION_TOPIC,
-        Message: JSON.stringify({
-          Operation: 'DELETE',
-          Type: 'OrganizationUser',
-          Record: organizationUser,
-        }),
+        Message: JSON.stringify(record),
         MessageGroupId: `delete-organization-${organizationId}`,
         MessageDeduplicationId: uuidv4(),
       });
@@ -80,13 +82,14 @@ async function publishDeleteOrganizationLabs(organizationId: string): Promise<vo
 
   await Promise.all(
     laboratories.map(async (laboratory: Laboratory) => {
+      const record: SnsProcessingEvent = {
+        Operation: 'DELETE',
+        Type: 'Laboratory',
+        Record: laboratory,
+      };
       return snsService.publish({
         TopicArn: process.env.SNS_ORGANIZATION_DELETION_TOPIC,
-        Message: JSON.stringify({
-          Operation: 'DELETE',
-          Type: 'Laboratory',
-          Record: laboratory,
-        }),
+        Message: JSON.stringify(record),
         MessageGroupId: `delete-organization-${organizationId}`,
         MessageDeduplicationId: uuidv4(),
       });

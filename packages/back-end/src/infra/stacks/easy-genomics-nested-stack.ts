@@ -134,6 +134,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
           },
         },
+        '/easy-genomics/laboratory/delete-laboratory': {
+          environment: {
+            SNS_LABORATORY_DELETION_TOPIC: this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/laboratory/process-delete-laboratory': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('laboratory-management-queue')!, { batchSize: 1 })],
+          environment: {
+            SNS_LABORATORY_DELETION_TOPIC: this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || '',
+          },
+        },
       },
       environment: {
         // Defines the common environment settings for all lambda functions
@@ -491,6 +502,28 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
         ],
         actions: ['ssm:DeleteParameter'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/laboratory/process-delete-laboratory
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/process-delete-laboratory', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+        ],
+        actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+        ],
+        actions: ['dynamodb:DeleteItem'],
         effect: Effect.ALLOW,
       }),
     ]);

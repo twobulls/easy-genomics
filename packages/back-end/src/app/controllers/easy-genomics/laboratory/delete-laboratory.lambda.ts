@@ -1,5 +1,6 @@
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
+import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sns-processing-event';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   LaboratoryDeleteFailedError,
@@ -7,13 +8,16 @@ import {
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
+import { SnsService } from '@BE/services/sns-service';
 import { SsmService } from '@BE/services/ssm-service';
 import { validateOrganizationAdminAccess } from '@BE/utils/auth-utils';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryUserService = new LaboratoryUserService();
+const snsService = new SnsService();
 const ssmService = new SsmService();
 
 export const handler: Handler = async (
@@ -28,21 +32,13 @@ export const handler: Handler = async (
     // Lookup by LaboratoryId to confirm existence before deletion
     const existingLaboratory: Laboratory = await laboratoryService.queryByLaboratoryId(id);
 
-    // TODO: lab can not be found
-
     // Only Organisation Admins are allowed delete laboratories
     if (!validateOrganizationAdminAccess(event, existingLaboratory.OrganizationId)) {
       throw new UnauthorizedAccessError();
     }
 
-    // Check LaboratoryUsers are empty before deletion
-    const existingLaboratoryUsers: LaboratoryUser[] = await laboratoryUserService.queryByLaboratoryId(
-      existingLaboratory.LaboratoryId,
-    );
-    if (existingLaboratoryUsers.length > 0) {
-      throw new Error(`Laboratory deletion error, ${existingLaboratoryUsers.length} Users exists.`);
-    }
-
+    // Publish FIFO asynchronous events to delete the Laboratory's Users and finally the Laboratory
+    await publishDeleteLaboratoryUsers(existingLaboratory.LaboratoryId);
     const isDeleted: boolean = await laboratoryService.delete(existingLaboratory);
 
     if (!isDeleted) {
@@ -61,3 +57,27 @@ export const handler: Handler = async (
     return buildErrorResponse(err, event);
   }
 };
+
+/**
+ * Publishes SNS notification messages to delete the Laboratory's Users
+ * @param laboratoryId
+ */
+async function publishDeleteLaboratoryUsers(laboratoryId: string): Promise<void> {
+  const laboratoryUsers: LaboratoryUser[] = await laboratoryUserService.queryByLaboratoryId(laboratoryId);
+
+  await Promise.all(
+    laboratoryUsers.map(async (laboratoryUser: LaboratoryUser) => {
+      const record: SnsProcessingEvent = {
+        Operation: 'DELETE',
+        Type: 'LaboratoryUser',
+        Record: laboratoryUser,
+      };
+      return snsService.publish({
+        TopicArn: process.env.SNS_LABORATORY_DELETION_TOPIC,
+        Message: JSON.stringify(record),
+        MessageGroupId: `delete-laboratory-${laboratoryId}`,
+        MessageDeduplicationId: uuidv4(),
+      });
+    }),
+  );
+}

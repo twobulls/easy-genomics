@@ -58,7 +58,3 @@
     border-radius: 4px;
   }
 </style>
-<!--<template v-if="isLoading">-->
-<!--  <USkeleton v-for="line in skeletonTitleLines" class="mb-0 min-h-[36px] w-3/4 rounded" :key="line" />-->
-<!--  <USkeleton v-for="line in skeletonDescriptionLines" class="mt-7 min-h-[16px] w-[150px] rounded" :key="line" />-->
-<!--</template>-->

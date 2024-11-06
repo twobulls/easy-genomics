@@ -7,6 +7,7 @@ launched yet. They're addressed by workflowTempId which is generated on pipeline
 This allows multiple workflows to be configured simultaneously without overwriting each other.
 */
 export interface WipWorkflowData {
+  laboratoryId?: string;
   pipelineId?: number;
   pipelineName?: string;
   pipelineDescription?: string;

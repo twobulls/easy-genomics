@@ -1,3 +1,4 @@
+import { CognitoUserSession, CognitoRefreshToken } from 'amazon-cognito-identity-js';
 import { Auth } from 'aws-amplify';
 import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 import { useToastStore, useUiStore } from '@FE/stores';
@@ -40,10 +41,40 @@ export default function useAuth() {
     return session.getIdToken().getJwtToken();
   }
 
+  /**
+   * Get the current refreshed token from the auth JWT
+   * @returns {Promise<string>}
+   */
+  async function getRefreshedToken(): Promise<string> {
+    try {
+      const currentUser = await Auth.currentAuthenticatedUser();
+      if (!currentUser) {
+        throw new Error('No current user');
+      }
+
+      const newSession: CognitoUserSession = await new Promise((resolve, reject) => {
+        currentUser.refreshSession(
+          currentUser.getSignInUserSession().getRefreshToken() as CognitoRefreshToken,
+          (err: Error, session: CognitoUserSession) => {
+            if (err) {
+              return reject(err);
+            }
+            resolve(session);
+          },
+        );
+      });
+
+      return newSession.getIdToken().getJwtToken();
+    } catch (error) {
+      console.error('Error occurred during token refresh.', error);
+      throw error;
+    }
+  }
+
   async function signOut() {
     try {
       await Auth.signOut();
-      await useUserStore().reset();
+      useUserStore().reset();
       await navigateTo('/signin');
       useToastStore().success('You have been signed out.');
     } catch (error) {
@@ -51,8 +82,10 @@ export default function useAuth() {
       throw error;
     }
   }
+
   return {
     getToken,
+    getRefreshedToken,
     isAuthed,
     signIn,
     signOut,

@@ -1,33 +1,48 @@
+import { ErrorCodeKeys } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/errors';
 import { useRuntimeConfig } from 'nuxt/app';
-const { getToken } = useAuth();
+const { getToken, getRefreshedToken } = useAuth();
 
 class HttpFactory {
   private baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
   private defaultApiUrl = `${this.baseApiUrl}/easy-genomics`;
   private nfTowerApiUrl = `${this.baseApiUrl}/nf-tower`;
 
+  private isRefreshingToken = false;
+  private tokenRefreshPromise: Promise<string> | null = null;
+
   /**
-   * @description Default API request handler
+   * Default API request handler
    */
-  call<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
-    return this.performRequest<T>(method, this.defaultApiUrl + url, data);
+  call<T>(method = 'GET', url: string, data: unknown = '', shouldRefresh: boolean = false): Promise<T | undefined> {
+    return this.performRequest<T>(method, this.defaultApiUrl + url, data, shouldRefresh);
   }
 
   /**
-   * @description NF Tower API request handler
+   * NF Tower API request handler
    */
-  callNextflowTower<T>(method = 'GET', url: string, data: unknown = ''): Promise<T | undefined> {
-    return this.performRequest<T>(method, this.nfTowerApiUrl + url, data);
+  callNextflowTower<T>(
+    method = 'GET',
+    url: string,
+    data: unknown = '',
+    shouldRefresh: boolean = false,
+  ): Promise<T | undefined> {
+    return this.performRequest<T>(method, this.nfTowerApiUrl + url, data, shouldRefresh);
   }
 
   /**
-   * @description Call API with token and handle response errors
+   * Call API with token and handle response errors
    * @param method
    * @param url
    * @param data
+   * @param shouldRefresh
    * @returns Promise<T | undefined>
    */
-  private async performRequest<T>(method: string, url: string, data: unknown = ''): Promise<T | undefined> {
+  private async performRequest<T>(
+    method: string,
+    url: string,
+    data: unknown = '',
+    shouldRefresh: boolean,
+  ): Promise<T | undefined> {
     try {
       const headers: HeadersInit = new Headers();
       headers.append('Content-Type', 'application/json');
@@ -41,40 +56,79 @@ class HttpFactory {
       // and access to various services and large response payloads.
       let token: string | undefined;
       try {
-        token = await getToken();
+        token = shouldRefresh ? await this.refreshToken() : await getToken();
       } catch (tokenError) {
         console.warn(`Failed to get token; reason: ${tokenError}; continuing without Bearer or X-API header`);
       }
       if (token) {
-        headers.append('Authorization', token);
+        headers.append('Authorization', `Bearer ${token}`);
       }
-      const settings: RequestInit = {
-        method,
-        headers,
-      };
+
+      const settings: RequestInit = { method, headers };
       if (data) {
         settings.body = JSON.stringify(data);
       }
+
       const response = await fetch(url, settings);
       if (!response.ok) {
         await this.handleResponseError(response);
       }
 
-      return await ((await response.json()) as Promise<T>);
+      if (shouldRefresh && token) {
+        // Ensure permissions are reloaded before remounting the app
+        await useUserStore().loadCurrentUserPermissions();
+        useUiStore().incrementRemountAppKey();
+      }
+
+      const jsonResponse = await response.json();
+      return jsonResponse as T;
     } catch (error: any) {
+      if (error.message === 'EG-110') {
+        return this.performRequest(method, url, data, true);
+      }
       throw new Error(`Request error: ${error.message}`);
     }
   }
 
+  /**
+   * Handle API response errors and refresh token if necessary
+   * @param response
+   */
   private async handleResponseError(response: Response): Promise<void> {
     let errorMessage = `HTTP error! status: ${response.status}`;
+    let errorCode: ErrorCodeKeys | undefined;
+
     try {
-      const errorBody: { Error: string } = await response.json();
+      const errorBody: { Error: string; ErrorCode: ErrorCodeKeys } = await response.json();
       errorMessage = errorBody.Error || errorMessage;
+      errorCode = errorBody.ErrorCode;
     } catch (error) {
       console.error('Error parsing response body', error);
     }
-    throw new Error(errorMessage);
+
+    if (errorCode === 'EG-110') {
+      throw new Error('EG-110');
+    } else {
+      throw new Error(errorMessage);
+    }
+  }
+
+  /**
+   * Refresh the token if necessary
+   * @returns Promise<string>
+   */
+  private refreshToken(): Promise<string> {
+    if (this.isRefreshingToken) {
+      return this.tokenRefreshPromise!;
+    }
+
+    this.isRefreshingToken = true;
+    this.tokenRefreshPromise = getRefreshedToken().finally(() => {
+      this.isRefreshingToken = false;
+      this.tokenRefreshPromise = null;
+    });
+
+    return this.tokenRefreshPromise;
   }
 }
 

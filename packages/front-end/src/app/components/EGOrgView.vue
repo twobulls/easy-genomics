@@ -20,7 +20,7 @@
   const router = useRouter();
   const { resendInvite, labsCount } = useUser($api);
 
-  const org = useOrgsStore().orgs[props.orgId];
+  const org = computed(() => useOrgsStore().orgs[props.orgId]);
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});

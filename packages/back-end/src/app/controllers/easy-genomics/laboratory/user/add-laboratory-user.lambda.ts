@@ -2,21 +2,13 @@ import { ConditionalCheckFailedException } from '@aws-sdk/client-dynamodb';
 import { AddLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-import {
-  LaboratoryAccess,
-  LaboratoryAccessDetails,
-  OrganizationAccess,
-  OrganizationAccessDetails,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
   LaboratoryUserAlreadyExistsError,
   LaboratoryUserNotFoundError,
-  OrganizationUserNotFoundError,
   UnauthorizedAccessError,
-  UserNotInOrganizationError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
@@ -45,7 +37,7 @@ export const handler: Handler = async (
 
     // Retrieve existing Laboratory and User record details
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
-    const user: User = await userService.get(request.UserId);
+    const existingUser: User = await userService.get(request.UserId);
 
     // Only Organisation Admins and Laboratory Managers are allowed to add a Laboratory-User mapping
     if (
@@ -57,9 +49,12 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
+    // Verify User has access to the Organization - throws error if not found
+    await organizationUserService.get(laboratory.OrganizationId, existingUser.UserId);
+
     // Verify User does not have an existing LaboratoryUser access mapping
     const laboratoryUser: LaboratoryUser | void = await laboratoryUserService
-      .get(request.LaboratoryId, request.UserId)
+      .get(laboratory.LaboratoryId, existingUser.UserId)
       .catch((error: unknown) => {
         if (error instanceof LaboratoryUserNotFoundError) {
           // Do nothing - allow new Laboratory-User access mapping to proceed.
@@ -67,50 +62,14 @@ export const handler: Handler = async (
           throw error;
         }
       });
-
     if (laboratoryUser) {
       throw new LaboratoryUserAlreadyExistsError();
     }
 
-    // Verify User has access to the Organization - throws error if not found
-    await organizationUserService.get(laboratory.OrganizationId, user.UserId).catch((error: unknown) => {
-      if (error instanceof OrganizationUserNotFoundError) {
-        throw new UserNotInOrganizationError();
-      } else {
-        throw error;
-      }
-    });
-
-    // Retrieve the User's OrganizationAccess metadata to update
-    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
-    const organizationAccessDetails: OrganizationAccessDetails | undefined =
-      organizationAccess && organizationAccess[laboratory.OrganizationId]
-        ? organizationAccess[laboratory.OrganizationId]
-        : undefined;
-    // Retrieve the current Organization's LaboratoryAccess details for use in the update
-    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
-      ? organizationAccessDetails.LaboratoryAccess
-      : undefined;
-
     const response = await platformUserService
       .addExistingUserToLaboratory(
         {
-          ...user,
-          OrganizationAccess: <OrganizationAccess>{
-            ...organizationAccess,
-            [laboratory.OrganizationId]: <OrganizationAccessDetails>{
-              ...organizationAccessDetails,
-              LaboratoryAccess: <LaboratoryAccess>{
-                ...laboratoryAccess,
-                [laboratory.LaboratoryId]: <LaboratoryAccessDetails>{
-                  Status: request.Status,
-                  LabManager: request.LabManager,
-                  LabTechnician: request.LabTechnician,
-                },
-              },
-            },
-          },
+          ...existingUser,
           ModifiedAt: new Date().toISOString(),
           ModifiedBy: currentUserId,
         },

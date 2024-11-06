@@ -1,3 +1,4 @@
+import { InvalidRequestError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
@@ -15,10 +16,11 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     // Get Query Parameter
+    const organizationId: string | undefined = event.queryStringParameters?.organizationId;
     const laboratoryId: string | undefined = event.queryStringParameters?.laboratoryId;
     const userId: string | undefined = event.queryStringParameters?.userId;
 
-    const laboratoryUsers: LaboratoryUser[] = await listLaboratoryUsers(laboratoryId, userId);
+    const laboratoryUsers: LaboratoryUser[] = await listLaboratoryUsers(organizationId, laboratoryId, userId);
 
     if (laboratoryUsers.length === 0) {
       return buildResponse(200, JSON.stringify([]), event);
@@ -53,12 +55,18 @@ export const handler: Handler = async (
   }
 };
 
-const listLaboratoryUsers = (laboratoryId?: string, userId?: string): Promise<LaboratoryUser[]> => {
-  if (laboratoryId && !userId) {
+const listLaboratoryUsers = (
+  organizationId?: string,
+  laboratoryId?: string,
+  userId?: string,
+): Promise<LaboratoryUser[]> => {
+  if (organizationId && !laboratoryId && !userId) {
+    return laboratoryUserService.queryByOrganizationId(organizationId);
+  } else if (laboratoryId && !organizationId && !userId) {
     return laboratoryUserService.queryByLaboratoryId(laboratoryId);
-  } else if (!laboratoryId && userId) {
+  } else if (userId && !organizationId && !laboratoryId) {
     return laboratoryUserService.queryByUserId(userId);
   } else {
-    throw new Error('Specify either laboratoryId or userId query parameter to retrieve the list of laboratory-users');
+    throw new InvalidRequestError();
   }
 };

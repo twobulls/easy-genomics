@@ -314,6 +314,8 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/client-cognito-identity-provider',
     '@aws-sdk/client-dynamodb',
     '@aws-sdk/client-ses',
+    '@aws-sdk/client-sns',
+    '@aws-sdk/client-sqs',
     '@aws-sdk/client-ssm',
     '@aws-sdk/client-sso-oidc',
     '@aws-sdk/client-sts',

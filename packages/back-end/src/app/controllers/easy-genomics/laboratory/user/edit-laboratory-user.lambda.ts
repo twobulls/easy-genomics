@@ -1,13 +1,7 @@
 import { EditLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-import {
-  LaboratoryAccess,
-  LaboratoryAccessDetails,
-  OrganizationAccess,
-  OrganizationAccessDetails,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { InvalidRequestError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -38,7 +32,7 @@ export const handler: Handler = async (
 
     // Lookup by LaboratoryId & UserId to confirm existence before updating
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
-    const user: User = await userService.get(request.UserId);
+    const existingUser: User = await userService.get(request.UserId);
 
     // Only Organisation Admins and Laboratory Managers are allowed to edit a Laboratory-User mapping's details
     if (
@@ -50,35 +44,9 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
-    // Retrieve the User's OrganizationAccess metadata to update
-    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
-    const organizationAccessDetails: OrganizationAccessDetails | undefined =
-      organizationAccess && organizationAccess[laboratory.OrganizationId]
-        ? organizationAccess[laboratory.OrganizationId]
-        : undefined;
-    // Retrieve the current Organization's LaboratoryAccess details for use in the update
-    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
-      ? organizationAccessDetails.LaboratoryAccess
-      : undefined;
-
     const response: boolean = await platformUserService.editExistingUserAccessToLaboratory(
       {
-        ...user,
-        OrganizationAccess: <OrganizationAccess>{
-          ...organizationAccess,
-          [laboratory.OrganizationId]: <OrganizationAccessDetails>{
-            ...organizationAccessDetails,
-            LaboratoryAccess: <LaboratoryAccess>{
-              ...laboratoryAccess,
-              [laboratory.LaboratoryId]: <LaboratoryAccessDetails>{
-                Status: request.Status,
-                LabManager: request.LabManager,
-                LabTechnician: request.LabTechnician,
-              },
-            },
-          },
-        },
+        ...existingUser,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
       },

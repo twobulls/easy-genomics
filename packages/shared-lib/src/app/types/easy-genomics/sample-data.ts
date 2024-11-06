@@ -88,6 +88,7 @@ export const labManagerUserOrganizationMapping: OrganizationUser = {
 export const labManagerUserLaboratoryMapping: LaboratoryUser = {
   LaboratoryId: laboratoryId,
   UserId: labManagerUserId,
+  OrganizationId: organizationId,
   Status: 'Active',
   LabManager: true,
   LabTechnician: false,
@@ -128,6 +129,7 @@ export const labTechnicianUserOrganizationMapping: OrganizationUser = {
 export const labTechnicianUserLaboratoryMapping: LaboratoryUser = {
   LaboratoryId: laboratoryId,
   UserId: labTechnicianUserId,
+  OrganizationId: organizationId,
   Status: 'Active',
   LabManager: false,
   LabTechnician: true,

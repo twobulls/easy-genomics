@@ -121,6 +121,34 @@ export class LaboratoryUserService extends DynamoDBService implements Service {
     }
   };
 
+  public queryByOrganizationId = async (organizationId: string): Promise<LaboratoryUser[]> => {
+    const logRequestMessage = `Query LaboratoryUsers by OrganizationId=${organizationId} request`;
+    console.info(logRequestMessage);
+
+    const response: QueryCommandOutput = await this.queryItems({
+      TableName: this.LABORATORY_USER_TABLE_NAME,
+      IndexName: 'OrganizationId_Index', // Global Secondary Index
+      KeyConditionExpression: '#OrganizationId = :organizationId',
+      ExpressionAttributeNames: {
+        '#OrganizationId': 'OrganizationId',
+      },
+      ExpressionAttributeValues: {
+        ':organizationId': { S: organizationId },
+      },
+      ScanIndexForward: false,
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      if (response.Items) {
+        return response.Items.map((item) => <LaboratoryUser>unmarshall(item));
+      } else {
+        throw new Error(`${logRequestMessage} unsuccessful: Resource not found`);
+      }
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  };
+
   public update = async (laboratoryUser: LaboratoryUser): Promise<LaboratoryUser> => {
     const logRequestMessage = `Update LaboratoryUser LaboratoryId=${laboratoryUser.LaboratoryId}, UserId=${laboratoryUser.UserId} request`;
     console.info(logRequestMessage);

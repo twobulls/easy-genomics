@@ -23,13 +23,13 @@ export const ACCESS_CONTROL_ALLOW_HEADERS = [
 export function buildResponse(
   statusCode: number,
   body: string,
-  event: APIGatewayProxyWithCognitoAuthorizerEvent | APIGatewayProxyEvent,
+  event?: APIGatewayProxyWithCognitoAuthorizerEvent | APIGatewayProxyEvent,
 ): APIGatewayProxyResult {
   return {
     statusCode,
     body,
     headers: {
-      'Access-Control-Allow-Origin': event.headers?.origin || '*',
+      'Access-Control-Allow-Origin': event?.headers?.origin || '*',
       'Access-Control-Allow-Methods': aws_apigateway.Cors.ALL_METHODS.join(','),
       'Access-Control-Allow-Headers': ACCESS_CONTROL_ALLOW_HEADERS.join(','),
     },
@@ -38,7 +38,7 @@ export function buildResponse(
 
 export function buildErrorResponse(
   error: Error,
-  event: APIGatewayProxyWithCognitoAuthorizerEvent | APIGatewayProxyEvent,
+  event?: APIGatewayProxyWithCognitoAuthorizerEvent | APIGatewayProxyEvent,
 ): APIGatewayProxyResult {
   let statusCode: number = 400;
   let errorCode: string = 'EG-100';
@@ -57,7 +57,7 @@ export function buildErrorResponse(
     statusCode,
     body,
     headers: {
-      'Access-Control-Allow-Origin': event.headers?.origin || '*',
+      'Access-Control-Allow-Origin': event?.headers?.origin || '*',
       'Access-Control-Allow-Methods': aws_apigateway.Cors.ALL_METHODS.join(','),
       'Access-Control-Allow-Headers': ACCESS_CONTROL_ALLOW_HEADERS.join(','),
     },

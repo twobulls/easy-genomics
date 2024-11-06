@@ -29,7 +29,7 @@
       await orgsStore.loadOrgs();
     } catch (error) {
       console.error(error);
-      useToastStore().error('Something went wrong while loading orgs');
+      useToastStore().error('Something went wrong while loading Organizations');
       throw error;
     } finally {
       isLoading.value = false;
@@ -102,7 +102,7 @@
       useToastStore().success('Organization deleted');
     } catch (error) {
       console.error(error);
-      useToastStore().error('Something went wrong while removing org');
+      useToastStore().error('Something went wrong while removing the Organization');
       throw error;
     } finally {
       isLoading.value = false;

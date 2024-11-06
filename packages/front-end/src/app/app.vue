@@ -7,7 +7,7 @@
 
 <template>
   <NuxtLoadingIndicator :color="primaryColHex" />
-  <NuxtLayout>
+  <NuxtLayout :key="useUiStore().remountAppKey">
     <NuxtPage />
     <EGBuildInfo v-if="ENV_TYPE !== 'prod'" />
   </NuxtLayout>

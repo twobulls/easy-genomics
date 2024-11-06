@@ -29,11 +29,13 @@ type PendingRequest =
 interface UiStoreState {
   pendingRequests: Set<string>;
   previousPageRoute: string;
+  remountAppKey: number;
 }
 
 const initialState = (): UiStoreState => ({
   pendingRequests: new Set<string>(),
   previousPageRoute: '',
+  remountAppKey: 0,
 });
 
 const useUiStore = defineStore('uiStore', {
@@ -65,6 +67,10 @@ const useUiStore = defineStore('uiStore', {
 
     setPreviousPageRoute(route: string) {
       this.previousPageRoute = route;
+    },
+
+    incrementRemountAppKey() {
+      this.remountAppKey++;
     },
   },
 

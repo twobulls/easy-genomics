@@ -137,6 +137,10 @@
       "type": "runtime"
     },
     {
+      "name": "amazon-cognito-identity-js",
+      "type": "runtime"
+    },
+    {
       "name": "aws-amplify",
       "version": "5.3.18",
       "type": "runtime"

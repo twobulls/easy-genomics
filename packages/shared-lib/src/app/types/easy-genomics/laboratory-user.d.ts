@@ -12,6 +12,7 @@
  * {
  *   LaboratoryId: <string>,
  *   UserId: <string>,
+ *   OrganizationId: <string>,
  *   Status: 'Active' | 'Inactive',
  *   LabManager: <boolean>,
  *   LabTechnician: <boolean>,
@@ -27,5 +28,6 @@ import { LaboratoryRoles } from './roles';
 export interface LaboratoryUser extends LaboratoryRoles, BaseAttributes {
   LaboratoryId: string; // DynamoDB Partition Key (String)
   UserId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
+  OrganizationId: string; // Global Secondary Index (String)
   Status: Status;
 }

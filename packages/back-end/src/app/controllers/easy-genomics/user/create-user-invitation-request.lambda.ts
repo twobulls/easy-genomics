@@ -67,17 +67,8 @@ export const handler: Handler = async (
       );
 
       try {
-        const newUserDetails: User = {
-          ...newUser,
-          OrganizationAccess: {
-            [organization.OrganizationId]: {
-              Status: newOrganizationUser.Status,
-              LaboratoryAccess: {},
-            },
-          },
-        };
         // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
-        if (await platformUserService.addNewUserToOrganization(newUserDetails, newOrganizationUser)) {
+        if (await platformUserService.addNewUserToOrganization(newUser, newOrganizationUser)) {
           return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
         }
       } catch (error: unknown) {

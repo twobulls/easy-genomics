@@ -59,7 +59,7 @@
       const { displayName, UserId } = selectedUser;
       maybeDisplayName = displayName; // Substute the word 'user' in the error toast message with the users display name
 
-      const res = (await $api.labs.addLabUser(props.labId, UserId)) as EditUserResponse;
+      const res = (await $api.labs.addLabUser(props.orgId, props.labId, UserId)) as EditUserResponse;
 
       if (!res) {
         throw new Error('User not added to Lab');

@@ -1,12 +1,7 @@
 import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-import {
-  LaboratoryAccess,
-  OrganizationAccess,
-  OrganizationAccessDetails,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { InvalidRequestError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -37,7 +32,7 @@ export const handler: Handler = async (
 
     // Retrieve Laboratory & User objects for necessary details to perform update/delete transaction
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
-    const user: User = await userService.get(request.UserId);
+    const existingUser: User = await userService.get(request.UserId);
 
     // Only Organisation Admins and Laboratory Managers are allowed to remove a Laboratory-User mapping
     if (
@@ -49,40 +44,14 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
-    // Retrieve the User's OrganizationAccess metadata to update
-    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
-    const organizationAccessDetails: OrganizationAccessDetails | undefined =
-      organizationAccess && organizationAccess[laboratory.OrganizationId]
-        ? organizationAccess[laboratory.OrganizationId]
-        : undefined;
-    // Retrieve the current Organization's LaboratoryAccess details for use in the update
-    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
-      ? organizationAccessDetails.LaboratoryAccess
-      : undefined;
-
-    if (laboratoryAccess) {
-      delete laboratoryAccess[laboratory.LaboratoryId];
-    }
-
     const response: boolean = await platformUserService.removeExistingUserFromLaboratory(
       {
-        ...user,
-        OrganizationAccess: <OrganizationAccess>{
-          ...organizationAccess,
-          [laboratory.OrganizationId]: <OrganizationAccessDetails>{
-            ...organizationAccessDetails,
-            LaboratoryAccess: <LaboratoryAccess>{
-              ...laboratoryAccess,
-            },
-          },
-        },
+        ...existingUser,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
       },
       laboratoryUser,
     );
-
     if (response) {
       return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);
     }

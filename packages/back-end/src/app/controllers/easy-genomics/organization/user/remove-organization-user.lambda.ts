@@ -1,11 +1,6 @@
 import { RemoveOrganizationUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/organization-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import {
-  LaboratoryAccess,
-  OrganizationAccess,
-  OrganizationAccessDetails,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { InvalidRequestError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -39,35 +34,15 @@ export const handler: Handler = async (
       request.OrganizationId,
       request.UserId,
     );
-    const user: User = await userService.get(request.UserId);
-
-    // Retrieve the User's OrganizationAccess metadata to update
-    const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-    // Retrieve the current Organization's OrganizationAccessDetails for use in the update
-    const organizationAccessDetails: OrganizationAccessDetails | undefined =
-      organizationAccess && organizationAccess[organizationUser.OrganizationId]
-        ? organizationAccess[organizationUser.OrganizationId]
-        : undefined;
-    // Retrieve the current Organization's LaboratoryAccess details for use in the update
-    const laboratoryAccess: LaboratoryAccess | undefined = organizationAccessDetails
-      ? organizationAccessDetails.LaboratoryAccess
-      : undefined;
-
-    if (organizationAccess) {
-      delete organizationAccess[organizationUser.OrganizationId];
-    }
+    const existingUser: User = await userService.get(request.UserId);
 
     const response: boolean = await platformUserService.removeExistingUserFromOrganization(
       {
-        ...user,
-        OrganizationAccess: <OrganizationAccess>{
-          ...organizationAccess,
-        },
+        ...existingUser,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
       },
       organizationUser,
-      laboratoryAccess,
     );
     if (response) {
       return buildResponse(200, JSON.stringify({ Status: 'Success' }), event);

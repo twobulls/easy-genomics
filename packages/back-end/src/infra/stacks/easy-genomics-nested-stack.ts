@@ -1,11 +1,14 @@
-import { NestedStack } from 'aws-cdk-lib';
+import { Duration, NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Construct } from 'constructs';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
 import { SesConstruct } from '../constructs/ses-construct';
+import { SnsConstruct, TopicDetails, Topics } from '../constructs/sns-construct';
+import { QueueDetails, Queues, SqsConstruct } from '../constructs/sqs-construct';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
 export class EasyGenomicsNestedStack extends NestedStack {
@@ -16,10 +19,39 @@ export class EasyGenomicsNestedStack extends NestedStack {
   iam: IamConstruct;
   lambda: LambdaConstruct;
   ses: SesConstruct;
+  sns: SnsConstruct;
+  sqs: SqsConstruct;
 
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
     super(scope, id);
     this.props = props;
+
+    this.sns = new SnsConstruct(this, `${this.props.constructNamespace}-sns`, {
+      namePrefix: this.props.namePrefix,
+      topics: <Topics>{
+        ['organization-deletion-topic']: <TopicDetails>{ fifo: true },
+        ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true },
+      },
+    });
+
+    this.sqs = new SqsConstruct(this, `${this.props.constructNamespace}-sqs`, {
+      namePrefix: this.props.namePrefix,
+      devEnv: this.props.devEnv,
+      queues: <Queues>{
+        ['organization-management-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          snsTopics: [this.sns.snsTopics.get('organization-deletion-topic')],
+        },
+        ['laboratory-management-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          snsTopics: [this.sns.snsTopics.get('laboratory-deletion-topic')],
+        },
+      },
+    });
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
       ...(<IamConstructProps>props), // Typecast to IamConstructProps
@@ -81,6 +113,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
             authorizer: undefined, // Explicitly remove authorizer
           },
         },
+        '/easy-genomics/organization/delete-organization': {
+          environment: {
+            SNS_ORGANIZATION_DELETION_TOPIC: this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/organization/process-delete-organization': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('organization-management-queue')!, { batchSize: 1 })],
+          environment: {
+            SNS_ORGANIZATION_DELETION_TOPIC: this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || '',
+          },
+        },
         '/easy-genomics/laboratory/create-laboratory': {
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
@@ -89,6 +132,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
         '/easy-genomics/laboratory/update-laboratory': {
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
+          },
+        },
+        '/easy-genomics/laboratory/delete-laboratory': {
+          environment: {
+            SNS_LABORATORY_DELETION_TOPIC: this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/laboratory/process-delete-laboratory': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('laboratory-management-queue')!, { batchSize: 1 })],
+          environment: {
+            SNS_LABORATORY_DELETION_TOPIC: this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || '',
           },
         },
       },
@@ -179,6 +233,41 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+        ],
+        actions: ['dynamodb:DeleteItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table/index/*`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/organization/process-delete-organization
+    this.iam.addPolicyStatements('/easy-genomics/organization/process-delete-organization', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+        ],
+        actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
         ],
         actions: ['dynamodb:DeleteItem'],
@@ -413,6 +502,28 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
         ],
         actions: ['ssm:DeleteParameter'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/laboratory/process-delete-laboratory
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/process-delete-laboratory', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+        ],
+        actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+        ],
+        actions: ['dynamodb:DeleteItem'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -881,6 +992,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
           {
             partitionKey: {
               name: 'UserId', // Global Secondary Index to support Laboratory lookup by UserId requests
+              type: AttributeType.STRING,
+            },
+          },
+          {
+            partitionKey: {
+              name: 'OrganizationId', // Global Secondary Index to support lookup by OrganizationId requests
               type: AttributeType.STRING,
             },
           },

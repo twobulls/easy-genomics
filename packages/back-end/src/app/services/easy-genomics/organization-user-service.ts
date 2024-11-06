@@ -59,7 +59,7 @@ export class OrganizationUserService extends DynamoDBService implements Service 
       if (response.Item) {
         return <OrganizationUser>unmarshall(response.Item);
       } else {
-        throw new OrganizationUserNotFoundError('organization user', userId, organizationId);
+        throw new OrganizationUserNotFoundError(organizationId, userId);
       }
     } else {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);

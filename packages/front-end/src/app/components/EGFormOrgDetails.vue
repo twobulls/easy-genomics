@@ -83,7 +83,7 @@
           @input.prevent="handleNameInput"
           :placeholder="formState.Name ? '' : 'Enter organization name (required and must be unique)'"
           required
-          :disabled="useUiStore().isRequestPending('createOrg')"
+          :disabled="useUiStore().isRequestPending('createOrg') || useUiStore().isRequestPending('editOrg')"
           autofocus
         />
         <EGCharacterCounter :value="orgNameCharCount" :max="ORG_NAME_MAX_LENGTH" />
@@ -94,18 +94,23 @@
           @blur="validateForm"
           @input.prevent="handleDescriptionInput"
           placeholder="Describe your organization and any relevant details"
-          :disabled="useUiStore().isRequestPending('createOrg')"
+          :disabled="useUiStore().isRequestPending('createOrg') || useUiStore().isRequestPending('editOrg')"
         />
         <EGCharacterCounter :value="orgDescriptionCharCount" :max="ORG_DESCRIPTION_MAX_LENGTH" />
       </EGFormGroup>
     </EGCard>
     <EGButton
       :size="ButtonSizeEnum.enum.sm"
-      :disabled="useUiStore().isRequestPending('createOrg') || formState.isFormDisabled || !didFormStateChange"
+      :disabled="
+        useUiStore().isRequestPending('createOrg') ||
+        useUiStore().isRequestPending('editOrg') ||
+        formState.isFormDisabled ||
+        !didFormStateChange
+      "
       type="submit"
       label="Save changes"
       class="mt-6"
-      :loading="useUiStore().isRequestPending('createOrg')"
+      :loading="useUiStore().isRequestPending('createOrg') || useUiStore().isRequestPending('editOrg')"
     />
   </UForm>
 </template>

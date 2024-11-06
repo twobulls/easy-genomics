@@ -113,7 +113,7 @@ async function generateSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[])
    */
   const sampleSheetCsvData: string[] = (
     await Promise.all(
-      uploadedFilePairs.map(async (uploadedFilePair: UploadedFilePairInfo, index: number) => {
+      uploadedFilePairs.map(async (uploadedFilePair: UploadedFilePairInfo) => {
         const r1 = uploadedFilePair.R1;
         const r2 = uploadedFilePair.R2;
 
@@ -127,7 +127,7 @@ async function generateSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[])
         } else if (validPair[1] === false) {
           throw new Error(`Uploaded R2 sample file not found: ${r2.Key}`);
         } else {
-          return `Sample_${index + 1}, ${r1.S3Url}, ${r2.S3Url}`; // CSV Sample-Sheet row with sample index
+          return `${uploadedFilePair.SampleId}, ${r1.S3Url}, ${r2.S3Url}`; // CSV Sample-Sheet row
         }
       }),
     )

@@ -75,6 +75,7 @@ class HttpFactory {
       }
 
       if (shouldRefresh && token) {
+        // Ensure permissions are reloaded before remounting the app
         await useUserStore().loadCurrentUserPermissions();
         useUiStore().incrementRemountAppKey();
       }

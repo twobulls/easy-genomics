@@ -13,7 +13,6 @@ export interface WipWorkflowData {
   transactionId?: string;
   userPipelineRunName?: string;
   params?: object;
-  sampleSheetCsv?: string;
   sampleSheetS3Url?: string;
   s3Bucket?: string;
   s3Path?: string;

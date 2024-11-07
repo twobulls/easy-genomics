@@ -36,6 +36,7 @@ import {
   ListMultipartUploadsCommandInput,
   ListObjectsV2Command,
   ListObjectsV2CommandInput,
+  ListObjectsV2CommandOutput,
   ListPartsCommand,
   ListPartsCommandInput,
   NoSuchBucket,
@@ -69,7 +70,7 @@ export enum S3Command {
   // Manage S3 Bucket objects
   COPY_BUCKET_OBJECT = 'copy-bucket-object',
   DELETE_BUCKET_OBJECT = 'delete-bucket-object',
-  LIST_BUCKET_OBJECTS = 'list-bucket-objects',
+  LIST_BUCKET_OBJECTS_V2 = 'list-bucket-objects-v2',
   HEAD_OBJECT = 'head-object',
   GET_OBJECT = 'get-object',
   PUT_OBJECT = 'put-object',
@@ -145,6 +146,15 @@ export class S3Service {
 
   public listBuckets = async (listBucketsInput: ListBucketsCommandInput): Promise<ListBucketsCommandOutput> => {
     return this.s3Request<ListBucketsCommandInput, ListBucketsCommandOutput>(S3Command.LIST_BUCKETS, listBucketsInput);
+  };
+
+  public listBucketObjectsV2 = async (
+    listObjectsV2Input: ListObjectsV2CommandInput,
+  ): Promise<ListObjectsV2CommandOutput> => {
+    return this.s3Request<ListObjectsV2CommandInput, ListObjectsV2CommandOutput>(
+      S3Command.LIST_BUCKET_OBJECTS_V2,
+      listObjectsV2Input,
+    );
   };
 
   public getBucketLocation = async (
@@ -262,7 +272,7 @@ export class S3Service {
         return new CopyObjectCommand(data as CopyObjectCommandInput);
       case S3Command.DELETE_BUCKET_OBJECT:
         return new DeleteObjectCommand(data as DeleteObjectCommandInput);
-      case S3Command.LIST_BUCKET_OBJECTS:
+      case S3Command.LIST_BUCKET_OBJECTS_V2:
         return new ListObjectsV2Command(data as ListObjectsV2CommandInput);
       case S3Command.HEAD_OBJECT:
         return new HeadObjectCommand(data as HeadObjectCommandInput);

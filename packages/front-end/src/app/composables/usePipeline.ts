@@ -1,17 +1,21 @@
-export default function usePipeline() {
+import { useWorkflowStore } from '@FE/stores';
+import { WipWorkflowData } from '@FE/stores/workflow';
+
+export default function usePipeline($api: any) {
   /**
    * Downloads the sample sheet as a CSV file.
    */
-  function downloadSampleSheet(workflowTempId: string) {
+  async function downloadSampleSheet(workflowTempId: string) {
     const wipWorkflow: WipWorkflowData = useWorkflowStore().wipWorkflows[workflowTempId];
 
-    const csvString = wipWorkflow.sampleSheetCsv;
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const fileDownloadUrlResponse = await $api.files.requestFileDownloadUrl({
+      LaboratoryId: `${wipWorkflow.laboratoryId}`,
+      S3Uri: `${wipWorkflow.sampleSheetS3Url}`,
+    });
+    const sampleSheetCsvData = await (await fetch(fileDownloadUrlResponse.DownloadUrl)).text();
     const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', `samplesheet-${wipWorkflow.pipelineName}--${wipWorkflow.userPipelineRunName}.csv`);
+    link.href = `data:text/csv;charset=utf-8,${sampleSheetCsvData}`;
+    link.download = `samplesheet-${wipWorkflow.pipelineName}--${wipWorkflow.userPipelineRunName}.csv`;
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

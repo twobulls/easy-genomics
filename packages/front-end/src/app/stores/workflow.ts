@@ -7,13 +7,13 @@ launched yet. They're addressed by workflowTempId which is generated on pipeline
 This allows multiple workflows to be configured simultaneously without overwriting each other.
 */
 export interface WipWorkflowData {
+  laboratoryId?: string;
   pipelineId?: number;
   pipelineName?: string;
   pipelineDescription?: string;
   transactionId?: string;
   userPipelineRunName?: string;
   params?: object;
-  sampleSheetCsv?: string;
   sampleSheetS3Url?: string;
   s3Bucket?: string;
   s3Path?: string;

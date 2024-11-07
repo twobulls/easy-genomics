@@ -14,6 +14,7 @@
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useWorkflowStore, useToastStore } from '@FE/stores';
+  import usePipeline from '@FE/composables/usePipeline';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -37,6 +38,7 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const workflowStore = useWorkflowStore();
+  const { downloadSampleSheet } = usePipeline($api);
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
@@ -544,7 +546,7 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="usePipeline().downloadSampleSheet(workflowTempId)"
+        @click="downloadSampleSheet(workflowTempId)"
       />
       <EGButton
         @click="startUploadProcess"

@@ -34,8 +34,8 @@
     <div class="flex items-start justify-between">
       <div class="w-full">
         <template v-if="isLoading">
-          <USkeleton v-for="line in skeletonTitleLines" class="mb-2 min-h-10 w-3/4 rounded" :key="line" />
-          <USkeleton v-for="line in skeletonDescriptionLines" class="mt-4 min-h-4 w-[150px] rounded" :key="line" />
+          <USkeleton v-for="line in skeletonTitleLines" class="mb-2 mt-1 min-h-10 w-3/4 rounded" :key="line" />
+          <USkeleton v-for="line in skeletonDescriptionLines" class="mt-5 min-h-4 w-[150px] rounded" :key="line" />
         </template>
         <template v-else>
           <EGText tag="h1" class="mb-0">{{ title }}</EGText>

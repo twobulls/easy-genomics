@@ -28,6 +28,10 @@
   const orgNameCharCount = computed(() => formState.Name.length);
   const orgDescriptionCharCount = computed(() => formState.Description.length);
 
+  const isPending = computed(
+    () => useUiStore().isRequestPending('createOrg') || useUiStore().isRequestPending('editOrg'),
+  );
+
   // Form-related refs and computed props
   const formState = reactive({
     Name: props.name,
@@ -83,7 +87,7 @@
           @input.prevent="handleNameInput"
           :placeholder="formState.Name ? '' : 'Enter organization name (required and must be unique)'"
           required
-          :disabled="useUiStore().isRequestPending('createOrg')"
+          :disabled="isPending"
           autofocus
         />
         <EGCharacterCounter :value="orgNameCharCount" :max="ORG_NAME_MAX_LENGTH" />
@@ -94,18 +98,18 @@
           @blur="validateForm"
           @input.prevent="handleDescriptionInput"
           placeholder="Describe your organization and any relevant details"
-          :disabled="useUiStore().isRequestPending('createOrg')"
+          :disabled="isPending"
         />
         <EGCharacterCounter :value="orgDescriptionCharCount" :max="ORG_DESCRIPTION_MAX_LENGTH" />
       </EGFormGroup>
     </EGCard>
     <EGButton
       :size="ButtonSizeEnum.enum.sm"
-      :disabled="useUiStore().isRequestPending('createOrg') || formState.isFormDisabled || !didFormStateChange"
+      :disabled="isPending || formState.isFormDisabled || !didFormStateChange"
       type="submit"
       label="Save changes"
       class="mt-6"
-      :loading="useUiStore().isRequestPending('createOrg')"
+      :loading="isPending"
     />
   </UForm>
 </template>

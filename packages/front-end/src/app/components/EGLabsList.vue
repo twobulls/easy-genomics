@@ -136,18 +136,14 @@
       useUiStore().setRequestComplete('getLabs');
     }
   }
-
-  const canCreateLab = computed<boolean>(
-    () => !props.superuser && useUserStore().canCreateLab(useUserStore().currentOrgId),
-  );
 </script>
 
 <template>
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Labs set up yet."
-    :primary-button-action="canCreateLab ? () => $router.push({ path: `/labs/create` }) : null"
-    :primary-button-label="canCreateLab ? 'Create a new Lab' : null"
+    :primary-button-action="useUserStore().canCreateLab ? () => $router.push({ path: `/labs/create` }) : null"
+    :primary-button-label="useUserStore().canCreateLab ? 'Create a new Lab' : null"
   />
 
   <EGTable

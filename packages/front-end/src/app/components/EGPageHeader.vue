@@ -28,14 +28,15 @@
 
 <template>
   <div class="mb-6 flex flex-col justify-between">
-    <div class="h-[40px]">
+    <div class="min-h-[40px]">
       <EGBack v-if="showBack" :label="backButtonLabel" :back-action="backAction" />
+      <EGAdminAlert v-if="useUserStore().isSuperuser" class="mb-4" />
     </div>
-    <div class="flex items-start justify-between">
+    <div class="flex min-h-[52px] items-start justify-between">
       <div class="w-full">
         <template v-if="isLoading">
-          <USkeleton v-for="line in skeletonTitleLines" class="mb-2 min-h-10 w-3/4 rounded" :key="line" />
-          <USkeleton v-for="line in skeletonDescriptionLines" class="mt-4 min-h-4 w-[150px] rounded" :key="line" />
+          <USkeleton v-for="line in skeletonTitleLines" class="mb-2 min-h-12 w-3/4 rounded" :key="line" />
+          <USkeleton v-for="line in skeletonDescriptionLines" class="mt-4 min-h-5 w-[150px] rounded" :key="line" />
         </template>
         <template v-else>
           <EGText tag="h1" class="mb-0">{{ title }}</EGText>

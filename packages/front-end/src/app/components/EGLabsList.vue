@@ -75,7 +75,11 @@
   const displayName = ref('');
 
   function onRowClicked(row: Laboratory) {
-    router.push({ path: `/labs/${row.LaboratoryId}` });
+    if (props.superuser) {
+      router.push({ path: `/admin/orgs/${props.orgId}/labs/${row.LaboratoryId}` });
+    } else {
+      router.push({ path: `/labs/${row.LaboratoryId}` });
+    }
   }
 
   function resetSelectedLabValues() {
@@ -139,15 +143,6 @@
 </script>
 
 <template>
-  <EGPageHeader title="Labs" :show-back="false">
-    <EGButton
-      v-if="canCreateLab"
-      label="Create a new Lab"
-      class="self-end"
-      @click="() => $router.push({ path: `/labs/create` })"
-    />
-  </EGPageHeader>
-
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Labs set up yet."

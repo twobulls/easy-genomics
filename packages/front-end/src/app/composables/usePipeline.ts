@@ -1,7 +1,3 @@
-import {
-  FileDownloadUrlResponse,
-  RequestFileDownloadUrl,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-file-download-url';
 import { useWorkflowStore } from '@FE/stores';
 import { WipWorkflowData } from '@FE/stores/workflow';
 
@@ -12,14 +8,14 @@ export default function usePipeline($api: any) {
   async function downloadSampleSheet(workflowTempId: string) {
     const wipWorkflow: WipWorkflowData = useWorkflowStore().wipWorkflows[workflowTempId];
 
-    const req: RequestFileDownloadUrl = {
+    const fileDownloadUrlResponse = await $api.files.requestFileDownloadUrl({
       LaboratoryId: `${wipWorkflow.laboratoryId}`,
       S3Uri: `${wipWorkflow.sampleSheetS3Url}`,
-    };
-    const fileDownloadUrlResponse: FileDownloadUrlResponse = await $api.files.requestFileDownloadUrl(req);
+    });
+    const sampleSheetCsvData = await (await fetch(fileDownloadUrlResponse.DownloadUrl)).text();
     const link = document.createElement('a');
-    link.setAttribute('href', fileDownloadUrlResponse.DownloadUrl);
-    link.setAttribute('download', `samplesheet-${wipWorkflow.pipelineName}--${wipWorkflow.userPipelineRunName}.csv`);
+    link.href = `data:text/csv;charset=utf-8,${sampleSheetCsvData}`;
+    link.download = `samplesheet-${wipWorkflow.pipelineName}--${wipWorkflow.userPipelineRunName}.csv`;
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

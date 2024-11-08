@@ -4,11 +4,7 @@ import { InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-prov
 import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 import { ConfirmUpdateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import {
-  OrganizationAccess,
-  OrganizationAccessDetails,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { ConfirmUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
@@ -83,10 +79,23 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     }
 
     if (payload.RequestType === 'ExistingUserInvitation') {
-      // Existing User invited to an Organization
-      await updatePlatformUserOrganizationAccess(user, organizationUser);
+      // Activate Existing User invited to an Organization
+      await platformUserService.editExistingUserAccessToOrganization(
+        {
+          ...user,
+          Status: 'Active',
+          ModifiedAt: new Date().toISOString(),
+          ModifiedBy: user.UserId,
+        },
+        {
+          ...organizationUser,
+          Status: 'Active',
+          ModifiedAt: new Date().toISOString(),
+          ModifiedBy: user.UserId,
+        },
+      );
     } else {
-      // New User invited to the Platform and an Organization
+      // Activate New User invited to the Platform and an Organization
       if (user.Status === 'Invited') {
         const temporaryPassword: string | undefined = payload.TemporaryPassword;
         if (!temporaryPassword) {
@@ -118,13 +127,21 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
               // Update Cognito User's email to verified
               cognitoIdpService.adminUpdateUserEmailVerified(user.UserId, true),
               // Update User's Status to 'Active' and set the supplied names
-              updatePlatformUserOrganizationAccess(
+              platformUserService.editExistingUserAccessToOrganization(
                 {
                   ...user,
                   FirstName: request.FirstName,
                   LastName: request.LastName,
+                  Status: 'Active',
+                  ModifiedAt: new Date().toISOString(),
+                  ModifiedBy: user.UserId,
                 },
-                organizationUser,
+                {
+                  ...organizationUser,
+                  Status: 'Active',
+                  ModifiedAt: new Date().toISOString(),
+                  ModifiedBy: user.UserId,
+                },
               ),
             ]);
           });
@@ -137,42 +154,3 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     return buildErrorResponse(err, event);
   }
 };
-
-/**
- * Helper function to update User's FirstName, LastName, Status,
- * OrganizationAccess metadata Status, and OrganizationUser Status values to
- * 'Active' after completing the sign-up confirmation workflow.
- * @param user
- * @param organizationUser
- */
-function updatePlatformUserOrganizationAccess(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
-  // Retrieve the User's OrganizationAccess metadata to update
-  const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-  // Retrieve the current Organization's OrganizationAccessDetails for use in the update
-  const organizationAccessDetails: OrganizationAccessDetails | undefined =
-    organizationAccess && organizationAccess[organizationUser.OrganizationId]
-      ? organizationAccess[organizationUser.OrganizationId]
-      : undefined;
-
-  return platformUserService.editExistingUserAccessToOrganization(
-    {
-      ...user,
-      Status: 'Active',
-      OrganizationAccess: <OrganizationAccess>{
-        ...organizationAccess,
-        [organizationUser.OrganizationId]: <OrganizationAccessDetails>{
-          ...organizationAccessDetails,
-          Status: 'Active',
-        },
-      },
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: user.UserId,
-    },
-    {
-      ...organizationUser,
-      Status: 'Active',
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: user.UserId,
-    },
-  );
-}

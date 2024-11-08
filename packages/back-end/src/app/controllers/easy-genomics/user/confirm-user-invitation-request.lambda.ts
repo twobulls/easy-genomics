@@ -1,6 +1,6 @@
 import { createHmac } from 'crypto';
 import { buildClient, CommitmentPolicy, KmsKeyringNode } from '@aws-crypto/client-node';
-import { InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import { InitiateAuthCommandOutput, NotAuthorizedException } from '@aws-sdk/client-cognito-identity-provider';
 import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 import { ConfirmUpdateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
@@ -47,15 +47,13 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     const jwtPayload: JwtPayload | string = verifyJwt(request.Token, process.env.JWT_SECRET_KEY);
 
     if (typeof jwtPayload !== 'object') {
-      throw new InvalidRequestError(`Unexpected confirm-user-invitation-request JWT: ${jwtPayload}`);
+      throw new InvalidRequestError(`Unexpected User Invitation: ${jwtPayload}`);
     }
 
     // Check JWT RequestType is the expected 'UserInvitationJwt'
     const payload: UserInvitationJwt = <UserInvitationJwt>jwtPayload;
     if (payload.RequestType !== 'NewUserInvitation' && payload.RequestType !== 'ExistingUserInvitation') {
-      throw new InvalidRequestError(
-        `Unexpected confirm-user-invitation-request JWT request type: '${payload.RequestType}'`,
-      );
+      throw new InvalidRequestError(`Unexpected User Invitation request type: '${payload.RequestType}'`);
     }
 
     // Lookup User by Email to verify request
@@ -71,7 +69,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
       .update(user.UserId + payload.OrganizationId)
       .digest('hex');
     if (payload.Verification !== verification) {
-      throw new InvalidRequestError('Failed to verify confirm-user-invitation-request JWT');
+      throw new InvalidRequestError('Failed to verify User Invitation');
     }
 
     // Lookup OrganizationUser access mapping to check invitation has not already been activated / restricted.
@@ -105,19 +103,25 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
       if (user.Status === 'Invited') {
         const temporaryPassword: string | undefined = payload.TemporaryPassword;
         if (!temporaryPassword) {
-          throw new InvalidRequestError('Required temporary password missing in confirm-user-invitation-request JWT');
+          throw new InvalidRequestError('Required temporary password missing in User Invitation');
         }
 
         // Decrypt the temporaryPassword
         const { plaintext } = await cryptoClient.decrypt(keyring, toByteArray(temporaryPassword));
 
         // Login with temporaryPassword to obtain accessToken and complete auth challenge set new password
-        const response: InitiateAuthCommandOutput = await cognitoIdpService.initiateAuth(
-          process.env.COGNITO_USER_POOL_CLIENT_ID,
-          user.Email,
-          plaintext.toString(),
-        );
-        if (!response.Session) {
+        const response: InitiateAuthCommandOutput | void = await cognitoIdpService
+          .initiateAuth(process.env.COGNITO_USER_POOL_CLIENT_ID, user.Email, plaintext.toString())
+          .catch((error: any) => {
+            if (error instanceof NotAuthorizedException) {
+              throw new UnauthorizedAccessError(
+                'User Invitation no longer valid. Please request the User Invitation to be re-sent.',
+              );
+            } else {
+              throw error;
+            }
+          });
+        if (!response || !response.Session) {
           throw new UnauthorizedAccessError('Unable to obtain authentication access token');
         }
 

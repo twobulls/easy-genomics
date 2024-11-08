@@ -8,7 +8,11 @@ import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user
 import { ConfirmUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import {
+  InvalidRequestError,
+  UnauthorizedAccessError,
+  UserNotFoundError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { toByteArray } from 'base64-js';
 import { JwtPayload } from 'jsonwebtoken';
@@ -43,37 +47,39 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     const jwtPayload: JwtPayload | string = verifyJwt(request.Token, process.env.JWT_SECRET_KEY);
 
     if (typeof jwtPayload !== 'object') {
-      throw new Error(`Unexpected response: ${jwtPayload}`);
+      throw new InvalidRequestError(`Unexpected confirm-user-invitation-request JWT: ${jwtPayload}`);
     }
 
     // Check JWT RequestType is the expected 'UserInvitationJwt'
     const payload: UserInvitationJwt = <UserInvitationJwt>jwtPayload;
     if (payload.RequestType !== 'NewUserInvitation' && payload.RequestType !== 'ExistingUserInvitation') {
-      throw new Error(`Invalid JWT RequestType: '${payload.RequestType}'`);
+      throw new InvalidRequestError(
+        `Unexpected confirm-user-invitation-request JWT request type: '${payload.RequestType}'`,
+      );
     }
 
     // Lookup User by Email to verify request
     const user: User | undefined = (await userService.queryByEmail(payload.Email)).shift();
     if (!user) {
-      throw new Error(`Unable to find User record: '${payload.Email}'`);
+      throw new UserNotFoundError();
     }
     if (user.Status === 'Inactive') {
-      throw new Error('User has been deactivated. Please contact the System Administrator for assistance.');
+      throw new UnauthorizedAccessError('Please contact the System Administrator for assistance.');
     }
 
     const verification = createHmac('sha256', process.env.JWT_SECRET_KEY + payload.CreatedAt)
       .update(user.UserId + payload.OrganizationId)
       .digest('hex');
     if (payload.Verification !== verification) {
-      throw new Error('User Invitation Verification invalid');
+      throw new InvalidRequestError('Failed to verify confirm-user-invitation-request JWT');
     }
 
     // Lookup OrganizationUser access mapping to check invitation has not already been activated / restricted.
     const organizationUser: OrganizationUser = await organizationUserService.get(payload.OrganizationId, user.UserId);
     if (organizationUser.Status === 'Active') {
-      throw new Error(ERROR_MESSAGES.invitationAlreadyActivated);
+      throw new UnauthorizedAccessError(ERROR_MESSAGES.invitationAlreadyActivated);
     } else if (organizationUser.Status === 'Inactive') {
-      throw new Error(
+      throw new UnauthorizedAccessError(
         'User access to Organization has been deactivated. Please contact the System Administrator for assistance.',
       );
     }
@@ -99,7 +105,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
       if (user.Status === 'Invited') {
         const temporaryPassword: string | undefined = payload.TemporaryPassword;
         if (!temporaryPassword) {
-          throw new Error('User invitation temporary password required');
+          throw new InvalidRequestError('Required temporary password missing in confirm-user-invitation-request JWT');
         }
 
         // Decrypt the temporaryPassword
@@ -112,7 +118,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
           plaintext.toString(),
         );
         if (!response.Session) {
-          throw new Error('Unable to obtain authentication access token');
+          throw new UnauthorizedAccessError('Unable to obtain authentication access token');
         }
 
         await cognitoIdpService
@@ -144,6 +150,9 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
                 },
               ),
             ]);
+          })
+          .catch((err) => {
+            throw new UnauthorizedAccessError(err.message);
           });
       }
     }

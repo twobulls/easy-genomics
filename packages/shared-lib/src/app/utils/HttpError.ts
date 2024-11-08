@@ -7,7 +7,7 @@ export default class HttpError extends Error {
     statusCode: number,
     errorCode: string,
   ) {
-    super(typeof rawMessage === 'object' ? JSON.stringify(rawMessage) : rawMessage);
+    super(typeof rawMessage === 'object' ? JSON.stringify(rawMessage) : rawMessage || '');
     this.statusCode = statusCode;
     this.errorCode = errorCode;
   }
@@ -21,7 +21,7 @@ export default class HttpError extends Error {
  */
 export class NotFoundError extends HttpError {
   constructor(message?: string) {
-    super(message, 404, 'EG-101');
+    super(message ? `Not found: ${message}` : 'Not found', 404, 'EG-101');
   }
 }
 
@@ -31,8 +31,8 @@ export class NotFoundError extends HttpError {
  * @param field - optional
  */
 export class RequiredIdNotFoundError extends HttpError {
-  constructor(field: string = 'id') {
-    super(`Required ${field} is missing`, 400, 'EG-102');
+  constructor(field: string = 'id', message?: string) {
+    super(message ? `Required ${field} is missing: ${message}` : `Required ${field} is missing`, 400, 'EG-102');
   }
 }
 
@@ -40,8 +40,8 @@ export class RequiredIdNotFoundError extends HttpError {
  * Invalid body parameters request
  */
 export class InvalidRequestError extends HttpError {
-  constructor() {
-    super('Invalid request', 400, 'EG-102');
+  constructor(message?: string) {
+    super(message ? `Invalid request: ${message}` : 'Invalid request', 400, 'EG-102');
   }
 }
 
@@ -51,8 +51,8 @@ export class InvalidRequestError extends HttpError {
  * User name does not have the required access for the endpoint
  */
 export class UnauthorizedAccessError extends HttpError {
-  constructor() {
-    super('Unauthorized access', 403, 'EG-103');
+  constructor(message?: string) {
+    super(message ? `Unauthorized access: ${message}` : 'Unauthorized access', 403, 'EG-103');
   }
 }
 
@@ -60,8 +60,8 @@ export class UnauthorizedAccessError extends HttpError {
  * The users organization access in Authorizer is out of date
  */
 export class ExpiredOrganizationAccessError extends HttpError {
-  constructor() {
-    super('Expired organization access', 409, 'EG-110');
+  constructor(message?: string) {
+    super(message ? `Expired organization access: ${message}` : 'Expired organization access', 409, 'EG-110');
   }
 }
 
@@ -71,8 +71,8 @@ export class ExpiredOrganizationAccessError extends HttpError {
  * Organization already exists
  */
 export class OrganizationAlreadyExistsError extends HttpError {
-  constructor() {
-    super('Organization already exists', 400, 'EG-201');
+  constructor(message?: string) {
+    super(message ? `Organization already exists: ${message}` : 'Organization already exists', 400, 'EG-201');
   }
 }
 
@@ -80,8 +80,8 @@ export class OrganizationAlreadyExistsError extends HttpError {
  * Organization failed to delete
  */
 export class OrganizationDeleteFailedError extends HttpError {
-  constructor() {
-    super('Organization deletion failed', 500, 'EG-202');
+  constructor(message?: string) {
+    super(message ? `Organization deletion failed: ${message}` : 'Organization deletion failed', 500, 'EG-202');
   }
 }
 
@@ -89,8 +89,8 @@ export class OrganizationDeleteFailedError extends HttpError {
  * Organization not found
  */
 export class OrganizationNotFoundError extends HttpError {
-  constructor() {
-    super('Organization Not Found', 404, 'EG-203');
+  constructor(message?: string) {
+    super(message ? `Organization Not Found: ${message}` : 'Organization Not Found', 404, 'EG-203');
   }
 }
 
@@ -98,8 +98,8 @@ export class OrganizationNotFoundError extends HttpError {
  * Organization name is already taken by another resource
  */
 export class OrganizationNameTakenError extends HttpError {
-  constructor() {
-    super('Organization name already taken', 409, 'EG-204');
+  constructor(message?: string) {
+    super(message ? `Organization name already taken: ${message}` : 'Organization name already taken', 409, 'EG-204');
   }
 }
 
@@ -109,8 +109,8 @@ export class OrganizationNameTakenError extends HttpError {
  * Organization User already exists
  */
 export class OrganizationUserAlreadyExistsError extends HttpError {
-  constructor() {
-    super('Organsiation User already exists', 400, 'EG-211');
+  constructor(message?: string) {
+    super(message ? `Organization User already exists: ${message}` : 'Organization User already exists', 400, 'EG-211');
   }
 }
 
@@ -118,8 +118,12 @@ export class OrganizationUserAlreadyExistsError extends HttpError {
  * Organization User failed to delete
  */
 export class OrganizationUserDeleteFailedError extends HttpError {
-  constructor() {
-    super('Removing user from organization failed', 500, 'EG-212');
+  constructor(message?: string) {
+    super(
+      message ? `Removing user from organization failed: ${message}` : 'Removing user from organization failed',
+      500,
+      'EG-212',
+    );
   }
 }
 
@@ -130,8 +134,14 @@ export class OrganizationUserDeleteFailedError extends HttpError {
  * @param userId
  */
 export class OrganizationUserNotFoundError extends HttpError {
-  constructor(organizationId: string, userId: string) {
-    super(`User '${userId}' for organization '${organizationId}' could not be found`, 404, 'EG-213');
+  constructor(organizationId: string, userId: string, message?: string) {
+    super(
+      message
+        ? `User '${userId}' for organization '${organizationId}' could not be found: ${message}`
+        : `User '${userId}' for organization '${organizationId}' could not be found`,
+      404,
+      'EG-213',
+    );
   }
 }
 
@@ -139,8 +149,12 @@ export class OrganizationUserNotFoundError extends HttpError {
  * Organization has no users
  */
 export class NoUsersFoundError extends HttpError {
-  constructor() {
-    super('Unable to find Users for Organization', 404, 'EG-214');
+  constructor(message?: string) {
+    super(
+      message ? `Unable to find Users for Organization: ${message}` : 'Unable to find Users for Organization',
+      404,
+      'EG-214',
+    );
   }
 }
 
@@ -148,8 +162,14 @@ export class NoUsersFoundError extends HttpError {
  * Organization User status can not reverted to Invited
  */
 export class OrganizationUserStatusError extends HttpError {
-  constructor(status: string) {
-    super(`User Organization Status already '${status}', cannot update Status to 'Invited'`, 409, 'EG-215');
+  constructor(status: string, message?: string) {
+    super(
+      message
+        ? `User Organization Status already '${status}', cannot update Status to 'Invited': ${message}`
+        : `User Organization Status already '${status}', cannot update Status to 'Invited'`,
+      409,
+      'EG-215',
+    );
   }
 }
 
@@ -159,8 +179,8 @@ export class OrganizationUserStatusError extends HttpError {
  * Laboratory already exists
  */
 export class LaboratoryAlreadyExistsError extends HttpError {
-  constructor() {
-    super('Laboratory already exists', 400, 'EG-301');
+  constructor(message?: string) {
+    super(message ? `Laboratory already exists: ${message}` : 'Laboratory already exists', 400, 'EG-301');
   }
 }
 
@@ -168,8 +188,8 @@ export class LaboratoryAlreadyExistsError extends HttpError {
  * Laboratory failed to delete
  */
 export class LaboratoryDeleteFailedError extends HttpError {
-  constructor() {
-    super('Laboratory deletion failed', 500, 'EG-302');
+  constructor(message?: string) {
+    super(message ? `Laboratory deletion failed: ${message}` : 'Laboratory deletion failed', 500, 'EG-302');
   }
 }
 
@@ -177,8 +197,8 @@ export class LaboratoryDeleteFailedError extends HttpError {
  * Laboratory not found
  */
 export class LaboratoryNotFoundError extends HttpError {
-  constructor() {
-    super('Laboratory Not Found', 404, 'EG-303');
+  constructor(message?: string) {
+    super(message ? `Laboratory not found: ${message}` : 'Laboratory not found', 404, 'EG-303');
   }
 }
 
@@ -186,8 +206,8 @@ export class LaboratoryNotFoundError extends HttpError {
  * Laboratory name is already taken by another resource
  */
 export class LaboratoryNameTakenError extends HttpError {
-  constructor() {
-    super('Laboratory name already taken', 409, 'EG-304');
+  constructor(message?: string) {
+    super(message ? `Laboratory name already taken: ${message}` : 'Laboratory name already taken', 409, 'EG-304');
   }
 }
 
@@ -195,8 +215,14 @@ export class LaboratoryNameTakenError extends HttpError {
  * Organization has no labratories
  */
 export class NoLabratoriesFoundError extends HttpError {
-  constructor() {
-    super('Unable to find Laboratories for Organization', 404, 'EG-305');
+  constructor(message?: string) {
+    super(
+      message
+        ? `Unable to find Laboratories for Organization: ${message}`
+        : 'Unable to find Laboratories for Organization',
+      404,
+      'EG-305',
+    );
   }
 }
 
@@ -204,8 +230,12 @@ export class NoLabratoriesFoundError extends HttpError {
  * Laboratory WorkspaceId Unavailable
  */
 export class LaboratoryWorkspaceIdUnavailableError extends HttpError {
-  constructor() {
-    super('Laboratory WorkspaceId unavailable', 400, 'EG-306');
+  constructor(message?: string) {
+    super(
+      message ? `Laboratory WorkspaceId unavailable: ${message}` : 'Laboratory WorkspaceId unavailable',
+      400,
+      'EG-306',
+    );
   }
 }
 
@@ -213,8 +243,12 @@ export class LaboratoryWorkspaceIdUnavailableError extends HttpError {
  * Laboratory Access Token Unavailable
  */
 export class LaboratoryAccessTokenUnavailableError extends HttpError {
-  constructor() {
-    super('Laboratory Access Token unavailable', 400, 'EG-307');
+  constructor(message?: string) {
+    super(
+      message ? `Laboratory Access Token unavailable: ${message}` : 'Laboratory Access Token unavailable',
+      400,
+      'EG-307',
+    );
   }
 }
 
@@ -222,8 +256,8 @@ export class LaboratoryAccessTokenUnavailableError extends HttpError {
  * Laboratory User already exists
  */
 export class LaboratoryUserAlreadyExistsError extends HttpError {
-  constructor() {
-    super('Laboratory User already exists', 400, 'EG-311');
+  constructor(message?: string) {
+    super(message ? `Laboratory User already exists: ${message}` : 'Laboratory User already exists', 400, 'EG-311');
   }
 }
 
@@ -231,8 +265,12 @@ export class LaboratoryUserAlreadyExistsError extends HttpError {
  * Laboratory User failed to delete
  */
 export class LaboratoryUserDeleteFailedError extends HttpError {
-  constructor() {
-    super('Removing user from laboratory failed', 500, 'EG-312');
+  constructor(message?: string) {
+    super(
+      message ? `Removing user from laboratory failed: ${message}` : 'Removing user from laboratory failed',
+      500,
+      'EG-312',
+    );
   }
 }
 
@@ -243,8 +281,14 @@ export class LaboratoryUserDeleteFailedError extends HttpError {
  * @param userId
  */
 export class LaboratoryUserNotFoundError extends HttpError {
-  constructor(laboratoryId: string, userId: string) {
-    super(`User '${userId}' for laboratory '${laboratoryId}' could not be found`, 404, 'EG-313');
+  constructor(laboratoryId: string, userId: string, message?: string) {
+    super(
+      message
+        ? `User '${userId}' for laboratory '${laboratoryId}' could not be found: ${message}`
+        : `User '${userId}' for laboratory '${laboratoryId}' could not be found`,
+      404,
+      'EG-313',
+    );
   }
 }
 
@@ -254,8 +298,14 @@ export class LaboratoryUserNotFoundError extends HttpError {
  * @param laboratoryId
  */
 export class LaboratoryBucketNotFoundError extends HttpError {
-  constructor(laboratoryId: string) {
-    super(`Laboratory '${laboratoryId}' S3 Bucket could not be found`, 404, 'EG-314');
+  constructor(laboratoryId: string, message?: string) {
+    super(
+      message
+        ? `Laboratory '${laboratoryId}' S3 Bucket could not be found: ${message}`
+        : `Laboratory '${laboratoryId}' S3 Bucket could not be found`,
+      404,
+      'EG-314',
+    );
   }
 }
 
@@ -265,8 +315,8 @@ export class LaboratoryBucketNotFoundError extends HttpError {
  * User already exists
  */
 export class UserAlreadyExistsError extends HttpError {
-  constructor() {
-    super('User already exists', 400, 'EG-401');
+  constructor(message?: string) {
+    super(message ? `User already exists: ${message}` : 'User already exists', 400, 'EG-401');
   }
 }
 
@@ -274,8 +324,8 @@ export class UserAlreadyExistsError extends HttpError {
  * User failed to delete
  */
 export class UserDeleteFailedError extends HttpError {
-  constructor() {
-    super('User deletion failed', 500, 'EG-402');
+  constructor(message?: string) {
+    super(message ? `User deletion failed: ${message}` : 'User deletion failed', 500, 'EG-402');
   }
 }
 
@@ -283,8 +333,8 @@ export class UserDeleteFailedError extends HttpError {
  * User not found
  */
 export class UserNotFoundError extends HttpError {
-  constructor() {
-    super('User Not Found', 404, 'EG-403');
+  constructor(message?: string) {
+    super(message ? `User not found: ${message}` : 'User not found', 404, 'EG-403');
   }
 }
 
@@ -292,8 +342,8 @@ export class UserNotFoundError extends HttpError {
  * User name is already taken by another resource
  */
 export class UserNameTakenError extends HttpError {
-  constructor() {
-    super('User name already taken', 409, 'EG-404');
+  constructor(message?: string) {
+    super(message ? `User name already taken: ${message}` : 'User name already taken', 409, 'EG-404');
   }
 }
 
@@ -301,7 +351,13 @@ export class UserNameTakenError extends HttpError {
  * User missing organization access
  */
 export class UserNotInOrganizationError extends HttpError {
-  constructor() {
-    super('User not permitted access without first granted access to the Organization', 409, 'EG-405');
+  constructor(message?: string) {
+    super(
+      message
+        ? `User not permitted access without first granted access to the Organization: ${message}`
+        : 'User not permitted access without first granted access to the Organization',
+      409,
+      'EG-405',
+    );
   }
 }

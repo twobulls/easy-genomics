@@ -27,7 +27,7 @@ export const ERROR_CODES: ErrorMessages = {
   'EG-314': 'Laboratory Bucket not found',
   'EG-401': 'User already exists',
   'EG-402': 'User deletion failed',
-  'EG-403': 'User Not Found',
+  'EG-403': 'User not found',
   'EG-404': 'User name already taken',
   'EG-405': 'User not permitted access without first granted access to the Organization',
 };

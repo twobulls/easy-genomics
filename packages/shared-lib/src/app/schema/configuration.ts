@@ -31,6 +31,7 @@ export const ConfigurationSettingsSchema = z
       ['test-workspace-id']: z.string().nullable().optional(),
       ['test-access-token']: z.string().nullable().optional(),
       ['test-s3-url']: z.string().nullable().optional(),
+      ['test-invite-email']: z.string().nullable().optional(),
       ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
       ['vpc-peering']: z.object(VpcPeeringSchema.shape).nullable().optional(), // Optional: VPC Peering Accepter details
     }),

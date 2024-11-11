@@ -14,7 +14,7 @@
 
   const props = defineProps<{
     orgId: string;
-    superuser: boolean;
+    superuser?: boolean;
   }>();
 
   const { $api } = useNuxtApp();

@@ -18,7 +18,7 @@
   import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
-    superuser: boolean;
+    superuser?: boolean;
     labId: string;
     initialTab: string | undefined;
   }>();

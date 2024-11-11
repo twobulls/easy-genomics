@@ -6,7 +6,7 @@
 <template>
   <EGPageHeader title="Labs" :show-back="false">
     <EGButton
-      v-if="useUserStore().canCreateLab"
+      v-if="useUserStore().canCreateLab()"
       label="Create a new Lab"
       class="self-end"
       @click="() => $router.push({ path: `/labs/create` })"

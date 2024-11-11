@@ -108,7 +108,7 @@
           class: 'text-alert-danger-dark',
           click: () => {
             selectedUserId.value = user.UserId;
-            primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${org.Name}?`;
+            primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${org.value.Name}?`;
             isOpen.value = true;
           },
         },

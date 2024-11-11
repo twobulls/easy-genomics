@@ -21,7 +21,11 @@ export default function useAuth() {
       if (user) {
         await useUserStore().loadCurrentUserPermissions();
         await useOrgsStore().loadOrgs();
-        await navigateTo('/labs');
+        if (useUserStore().isSuperuser) {
+          await navigateTo('/orgs');
+        } else {
+          await navigateTo('/labs');
+        }
       }
     } catch (error: any) {
       if (error.code === 'NotAuthorizedException') {

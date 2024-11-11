@@ -12,5 +12,5 @@
 </script>
 
 <template>
-  <EGLabView :superuser="false" :lab-id="labId" :initial-tab="initialTab" />
+  <EGLabView :lab-id="labId" :initial-tab="initialTab" />
 </template>

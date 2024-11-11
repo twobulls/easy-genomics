@@ -25,8 +25,6 @@
 </script>
 
 <template>
-  <EGAdminAlert />
-
   <div class="w-full">
     <EGBack :back-action="() => $router.push({ path: '/admin/orgs' })" />
     <EGText tag="h1" class="mb-6">Create a new Organization</EGText>

@@ -440,7 +440,7 @@
   <EGPageHeader
     :title="labName"
     description="View your Lab users, details and pipelines"
-    :back-action="() => $router.push('/labs')"
+    :back-action="() => (superuser ? $router.push(`/orgs/${orgId}`) : $router.push('/labs'))"
     :show-back="true"
   >
     <EGButton
@@ -473,6 +473,7 @@
       }
     "
   >
+    <!-- Pipelines tab -->
     <template #item="{ item }">
       <div v-if="item.key === 'pipelines'" class="space-y-3">
         <EGTable
@@ -505,6 +506,7 @@
           </template>
         </EGTable>
       </div>
+      <!-- Runs tab -->
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable
           :row-click-action="onRunsRowClicked"
@@ -544,6 +546,7 @@
           </template>
         </EGTable>
       </div>
+      <!-- Lab Users tab -->
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGSearchInput
           @input-event="updateSearchOutput"
@@ -589,7 +592,9 @@
                 :show-remove-from-lab="true"
                 :key="labUser?.LabManager"
                 :disabled="
-                  useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) || !useUserStore().canEditLab(labId)
+                  useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
+                  !useUserStore().canEditLab(labId) ||
+                  useUserStore().isSuperuser
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

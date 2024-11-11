@@ -80,6 +80,7 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
 
   if (userExists) {
     // Invite the user as they do not exist
+    await page.getByRole('tab', { name: 'All users' }).click();
     await page.getByRole('button', { name: 'Invite users' }).click();
     await page.waitForTimeout(2000);
     await page.getByPlaceholder('Enter Email').click();
@@ -89,7 +90,6 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
     // Confirm
     await expect(page.getByText(`${envConfig.testInviteEmail} has been sent an invite`).nth(0)).toBeVisible();
 
-    await page.reload();
     await page.waitForTimeout(2000);
     const cell = page.getByRole('cell', {
       name: envConfig.testInviteEmail,

@@ -5,7 +5,7 @@
   import { DeletedResponse } from '@FE/types/api';
 
   const props = defineProps<{
-    superuser: boolean;
+    superuser?: boolean;
     orgId: string;
   }>();
 
@@ -142,8 +142,8 @@
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Labs set up yet."
-    :primary-button-action="useUserStore().canCreateLab ? () => $router.push({ path: `/labs/create` }) : null"
-    :primary-button-label="useUserStore().canCreateLab ? 'Create a new Lab' : null"
+    :primary-button-action="useUserStore().canCreateLab() ? () => $router.push({ path: `/labs/create` }) : null"
+    :primary-button-label="useUserStore().canCreateLab() ? 'Create a new Lab' : null"
   />
 
   <EGTable

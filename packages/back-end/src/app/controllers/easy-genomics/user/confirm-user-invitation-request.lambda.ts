@@ -1,18 +1,18 @@
 import { createHmac } from 'crypto';
 import { buildClient, CommitmentPolicy, KmsKeyringNode } from '@aws-crypto/client-node';
-import { InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import { InitiateAuthCommandOutput, NotAuthorizedException } from '@aws-sdk/client-cognito-identity-provider';
 import { ERROR_MESSAGES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 import { ConfirmUpdateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
-import {
-  OrganizationAccess,
-  OrganizationAccessDetails,
-  User,
-} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { ConfirmUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { InvalidRequestError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import {
+  InvalidRequestError,
+  UnauthorizedAccessError,
+  UserNotFoundError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { toByteArray } from 'base64-js';
 import { JwtPayload } from 'jsonwebtoken';
@@ -47,63 +47,82 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     const jwtPayload: JwtPayload | string = verifyJwt(request.Token, process.env.JWT_SECRET_KEY);
 
     if (typeof jwtPayload !== 'object') {
-      throw new Error(`Unexpected response: ${jwtPayload}`);
+      throw new InvalidRequestError(`Unexpected User Invitation: ${jwtPayload}`);
     }
 
     // Check JWT RequestType is the expected 'UserInvitationJwt'
     const payload: UserInvitationJwt = <UserInvitationJwt>jwtPayload;
     if (payload.RequestType !== 'NewUserInvitation' && payload.RequestType !== 'ExistingUserInvitation') {
-      throw new Error(`Invalid JWT RequestType: '${payload.RequestType}'`);
+      throw new InvalidRequestError(`Unexpected User Invitation request type: '${payload.RequestType}'`);
     }
 
     // Lookup User by Email to verify request
     const user: User | undefined = (await userService.queryByEmail(payload.Email)).shift();
     if (!user) {
-      throw new Error(`Unable to find User record: '${payload.Email}'`);
+      throw new UserNotFoundError();
     }
     if (user.Status === 'Inactive') {
-      throw new Error('User has been deactivated. Please contact the System Administrator for assistance.');
+      throw new UnauthorizedAccessError('Please contact the System Administrator for assistance.');
     }
 
     const verification = createHmac('sha256', process.env.JWT_SECRET_KEY + payload.CreatedAt)
       .update(user.UserId + payload.OrganizationId)
       .digest('hex');
     if (payload.Verification !== verification) {
-      throw new Error('User Invitation Verification invalid');
+      throw new InvalidRequestError('Failed to verify User Invitation');
     }
 
     // Lookup OrganizationUser access mapping to check invitation has not already been activated / restricted.
     const organizationUser: OrganizationUser = await organizationUserService.get(payload.OrganizationId, user.UserId);
     if (organizationUser.Status === 'Active') {
-      throw new Error(ERROR_MESSAGES.invitationAlreadyActivated);
+      throw new UnauthorizedAccessError(ERROR_MESSAGES.invitationAlreadyActivated);
     } else if (organizationUser.Status === 'Inactive') {
-      throw new Error(
+      throw new UnauthorizedAccessError(
         'User access to Organization has been deactivated. Please contact the System Administrator for assistance.',
       );
     }
 
     if (payload.RequestType === 'ExistingUserInvitation') {
-      // Existing User invited to an Organization
-      await updatePlatformUserOrganizationAccess(user, organizationUser);
+      // Activate Existing User invited to an Organization
+      await platformUserService.editExistingUserAccessToOrganization(
+        {
+          ...user,
+          Status: 'Active',
+          ModifiedAt: new Date().toISOString(),
+          ModifiedBy: user.UserId,
+        },
+        {
+          ...organizationUser,
+          Status: 'Active',
+          ModifiedAt: new Date().toISOString(),
+          ModifiedBy: user.UserId,
+        },
+      );
     } else {
-      // New User invited to the Platform and an Organization
+      // Activate New User invited to the Platform and an Organization
       if (user.Status === 'Invited') {
         const temporaryPassword: string | undefined = payload.TemporaryPassword;
         if (!temporaryPassword) {
-          throw new Error('User invitation temporary password required');
+          throw new InvalidRequestError('Required temporary password missing in User Invitation');
         }
 
         // Decrypt the temporaryPassword
         const { plaintext } = await cryptoClient.decrypt(keyring, toByteArray(temporaryPassword));
 
         // Login with temporaryPassword to obtain accessToken and complete auth challenge set new password
-        const response: InitiateAuthCommandOutput = await cognitoIdpService.initiateAuth(
-          process.env.COGNITO_USER_POOL_CLIENT_ID,
-          user.Email,
-          plaintext.toString(),
-        );
-        if (!response.Session) {
-          throw new Error('Unable to obtain authentication access token');
+        const response: InitiateAuthCommandOutput | void = await cognitoIdpService
+          .initiateAuth(process.env.COGNITO_USER_POOL_CLIENT_ID, user.Email, plaintext.toString())
+          .catch((error: any) => {
+            if (error instanceof NotAuthorizedException) {
+              throw new UnauthorizedAccessError(
+                'User Invitation no longer valid. Please request the User Invitation to be re-sent.',
+              );
+            } else {
+              throw error;
+            }
+          });
+        if (!response || !response.Session) {
+          throw new UnauthorizedAccessError('Unable to obtain authentication access token');
         }
 
         await cognitoIdpService
@@ -118,15 +137,26 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
               // Update Cognito User's email to verified
               cognitoIdpService.adminUpdateUserEmailVerified(user.UserId, true),
               // Update User's Status to 'Active' and set the supplied names
-              updatePlatformUserOrganizationAccess(
+              platformUserService.editExistingUserAccessToOrganization(
                 {
                   ...user,
                   FirstName: request.FirstName,
                   LastName: request.LastName,
+                  Status: 'Active',
+                  ModifiedAt: new Date().toISOString(),
+                  ModifiedBy: user.UserId,
                 },
-                organizationUser,
+                {
+                  ...organizationUser,
+                  Status: 'Active',
+                  ModifiedAt: new Date().toISOString(),
+                  ModifiedBy: user.UserId,
+                },
               ),
             ]);
+          })
+          .catch((err) => {
+            throw new UnauthorizedAccessError(err.message);
           });
       }
     }
@@ -137,42 +167,3 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
     return buildErrorResponse(err, event);
   }
 };
-
-/**
- * Helper function to update User's FirstName, LastName, Status,
- * OrganizationAccess metadata Status, and OrganizationUser Status values to
- * 'Active' after completing the sign-up confirmation workflow.
- * @param user
- * @param organizationUser
- */
-function updatePlatformUserOrganizationAccess(user: User, organizationUser: OrganizationUser): Promise<Boolean> {
-  // Retrieve the User's OrganizationAccess metadata to update
-  const organizationAccess: OrganizationAccess | undefined = user.OrganizationAccess;
-  // Retrieve the current Organization's OrganizationAccessDetails for use in the update
-  const organizationAccessDetails: OrganizationAccessDetails | undefined =
-    organizationAccess && organizationAccess[organizationUser.OrganizationId]
-      ? organizationAccess[organizationUser.OrganizationId]
-      : undefined;
-
-  return platformUserService.editExistingUserAccessToOrganization(
-    {
-      ...user,
-      Status: 'Active',
-      OrganizationAccess: <OrganizationAccess>{
-        ...organizationAccess,
-        [organizationUser.OrganizationId]: <OrganizationAccessDetails>{
-          ...organizationAccessDetails,
-          Status: 'Active',
-        },
-      },
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: user.UserId,
-    },
-    {
-      ...organizationUser,
-      Status: 'Active',
-      ModifiedAt: new Date().toISOString(),
-      ModifiedBy: user.UserId,
-    },
-  );
-}

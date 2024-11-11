@@ -33,7 +33,7 @@ export const handler: Handler = async (
     const organizationName: string = event.request.clientMetadata ? event.request.clientMetadata.OrganizationName : '';
 
     const newUserInvitationJwt: string = generateNewUserInvitationJwt(email, userId, organizationId, temporaryPassword);
-    await sesService.sendUserInvitationEmail(email, organizationName, newUserInvitationJwt);
+    await sesService.sendNewUserInvitationEmail(email, organizationName, newUserInvitationJwt);
   } else if (event.triggerSource === 'CustomEmailSender_ForgotPassword') {
     const email: string = event.request.userAttributes.email;
     const userId: string = event.request.userAttributes.sub;

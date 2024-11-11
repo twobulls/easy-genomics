@@ -1,5 +1,8 @@
 import { test, expect } from 'playwright/test';
 
+const labName = 'Playwright test lab';
+const labNameUpdated = 'Automated Lab - Updated';
+
 test('01 - Hide Create a new Laboratory button', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
   await page.waitForTimeout(2000);
@@ -35,4 +38,44 @@ test('03 - Hide Organization link', async ({ page, baseURL }) => {
 
   //check if the Organizations menu is visible
   await expect(page.getByRole('link', { name: 'Organizations' })).toBeHidden();
+});
+
+test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labName }).isVisible();
+  } catch (error) {
+    console.log(labName + ' test lab not found', error);
+  }
+
+  if (hasTestLab == true) {
+    await page.getByRole('row', { name: labName }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.getByRole('tab', { name: 'Details' }).click();
+
+    // check if Edit is disabled
+    await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
+  }
+
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  let hasUpdatedTestLab = false;
+  try {
+    hasUpdatedTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log(labNameUpdated + ' test lab not found', error);
+  }
+
+  if (hasUpdatedTestLab == true) {
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.getByRole('tab', { name: 'Details' }).click();
+
+    // check if Edit is disabled
+    await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
+  }
 });

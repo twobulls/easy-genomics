@@ -162,7 +162,7 @@
     }
   }
 
-  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLab(useUserStore().currentOrgId));
+  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLab(labId));
 
   /**
    * Retrieves the lab details from the server and sets the form state.

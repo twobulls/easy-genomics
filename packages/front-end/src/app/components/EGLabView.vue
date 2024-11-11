@@ -589,8 +589,7 @@
                 :show-remove-from-lab="true"
                 :key="labUser?.LabManager"
                 :disabled="
-                  useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
-                  !useUserStore().canEditLab(useUserStore().currentOrgId)
+                  useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) || !useUserStore().canEditLab(labId)
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

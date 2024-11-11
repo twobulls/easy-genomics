@@ -1,12 +1,8 @@
-import { createHmac } from 'crypto';
-import { ResourceNotFoundException } from '@aws-sdk/client-dynamodb';
-import { OrganizationUserNotFoundError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
-import { UserInvitationJwt } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-verification-jwt';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { CognitoIdpService } from '@BE/services/cognito-idp-service';
@@ -15,7 +11,6 @@ import { OrganizationUserService } from '@BE/services/easy-genomics/organization
 import { PlatformUserService } from '@BE/services/easy-genomics/platform-user-service';
 import { UserService } from '@BE/services/easy-genomics/user-service';
 import { SesService } from '@BE/services/ses-service';
-import { generateJwt } from '@BE/utils/jwt-utils';
 
 const cognitoIdpService = new CognitoIdpService({ userPoolId: process.env.COGNITO_USER_POOL_ID });
 const organizationService = new OrganizationService();
@@ -111,35 +106,30 @@ async function inviteExistingUserToOrganization(organization: Organization, user
   // Try to find existing OrganizationUser record
   const existingOrganizationUser: OrganizationUser | void = await organizationUserService
     .get(organization.OrganizationId, user.UserId)
-    .catch((error: any) => {
-      if (error instanceof ResourceNotFoundException || error instanceof OrganizationUserNotFoundError) {
-        // Do nothing - allow new OrganizationUser access mapping to proceed.
-      } else {
-        throw error;
-      }
-    });
+    .catch(() => {});
+
+  if (existingOrganizationUser && existingOrganizationUser.Status === 'Active') {
+    return; // Do nothing
+  }
 
   const organizationUser: OrganizationUser = existingOrganizationUser
     ? {
         ...existingOrganizationUser,
-        Status: 'Invited',
+        Status: 'Active',
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: modifiedBy,
       }
     : {
         OrganizationId: organization.OrganizationId,
         UserId: user.UserId,
-        Status: 'Invited',
+        Status: 'Active',
         OrganizationAdmin: false,
         CreatedAt: new Date().toISOString(),
         CreatedBy: modifiedBy,
       };
 
-  await sesService.sendUserInvitationEmail(
-    user.Email,
-    organization.Name,
-    generateExistingUserInvitationJwt(user.Email, user.UserId, organization.OrganizationId),
-  );
+  // Send out courtesy notification email to advise user they have been added to an Organization
+  await sesService.sendExistingUserInvitationEmail(user.Email, organization.Name);
 
   // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
   await platformUserService.addExistingUserToOrganization(
@@ -150,25 +140,4 @@ async function inviteExistingUserToOrganization(organization: Organization, user
     },
     organizationUser,
   );
-}
-
-/**
- * Helper function to generate an Existing User Invitation JWT to send in an
- * invitation email and used to verify User Invitation acceptance.
- * @param email
- * @param userId
- * @param organizationId
- */
-function generateExistingUserInvitationJwt(email: string, userId: string, organizationId: string): string {
-  const createdAt: number = Date.now(); // Salt
-  const existingUserInvitationJwt: UserInvitationJwt = {
-    RequestType: 'ExistingUserInvitation',
-    Verification: createHmac('sha256', process.env.JWT_SECRET_KEY + createdAt)
-      .update(userId + organizationId)
-      .digest('hex'),
-    OrganizationId: organizationId,
-    Email: email,
-    CreatedAt: createdAt,
-  };
-  return generateJwt(existingUserInvitationJwt, process.env.JWT_SECRET_KEY, '7 d');
 }

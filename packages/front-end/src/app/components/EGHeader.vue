@@ -28,24 +28,8 @@
           <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
         </div>
         <div class="flex items-center gap-2">
-          <!-- TODO: build pages for Runs and Workflow -->
-          <!--        <ULink-->
-          <!--          to="/runs"-->
-          <!--          inactive-class="text-body"-->
-          <!--          active-class="text-primary bg-primary-muted"-->
-          <!--          class="ULink font-serif flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"-->
-          <!--        >-->
-          <!--          Runs-->
-          <!--        </ULink>-->
-          <!--        <ULink-->
-          <!--          to="/workflows"-->
-          <!--          inactive-class="text-body"-->
-          <!--          active-class="text-primary bg-primary-muted"-->
-          <!--          class="ULink font-serif flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 text-sm tracking-normal"-->
-          <!--        >-->
-          <!--          Workflows-->
-          <!--        </ULink>-->
           <ULink
+            v-if="!useUserStore().isSuperuser"
             to="/labs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"

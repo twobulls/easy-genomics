@@ -10,9 +10,11 @@
   import { OrgDetailsForm } from '@FE/types/forms';
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
+  import { Laboratory } from '@/packages/shared-lib/src/app/types/easy-genomics/laboratory';
 
   const props = defineProps<{
     orgId: string;
+    superuser: boolean;
   }>();
 
   const { $api } = useNuxtApp();
@@ -46,6 +48,13 @@
       label: 'Details',
     },
   ];
+
+  if (props.superuser) {
+    tabItems.unshift({
+      slot: 'labs',
+      label: 'All Labs',
+    });
+  }
 
   const tableColumns = [
     {
@@ -82,25 +91,32 @@
     editUser(row.UserId);
   }
 
-  const actionItems = (user: OrgUser) => [
-    [
-      {
-        label: 'Edit User Access',
-        click: async () => editUser(user.UserId),
-      },
-    ],
-    [
-      {
-        label: 'Remove From Org',
-        class: 'text-alert-danger-dark',
-        click: () => {
-          selectedUserId.value = user.UserId;
-          primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${org.value.Name}?`;
-          isOpen.value = true;
+  function actionItems(lab: Laboratory) {
+    const items: object[] = [
+      [
+        {
+          label: 'Edit User Access',
+          click: async () => editUser(user.UserId),
         },
-      },
-    ],
-  ];
+      ],
+    ];
+
+    if (!props.superuser) {
+      items.push([
+        {
+          label: 'Remove From Org',
+          class: 'text-alert-danger-dark',
+          click: () => {
+            selectedUserId.value = user.UserId;
+            primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${org.value.Name}?`;
+            isOpen.value = true;
+          },
+        },
+      ]);
+    }
+
+    return items;
+  }
 
   /**
    * Filter rows based on search input for both name and email
@@ -286,7 +302,7 @@
     :title="org.Name"
     :description="org.Description"
     :back-action="() => $router.push('/orgs')"
-    :show-back="false"
+    :show-back="true"
     :is-loading="isLoading"
     :skeleton-config="{ titleLines: 1, descriptionLines: 1 }"
   >
@@ -299,6 +315,10 @@
   <UTabs :ui="EGTabsStyles" :default-index="0" :items="tabItems">
     <template #details>
       <EGFormOrgDetails @submit-form-org-details="onSubmit($event)" :name="org.Name" :description="org.Description" />
+    </template>
+
+    <template #labs v-if="props.superuser">
+      <EGLabsList superuser :org-id="props.orgId" />
     </template>
 
     <template #users>

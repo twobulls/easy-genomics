@@ -593,8 +593,8 @@
                 :key="labUser?.LabManager"
                 :disabled="
                   useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
-                  useUserStore().isSuperuser ||
-                  !useUserStore().canEditLab(useUserStore().currentOrgId)
+                  !useUserStore().canEditLab(labId) ||
+                  useUserStore().isSuperuser
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

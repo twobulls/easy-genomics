@@ -5,7 +5,5 @@
 </script>
 
 <template>
-  <EGAdminAlert />
-
-  <EGOrgView :org-id="orgId" />
+  <EGOrgView :org-id="orgId" superuser />
 </template>

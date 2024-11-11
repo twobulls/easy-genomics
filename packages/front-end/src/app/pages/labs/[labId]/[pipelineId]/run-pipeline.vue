@@ -74,7 +74,10 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    workflowStore.updateWipWorkflow(workflowTempId, { pipelineDescription: schema.value.description });
+    workflowStore.updateWipWorkflow(workflowTempId, {
+      laboratoryId: labId,
+      pipelineDescription: schema.value.description,
+    });
     if (res.params) {
       workflowStore.updateWipWorkflow(workflowTempId, { params: JSON.parse(res.params) });
     }

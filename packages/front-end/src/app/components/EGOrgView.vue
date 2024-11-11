@@ -4,7 +4,6 @@
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
   import { useOrgsStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
-  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse } from '@FE/types/api';
   import type { FormSubmitEvent } from '#ui/types';
@@ -21,8 +20,6 @@
   const { $api } = useNuxtApp();
   const router = useRouter();
   const { resendInvite, labsCount } = useUser($api);
-
-  const org = computed(() => useOrgsStore().orgs[props.orgId]);
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
@@ -160,13 +157,13 @@
       const res: DeletedResponse = await $api.orgs.removeUser(props.orgId, selectedUserId.value);
 
       if (res?.Status === 'Success') {
-        useToastStore().success(`${displayName} has been removed from ${org.Name}`);
+        useToastStore().success(`${displayName} has been removed from ${org.value.Name}`);
         await fetchOrgData(false);
       } else {
         throw new Error('User not removed from Organization');
       }
     } catch (error) {
-      useToastStore().error(`Failed to remove ${displayName} from  ${org.Name}`);
+      useToastStore().error(`Failed to remove ${displayName} from  ${org.value.Name}`);
       throw error;
     } finally {
       selectedUserId.value = '';
@@ -187,7 +184,7 @@
     useUiStore().setRequestPending('fetchOrgData');
     try {
       if (shouldGetOrgSettings) {
-        useOrgsStore().loadOrg(props.orgId);
+        await useOrgsStore().loadOrg(props.orgId);
       }
 
       const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(props.orgId);
@@ -214,6 +211,9 @@
     }
     return orgSettingsData.value;
   }
+
+  // must be declared after store is set in fetchOrgData()
+  const org = computed(() => useOrgsStore().orgs[props.orgId] || {});
 
   async function resend(userDetails: OrgUser, index: number) {
     const { OrganizationId, UserEmail } = userDetails;

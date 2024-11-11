@@ -90,7 +90,6 @@ export const handler: Handler = async (
           Region: s3Region,
           S3Url: s3Url,
         },
-        SampleSheetContents: sampleSheetCsv,
       };
       return buildResponse(200, JSON.stringify(response), event);
     }

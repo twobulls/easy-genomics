@@ -24,7 +24,6 @@ export type UploadedFileInfo = {
 export type SampleSheetResponse = {
   TransactionId: string;
   SampleSheetInfo: SampleSheetInfo;
-  SampleSheetContents: string;
 };
 
 export type SampleSheetInfo = {

@@ -55,7 +55,7 @@
       ],
     ];
 
-    if (useUserStore().canDeleteLab(useUserStore().currentOrgId)) {
+    if (!useUserStore().isSuperuser && useUserStore().canDeleteLab(useUserStore().currentOrgId)) {
       items.push([
         {
           label: 'Remove',

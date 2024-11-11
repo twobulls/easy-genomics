@@ -384,7 +384,7 @@ export class SesConstruct extends Construct {
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div style="mso-line-height-rule: exactly;mso-text-raise: 11px;vertical-align: middle;">
                                                 <h1 class="size-32" style="Margin-top: 0;Margin-bottom: 0;font-style: normal;font-weight: normal;color: #565656;font-size: 28px;line-height: 36px;font-family: sans-serif;text-align: center;" lang="x-size-32"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #12181f;">You've been invited</span></span></h1>
-                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">to {{ ORGANIZATION_NAME }}, click the link below to set up your account and get started. This link will expire in 7 days.</span></span></p>
+                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">to the Easy Genomics Organization '{{ ORGANIZATION_NAME }}'. Click the link below to set up your account and get started. This link will expire in 7 days.</span></span></p>
                                              </div>
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
@@ -483,7 +483,7 @@ export class SesConstruct extends Construct {
     const invitationEmailTemplate: CfnTemplate = new CfnTemplate(this, 'ExistingUserInvitationEmailTemplate', {
       template: {
         templateName: 'ExistingUserInvitationEmailTemplate',
-        subjectPart: 'You’ve been invited to Easy Genomics',
+        subjectPart: 'You’ve been added to an Easy Genomics Organization',
         htmlPart: `
          <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html style="margin: 0px; padding: 0px; height: 100%;" xmlns="http://www.w3.org/1999/xhtml">
@@ -821,7 +821,7 @@ export class SesConstruct extends Construct {
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div style="mso-line-height-rule: exactly;mso-text-raise: 11px;vertical-align: middle;">
                                                 <h1 class="size-32" style="Margin-top: 0;Margin-bottom: 0;font-style: normal;font-weight: normal;color: #565656;font-size: 28px;line-height: 36px;font-family: sans-serif;text-align: center;" lang="x-size-32"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #12181f;">You've been added</span></span></h1>
-                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">to {{ ORGANIZATION_NAME }}. This is a courtesy notification and no action is required.</span></span></p>
+                                                <p class="size-14" style="Margin-top: 20px;Margin-bottom: 20px;font-family: sans-serif;font-size: 14px;line-height: 21px;text-align: center;" lang="x-size-14"><span class="font-sans-serif" style="text-decoration: inherit;"><span style="text-decoration: inherit;color: #323840;">to the Easy Genomics Organization '{{ ORGANIZATION_NAME }}'. This is a courtesy notification and no action is required.</span></span></p>
                                              </div>
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">

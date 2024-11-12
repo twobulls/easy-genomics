@@ -99,7 +99,7 @@ export function validateLaboratoryManagerAccess(
   laboratoryId: string,
 ): Boolean {
   try {
-    const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims.OrganizationAccess;
+    const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims?.OrganizationAccess;
     if (!orgAccessMetadata) {
       return false;
     }
@@ -119,11 +119,10 @@ export function validateLaboratoryManagerAccess(
     if (
       !laboratoryAccessDetails ||
       (laboratoryAccessDetails && laboratoryAccessDetails.Status !== 'Active') ||
-      (laboratoryAccessDetails && laboratoryAccessDetails.LabManager)
+      (laboratoryAccessDetails && !laboratoryAccessDetails.LabManager)
     ) {
       return false;
     }
-
     return true;
   } catch (error) {
     console.error(error);
@@ -144,7 +143,7 @@ export function validateLaboratoryTechnicianAccess(
   laboratoryId: string,
 ): Boolean {
   try {
-    const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims.OrganizationAccess;
+    const orgAccessMetadata: string | undefined = event.requestContext.authorizer?.claims?.OrganizationAccess;
     if (!orgAccessMetadata) {
       return false;
     }
@@ -164,7 +163,7 @@ export function validateLaboratoryTechnicianAccess(
     if (
       !laboratoryAccessDetails ||
       (laboratoryAccessDetails && laboratoryAccessDetails.Status !== 'Active') ||
-      (laboratoryAccessDetails && laboratoryAccessDetails.LabTechnician)
+      (laboratoryAccessDetails && !laboratoryAccessDetails.LabTechnician)
     ) {
       return false;
     }

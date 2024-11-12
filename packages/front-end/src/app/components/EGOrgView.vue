@@ -91,7 +91,7 @@
     editUser(row.UserId);
   }
 
-  function actionItems(lab: Laboratory) {
+  function actionItems(user: OrgUser) {
     const items: object[] = [
       [
         {
@@ -101,7 +101,7 @@
       ],
     ];
 
-    if (!props.superuser) {
+    if (props.superuser) {
       items.push([
         {
           label: 'Remove From Org',

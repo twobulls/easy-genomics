@@ -22,13 +22,12 @@ export const handler: Handler = async (
     const userId = event.requestContext.authorizer.claims['cognito:username'];
     // Post Request Body
     const request: User = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
-    console.log('DEBUG: request = ', request);
 
     // Data validation safety check
     if (!CreateUserSchema.safeParse(request).success) throw new InvalidRequestError();
 
     // Create new User record in Easy-Genomics User table
-    const response: User = await userService
+    const response: User | void = await userService
       .add({
         ...request,
         UserId: uuidv4(),

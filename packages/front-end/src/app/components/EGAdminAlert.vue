@@ -1,3 +1,7 @@
 <template>
-  <div style="font-size: 64px; text-align: center">🔑 Admin</div>
+  <div
+    class="bg-primary-muted text-primary inline-flex gap-2 rounded-[100px] px-4 py-1 text-xs font-semibold uppercase"
+  >
+    Admin View
+  </div>
 </template>

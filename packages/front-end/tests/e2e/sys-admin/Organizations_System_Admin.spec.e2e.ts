@@ -6,6 +6,9 @@ const orgName = 'Automated Org';
 const orgNameSelector = 'Automated Org This is a';
 const orgNameUpdated = 'Automated Org - Updated';
 const orgNameUpdatedSelector = 'Automated Org - Updated This';
+const existingOrgName = 'Default Organization';
+const labNameUpdated = 'Automated Lab - Updated';
+const labManagerName = 'Lab Manager';
 
 test('01 - Remove an Organization Successfully', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/orgs`);
@@ -80,6 +83,7 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
 
   if (userExists) {
     // Invite the user as they do not exist
+    await page.getByRole('tab', { name: 'All users' }).click();
     await page.getByRole('button', { name: 'Invite users' }).click();
     await page.waitForTimeout(2000);
     await page.getByPlaceholder('Enter Email').click();
@@ -89,7 +93,6 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
     // Confirm
     await expect(page.getByText(`${envConfig.testInviteEmail} has been sent an invite`).nth(0)).toBeVisible();
 
-    await page.reload();
     await page.waitForTimeout(2000);
     const cell = page.getByRole('cell', {
       name: envConfig.testInviteEmail,
@@ -190,3 +193,65 @@ test('06 - Update an Org Successfully', async ({ page, baseURL }) => {
     console.log('Updated Organization not found');
   }
 });
+
+test('07 - View All labs tab', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/orgs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'updated' test org already exists then update it back to the original value
+  let autoOrgExists = true;
+  try {
+    autoOrgExists = await page.getByRole('row', { name: existingOrgName }).isVisible();
+  } catch (error) {
+    console.log(existingOrgName + ' not found', error);
+  }
+
+  if (autoOrgExists) {
+    await page.getByRole('row', { name: existingOrgName }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.getByRole('tab', { name: 'All Labs' }).click();
+    await page.waitForTimeout(2000);
+
+    let emptyOrg = false;
+    try {
+      emptyOrg = await page.getByText("You don't have any Labs set up yet.", { exact: true }).isVisible();
+    } catch (error) {
+      console.log(existingOrgName + ' not found', error);
+    }
+
+    if (emptyOrg) {
+      console.log('No existing Labs found for ' + existingOrgName);
+    } else {
+      // Check if the 'labNameUpdated' value exists
+      let hasTestLab = false;
+      try {
+        hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+      } catch (error) {
+        console.log('Playwright test lab not found', error);
+      }
+
+      if (hasTestLab) {
+        await page.getByRole('row', { name: labNameUpdated }).click();
+        await page.waitForTimeout(2000);
+
+        //Lab Users tab
+        await expect(page.getByRole('tab', { name: 'Lab Users' })).toBeVisible();
+        await expect(page.getByRole('tab', { name: 'Details' })).toBeVisible();
+        await page.waitForTimeout(2000);
+        await expect(page.getByRole('row', { name: labManagerName })).toBeVisible();
+
+        //Details tab
+        await page.getByRole('tab', { name: 'Details' }).click();
+        await expect(page.getByText(labNameUpdated).nth(0)).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
+      }
+    }
+  } else {
+    console.log('Existing organization not found');
+  }
+});
+
+//TO DO
+//Check if Remove options exists
+//check if Labs menu appears
+//check if create a new lab button appears

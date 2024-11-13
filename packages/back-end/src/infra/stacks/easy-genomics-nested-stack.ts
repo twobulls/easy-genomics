@@ -1023,6 +1023,45 @@ export class EasyGenomicsNestedStack extends NestedStack {
     );
     this.dynamoDBTables.set(laboratoryUserTableName, laboratoryUserTable);
 
+    // Laboratory Run table
+    const laboratoryRunTableName = `${this.props.namePrefix}-laboratory-run-table`;
+    const laboratoryRunTable = this.dynamoDB.createTable(
+      laboratoryRunTableName,
+      {
+        partitionKey: {
+          name: 'LaboratoryId',
+          type: AttributeType.STRING,
+        },
+        sortKey: {
+          name: 'RunId',
+          type: AttributeType.STRING,
+        },
+        gsi: [
+          {
+            partitionKey: {
+              name: 'RunId', // Global Secondary Index to support Laboratory lookup by RunId requests
+              type: AttributeType.STRING,
+            },
+          },
+          {
+            partitionKey: {
+              name: 'UserId', // Global Secondary Index to support Laboratory lookup by UserId requests
+              type: AttributeType.STRING,
+            },
+          },
+          {
+            partitionKey: {
+              name: 'OrganizationId', // Global Secondary Index to support lookup by OrganizationId requests
+              type: AttributeType.STRING,
+            },
+          },
+        ],
+        lsi: baseLSIAttributes,
+      },
+      this.props.devEnv,
+    );
+    this.dynamoDBTables.set(laboratoryRunTableName, laboratoryRunTable);
+
     // Unique-Reference table
     const uniqueReferenceTableName = `${this.props.namePrefix}-unique-reference-table`;
     const uniqueReferenceTable = this.dynamoDB.createTable(

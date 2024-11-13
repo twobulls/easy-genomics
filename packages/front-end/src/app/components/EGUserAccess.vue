@@ -7,7 +7,7 @@
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
   const props = defineProps<{
-    superuser: boolean;
+    superuser?: boolean;
     orgAdmin: boolean;
   }>();
 
@@ -44,8 +44,6 @@
       label: 'Lab Access',
     },
   ];
-
-  const canCreateLabs = computed<boolean>(() => !props.superuser && props.orgAdmin);
 
   type LabIdents = { id: string; name: string };
   const labToRemoveFrom = ref<LabIdents | null>(null);
@@ -264,8 +262,8 @@
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="There are no labs in your Organization"
-    :primary-button-action="canCreateLabs ? () => $router.push({ path: '/labs/create' }) : null"
-    :primary-button-label="canCreateLabs ? 'Create a Lab' : null"
+    :primary-button-action="useUserStore().canCreateLab() ? () => $router.push({ path: '/labs/create' }) : null"
+    :primary-button-label="useUserStore().canCreateLab() ? 'Create a Lab' : null"
   />
 
   <EGTable

@@ -75,6 +75,7 @@ export const handler: Handler = async (
         },
         {
           ...request,
+          OrganizationId: laboratory.OrganizationId,
           CreatedAt: new Date().toISOString(),
           CreatedBy: currentUserId,
         },

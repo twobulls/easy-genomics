@@ -76,15 +76,13 @@ class LabsModule extends HttpFactory {
 
   /**
    * Add a user to a laboratory
-   * @param orgId
    * @param labId
    * @param userId
    */
-  async addLabUser(orgId: string, labId: string, userId: string): Promise<EditUserResponse> {
+  async addLabUser(labId: string, userId: string): Promise<EditUserResponse> {
     const res = await this.call<EditUserResponse>('POST', '/laboratory/user/add-laboratory-user', {
       LaboratoryId: labId,
       UserId: userId,
-      OrganizationId: orgId,
       Status: 'Active',
       LabManager: false,
       LabTechnician: true,

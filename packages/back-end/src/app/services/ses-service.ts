@@ -50,11 +50,11 @@ export class SesService {
     }
   }
 
-  public async sendExistingUserInvitationEmail(
+  public async sendExistingUserCourtesyEmail(
     toAddress: string,
     organizationName: string,
   ): Promise<SendTemplatedEmailCommandOutput> {
-    const logRequestMessage = `Send Existing User Invitation Email request: ${toAddress}`;
+    const logRequestMessage = `Send Existing User Courtesy Email request: ${toAddress}`;
     console.info(logRequestMessage);
 
     const sendTemplatedEmailCommand: SendTemplatedEmailCommand = new SendTemplatedEmailCommand({
@@ -65,7 +65,7 @@ export class SesService {
       ReplyToAddresses: [`no.reply@${this.props.domainName}`],
       ReturnPath: `no.reply@${this.props.domainName}`,
       SourceArn: `arn:aws:ses:${this.props.region}:${this.props.accountId}:identity/${this.props.domainName}`,
-      Template: 'ExistingUserInvitationEmailTemplate',
+      Template: 'ExistingUserCourtesyEmailTemplate',
       TemplateData: JSON.stringify({
         COPYRIGHT_YEAR: `${new Date().getFullYear()}`,
         DOMAIN_NAME: this.props.domainName,
@@ -76,7 +76,7 @@ export class SesService {
 
     try {
       const response = await this.sesClient.send<SendTemplatedEmailCommand>(sendTemplatedEmailCommand);
-      console.info(`Send Existing User Invitation Email to ${toAddress} response: `, response);
+      console.info(`Send Existing User Courtesy Email to ${toAddress} response: `, response);
       return response;
     } catch (error: unknown) {
       throw new Error(`${logRequestMessage} unsuccessful: ${error.message}`);

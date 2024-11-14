@@ -372,3 +372,14 @@ export class UserNotInOrganizationError extends HttpError {
     super('User not permitted access without first granted access to the Organization', 409, 'EG-405', messageOpt);
   }
 }
+
+/**
+ * User deactivated
+ *
+ * @param messageOpt - optional additional message
+ */
+export class UserDeactivatedError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('User deactivated', 403, 'EG-406', messageOpt);
+  }
+}

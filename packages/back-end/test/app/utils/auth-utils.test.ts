@@ -1,6 +1,11 @@
 import { OrganizationAccess, User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { APIGatewayProxyEvent } from 'aws-lambda/trigger/api-gateway-proxy';
-import { getLaboratoryAccessLaboratoryIds, verifyCurrentOrganizationAccess } from '../../../src/app/utils/auth-utils';
+import {
+  getLaboratoryAccessLaboratoryIds,
+  validateLaboratoryManagerAccess,
+  validateLaboratoryTechnicianAccess,
+  verifyCurrentOrganizationAccess,
+} from '../../../src/app/utils/auth-utils';
 
 describe('get laboratory access ids from authorizer claims', () => {
   let mockEvent: APIGatewayProxyEvent = {
@@ -489,5 +494,417 @@ describe('verifyCurrentOrganizationAccess tests', () => {
     };
 
     expect(verifyCurrentOrganizationAccess(mockEvent, mockUser)).toBeTruthy();
+  });
+});
+
+describe('validateLaboratoryManagerAccess tests', () => {
+  let mockEvent: APIGatewayProxyEvent = {
+    body: '',
+    headers: {},
+    multiValueHeaders: {},
+    httpMethod: 'GET',
+    path: '/test/',
+    isBase64Encoded: false,
+    pathParameters: {},
+    queryStringParameters: {},
+    multiValueQueryStringParameters: {},
+    stageVariables: {},
+    resource: '',
+    requestContext: {
+      accountId: '',
+      authorizer: {},
+      protocol: '',
+      httpMethod: '',
+      identity: {
+        accessKey: '',
+        accountId: '',
+        apiKey: '',
+        apiKeyId: '',
+        caller: '',
+        clientCert: {
+          serialNumber: '',
+          clientCertPem: '',
+          subjectDN: '',
+          issuerDN: '',
+          validity: {
+            notAfter: '',
+            notBefore: '',
+          },
+        },
+        cognitoAuthenticationProvider: '',
+        cognitoAuthenticationType: '',
+        cognitoIdentityId: '',
+        cognitoIdentityPoolId: '',
+        principalOrgId: '',
+        sourceIp: '',
+        user: '',
+        userAgent: '',
+        userArn: '',
+      },
+      path: '',
+      stage: '',
+      apiId: '',
+      requestId: '',
+      requestTimeEpoch: 0,
+      resourceId: '',
+      resourcePath: '',
+    },
+  };
+
+  it('No authorizer claims, no access', () => {
+    mockEvent.requestContext.authorizer = {};
+    expect(
+      validateLaboratoryManagerAccess(
+        mockEvent,
+        '8eb26467-6d9a-47c7-8c3e-85ab5e1ff936',
+        '92436a7f-645f-4b47-9521-df7fb838c04f',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('Empty authorizer claims, no access', () => {
+    const organizationAccess: OrganizationAccess = {};
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+    expect(
+      validateLaboratoryManagerAccess(
+        mockEvent,
+        '8eb26467-6d9a-47c7-8c3e-85ab5e1ff936',
+        '92436a7f-645f-4b47-9521-df7fb838c04f',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('No access to requested org, no access', () => {
+    const organizationAccess: OrganizationAccess = {
+      'da47e581-834b-4eb4-9c8d-23e83767522d': {
+        Status: 'Active',
+        LaboratoryAccess: {
+          '11072469-c909-43b9-9471-42b78b054ca2': {
+            Status: 'Active',
+          },
+        },
+      },
+    };
+
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+
+    expect(
+      validateLaboratoryManagerAccess(
+        mockEvent,
+        '8eb26467-6d9a-47c7-8c3e-85ab5e1ff936',
+        '92436a7f-645f-4b47-9521-df7fb838c04f',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('Access to org but not lab, no access', () => {
+    const organizationAccess: OrganizationAccess = {
+      'da47e581-834b-4eb4-9c8d-23e83767522d': {
+        Status: 'Active',
+        LaboratoryAccess: {
+          '11072469-c909-43b9-9471-42b78b054ca2': {
+            Status: 'Active',
+          },
+        },
+      },
+    };
+
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+
+    expect(
+      validateLaboratoryManagerAccess(
+        mockEvent,
+        'da47e581-834b-4eb4-9c8d-23e83767522d',
+        '92436a7f-645f-4b47-9521-df7fb838c04f',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('Access to org and lab but no lab manager access, no access', () => {
+    const organizationAccess: OrganizationAccess = {
+      'ac04d32e-c44b-4691-8828-61dc66986b2f': {
+        Status: 'Active',
+        LaboratoryAccess: {
+          '11072469-c909-43b9-9471-42b78b054ca2': {
+            Status: 'Active',
+            LabManager: true,
+          },
+          '243b3919-0ed8-4cde-bf3e-6d4b4dcaa838': {
+            Status: 'Active',
+            LabTechnician: true,
+          },
+          '3b5f2daa-072e-4fd2-8797-bc7a775e9105': {
+            Status: 'Active',
+          },
+        },
+      },
+    };
+
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+
+    expect(
+      validateLaboratoryManagerAccess(
+        mockEvent,
+        'ac04d32e-c44b-4691-8828-61dc66986b2f',
+        '243b3919-0ed8-4cde-bf3e-6d4b4dcaa838',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('Access to org and lab with lab manager access, user has access', () => {
+    const organizationAccess: OrganizationAccess = {
+      'ac04d32e-c44b-4691-8828-61dc66986b2f': {
+        Status: 'Active',
+        LaboratoryAccess: {
+          '11072469-c909-43b9-9471-42b78b054ca2': {
+            Status: 'Active',
+            LabManager: true,
+          },
+          '243b3919-0ed8-4cde-bf3e-6d4b4dcaa838': {
+            Status: 'Active',
+            LabTechnician: true,
+          },
+          '3b5f2daa-072e-4fd2-8797-bc7a775e9105': {
+            Status: 'Active',
+          },
+        },
+      },
+    };
+
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+
+    expect(
+      validateLaboratoryManagerAccess(
+        mockEvent,
+        'ac04d32e-c44b-4691-8828-61dc66986b2f',
+        '11072469-c909-43b9-9471-42b78b054ca2',
+      ),
+    ).toBeTruthy();
+  });
+});
+
+describe('validateLaboratoryTechnicianAccess tests', () => {
+  let mockEvent: APIGatewayProxyEvent = {
+    body: '',
+    headers: {},
+    multiValueHeaders: {},
+    httpMethod: 'GET',
+    path: '/test/',
+    isBase64Encoded: false,
+    pathParameters: {},
+    queryStringParameters: {},
+    multiValueQueryStringParameters: {},
+    stageVariables: {},
+    resource: '',
+    requestContext: {
+      accountId: '',
+      authorizer: {},
+      protocol: '',
+      httpMethod: '',
+      identity: {
+        accessKey: '',
+        accountId: '',
+        apiKey: '',
+        apiKeyId: '',
+        caller: '',
+        clientCert: {
+          serialNumber: '',
+          clientCertPem: '',
+          subjectDN: '',
+          issuerDN: '',
+          validity: {
+            notAfter: '',
+            notBefore: '',
+          },
+        },
+        cognitoAuthenticationProvider: '',
+        cognitoAuthenticationType: '',
+        cognitoIdentityId: '',
+        cognitoIdentityPoolId: '',
+        principalOrgId: '',
+        sourceIp: '',
+        user: '',
+        userAgent: '',
+        userArn: '',
+      },
+      path: '',
+      stage: '',
+      apiId: '',
+      requestId: '',
+      requestTimeEpoch: 0,
+      resourceId: '',
+      resourcePath: '',
+    },
+  };
+
+  it('No authorizer claims, no access', () => {
+    mockEvent.requestContext.authorizer = {};
+    expect(
+      validateLaboratoryTechnicianAccess(
+        mockEvent,
+        '8eb26467-6d9a-47c7-8c3e-85ab5e1ff936',
+        '92436a7f-645f-4b47-9521-df7fb838c04f',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('Empty authorizer claims, no access', () => {
+    const organizationAccess: OrganizationAccess = {};
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+    expect(
+      validateLaboratoryTechnicianAccess(
+        mockEvent,
+        '8eb26467-6d9a-47c7-8c3e-85ab5e1ff936',
+        '92436a7f-645f-4b47-9521-df7fb838c04f',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('No access to requested org, no access', () => {
+    const organizationAccess: OrganizationAccess = {
+      'da47e581-834b-4eb4-9c8d-23e83767522d': {
+        Status: 'Active',
+        LaboratoryAccess: {
+          '11072469-c909-43b9-9471-42b78b054ca2': {
+            Status: 'Active',
+          },
+        },
+      },
+    };
+
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+
+    expect(
+      validateLaboratoryTechnicianAccess(
+        mockEvent,
+        '8eb26467-6d9a-47c7-8c3e-85ab5e1ff936',
+        '92436a7f-645f-4b47-9521-df7fb838c04f',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('Access to org but not lab, no access', () => {
+    const organizationAccess: OrganizationAccess = {
+      'da47e581-834b-4eb4-9c8d-23e83767522d': {
+        Status: 'Active',
+        LaboratoryAccess: {
+          '11072469-c909-43b9-9471-42b78b054ca2': {
+            Status: 'Active',
+          },
+        },
+      },
+    };
+
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+
+    expect(
+      validateLaboratoryTechnicianAccess(
+        mockEvent,
+        'da47e581-834b-4eb4-9c8d-23e83767522d',
+        '92436a7f-645f-4b47-9521-df7fb838c04f',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('Access to org and lab but no lab technician access, no access', () => {
+    const organizationAccess: OrganizationAccess = {
+      'ac04d32e-c44b-4691-8828-61dc66986b2f': {
+        Status: 'Active',
+        LaboratoryAccess: {
+          '11072469-c909-43b9-9471-42b78b054ca2': {
+            Status: 'Active',
+            LabManager: true,
+          },
+          '243b3919-0ed8-4cde-bf3e-6d4b4dcaa838': {
+            Status: 'Active',
+            LabTechnician: true,
+          },
+          '3b5f2daa-072e-4fd2-8797-bc7a775e9105': {
+            Status: 'Active',
+          },
+        },
+      },
+    };
+
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+
+    expect(
+      validateLaboratoryTechnicianAccess(
+        mockEvent,
+        'ac04d32e-c44b-4691-8828-61dc66986b2f',
+        '11072469-c909-43b9-9471-42b78b054ca2',
+      ),
+    ).toBeFalsy();
+  });
+
+  it('Access to org and lab with lab manager access, user has access', () => {
+    const organizationAccess: OrganizationAccess = {
+      'ac04d32e-c44b-4691-8828-61dc66986b2f': {
+        Status: 'Active',
+        LaboratoryAccess: {
+          '11072469-c909-43b9-9471-42b78b054ca2': {
+            Status: 'Active',
+            LabManager: true,
+          },
+          '243b3919-0ed8-4cde-bf3e-6d4b4dcaa838': {
+            Status: 'Active',
+            LabTechnician: true,
+          },
+          '3b5f2daa-072e-4fd2-8797-bc7a775e9105': {
+            Status: 'Active',
+          },
+        },
+      },
+    };
+
+    mockEvent.requestContext.authorizer = {
+      claims: {
+        OrganizationAccess: JSON.stringify(organizationAccess),
+      },
+    };
+
+    expect(
+      validateLaboratoryTechnicianAccess(
+        mockEvent,
+        'ac04d32e-c44b-4691-8828-61dc66986b2f',
+        '243b3919-0ed8-4cde-bf3e-6d4b4dcaa838',
+      ),
+    ).toBeTruthy();
   });
 });

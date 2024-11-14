@@ -3,6 +3,11 @@ import { CreateUserForgotPasswordRequestSchema } from '@easy-genomics/shared-lib
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { CreateUserForgotPasswordRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-password';
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
+import {
+  InvalidRequestError,
+  UserDeactivatedError,
+  UserNotFoundError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { CognitoIdpService } from '@BE/services/cognito-idp-service';
 import { UserService } from '@BE/services/easy-genomics/user-service';
@@ -18,30 +23,32 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
       ? JSON.parse(atob(event.body!))
       : JSON.parse(event.body!);
     // Data validation safety check
-    if (!CreateUserForgotPasswordRequestSchema.safeParse(request).success) throw new Error('Invalid request');
+    if (!CreateUserForgotPasswordRequestSchema.safeParse(request).success) {
+      throw new InvalidRequestError();
+    }
 
     // Verify User
     const user: User | undefined = (await userService.queryByEmail(request.Email)).shift();
 
     if (!user) {
-      throw new Error(`User ${request.Email} not found`);
+      throw new UserNotFoundError(`'${request.Email}' not found`);
     }
 
     if (user.Status === 'Inactive') {
-      throw new Error(`User ${request.Email} Status 'Inactive'`);
+      throw new UserDeactivatedError(`'${request.Email}' Status 'Inactive'`);
     }
 
     // Retrieve Cognito User Account and initiate Cognito's forgot password workflow
     const cognitoUser: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(request.Email);
 
     if (!cognitoUser.Enabled) {
-      throw new Error(`User ${request.Email} Cognito Account disabled`);
+      throw new UserDeactivatedError(`'${request.Email}' Cognito Account disabled`);
     }
 
     await cognitoIdpService.forgotPassword(process.env.COGNITO_USER_POOL_CLIENT_ID, request.Email);
     return buildResponse(200, JSON.stringify({ Status: 'success' }), event);
   } catch (err: any) {
     console.error(err);
-    return buildResponse(400, JSON.stringify({ Status: 'success' }), event); // Return false positive to prevent snooping
+    return buildResponse(200, JSON.stringify({ Status: 'success' }), event); // Return false positive to prevent snooping
   }
 };

@@ -5,7 +5,7 @@ import { CreateUserForgotPasswordRequest } from '@easy-genomics/shared-lib/src/a
 import { buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
-  UserDeactivatedError,
+  UnauthorizedAccessError,
   UserNotFoundError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyEvent, APIGatewayProxyResult, Handler } from 'aws-lambda';
@@ -34,15 +34,15 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
       throw new UserNotFoundError(`'${request.Email}' not found`);
     }
 
-    if (user.Status === 'Inactive') {
-      throw new UserDeactivatedError(`'${request.Email}' Status 'Inactive'`);
+    if (user.Status === 'Invited' || user.Status === 'Inactive') {
+      throw new UnauthorizedAccessError(`'${request.Email}' Status '${user.Status}'`);
     }
 
     // Retrieve Cognito User Account and initiate Cognito's forgot password workflow
     const cognitoUser: AdminGetUserCommandOutput = await cognitoIdpService.adminGetUser(request.Email);
 
     if (!cognitoUser.Enabled) {
-      throw new UserDeactivatedError(`'${request.Email}' Cognito Account disabled`);
+      throw new UnauthorizedAccessError(`'${request.Email}' Cognito Account disabled`);
     }
 
     await cognitoIdpService.forgotPassword(process.env.COGNITO_USER_POOL_CLIENT_ID, request.Email);

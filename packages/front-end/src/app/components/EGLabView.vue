@@ -593,7 +593,7 @@
                 :key="labUser?.LabManager"
                 :disabled="
                   useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
-                  !useUserStore().canEditLab(labId) ||
+                  !useUserStore().canEditLabUsers(orgId, labId) ||
                   useUserStore().isSuperuser
                 "
                 :user="labUser"

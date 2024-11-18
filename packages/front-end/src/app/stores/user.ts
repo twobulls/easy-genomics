@@ -49,7 +49,10 @@ const useUserStore = defineStore('userStore', {
       (orgId: string, labId: string): boolean =>
         !!state.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId]?.LabManager,
     // currently we don't have any granular org permission logic so this is it
-    canManageOrgs: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(useUserStore().currentOrgId),
+    canManageOrgs:
+      (_state: UserStoreState) =>
+      (orgId: string): boolean =>
+        useUserStore().isOrgAdmin(orgId),
 
     canCreateLab:
       (_state: UserStoreState) =>

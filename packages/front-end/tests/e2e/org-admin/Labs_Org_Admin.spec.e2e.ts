@@ -5,6 +5,7 @@ const orgName = 'Default Organization';
 const labName = 'Playwright test lab';
 const labNameUpdated = 'Automated Lab - Updated';
 const labManagerName = 'Lab Manager';
+const labManagerEmail = 'lab.manager@easygenomics.org';
 
 test('01 - Remove user from a Laboratory Successfully', async ({ page, baseURL }) => {
   // Check if the user has been added already to a Lab
@@ -18,14 +19,14 @@ test('01 - Remove user from a Laboratory Successfully', async ({ page, baseURL }
   }
 
   if (hasTestLab) {
-    let UserNotAddedtoLab = true;
+    let userNotAddedToLab = true;
     try {
-      UserNotAddedtoLab = await page.getByRole('row', { name: labManagerName + 'Grant access' }).isHidden();
+      userNotAddedToLab = await page.getByRole('row', { name: labManagerName + 'Grant access' }).isHidden();
     } catch (error) {
       console.log('User is not added yet to Automation Lab!', error);
     }
 
-    if (UserNotAddedtoLab) {
+    if (userNotAddedToLab) {
       await page.getByRole('row', { name: labName }).locator('button').click();
       await page.getByRole('menuitem', { name: 'View / Edit' }).click();
       await page.getByRole('tab', { name: 'Lab Users' }).click();
@@ -50,14 +51,14 @@ test('01 - Remove user from a Laboratory Successfully', async ({ page, baseURL }
   }
 
   if (hasUpdatedTestLab) {
-    let UserNotAddedtoLab = true;
+    let userNotAddedToLab = true;
     try {
-      UserNotAddedtoLab = await page.getByRole('row', { name: 'Grant access' }).isHidden();
+      userNotAddedToLab = await page.getByRole('row', { name: 'Grant access' }).isHidden();
     } catch (error) {
       console.log('User is not added yet to Automation Lab!', error);
     }
 
-    if (UserNotAddedtoLab) {
+    if (userNotAddedToLab) {
       await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
       await page.getByRole('menuitem', { name: 'View / Edit' }).click();
       await page.getByRole('tab', { name: 'Lab Users' }).click();
@@ -236,14 +237,14 @@ test('05 - Grant access to a user to a Lab via Edit User Access Successfully', a
   await page.getByRole('menuitem', { name: 'Edit User Access' }).click();
   await page.waitForTimeout(2000);
 
-  let UserNotAddedtoLab = true;
+  let userNotAddedToLab = true;
   try {
-    UserNotAddedtoLab = await page.getByRole('row', { name: labNameUpdated + ' Grant access' }).isVisible();
+    userNotAddedToLab = await page.getByRole('row', { name: labNameUpdated + ' Grant access' }).isVisible();
   } catch (error) {
     console.log('User was already added!', error);
   }
 
-  if (UserNotAddedtoLab) {
+  if (userNotAddedToLab) {
     // Click Grant Access in Edit User Access page
     await page
       .getByRole('row', { name: labNameUpdated + ' Grant access' })
@@ -293,14 +294,14 @@ test('07 - Add a user to a Laboratory Successfully', async ({ page, baseURL }) =
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
 
-  let UserNotAddedtoLab = true;
+  let userNotAddedToLab = true;
   try {
-    UserNotAddedtoLab = await page.getByRole('row', { name: 'Grant access' }).isHidden();
+    userNotAddedToLab = await page.getByRole('row', { name: 'Grant access' }).isHidden();
   } catch (error) {
     console.log('User is not added yet to Automation Lab!', error);
   }
 
-  if (UserNotAddedtoLab) {
+  if (userNotAddedToLab) {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.getByRole('tab', { name: 'Lab Users' }).click();
@@ -309,7 +310,7 @@ test('07 - Add a user to a Laboratory Successfully', async ({ page, baseURL }) =
 
     await page.getByText('Select User').click();
     await page.getByPlaceholder('Search all users...').click();
-    await page.keyboard.type(labManagerName);
+    await page.keyboard.type(labManagerEmail);
     await page.getByRole('option', { name: labManagerName }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await page.getByText('Successfully added ' + labManagerName + ' to ' + labNameUpdated).click();

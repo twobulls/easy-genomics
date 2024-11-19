@@ -29,6 +29,7 @@
 
   const workflowStore = useWorkflowStore();
   const labStore = useLabsStore();
+  const uiStore = useUiStore();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
 
@@ -422,6 +423,8 @@
       throw new Error("runToCancel workflow id should have a value but doesn't");
     }
 
+    uiStore.setRequestPending('cancelWorkflow');
+
     try {
       await $api.workflows.cancelPipelineRun(props.labId, runId);
       useToastStore().success(`${runName} has been successfully cancelled`);
@@ -431,6 +434,7 @@
 
     isCancelDialogOpen.value = false;
     runToCancel.value = null;
+    uiStore.setRequestComplete('cancelWorkflow');
 
     await getWorkflows();
   }
@@ -623,5 +627,6 @@
     :primary-message="`Are you sure you would like to cancel ${runToCancel?.runName}?`"
     secondary-message="This will stop any progress made."
     v-model="isCancelDialogOpen"
+    :buttons-disabled="uiStore.isRequestPending('cancelWorkflow')"
   />
 </template>

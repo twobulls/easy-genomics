@@ -7,6 +7,7 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
+  const { downloadReport } = useFileDownload();
 
   const workflowStore = useWorkflowStore();
 
@@ -54,6 +55,45 @@
     },
   ];
 
+  const s3JsonData = [
+    {
+      'type': 'directory',
+      'name': 'next-flow',
+      'children': [
+        {
+          'type': 'file',
+          'name': 'GOL2051A55857_S103_L002_R1_001.fastq.gz',
+          'dateModified': '2023-10-01',
+          'size': 1024,
+        },
+        {
+          'type': 'file',
+          'name': 'GOL2051A55857_S103_L002_R2_001.fastq.gz',
+          'dateModified': '2023-10-01',
+          'size': 2048,
+        },
+        {
+          'type': 'directory',
+          'name': 'results',
+          'children': [
+            {
+              'type': 'directory',
+              'name': 'pipeline_info',
+              'children': [
+                {
+                  'type': 'file',
+                  'name': 'execution_report_2024-11-08_02-43-12.html',
+                  'dateModified': '2023-10-05',
+                  'size': 512,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ];
+
   let tabIndex = ref(0);
   // set tabIndex according to query param
   onMounted(() => {
@@ -79,17 +119,6 @@
   });
 
   onBeforeMount(initData);
-
-  async function downloadReport(fileName: string, path: string, size: number) {
-    const fileDownload: FileDownloadResponse = await $api.workflows.getNextFlowFileDownload(labId, path);
-    if (fileDownload) {
-      const link = document.createElement('a');
-      link.href = `data:${size};base64,${fileDownload.Data}`;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(link.href);
-    }
-  }
 
   async function initData() {
     useUiStore().setRequestPending('loadWorkflow');
@@ -124,6 +153,8 @@
   >
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
+        <EGFileExplorerer :json-data="s3JsonData" />
+
         <EGTable
           :table-data="workflowReports"
           :columns="runResultsColumns"
@@ -136,7 +167,7 @@
                 label="Download"
                 variant="secondary"
                 size="sm"
-                @click="downloadReport(row.fileName, `${workflowBasePath}${row.path}`, row.size)"
+                @click="downloadReport(labId, row.fileName, `${workflowBasePath}${row.path}`, row.size)"
                 :icon-right="false"
                 icon="i-heroicons-arrow-down-tray"
               />

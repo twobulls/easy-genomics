@@ -37,7 +37,7 @@ export class SesConstruct extends Construct {
       emailDomainIdentity.applyRemovalPolicy(RemovalPolicy.DESTROY);
 
       this.setupNewUserInvitationEmailTemplate();
-      this.setupExistingUserInvitationEmailTemplate();
+      this.setupExistingUserCourtesyEmailTemplate();
       this.setupUserForgotPasswordEmailTemplate();
     }
   }
@@ -479,10 +479,10 @@ export class SesConstruct extends Construct {
     return newUserInvitationEmailTemplate;
   }
 
-  private setupExistingUserInvitationEmailTemplate() {
-    const invitationEmailTemplate: CfnTemplate = new CfnTemplate(this, 'ExistingUserInvitationEmailTemplate', {
+  private setupExistingUserCourtesyEmailTemplate() {
+    const invitationEmailTemplate: CfnTemplate = new CfnTemplate(this, 'ExistingUserCourtesyEmailTemplate', {
       template: {
-        templateName: 'ExistingUserInvitationEmailTemplate',
+        templateName: 'ExistingUserCourtesyEmailTemplate',
         subjectPart: 'You’ve been added to an Easy Genomics Organization',
         htmlPart: `
          <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">

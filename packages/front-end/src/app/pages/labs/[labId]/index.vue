@@ -6,7 +6,7 @@
   const initialTab = $route.query.tab as string;
 
   // check permissions to be on this page
-  if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
+  if (!useUserStore().canViewLab(labId)) {
     $router.push('/labs');
   }
 </script>

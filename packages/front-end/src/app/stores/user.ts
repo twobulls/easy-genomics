@@ -33,47 +33,44 @@ const useUserStore = defineStore('userStore', {
 
     isSuperuser: (state: UserStoreState): boolean => !!state.currentUserPermissions.isSuperuser,
 
-    isOrgAdmin:
-      (state: UserStoreState) =>
-      (orgId: string): boolean => {
-        return useUserStore().isSuperuser || !!state.currentUserPermissions.orgPermissions?.[orgId]?.OrganizationAdmin;
-      },
+    isOrgAdmin: (state: UserStoreState) => (): boolean =>
+      useUserStore().isSuperuser ||
+      !!state.currentUserPermissions.orgPermissions?.[useUserStore().currentOrgId]?.OrganizationAdmin,
 
     isLabMember:
       (state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        !!state.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId],
+      (labId: string): boolean =>
+        !!state.currentUserPermissions.orgPermissions?.[useUserStore().currentOrgId]?.LaboratoryAccess?.[labId],
 
     isLabManager:
       (state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        !!state.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId]?.LabManager,
-    // currently we don't have any granular org permission logic so this is it
-    canManageOrgs: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(useUserStore().currentOrgId),
+      (labId: string): boolean =>
+        !!state.currentUserPermissions.orgPermissions?.[useUserStore().currentOrgId]?.LaboratoryAccess?.[labId]
+          ?.LabManager,
 
-    canCreateLab: (_state: UserStoreState) => (): boolean =>
-      !useUserStore().isSuperuser && useUserStore().isOrgAdmin(useUserStore().currentOrgId),
+    // currently we don't have any granular org permission logic so this is it
+    canManageOrgs: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(),
+
+    canCreateLab: (_state: UserStoreState) => (): boolean => !useUserStore().isSuperuser && useUserStore().isOrgAdmin(),
 
     canViewLab:
       (_state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        useUserStore().isOrgAdmin(orgId) || useUserStore().isLabMember(orgId, labId),
+      (labId: string): boolean =>
+        useUserStore().isOrgAdmin() || useUserStore().isLabMember(labId),
 
-    canEditLab:
+    canEditLabUsers:
       (_state: UserStoreState) =>
       (labId: string): boolean =>
-        useUserStore().isOrgAdmin(useUserStore().currentOrgId) ||
-        useUserStore().isLabManager(useUserStore().currentOrgId, labId),
+        useUserStore().isOrgAdmin() || useUserStore().isLabManager(labId),
 
-    canDeleteLab:
-      (_state: UserStoreState) =>
-      (orgId: string): boolean =>
-        useUserStore().isOrgAdmin(orgId),
+    canEditLabDetails: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(),
+
+    canDeleteLab: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(),
 
     canAddLabUsers:
       (_state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        useUserStore().isOrgAdmin(orgId) || useUserStore().isLabManager(orgId, labId),
+      (labId: string): boolean =>
+        useUserStore().isOrgAdmin() || useUserStore().isLabManager(labId),
   },
 
   actions: {

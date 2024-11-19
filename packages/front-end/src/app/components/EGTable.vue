@@ -134,7 +134,7 @@
 
     tbody tr td:nth-child(1) {
       color: black;
-      font-weight: 600;
+      font-weight: 500;
       padding-left: 40px;
       white-space: normal;
     }

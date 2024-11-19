@@ -137,6 +137,14 @@
       "type": "runtime"
     },
     {
+      "name": "@vueuse/core",
+      "type": "runtime"
+    },
+    {
+      "name": "@vueuse/nuxt",
+      "type": "runtime"
+    },
+    {
       "name": "amazon-cognito-identity-js",
       "type": "runtime"
     },

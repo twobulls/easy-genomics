@@ -27,7 +27,48 @@ export default function useSort() {
     return result;
   }
 
+  /**
+   * Compares number values for sorting
+   *
+   * @param {number} inputA
+   * @param {number} inputB
+   * @param {'asc' | 'desc'} direction
+   * @return {number} comparison result
+   */
+  function numberSortCompare(inputA: number, inputB: number, direction: 'asc' | 'desc' = 'asc') {
+    let result = inputA - inputB;
+
+    if (direction === 'desc') {
+      result *= -1;
+    }
+
+    return result;
+  }
+
+  /**
+   * Compares date values in yyyy-mm-dd format for sorting
+   *
+   * @param {string} inputA
+   * @param {string} inputB
+   * @param {'asc' | 'desc'} direction
+   * @return {number} comparison result
+   */
+  function dateSortCompare(inputA: string, inputB: string, direction: 'asc' | 'desc' = 'asc') {
+    const dateA = new Date(inputA);
+    const dateB = new Date(inputB);
+
+    let result = dateA.getTime() - dateB.getTime();
+
+    if (direction === 'desc') {
+      result *= -1;
+    }
+
+    return result;
+  }
+
   return {
     stringSortCompare,
+    numberSortCompare,
+    dateSortCompare,
   };
 }

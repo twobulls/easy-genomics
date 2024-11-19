@@ -406,6 +406,8 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@playwright/test',
     '@smithy/types',
     '@smithy/url-parser',
+    '@vueuse/core',
+    '@vueuse/nuxt',
     'amazon-cognito-identity-js',
     'aws-amplify@5.3.18',
     'axios',

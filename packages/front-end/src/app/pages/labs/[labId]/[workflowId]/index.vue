@@ -153,7 +153,7 @@
   >
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
-        <EGFileExplorerer :json-data="s3JsonData" />
+        <EGFileExplorerer :json-data="s3JsonData" :lab-id="labId" />
 
         <EGTable
           :table-data="workflowReports"

@@ -1,32 +1,51 @@
 <template>
-  <div class="file-explorer">
-    <div class="breadcrumbs">
-      <span v-for="(crumb, index) in breadcrumbs" :key="index" @click="navigateTo(index)">
-        {{ crumb.name }}
-        <span v-if="index < breadcrumbs.length - 1">/</span>
-      </span>
-    </div>
-    <EGTable
-      :row-click-action="onRowClicked"
-      :table-data="currentItems"
-      :columns="tableColumns"
-      :action-items="actionItems"
-      :can-select="canSelectRow"
-    />
+  <div class="breadcrumbs">
+    <span
+      v-for="(crumb, index) in breadcrumbs"
+      :key="index"
+      icon="i-heroicons-arrow-down-tray"
+      @click="navigateTo(index)"
+      class="breadcrumb-item text-muted text-sm"
+    >
+      {{ crumb.name }}
+      <UIcon v-if="index < breadcrumbs.length - 1" size="large" name="i-heroicons-chevron-right" />
+    </span>
   </div>
+  <EGTable
+    :row-click-action="onRowClicked"
+    :table-data="currentItems"
+    :columns="tableColumns"
+    :action-items="actionItems"
+  >
+    <template #type-data="{ row, index }">
+      {{ useChangeCase(row.type, 'sentenceCase') }}
+    </template>
+    <template #size-data="{ row, index }">
+      {{ formatSize(row.size) }}
+    </template>
+  </EGTable>
 </template>
 
 <script setup lang="ts">
-  import { parseISO, format, compareAsc } from 'date-fns';
-  import { Laboratory } from '@/packages/shared-lib/src/app/types/easy-genomics/laboratory';
+  import { parseISO, format } from 'date-fns';
+  import { useChangeCase } from '@vueuse/integrations/useChangeCase';
+
+  const { downloadReport } = useFileDownload();
 
   // Define the props for the component
   const props = defineProps<{
+    labId: string;
     jsonData: Array<{ type: string; name: string; dateModified?: string; size?: number; children?: any[] }>;
   }>();
 
-  // Initialize the current path with the root directory
-  const currentPath = ref([{ name: 'root', children: props.jsonData }]);
+  const updatedJsonData = computed(() => {
+    return props.jsonData.map((item) => ({
+      ...item,
+      type: item.type === 'directory' ? 'Folder' : item.type === 'file' ? 'File' : item.type,
+    }));
+  });
+
+  const currentPath = ref([{ name: 'All Files', children: updatedJsonData.value }]);
 
   // Generate the breadcrumb trail
   const breadcrumbs = computed(() => {
@@ -40,7 +59,6 @@
   const currentItems = computed(() => {
     if (currentPath.value.length > 0) {
       const currentDir = currentPath.value[currentPath.value.length - 1];
-      console.log('Current Directory Items:', currentDir.children); // Debug: Log current directory items
       return currentDir.children || [];
     }
     return [];
@@ -52,6 +70,8 @@
       key: 'name',
       label: 'Name',
       sortable: true,
+      sort: useSort().stringSortCompare,
+      rowClass: (row) => (row.type === 'Folder' ? 'underline-folder' : ''),
     },
     {
       key: 'type',
@@ -62,15 +82,23 @@
       key: 'dateModified',
       label: 'Date Modified',
       sortable: true,
-      sort: (rowA, rowB) => compareAsc(parseISO(rowA.dateModified), parseISO(rowB.dateModified)),
-      formatter: (value) => (value ? format(parseISO(value), 'yyyy-MM-dd') : ''),
+      sort: useSort().dateSortCompare,
+      class: (value) => (value ? format(parseISO(value), 'dd/MM/yyyy') : ''),
     },
     {
       key: 'size',
       label: 'Size',
       sortable: true,
-      sort: (rowA, rowB) => rowA.size - rowB.size,
-      formatter: (value) => formatSize(value),
+      sort: useSort().numberSortCompare,
+      //
+      // sort: (rowA, rowB) => {
+      //   if (rowA === undefined) return 1; // Move undefined values to the end
+      //   if (rowB === undefined) return -1; // Move undefined values to the end
+      //   const sizeA = typeof rowA === 'number' ? rowA : 0;
+      //   const sizeB = typeof rowB === 'number' ? rowB : 0;
+      //   return sizeA - sizeB;
+      // },
+      class: (value) => formatSize(value),
     },
     {
       key: 'actions',
@@ -79,44 +107,35 @@
   ];
 
   // Format the file size into a human-readable format
-  function formatSize(value) {
+  function formatSize(value: number) {
     if (!value) return '';
-    if (value < 1024) return `${value} B`;
-    if (value < 1024 * 1024) return `${(value / 1024).toFixed(2)} KB`;
-    return `${(value / (1024 * 1024)).toFixed(2)} MB`;
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let unitIndex = 0;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex++;
+    }
+    return unitIndex === 0 ? `${value.toFixed(0)} ${units[unitIndex]}` : `${value.toFixed(2)} ${units[unitIndex]}`;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex++;
+    }
+    return `${value.toFixed(2)} ${units[unitIndex]}`;
   }
-
-  // Filter rows to only allow selecting files, not directories
-  const canSelectRow = (row) => {
-    return row.type !== 'directory';
-  };
 
   // Handle row click action
   const onRowClicked = (item) => {
-    console.log('Row clicked:', item); // Debug: Log the clicked row
-    if (item.type === 'directory') {
+    if (item.type === 'Folder' || item.type === 'directory') {
+      console.log('Opening directory:', item.name); // Debug log
       openDirectory(item);
       resetSelection();
     }
   };
 
-  // Action items (if any, this can be expanded as needed)
-  function actionItems(lab: Laboratory) {
-    const items: object[] = [
-      [
-        {
-          label: 'Download',
-          click: () => onRowClicked(lab),
-        },
-      ],
-    ];
-
-    return items;
-  }
-
   // Open a directory and update the current path
   const openDirectory = (dir) => {
-    currentPath.value.push(dir);
+    console.log('Navigating to directory:', dir.name); // Debug log
+    currentPath.value.push({ name: dir.name, children: dir.children });
   };
 
   // Navigate to a specific breadcrumb
@@ -129,23 +148,39 @@
   const resetSelection = () => {
     // Implement your reset selection logic here (e.g., clear selected items)
   };
+
+  // Define action items for each row
+  const actionItems = (row) => {
+    return [
+      {
+        label: 'Download',
+        icon: 'download', // Assuming you have a way to render this icon
+        action: () => downloadReport(labId, row.fileName, `${workflowBasePath}${row.path}`, row.size),
+      },
+      // Add more actions if needed
+    ];
+  };
 </script>
 
 <style scoped>
-  .file-explorer {
-    font-family: Arial, sans-serif;
+  .breadcrumb-item {
+    cursor: pointer;
+    margin-right: 5px;
+
+    > &:last-child {
+      color: #000;
+    }
   }
 
   .breadcrumbs {
     margin-bottom: 10px;
   }
 
-  .breadcrumbs span {
-    cursor: pointer;
-    color: blue;
+  .breadcrumb-item:hover {
+    text-decoration: underline;
   }
 
-  .breadcrumbs span:hover {
+  .underline-folder {
     text-decoration: underline;
   }
 </style>

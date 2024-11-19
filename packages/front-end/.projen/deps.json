@@ -141,6 +141,10 @@
       "type": "runtime"
     },
     {
+      "name": "@vueuse/integrations",
+      "type": "runtime"
+    },
+    {
       "name": "@vueuse/nuxt",
       "type": "runtime"
     },

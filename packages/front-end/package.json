@@ -81,6 +81,7 @@
     "@smithy/types": "^3.5.0",
     "@smithy/url-parser": "^3.0.7",
     "@vueuse/core": "^11.2.0",
+    "@vueuse/integrations": "^10.11.1",
     "@vueuse/nuxt": "^11.2.0",
     "amazon-cognito-identity-js": "^6.3.13",
     "aws-amplify": "5.3.18",

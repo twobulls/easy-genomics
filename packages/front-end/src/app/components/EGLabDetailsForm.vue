@@ -162,7 +162,7 @@
     }
   }
 
-  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLab(labId));
+  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLabDetails());
 
   /**
    * Retrieves the lab details from the server and sets the form state.
@@ -170,7 +170,7 @@
   async function getLabDetails() {
     try {
       isLoadingFormData.value = true;
-      const res = await $api.labs.labDetails($route.params.labId);
+      const res = await $api.labs.labDetails(labId);
       const parseResult = ReadLaboratorySchema.safeParse(res);
 
       if (parseResult.success) {
@@ -382,7 +382,7 @@
       </EGFormGroup>
 
       <EGFormGroup
-        v-if="useUserStore().isOrgAdmin(useUserStore().currentOrgId)"
+        v-if="useUserStore().isOrgAdmin()"
         label="Default S3 bucket directory"
         name="DefaultS3BucketDirectory"
         required

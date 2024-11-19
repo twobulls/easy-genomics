@@ -162,7 +162,7 @@
     }
   }
 
-  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLabDetails(useUserStore().currentOrgId));
+  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLabDetails());
 
   /**
    * Retrieves the lab details from the server and sets the form state.
@@ -382,7 +382,7 @@
       </EGFormGroup>
 
       <EGFormGroup
-        v-if="useUserStore().isOrgAdmin(useUserStore().currentOrgId)"
+        v-if="useUserStore().isOrgAdmin()"
         label="Default S3 bucket directory"
         name="DefaultS3BucketDirectory"
         required

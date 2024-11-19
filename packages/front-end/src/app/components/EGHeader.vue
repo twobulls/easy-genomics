@@ -39,7 +39,7 @@
             Labs
           </ULink>
           <ULink
-            v-if="useUserStore().canManageOrgs(useUserStore().currentOrgId)"
+            v-if="useUserStore().canManageOrgs()"
             to="/orgs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"

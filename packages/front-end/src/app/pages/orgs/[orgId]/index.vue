@@ -2,7 +2,7 @@
   const $router = useRouter();
   const $route = useRoute();
 
-  if (!useUserStore().canManageOrgs(useUserStore().currentOrgId)) {
+  if (!useUserStore().canManageOrgs()) {
     $router.push({ path: '/' });
   }
 

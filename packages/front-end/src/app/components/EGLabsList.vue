@@ -18,7 +18,7 @@
       .labsForOrg(props.orgId)
       // arguably this filter step shouldn't need to exist on the frontend because the backend shouldn't send us labs
       // that the user doesn't have access to, so maybe it should be taken out at some point
-      .filter((lab) => useUserStore().canViewLab(useUserStore().currentOrgId, lab.LaboratoryId))
+      .filter((lab) => useUserStore().canViewLab(lab.LaboratoryId))
       .sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name)),
   );
   const hasNoData = computed<boolean>(
@@ -55,7 +55,7 @@
       ],
     ];
 
-    if (!useUserStore().isSuperuser && useUserStore().canDeleteLab(useUserStore().currentOrgId)) {
+    if (!useUserStore().isSuperuser && useUserStore().canDeleteLab()) {
       items.push([
         {
           label: 'Remove',
@@ -142,10 +142,8 @@
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="You don't have any Labs set up yet."
-    :primary-button-action="
-      useUserStore().canCreateLab(useUserStore().currentOrgId) ? () => $router.push({ path: `/labs/create` }) : null
-    "
-    :primary-button-label="useUserStore().canCreateLab(useUserStore().currentOrgId) ? 'Create a new Lab' : null"
+    :primary-button-action="useUserStore().canCreateLab() ? () => $router.push({ path: `/labs/create` }) : null"
+    :primary-button-label="useUserStore().canCreateLab() ? 'Create a new Lab' : null"
   />
 
   <EGTable

@@ -217,7 +217,7 @@
           await getLabUsers();
         } else {
           await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
-          canAddUsers.value = useUserStore().canAddLabUsers(orgId, props.labId);
+          canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
         }
       } else {
         // missing personal access token message
@@ -593,7 +593,7 @@
                 :key="labUser?.LabManager"
                 :disabled="
                   useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
-                  !useUserStore().canEditLabUsers(orgId, labId) ||
+                  !useUserStore().canEditLabUsers(labId) ||
                   useUserStore().isSuperuser
                 "
                 :user="labUser"

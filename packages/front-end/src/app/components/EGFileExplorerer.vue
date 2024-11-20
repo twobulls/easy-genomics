@@ -1,106 +1,89 @@
 <template>
-  <div class="breadcrumbs">
-    <span
-      v-for="(crumb, index) in breadcrumbs"
-      :key="index"
-      icon="i-heroicons-arrow-down-tray"
-      @click="navigateTo(index)"
-      class="breadcrumb-item text-muted text-sm"
-    >
-      {{ crumb.name }}
-      <UIcon v-if="index < breadcrumbs.length - 1" size="large" name="i-heroicons-chevron-right" />
-    </span>
+  <div>
+    <input type="text" v-model="searchQuery" placeholder="Search files..." />
+    <div class="breadcrumbs">
+      <span
+        v-for="(crumb, index) in breadcrumbs"
+        :key="index"
+        @click="navigateTo(index)"
+        class="breadcrumb-item text-muted text-sm"
+      >
+        {{ crumb.name }}
+        <UIcon v-if="index < breadcrumbs.length - 1" size="large" name="i-heroicons-chevron-right" class="separator" />
+      </span>
+    </div>
+    <EGTable :row-click-action="onRowClicked" :table-data="filteredItems" :columns="tableColumns">
+      <template #name-data="{ row }">
+        <span v-if="row.type === 'directory'" class="underline hover:no-underline" @click="onRowClicked(row)">
+          {{ `${row.name}/` }}
+        </span>
+        <span v-else>
+          {{ row.name }}
+        </span>
+      </template>
+      <template #type-data="{ row }">
+        {{ row.type === 'directory' ? 'Folder' : row.type }}
+      </template>
+      <template #size-data="{ row }">
+        {{ formatSize(row.size) }}
+      </template>
+      <template #actions-data="{ row }">
+        <div class="flex justify-end">
+          <EGActionButton :items="actionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+        </div>
+      </template>
+    </EGTable>
   </div>
-  <EGTable :row-click-action="onRowClicked" :table-data="currentItems" :columns="tableColumns">
-    <template #name-data="{ row, index }">
-      <span v-if="row.type === 'directory'" class="underline hover:no-underline">
-        {{ `${row.name}/` }}
-      </span>
-      <span v-else>
-        {{ row.name }}
-      </span>
-    </template>
-    <template #type-data="{ row, index }">
-      {{ useChangeCase(row.type === 'directory' ? 'Folder' : row.type, 'sentenceCase') }}
-    </template>
-    <!--    <template #dateModified-data="{ row, index }">{{ format(parseISO(row.dateModified), 'dd/MM/yyyy') }}</template>-->
-    <template #size-data="{ row, index }">
-      {{ formatSize(row.size) }}
-    </template>
-    <template #actions-data="{ row }">
-      <div class="flex justify-end">
-        <EGActionButton :items="actionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
-      </div>
-    </template>
-  </EGTable>
 </template>
 
 <script setup lang="ts">
-  import { useChangeCase } from '@vueuse/integrations/useChangeCase';
-
   const props = defineProps<{
     workflowBasePath: string;
     labId: string;
     jsonData: typeof s3JsonData;
   }>();
 
-  const { downloadReport } = useFileDownload();
+  const startPathPrefix =
+    '61c86013-74f2-4d30-916a-70b03a97ba14/2c7be90f-6db9-442f-a7ec-5b15bab0229f/next-flow/4c985899-fcbd-4a51-bc4b-5b0e3fb5e7a2/';
 
-  const updatedJsonData = computed(() => transformS3Data(props.jsonData));
-  const s3Prefix = computed(() => props.jsonData.Prefix);
+  const currentPath = [{ name: 'All Files', children: [] }];
+  const searchQuery = '';
 
-  const currentPath = ref([{ name: 'All Files', children: updatedJsonData.value }]);
+  const updatedJsonData = transformS3Data(props.jsonData, startPathPrefix);
+  if (currentPath[0].children.length === 0) {
+    currentPath[0].children = updatedJsonData;
+  }
 
-  const breadcrumbs = computed(() => {
-    return currentPath.value.map((dir, index) => ({
-      name: dir.name,
-      path: currentPath.value.slice(0, index + 1),
-    }));
-  });
+  const breadcrumbs = currentPath.map((dir, index) => ({
+    name: dir.name,
+    path: currentPath.slice(0, index + 1),
+  }));
 
-  const currentItems = computed(() => {
-    if (currentPath.value.length > 0) {
-      const currentDir = currentPath.value[currentPath.value.length - 1];
-      return currentDir.children || [];
-    }
-    return [];
-  });
+  const currentItems = currentPath.length > 0 ? currentPath[currentPath.length - 1]?.children || [] : [];
+
+  const filteredItems =
+    currentItems.length > 0
+      ? currentItems.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      : [{ name: '/', type: 'directory' }];
 
   const tableColumns = [
-    {
-      key: 'name',
-      label: 'Name',
-      sortable: true,
-      sort: useSort().stringSortCompare,
-    },
-    {
-      key: 'type',
-      label: 'Type',
-      sortable: true,
-    },
+    { key: 'name', label: 'Name', sortable: true, sort: (a, b) => a.name.localeCompare(b.name) },
+    { key: 'type', label: 'Type', sortable: true, sort: (a, b) => a.type.localeCompare(b.type) },
     {
       key: 'dateModified',
       label: 'Date Modified',
       sortable: true,
-      sort: useSort().dateSortCompare,
+      sort: (a, b) => new Date(a.dateModified) - new Date(b.dateModified),
     },
-    {
-      key: 'size',
-      label: 'Size',
-      sortable: true,
-      sort: useSort().numberSortCompare,
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-    },
+    { key: 'size', label: 'Size', sortable: true, sort: (a, b) => a.size - b.size },
+    { key: 'actions', label: 'Actions' },
   ];
 
-  function transformS3Data(s3Data) {
+  function transformS3Data(s3Data, prefix) {
     const map = {};
 
-    s3Data.Contents.forEach((item) => {
-      const parts = item.Key.split('/');
+    s3Data.Contents.filter((item) => item.Key.startsWith(prefix)).forEach((item) => {
+      const parts = item.Key.slice(prefix.length).split('/');
       parts.reduce((acc, part, index) => {
         if (!acc[part]) {
           acc[part] = {
@@ -119,10 +102,8 @@
       return Object.keys(obj).map((key) => {
         const item = obj[key];
         if (Object.keys(item.children).length > 0) {
-          return {
-            ...item,
-            children: nestify(item.children),
-          };
+          item.children = nestify(item.children);
+          return item;
         } else {
           delete item.children;
           return item;
@@ -133,8 +114,7 @@
     return nestify(map);
   }
 
-  // Format the file size into a human-readable format
-  function formatSize(value: number) {
+  function formatSize(value) {
     if (!value) return '';
     const units = ['B', 'KB', 'MB', 'GB'];
     let unitIndex = 0;
@@ -145,54 +125,51 @@
     return unitIndex === 0 ? `${value.toFixed(0)} ${units[unitIndex]}` : `${value.toFixed(2)} ${units[unitIndex]}`;
   }
 
-  // Handle row click action
   const onRowClicked = (item) => {
-    if (item.type === 'Folder' || item.type === 'directory') {
-      console.log('Opening directory:', item.name); // Debug log
+    if (item.type === 'directory') {
       openDirectory(item);
     }
   };
 
-  // Open a directory and update the current path
   const openDirectory = (dir) => {
-    console.log('Navigating to directory:', dir.name); // Debug log
-    currentPath.value.push({ name: dir.name, children: dir.children });
+    console.log('Trying to open directory:', dir);
+
+    // Allow navigation into the directory, even if it's empty
+    currentPath.push({ name: dir.name, children: dir.children ?? [] });
+    console.log('Updated currentPath:', currentPath);
   };
 
-  // Navigate to a specific breadcrumb
   const navigateTo = (index) => {
-    currentPath.value = currentPath.value.slice(0, index + 1);
+    if (index >= 0 && index < currentPath.length) {
+      currentPath.splice(index + 1);
+    }
   };
 
-  // Define action items for each row
-  const actionItems = (row) => {
-    const items: object[] = [
-      [
-        {
-          label: 'Download',
-          click: () => downloadReport(props.labId, row.name, props.workflowBasePath + row.name, row.size),
-        },
-      ],
-    ];
+  const actionItems = (row) => [
+    {
+      label: 'Download',
+      click: () => downloadReport(props.labId, row.name, `${props.workflowBasePath}${row.name}`, row.size),
+    },
+  ];
 
-    return items;
-  };
+  function downloadReport(labId, fileName, filePath, fileSize) {
+    // Placeholder for actual download logic
+    console.log(`Downloading report for lab ${labId}: ${fileName} from ${filePath} (size: ${fileSize})`);
+  }
 </script>
 
 <style scoped>
   .breadcrumb-item {
     cursor: pointer;
     margin-right: 5px;
-
-    > &:last-child {
-      color: #000;
-    }
   }
 
   .breadcrumbs {
+    display: flex;
     margin-bottom: 10px;
   }
 
-  .breadcrumb-item:hover {
+  .separator {
+    margin: 0 2px 0 3px;
   }
 </style>

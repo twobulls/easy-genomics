@@ -5,6 +5,7 @@ export default function useFileDownload() {
 
   async function downloadReport(labId: string, fileName: string, path: string, size: number) {
     const fileDownload: FileDownloadResponse = await $api.workflows.getNextFlowFileDownload(labId, path);
+    // const fileDownload: FileDownloadResponse = await $api.workflows.getNextFlowFileDownload(labId, path + fileName);
     if (fileDownload) {
       const link = document.createElement('a');
       link.href = `data:${size};base64,${fileDownload.Data}`;

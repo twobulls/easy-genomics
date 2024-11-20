@@ -54,6 +54,7 @@
   const isNameFieldDisabled = ref(true);
   const isDescriptionFieldDisabled = ref(true);
   const isNextFlowTowerWorkspaceIdFieldDisabled = ref(true);
+  const isEnableIntegrationFieldsDisabled = ref(true);
 
   // Hide/show fields default
   const isNextFlowTowerAccessTokenFieldHidden = ref(true);
@@ -64,6 +65,8 @@
     NextFlowTowerAccessToken: '',
     NextFlowTowerWorkspaceId: '',
     S3Bucket: '',
+    EnableOmicsIntegration: false,
+    EnableSeqeraIntegration: false,
   };
 
   const state = ref({ ...defaultState } as Laboratory);
@@ -101,6 +104,7 @@
       isNameFieldDisabled.value = true;
       isDescriptionFieldDisabled.value = true;
       isNextFlowTowerWorkspaceIdFieldDisabled.value = true;
+      isEnableIntegrationFieldsDisabled.value = true;
 
       // hide fields
       isNextFlowTowerAccessTokenFieldHidden.value = true;
@@ -109,6 +113,7 @@
       isNameFieldDisabled.value = false;
       isDescriptionFieldDisabled.value = false;
       isNextFlowTowerWorkspaceIdFieldDisabled.value = false;
+      isEnableIntegrationFieldsDisabled.value = false;
 
       // show fields
       isNextFlowTowerAccessTokenFieldHidden.value = false;
@@ -396,8 +401,25 @@
         />
       </EGFormGroup>
 
+      <hr class="mb-6" />
+
+      <!-- Next Flow Tower Toggle -->
+      <EGFormGroup
+        label="Enable Seqera Integration"
+        name="NextFlowTowerEnable"
+        eager-validation
+        class="flex justify-between"
+      >
+        <UToggle class="ml-2" v-model="state.EnableSeqeraIntegration" :disabled="isEnableIntegrationFieldsDisabled" />
+      </EGFormGroup>
+
       <!-- Next Flow Tower Workspace ID -->
-      <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId" eager-validation>
+      <EGFormGroup
+        label="Workspace ID"
+        name="NextFlowTowerWorkspaceId"
+        eager-validation
+        v-if="state.EnableSeqeraIntegration"
+      >
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
           placeholder="Defaults to the Next Flow Tower personal workspace if not specified."
@@ -407,7 +429,7 @@
 
       <!-- Next Flow Tower Access Token -->
       <EGFormGroup
-        v-if="!isNextFlowTowerAccessTokenFieldHidden"
+        v-if="!isNextFlowTowerAccessTokenFieldHidden && state.EnableSeqeraIntegration"
         label="Personal Access Token"
         name="NextFlowTowerAccessToken"
         eager-validation
@@ -430,6 +452,18 @@
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
           eager-validation
         />
+      </EGFormGroup>
+
+      <hr class="mb-6" />
+
+      <!-- HealthOmics Toggle -->
+      <EGFormGroup
+        label="Enable HealthOmics Integration"
+        name="HealthOmicsEnable"
+        eager-validation
+        class="flex justify-between"
+      >
+        <UToggle class="ml-2" v-model="state.EnableOmicsIntegration" :disabled="isEnableIntegrationFieldsDisabled" />
       </EGFormGroup>
     </EGCard>
 

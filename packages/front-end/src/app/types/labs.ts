@@ -31,6 +31,8 @@ const LabDetailsSchema = z.object({
   NextFlowTowerAccessToken: NextFlowTowerAccessTokenSchema,
   NextFlowTowerWorkspaceId: NextFlowTowerWorkspaceIdSchema,
   S3Bucket: S3BucketSchema.optional(),
+  EnableSeqeraIntegration: z.boolean(),
+  EnableOmicsIntegration: z.boolean(),
 });
 type LabDetails = z.infer<typeof LabDetailsSchema>;
 

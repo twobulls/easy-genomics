@@ -874,7 +874,6 @@
 </script>
 
 <template>
-  workflowBasePath: {{ workflowBasePath }}
   <EGPageHeader
     :title="workflow?.runName || ''"
     :description="workflow?.projectName || ''"

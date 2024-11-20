@@ -50,7 +50,6 @@
 
 <template>
   <UCard class="rounded-2xl border-none shadow-none" :ui="{ body: 'p-0' }">
-    {{ selected }}
     <UTable
       :ui="{
         tr: {

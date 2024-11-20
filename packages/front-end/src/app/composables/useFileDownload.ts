@@ -15,7 +15,7 @@ export default function useFileDownload() {
     }
   }
 
-  async function downloadFolder(labId: string, fileName: string, path: string, size: number) {
+  async function downloadFolder() {
     // TODO
   }
 
@@ -44,6 +44,7 @@ export default function useFileDownload() {
 
   return {
     downloadReport,
+    downloadFolder,
     openFileInNewWindow,
     isSupportedFileType,
   };

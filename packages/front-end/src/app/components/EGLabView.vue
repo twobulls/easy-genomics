@@ -478,8 +478,8 @@
       }
     "
   >
-    <!-- Pipelines tab -->
     <template #item="{ item }">
+      <!-- NextFlow Pipelines tab -->
       <div v-if="item.key === 'nextflowPipelines'" class="space-y-3">
         <EGTable
           :row-click-action="onPipelinesRowClicked"
@@ -511,6 +511,12 @@
           </template>
         </EGTable>
       </div>
+
+      <!-- HealthOmics Pipelines tab -->
+      <div v-if="item.key === 'omicsPipelines'" class="space-y-3">
+        <!-- HealthOmics pipelines will go here -->
+      </div>
+
       <!-- Runs tab -->
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable

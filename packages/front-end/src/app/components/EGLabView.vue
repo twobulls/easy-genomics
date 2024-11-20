@@ -155,8 +155,9 @@
 
     if (!missingPAT.value) {
       if (!props.superuser) {
-        items.push({ key: 'runs', label: 'Runs' });
-        items.push({ key: 'pipelines', label: 'Pipelines' });
+        items.push({ key: 'nextflowPipelines', label: 'NextFlow Pipelines' });
+        items.push({ key: 'omicsPipelines', label: 'HealthOmics Pipelines' });
+        items.push({ key: 'runs', label: 'Lab Runs' });
       }
       items.push({ key: 'users', label: 'Lab Users' });
     }
@@ -479,7 +480,7 @@
   >
     <!-- Pipelines tab -->
     <template #item="{ item }">
-      <div v-if="item.key === 'pipelines'" class="space-y-3">
+      <div v-if="item.key === 'nextflowPipelines'" class="space-y-3">
         <EGTable
           :row-click-action="onPipelinesRowClicked"
           :table-data="pipelines"

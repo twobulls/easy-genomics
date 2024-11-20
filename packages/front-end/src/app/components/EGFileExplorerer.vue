@@ -22,7 +22,7 @@
         </span>
       </template>
       <template #type-data="{ row }">
-        {{ row.type === 'directory' ? 'Folder' : row.type }}
+        {{ useChangeCase(row.type === 'directory' ? 'Folder' : row.type, 'sentenceCase') }}
       </template>
       <template #size-data="{ row }">
         {{ formatSize(row.size) }}
@@ -37,34 +37,48 @@
 </template>
 
 <script setup lang="ts">
+  import { useChangeCase } from '@vueuse/integrations/useChangeCase';
+
   const props = defineProps<{
     workflowBasePath: string;
     labId: string;
     jsonData: typeof s3JsonData;
   }>();
 
+  const { downloadReport } = useFileDownload();
   const startPathPrefix =
     '61c86013-74f2-4d30-916a-70b03a97ba14/2c7be90f-6db9-442f-a7ec-5b15bab0229f/next-flow/4c985899-fcbd-4a51-bc4b-5b0e3fb5e7a2/';
 
-  const currentPath = [{ name: 'All Files', children: [] }];
-  const searchQuery = '';
+  const currentPath = ref([{ name: 'All Files', children: [] }]);
+  const searchQuery = ref('');
 
-  const updatedJsonData = transformS3Data(props.jsonData, startPathPrefix);
-  if (currentPath[0].children.length === 0) {
-    currentPath[0].children = updatedJsonData;
-  }
+  const updatedJsonData = computed(() => {
+    const transformedData = transformS3Data(props.jsonData, startPathPrefix);
+    if (currentPath.value[0].children.length === 0) {
+      currentPath.value[0].children = transformedData;
+    }
+    return transformedData;
+  });
 
-  const breadcrumbs = currentPath.map((dir, index) => ({
-    name: dir.name,
-    path: currentPath.slice(0, index + 1),
-  }));
+  const breadcrumbs = computed(() => {
+    return currentPath.value.map((dir, index) => ({
+      name: dir.name,
+      path: currentPath.value.slice(0, index + 1),
+    }));
+  });
 
-  const currentItems = currentPath.length > 0 ? currentPath[currentPath.length - 1]?.children || [] : [];
+  const currentItems = computed(() => {
+    if (currentPath.value.length > 0) {
+      const currentDir = currentPath.value[currentPath.value.length - 1];
+      return currentDir.children || [];
+    }
+    return [];
+  });
 
-  const filteredItems =
-    currentItems.length > 0
-      ? currentItems.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
-      : [{ name: '/', type: 'directory' }];
+  const filteredItems = computed(() => {
+    const query = searchQuery.value.toLowerCase();
+    return currentItems.value.filter((item) => item.name.toLowerCase().includes(query));
+  });
 
   const tableColumns = [
     { key: 'name', label: 'Name', sortable: true, sort: (a, b) => a.name.localeCompare(b.name) },
@@ -132,30 +146,37 @@
   };
 
   const openDirectory = (dir) => {
-    console.log('Trying to open directory:', dir);
-
-    // Allow navigation into the directory, even if it's empty
-    currentPath.push({ name: dir.name, children: dir.children ?? [] });
-    console.log('Updated currentPath:', currentPath);
+    // Ensure correct initialization and logging
+    console.log('Opening directory:', dir);
+    if (!dir.children || dir.children.length === 0) {
+      console.error('Directory has no children:', dir); // Log error
+      return;
+    }
+    if (currentPath.value.length === 0 || currentPath.value[currentPath.value.length - 1].name !== dir.name) {
+      currentPath.value.push({ name: dir.name, children: dir.children });
+    }
   };
 
   const navigateTo = (index) => {
-    if (index >= 0 && index < currentPath.length) {
-      currentPath.splice(index + 1);
+    if (index >= 0 && index < currentPath.value.length) {
+      currentPath.value = currentPath.value.slice(0, index + 1);
     }
   };
 
   const actionItems = (row) => [
     {
       label: 'Download',
-      click: () => downloadReport(props.labId, row.name, `${props.workflowBasePath}${row.name}`, row.size),
+      click: () => downloadReport(props.labId, row.name, props.workflowBasePath + row.name, row.size),
     },
   ];
 
-  function downloadReport(labId, fileName, filePath, fileSize) {
-    // Placeholder for actual download logic
-    console.log(`Downloading report for lab ${labId}: ${fileName} from ${filePath} (size: ${fileSize})`);
-  }
+  watch(currentPath, (newPath, oldPath) => {
+    console.log('Current Path Updated:', JSON.stringify(newPath, null, 2));
+  });
+
+  watch(updatedJsonData, (newData) => {
+    console.log('Updated JSON Data:', JSON.stringify(newData, null, 2));
+  });
 </script>
 
 <style scoped>

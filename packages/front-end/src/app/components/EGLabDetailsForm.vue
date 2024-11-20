@@ -50,14 +50,7 @@
   const canSubmit = ref(false);
   const isSubmittingFormData = ref(false);
 
-  // Enable/disable fields default
-  const isNameFieldDisabled = ref(true);
-  const isDescriptionFieldDisabled = ref(true);
-  const isNextFlowTowerWorkspaceIdFieldDisabled = ref(true);
-  const isEnableIntegrationFieldsDisabled = ref(true);
-
-  // Hide/show fields default
-  const isNextFlowTowerAccessTokenFieldHidden = ref(true);
+  const isEditing = computed<boolean>(() => formMode.value !== LabDetailsFormModeEnum.enum.ReadOnly);
 
   const defaultState: LabDetails = {
     Name: '',
@@ -95,29 +88,7 @@
    * Switches the form input fields disabled/hidden states based on the form mode.
    */
   function switchToFormMode(newFormMode: LabDetailsFormMode) {
-    if (formMode.value !== newFormMode) {
-      formMode.value = newFormMode;
-    }
-
-    if (newFormMode === LabDetailsFormModeEnum.enum.ReadOnly) {
-      // disable fields
-      isNameFieldDisabled.value = true;
-      isDescriptionFieldDisabled.value = true;
-      isNextFlowTowerWorkspaceIdFieldDisabled.value = true;
-      isEnableIntegrationFieldsDisabled.value = true;
-
-      // hide fields
-      isNextFlowTowerAccessTokenFieldHidden.value = true;
-    } else if (newFormMode === LabDetailsFormModeEnum.enum.Create || newFormMode === LabDetailsFormModeEnum.enum.Edit) {
-      // enable fields
-      isNameFieldDisabled.value = false;
-      isDescriptionFieldDisabled.value = false;
-      isNextFlowTowerWorkspaceIdFieldDisabled.value = false;
-      isEnableIntegrationFieldsDisabled.value = false;
-
-      // show fields
-      isNextFlowTowerAccessTokenFieldHidden.value = false;
-    }
+    formMode.value = newFormMode;
   }
 
   onMounted(async () => {
@@ -370,7 +341,7 @@
       <EGFormGroup label="Lab Name" name="Name" eager-validation required>
         <EGInput
           v-model="state.Name"
-          :disabled="isNameFieldDisabled"
+          :disabled="!isEditing"
           placeholder="Enter lab name (required and must be unique)"
           required
           autofocus
@@ -381,7 +352,7 @@
       <EGFormGroup label="Lab Description" name="Description" eager-validation>
         <EGTextArea
           v-model="state.Description"
-          :disabled="isDescriptionFieldDisabled"
+          :disabled="!isEditing"
           placeholder="Describe your lab and what runs should be launched by Lab users."
         />
       </EGFormGroup>
@@ -395,7 +366,7 @@
         <EGSelect
           :options="s3Directories"
           v-model="selectedS3Bucket"
-          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled"
+          :disabled="!isEditing"
           placeholder="Please select an S3 bucket from the list below"
           searchable-placeholder="Search existing S3 buckets..."
         />
@@ -410,7 +381,7 @@
         eager-validation
         class="flex justify-between"
       >
-        <UToggle class="ml-2" v-model="state.EnableSeqeraIntegration" :disabled="isEnableIntegrationFieldsDisabled" />
+        <UToggle class="ml-2" v-model="state.EnableSeqeraIntegration" :disabled="!isEditing" />
       </EGFormGroup>
 
       <!-- Next Flow Tower Workspace ID -->
@@ -423,13 +394,13 @@
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
           placeholder="Defaults to the Next Flow Tower personal workspace if not specified."
-          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled"
+          :disabled="!isEditing"
         />
       </EGFormGroup>
 
       <!-- Next Flow Tower Access Token -->
       <EGFormGroup
-        v-if="!isNextFlowTowerAccessTokenFieldHidden && state.EnableSeqeraIntegration"
+        v-if="isEditing && state.EnableSeqeraIntegration"
         label="Personal Access Token"
         name="NextFlowTowerAccessToken"
         eager-validation
@@ -463,7 +434,7 @@
         eager-validation
         class="flex justify-between"
       >
-        <UToggle class="ml-2" v-model="state.EnableOmicsIntegration" :disabled="isEnableIntegrationFieldsDisabled" />
+        <UToggle class="ml-2" v-model="state.EnableOmicsIntegration" :disabled="!isEditing" />
       </EGFormGroup>
     </EGCard>
 

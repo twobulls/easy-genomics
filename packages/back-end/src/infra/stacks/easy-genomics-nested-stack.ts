@@ -816,6 +816,21 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
     ]);
 
+    // /easy-genomics/file/create-s3-zip
+    this.iam.addPolicyStatements('/easy-genomics/file/create-s3-zip', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*'],
+        actions: ['s3:ListBucket', 's3:GetObject', 's3:PutObject'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /easy-genomics/file/request-file-download-url
     this.iam.addPolicyStatements('/easy-genomics/file/request-file-download-url', [
       new PolicyStatement({

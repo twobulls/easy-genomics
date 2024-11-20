@@ -15,6 +15,10 @@ export default function useFileDownload() {
     }
   }
 
+  async function downloadFolder(labId: string, fileName: string, path: string, size: number) {
+    // TODO
+  }
+
   function isSupportedFileType(filename: string): boolean {
     const supportedExtensions = ['.csv', '.txt'];
     const extensionIndex = filename.lastIndexOf('.');

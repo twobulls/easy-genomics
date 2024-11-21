@@ -9,8 +9,6 @@
   import type { FormSubmitEvent } from '#ui/types';
   import { OrgDetailsForm } from '@FE/types/forms';
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
-  import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
-  import { Laboratory } from '@/packages/shared-lib/src/app/types/easy-genomics/laboratory';
 
   const props = defineProps<{
     orgId: string;
@@ -295,6 +293,31 @@
       useUiStore().setRequestComplete('editOrg');
     }
   }
+
+  // Note: the UTabs :ui element has to be defined locally to get Tailwind to pick up the classes used.
+  // To keep the app styling consistent, any changes made here need to be duplicated to all other UTabs.
+  const EGTabsStyles = {
+    base: 'focus:outline-none',
+    list: {
+      base: 'border-b-8 mb-4 mt-0',
+      padding: 'p-0',
+      height: 'h-14',
+      marker: {
+        wrapper: 'duration-200 ease-out absolute bottom-0 ',
+        base: 'absolute bottom-0 rounded-none h-0.5',
+        background: 'bg-primary',
+        shadow: 'shadow-none',
+      },
+      tab: {
+        base: 'font-serif w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out',
+        active: 'text-primary h-14',
+        inactive: 'font-serif',
+        height: 'h-14',
+        padding: 'p-0',
+        size: 'text-lg',
+      },
+    },
+  };
 </script>
 
 <template>

@@ -2,11 +2,11 @@ import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/lib/app/types
 import { defineStore } from 'pinia';
 
 /*
-The WIP Workflow is a construct for storing all of the data for a pipeline run that's being configured but hasn't been
-launched yet. They're addressed by workflowTempId which is generated on pipeline click and stored as a query parameter.
-This allows multiple workflows to be configured simultaneously without overwriting each other.
+The WIP NextFlow Run is a construct for storing all of the data for a pipeline run that's being configured but hasn't
+been launched yet. They're addressed by workflowTempId which is generated on pipeline click and stored as a query
+parameter. This allows multiple runs to be configured simultaneously without overwriting each other.
 */
-export interface WipWorkflowData {
+export interface WipNextFlowRunData {
   laboratoryId?: string;
   pipelineId?: number;
   pipelineName?: string;
@@ -25,7 +25,7 @@ interface WorkflowState {
   // ordered lists for pipelines by lab
   workflowIdsByLab: Record<string, string[]>;
   // configs of new workflows yet to be launched
-  wipWorkflows: Record<string, WipWorkflowData>;
+  wipWorkflows: Record<string, WipNextFlowRunData>;
 }
 
 const initialState = (): WorkflowState => ({
@@ -82,7 +82,7 @@ const useWorkflowStore = defineStore('workflowStore', {
       this.workflows[labId][workflow.id] = workflow;
     },
 
-    updateWipWorkflow(tempId: string, updates: Partial<WipWorkflowData>): void {
+    updateWipWorkflow(tempId: string, updates: Partial<WipNextFlowRunData>): void {
       this.wipWorkflows[tempId] = {
         ...(this.wipWorkflows[tempId] || {}),
         ...updates,

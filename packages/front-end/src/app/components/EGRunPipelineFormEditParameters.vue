@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useWorkflowStore } from '@FE/stores';
-  import { WipWorkflowData } from '@FE/stores/workflow';
+  import { WipNextFlowRunData } from '@FE/stores/workflow';
 
   const props = defineProps<{
     schema: object;
@@ -17,7 +17,7 @@
   const activeSection = ref<string | null>(null);
   const workflowStore = useWorkflowStore();
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   const localProps = reactive({
     schema: props.schema,

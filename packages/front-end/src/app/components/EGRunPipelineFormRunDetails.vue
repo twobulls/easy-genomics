@@ -12,7 +12,7 @@
 
   const workflowTempId = $route.query.workflowTempId as string;
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
 
   /**
    * Seqera API spec

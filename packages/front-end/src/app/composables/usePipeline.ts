@@ -1,12 +1,12 @@
 import { useWorkflowStore } from '@FE/stores';
-import { WipWorkflowData } from '@FE/stores/workflow';
+import { WipNextFlowRunData } from '@FE/stores/workflow';
 
 export default function usePipeline($api: any) {
   /**
    * Downloads the sample sheet as a CSV file.
    */
   async function downloadSampleSheet(workflowTempId: string) {
-    const wipWorkflow: WipWorkflowData = useWorkflowStore().wipWorkflows[workflowTempId];
+    const wipWorkflow: WipNextFlowRunData = useWorkflowStore().wipWorkflows[workflowTempId];
 
     const fileDownloadUrlResponse = await $api.files.requestFileDownloadUrl({
       LaboratoryId: `${wipWorkflow.laboratoryId}`,

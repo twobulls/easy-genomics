@@ -11,7 +11,7 @@
   const runStore = useRunStore();
 
   const labId: string = $route.params.labId;
-  const workflowId: string = $route.params.workflowId;
+  const nextFlowRunId: string = $route.params.nextFlowRunId;
   const workflowReports = ref([]);
   let workflowBasePath = '';
 
@@ -20,11 +20,11 @@
     $router.push('/labs');
   }
 
-  const workflow = computed<NextFlowRun | null>(() => runStore.nextFlowRuns[labId][workflowId]);
+  const workflow = computed<NextFlowRun | null>(() => runStore.nextFlowRuns[labId][nextFlowRunId]);
 
   async function loadWorkflow() {
     try {
-      runStore.loadSingleNextFlowRun(labId, workflowId);
+      runStore.loadSingleNextFlowRun(labId, nextFlowRunId);
     } catch (e: any) {
       console.error('Failed to get workflow from API:', e);
     }
@@ -94,7 +94,7 @@
   async function initData() {
     useUiStore().setRequestPending('loadNextFlowRun');
     await loadWorkflow();
-    const res = await $api.workflows.readWorkflowReports(workflowId, labId);
+    const res = await $api.workflows.readWorkflowReports(nextFlowRunId, labId);
     workflowReports.value = res.reports;
     workflowBasePath = res.basePath;
     useUiStore().setRequestComplete('loadNextFlowRun');

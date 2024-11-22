@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useWorkflowStore, useToastStore, useLabsStore } from '@FE/stores';
+  import { useRunStore, useToastStore, useLabsStore } from '@FE/stores';
   import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import EGAccordion from '@FE/components/EGAccordion.vue';
   import { ButtonSizeEnum } from '@FE/types/buttons';
@@ -13,7 +13,7 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
 
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
@@ -24,7 +24,7 @@
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -52,7 +52,7 @@
         },
       };
       await $api.workflows.createPipelineRun(labId, launchRequest);
-      delete workflowStore.wipNextFlowRuns[nextFlowRunTempId];
+      delete runStore.wipNextFlowRuns[nextFlowRunTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');

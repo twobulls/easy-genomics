@@ -1,15 +1,15 @@
 <script setup lang="ts">
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -74,18 +74,18 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    workflowStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
       laboratoryId: labId,
       pipelineDescription: schema.value.description,
     });
     if (res.params) {
-      workflowStore.updateWipNextFlowRun(nextFlowRunTempId, { params: JSON.parse(res.params) });
+      runStore.updateWipNextFlowRun(nextFlowRunTempId, { params: JSON.parse(res.params) });
     }
   }
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete workflowStore.wipNextFlowRuns[nextFlowRunTempId];
+    delete runStore.wipNextFlowRuns[nextFlowRunTempId];
     $router.push(nextRoute.value!);
   }
 
@@ -96,7 +96,7 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    workflowStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
       userPipelineRunName: '',
       pipelineDescription: '',
       params: {},

@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useWorkflowStore } from '@FE/stores';
-  import { WipNextFlowRunData } from '@FE/stores/workflow';
+  import { useRunStore } from '@FE/stores';
+  import { WipNextFlowRunData } from '@FE/stores/run';
 
   const props = defineProps<{
     schema: object;
@@ -15,9 +15,9 @@
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
   const activeSection = ref<string | null>(null);
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const localProps = reactive({
     schema: props.schema,
@@ -81,7 +81,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        workflowStore.updateWipNextFlowRun(nextFlowRunTempId, { params: val });
+        runStore.updateWipNextFlowRun(nextFlowRunTempId, { params: val });
       }
     },
     { deep: true },

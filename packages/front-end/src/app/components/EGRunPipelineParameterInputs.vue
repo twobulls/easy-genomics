@@ -2,7 +2,7 @@
   import StringField from './EGParametersStringField.vue';
   import NumberField from './EGParametersNumberField.vue';
   import BooleanField from './EGParametersBooleanField.vue';
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
 
   const props = defineProps<{
     section: Record<string, any>;
@@ -10,7 +10,7 @@
   }>();
 
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
@@ -48,7 +48,7 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      workflowStore.wipNextFlowRuns[nextFlowRunTempId].params[key] = propValues[key];
+      runStore.wipNextFlowRuns[nextFlowRunTempId].params[key] = propValues[key];
     }
   });
 </script>
@@ -75,7 +75,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="workflowStore.wipWorkflows[nextFlowRunTempId].sampleSheetS3Url" />
+        <EGInput name="input" v-model="runStore.wipWorkflows[nextFlowRunTempId].sampleSheetS3Url" />
       </template>
     </div>
   </div>

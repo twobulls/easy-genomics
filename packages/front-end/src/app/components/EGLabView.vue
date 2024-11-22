@@ -7,7 +7,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useWorkflowStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useRunStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -27,7 +27,7 @@
   const $router = useRouter();
   const modal = useModal();
 
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
   const labStore = useLabsStore();
   const uiStore = useUiStore();
 
@@ -73,7 +73,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const workflows = computed<Workflow[]>(() => workflowStore.nextFlowRunsForLab(props.labId));
+  const workflows = computed<Workflow[]>(() => runStore.nextFlowRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -363,7 +363,7 @@
   async function getWorkflows(): Promise<void> {
     useUiStore().setRequestPending('getWorkflows');
     try {
-      await workflowStore.loadNextFlowRunsForLab(props.labId);
+      await runStore.loadNextFlowRunsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
     } finally {
@@ -393,7 +393,7 @@
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    workflowStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',

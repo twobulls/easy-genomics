@@ -19,7 +19,7 @@ export interface WipNextFlowRunData {
   s3Path?: string;
 }
 
-interface WorkflowState {
+interface RunState {
   // lookup object for NextFlow runs
   nextFlowRuns: Record<string, Record<string, NextFlowRun>>;
   // ordered lists for NextFlow runs by lab
@@ -28,18 +28,18 @@ interface WorkflowState {
   wipNextFlowRuns: Record<string, WipNextFlowRunData>;
 }
 
-const initialState = (): WorkflowState => ({
+const initialState = (): RunState => ({
   nextFlowRuns: {},
   nextFlowRunIdsByLab: {},
   wipNextFlowRuns: {},
 });
 
-const useWorkflowStore = defineStore('workflowStore', {
+const useRunStore = defineStore('runStore', {
   state: initialState,
 
   getters: {
     nextFlowRunsForLab:
-      (state: WorkflowState) =>
+      (state: RunState) =>
       (labId: string): NextFlowRun[] =>
         state.nextFlowRunIdsByLab[labId]?.map((pipelineId) => state.nextFlowRuns[labId][pipelineId]) || [],
   },
@@ -93,4 +93,4 @@ const useWorkflowStore = defineStore('workflowStore', {
   persist: true,
 });
 
-export default useWorkflowStore;
+export default useRunStore;

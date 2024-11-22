@@ -92,12 +92,12 @@
   }
 
   async function initData() {
-    useUiStore().setRequestPending('loadWorkflow');
+    useUiStore().setRequestPending('loadNextFlowRun');
     await loadWorkflow();
     const res = await $api.workflows.readWorkflowReports(workflowId, labId);
     workflowReports.value = res.reports;
     workflowBasePath = res.basePath;
-    useUiStore().setRequestComplete('loadWorkflow');
+    useUiStore().setRequestComplete('loadNextFlowRun');
   }
 </script>
 
@@ -107,7 +107,7 @@
     :description="workflow?.projectName || ''"
     :show-back="true"
     :back-action="() => $router.push(`/labs/${labId}`)"
-    :is-loading="useUiStore().isRequestPending('loadWorkflow')"
+    :is-loading="useUiStore().isRequestPending('loadNextFlowRun')"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />
 
@@ -127,7 +127,7 @@
         <EGTable
           :table-data="workflowReports"
           :columns="runResultsColumns"
-          :is-loading="useUiStore().isRequestPending('loadWorkflow')"
+          :is-loading="useUiStore().isRequestPending('loadNextFlowRun')"
           no-results-msg="No results have been generated yet."
         >
           <template #actions-data="{ row, index }">

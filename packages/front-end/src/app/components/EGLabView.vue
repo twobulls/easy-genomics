@@ -361,13 +361,13 @@
   }
 
   async function getWorkflows(): Promise<void> {
-    useUiStore().setRequestPending('getWorkflows');
+    useUiStore().setRequestPending('getNextFlowRuns');
     try {
       await runStore.loadNextFlowRunsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
     } finally {
-      useUiStore().setRequestComplete('getWorkflows');
+      useUiStore().setRequestComplete('getNextFlowRuns');
     }
   }
 
@@ -423,7 +423,7 @@
       throw new Error("runToCancel workflow id should have a value but doesn't");
     }
 
-    uiStore.setRequestPending('cancelWorkflow');
+    uiStore.setRequestPending('cancelNextFlowRun');
 
     try {
       await $api.workflows.cancelPipelineRun(props.labId, runId);
@@ -434,7 +434,7 @@
 
     isCancelDialogOpen.value = false;
     runToCancel.value = null;
-    uiStore.setRequestComplete('cancelWorkflow');
+    uiStore.setRequestComplete('cancelNextFlowRun');
 
     await getWorkflows();
   }
@@ -516,8 +516,8 @@
           :row-click-action="onRunsRowClicked"
           :table-data="workflows"
           :columns="workflowsTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
         >
           <template #runName-data="{ row: workflow }">
             <div class="text-body text-sm font-medium">{{ workflow.runName }}</div>
@@ -627,6 +627,6 @@
     :primary-message="`Are you sure you would like to cancel ${runToCancel?.runName}?`"
     secondary-message="This will stop any progress made."
     v-model="isCancelDialogOpen"
-    :buttons-disabled="uiStore.isRequestPending('cancelWorkflow')"
+    :buttons-disabled="uiStore.isRequestPending('cancelNextFlowRun')"
   />
 </template>

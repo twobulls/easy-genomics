@@ -12,21 +12,21 @@
 
   const labId: string = $route.params.labId;
   const nextFlowRunId: string = $route.params.nextFlowRunId;
-  const workflowReports = ref([]);
-  let workflowBasePath = '';
+  const nextFlowRunReports = ref([]);
+  let nextFlowRunBasePath = '';
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(labId)) {
     $router.push('/labs');
   }
 
-  const workflow = computed<NextFlowRun | null>(() => runStore.nextFlowRuns[labId][nextFlowRunId]);
+  const nextFlowRun = computed<NextFlowRun | null>(() => runStore.nextFlowRuns[labId][nextFlowRunId]);
 
-  async function loadWorkflow() {
+  async function loadNextFlowRun() {
     try {
       runStore.loadSingleNextFlowRun(labId, nextFlowRunId);
     } catch (e: any) {
-      console.error('Failed to get workflow from API:', e);
+      console.error('Failed to get NextFlow run from API:', e);
     }
   }
 
@@ -63,18 +63,18 @@
   });
 
   const createdDateTime = computed(() => {
-    const createdDate = getDate(workflow.value?.dateCreated);
-    const createdTime = getTime(workflow.value?.dateCreated);
+    const createdDate = getDate(nextFlowRun.value?.dateCreated);
+    const createdTime = getTime(nextFlowRun.value?.dateCreated);
     return createdDate && createdTime ? `${createdTime} ⋅ ${createdDate}` : '—';
   });
   const startedDateTime = computed(() => {
-    const startedDate = getDate(workflow.value?.start);
-    const startedTime = getTime(workflow.value?.start);
+    const startedDate = getDate(nextFlowRun.value?.start);
+    const startedTime = getTime(nextFlowRun.value?.start);
     return startedDate && startedTime ? `${startedTime} ⋅ ${startedDate}` : '—';
   });
   const stoppedDateTime = computed(() => {
-    const stoppedDate = getDate(workflow.value?.complete);
-    const stoppedTime = getTime(workflow.value?.complete);
+    const stoppedDate = getDate(nextFlowRun.value?.complete);
+    const stoppedTime = getTime(nextFlowRun.value?.complete);
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
 
@@ -93,18 +93,18 @@
 
   async function initData() {
     useUiStore().setRequestPending('loadNextFlowRun');
-    await loadWorkflow();
+    await loadNextFlowRun();
     const res = await $api.workflows.readWorkflowReports(nextFlowRunId, labId);
-    workflowReports.value = res.reports;
-    workflowBasePath = res.basePath;
+    nextFlowRunReports.value = res.reports;
+    nextFlowRunBasePath = res.basePath;
     useUiStore().setRequestComplete('loadNextFlowRun');
   }
 </script>
 
 <template>
   <EGPageHeader
-    :title="workflow?.runName || ''"
-    :description="workflow?.projectName || ''"
+    :title="nextFlowRun?.runName || ''"
+    :description="nextFlowRun?.projectName || ''"
     :show-back="true"
     :back-action="() => $router.push(`/labs/${labId}`)"
     :is-loading="useUiStore().isRequestPending('loadNextFlowRun')"
@@ -125,7 +125,7 @@
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
         <EGTable
-          :table-data="workflowReports"
+          :table-data="nextFlowRunReports"
           :columns="runResultsColumns"
           :is-loading="useUiStore().isRequestPending('loadNextFlowRun')"
           no-results-msg="No results have been generated yet."
@@ -136,7 +136,7 @@
                 label="Download"
                 variant="secondary"
                 size="sm"
-                @click="downloadReport(row.fileName, `${workflowBasePath}${row.path}`, row.size)"
+                @click="downloadReport(row.fileName, `${nextFlowRunBasePath}${row.path}`, row.size)"
                 :icon-right="false"
                 icon="i-heroicons-arrow-down-tray"
               />
@@ -151,7 +151,7 @@
           <dl class="mt-4">
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Workflow Run Status</dt>
-              <dd class="text-muted text-left"><EGStatusChip :status="workflow?.status" /></dd>
+              <dd class="text-muted text-left"><EGStatusChip :status="nextFlowRun?.status" /></dd>
             </div>
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Creation Time</dt>

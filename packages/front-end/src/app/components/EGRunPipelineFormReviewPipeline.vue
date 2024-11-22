@@ -18,8 +18,8 @@
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
-  const isLaunchingWorkflow = ref(false);
-  const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
+  const isLaunchingRun = ref(false);
+  const emit = defineEmits(['has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
@@ -29,12 +29,12 @@
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
 
-  async function launchWorkflow() {
+  async function launchRun() {
     try {
-      isLaunchingWorkflow.value = true;
+      isLaunchingRun.value = true;
       const pipelineId = wipNextFlowRun.value?.pipelineId;
       if (pipelineId === undefined) {
-        throw new Error('pipeline id not found in wip workflow config');
+        throw new Error('pipeline id not found in wip run config');
       }
 
       const launchDetails = await $api.pipelines.readPipelineLaunchDetails(pipelineId, labId);
@@ -58,7 +58,7 @@
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
       console.error('Error launching workflow:', error);
     } finally {
-      isLaunchingWorkflow.value = false;
+      isLaunchingRun.value = false;
     }
   }
 
@@ -145,9 +145,9 @@
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-tab')" />
     <EGButton
       :disabled="!canLaunch"
-      :loading="isLaunchingWorkflow"
+      :loading="isLaunchingRun"
       :size="ButtonSizeEnum.enum.sm"
-      @click="launchWorkflow"
+      @click="launchRun"
       label="Launch Workflow Run"
     />
   </div>

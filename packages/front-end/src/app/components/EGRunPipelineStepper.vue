@@ -11,7 +11,7 @@
 
   const workflowTempId = $route.query.workflowTempId as string;
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[workflowTempId]);
 
   const labId = $route.params.labId as string;
 

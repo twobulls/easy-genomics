@@ -20,11 +20,11 @@
     $router.push('/labs');
   }
 
-  const workflow = computed<Workflow | null>(() => workflowStore.workflows[labId][workflowId]);
+  const workflow = computed<Workflow | null>(() => workflowStore.nextFlowRuns[labId][workflowId]);
 
   async function loadWorkflow() {
     try {
-      workflowStore.loadSingleWorkflow(labId, workflowId);
+      workflowStore.loadSingleNextFlowRun(labId, workflowId);
     } catch (e: any) {
       console.error('Failed to get workflow from API:', e);
     }

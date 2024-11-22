@@ -17,7 +17,7 @@
   const activeSection = ref<string | null>(null);
   const workflowStore = useWorkflowStore();
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[workflowTempId]);
 
   const localProps = reactive({
     schema: props.schema,
@@ -81,7 +81,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        workflowStore.updateWipWorkflow(workflowTempId, { params: val });
+        workflowStore.updateWipNextFlowRun(workflowTempId, { params: val });
       }
     },
     { deep: true },

@@ -48,7 +48,7 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      workflowStore.wipWorkflows[workflowTempId].params[key] = propValues[key];
+      workflowStore.wipNextFlowRuns[workflowTempId].params[key] = propValues[key];
     }
   });
 </script>

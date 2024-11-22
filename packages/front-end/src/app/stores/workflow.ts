@@ -20,28 +20,28 @@ export interface WipNextFlowRunData {
 }
 
 interface WorkflowState {
-  // lookup object for workflows
-  workflows: Record<string, Record<string, NextFlowRun>>;
-  // ordered lists for pipelines by lab
-  workflowIdsByLab: Record<string, string[]>;
-  // configs of new workflows yet to be launched
-  wipWorkflows: Record<string, WipNextFlowRunData>;
+  // lookup object for NextFlow runs
+  nextFlowRuns: Record<string, Record<string, NextFlowRun>>;
+  // ordered lists for NextFlow runs by lab
+  nextFlowRunIdsByLab: Record<string, string[]>;
+  // configs of new NextFlow runs yet to be launched
+  wipNextFlowRuns: Record<string, WipNextFlowRunData>;
 }
 
 const initialState = (): WorkflowState => ({
-  workflows: {},
-  workflowIdsByLab: {},
-  wipWorkflows: {},
+  nextFlowRuns: {},
+  nextFlowRunIdsByLab: {},
+  wipNextFlowRuns: {},
 });
 
 const useWorkflowStore = defineStore('workflowStore', {
   state: initialState,
 
   getters: {
-    workflowsForLab:
+    nextFlowRunsForLab:
       (state: WorkflowState) =>
       (labId: string): NextFlowRun[] =>
-        state.workflowIdsByLab[labId]?.map((pipelineId) => state.workflows[labId][pipelineId]) || [],
+        state.nextFlowRunIdsByLab[labId]?.map((pipelineId) => state.nextFlowRuns[labId][pipelineId]) || [],
   },
 
   actions: {
@@ -49,42 +49,42 @@ const useWorkflowStore = defineStore('workflowStore', {
       Object.assign(this, initialState());
     },
 
-    async loadWorkflowsForLab(labId: string): Promise<void> {
+    async loadNextFlowRunsForLab(labId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
-      // fetch new workflows without modifying existing state
-      const workflows: NextFlowRun[] = await $api.workflows.list(labId);
+      // fetch new runs without modifying existing state
+      const runs: NextFlowRun[] = await $api.workflows.list(labId);
 
       // prepare temporary storage
-      const newWorkflows: Record<string, NextFlowRun> = {};
-      const newWorkflowIds: string[] = [];
+      const newRuns: Record<string, NextFlowRun> = {};
+      const newRunIds: string[] = [];
 
-      for (const workflow of workflows) {
-        if (workflow.id !== undefined) {
-          newWorkflows[workflow.id] = workflow;
-          newWorkflowIds.push(workflow.id);
+      for (const run of runs) {
+        if (run.id !== undefined) {
+          newRuns[run.id] = run;
+          newRunIds.push(run.id);
         }
       }
 
       // update state with the new data
-      this.workflows[labId] = newWorkflows;
-      this.workflowIdsByLab[labId] = newWorkflowIds;
+      this.nextFlowRuns[labId] = newRuns;
+      this.nextFlowRunIdsByLab[labId] = newRunIds;
     },
 
-    async loadSingleWorkflow(labId: string, workflowId: string): Promise<void> {
+    async loadSingleNextFlowRun(labId: string, runId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
-      const workflow: NextFlowRun = await $api.workflows.get(labId, workflowId);
+      const run: NextFlowRun = await $api.workflows.get(labId, runId);
 
-      if (!this.workflows[labId]) {
-        this.workflows[labId] = {};
+      if (!this.nextFlowRuns[labId]) {
+        this.nextFlowRuns[labId] = {};
       }
-      this.workflows[labId][workflow.id] = workflow;
+      this.nextFlowRuns[labId][run.id] = run;
     },
 
-    updateWipWorkflow(tempId: string, updates: Partial<WipNextFlowRunData>): void {
-      this.wipWorkflows[tempId] = {
-        ...(this.wipWorkflows[tempId] || {}),
+    updateWipNextFlowRun(tempId: string, updates: Partial<WipNextFlowRunData>): void {
+      this.wipNextFlowRuns[tempId] = {
+        ...(this.wipNextFlowRuns[tempId] || {}),
         ...updates,
       };
     },

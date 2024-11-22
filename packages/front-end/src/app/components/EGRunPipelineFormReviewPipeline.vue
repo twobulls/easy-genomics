@@ -24,7 +24,7 @@
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[workflowTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -52,7 +52,7 @@
         },
       };
       await $api.workflows.createPipelineRun(labId, launchRequest);
-      delete workflowStore.wipWorkflows[workflowTempId];
+      delete workflowStore.wipNextFlowRuns[workflowTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');

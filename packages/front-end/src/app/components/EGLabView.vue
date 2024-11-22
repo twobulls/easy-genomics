@@ -73,7 +73,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(props.labId));
+  const workflows = computed<Workflow[]>(() => workflowStore.nextFlowRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -363,7 +363,7 @@
   async function getWorkflows(): Promise<void> {
     useUiStore().setRequestPending('getWorkflows');
     try {
-      await workflowStore.loadWorkflowsForLab(props.labId);
+      await workflowStore.loadNextFlowRunsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving workflows/runs', error);
     } finally {
@@ -393,7 +393,7 @@
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    workflowStore.updateWipWorkflow(workflowTempId, {
+    workflowStore.updateWipNextFlowRun(workflowTempId, {
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',

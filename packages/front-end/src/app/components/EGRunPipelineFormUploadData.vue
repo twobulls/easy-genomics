@@ -45,7 +45,7 @@
   const labId = $route.params.labId as string;
   const workflowTempId = $route.query.workflowTempId as string;
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[workflowTempId]);
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -288,7 +288,7 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    useWorkflowStore().updateWipWorkflow(workflowTempId, {
+    useWorkflowStore().updateWipNextFlowRun(workflowTempId, {
       sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
       s3Path: sampleSheetResponse.SampleSheetInfo.Path,

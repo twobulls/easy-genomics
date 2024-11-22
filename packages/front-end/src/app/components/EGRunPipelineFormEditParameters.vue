@@ -9,7 +9,6 @@
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
-  const { $api } = useNuxtApp();
   const $route = useRoute();
 
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
@@ -17,14 +16,14 @@
   const activeSection = ref<string | null>(null);
   const runStore = useRunStore();
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const localProps = reactive({
     schema: props.schema,
     params: {
       ...props.params,
-      input: wipWorkflow.value?.sampleSheetS3Url,
-      outdir: `s3://${wipWorkflow.value?.s3Bucket}/${wipWorkflow.value?.s3Path}/results`,
+      input: wipNextFlowRun.value?.sampleSheetS3Url,
+      outdir: `s3://${wipNextFlowRun.value?.s3Bucket}/${wipNextFlowRun.value?.s3Path}/results`,
     },
   });
 

@@ -12,7 +12,7 @@
 
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   /**
    * Seqera API spec
@@ -47,8 +47,8 @@
   type FormState = z.infer<typeof formStateSchema>;
 
   const formState = reactive<FormState>({
-    pipelineDescription: wipWorkflow.value?.pipelineDescription || '',
-    pipelineName: wipWorkflow.value?.pipelineName || '',
+    pipelineDescription: wipNextFlowRun.value?.pipelineDescription || '',
+    pipelineName: wipNextFlowRun.value?.pipelineName || '',
     runName: '',
   });
 
@@ -66,8 +66,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = wipWorkflow.value?.userPipelineRunName || '';
-    formState.pipelineDescription = wipWorkflow.value?.pipelineDescription || '';
+    formState.runName = wipNextFlowRun.value?.userPipelineRunName || '';
+    formState.pipelineDescription = wipNextFlowRun.value?.pipelineDescription || '';
     validate(formState);
   });
 

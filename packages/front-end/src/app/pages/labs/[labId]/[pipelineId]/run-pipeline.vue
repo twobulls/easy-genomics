@@ -9,7 +9,7 @@
 
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -90,7 +90,7 @@
   }
 
   /**
-   * Resets the pipeline run workflow:
+   * Resets the pipeline run:
    * - clears some store values
    * - re-initializes the schema + prefills params
    * - re-mounts the stepper to reset it to initial state
@@ -117,7 +117,7 @@
   <EGRunPipelineStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="wipWorkflow?.params"
+    :params="wipNextFlowRun?.params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
   />

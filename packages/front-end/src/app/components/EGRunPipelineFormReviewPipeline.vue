@@ -24,7 +24,7 @@
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -32,18 +32,18 @@
   async function launchWorkflow() {
     try {
       isLaunchingWorkflow.value = true;
-      const pipelineId = wipWorkflow.value?.pipelineId;
+      const pipelineId = wipNextFlowRun.value?.pipelineId;
       if (pipelineId === undefined) {
         throw new Error('pipeline id not found in wip workflow config');
       }
 
       const launchDetails = await $api.pipelines.readPipelineLaunchDetails(pipelineId, labId);
 
-      const workDir: string = `s3://${wipWorkflow.value?.s3Bucket}/${wipWorkflow.value?.s3Path}/work`;
+      const workDir: string = `s3://${wipNextFlowRun.value?.s3Bucket}/${wipNextFlowRun.value?.s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
           computeEnvId: launchDetails.launch?.computeEnv?.id,
-          runName: wipWorkflow.value?.userPipelineRunName,
+          runName: wipNextFlowRun.value?.userPipelineRunName,
           pipeline: launchDetails.launch?.pipeline,
           revision: launchDetails.launch?.revision,
           configProfiles: launchDetails.launch?.configProfiles,
@@ -100,7 +100,7 @@
       <dl>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Pipeline</dt>
-          <dd class="text-muted text-left">{{ wipWorkflow?.pipelineName }}</dd>
+          <dd class="text-muted text-left">{{ wipNextFlowRun?.pipelineName }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Laboratory</dt>
@@ -108,7 +108,7 @@
         </div>
         <div class="text-md flex px-4 py-4">
           <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ wipWorkflow?.userPipelineRunName }}</dd>
+          <dd class="text-muted text-left">{{ wipNextFlowRun?.userPipelineRunName }}</dd>
         </div>
       </dl>
     </section>

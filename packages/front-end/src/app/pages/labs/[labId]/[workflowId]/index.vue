@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
-  import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+  import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
   import { FileDownloadResponse } from '@/packages/shared-lib/src/app/types/nf-tower/file/request-file-download';
 
   const { $api } = useNuxtApp();
@@ -20,7 +20,7 @@
     $router.push('/labs');
   }
 
-  const workflow = computed<Workflow | null>(() => runStore.nextFlowRuns[labId][workflowId]);
+  const workflow = computed<NextFlowRun | null>(() => runStore.nextFlowRuns[labId][workflowId]);
 
   async function loadWorkflow() {
     try {

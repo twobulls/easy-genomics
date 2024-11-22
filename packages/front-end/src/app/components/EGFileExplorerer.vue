@@ -15,30 +15,45 @@
     };
   };
 
-  const props = defineProps<{
-    workflowBasePath: string;
-    labId: string;
-    jsonData: typeof s3JsonData;
-  }>();
+  const props = withDefaults(
+    defineProps<{
+      workflowBasePath: string;
+      labId: string;
+      s3Contents: S3Response | null;
+      isLoading?: boolean;
+    }>(),
+    {
+      s3Contents: null,
+      isLoading: false,
+    },
+  );
 
-  const { downloadReport, downloadFolder } = useFileDownload();
+  const { handleS3Download, downloadFolder } = useFileDownload();
 
-  // TODO: mock path prefix - this should be fetched from the backend
-  const s3Prefix =
-    '61c86013-74f2-4d30-916a-70b03a97ba14/2c7be90f-6db9-442f-a7ec-5b15bab0229f/next-flow/4c985899-fcbd-4a51-bc4b-5b0e3fb5e7a2/';
-  const currentPath = ref([{ name: 'All Files', children: [] }]);
-  const searchQuery = ref('');
-
-  // Compute updated JSON data and initialize current path children
-  const updatedJsonData = computed(() => {
-    const transformedData = transformS3Data(props.jsonData, s3Prefix);
-    if (currentPath.value[0].children.length === 0) {
-      currentPath.value[0].children = transformedData;
+  const initialPath = computed(() => {
+    if (props.s3Contents && props.s3Contents.Contents.length > 0) {
+      const firstKey = props.s3Contents.Contents[0].Key;
+      const parts = firstKey.split('/');
+      return parts.slice(0, 3).join('/') + '/';
     }
-    return transformedData;
+    return '';
   });
 
-  // Generate breadcrumbs based on current path
+  const currentPath = ref([{ name: 'All Files', children: [] }]);
+  const searchQuery = ref('');
+  const s3Prefix = computed(() => initialPath.value);
+
+  const updatedJsonData = computed(() => {
+    if (props.s3Contents) {
+      const transformedData = transformS3Data(props.s3Contents, s3Prefix.value);
+      if (currentPath.value[0].children.length === 0) {
+        currentPath.value[0].children = transformedData;
+      }
+      return transformedData;
+    }
+    return [];
+  });
+
   const breadcrumbs = computed(() => {
     return currentPath.value.map((dir, index) => ({
       name: dir.name,
@@ -46,7 +61,6 @@
     }));
   });
 
-  // Get items in the current directory
   const currentItems = computed(() => {
     if (currentPath.value.length > 0) {
       const currentDir = currentPath.value[currentPath.value.length - 1];
@@ -55,7 +69,6 @@
     return [];
   });
 
-  // Filter items based on search query
   const filteredItems = computed(() => {
     const query = searchQuery.value.toLowerCase();
     return currentItems.value.filter((item: { name: string }) => item.name.toLowerCase().includes(query));
@@ -69,15 +82,10 @@
     { key: 'actions', label: 'Actions' },
   ];
 
-  /**
-   * Transform S3 object data into a nested structure
-   * @param s3Data
-   * @param s3prefix
-   */
-  function transformS3Data(s3Data: S3Response, s3prefix: string) {
-    const map = {};
+  function transformS3Data(s3Contents: S3Response, s3prefix: string) {
+    const map: MapType = {};
 
-    s3Data.Contents.filter((item: S3Object) => item.Key.startsWith(s3prefix)).forEach((item: S3Object) => {
+    s3Contents.Contents.filter((item: S3Object) => item.Key.startsWith(s3prefix)).forEach((item: S3Object) => {
       const parts = item.Key.slice(s3prefix.length).split('/');
 
       parts.reduce((acc: MapType, part: string, index: number) => {
@@ -94,11 +102,7 @@
       }, map);
     });
 
-    /**
-     *
-     * @param obj
-     */
-    function nestify(obj) {
+    function nestify(obj: MapType) {
       return Object.keys(obj)
         .map((key) => {
           const item = obj[key];
@@ -116,7 +120,6 @@
     return nestify(map);
   }
 
-  // Utility to format file sizes
   function formatSize(value: number) {
     if (!value) return '';
     const units = ['B', 'KB', 'MB', 'GB'];
@@ -128,42 +131,39 @@
     return unitIndex === 0 ? `${value.toFixed(0)} ${units[unitIndex]}` : `${value.toFixed(2)} ${units[unitIndex]}`;
   }
 
-  const onRowClicked = (item: MapType) => {
-    debugger;
-    if (item.type === 'directory' && item.children && item.children.length > 0) {
+  const onRowClicked = (item: { name: string; type: string; children?: [] }) => {
+    if (item.type === 'directory' && item.children?.length) {
       openDirectory(item);
     }
   };
 
-  const openDirectory = (dir: MapType) => {
+  const openDirectory = (dir: { name: string; children: [] }) => {
     currentPath.value.push({ name: dir.name, children: dir.children });
   };
 
-  // Navigate to a directory based on breadcrumbs
   const navigateTo = (index: number) => {
     if (index >= 0 && index < currentPath.value.length) {
       currentPath.value = currentPath.value.slice(0, index + 1);
     }
   };
 
-  // Define action items for each row
-  const actionItems = (row: string) => {
-    const items: object[] = [
-      [
-        {
-          label: row.type === 'file' ? 'Download' : 'Download as zip',
-          click: () =>
-            row.type === 'file'
-              ? downloadReport(props.labId, row.name, props.workflowBasePath + row.name, row.size)
-              : downloadFolder(),
-        },
-      ],
+  const actionItems = (row: { name: string; type: string; size: number }) => {
+    return [
+      {
+        label: row.type === 'file' ? 'Download' : 'Download as zip',
+        click: () =>
+          row.type === 'file'
+            ? handleS3Download(
+                props.labId,
+                row.name,
+                's3://851725267090-dev-build-lab-bucket/61c86013-74f2-4d30-916a-70b03a97ba14/bbac4190-0446-4db4-a084-cfdbc8102297/next-flow/0a9b27fa-6a41-4658-a412-1cdcf817b8a6/sample-sheet.csv',
+                row.size,
+              )
+            : downloadFolder(),
+      },
     ];
-
-    return items;
   };
 
-  // Watch for changes and log updates
   watch(currentPath, (newPath) => {
     console.log('Current Path Updated:', JSON.stringify(newPath, null, 2));
   });
@@ -177,13 +177,14 @@
   <div>
     <!-- Search input -->
     <EGSearchInput
-      @input-event="(event) => (searchQuery = event)"
+      @input-event="(event) => (searchQuery.value = event)"
       placeholder="Search files/folders"
       class="my-6 w-[408px]"
+      :disabled="isLoading"
     />
 
     <!-- Breadcrumbs -->
-    <div class="breadcrumbs mb-6">
+    <div class="breadcrumbs mb-6" v-if="!isLoading">
       <span
         v-for="(crumb, index) in breadcrumbs"
         :key="index"
@@ -201,6 +202,7 @@
       :table-data="filteredItems"
       :columns="tableColumns"
       no-results-msg="No files or folders found"
+      :is-loading="isLoading"
     >
       <template #name-data="{ row }">
         <span v-if="row.type === 'directory'" class="underline hover:no-underline" @click="onRowClicked(row)">

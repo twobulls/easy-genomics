@@ -32,7 +32,7 @@ class FileModule extends HttpFactory {
    * @param req
    */
   async requestListBucketObjects(req: RequestListBucketObjects): Promise<S3Response> {
-    const res = await this.call<S3Response>('POST', '/easy-genomics/file/request-list-bucket-objects', req);
+    const res = await this.call<S3Response>('POST', '/file/request-list-bucket-objects', req);
 
     if (!res) {
       console.error('Error calling file download API');

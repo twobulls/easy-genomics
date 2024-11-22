@@ -3,9 +3,8 @@ import { FileDownloadResponse } from '@/packages/shared-lib/src/app/types/nf-tow
 export default function useFileDownload() {
   const { $api } = useNuxtApp();
 
-  async function downloadReport(labId: string, fileName: string, path: string, size: number) {
-    const fileDownload: FileDownloadResponse = await $api.workflows.getNextFlowFileDownload(labId, path);
-    // const fileDownload: FileDownloadResponse = await $api.workflows.getNextFlowFileDownload(labId, path + fileName);
+  async function handleS3Download(labId: string, fileName: string, path: string, size: number) {
+    const fileDownload: FileDownloadResponse = await $api.workflows.downloadS3file(labId, path);
     if (fileDownload) {
       const link = document.createElement('a');
       link.href = `data:${size};base64,${fileDownload.Data}`;
@@ -32,7 +31,7 @@ export default function useFileDownload() {
   }
 
   async function openFileInNewWindow(labId: string, path: string, mimeType: string) {
-    const fileDownload: FileDownloadResponse = await $api.workflows.getNextFlowFileDownload(labId, path);
+    const fileDownload: FileDownloadResponse = await $api.workflows.downloadNextflowFile(labId, path);
     if (fileDownload) {
       const fileContent = `data:${mimeType};base64,${fileDownload.Data}`;
       const newWindow = window.open();
@@ -43,7 +42,7 @@ export default function useFileDownload() {
   }
 
   return {
-    downloadReport,
+    handleS3Download,
     downloadFolder,
     openFileInNewWindow,
     isSupportedFileType,

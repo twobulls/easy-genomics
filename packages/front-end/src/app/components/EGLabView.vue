@@ -15,7 +15,7 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
-  import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -73,7 +73,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const workflows = computed<Workflow[]>(() => runStore.nextFlowRunsForLab(props.labId));
+  const workflows = computed<NextFlowRun[]>(() => runStore.nextFlowRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -175,7 +175,7 @@
     ],
   ];
 
-  function workflowsActionItems(row: Workflow): object[] {
+  function workflowsActionItems(row: NextFlowRun): object[] {
     const buttons: object[][] = [
       [
         {
@@ -380,15 +380,15 @@
     await getLabUsers();
   }
 
-  function onRunsRowClicked(row: Workflow) {
+  function onRunsRowClicked(row: NextFlowRun) {
     viewRunDetails(row);
   }
 
-  function onPipelinesRowClicked(row: Workflow) {
+  function onPipelinesRowClicked(row: NextFlowRun) {
     viewRunPipeline(row);
   }
 
-  function viewRunPipeline(pipeline: Workflow) {
+  function viewRunPipeline(pipeline: NextFlowRun) {
     const nextFlowRunTempId = uuidv4();
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
@@ -408,12 +408,12 @@
     });
   }
 
-  function viewRunDetails(row: Workflow) {
+  function viewRunDetails(row: NextFlowRun) {
     $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 
   const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<Workflow | null>(null);
+  const runToCancel = ref<NextFlowRun | null>(null);
 
   async function handleCancelDialogAction() {
     const runId = runToCancel.value?.id;

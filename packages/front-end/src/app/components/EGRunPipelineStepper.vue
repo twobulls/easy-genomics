@@ -150,8 +150,11 @@
 
   function handleLaunchSuccess() {
     hasLaunched.value = true;
-    disableAllSteps();
     emit('has-launched');
+  }
+
+  function handleSubmitLaunchRequest() {
+    disableAllSteps();
   }
 </script>
 
@@ -204,6 +207,7 @@
               :can-launch="true"
               :schema="props.schema"
               :params="wipWorkflow?.params"
+              @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"
             />

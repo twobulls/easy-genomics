@@ -56,7 +56,7 @@
   });
 
   /**
-   * Fetch Lab details, pipelines, workflows and Lab users before component mount and start periodic fetching
+   * Fetch Lab details, pipelines, runs and Lab users before component mount and start periodic fetching
    */
   onBeforeMount(loadLabData);
 
@@ -65,15 +65,15 @@
       clearTimeout(intervalId);
     }
   });
-  async function pollFetchWorkflows() {
-    await getWorkflows();
-    intervalId = window.setTimeout(pollFetchWorkflows, 2 * 60 * 1000);
+  async function pollFetchNextFlowRuns() {
+    await getNextFlowRuns();
+    intervalId = window.setTimeout(pollFetchNextFlowRuns, 2 * 60 * 1000);
   }
 
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const workflows = computed<NextFlowRun[]>(() => runStore.nextFlowRunsForLab(props.labId));
+  const nextFlowRuns = computed<NextFlowRun[]>(() => runStore.nextFlowRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -127,7 +127,7 @@
     },
   ];
 
-  const workflowsTableColumns = [
+  const runsTableColumns = [
     {
       key: 'runName',
       label: 'Run Name',
@@ -175,7 +175,7 @@
     ],
   ];
 
-  function workflowsActionItems(row: NextFlowRun): object[] {
+  function runsActionItems(row: NextFlowRun): object[] {
     const buttons: object[][] = [
       [
         {
@@ -212,12 +212,12 @@
   watch(lab, async (lab) => {
     if (lab !== null) {
       if (lab.HasNextFlowTowerAccessToken) {
-        // load pipelines/workflows/labUsers after lab loads
+        // load pipelines/runs/labUsers after lab loads
         if (props.superuser) {
-          // superuser doesn't view pipelines or workflows so don't fetch those
+          // superuser doesn't view pipelines or runs so don't fetch those
           await getLabUsers();
         } else {
-          await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
+          await Promise.all([getPipelines(), pollFetchNextFlowRuns(), getLabUsers()]);
           canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
         }
       } else {
@@ -360,12 +360,12 @@
     }
   }
 
-  async function getWorkflows(): Promise<void> {
+  async function getNextFlowRuns(): Promise<void> {
     useUiStore().setRequestPending('getNextFlowRuns');
     try {
       await runStore.loadNextFlowRunsForLab(props.labId);
     } catch (error) {
-      console.error('Error retrieving workflows/runs', error);
+      console.error('Error retrieving NextFlow runs', error);
     } finally {
       useUiStore().setRequestComplete('getNextFlowRuns');
     }
@@ -420,7 +420,7 @@
     const runName = runToCancel.value?.runName;
 
     if (!runId) {
-      throw new Error("runToCancel workflow id should have a value but doesn't");
+      throw new Error("runToCancel runId should have a value but doesn't");
     }
 
     uiStore.setRequestPending('cancelNextFlowRun');
@@ -436,7 +436,7 @@
     runToCancel.value = null;
     uiStore.setRequestComplete('cancelNextFlowRun');
 
-    await getWorkflows();
+    await getNextFlowRuns();
   }
 </script>
 
@@ -514,32 +514,32 @@
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable
           :row-click-action="onRunsRowClicked"
-          :table-data="workflows"
-          :columns="workflowsTableColumns"
+          :table-data="nextFlowRuns"
+          :columns="runsTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
         >
-          <template #runName-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow.runName }}</div>
-            <div class="text-muted text-xs font-normal">{{ workflow.projectName }}</div>
+          <template #runName-data="{ row: nextFlowRun }">
+            <div class="text-body text-sm font-medium">{{ nextFlowRun.runName }}</div>
+            <div class="text-muted text-xs font-normal">{{ nextFlowRun.projectName }}</div>
           </template>
 
-          <template #lastUpdated-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ getDate(workflow.lastUpdated) }}</div>
-            <div class="text-muted">{{ getTime(workflow.lastUpdated) }}</div>
+          <template #lastUpdated-data="{ row: nextFlowRun }">
+            <div class="text-body text-sm font-medium">{{ getDate(nextFlowRun.lastUpdated) }}</div>
+            <div class="text-muted">{{ getTime(nextFlowRun.lastUpdated) }}</div>
           </template>
 
-          <template #status-data="{ row: workflow }">
-            <EGStatusChip :status="workflow.status" />
+          <template #status-data="{ row: nextFlowRun }">
+            <EGStatusChip :status="nextFlowRun.status" />
           </template>
 
-          <template #owner-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow?.userName ?? '-' }}</div>
+          <template #owner-data="{ row: nextFlowRun }">
+            <div class="text-body text-sm font-medium">{{ nextFlowRun?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton :items="workflowsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+              <EGActionButton :items="runsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
             </div>
           </template>
 

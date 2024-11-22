@@ -1,4 +1,4 @@
-import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import { defineStore } from 'pinia';
 
 /*
@@ -21,7 +21,7 @@ export interface WipWorkflowData {
 
 interface WorkflowState {
   // lookup object for workflows
-  workflows: Record<string, Record<string, Workflow>>;
+  workflows: Record<string, Record<string, NextFlowRun>>;
   // ordered lists for pipelines by lab
   workflowIdsByLab: Record<string, string[]>;
   // configs of new workflows yet to be launched
@@ -40,7 +40,7 @@ const useWorkflowStore = defineStore('workflowStore', {
   getters: {
     workflowsForLab:
       (state: WorkflowState) =>
-      (labId: string): Workflow[] =>
+      (labId: string): NextFlowRun[] =>
         state.workflowIdsByLab[labId]?.map((pipelineId) => state.workflows[labId][pipelineId]) || [],
   },
 
@@ -53,10 +53,10 @@ const useWorkflowStore = defineStore('workflowStore', {
       const { $api } = useNuxtApp();
 
       // fetch new workflows without modifying existing state
-      const workflows: Workflow[] = await $api.workflows.list(labId);
+      const workflows: NextFlowRun[] = await $api.workflows.list(labId);
 
       // prepare temporary storage
-      const newWorkflows: Record<string, Workflow> = {};
+      const newWorkflows: Record<string, NextFlowRun> = {};
       const newWorkflowIds: string[] = [];
 
       for (const workflow of workflows) {
@@ -74,7 +74,7 @@ const useWorkflowStore = defineStore('workflowStore', {
     async loadSingleWorkflow(labId: string, workflowId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
-      const workflow: Workflow = await $api.workflows.get(labId, workflowId);
+      const workflow: NextFlowRun = await $api.workflows.get(labId, workflowId);
 
       if (!this.workflows[labId]) {
         this.workflows[labId] = {};

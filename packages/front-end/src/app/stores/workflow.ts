@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 
 /*
 The WIP NextFlow Run is a construct for storing all of the data for a pipeline run that's being configured but hasn't
-been launched yet. They're addressed by workflowTempId which is generated on pipeline click and stored as a query
+been launched yet. They're addressed by nextFlowRunTempId which is generated on pipeline click and stored as a query
 parameter. This allows multiple runs to be configured simultaneously without overwriting each other.
 */
 export interface WipNextFlowRunData {

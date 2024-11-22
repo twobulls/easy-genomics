@@ -389,11 +389,11 @@
   }
 
   function viewRunPipeline(pipeline: Workflow) {
-    const workflowTempId = uuidv4();
+    const nextFlowRunTempId = uuidv4();
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    workflowStore.updateWipNextFlowRun(workflowTempId, {
+    workflowStore.updateWipNextFlowRun(nextFlowRunTempId, {
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',
@@ -403,7 +403,7 @@
     $router.push({
       path: `/labs/${props.labId}/${pipelineId}/run-pipeline`,
       query: {
-        workflowTempId,
+        nextFlowRunTempId,
       },
     });
   }

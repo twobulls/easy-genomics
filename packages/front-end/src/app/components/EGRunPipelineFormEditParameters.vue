@@ -12,12 +12,12 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
   const activeSection = ref<string | null>(null);
   const workflowStore = useWorkflowStore();
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const localProps = reactive({
     schema: props.schema,
@@ -81,7 +81,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        workflowStore.updateWipNextFlowRun(workflowTempId, { params: val });
+        workflowStore.updateWipNextFlowRun(nextFlowRunTempId, { params: val });
       }
     },
     { deep: true },

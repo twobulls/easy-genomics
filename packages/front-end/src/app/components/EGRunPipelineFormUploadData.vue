@@ -43,9 +43,9 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const labId = $route.params.labId as string;
-  const workflowTempId = $route.query.workflowTempId as string;
+  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -288,7 +288,7 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    useWorkflowStore().updateWipNextFlowRun(workflowTempId, {
+    useWorkflowStore().updateWipNextFlowRun(nextFlowRunTempId, {
       sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
       s3Path: sampleSheetResponse.SampleSheetInfo.Path,
@@ -546,7 +546,7 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="downloadSampleSheet(workflowTempId)"
+        @click="downloadSampleSheet(nextFlowRunTempId)"
       />
       <EGButton
         @click="startUploadProcess"

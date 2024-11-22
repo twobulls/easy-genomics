@@ -17,14 +17,14 @@
 
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
-  const workflowTempId = $route.query.workflowTempId as string;
+  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
   const isLaunchingWorkflow = ref(false);
   const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -52,7 +52,7 @@
         },
       };
       await $api.workflows.createPipelineRun(labId, launchRequest);
-      delete workflowStore.wipNextFlowRuns[workflowTempId];
+      delete workflowStore.wipNextFlowRuns[nextFlowRunTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');

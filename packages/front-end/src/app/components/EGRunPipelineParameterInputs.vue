@@ -12,7 +12,7 @@
   const $route = useRoute();
   const workflowStore = useWorkflowStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -48,7 +48,7 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      workflowStore.wipNextFlowRuns[workflowTempId].params[key] = propValues[key];
+      workflowStore.wipNextFlowRuns[nextFlowRunTempId].params[key] = propValues[key];
     }
   });
 </script>
@@ -75,7 +75,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="workflowStore.wipWorkflows[workflowTempId].sampleSheetS3Url" />
+        <EGInput name="input" v-model="workflowStore.wipWorkflows[nextFlowRunTempId].sampleSheetS3Url" />
       </template>
     </div>
   </div>

@@ -10,9 +10,9 @@
   const $route = useRoute();
   const workflowStore = useWorkflowStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[workflowTempId]);
+  const wipWorkflow = computed<WipNextFlowRunData | undefined>(() => workflowStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   /**
    * Seqera API spec
@@ -87,7 +87,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    useWorkflowStore().updateWipNextFlowRun(workflowTempId, { userPipelineRunName: safeRunName });
+    useWorkflowStore().updateWipNextFlowRun(nextFlowRunTempId, { userPipelineRunName: safeRunName });
     emit('next-step');
   }
 

@@ -46,7 +46,7 @@
     if (props.s3Contents) {
       const transformedData = transformS3Data(props.s3Contents, s3Prefix.value);
       if (currentPath.value[0].children.length === 0) {
-        currentPath.value[0]?.children = transformedData;
+        currentPath.value[0].children = transformedData;
       }
       return transformedData;
     }
@@ -106,14 +106,14 @@
         .map((key) => {
           const item = obj[key];
           if (Object.keys(item.children).length > 0) {
-            item?.children = nestify(item.children);
+            item.children = nestify(item.children);
             return item;
           } else {
-            delete item?.children;
+            delete item.children;
             return item;
           }
         })
-        .filter((item) => item.type === 'file' || (item.children && item?.children.length > 0));
+        .filter((item) => item.type === 'file' || (item.children && item.children.length > 0));
     }
 
     return nestify(map);
@@ -146,21 +146,26 @@
     }
   };
 
-  const actionItems = (row: { name: string; type: string; size: number }) => {
-    return [
-      {
-        label: row.type === 'file' ? 'Download' : 'Download as zip',
-        click: () =>
-          row.type === 'file'
-            ? handleS3Download(
-                props.labId,
-                row.name,
-                's3://851725267090-dev-build-lab-bucket/61c86013-74f2-4d30-916a-70b03a97ba14/bbac4190-0446-4db4-a084-cfdbc8102297/next-flow/0a9b27fa-6a41-4658-a412-1cdcf817b8a6/sample-sheet.csv',
-                row.size,
-              )
-            : downloadFolder(),
-      },
+  const actionItems = (row: string) => {
+    const items: object[] = [
+      [
+        {
+          label: row.type === 'file' ? 'Download' : 'Download as zip',
+          click: () =>
+            row.type === 'file'
+              ? downloadReport(
+                  props.labId,
+                  row.name,
+                  's3://851725267090-dev-build-lab-bucket/61c86013-74f2-4d30-916a-70b03a97ba14/bbac4190-0446-4db4-a084-cfdbc8102297/next-flow/0a9b27fa-6a41-4658-a412-1cdcf817b8a6/sample-sheet.csv',
+                  row.name,
+                  row.size,
+                )
+              : downloadFolder(),
+        },
+      ],
     ];
+
+    return items;
   };
 
   watch(currentPath, (newPath) => {

@@ -14,6 +14,7 @@ type PendingRequest =
   | 'getPipelines'
   | 'getWorkflows'
   | 'loadWorkflow'
+  | 'launchWorkflow'
   | 'cancelWorkflow'
   | 'createOrg'
   | 'fetchOrgData'

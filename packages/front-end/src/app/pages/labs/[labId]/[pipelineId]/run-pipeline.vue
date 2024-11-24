@@ -20,6 +20,8 @@
   const schema = ref({});
   const resetStepperKey = ref(0);
 
+  const labName = computed<string>(() => useLabsStore().labs[labId].Name);
+
   // check permissions to be on this page
   if (!useUserStore().canViewLab(labId)) {
     $router.push('/labs');

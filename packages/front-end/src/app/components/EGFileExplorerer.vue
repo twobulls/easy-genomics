@@ -23,7 +23,6 @@
       isLoading?: boolean;
     }>(),
     {
-      s3Contents: null,
       isLoading: false,
     },
   );
@@ -47,7 +46,7 @@
     if (props.s3Contents) {
       const transformedData = transformS3Data(props.s3Contents, s3Prefix.value);
       if (currentPath.value[0].children.length === 0) {
-        currentPath.value[0].children = transformedData;
+        currentPath.value[0]?.children = transformedData;
       }
       return transformedData;
     }
@@ -107,20 +106,20 @@
         .map((key) => {
           const item = obj[key];
           if (Object.keys(item.children).length > 0) {
-            item.children = nestify(item.children);
+            item?.children = nestify(item.children);
             return item;
           } else {
-            delete item.children;
+            delete item?.children;
             return item;
           }
         })
-        .filter((item) => item.type === 'file' || (item.children && item.children.length > 0));
+        .filter((item) => item.type === 'file' || (item.children && item?.children.length > 0));
     }
 
     return nestify(map);
   }
 
-  function formatSize(value: number) {
+  function formatFileSize(value: number) {
     if (!value) return '';
     const units = ['B', 'KB', 'MB', 'GB'];
     let unitIndex = 0;
@@ -216,7 +215,7 @@
         {{ useChangeCase(row.type === 'directory' ? 'Folder' : row.type, 'sentenceCase') }}
       </template>
       <template #size-data="{ row }">
-        {{ formatSize(row.size) }}
+        {{ formatFileSize(row.size) }}
       </template>
       <template #actions-data="{ row }">
         <div class="flex justify-end">

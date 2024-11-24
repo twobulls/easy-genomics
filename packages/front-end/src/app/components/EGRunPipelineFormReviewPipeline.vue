@@ -19,7 +19,7 @@
   const labName = useLabsStore().labs[labId].Name;
   const workflowTempId = $route.query.workflowTempId as string;
   const isLaunchingWorkflow = ref(false);
-  const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
+  const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
@@ -30,6 +30,8 @@
   const schema = JSON.parse(JSON.stringify(props.schema));
 
   async function launchWorkflow() {
+    emit('submit-launch-request');
+
     try {
       isLaunchingWorkflow.value = true;
       const pipelineId = wipWorkflow.value?.pipelineId;

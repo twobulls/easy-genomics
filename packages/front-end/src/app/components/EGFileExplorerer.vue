@@ -83,13 +83,13 @@
     { key: 'actions', label: 'Actions' },
   ];
 
-  function transformS3Data(s3Contents: S3Response, s3prefix: string) {
-    const map: MapType = {};
+  function transformS3Data(s3Contents, s3prefix) {
+    const map = {};
 
-    s3Contents.Contents.filter((item: S3Object) => item.Key.startsWith(s3prefix)).forEach((item: S3Object) => {
-      const parts = item.Key.slice(s3prefix.length).split('/');
+    s3Contents.Contents.filter((item) => item.Key.startsWith(s3prefix)).forEach((item) => {
+      const parts = item.Key.slice(s3prefix.length).split('/').filter(Boolean);
 
-      parts.reduce((acc: MapType, part: string, index: number) => {
+      parts.reduce((acc, part, index) => {
         if (!acc[part]) {
           acc[part] = {
             type: index === parts.length - 1 && item.Size > 0 ? 'file' : 'directory',
@@ -132,11 +132,19 @@
     return unitIndex === 0 ? `${value.toFixed(0)} ${units[unitIndex]}` : `${value.toFixed(2)} ${units[unitIndex]}`;
   }
 
-  const onRowClicked = (item: { name: string; type: string; children?: [] }) => {
+  function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
+  const onRowClicked = debounce((item: { name: string; type: string; children?: [] }) => {
     if (item.type === 'directory' && item.children?.length) {
       openDirectory(item);
     }
-  };
+  }, 300);
 
   const openDirectory = (dir: { name: string; children: [] }) => {
     const itemPath = currentPath.value.map((p) => p.name).join('/');
@@ -174,21 +182,13 @@
 
     return items;
   };
-
-  watch(currentPath, (newPath) => {
-    console.log('Current Path Updated:', JSON.stringify(newPath, null, 2));
-  });
-
-  watch(updatedJsonData, (newData) => {
-    console.log('Updated JSON Data:', JSON.stringify(newData, null, 2));
-  });
 </script>
 
 <template>
   <div>
     <!-- Search input -->
     <EGSearchInput
-      @input-event="(event) => (searchQuery.value = event)"
+      @input-event="(event) => (searchQuery = event)"
       placeholder="Search files/folders"
       class="my-6 w-[408px]"
       :disabled="isLoading"

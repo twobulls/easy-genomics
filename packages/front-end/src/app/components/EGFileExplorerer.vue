@@ -1,11 +1,8 @@
 <script setup lang="ts">
   import { useChangeCase } from '@vueuse/integrations/useChangeCase';
   import { useWorkflowStore } from '@FE/stores';
-
-  import {
-    S3Object,
-    S3Response,
-  } from '@/packages/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
+  import { format } from 'date-fns';
+  import { S3Response } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
 
   type MapType = {
     [key: string]: {
@@ -24,9 +21,7 @@
       s3Contents: S3Response | null;
       isLoading?: boolean;
     }>(),
-    {
-      isLoading: false,
-    },
+    { isLoading: false },
   );
 
   const { handleS3Download, downloadFolder } = useFileDownload();
@@ -34,8 +29,7 @@
   const initialPath = computed(() => {
     if (props.s3Contents && props.s3Contents.Contents.length > 0) {
       const firstKey = props.s3Contents.Contents[0].Key;
-      const parts = firstKey.split('/');
-      return parts.slice(0, 3).join('/') + '/';
+      return firstKey.split('/').slice(0, 3).join('/') + '/';
     }
     return '';
   });
@@ -47,7 +41,7 @@
   const updatedJsonData = computed(() => {
     if (props.s3Contents) {
       const transformedData = transformS3Data(props.s3Contents, s3Prefix.value);
-      if (currentPath.value[0].children.length === 0) {
+      if (!currentPath.value[0].children.length) {
         currentPath.value[0].children = transformedData;
       }
       return transformedData;
@@ -63,16 +57,13 @@
   });
 
   const currentItems = computed(() => {
-    if (currentPath.value.length > 0) {
-      const currentDir = currentPath.value[currentPath.value.length - 1];
-      return currentDir.children || [];
-    }
-    return [];
+    const currentDir = currentPath.value[currentPath.value.length - 1];
+    return currentDir.children || [];
   });
 
   const filteredItems = computed(() => {
     const query = searchQuery.value.toLowerCase();
-    return currentItems.value.filter((item: { name: string }) => item.name.toLowerCase().includes(query));
+    return currentItems.value.filter((item) => item.name.toLowerCase().includes(query));
   });
 
   const tableColumns = [
@@ -84,23 +75,23 @@
   ];
 
   function transformS3Data(s3Contents, s3prefix) {
-    const map = {};
-
-    s3Contents.Contents.filter((item) => item.Key.startsWith(s3prefix)).forEach((item) => {
-      const parts = item.Key.slice(s3prefix.length).split('/').filter(Boolean);
-
-      parts.reduce((acc, part, index) => {
-        if (!acc[part]) {
-          acc[part] = {
-            type: index === parts.length - 1 && item.Size > 0 ? 'file' : 'directory',
-            name: part,
-            size: item.Size,
-            lastModified: item.LastModified,
-            children: {},
-          };
-        }
-        return acc[part].children;
-      }, map);
+    const map: MapType = {};
+    s3Contents.Contents.forEach((item) => {
+      if (item.Key.startsWith(s3prefix)) {
+        const parts = item.Key.slice(s3prefix.length).split('/').filter(Boolean);
+        parts.reduce((acc, part, index) => {
+          if (!acc[part]) {
+            acc[part] = {
+              type: index === parts.length - 1 && item.Size > 0 ? 'file' : 'directory',
+              name: part,
+              size: item.Size,
+              lastModified: item.LastModified,
+              children: {},
+            };
+          }
+          return acc[part].children;
+        }, map);
+      }
     });
 
     function nestify(obj: MapType) {
@@ -109,13 +100,12 @@
           const item = obj[key];
           if (Object.keys(item.children).length > 0) {
             item.children = nestify(item.children);
-            return item;
           } else {
             delete item.children;
-            return item;
           }
+          return item;
         })
-        .filter((item) => item.type === 'file' || (item.children && item.children.length > 0));
+        .filter((item) => item.type === 'file' || item.children?.length > 0);
     }
 
     return nestify(map);
@@ -129,7 +119,7 @@
       value /= 1024;
       unitIndex++;
     }
-    return unitIndex === 0 ? `${value.toFixed(0)} ${units[unitIndex]}` : `${value.toFixed(2)} ${units[unitIndex]}`;
+    return `${value.toFixed(unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
   }
 
   function debounce(func, wait) {
@@ -140,16 +130,14 @@
     };
   }
 
-  const onRowClicked = debounce((item: { name: string; type: string; children?: [] }) => {
+  const onRowClicked = debounce((item) => {
     if (item.type === 'directory' && item.children?.length) {
       openDirectory(item);
     }
   }, 300);
 
-  const openDirectory = (dir: { name: string; children: [] }) => {
-    const itemPath = currentPath.value.map((p) => p.name).join('/');
-    const newItemPath = `${itemPath}/${dir.name}`.replace(/\/+/g, '/'); // Normalize the path
-    if (!currentPath.value.some((item) => item.name === newItemPath)) {
+  const openDirectory = (dir) => {
+    if (!currentPath.value.some((item) => item.name === dir.name)) {
       currentPath.value.push({ name: dir.name, children: dir.children });
     }
   };
@@ -182,6 +170,10 @@
 
     return items;
   };
+
+  // Watchers to ensure data reactivity
+  watch(currentPath, () => {});
+  watch(updatedJsonData, () => {});
 </script>
 
 <template>
@@ -195,17 +187,24 @@
     />
 
     <!-- Breadcrumbs -->
-    <div class="breadcrumbs mb-6" v-if="!isLoading">
-      <span
-        v-for="(crumb, index) in breadcrumbs"
-        :key="index"
-        @click="navigateTo(index)"
-        class="breadcrumb-item text-sm"
-        :class="{ 'text-black': index === breadcrumbs.length - 1, 'text-gray-500': index !== breadcrumbs.length - 1 }"
-      >
-        {{ crumb.name }}
-        <UIcon v-if="index < breadcrumbs.length - 1" size="large" name="i-heroicons-chevron-right" class="separator" />
-      </span>
+    <div class="mb-6 flex min-h-[24px] flex-wrap">
+      <template v-if="!isLoading">
+        <span
+          v-for="(crumb, index) in breadcrumbs"
+          :key="index"
+          @click="navigateTo(index)"
+          class="breadcrumb-item text-sm"
+          :class="{ 'text-black': index === breadcrumbs.length - 1, 'text-gray-500': index !== breadcrumbs.length - 1 }"
+        >
+          {{ crumb.name }}
+          <UIcon
+            v-if="index < breadcrumbs.length - 1"
+            size="large"
+            name="i-heroicons-chevron-right"
+            class="separator"
+          />
+        </span>
+      </template>
     </div>
 
     <EGTable
@@ -226,6 +225,9 @@
       <template #type-data="{ row }">
         {{ useChangeCase(row.type === 'directory' ? 'Folder' : row.type, 'sentenceCase') }}
       </template>
+      <template #dateModified-data="{ row }">
+        {{ format(row.lastModified, 'MM/dd/yyyy') }}
+      </template>
       <template #size-data="{ row }">
         {{ formatFileSize(row.size) }}
       </template>
@@ -243,17 +245,14 @@
     cursor: pointer;
     margin-right: 5px;
     display: flex;
+    align-items: center;
 
     &:last-child {
       cursor: default;
     }
-  }
 
-  .breadcrumbs {
-    display: flex;
-  }
-
-  .separator {
-    margin: 0 2px 0 3px;
+    .separator {
+      margin: 0 2px 0 3px;
+    }
   }
 </style>

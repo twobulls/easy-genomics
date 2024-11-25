@@ -1,8 +1,12 @@
 <script setup lang="ts">
   import { useChangeCase } from '@vueuse/integrations/useChangeCase';
+  import { useDebounceFn } from '@vueuse/core';
   import { useWorkflowStore } from '@FE/stores';
   import { format } from 'date-fns';
-  import { S3Response } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
+  import {
+    S3Response,
+    S3Object,
+  } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
 
   type MapType = {
     [key: string]: {
@@ -42,7 +46,7 @@
     if (props.s3Contents) {
       const transformedData = transformS3Data(props.s3Contents, s3Prefix.value);
       if (!currentPath.value[0].children.length) {
-        currentPath.value[0].children = transformedData;
+        currentPath.value[0]?.children.push(...transformedData);
       }
       return transformedData;
     }
@@ -63,7 +67,7 @@
 
   const filteredItems = computed(() => {
     const query = searchQuery.value.toLowerCase();
-    return currentItems.value.filter((item) => item.name.toLowerCase().includes(query));
+    return currentItems.value.filter((item) => item.name?.toLowerCase().includes(query));
   });
 
   const tableColumns = [
@@ -74,41 +78,40 @@
     { key: 'actions', label: 'Actions' },
   ];
 
-  function transformS3Data(s3Contents, s3prefix) {
+  function transformS3Data(s3Contents: S3Response, s3prefix: string) {
     const map: MapType = {};
-    s3Contents.Contents.forEach((item) => {
+    s3Contents.Contents.forEach((item: S3Object) => {
       if (item.Key.startsWith(s3prefix)) {
         const parts = item.Key.slice(s3prefix.length).split('/').filter(Boolean);
-        parts.reduce((acc, part, index) => {
+        parts.reduce((acc: MapType, part: string, index: number) => {
           if (!acc[part]) {
             acc[part] = {
               type: index === parts.length - 1 && item.Size > 0 ? 'file' : 'directory',
               name: part,
               size: item.Size,
               lastModified: item.LastModified,
-              children: {},
+              children: {} as MapType,
             };
           }
           return acc[part].children;
         }, map);
       }
     });
-
-    function nestify(obj: MapType) {
-      return Object.keys(obj)
-        .map((key) => {
-          const item = obj[key];
-          if (Object.keys(item.children).length > 0) {
-            item.children = nestify(item.children);
-          } else {
-            delete item.children;
-          }
-          return item;
-        })
-        .filter((item) => item.type === 'file' || item.children?.length > 0);
-    }
-
     return nestify(map);
+  }
+
+  function nestify(obj: MapType) {
+    return Object.keys(obj)
+      .map((key) => {
+        const item = obj[key];
+        if (Object.keys(item.children).length > 0) {
+          item.children = nestify(item.children);
+        } else {
+          delete item.children;
+        }
+        return item;
+      })
+      .filter((item) => item.type === 'file' || (item.children && Object.keys(item.children).length > 0));
   }
 
   function formatFileSize(value: number) {
@@ -122,21 +125,13 @@
     return `${value.toFixed(unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
   }
 
-  function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-  }
-
-  const onRowClicked = debounce((item) => {
+  const onRowClicked = useDebounceFn((item) => {
     if (item.type === 'directory' && item.children?.length) {
       openDirectory(item);
     }
   }, 300);
 
-  const openDirectory = (dir) => {
+  const openDirectory = (dir: string) => {
     if (!currentPath.value.some((item) => item.name === dir.name)) {
       currentPath.value.push({ name: dir.name, children: dir.children });
     }
@@ -148,7 +143,7 @@
     }
   };
 
-  const actionItems = (row: string) => {
+  const actionItems = (row: MapType) => {
     const items: object[] = [
       [
         {

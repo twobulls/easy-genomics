@@ -19,7 +19,7 @@
   const labName = useLabsStore().labs[labId].Name;
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
   const isLaunchingRun = ref(false);
-  const emit = defineEmits(['has-launched', 'previous-tab']);
+  const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
@@ -30,6 +30,8 @@
   const schema = JSON.parse(JSON.stringify(props.schema));
 
   async function launchRun() {
+    emit('submit-launch-request');
+
     try {
       isLaunchingRun.value = true;
       const pipelineId = wipNextFlowRun.value?.pipelineId;

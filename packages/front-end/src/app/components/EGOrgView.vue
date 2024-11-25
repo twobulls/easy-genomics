@@ -21,11 +21,11 @@
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
-  const hasNoData = ref(false);
-  const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
-  const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
+
+  const hasNoData = computed<boolean>(() => orgUsersDetailsData.value.length === 0);
+  const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -187,10 +187,6 @@
 
       const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(props.orgId);
 
-      if (orgUsers?.length === 0) {
-        hasNoData.value = true;
-      }
-
       // Add displayName to each of the user records for display and sorting purposes
       orgUsersDetailsData.value = orgUsers.map((user) => ({
         ...user,
@@ -207,7 +203,6 @@
     } finally {
       useUiStore().setRequestComplete('fetchOrgData');
     }
-    return orgSettingsData.value;
   }
 
   // must be declared after store is set in fetchOrgData()
@@ -245,10 +240,6 @@
   async function refreshUserList() {
     try {
       const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(props.orgId);
-
-      if (orgUsers?.length === 0) {
-        hasNoData.value = true;
-      }
 
       // Add displayName to each of the user records for display and sorting purposes
       orgUsersDetailsData.value = orgUsers.map((user) => ({
@@ -349,7 +340,7 @@
     <template #users>
       <EGEmptyDataCTA
         v-if="!isLoading && hasNoData"
-        message="You don't have any users in this lab yet."
+        message="You don't have any users in this organization yet."
         img-src="/images/empty-state-user.jpg"
       />
 

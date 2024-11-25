@@ -38,9 +38,9 @@
   const searchOutput = ref('');
   const isCancelDialogOpen = ref<boolean>(false);
   const runToCancel = ref<Workflow | null>(null);
-  const isOpen = ref(false); // Dynamic remove user dialog values
-  const primaryMessage = ref(''); // Dynamic remove user dialog values
-  const userToRemove = ref(); // Dynamic remove user dialog values
+  const isOpen = ref(false);
+  const primaryMessage = ref('');
+  const userToRemove = ref();
   const missingPAT = ref<boolean>(false);
   const tabIndex = ref(0);
   let intervalId: number | undefined;

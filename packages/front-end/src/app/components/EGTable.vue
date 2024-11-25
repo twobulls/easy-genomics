@@ -150,8 +150,4 @@
       text-align: right;
     }
   }
-
-  .is-directory .form-checkbox {
-    display: none;
-  }
 </style>

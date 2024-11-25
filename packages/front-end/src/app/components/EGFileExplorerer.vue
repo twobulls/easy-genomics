@@ -8,15 +8,15 @@
     S3Object,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
 
-  type MapType = {
+  interface MapType {
     [key: string]: {
-      type: string;
-      name: string;
-      size: number;
-      lastModified: string;
-      children: MapType;
+      type?: string;
+      name?: string;
+      size?: number;
+      lastModified?: string;
+      children?: MapType;
     };
-  };
+  }
 
   const props = withDefaults(
     defineProps<{
@@ -42,11 +42,11 @@
   const searchQuery = ref('');
   const s3Prefix = computed(() => initialPath.value);
 
-  const updatedJsonData = computed(() => {
+  const updatedS3Contents = computed(() => {
     if (props.s3Contents) {
       const transformedData = transformS3Data(props.s3Contents, s3Prefix.value);
       if (!currentPath.value[0].children.length) {
-        currentPath.value[0]?.children.push(...transformedData);
+        currentPath.value[0].children = transformedData as any;
       }
       return transformedData;
     }
@@ -67,7 +67,7 @@
 
   const filteredItems = computed(() => {
     const query = searchQuery.value.toLowerCase();
-    return currentItems.value.filter((item) => item.name?.toLowerCase().includes(query));
+    return currentItems.value.filter((item) => item?.name?.toLowerCase().includes(query));
   });
 
   const tableColumns = [
@@ -93,7 +93,7 @@
               children: {} as MapType,
             };
           }
-          return acc[part].children;
+          return acc[part].children as MapType;
         }, map);
       }
     });
@@ -104,8 +104,8 @@
     return Object.keys(obj)
       .map((key) => {
         const item = obj[key];
-        if (Object.keys(item.children).length > 0) {
-          item.children = nestify(item.children);
+        if (Object.keys(item.children || {}).length > 0) {
+          item?.children = nestify(item.children as MapType);
         } else {
           delete item.children;
         }
@@ -114,7 +114,7 @@
       .filter((item) => item.type === 'file' || (item.children && Object.keys(item.children).length > 0));
   }
 
-  function formatFileSize(value: number) {
+  function formatFileSize(value?: number): string {
     if (!value) return '';
     const units = ['B', 'KB', 'MB', 'GB'];
     let unitIndex = 0;
@@ -125,15 +125,15 @@
     return `${value.toFixed(unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
   }
 
-  const onRowClicked = useDebounceFn((item) => {
+  const onRowClicked = useDebounceFn((item: MapType) => {
     if (item.type === 'directory' && item.children?.length) {
       openDirectory(item);
     }
   }, 300);
 
-  const openDirectory = (dir: string) => {
+  const openDirectory = (dir: MapType) => {
     if (!currentPath.value.some((item) => item.name === dir.name)) {
-      currentPath.value.push({ name: dir.name, children: dir.children });
+      currentPath.value.push(dir);
     }
   };
 
@@ -147,7 +147,7 @@
     const items: object[] = [
       [
         {
-          label: row.type === 'file' ? 'Download' : 'Download as zip',
+          label: row?.type === 'file' ? 'Download' : 'Download as zip',
           click: () =>
             row.type === 'file'
               ? handleS3Download(
@@ -162,13 +162,12 @@
         },
       ],
     ];
-
     return items;
   };
 
   // Watchers to ensure data reactivity
   watch(currentPath, () => {});
-  watch(updatedJsonData, () => {});
+  watch(updatedS3Contents, () => {});
 </script>
 
 <template>

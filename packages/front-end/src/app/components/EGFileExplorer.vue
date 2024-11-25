@@ -67,7 +67,7 @@
 
   const filteredItems = computed(() => {
     const query = searchQuery.value.toLowerCase();
-    return currentItems.value.filter((item) => item?.name?.toLowerCase().includes(query));
+    return currentItems.value.filter((item: MapType) => item?.name.toLowerCase().includes(query));
   });
 
   const tableColumns = [
@@ -105,7 +105,7 @@
       .map((key) => {
         const item = obj[key];
         if (Object.keys(item.children || {}).length > 0) {
-          item?.children = nestify(item.children as MapType);
+          item.children = nestify(item.children as MapType);
         } else {
           delete item.children;
         }

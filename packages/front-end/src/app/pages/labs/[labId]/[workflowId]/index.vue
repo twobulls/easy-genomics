@@ -114,7 +114,7 @@
   >
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
-        <EGFileExplorerer
+        <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"
           :workflow-id="workflowId"

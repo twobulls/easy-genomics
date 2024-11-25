@@ -1,5 +1,7 @@
 <script setup lang="ts">
   import { useChangeCase } from '@vueuse/integrations/useChangeCase';
+  import { useWorkflowStore } from '@FE/stores';
+
   import {
     S3Object,
     S3Response,
@@ -17,8 +19,8 @@
 
   const props = withDefaults(
     defineProps<{
-      workflowBasePath: string;
       labId: string;
+      workflowId: string;
       s3Contents: S3Response | null;
       isLoading?: boolean;
     }>(),
@@ -137,7 +139,11 @@
   };
 
   const openDirectory = (dir: { name: string; children: [] }) => {
-    currentPath.value.push({ name: dir.name, children: dir.children });
+    const itemPath = currentPath.value.map((p) => p.name).join('/');
+    const newItemPath = `${itemPath}/${dir.name}`.replace(/\/+/g, '/'); // Normalize the path
+    if (!currentPath.value.some((item) => item.name === newItemPath)) {
+      currentPath.value.push({ name: dir.name, children: dir.children });
+    }
   };
 
   const navigateTo = (index: number) => {
@@ -153,11 +159,12 @@
           label: row.type === 'file' ? 'Download' : 'Download as zip',
           click: () =>
             row.type === 'file'
-              ? downloadReport(
+              ? handleS3Download(
                   props.labId,
                   row.name,
-                  's3://851725267090-dev-build-lab-bucket/61c86013-74f2-4d30-916a-70b03a97ba14/bbac4190-0446-4db4-a084-cfdbc8102297/next-flow/0a9b27fa-6a41-4658-a412-1cdcf817b8a6/sample-sheet.csv',
-                  row.name,
+                  useWorkflowStore()
+                    .workflowById(props.labId, props.workflowId)
+                    .workDir.replace(/\/work$/, ''),
                   row.size,
                 )
               : downloadFolder(),

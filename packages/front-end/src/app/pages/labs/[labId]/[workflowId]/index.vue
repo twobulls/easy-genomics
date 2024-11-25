@@ -117,7 +117,7 @@
         <EGFileExplorerer
           :s3-contents="s3Contents"
           :lab-id="labId"
-          :workflow-base-path="workflowBasePath"
+          :workflow-id="workflowId"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>

@@ -4,7 +4,8 @@ export default function useFileDownload() {
   const { $api } = useNuxtApp();
 
   async function handleS3Download(labId: string, fileName: string, path: string, size: number) {
-    const fileDownload: FileDownloadResponse = await $api.workflows.downloadS3file(labId, path);
+    const fileDownloadPath = `${path}/${fileName}`;
+    const fileDownload: FileDownloadResponse = await $api.workflows.downloadS3file(labId, fileDownloadPath);
     if (fileDownload) {
       const link = document.createElement('a');
       link.href = `data:${size};base64,${fileDownload.Data}`;
@@ -15,7 +16,7 @@ export default function useFileDownload() {
   }
 
   async function downloadFolder() {
-    // TODO
+    // TODO: download folder as zip file once API is available
   }
 
   function isSupportedFileType(filename: string): boolean {

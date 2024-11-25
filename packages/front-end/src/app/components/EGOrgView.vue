@@ -10,7 +10,6 @@
   import { OrgDetailsForm } from '@FE/types/forms';
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
   import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
-  import { Laboratory } from '@/packages/shared-lib/src/app/types/easy-genomics/laboratory';
 
   const props = defineProps<{
     orgId: string;
@@ -23,11 +22,12 @@
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
-  const hasNoData = ref(false);
-  const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
-  const orgSettingsData = ref({} as Organization | undefined);
+  const orgSettingsData = ref({} as Organization | undefined); // yeet
   const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
+
+  const hasNoData = computed<boolean>(() => orgUsersDetailsData.value.length === 0);
+  const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -189,10 +189,6 @@
 
       const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(props.orgId);
 
-      if (orgUsers?.length === 0) {
-        hasNoData.value = true;
-      }
-
       // Add displayName to each of the user records for display and sorting purposes
       orgUsersDetailsData.value = orgUsers.map((user) => ({
         ...user,
@@ -247,10 +243,6 @@
   async function refreshUserList() {
     try {
       const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(props.orgId);
-
-      if (orgUsers?.length === 0) {
-        hasNoData.value = true;
-      }
 
       // Add displayName to each of the user records for display and sorting purposes
       orgUsersDetailsData.value = orgUsers.map((user) => ({
@@ -324,7 +316,7 @@
     <template #users>
       <EGEmptyDataCTA
         v-if="!isLoading && hasNoData"
-        message="You don't have any users in this lab yet."
+        message="You don't have any users in this organization yet."
         img-src="/images/empty-state-user.jpg"
       />
 

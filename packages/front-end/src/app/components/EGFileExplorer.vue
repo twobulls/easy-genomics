@@ -25,7 +25,7 @@
       s3Contents: S3Response | null;
       isLoading?: boolean;
     }>(),
-    { isLoading: false },
+    { isLoading: true },
   );
 
   const { handleS3Download, downloadFolder } = useFileDownload();

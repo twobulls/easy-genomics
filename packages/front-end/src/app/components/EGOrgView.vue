@@ -22,7 +22,6 @@
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
-  const orgSettingsData = ref({} as Organization | undefined); // yeet
   const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
 
@@ -205,7 +204,6 @@
     } finally {
       useUiStore().setRequestComplete('fetchOrgData');
     }
-    return orgSettingsData.value;
   }
 
   // must be declared after store is set in fetchOrgData()

@@ -182,7 +182,7 @@
     <EGSearchInput
       @input-event="(event) => (searchQuery = event)"
       placeholder="Search files/folders"
-      class="my-6 w-[408px]"
+      class="mb-6 w-[408px]"
       :disabled="isLoading"
     />
 

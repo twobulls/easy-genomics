@@ -1,10 +1,24 @@
 <script setup lang="ts">
-  defineProps({ items: { type: Array, required: true } });
+  withDefaults(
+    defineProps<{
+      items: { name: string; icon: string; action: () => void }[];
+    }>(),
+    {
+      items: () => [],
+    },
+  );
   const isOpen = ref(false);
+  const attrs = useAttrs();
 </script>
 
 <template>
-  <UDropdown class="EGActionButton" v-model:open="isOpen" :items="items" :popper="{ placement: 'bottom-start' }">
+  <UDropdown
+    class="EGActionButton"
+    v-model:open="isOpen"
+    :items="items"
+    :popper="{ placement: 'bottom-start' }"
+    v-bind="attrs"
+  >
     <div class="h-10 w-10 rounded-full border">
       <UButton
         :class="{ active: isOpen }"

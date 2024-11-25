@@ -13,6 +13,8 @@
       showPagination?: boolean;
       rowClickAction?: (rowItem: any) => void | undefined;
       noResultsMsg?: string;
+      canSelect?: boolean;
+      rowClasses?: (row: any) => string;
     }>(),
     {
       isLoading: false,
@@ -36,6 +38,8 @@
     return localProps.tableData.slice((page.value - 1) * pageCount.value, page.value * pageCount.value);
   });
 
+  const selected = props.canSelect ? ref([]) : ref(null);
+
   watch(
     () => props.tableData,
     (newTableData: any) => {
@@ -45,12 +49,7 @@
 </script>
 
 <template>
-  <UCard
-    class="rounded-2xl border-none shadow-none"
-    :ui="{
-      body: 'p-0',
-    }"
-  >
+  <UCard class="rounded-2xl border-none shadow-none" :ui="{ body: 'p-0' }">
     <UTable
       :ui="{
         tr: {
@@ -63,15 +62,25 @@
       :columns="columns"
       :loading="isLoading"
       :loading-state="{ icon: '', label: '' }"
+      v-model="selected"
     >
       <!-- Custom columns can be passed in as slots from parent -->
       <template v-for="(_, slotName) in $slots" #[slotName]="slotData">
         <slot :name="slotName" v-bind="slotData"></slot>
       </template>
 
+      <template #default="{ row }">
+        <tr :class="props.rowClasses ? props.rowClasses(row) : ''">
+          <td v-for="(column, index) in columns" :key="index">
+            <slot :name="column.key + '-data'" :row="row">{{ row[column.key] }}</slot>
+          </td>
+        </tr>
+      </template>
+
       <template #actions-data="{ row }">
         <EGActionButton v-if="actionItems" :items="actionItems(row)" @click="$event.stopPropagation()" />
       </template>
+
       <template #empty-state>
         <div class="text-muted flex h-12 items-center justify-center font-normal" v-if="!isLoading">
           {{ noResultsMsg }}
@@ -89,9 +98,6 @@
 </template>
 
 <style scoped lang="scss">
-  /**
-   * Table styles are quite granular so styled here via SCSS instead of the UTable's :ui prop config object
-   */
   :deep(table) {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
@@ -127,7 +133,7 @@
 
     tbody tr td:nth-child(1) {
       color: black;
-      font-weight: 600;
+      font-weight: 500;
       padding-left: 40px;
       white-space: normal;
     }

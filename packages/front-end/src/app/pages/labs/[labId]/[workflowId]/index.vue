@@ -7,15 +7,13 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-
   const workflowStore = useWorkflowStore();
 
   const labId = $route.params.labId as string;
   const workflowId = $route.params.workflowId as string;
   const workflowReports = ref([]);
-
-  let workflowBasePath = '';
-  let tabIndex = ref(0);
+  const s3Contents = ref<S3Response>(null);
+  const tabIndex = ref(0);
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(labId)) {
@@ -34,9 +32,8 @@
       label: 'Run Results',
     },
   ]);
-  const workflow = computed<Workflow | null>(() => workflowStore.workflows[labId][workflowId]);
 
-  const s3Contents = ref<S3Response>(null);
+  const workflow = computed<Workflow | null>(() => workflowStore.workflows[labId][workflowId]);
 
   const createdDateTime = computed(() => {
     const createdDate = getDate(workflow.value?.dateCreated);
@@ -58,7 +55,6 @@
     useUiStore().setRequestPending('loadWorkflowReports');
     const res = await $api.workflows.readWorkflowReports(workflowId, labId);
     workflowReports.value = res.reports;
-    workflowBasePath = res.basePath;
     useUiStore().setRequestComplete('loadWorkflowReports');
   }
 

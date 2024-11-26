@@ -31,7 +31,7 @@
 </script>
 
 <template>
-  <UForm :schema="formSchema" :state="state" class="w-full max-w-[408px]">
+  <UForm :schema="formSchema" :state="state" @submit="signIn(state.email, state.password)" class="w-full max-w-[408px]">
     <EGText tag="h2" class="mb-12">Sign in</EGText>
     <EGFormGroup label="Email" name="email">
       <EGInput v-model="state.email" :autofocus="isAcceptingInvite" autocomplete="username" />
@@ -44,7 +44,7 @@
         :disabled="isFormDisabled || useUiStore().isRequestPending('signIn')"
         :loading="useUiStore().isRequestPending('signIn')"
         label="Sign in"
-        @click="signIn(state.email, state.password)"
+        u-button-type="submit"
       />
       <EGText href="/forgot-password" tag="a" color-class="text-primary">Forgot password?</EGText>
     </div>

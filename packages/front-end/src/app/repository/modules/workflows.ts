@@ -1,6 +1,5 @@
 import { FileDownloadUrlResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/file/request-file-download-url';
 import { FileDownloadResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/nf-tower/file/request-file-download';
-import { FileDownloadUrlResponse } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-file-download-url';
 import { FileDownloadResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/file/request-file-download';
 import {
   CreateWorkflowLaunchRequest,
@@ -68,39 +67,13 @@ class WorkflowsModule extends HttpFactory {
   }
 
   /**
-   * Calls '/easy-genomics/file/download/request-file-download-url' API to
-   * retrieve pre-signed S3 Download URL for secure file download.
-   *
-   * This method and API is only suitable for us when downloading a file that
-   * exists within an S3 Bucket that the AWS Account has access to and is within
-   * the same AWS Region.
-   *
-   * @param labId
-   * @param s3Uri
-   */
-  async getFileDownloadUrl(labId: string, s3Uri: string): Promise<FileDownloadUrlResponse> {
-    const res = await this.call<FileDownloadUrlResponse>('POST', '/file/download/request-file-download-url', {
-      LaboratoryId: labId,
-      S3Uri: s3Uri,
-    });
-
-    if (!res) {
-      console.error('Error calling file download url API');
-      throw new Error('Failed to get file download url');
-    }
-
-    validateApiResponse(FileDownloadUrlResponseSchema, res);
-    return res;
-  }
-
-  /**
    * Calls '/nf-tower/file/request-file-download' API to download the contents
    * of a specified NextFlow Tower Workflow Run results file.
    *
    * @param labId
    * @param contentUri
    */
-  async getNextFlowFileDownload(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+  async downloadNextflowFile(labId: string, contentUri: string): Promise<FileDownloadResponse> {
     const res: FileDownloadResponse | undefined = await this.callNextflowTower<FileDownloadResponse>(
       'POST',
       '/file/request-file-download',
@@ -116,6 +89,30 @@ class WorkflowsModule extends HttpFactory {
     }
 
     validateApiResponse(FileDownloadResponseSchema, res);
+    return res;
+  }
+
+  /**
+   * Get signed URL for downloading a file from S3 Bucket
+   * @param labId
+   * @param contentUri
+   */
+  async downloadS3file(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+    const res: FileDownloadResponse | undefined = await this.call<FileDownloadResponse>(
+      'POST',
+      '/file/request-file-download-url',
+      {
+        LaboratoryId: labId,
+        S3Uri: contentUri,
+      },
+    );
+
+    if (!res) {
+      console.error('Error calling file download API');
+      throw new Error('Failed to perform file download');
+    }
+
+    validateApiResponse(FileDownloadUrlResponseSchema, res);
     return res;
   }
 

@@ -32,43 +32,19 @@
   const uiStore = useUiStore();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
-
   const labUsers = ref<LabUser[]>([]);
+  const pipelines = ref<[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
-  const pipelines = ref<[]>([]);
-
-  // Dynamic remove user dialog values
+  const isCancelDialogOpen = ref<boolean>(false);
+  const runToCancel = ref<Workflow | null>(null);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
-
-  let intervalId: number | undefined;
-
   const missingPAT = ref<boolean>(false);
-
   const tabIndex = ref(0);
-  // set tabIndex according to query param
-  onMounted(() => {
-    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
-    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
-  });
-
-  /**
-   * Fetch Lab details, pipelines, runs and Lab users before component mount and start periodic fetching
-   */
-  onBeforeMount(loadLabData);
-
-  onUnmounted(() => {
-    if (intervalId) {
-      clearTimeout(intervalId);
-    }
-  });
-  async function pollFetchNextFlowRuns() {
-    await getNextFlowRuns();
-    intervalId = window.setTimeout(pollFetchNextFlowRuns, 2 * 60 * 1000);
-  }
+  let intervalId: number | undefined;
 
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
@@ -209,24 +185,31 @@
     return buttons;
   }
 
-  watch(lab, async (lab) => {
-    if (lab !== null) {
-      if (lab.HasNextFlowTowerAccessToken) {
-        // load pipelines/runs/labUsers after lab loads
-        if (props.superuser) {
-          // superuser doesn't view pipelines or runs so don't fetch those
-          await getLabUsers();
-        } else {
-          await Promise.all([getPipelines(), pollFetchNextFlowRuns(), getLabUsers()]);
-          canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
-        }
-      } else {
-        // missing personal access token message
-        missingPAT.value = true;
-        showRedirectModal();
-      }
+  /**
+   * Fetch Lab details, pipelines, workflows and Lab users before component mount and start periodic fetching
+   */
+  onBeforeMount(loadLabData);
+
+  // set tabIndex according to query param
+  onMounted(() => {
+    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
+    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+
+    if (intervalId) {
+      clearTimeout(intervalId);
     }
   });
+
+  onBeforeRouteLeave(() => {
+    if (intervalId) {
+      clearTimeout(intervalId);
+    }
+  });
+
+  async function pollFetchWorkflows() {
+    await getWorkflows();
+    intervalId = window.setTimeout(pollFetchWorkflows, 2 * 60 * 1000);
+  }
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -412,9 +395,6 @@
     $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 
-  const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<NextFlowRun | null>(null);
-
   async function handleCancelDialogAction() {
     const runId = runToCancel.value?.id;
     const runName = runToCancel.value?.runName;
@@ -438,6 +418,25 @@
 
     await getNextFlowRuns();
   }
+
+  watch(lab, async (lab) => {
+    if (lab !== null) {
+      if (lab.HasNextFlowTowerAccessToken) {
+        // load pipelines/workflows/labUsers after lab loads
+        if (props.superuser) {
+          // superuser doesn't view pipelines or workflows so don't fetch those
+          await getLabUsers();
+        } else {
+          await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
+          canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
+        }
+      } else {
+        // missing personal access token message
+        missingPAT.value = true;
+        showRedirectModal();
+      }
+    }
+  });
 </script>
 
 <template>

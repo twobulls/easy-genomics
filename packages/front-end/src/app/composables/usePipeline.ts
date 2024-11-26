@@ -8,7 +8,7 @@ export default function usePipeline($api: any) {
   async function downloadSampleSheet(nextFlowRunTempId: string) {
     const wipNextFlowRun: WipNextFlowRunData = useRunStore().wipNextFlowRuns[nextFlowRunTempId];
 
-    const fileDownloadUrlResponse = await $api.files.requestFileDownloadUrl({
+    const fileDownloadUrlResponse = await $api.file.requestFileDownloadUrl({
       LaboratoryId: `${wipNextFlowRun.laboratoryId}`,
       S3Uri: `${wipNextFlowRun.sampleSheetS3Url}`,
     });

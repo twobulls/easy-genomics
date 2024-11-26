@@ -1,5 +1,5 @@
 import { NestedStack } from 'aws-cdk-lib';
-// import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 // import { LambdaConstruct } from '../constructs/lambda-construct';
@@ -36,5 +36,45 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
   }
 
   // AWS HealthOmics specific IAM policies
-  private setupIamPolicies = () => {};
+  private setupIamPolicies = () => {
+    /**
+     * To run an Omics workflow, a service role that allows HealthOmics service to access resources is required.
+     * The following policy statements provide the service role permission to:
+     * - All input files locations in S3 will need Read access
+     * - Any S3 output location will require read and write access
+     * - CloudWatch requires access
+     * - Ensure that all ECR containers and buckets required to run the workflow are in the same region
+     */
+    this.iam.addPolicyStatements('easy-genomics-healthomics-workflow-policy-statements', [
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*/*'],
+        actions: ['s3:GetObject', 's3:PutObject'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*'],
+        actions: ['s3:ListBucket'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:logs:${this.props.env.region!}:${this.props.env.account!}:log-group:/aws/omics/WorkflowLog:log-stream:*`,
+        ],
+        actions: ['logs:CreateLogStream', 'logs:DescribeLogStreams', 'logs:PutLogEvents'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:logs:${this.props.env.region!}:${this.props.env.account!}:log-group:/aws/omics/WorkflowLog:*`,
+        ],
+        actions: ['logs:CreateLogGroup'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:logs:${this.props.env.region!}:${this.props.env.account!}:repository/*`],
+        actions: ['ecr:BatchCheckLayerAvailability', 'ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+  };
 }

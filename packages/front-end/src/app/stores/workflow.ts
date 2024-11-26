@@ -38,6 +38,10 @@ const useWorkflowStore = defineStore('workflowStore', {
   state: initialState,
 
   getters: {
+    workflowById:
+      (state: WorkflowState) =>
+      (labId: string, workflowId: string): Workflow | undefined =>
+        state.workflows[labId]?.[workflowId],
     workflowsForLab:
       (state: WorkflowState) =>
       (labId: string): Workflow[] =>

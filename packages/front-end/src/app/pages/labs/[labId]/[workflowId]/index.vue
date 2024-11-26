@@ -1,48 +1,27 @@
 <script setup lang="ts">
   import { getDate, getTime } from '@FE/utils/date-time';
   import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
-  import { FileDownloadResponse } from '@/packages/shared-lib/src/app/types/nf-tower/file/request-file-download';
+  import { S3Response } from '@/packages/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-
   const workflowStore = useWorkflowStore();
 
-  const labId: string = $route.params.labId;
-  const workflowId: string = $route.params.workflowId;
+  const labId = $route.params.labId as string;
+  const workflowId = $route.params.workflowId as string;
   const workflowReports = ref([]);
-  let workflowBasePath = '';
+  const s3Contents = ref<S3Response>(null);
+  const tabIndex = ref(0);
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(labId)) {
     $router.push('/labs');
   }
 
-  const workflow = computed<Workflow | null>(() => workflowStore.workflows[labId][workflowId]);
-
-  async function loadWorkflow() {
-    try {
-      workflowStore.loadSingleWorkflow(labId, workflowId);
-    } catch (e: any) {
-      console.error('Failed to get workflow from API:', e);
-    }
-  }
-
-  const runResultsColumns = [
-    {
-      key: 'fileName',
-      label: 'File Names',
-      sortable: true,
-      sort: useSort().stringSortCompare,
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-    },
-  ];
-
-  const tabItems = [
+  // TODO: switch 'healthomics' suffix for HealthOmics labs
+  const s3Prefix = computed(() => `${useUserStore().currentOrgId}/${labId}/next-flow`);
+  const tabItems = computed(() => [
     {
       key: 'runDetails',
       label: 'Run Details',
@@ -51,15 +30,9 @@
       key: 'runResults',
       label: 'Run Results',
     },
-  ];
+  ]);
 
-  let tabIndex = ref(0);
-  // set tabIndex according to query param
-  onMounted(() => {
-    const queryTab = $route.query.tab as string;
-    const queryTabMatchIndex = tabItems.findIndex((tab) => tab.label === queryTab);
-    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
-  });
+  const workflow = computed<Workflow | null>(() => workflowStore.workflows[labId][workflowId]);
 
   const createdDateTime = computed(() => {
     const createdDate = getDate(workflow.value?.dateCreated);
@@ -77,27 +50,40 @@
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
 
-  onBeforeMount(initData);
+  async function loadWorkflowReports() {
+    useUiStore().setRequestPending('loadWorkflowReports');
+    const res = await $api.workflows.readWorkflowReports(workflowId, labId);
+    workflowReports.value = res.reports;
+    useUiStore().setRequestComplete('loadWorkflowReports');
+  }
 
-  async function downloadReport(fileName: string, path: string, size: number) {
-    const fileDownload: FileDownloadResponse = await $api.workflows.getNextFlowFileDownload(labId, path);
-    if (fileDownload) {
-      const link = document.createElement('a');
-      link.href = `data:${size};base64,${fileDownload.Data}`;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(link.href);
+  async function fetchS3Content() {
+    useUiStore().setRequestPending('fetchS3Content');
+    try {
+      const res = await $api.file.requestListBucketObjects({
+        LaboratoryId: labId,
+        S3Prefix: s3Prefix.value,
+      });
+      s3Contents.value = res;
+    } catch (error) {
+      console.error('Error fetching S3 content', error);
+    } finally {
+      useUiStore().setRequestComplete('fetchS3Content');
     }
   }
 
-  async function initData() {
-    useUiStore().setRequestPending('loadWorkflow');
-    await loadWorkflow();
-    const res = await $api.workflows.readWorkflowReports(workflowId, labId);
-    workflowReports.value = res.reports;
-    workflowBasePath = res.basePath;
-    useUiStore().setRequestComplete('loadWorkflow');
-  }
+  onBeforeMount(async () => {
+    await loadWorkflowReports();
+    // TODO: add API call to get Run ID to construct s3 prefix for fetchS3Content() - see: Andrew
+    await fetchS3Content();
+  });
+
+  // set tabIndex according to query param
+  onMounted(() => {
+    const queryTab = $route.query.tab as string;
+    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
+    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+  });
 
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
   //  Tailwind won't pick up and include the classes used and styles will be missing.
@@ -150,25 +136,12 @@
   >
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
-        <EGTable
-          :table-data="workflowReports"
-          :columns="runResultsColumns"
-          :is-loading="useUiStore().isRequestPending('loadWorkflow')"
-          no-results-msg="No results have been generated yet."
-        >
-          <template #actions-data="{ row, index }">
-            <div class="flex items-center justify-end">
-              <EGButton
-                label="Download"
-                variant="secondary"
-                size="sm"
-                @click="downloadReport(row.fileName, `${workflowBasePath}${row.path}`, row.size)"
-                :icon-right="false"
-                icon="i-heroicons-arrow-down-tray"
-              />
-            </div>
-          </template>
-        </EGTable>
+        <EGFileExplorer
+          :s3-contents="s3Contents"
+          :lab-id="labId"
+          :workflow-id="workflowId"
+          :is-loading="useUiStore().isRequestPending('fetchS3Content')"
+        />
       </div>
       <div v-if="item.key === 'runDetails'" class="space-y-3">
         <section

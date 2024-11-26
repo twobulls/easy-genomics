@@ -26,7 +26,9 @@ type PendingRequest =
   | 'fetchOrgLabs'
   | 'fetchUserLabs'
   | 'loadLabData'
-  | `addUserToLabButton-${string}-${string}`;
+  | `addUserToLabButton-${string}-${string}`
+  | 'fetchS3Content'
+  | 'loadWorkflowReports';
 
 interface UiStoreState {
   pendingRequests: Set<string>;

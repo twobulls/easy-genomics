@@ -1,5 +1,5 @@
 import { NestedStack } from 'aws-cdk-lib';
-import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Effect, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 // import { LambdaConstruct } from '../constructs/lambda-construct';
@@ -48,12 +48,12 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
     this.iam.addPolicyStatements('easy-genomics-healthomics-workflow-policy-statements', [
       new PolicyStatement({
         resources: ['arn:aws:s3:::*/*'],
-        actions: ['s3:GetObject', 's3:PutObject'],
+        actions: ['s3:*'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
         resources: ['arn:aws:s3:::*'],
-        actions: ['s3:ListBucket'],
+        actions: ['s3:*'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -76,5 +76,31 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+
+    /**
+     * To start an Omics workflow run, a service role with the appropriate access policies is required.
+     */
+    this.iam.addRole(
+      'easy-genomics-healthomics-workflow-run-role',
+      new Role(this, `${this.props.namePrefix}-easy-genomics-healthomics-workflow-run-role`, {
+        roleName: `${this.props.namePrefix}-easy-genomics-healthomics-workflow-run-role`,
+        assumedBy: new ServicePrincipal('omics.amazonaws.com', {
+          region: `${this.props.env.region!}`,
+          conditions: {
+            ['StringEquals']: {
+              'aws:SourceAccount': `${this.props.env.account!}`,
+            },
+            ['ArnLike']: {
+              'aws:SourceArn': `arn:aws:omics:${this.props.env.region}:${this.props.env.account!}:run/*`,
+            },
+          },
+        }),
+        inlinePolicies: {
+          [`${this.props.namePrefix}-easy-genomics-healthomics-workflow-policy-document`]: new PolicyDocument({
+            statements: this.iam.getPolicyStatements('easy-genomics-healthomics-workflow-policy-statements'),
+          }),
+        },
+      }),
+    );
   };
 }

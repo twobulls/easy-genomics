@@ -199,6 +199,12 @@
     }
   });
 
+  onBeforeRouteLeave(() => {
+    if (intervalId) {
+      clearTimeout(intervalId);
+    }
+  });
+
   async function pollFetchWorkflows() {
     await getWorkflows();
     intervalId = window.setTimeout(pollFetchWorkflows, 2 * 60 * 1000);

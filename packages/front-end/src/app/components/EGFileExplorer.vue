@@ -73,7 +73,12 @@
   const tableColumns = [
     { key: 'name', label: 'Name', sortable: true, sort: useSort().stringSortCompare },
     { key: 'type', label: 'Type', sortable: true, sort: useSort().stringSortCompare },
-    { key: 'dateModified', label: 'Date Modified', sortable: true, sort: useSort().dateSortCompare },
+    {
+      key: 'lastModified',
+      label: 'Date Modified',
+      sortable: true,
+      sort: useSort().dateSortCompare,
+    },
     { key: 'size', label: 'Size', sortable: true, sort: useSort().numberSortCompare },
     { key: 'actions', label: 'Actions' },
   ];
@@ -219,7 +224,7 @@
       <template #type-data="{ row }">
         {{ useChangeCase(row.type === 'directory' ? 'Folder' : row.type, 'sentenceCase') }}
       </template>
-      <template #dateModified-data="{ row }">
+      <template #lastModified-data="{ row }">
         {{ format(row.lastModified, 'MM/dd/yyyy') }}
       </template>
       <template #size-data="{ row }">

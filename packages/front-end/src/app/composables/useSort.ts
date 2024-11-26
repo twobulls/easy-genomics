@@ -1,3 +1,5 @@
+import { parse, isValid } from 'date-fns';
+
 export default function useSort() {
   /**
    * Compares string values for sorting in a linguistically intuitive way
@@ -46,24 +48,22 @@ export default function useSort() {
   }
 
   /**
-   * Compares date values in yyyy-mm-dd format for sorting
-   *
-   * @param {string} inputA
-   * @param {string} inputB
-   * @param {'asc' | 'desc'} direction
-   * @return {number} comparison result
+   * Compares date values for sorting
+   * @param inputA - First date string in ISO 8601 format
+   * @param inputB - Second date string in ISO 8601 format
+   * @param direction
    */
-  function dateSortCompare(inputA: string, inputB: string, direction: 'asc' | 'desc' = 'asc') {
-    const dateA = new Date(inputA);
-    const dateB = new Date(inputB);
+  function dateSortCompare(inputA: string, inputB: string, direction: 'asc' | 'desc' = 'asc'): number {
+    const dateA = parse(inputA, "yyyy-MM-dd'T'HH:mm:ss.SSSX", new Date());
+    const dateB = parse(inputB, "yyyy-MM-dd'T'HH:mm:ss.SSSX", new Date());
 
-    let result = dateA.getTime() - dateB.getTime();
-
-    if (direction === 'desc') {
-      result *= -1;
+    if (!isValid(dateA) || !isValid(dateB)) {
+      throw new Error('Invalid date format');
     }
 
-    return result;
+    const result = dateA.getTime() - dateB.getTime();
+
+    return direction === 'asc' ? result : -result;
   }
 
   return {

@@ -1,16 +1,17 @@
 <script setup lang="ts">
   import { getDate, getTime } from '@FE/utils/date-time';
-  import { Workflow } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+  import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
   import { S3Response } from '@/packages/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
+  import { useRunStore } from '@FE/stores';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
   const labId = $route.params.labId as string;
-  const workflowId = $route.params.workflowId as string;
-  const workflowReports = ref([]);
+  const nextFlowRunId = $route.params.nextFlowRunId as string;
+  const nextFlowRunReports = ref([]);
   const s3Contents = ref<S3Response>(null);
   const tabIndex = ref(0);
 
@@ -32,29 +33,29 @@
     },
   ]);
 
-  const workflow = computed<Workflow | null>(() => workflowStore.workflows[labId][workflowId]);
+  const nextFlowRun = computed<NextFlowRun | null>(() => runStore.nextFlowRuns[labId][nextFlowRunId]);
 
   const createdDateTime = computed(() => {
-    const createdDate = getDate(workflow.value?.dateCreated);
-    const createdTime = getTime(workflow.value?.dateCreated);
+    const createdDate = getDate(nextFlowRun.value?.dateCreated);
+    const createdTime = getTime(nextFlowRun.value?.dateCreated);
     return createdDate && createdTime ? `${createdTime} ⋅ ${createdDate}` : '—';
   });
   const startedDateTime = computed(() => {
-    const startedDate = getDate(workflow.value?.start);
-    const startedTime = getTime(workflow.value?.start);
+    const startedDate = getDate(nextFlowRun.value?.start);
+    const startedTime = getTime(nextFlowRun.value?.start);
     return startedDate && startedTime ? `${startedTime} ⋅ ${startedDate}` : '—';
   });
   const stoppedDateTime = computed(() => {
-    const stoppedDate = getDate(workflow.value?.complete);
-    const stoppedTime = getTime(workflow.value?.complete);
+    const stoppedDate = getDate(nextFlowRun.value?.complete);
+    const stoppedTime = getTime(nextFlowRun.value?.complete);
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
 
-  async function loadWorkflowReports() {
-    useUiStore().setRequestPending('loadWorkflowReports');
-    const res = await $api.workflows.readWorkflowReports(workflowId, labId);
-    workflowReports.value = res.reports;
-    useUiStore().setRequestComplete('loadWorkflowReports');
+  async function loadRunReports() {
+    useUiStore().setRequestPending('loadRunReports');
+    const res = await $api.workflows.readWorkflowReports(nextFlowRunId, labId);
+    nextFlowRunReports.value = res.reports;
+    useUiStore().setRequestComplete('loadRunReports');
   }
 
   async function fetchS3Content() {
@@ -73,7 +74,7 @@
   }
 
   onBeforeMount(async () => {
-    await loadWorkflowReports();
+    await loadRunReports();
     // TODO: add API call to get Run ID to construct s3 prefix for fetchS3Content() - see: Andrew
     await fetchS3Content();
   });
@@ -115,11 +116,11 @@
 
 <template>
   <EGPageHeader
-    :title="workflow?.runName || ''"
-    :description="workflow?.projectName || ''"
+    :title="nextFlowRun?.runName || ''"
+    :description="nextFlowRun?.projectName || ''"
     :show-back="true"
     :back-action="() => $router.push(`/labs/${labId}`)"
-    :is-loading="useUiStore().isRequestPending('loadWorkflow')"
+    :is-loading="useUiStore().isRequestPending('loadNextFlowRun')"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />
 
@@ -139,7 +140,7 @@
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"
-          :workflow-id="workflowId"
+          :next-flow-run-id="nextFlowRunId"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>
@@ -149,8 +150,8 @@
         >
           <dl class="mt-4">
             <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">Workflow Run Status</dt>
-              <dd class="text-muted text-left"><EGStatusChip :status="workflow?.status" /></dd>
+              <dt class="w-[200px] font-medium text-black">Run Status</dt>
+              <dd class="text-muted text-left"><EGStatusChip :status="nextFlowRun?.status" /></dd>
             </div>
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Creation Time</dt>

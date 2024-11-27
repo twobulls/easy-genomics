@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { useChangeCase } from '@vueuse/integrations/useChangeCase';
   import { useDebounceFn } from '@vueuse/core';
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
   import { format } from 'date-fns';
   import {
     S3Response,
@@ -21,7 +21,7 @@
   const props = withDefaults(
     defineProps<{
       labId: string;
-      workflowId: string;
+      nextFlowRunId: string;
       s3Contents: S3Response | null;
       isLoading?: boolean;
     }>(),
@@ -158,9 +158,7 @@
               ? handleS3Download(
                   props.labId,
                   row.name,
-                  useWorkflowStore()
-                    .workflowById(props.labId, props.workflowId)
-                    .workDir.replace(/\/work$/, ''),
+                  useRunStore().nextFlowRuns[props.labId][props.nextFlowRunId].workDir.replace(/\/work$/, ''),
                   row.size,
                 )
               : downloadFolder(),

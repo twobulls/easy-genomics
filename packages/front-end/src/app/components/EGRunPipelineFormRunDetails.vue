@@ -3,16 +3,16 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
 
   const emit = defineEmits(['next-step', 'step-validated']);
 
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   /**
    * Seqera API spec
@@ -47,8 +47,8 @@
   type FormState = z.infer<typeof formStateSchema>;
 
   const formState = reactive<FormState>({
-    pipelineDescription: wipWorkflow.value?.pipelineDescription || '',
-    pipelineName: wipWorkflow.value?.pipelineName || '',
+    pipelineDescription: wipNextFlowRun.value?.pipelineDescription || '',
+    pipelineName: wipNextFlowRun.value?.pipelineName || '',
     runName: '',
   });
 
@@ -66,8 +66,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = wipWorkflow.value?.userPipelineRunName || '';
-    formState.pipelineDescription = wipWorkflow.value?.pipelineDescription || '';
+    formState.runName = wipNextFlowRun.value?.userPipelineRunName || '';
+    formState.pipelineDescription = wipNextFlowRun.value?.pipelineDescription || '';
     validate(formState);
   });
 
@@ -87,7 +87,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    useWorkflowStore().updateWipWorkflow(workflowTempId, { userPipelineRunName: safeRunName });
+    useRunStore().updateWipNextFlowRun(nextFlowRunTempId, { userPipelineRunName: safeRunName });
     emit('next-step');
   }
 

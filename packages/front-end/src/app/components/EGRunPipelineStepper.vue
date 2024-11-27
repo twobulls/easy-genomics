@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
 
   const props = defineProps<{
     schema: object;
@@ -7,11 +7,11 @@
   }>();
 
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const labId = $route.params.labId as string;
 
@@ -206,7 +206,7 @@
             <EGRunPipelineFormReviewPipeline
               :can-launch="true"
               :schema="props.schema"
-              :params="wipWorkflow?.params"
+              :params="wipNextFlowRun?.params"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"

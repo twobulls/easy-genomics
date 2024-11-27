@@ -12,10 +12,9 @@ type PendingRequest =
   | 'addUserToLab'
   | 'updateUser'
   | 'getPipelines'
-  | 'getWorkflows'
-  | 'loadWorkflow'
-  | 'launchWorkflow'
-  | 'cancelWorkflow'
+  | 'getNextFlowRuns'
+  | 'loadNextFlowRun'
+  | 'cancelNextFlowRun'
   | 'createOrg'
   | 'fetchOrgData'
   | 'editOrg'
@@ -28,7 +27,7 @@ type PendingRequest =
   | 'loadLabData'
   | `addUserToLabButton-${string}-${string}`
   | 'fetchS3Content'
-  | 'loadWorkflowReports';
+  | 'loadRunReports';
 
 interface UiStoreState {
   pendingRequests: Set<string>;

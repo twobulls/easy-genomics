@@ -7,7 +7,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useWorkflowStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useRunStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -15,7 +15,7 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
-  import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -26,7 +26,8 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const modal = useModal();
-  const workflowStore = useWorkflowStore();
+
+  const runStore = useRunStore();
   const labStore = useLabsStore();
   const uiStore = useUiStore();
 
@@ -37,7 +38,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<Workflow | null>(null);
+  const runToCancel = ref<NextFlowRun | null>(null);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
@@ -48,7 +49,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(props.labId));
+  const nextFlowRuns = computed<NextFlowRun[]>(() => runStore.nextFlowRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -102,7 +103,7 @@
     },
   ];
 
-  const workflowsTableColumns = [
+  const runsTableColumns = [
     {
       key: 'runName',
       label: 'Run Name',
@@ -150,7 +151,7 @@
     ],
   ];
 
-  function workflowsActionItems(row: Workflow): object[] {
+  function runsActionItems(row: NextFlowRun): object[] {
     const buttons: object[][] = [
       [
         {
@@ -205,9 +206,9 @@
     }
   });
 
-  async function pollFetchWorkflows() {
-    await getWorkflows();
-    intervalId = window.setTimeout(pollFetchWorkflows, 2 * 60 * 1000);
+  async function pollFetchNextFlowRuns() {
+    await getNextFlowRuns();
+    intervalId = window.setTimeout(pollFetchNextFlowRuns, 2 * 60 * 1000);
   }
 
   function showRedirectModal() {
@@ -342,14 +343,14 @@
     }
   }
 
-  async function getWorkflows(): Promise<void> {
-    useUiStore().setRequestPending('getWorkflows');
+  async function getNextFlowRuns(): Promise<void> {
+    useUiStore().setRequestPending('getNextFlowRuns');
     try {
-      await workflowStore.loadWorkflowsForLab(props.labId);
+      await runStore.loadNextFlowRunsForLab(props.labId);
     } catch (error) {
-      console.error('Error retrieving workflows/runs', error);
+      console.error('Error retrieving NextFlow runs', error);
     } finally {
-      useUiStore().setRequestComplete('getWorkflows');
+      useUiStore().setRequestComplete('getNextFlowRuns');
     }
   }
 
@@ -362,20 +363,20 @@
     await getLabUsers();
   }
 
-  function onRunsRowClicked(row: Workflow) {
+  function onRunsRowClicked(row: NextFlowRun) {
     viewRunDetails(row);
   }
 
-  function onPipelinesRowClicked(row: Workflow) {
+  function onPipelinesRowClicked(row: NextFlowRun) {
     viewRunPipeline(row);
   }
 
-  function viewRunPipeline(pipeline: Workflow) {
-    const workflowTempId = uuidv4();
+  function viewRunPipeline(pipeline: NextFlowRun) {
+    const nextFlowRunTempId = uuidv4();
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    workflowStore.updateWipWorkflow(workflowTempId, {
+    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',
@@ -385,12 +386,12 @@
     $router.push({
       path: `/labs/${props.labId}/${pipelineId}/run-pipeline`,
       query: {
-        workflowTempId,
+        nextFlowRunTempId,
       },
     });
   }
 
-  function viewRunDetails(row: Workflow) {
+  function viewRunDetails(row: NextFlowRun) {
     $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 
@@ -399,10 +400,10 @@
     const runName = runToCancel.value?.runName;
 
     if (!runId) {
-      throw new Error("runToCancel workflow id should have a value but doesn't");
+      throw new Error("runToCancel runId should have a value but doesn't");
     }
 
-    uiStore.setRequestPending('cancelWorkflow');
+    uiStore.setRequestPending('cancelNextFlowRun');
 
     try {
       await $api.workflows.cancelPipelineRun(props.labId, runId);
@@ -413,20 +414,20 @@
 
     isCancelDialogOpen.value = false;
     runToCancel.value = null;
-    uiStore.setRequestComplete('cancelWorkflow');
+    uiStore.setRequestComplete('cancelNextFlowRun');
 
-    await getWorkflows();
+    await getNextFlowRuns();
   }
 
   watch(lab, async (lab) => {
     if (lab !== null) {
       if (lab.HasNextFlowTowerAccessToken) {
-        // load pipelines/workflows/labUsers after lab loads
+        // load pipelines/runs/labUsers after lab loads
         if (props.superuser) {
-          // superuser doesn't view pipelines or workflows so don't fetch those
+          // superuser doesn't view pipelines or runs so don't fetch those
           await getLabUsers();
         } else {
-          await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
+          await Promise.all([getPipelines(), pollFetchNextFlowRuns(), getLabUsers()]);
           canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
         }
       } else {
@@ -512,32 +513,32 @@
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable
           :row-click-action="onRunsRowClicked"
-          :table-data="workflows"
-          :columns="workflowsTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
+          :table-data="nextFlowRuns"
+          :columns="runsTableColumns"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
         >
-          <template #runName-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow.runName }}</div>
-            <div class="text-muted text-xs font-normal">{{ workflow.projectName }}</div>
+          <template #runName-data="{ row: nextFlowRun }">
+            <div class="text-body text-sm font-medium">{{ nextFlowRun.runName }}</div>
+            <div class="text-muted text-xs font-normal">{{ nextFlowRun.projectName }}</div>
           </template>
 
-          <template #lastUpdated-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ getDate(workflow.lastUpdated) }}</div>
-            <div class="text-muted">{{ getTime(workflow.lastUpdated) }}</div>
+          <template #lastUpdated-data="{ row: nextFlowRun }">
+            <div class="text-body text-sm font-medium">{{ getDate(nextFlowRun.lastUpdated) }}</div>
+            <div class="text-muted">{{ getTime(nextFlowRun.lastUpdated) }}</div>
           </template>
 
-          <template #status-data="{ row: workflow }">
-            <EGStatusChip :status="workflow.status" />
+          <template #status-data="{ row: nextFlowRun }">
+            <EGStatusChip :status="nextFlowRun.status" />
           </template>
 
-          <template #owner-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow?.userName ?? '-' }}</div>
+          <template #owner-data="{ row: nextFlowRun }">
+            <div class="text-body text-sm font-medium">{{ nextFlowRun?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton :items="workflowsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+              <EGActionButton :items="runsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
             </div>
           </template>
 
@@ -625,6 +626,6 @@
     :primary-message="`Are you sure you would like to cancel ${runToCancel?.runName}?`"
     secondary-message="This will stop any progress made."
     v-model="isCancelDialogOpen"
-    :buttons-disabled="uiStore.isRequestPending('cancelWorkflow')"
+    :buttons-disabled="uiStore.isRequestPending('cancelNextFlowRun')"
   />
 </template>

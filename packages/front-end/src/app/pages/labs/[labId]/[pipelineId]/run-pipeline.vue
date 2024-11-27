@@ -1,15 +1,15 @@
 <script setup lang="ts">
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -76,29 +76,29 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    workflowStore.updateWipWorkflow(workflowTempId, {
+    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
       laboratoryId: labId,
       pipelineDescription: schema.value.description,
     });
     if (res.params) {
-      workflowStore.updateWipWorkflow(workflowTempId, { params: JSON.parse(res.params) });
+      runStore.updateWipNextFlowRun(nextFlowRunTempId, { params: JSON.parse(res.params) });
     }
   }
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete workflowStore.wipWorkflows[workflowTempId];
+    delete runStore.wipNextFlowRuns[nextFlowRunTempId];
     $router.push(nextRoute.value!);
   }
 
   /**
-   * Resets the pipeline run workflow:
+   * Resets the pipeline run:
    * - clears some store values
    * - re-initializes the schema + prefills params
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    workflowStore.updateWipWorkflow(workflowTempId, {
+    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
       userPipelineRunName: '',
       pipelineDescription: '',
       params: {},
@@ -119,7 +119,7 @@
   <EGRunPipelineStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="wipWorkflow?.params"
+    :params="wipNextFlowRun?.params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
   />

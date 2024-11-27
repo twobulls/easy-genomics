@@ -38,7 +38,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<Workflow | null>(null);
+  const runToCancel = ref<NextFlowRun | null>(null);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
@@ -206,9 +206,9 @@
     }
   });
 
-  async function pollFetchWorkflows() {
-    await getWorkflows();
-    intervalId = window.setTimeout(pollFetchWorkflows, 2 * 60 * 1000);
+  async function pollFetchNextFlowRuns() {
+    await getNextFlowRuns();
+    intervalId = window.setTimeout(pollFetchNextFlowRuns, 2 * 60 * 1000);
   }
 
   function showRedirectModal() {
@@ -422,12 +422,12 @@
   watch(lab, async (lab) => {
     if (lab !== null) {
       if (lab.HasNextFlowTowerAccessToken) {
-        // load pipelines/workflows/labUsers after lab loads
+        // load pipelines/runs/labUsers after lab loads
         if (props.superuser) {
-          // superuser doesn't view pipelines or workflows so don't fetch those
+          // superuser doesn't view pipelines or runs so don't fetch those
           await getLabUsers();
         } else {
-          await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
+          await Promise.all([getPipelines(), pollFetchNextFlowRuns(), getLabUsers()]);
           canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
         }
       } else {

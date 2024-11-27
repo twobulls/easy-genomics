@@ -114,7 +114,7 @@
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"
-          :workflow-id="nextFlowRunId"
+          :next-flow-run-id="nextFlowRunId"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>

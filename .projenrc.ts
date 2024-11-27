@@ -313,6 +313,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-crypto/encrypt-node',
     '@aws-sdk/client-cognito-identity-provider',
     '@aws-sdk/client-dynamodb',
+    '@aws-sdk/client-omics',
     '@aws-sdk/client-ses',
     '@aws-sdk/client-sns',
     '@aws-sdk/client-sqs',

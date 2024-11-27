@@ -41,10 +41,10 @@ class WorkflowsModule extends HttpFactory {
     return workflows || [];
   }
 
-  async cancelPipelineRun(labId: string, workflowId: string): Promise<any> {
+  async cancelPipelineRun(labId: string, nextFlowRunId: string): Promise<any> {
     const res = await this.callNextflowTower<any>(
       'PUT',
-      `/workflow/cancel-workflow-execution/${workflowId}?laboratoryId=${labId}`,
+      `/workflow/cancel-workflow-execution/${nextFlowRunId}?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -116,10 +116,10 @@ class WorkflowsModule extends HttpFactory {
     return res;
   }
 
-  async get(labId: string, workflowId: string): Promise<Workflow> {
+  async get(labId: string, nextFlowRunId: string): Promise<Workflow> {
     const res = await this.callNextflowTower<DescribeWorkflowResponse>(
       'GET',
-      `/workflow/read-workflow/${workflowId}?laboratoryId=${labId}`,
+      `/workflow/read-workflow/${nextFlowRunId}?laboratoryId=${labId}`,
     );
 
     if (!res) {

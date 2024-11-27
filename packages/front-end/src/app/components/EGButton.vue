@@ -9,6 +9,7 @@
     icon?: string;
     iconRight?: boolean;
     disabled?: boolean;
+    uButtonType?: string;
   };
 
   withDefaults(defineProps<ButtonProps>(), {
@@ -18,6 +19,7 @@
     icon: '',
     iconRight: true,
     disabled: false,
+    uButtonType: undefined,
   });
 
   const buttonVariants = cva(
@@ -109,5 +111,6 @@
         loadingIcon: 'i-heroicons-arrow-path-20-solid',
       },
     }"
+    :type="uButtonType"
   />
 </template>

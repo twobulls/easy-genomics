@@ -28,23 +28,39 @@
   });
 
   const page = ref(1);
-  const pageCount = ref(10);
-  const pageTotal = computed(() => localProps.tableData.length);
-  const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
-  const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
-  const { showingResultsMsg } = useTable(pageFrom, pageTo, pageTotal);
-
-  const rows = computed(() => {
-    return localProps.tableData.slice((page.value - 1) * pageCount.value, page.value * pageCount.value);
-  });
-
+  const rowsPerPage = ref(10);
   const selected = props.canSelect ? ref([]) : ref(null);
+
+  const end = computed(() => Math.min(start.value + rowsPerPage.value, totalRows.value));
+  const rows = computed(() => {
+    if (totalRows.value > 0) return localProps.tableData.slice(start.value, end.value);
+    return [];
+  });
+  const showingResultsMsg = computed(() => {
+    if (totalRows.value > 0) {
+      return `Showing ${start.value + 1}-${end.value} of ${totalRows.value} results`;
+    }
+    return '';
+  });
+  const start = computed(() => (page.value - 1) * rowsPerPage.value);
+  const totalRows = computed(() => localProps.tableData.length || 0);
+
+  watch(
+    page,
+    (newPage) => {
+      if (newPage < 1) page.value = 1;
+      else if (newPage > rowsPerPage.value) page.value = rowsPerPage.value;
+    },
+    { immediate: true, flush: 'sync' },
+  );
 
   watch(
     () => props.tableData,
     (newTableData: any) => {
       localProps.tableData = newTableData;
+      page.value = 1;
     },
+    { immediate: true },
   );
 </script>
 
@@ -89,10 +105,13 @@
     </UTable>
   </UCard>
 
-  <div class="text-muted flex h-16 flex-wrap items-center justify-between" v-if="showPagination && !isLoading">
+  <div
+    class="text-muted flex h-16 flex-wrap items-center justify-between"
+    v-if="showPagination && rowsPerPage > 1 && !isLoading"
+  >
     <div class="text-xs leading-5">{{ showingResultsMsg }}</div>
-    <div class="flex justify-end px-3" v-if="pageTotal > pageCount">
-      <UPagination v-model="page" :page-count="10" :total="localProps.tableData.length" />
+    <div class="flex justify-end px-3" v-if="totalRows > rowsPerPage">
+      <UPagination v-model="page" :page-count="rowsPerPage" :total="totalRows" />
     </div>
   </div>
 </template>

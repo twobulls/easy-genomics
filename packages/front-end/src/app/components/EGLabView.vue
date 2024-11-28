@@ -130,7 +130,7 @@
 
     if (!missingPAT.value) {
       if (!props.superuser) {
-        items.push({ key: 'nextflowPipelines', label: 'NextFlow Workflows' });
+        items.push({ key: 'nextflowPipelines', label: 'NextFlow Pipelines' });
         items.push({ key: 'omicsPipelines', label: 'HealthOmics Workflows' });
         items.push({ key: 'runs', label: 'Lab Runs' });
       }

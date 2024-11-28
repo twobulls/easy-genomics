@@ -9,6 +9,12 @@ export const enum REST_API_METHOD {
   DELETE = 'DELETE',
 }
 
+export type AwsHealthOmicsQueryParameters = {
+  name?: string;
+  startingToken?: string;
+  maxResults?: number;
+};
+
 /**
  * Helper utility function to perform HTTP REST API requests and return the
  * expected JSON response object type.
@@ -62,7 +68,8 @@ export async function httpRequest<T>(
 
 /**
  * Helper utility function to retrieve common basic query parameters from the
- * Easy Genomics FE which are supported by Seqera Cloud / NextFlow Tower APIs.
+ * Easy Genomics FE which are supported by Seqera Cloud / NextFlow Tower APIs
+ * and AWS HealthOmics.
  * @param event
  */
 export function getApiParameters(event: APIGatewayProxyEvent): URLSearchParams {
@@ -95,4 +102,33 @@ export function getNextFlowApiQueryParameters(event: APIGatewayProxyEvent, works
     apiParameters.set('workspaceId', workspaceId);
   }
   return apiParameters.toString();
+}
+
+/**
+ * Helper utility function to convert the Easy Genomics FE query parameters to
+ * AWS HealthOmics pagination parameters.
+ *
+ * @param event
+ */
+export function getAwsHealthOmicsApiQueryParameters(event: APIGatewayProxyEvent): AwsHealthOmicsQueryParameters {
+  const apiParameters: URLSearchParams = getApiParameters(event);
+
+  const apiQueryParameters: AwsHealthOmicsQueryParameters = {};
+  const name: string | undefined = apiParameters.get('search') || undefined;
+  const maxResults: string | undefined = apiParameters.get('max') || undefined;
+  const startingToken: string | undefined = apiParameters.get('offset') || undefined;
+
+  if (name) {
+    apiQueryParameters.name = name;
+  }
+
+  if (maxResults) {
+    apiQueryParameters.maxResults = parseInt(maxResults);
+
+    if (startingToken) {
+      apiQueryParameters.startingToken = startingToken;
+    }
+  }
+
+  return apiQueryParameters;
 }

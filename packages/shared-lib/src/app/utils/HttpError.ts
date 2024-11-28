@@ -299,6 +299,30 @@ export class LaboratoryUserNotFoundError extends HttpError {
 }
 
 /**
+ * Laboratory Run failed to delete
+ *
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryRunDeleteFailedError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Removing run from laboratory failed', 500, 'EG-322', messageOpt);
+  }
+}
+
+/**
+ * Laboratory Run not found
+ *
+ * @param runId
+ * @param laboratoryId - optional additional message
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryRunNotFoundError extends HttpError {
+  constructor(runId: string, laboratoryId: string = 'unknown', messageOpt?: string) {
+    super(`Run '${runId}' for laboratory '${laboratoryId}' could not be found`, 404, 'EG-323', messageOpt);
+  }
+}
+
+/**
  * Laboratory Bucket not found
  *
  * @param laboratoryId

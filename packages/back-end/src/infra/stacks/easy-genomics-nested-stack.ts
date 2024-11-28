@@ -526,6 +526,14 @@ export class EasyGenomicsNestedStack extends NestedStack {
         actions: ['dynamodb:DeleteItem'],
         effect: Effect.ALLOW,
       }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:DeleteItem'],
+        effect: Effect.ALLOW,
+      }),
     ]);
 
     // /easy-genomics/laboratory/user/add-laboratory-user
@@ -671,6 +679,78 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
         ],
         actions: ['dynamodb:Scan'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/create-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/create-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:PutItem'],
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/read-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/read-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/list-laboratory-runs
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/list-laboratory-runs', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/update-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/update-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/delete-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/delete-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:DeleteItem'],
         effect: Effect.ALLOW,
       }),
     ]);

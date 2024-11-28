@@ -20,6 +20,7 @@ export default function useAuth() {
       const user = await Auth.signIn(username, password);
       if (user) {
         await useUserStore().loadCurrentUserPermissions();
+        await useUserStore().loadCurrentUserDetails();
         await useOrgsStore().loadOrgs();
         if (useUserStore().isSuperuser) {
           await navigateTo('/orgs');

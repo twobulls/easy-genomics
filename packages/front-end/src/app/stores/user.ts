@@ -10,6 +10,10 @@ interface UserStoreState {
     isSuperuser: boolean | null;
     orgPermissions: OrganizationAccess | null;
   };
+  currentUserDetails: {
+    firstName: string | null;
+    lastName: string | null;
+  };
 }
 
 const initialState = (): UserStoreState => ({
@@ -19,6 +23,10 @@ const initialState = (): UserStoreState => ({
   currentUserPermissions: {
     isSuperuser: null,
     orgPermissions: null,
+  },
+  currentUserDetails: {
+    firstName: null,
+    lastName: null,
   },
 });
 
@@ -30,6 +38,8 @@ const useUserStore = defineStore('userStore', {
 
   getters: {
     currentOrgId: (state) => state.currentOrg.OrganizationId,
+
+    // permissions
 
     isSuperuser: (state: UserStoreState): boolean => !!state.currentUserPermissions.isSuperuser,
 
@@ -71,6 +81,11 @@ const useUserStore = defineStore('userStore', {
       (_state: UserStoreState) =>
       (labId: string): boolean =>
         useUserStore().isOrgAdmin() || useUserStore().isLabManager(labId),
+
+    // user details
+
+    initials: (_state: UserStoreState): string =>
+      (_state.currentUserDetails.firstName?.charAt(0) || '?') + (_state.currentUserDetails.lastName?.charAt(0) || '?'),
   },
 
   actions: {
@@ -94,6 +109,14 @@ const useUserStore = defineStore('userStore', {
 
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
       this.currentUserPermissions.orgPermissions = parsedOrgAccess;
+    },
+
+    async loadCurrentUserDetails(): Promise<void> {
+      const token = await useAuth().getToken();
+      const decodedToken: any = decodeJwt(token);
+
+      this.currentUserDetails.firstName = decodedToken.FirstName;
+      this.currentUserDetails.lastName = decodedToken.LastName;
     },
   },
 

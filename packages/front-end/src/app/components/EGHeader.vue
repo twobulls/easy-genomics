@@ -18,6 +18,35 @@
   function isSubpath(url: string) {
     return currentRoute.value.path.includes(url);
   }
+
+  const acctDropdownIsOpen = ref<boolean>(false);
+
+  const items = [
+    [
+      {
+        label: '(Sample) Your Name',
+      },
+      {
+        label: '(Sample) Organization Name',
+      },
+    ],
+    [
+      {
+        label: '(Sample) Other Organizations',
+      },
+      {
+        label: '(Sample) [Org Name]',
+      },
+      {
+        label: '(Sample) [Org Name]',
+      },
+    ],
+    [
+      {
+        label: 'Sign Out',
+      },
+    ],
+  ];
 </script>
 
 <template>
@@ -48,6 +77,11 @@
           >
             Organizations
           </ULink>
+          <UDropdown v-model:open="acctDropdownIsOpen" :items="items">
+            <div class="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-xs text-white">
+              {{ useUserStore().initials }}
+            </div>
+          </UDropdown>
           <EGButton
             :size="ButtonSizeEnum.enum.sm"
             v-if="isAuthed"

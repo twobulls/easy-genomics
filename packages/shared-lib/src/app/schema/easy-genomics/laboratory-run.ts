@@ -68,6 +68,9 @@ export const EditLaboratoryRunSchema = z
     Title: z.string().optional(),
     Status: z.string(),
     Settings: z.record(z.string(), jsonSchema).optional(),
+    WorkflowName: z.string().optional(),
+    S3Input: z.string().optional(),
+    S3Output: z.string().optional(),
   })
   .strict();
 export type EditLaboratoryRun = z.infer<typeof EditLaboratoryRunSchema>;

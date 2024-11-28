@@ -33,7 +33,7 @@ export const handler: Handler = async (
 
     // Put Request Body
     const request: EditLaboratoryRun = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
-    console.log('going to edit this lab', request);
+
     // Data validation safety check
     if (!EditLaboratoryRunSchema.safeParse(request).success) {
       throw new InvalidRequestError();
@@ -53,12 +53,10 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
-    console.log('about to update?');
     const updatedLaboratoryRun = await laboratoryRunService
       .update({
         ...existing,
-        Title: request.Title ? request.Title : existing.Title,
-        Status: request.Status,
+        ...request,
         Settings: request.Settings ? JSON.stringify(request.Settings) : existing.Settings,
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: currentUserId,
@@ -66,7 +64,7 @@ export const handler: Handler = async (
       .catch((error: any) => {
         throw error;
       });
-    console.log('we up to here?');
+
     // Return Laboratory Run with settings object
     const response: ReadLaboratoryRun = {
       ...updatedLaboratoryRun,

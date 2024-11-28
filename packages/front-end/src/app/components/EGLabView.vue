@@ -614,7 +614,7 @@
         </EGTable>
       </div>
       <div v-else-if="item.key === 'details'" class="space-y-3">
-        <EGLabDetailsForm @updated="loadLabData" />
+        <EGFormLabDetails @updated="loadLabData" />
       </div>
     </template>
   </UTabs>

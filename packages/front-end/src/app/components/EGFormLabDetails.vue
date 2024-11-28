@@ -48,7 +48,6 @@
   const isLoadingBuckets = ref(false);
   const isLoadingFormData = ref(false);
   const canSubmit = ref(false);
-  const isSubmittingFormData = ref(false);
 
   // Enable/disable fields default
   const isNameFieldDisabled = ref(true);
@@ -203,6 +202,10 @@
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
   }
 
+  const isSubmittingFormData = computed(
+    () => useUiStore().isRequestPending('createLab') || useUiStore().isRequestPending('updateLab'),
+  );
+
   /**
    * Handles form submission for various lab detail modes such as Create and Edit.
    *
@@ -215,8 +218,6 @@
     if (formMode.value === LabDetailsFormModeEnum.enum.ReadOnly) return;
 
     try {
-      isSubmittingFormData.value = true;
-
       if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
         await handleCreateLab();
       } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
@@ -225,7 +226,6 @@
     } catch (error) {
       useToastStore().error(`Invalid Workspace ID or Personal Access Token. Please try again.`);
     } finally {
-      isSubmittingFormData.value = false;
       useUiStore().setRequestComplete('createLab');
       useUiStore().setRequestComplete('updateLab');
     }
@@ -365,7 +365,7 @@
       <EGFormGroup label="Lab Name" name="Name" eager-validation required>
         <EGInput
           v-model="state.Name"
-          :disabled="isNameFieldDisabled"
+          :disabled="isNameFieldDisabled || isSubmittingFormData"
           placeholder="Enter lab name (required and must be unique)"
           required
           autofocus
@@ -376,7 +376,7 @@
       <EGFormGroup label="Lab Description" name="Description" eager-validation>
         <EGTextArea
           v-model="state.Description"
-          :disabled="isDescriptionFieldDisabled"
+          :disabled="isDescriptionFieldDisabled || isSubmittingFormData"
           placeholder="Describe your lab and what runs should be launched by Lab users."
         />
       </EGFormGroup>
@@ -390,7 +390,7 @@
         <EGSelect
           :options="s3Directories"
           v-model="selectedS3Bucket"
-          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled"
+          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled || isSubmittingFormData"
           placeholder="Please select an S3 bucket from the list below"
           searchable-placeholder="Search existing S3 buckets..."
         />
@@ -401,7 +401,7 @@
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
           placeholder="Defaults to the Next Flow Tower personal workspace if not specified."
-          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled"
+          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled || isSubmittingFormData"
         />
       </EGFormGroup>
 
@@ -418,6 +418,7 @@
           v-model="state.NextFlowTowerAccessToken"
           :password="true"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+          :disabled="isSubmittingFormData"
         />
         <!-- Next Flow Tower Access Token: Edit  Mode -->
         <EGPasswordInput
@@ -429,6 +430,7 @@
           :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
           eager-validation
+          :disabled="isSubmittingFormData"
         />
       </EGFormGroup>
     </EGCard>

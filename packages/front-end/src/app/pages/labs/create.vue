@@ -16,5 +16,5 @@
     <EGText tag="h4" class="mb-4">Lab details</EGText>
   </div>
 
-  <EGLabDetailsForm :form-mode="LabDetailsFormModeEnum.enum.Create" />
+  <EGFormLabDetails :form-mode="LabDetailsFormModeEnum.enum.Create" />
 </template>

@@ -1,5 +1,6 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import {
   CreateWorkflowLaunchRequest,
   CreateWorkflowLaunchResponse,
@@ -12,7 +13,9 @@ import {
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { UserService } from '@BE/services/easy-genomics/user-service';
 import { SsmService } from '@BE/services/ssm-service';
 import {
   validateLaboratoryManagerAccess,
@@ -21,7 +24,9 @@ import {
 } from '@BE/utils/auth-utils';
 import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
+const userService = new UserService();
 const laboratoryService = new LaboratoryService();
+const laboratoryRunService = new LaboratoryRunService();
 const ssmService = new SsmService();
 
 /**
@@ -62,6 +67,10 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
+    // Fetch the user
+    const userEmail = event.requestContext.authorizer.claims.email;
+    const user: User | undefined = (await userService.queryByEmail(userEmail)).shift();
+
     console.log('event.isBase64Encoded:', event.isBase64Encoded);
 
     const rawBody = event.isBase64Encoded ? atob(event.body!) : event.body!;
@@ -95,15 +104,36 @@ export const handler: Handler = async (
     console.log('Next Flow Tower API create workflow launch API Parameters:', apiQueryParameters);
     console.log('Next Flow Tower API create workflow launch request:', createWorkflowLaunchRequest);
 
-    const response: CreateWorkflowLaunchResponse = await httpRequest<CreateWorkflowLaunchResponse>(
+    const nfTowerResponse: CreateWorkflowLaunchResponse = await httpRequest<CreateWorkflowLaunchResponse>(
       `${process.env.SEQERA_API_BASE_URL}/workflow/launch?${apiQueryParameters}`,
       REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },
       createWorkflowLaunchRequest, // Delegate request body validation to Seqera Cloud / NextFlow Tower
     );
-    console.log('Create workflow launch response from Next Flow Tower API:', response);
+    console.log('Create workflow launch response from Next Flow Tower API:', nfTowerResponse);
 
-    return buildResponse(200, JSON.stringify(response), event);
+    // Create laboratory run
+    const runId: string = crypto.randomUUID().toLowerCase();
+
+    const response = await laboratoryRunService
+      .add({
+        LaboratoryId: laboratory.LaboratoryId,
+        RunId: runId,
+        OrganizationId: laboratory.OrganizationId,
+        WorkflowName: nfTowerResponse.workflowId,
+        Status: 'Active',
+        UserId: user?.UserId || 'unknown',
+        Type: 'Seqera Cloud',
+        Settings: '{}',
+        CreatedAt: Date.now().toString(),
+        CreatedBy: user?.UserId || 'unknown',
+      })
+      .catch((error: any) => {
+        throw error;
+      });
+    console.log('created lab run', response);
+
+    return buildResponse(200, JSON.stringify(nfTowerResponse), event);
   } catch (err: any) {
     console.error(err);
     return buildErrorResponse(err, event);

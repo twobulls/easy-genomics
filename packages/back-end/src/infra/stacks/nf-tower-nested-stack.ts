@@ -59,6 +59,24 @@ export class NFTowerNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+    this.iam.addPolicyStatements('laboratory-run-create-policy', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
 
     // /nf-tower/compute-env/list-compute-envs
     this.iam.addPolicyStatements('/nf-tower/compute-env/list-compute-envs', [
@@ -107,6 +125,7 @@ export class NFTowerNestedStack extends NestedStack {
     this.iam.addPolicyStatements('/nf-tower/workflow/create-workflow-execution', [
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+      ...this.iam.getPolicyStatements('laboratory-run-create-policy'),
     ]);
     // /nf-tower/workflow/list-workflows
     this.iam.addPolicyStatements('/nf-tower/workflow/list-workflows', [

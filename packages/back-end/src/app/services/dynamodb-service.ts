@@ -201,8 +201,10 @@ export class DynamoDBService {
       .map((key: string) => {
         const attributeId = `${key.charAt(0).toLowerCase() + key.slice(1)}`; // Camel Case
         const attributeValue = object[key];
+        console.log('key', key);
+        console.log('value', attributeValue);
         const attributeType = typeof attributeValue;
-
+        console.log('type', attributeType);
         if (attributeType === 'boolean') {
           return {
             [`:${attributeId}`]: { BOOL: attributeValue }, // Boolean
@@ -233,13 +235,125 @@ export class DynamoDBService {
             }
           } else {
             return {
-              [`:${attributeId}`]: { M: attributeValue }, // Map
+              [`:${attributeId}`]: { M: this.getObjectExpressionValues(attributeValue) }, // Map
             };
           }
         } else {
           throw new Error(`Attribute Type: ${attributeType} not supported`);
         }
       });
+    // @ts-ignore
+    return Object.assign({}, ...objectExpressionAttributeValues);
+  };
+
+  /**
+   * Helper service function to assist the generation of the DynamoDB
+   * ExpressionAttributeValues from an object's property values & types.
+   *
+   * The DynamoDB AttributeValue types supported attempts to cover the available
+   * types from:
+   *    https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html
+   *
+   * The following types are not currently supported: Binary, Binary Set, Null
+   *
+   * @param object
+   */
+  private getObjectExpressionValues = <T>(object: T): { [p: string]: any } => {
+    const objectExpressionAttributeValues: { [p: string]: any }[] = Object.keys(object).map((key: string) => {
+      const attributeId = key;
+      const attributeValue = object[key];
+      console.log('object key', key);
+      console.log('object value', attributeValue);
+      const attributeType = typeof attributeValue;
+      console.log('object type', attributeType);
+      if (attributeType === 'boolean') {
+        return {
+          [`${attributeId}`]: { BOOL: attributeValue }, // Boolean
+        };
+      } else if (attributeType === 'number') {
+        return {
+          [`${attributeId}`]: { N: attributeValue }, // Number
+        };
+      } else if (attributeType === 'string') {
+        return {
+          [`${attributeId}`]: { S: attributeValue }, // String
+        };
+      } else if (attributeType === 'object') {
+        if (Array.isArray(object[key])) {
+          console.log('we got an array', object[key]);
+          if (object[key].every((_) => typeof _ === 'number')) {
+            console.log('Everything is a number');
+            console.log(
+              'want to convert the array to this',
+              attributeValue.map((numberValue: number) => {
+                return numberValue.toString();
+              }),
+            );
+            return {
+              [`${attributeId}`]: {
+                NS: attributeValue.map((numberValue: number) => {
+                  return numberValue.toString();
+                }),
+              }, // Number Set
+            };
+          } else if (object[key].every((_) => typeof _ === 'string')) {
+            console.log('Everything is a string');
+            return {
+              [`${attributeId}`]: { SS: attributeValue }, // String Set
+            };
+          } else {
+            console.log('This is an object but still an array');
+            // Array of objects
+            return {
+              [`${attributeId}`]: { L: this.getListExpressionValues(attributeValue) }, // List
+            };
+          }
+        } else {
+          return {
+            [`${attributeId}`]: { M: this.getObjectExpressionValues(attributeValue) }, // Map
+          };
+        }
+      } else {
+        throw new Error(`Attribute Type: ${attributeType} not supported for objects`);
+      }
+    });
+    // @ts-ignore
+    return Object.assign({}, ...objectExpressionAttributeValues);
+  };
+
+  private getListExpressionValues = (array: any[]) => {
+    const objectExpressionAttributeValues: { [p: string]: any }[] = array.map((value: any) => {
+      const attributeValue = value;
+      console.log('array value', attributeValue);
+      const attributeType = typeof attributeValue;
+      console.log('array type', attributeType);
+      if (attributeType === 'boolean') {
+        return { BOOL: attributeValue }; // Boolean
+      } else if (attributeType === 'number') {
+        return { N: attributeValue }; // Number
+      } else if (attributeType === 'string') {
+        return { S: attributeValue }; // String
+      } else if (attributeType === 'object') {
+        if (Array.isArray(value)) {
+          console.log('we got an array within an array', value);
+          if (value.every((_) => typeof _ === 'number')) {
+            console.log('Everything is a number');
+            return { NS: attributeValue }; // Number Set
+          } else if (value.every((_) => typeof _ === 'string')) {
+            console.log('Everything is a string');
+            return { SS: attributeValue }; // String Set
+          } else {
+            console.log('This is an object but still an array');
+            // Array of objects
+            return { L: this.getListExpressionValues(attributeValue) }; // List
+          }
+        } else {
+          return { M: this.getObjectExpressionValues(attributeValue) }; // Map
+        }
+      } else {
+        throw new Error(`Attribute Type: ${attributeType} not supported for objects`);
+      }
+    });
     // @ts-ignore
     return Object.assign({}, ...objectExpressionAttributeValues);
   };

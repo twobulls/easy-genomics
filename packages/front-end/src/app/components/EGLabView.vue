@@ -11,7 +11,6 @@
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-  import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
@@ -131,8 +130,9 @@
 
     if (!missingPAT.value) {
       if (!props.superuser) {
-        items.push({ key: 'runs', label: 'Runs' });
-        items.push({ key: 'pipelines', label: 'Pipelines' });
+        items.push({ key: 'nextflowPipelines', label: 'NextFlow Pipelines' });
+        items.push({ key: 'omicsPipelines', label: 'HealthOmics Workflows' });
+        items.push({ key: 'runs', label: 'Lab Runs' });
       }
       items.push({ key: 'users', label: 'Lab Users' });
     }
@@ -437,6 +437,33 @@
       }
     }
   });
+
+  // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
+  //  Tailwind won't pick up and include the classes used and styles will be missing.
+  // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
+  //  UTabs that use an "EGTabsStyles" as input to the :ui attribute.
+  const EGTabsStyles = {
+    base: 'focus:outline-none',
+    list: {
+      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      padding: 'p-0',
+      height: 'h-14',
+      marker: {
+        wrapper: 'duration-200 ease-out absolute bottom-0 ',
+        base: 'absolute bottom-0 rounded-none h-0.5',
+        background: 'bg-primary',
+        shadow: 'shadow-none',
+      },
+      tab: {
+        base: 'font-serif w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out mr-16',
+        active: 'text-primary h-14',
+        inactive: 'font-serif',
+        height: 'h-14',
+        padding: 'p-0',
+        size: 'text-lg',
+      },
+    },
+  };
 </script>
 
 <template>
@@ -476,9 +503,9 @@
       }
     "
   >
-    <!-- Pipelines tab -->
     <template #item="{ item }">
-      <div v-if="item.key === 'pipelines'" class="space-y-3">
+      <!-- NextFlow Pipelines tab -->
+      <div v-if="item.key === 'nextflowPipelines'" class="space-y-3">
         <EGTable
           :row-click-action="onPipelinesRowClicked"
           :table-data="pipelines"
@@ -509,6 +536,12 @@
           </template>
         </EGTable>
       </div>
+
+      <!-- HealthOmics Pipelines tab -->
+      <div v-if="item.key === 'omicsPipelines'" class="space-y-3">
+        <!-- HealthOmics pipelines will go here -->
+      </div>
+
       <!-- Runs tab -->
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable

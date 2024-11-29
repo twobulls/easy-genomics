@@ -11,7 +11,7 @@ const LabDescriptionSchema = z.string().trim().max(500, 'Description must be no 
 /**
  * No max character limit as it needs to store the encrypted version of the token
  * from the server, which could be any length. The raw token input by the user
- * is validated in the EGLabDetailsForm component as it handles special cases
+ * is validated in the EGFormLabDetails component as it handles special cases
  * for edit mode when the token value may or may not be updated by the user.
  */
 const NextFlowTowerAccessTokenSchema = z.string().trim().optional();

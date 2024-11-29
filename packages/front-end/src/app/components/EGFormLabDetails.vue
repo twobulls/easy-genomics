@@ -48,7 +48,6 @@
   const isLoadingBuckets = ref(false);
   const isLoadingFormData = ref(false);
   const canSubmit = ref(false);
-  const isSubmittingFormData = ref(false);
 
   const isEditing = computed<boolean>(() => formMode.value !== LabDetailsFormModeEnum.enum.ReadOnly);
 
@@ -179,6 +178,10 @@
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
   }
 
+  const isSubmittingFormData = computed(
+    () => useUiStore().isRequestPending('createLab') || useUiStore().isRequestPending('updateLab'),
+  );
+
   /**
    * Handles form submission for various lab detail modes such as Create and Edit.
    *
@@ -191,8 +194,6 @@
     if (formMode.value === LabDetailsFormModeEnum.enum.ReadOnly) return;
 
     try {
-      isSubmittingFormData.value = true;
-
       if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
         await handleCreateLab();
       } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
@@ -201,7 +202,6 @@
     } catch (error) {
       useToastStore().error(`Invalid Workspace ID or Personal Access Token. Please try again.`);
     } finally {
-      isSubmittingFormData.value = false;
       useUiStore().setRequestComplete('createLab');
       useUiStore().setRequestComplete('updateLab');
     }
@@ -341,7 +341,7 @@
       <EGFormGroup label="Lab Name" name="Name" eager-validation required>
         <EGInput
           v-model="state.Name"
-          :disabled="!isEditing"
+          :disabled="!isEditing || isSubmittingFormData"
           placeholder="Enter lab name (required and must be unique)"
           required
           autofocus
@@ -352,7 +352,7 @@
       <EGFormGroup label="Lab Description" name="Description" eager-validation>
         <EGTextArea
           v-model="state.Description"
-          :disabled="!isEditing"
+          :disabled="!isEditing || isSubmittingFormData"
           placeholder="Describe your lab and what runs should be launched by Lab users."
         />
       </EGFormGroup>
@@ -366,7 +366,7 @@
         <EGSelect
           :options="s3Directories"
           v-model="selectedS3Bucket"
-          :disabled="!isEditing"
+          :disabled="!isEditing || isSubmittingFormData"
           placeholder="Please select an S3 bucket from the list below"
           searchable-placeholder="Search existing S3 buckets..."
         />
@@ -381,7 +381,7 @@
         eager-validation
         class="flex justify-between"
       >
-        <UToggle class="ml-2" v-model="state.EnableSeqeraIntegration" :disabled="!isEditing" />
+        <UToggle class="ml-2" v-model="state.EnableSeqeraIntegration" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
       <!-- Next Flow Tower Workspace ID -->
@@ -394,7 +394,7 @@
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
           placeholder="Defaults to the Next Flow Tower personal workspace if not specified."
-          :disabled="!isEditing"
+          :disabled="!isEditing || isSubmittingFormData"
         />
       </EGFormGroup>
 
@@ -411,6 +411,7 @@
           v-model="state.NextFlowTowerAccessToken"
           :password="true"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+          :disabled="!isEditing || isSubmittingFormData"
         />
         <!-- Next Flow Tower Access Token: Edit  Mode -->
         <EGPasswordInput
@@ -422,6 +423,7 @@
           :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
           eager-validation
+          :disabled="!isEditing || isSubmittingFormData"
         />
       </EGFormGroup>
 
@@ -434,7 +436,7 @@
         eager-validation
         class="flex justify-between"
       >
-        <UToggle class="ml-2" v-model="state.EnableOmicsIntegration" :disabled="!isEditing" />
+        <UToggle class="ml-2" v-model="state.EnableOmicsIntegration" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
     </EGCard>
 

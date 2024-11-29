@@ -23,6 +23,7 @@
     UpdateLaboratory,
     UpdateLaboratorySchema,
   } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+  import { ERROR_CODES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 
   const props = withDefaults(
     defineProps<{
@@ -199,8 +200,14 @@
       } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
         await handleUpdateLabDetails();
       }
-    } catch (error) {
-      useToastStore().error(`Invalid Workspace ID or Personal Access Token. Please try again.`);
+    } catch (error: any) {
+      if (error.message === `Request error: ${ERROR_CODES['EG-304']}`) {
+        useToastStore().error('Laboratory name already taken. Please try again.');
+      } else if (error.message === `Request error: ${ERROR_CODES['EG-308']}`) {
+        useToastStore().error('Invalid Workspace ID or Personal Access Token. Please try again.');
+      } else {
+        useToastStore().error('An unknown error occurred. Please refresh the page and try again.');
+      }
     } finally {
       useUiStore().setRequestComplete('createLab');
       useUiStore().setRequestComplete('updateLab');

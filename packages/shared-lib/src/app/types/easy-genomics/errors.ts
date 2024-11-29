@@ -19,6 +19,7 @@ export type ErrorCodeKeys =
   | 'EG-305'
   | 'EG-306'
   | 'EG-307'
+  | 'EG-308'
   | 'EG-311'
   | 'EG-312'
   | 'EG-313'

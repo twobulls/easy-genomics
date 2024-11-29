@@ -38,8 +38,4 @@ export interface LaboratoryRun extends BaseAttributes {
   S3Input?: string;
   S3Output?: string;
   Settings?: string; // JSON
-  CreatedAt?: string;
-  CreatedBy?: string;
-  ModifiedAt?: string;
-  ModifiedBy?: string;
 }

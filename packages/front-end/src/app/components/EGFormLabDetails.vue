@@ -227,8 +227,10 @@
     } catch (error: any) {
       if (error.message === `Request error: ${ERROR_CODES['EG-304']}`) {
         useToastStore().error('Laboratory name already taken. Please try again.');
-      } else {
+      } else if (error.message === `Request error: ${ERROR_CODES['EG-308']}`) {
         useToastStore().error('Invalid Workspace ID or Personal Access Token. Please try again.');
+      } else {
+        useToastStore().error('An unknown error occurred. Please refresh the page and try again.');
       }
     } finally {
       useUiStore().setRequestComplete('createLab');

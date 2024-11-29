@@ -264,6 +264,17 @@ export class LaboratoryAccessTokenUnavailableError extends HttpError {
 }
 
 /**
+ * Laboratory WorkspaceId Or Access Token Incorrect
+ *
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryWorkspaceIdOrAccessTokenIncorrectError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Laboratory WorkspaceId or Access Token is incorrect', 400, 'EG-308', messageOpt);
+  }
+}
+
+/**
  * Laboratory User already exists
  *
  * @param messageOpt - optional additional message

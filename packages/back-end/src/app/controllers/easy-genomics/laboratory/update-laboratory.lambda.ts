@@ -10,6 +10,7 @@ import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src
 import {
   InvalidRequestError,
   LaboratoryNameTakenError,
+  LaboratoryWorkspaceIdOrAccessTokenIncorrectError,
   RequiredIdNotFoundError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
@@ -54,7 +55,7 @@ export const handler: Handler = async (
         request.NextFlowTowerAccessToken,
       ))
     ) {
-      throw new InvalidRequestError();
+      throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
     }
 
     const response = await laboratoryService

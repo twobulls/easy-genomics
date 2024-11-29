@@ -21,6 +21,7 @@ export const ERROR_CODES: ErrorMessages = {
   'EG-305': 'Unable to find Laboratories for Organization',
   'EG-306': 'Laboratory WorkspaceId unavailable',
   'EG-307': 'Laboratory Access Token unavailable',
+  'EG-308': 'Laboratory WorkspaceId or Access Token is incorrect',
   'EG-311': 'Laboratory User already exists',
   'EG-312': 'Removing user from laboratory failed',
   'EG-313': 'Laboratory User not found',

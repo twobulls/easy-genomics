@@ -26,9 +26,9 @@ const omicsService = new OmicsService();
  *  - Required Query Parameter:
  *    - 'laboratoryId': to retrieve the Laboratory to verify access to AWS HealthOmics
  *  - Optional Query Parameters:
- *    - 'max': pagination number of results
- *    - 'offset': pagination results offset index
- *    - 'search': string to search by the Workflow name attribute
+ *    - 'maxResults': pagination number of results
+ *    - 'nextToken': pagination results offset index
+ *    - 'name': string to search by the Workflow name attribute
  *
  * @param event
  */

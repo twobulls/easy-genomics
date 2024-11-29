@@ -67,66 +67,53 @@ export async function httpRequest<T>(
 }
 
 /**
- * Helper utility function to retrieve common basic query parameters from the
- * Easy Genomics FE which are supported by Seqera Cloud / NextFlow Tower APIs
- * and AWS HealthOmics.
- * @param event
- */
-export function getApiParameters(event: APIGatewayProxyEvent): URLSearchParams {
-  const parameters: URLSearchParams = new URLSearchParams();
-
-  const max: string | undefined = event.queryStringParameters?.max;
-  if (max && parseInt(max) > 0) {
-    parameters.set('max', max);
-  }
-  const offset: string | undefined = event.queryStringParameters?.offset;
-  if (offset && parseInt(offset) > 0) {
-    parameters.set('offset', offset);
-  }
-  const search: string | undefined = event.queryStringParameters?.search;
-  if (search) {
-    parameters.set('search', search);
-  }
-
-  return parameters;
-}
-
-/**
  * Helper utility function to set the NextFlow Tower API query parameters.
  * @param event
  * @param workspaceId
  */
 export function getNextFlowApiQueryParameters(event: APIGatewayProxyEvent, workspaceId?: string): string {
-  const apiParameters: URLSearchParams = getApiParameters(event);
-  if (workspaceId) {
-    apiParameters.set('workspaceId', workspaceId);
+  const apiQueryParameters: URLSearchParams = new URLSearchParams();
+
+  const max: string | undefined = event.queryStringParameters?.max;
+  if (max && parseInt(max) > 0) {
+    apiQueryParameters.set('max', max);
   }
-  return apiParameters.toString();
+  const offset: string | undefined = event.queryStringParameters?.offset;
+  if (offset && parseInt(offset) > 0) {
+    apiQueryParameters.set('offset', offset);
+  }
+  const search: string | undefined = event.queryStringParameters?.search;
+  if (search) {
+    apiQueryParameters.set('search', search);
+  }
+
+  if (workspaceId) {
+    apiQueryParameters.set('workspaceId', workspaceId);
+  }
+
+  return apiQueryParameters.toString();
 }
 
 /**
- * Helper utility function to convert the Easy Genomics FE query parameters to
- * AWS HealthOmics pagination parameters.
- *
+ * Helper utility function to set the AWS HealthOmics query parameters.
  * @param event
  */
 export function getAwsHealthOmicsApiQueryParameters(event: APIGatewayProxyEvent): AwsHealthOmicsQueryParameters {
-  const apiParameters: URLSearchParams = getApiParameters(event);
-
   const apiQueryParameters: AwsHealthOmicsQueryParameters = {};
-  const name: string | undefined = apiParameters.get('search') || undefined;
-  const maxResults: string | undefined = apiParameters.get('max') || undefined;
-  const startingToken: string | undefined = apiParameters.get('offset') || undefined;
+
+  const name: string | undefined = event.queryStringParameters?.name || undefined;
+  const maxResults: string | undefined = event.queryStringParameters?.maxResults || undefined;
+  const nextToken: string | undefined = event.queryStringParameters?.nextToken || undefined;
 
   if (name) {
     apiQueryParameters.name = name;
   }
 
-  if (maxResults) {
+  if (maxResults && parseInt(maxResults) > 0) {
     apiQueryParameters.maxResults = parseInt(maxResults);
 
-    if (startingToken) {
-      apiQueryParameters.startingToken = startingToken;
+    if (nextToken) {
+      apiQueryParameters.startingToken = nextToken;
     }
   }
 

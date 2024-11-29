@@ -691,6 +691,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
         ],
         actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
       }),
       new PolicyStatement({
         resources: [
@@ -710,6 +711,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
         ],
         actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
       }),
     ]);
 
@@ -721,6 +723,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
         ],
         actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
       }),
       new PolicyStatement({
         resources: [
@@ -740,6 +743,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
         ],
         actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+        effect: Effect.ALLOW,
       }),
     ]);
 

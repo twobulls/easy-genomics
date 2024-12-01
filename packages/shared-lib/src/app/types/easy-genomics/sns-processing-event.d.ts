@@ -3,13 +3,14 @@ import { User } from "@SharedLib/types/easy-genomics/user";
 import { LaboratoryUser } from "@SharedLib/types/easy-genomics/laboratory-user";
 import { Organization } from "@SharedLib/types/easy-genomics/organization";
 import { OrganizationUser } from "@SharedLib/types/easy-genomics/organization-user";
+import { LaboratoryRun } from "@SharedLib/types/easy-genomics/laboratory-run";
 
 export type SnsProcessingOperation = 'CREATE' | 'UPDATE' | 'DELETE';
 
-export type SnsProcessingRecordType = 'Organization' | 'OrganizationUser' | 'Laboratory' | 'LaboratoryUser' | 'User';
+export type SnsProcessingRecordType = 'Organization' | 'OrganizationUser' | 'Laboratory' | 'LaboratoryUser' | 'LaboratoryRun' | 'User';
 
 export interface SnsProcessingEvent {
   Operation: SnsProcessingOperation,
   Type: SnsProcessingRecordType,
-  Record: Organization | OrganizationUser | Laboratory | LaboratoryUser | User,
+  Record: Organization | OrganizationUser | Laboratory | LaboratoryUser | LaboratoryRun | User,
 }

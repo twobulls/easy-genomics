@@ -119,8 +119,8 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       }),
     ]);
 
-    // /aws-healthomics/workflow/run/list-private-workflow-runs
-    this.iam.addPolicyStatements('/aws-healthomics/workflow/run/list-private-workflow-runs', [
+    // /aws-healthomics/run/list-runs
+    this.iam.addPolicyStatements('/aws-healthomics/run/list-runs', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,

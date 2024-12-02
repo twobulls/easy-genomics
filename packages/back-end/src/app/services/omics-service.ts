@@ -45,7 +45,7 @@ export class OmicsService {
   };
 
   public getRun = async (getRunCommandInput: GetRunCommandInput): Promise<GetRunCommandOutput> => {
-    return this.omicsRequest<GetRunCommandInput, GetRunCommandOutput>(OmicsCommand.GET_WORKFLOW, getRunCommandInput);
+    return this.omicsRequest<GetRunCommandInput, GetRunCommandOutput>(OmicsCommand.GET_RUN, getRunCommandInput);
   };
 
   public getWorkflow = async (getWorkflowCommandInput: GetWorkflowCommandInput): Promise<GetWorkflowCommandOutput> => {

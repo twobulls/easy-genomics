@@ -66,6 +66,7 @@ export const handler: Handler = async (
     const response = await omicsService.listWorkflows(<ListWorkflowsCommandInput>{
       type: 'PRIVATE',
       ...queryParameters,
+      status: undefined, // Explicitly exclude status filter for Workflows
     });
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

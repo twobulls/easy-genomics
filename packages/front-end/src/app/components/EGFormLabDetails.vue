@@ -58,8 +58,8 @@
     NextFlowTowerAccessToken: '',
     NextFlowTowerWorkspaceId: '',
     S3Bucket: '',
-    EnableOmicsIntegration: false,
-    EnableSeqeraIntegration: false,
+    AwsHealthOmicsEnabled: false,
+    NextFlowTowerEnabled: false,
   };
 
   const state = ref({ ...defaultState } as Laboratory);
@@ -388,7 +388,7 @@
         eager-validation
         class="flex justify-between"
       >
-        <UToggle class="ml-2" v-model="state.EnableSeqeraIntegration" :disabled="!isEditing || isSubmittingFormData" />
+        <UToggle class="ml-2" v-model="state.NextFlowTowerEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
       <!-- Next Flow Tower Workspace ID -->
@@ -396,7 +396,7 @@
         label="Workspace ID"
         name="NextFlowTowerWorkspaceId"
         eager-validation
-        v-if="state.EnableSeqeraIntegration"
+        v-if="state.NextFlowTowerEnabled"
       >
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
@@ -407,7 +407,7 @@
 
       <!-- Next Flow Tower Access Token -->
       <EGFormGroup
-        v-if="isEditing && state.EnableSeqeraIntegration"
+        v-if="isEditing && state.NextFlowTowerEnabled"
         label="Personal Access Token"
         name="NextFlowTowerAccessToken"
         eager-validation
@@ -443,7 +443,7 @@
         eager-validation
         class="flex justify-between"
       >
-        <UToggle class="ml-2" v-model="state.EnableOmicsIntegration" :disabled="!isEditing || isSubmittingFormData" />
+        <UToggle class="ml-2" v-model="state.AwsHealthOmicsEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
     </EGCard>
 

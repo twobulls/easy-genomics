@@ -51,6 +51,14 @@
       runStore.wipNextFlowRuns[nextFlowRunTempId].params[key] = propValues[key];
     }
   });
+
+  watch(
+    () => runStore.wipNextFlowRuns[nextFlowRunTempId].sampleSheetS3Url,
+    () => {
+      runStore.wipNextFlowRuns[nextFlowRunTempId].params['input'] =
+        runStore.wipNextFlowRuns[nextFlowRunTempId].sampleSheetS3Url;
+    },
+  );
 </script>
 
 <template>

@@ -1,4 +1,4 @@
-import { ListWorkflowsCommandInput } from '@aws-sdk/client-omics/dist-types/commands/ListWorkflowsCommand';
+import { ListRunsCommandInput, RunStatus } from '@aws-sdk/client-omics';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
   LaboratoryNotFoundError,
@@ -20,15 +20,16 @@ const laboratoryService = new LaboratoryService();
 const omicsService = new OmicsService();
 
 /**
- * This GET /aws-healthomics/workflow/list-private-workflows?laboratoryId={LaboratoryId}
+ * This GET /aws-healthomics/run/list-runs?laboratoryId={LaboratoryId}
  * API queries the same region's AWS HealthOmics service to retrieve a list of
- * Private Workflows, and it expects:
+ * Runs, and it expects:
  *  - Required Query Parameter:
  *    - 'laboratoryId': to retrieve the Laboratory to verify access to AWS HealthOmics
  *  - Optional Query Parameters:
  *    - 'maxResults': pagination number of results
  *    - 'nextToken': pagination results offset index
  *    - 'name': string to search by the Workflow name attribute
+ *    - 'status': string to search by Status of Workflow Run
  *
  * @param event
  */
@@ -63,10 +64,9 @@ export const handler: Handler = async (
     }
 
     const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
-    const response = await omicsService.listWorkflows(<ListWorkflowsCommandInput>{
-      type: 'PRIVATE',
+    const response = await omicsService.listRuns(<ListRunsCommandInput>{
       ...queryParameters,
-      status: undefined, // Explicitly exclude status filter for Workflows
+      status: validateRunStatusQueryParameter(queryParameters.status),
     });
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
@@ -74,3 +74,33 @@ export const handler: Handler = async (
     return buildErrorResponse(err, event);
   }
 };
+
+/**
+ * Helper function to validate status query parameter and return the corresponding RunStatus filter.
+ */
+function validateRunStatusQueryParameter(status: string | undefined): RunStatus | undefined {
+  if (!status) {
+    return undefined;
+  }
+
+  switch (status.toUpperCase()) {
+    case 'CANCELLED':
+      return RunStatus.CANCELLED;
+    case 'COMPLETED':
+      return RunStatus.COMPLETED;
+    case 'DELETED':
+      return RunStatus.DELETED;
+    case 'FAILED':
+      return RunStatus.FAILED;
+    case 'PENDING':
+      return RunStatus.PENDING;
+    case 'RUNNING':
+      return RunStatus.RUNNING;
+    case 'STARTING':
+      return RunStatus.STARTING;
+    case 'STOPPING':
+      return RunStatus.STOPPING;
+    default:
+      return undefined;
+  }
+}

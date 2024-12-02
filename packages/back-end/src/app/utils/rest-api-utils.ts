@@ -11,6 +11,7 @@ export const enum REST_API_METHOD {
 
 export type AwsHealthOmicsQueryParameters = {
   name?: string;
+  status?: string;
   startingToken?: string;
   maxResults?: number;
 };
@@ -104,9 +105,14 @@ export function getAwsHealthOmicsApiQueryParameters(event: APIGatewayProxyEvent)
   const name: string | undefined = event.queryStringParameters?.name || undefined;
   const maxResults: string | undefined = event.queryStringParameters?.maxResults || undefined;
   const nextToken: string | undefined = event.queryStringParameters?.nextToken || undefined;
+  const status: string | undefined = event.queryStringParameters?.status || undefined;
 
   if (name) {
     apiQueryParameters.name = name;
+  }
+
+  if (status) {
+    apiQueryParameters.status = status;
   }
 
   if (maxResults && parseInt(maxResults) > 0) {

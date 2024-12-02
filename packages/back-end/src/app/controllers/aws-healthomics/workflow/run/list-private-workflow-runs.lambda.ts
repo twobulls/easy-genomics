@@ -20,7 +20,7 @@ const laboratoryService = new LaboratoryService();
 const omicsService = new OmicsService();
 
 /**
- * This GET /aws-healthomics/workflow/run/list-workflow-runs?laboratoryId={LaboratoryId}
+ * This GET /aws-healthomics/workflow/run/list-private-workflow-runs?laboratoryId={LaboratoryId}
  * API queries the same region's AWS HealthOmics service to retrieve a list of
  * Private Workflow Runs, and it expects:
  *  - Required Query Parameter:

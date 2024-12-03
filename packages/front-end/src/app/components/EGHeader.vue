@@ -24,27 +24,35 @@
 
   const acctDropdownIsOpen = ref<boolean>(false);
 
-  const items = [
-    [
+  const dropdownItems = computed<object[][]>(() => {
+    const items = [];
+
+    items.push([
       {
         slot: 'profile',
         class: 'bg-background-light-grey p-4',
       },
-    ],
-    [
-      {
-        slot: 'other-orgs',
-        class: 'bg-background-light-grey p-4',
-      },
-    ],
-    [
+    ]);
+
+    if (otherOrgs.value.length > 0) {
+      items.push([
+        {
+          slot: 'other-orgs',
+          class: 'bg-background-light-grey p-4',
+        },
+      ]);
+    }
+
+    items.push([
       {
         label: 'Sign Out',
         class: 'p-4',
         click: signOut,
       },
-    ],
-  ];
+    ]);
+
+    return items;
+  });
 
   const otherOrgs = computed<Organization[]>(() =>
     Object.values(orgsStore.orgs)
@@ -84,7 +92,7 @@
 
           <UDropdown
             v-model:open="acctDropdownIsOpen"
-            :items="items"
+            :items="dropdownItems"
             :ui="{
               padding: '',
               width: 'w-80',

@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
   const props = withDefaults(
     defineProps<{
@@ -34,15 +35,21 @@
     [
       {
         slot: 'other-orgs',
-        class: 'bg-background-light-grey',
+        class: 'bg-background-light-grey p-4',
       },
     ],
     [
       {
-        slot: 'sign-out',
+        slot: 'sign-out p-4',
       },
     ],
   ];
+
+  const otherOrgs = computed<Organization[]>(() =>
+    Object.values(orgsStore.orgs)
+      .filter((org) => org.OrganizationId !== userStore.currentOrgId)
+      .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
+  );
 </script>
 
 <template>
@@ -73,6 +80,7 @@
           >
             Organizations
           </ULink>
+
           <UDropdown
             v-model:open="acctDropdownIsOpen"
             :items="items"
@@ -103,9 +111,13 @@
             </template>
 
             <template #other-orgs>
-              <p>other organizations</p>
-              <p>organization name</p>
-              <p>organization name</p>
+              <div class="text-muted pb-2">Other Organizations</div>
+
+              <div class="flex w-full flex-col items-start gap-3" v-for="(org, i) of otherOrgs">
+                <div v-if="i > 0" class="mt-2 w-full border" />
+
+                <div class="font-medium">{{ org.Name }}</div>
+              </div>
             </template>
 
             <template #sign-out>sign out</template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
   const props = withDefaults(
     defineProps<{
@@ -10,6 +10,9 @@
     },
   );
 
+  const userStore = useUserStore();
+  const orgsStore = useOrgsStore();
+
   const { signOut, isAuthed } = useAuth();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
@@ -18,6 +21,44 @@
   function isSubpath(url: string) {
     return currentRoute.value.path.includes(url);
   }
+
+  const acctDropdownIsOpen = ref<boolean>(false);
+
+  const dropdownItems = computed<object[][]>(() => {
+    const items = [];
+
+    items.push([
+      {
+        slot: 'profile',
+        class: 'bg-background-light-grey p-4',
+      },
+    ]);
+
+    if (otherOrgs.value.length > 0) {
+      items.push([
+        {
+          slot: 'other-orgs',
+          class: 'bg-background-light-grey p-4',
+        },
+      ]);
+    }
+
+    items.push([
+      {
+        label: 'Sign Out',
+        class: 'p-4',
+        click: signOut,
+      },
+    ]);
+
+    return items;
+  });
+
+  const otherOrgs = computed<Organization[]>(() =>
+    Object.values(orgsStore.orgs)
+      .filter((org) => org.OrganizationId !== userStore.currentOrgId)
+      .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
+  );
 </script>
 
 <template>
@@ -29,7 +70,7 @@
         </div>
         <div class="flex items-center gap-2">
           <ULink
-            v-if="!useUserStore().isSuperuser"
+            v-if="!userStore.isSuperuser"
             to="/labs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
@@ -39,7 +80,7 @@
             Labs
           </ULink>
           <ULink
-            v-if="useUserStore().canManageOrgs()"
+            v-if="userStore.canManageOrgs()"
             to="/orgs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
@@ -48,13 +89,46 @@
           >
             Organizations
           </ULink>
-          <EGButton
-            :size="ButtonSizeEnum.enum.sm"
-            v-if="isAuthed"
-            @click="signOut()"
-            class="ml-8 h-10"
-            label="Sign Out"
-          />
+
+          <UDropdown
+            v-model:open="acctDropdownIsOpen"
+            :items="dropdownItems"
+            :ui="{
+              padding: '',
+              width: 'w-80',
+              item: {
+                base: 'flex flex-col items-start',
+                rounded: '',
+              },
+            }"
+          >
+            <EGInitialsCircle />
+
+            <template #profile>
+              <div class="flex flex-row items-center gap-3">
+                <EGInitialsCircle />
+
+                <div class="flex flex-col items-start gap-1">
+                  <div class="font-medium">
+                    {{ userStore.currentUserDetails.firstName }} {{ userStore.currentUserDetails.lastName }}
+                  </div>
+                  <div class="text-muted">
+                    {{ orgsStore.orgs[userStore.currentOrgId].Name }}
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <template #other-orgs>
+              <div class="text-muted pb-2">Other Organizations</div>
+
+              <div class="flex w-full flex-col items-start gap-3" v-for="(org, i) of otherOrgs">
+                <div v-if="i > 0" class="mt-2 w-full border" />
+
+                <div class="font-medium">{{ org.Name }}</div>
+              </div>
+            </template>
+          </UDropdown>
         </div>
       </template>
       <template v-else>

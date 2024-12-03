@@ -1,5 +1,4 @@
 <script setup lang="ts">
-  import { ButtonSizeEnum } from '@FE/types/buttons';
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
   const props = withDefaults(
@@ -40,7 +39,9 @@
     ],
     [
       {
-        slot: 'sign-out p-4',
+        label: 'Sign Out',
+        class: 'p-4',
+        click: signOut,
       },
     ],
   ];
@@ -119,16 +120,7 @@
                 <div class="font-medium">{{ org.Name }}</div>
               </div>
             </template>
-
-            <template #sign-out>sign out</template>
           </UDropdown>
-          <EGButton
-            :size="ButtonSizeEnum.enum.sm"
-            v-if="isAuthed"
-            @click="signOut()"
-            class="ml-8 h-10"
-            label="Sign Out"
-          />
         </div>
       </template>
       <template v-else>

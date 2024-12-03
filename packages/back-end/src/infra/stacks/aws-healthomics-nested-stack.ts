@@ -165,8 +165,8 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
-    // /aws-healthomics/run/cancel-run
-    this.iam.addPolicyStatements('/aws-healthomics/run/cancel-run', [
+    // /aws-healthomics/run/cancel-run-execution
+    this.iam.addPolicyStatements('/aws-healthomics/run/cancel-run-execution', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,

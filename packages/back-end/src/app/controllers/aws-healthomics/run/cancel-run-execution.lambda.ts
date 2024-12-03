@@ -20,7 +20,7 @@ const laboratoryService = new LaboratoryService();
 const omicsService = new OmicsService();
 
 /**
- * This PUT /aws-healthomics/run/cancel-run/:{RunId}?laboratoryId={LaboratoryId}
+ * This PUT /aws-healthomics/run/cancel-run-execution/:{RunId}?laboratoryId={LaboratoryId}
  * API queries the same region's AWS HealthOmics service to cancel a specific
  * Run, and it expects:
  *  - Required Path Parameter:

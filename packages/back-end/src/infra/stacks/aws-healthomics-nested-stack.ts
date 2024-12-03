@@ -2,13 +2,13 @@ import { NestedStack } from 'aws-cdk-lib';
 import { Effect, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
-// import { LambdaConstruct } from '../constructs/lambda-construct';
+import { LambdaConstruct } from '../constructs/lambda-construct';
 import { AwsHealthOmicsNestedStackProps } from '../types/back-end-stack';
 
 export class AwsHealthOmicsNestedStack extends NestedStack {
   readonly props: AwsHealthOmicsNestedStackProps;
   iam: IamConstruct;
-  // lambda: LambdaConstruct;
+  lambda: LambdaConstruct;
 
   constructor(scope: Construct, id: string, props: AwsHealthOmicsNestedStackProps) {
     super(scope, id);
@@ -19,20 +19,20 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
     });
     this.setupIamPolicies();
 
-    // this.lambda = new LambdaConstruct(this, `${this.props.constructNamespace}`, {
-    //   ...this.props,
-    //   iamPolicyStatements: this.iam.policyStatements, // Pass declared Auth IAM policies for attaching to respective Lambda function
-    //   lambdaFunctionsDir: 'src/app/controllers/aws-healthomics',
-    //   lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-    //   lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
-    //   environment: {
-    //     // Defines the common environment settings for all lambda functions
-    //     ACCOUNT_ID: this.props.env.account!,
-    //     REGION: this.props.env.region!,
-    //     DOMAIN_NAME: this.props.appDomainName,
-    //     NAME_PREFIX: this.props.namePrefix,
-    //   },
-    // });
+    this.lambda = new LambdaConstruct(this, `${this.props.constructNamespace}`, {
+      ...this.props,
+      iamPolicyStatements: this.iam.policyStatements, // Pass declared Auth IAM policies for attaching to respective Lambda function
+      lambdaFunctionsDir: 'src/app/controllers/aws-healthomics',
+      lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
+      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      environment: {
+        // Defines the common environment settings for all lambda functions
+        ACCOUNT_ID: this.props.env.account!,
+        REGION: this.props.env.region!,
+        DOMAIN_NAME: this.props.appDomainName,
+        NAME_PREFIX: this.props.namePrefix,
+      },
+    });
   }
 
   // AWS HealthOmics specific IAM policies
@@ -102,5 +102,67 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         },
       }),
     );
+
+    // /aws-healthomics/workflow/list-private-workflows
+    this.iam.addPolicyStatements('/aws-healthomics/workflow/list-private-workflows', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
+        actions: ['omics:ListWorkflows'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /aws-healthomics/run/list-runs
+    this.iam.addPolicyStatements('/aws-healthomics/run/list-runs', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
+        actions: ['omics:ListRuns'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /aws-healthomics/run/read-run
+    this.iam.addPolicyStatements('/aws-healthomics/run/read-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
+        actions: ['omics:GetRun'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /aws-healthomics/run/cancel-run
+    this.iam.addPolicyStatements('/aws-healthomics/run/cancel-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
+        actions: ['omics:CancelRun'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
   };
 }

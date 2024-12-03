@@ -264,6 +264,17 @@ export class LaboratoryAccessTokenUnavailableError extends HttpError {
 }
 
 /**
+ * Laboratory WorkspaceId Or Access Token Incorrect
+ *
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryWorkspaceIdOrAccessTokenIncorrectError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Laboratory WorkspaceId or Access Token is incorrect', 400, 'EG-308', messageOpt);
+  }
+}
+
+/**
  * Laboratory User already exists
  *
  * @param messageOpt - optional additional message
@@ -295,6 +306,30 @@ export class LaboratoryUserDeleteFailedError extends HttpError {
 export class LaboratoryUserNotFoundError extends HttpError {
   constructor(laboratoryId: string, userId: string, messageOpt?: string) {
     super(`User '${userId}' for laboratory '${laboratoryId}' could not be found`, 404, 'EG-313', messageOpt);
+  }
+}
+
+/**
+ * Laboratory Run failed to delete
+ *
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryRunDeleteFailedError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Removing run from laboratory failed', 500, 'EG-322', messageOpt);
+  }
+}
+
+/**
+ * Laboratory Run not found
+ *
+ * @param runId
+ * @param laboratoryId - optional additional message
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryRunNotFoundError extends HttpError {
+  constructor(runId: string, laboratoryId: string = 'unknown', messageOpt?: string) {
+    super(`Run '${runId}' for laboratory '${laboratoryId}' could not be found`, 404, 'EG-323', messageOpt);
   }
 }
 

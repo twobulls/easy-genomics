@@ -23,6 +23,7 @@
     UpdateLaboratory,
     UpdateLaboratorySchema,
   } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+  import { ERROR_CODES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 
   const props = withDefaults(
     defineProps<{
@@ -49,13 +50,7 @@
   const isLoadingFormData = ref(false);
   const canSubmit = ref(false);
 
-  // Enable/disable fields default
-  const isNameFieldDisabled = ref(true);
-  const isDescriptionFieldDisabled = ref(true);
-  const isNextFlowTowerWorkspaceIdFieldDisabled = ref(true);
-
-  // Hide/show fields default
-  const isNextFlowTowerAccessTokenFieldHidden = ref(true);
+  const isEditing = computed<boolean>(() => formMode.value !== LabDetailsFormModeEnum.enum.ReadOnly);
 
   const defaultState: LabDetails = {
     Name: '',
@@ -63,6 +58,8 @@
     NextFlowTowerAccessToken: '',
     NextFlowTowerWorkspaceId: '',
     S3Bucket: '',
+    AwsHealthOmicsEnabled: false,
+    NextFlowTowerEnabled: false,
   };
 
   const state = ref({ ...defaultState } as Laboratory);
@@ -91,27 +88,7 @@
    * Switches the form input fields disabled/hidden states based on the form mode.
    */
   function switchToFormMode(newFormMode: LabDetailsFormMode) {
-    if (formMode.value !== newFormMode) {
-      formMode.value = newFormMode;
-    }
-
-    if (newFormMode === LabDetailsFormModeEnum.enum.ReadOnly) {
-      // disable fields
-      isNameFieldDisabled.value = true;
-      isDescriptionFieldDisabled.value = true;
-      isNextFlowTowerWorkspaceIdFieldDisabled.value = true;
-
-      // hide fields
-      isNextFlowTowerAccessTokenFieldHidden.value = true;
-    } else if (newFormMode === LabDetailsFormModeEnum.enum.Create || newFormMode === LabDetailsFormModeEnum.enum.Edit) {
-      // enable fields
-      isNameFieldDisabled.value = false;
-      isDescriptionFieldDisabled.value = false;
-      isNextFlowTowerWorkspaceIdFieldDisabled.value = false;
-
-      // show fields
-      isNextFlowTowerAccessTokenFieldHidden.value = false;
-    }
+    formMode.value = newFormMode;
   }
 
   onMounted(async () => {
@@ -223,8 +200,14 @@
       } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
         await handleUpdateLabDetails();
       }
-    } catch (error) {
-      useToastStore().error(`Invalid Workspace ID or Personal Access Token. Please try again.`);
+    } catch (error: any) {
+      if (error.message === `Request error: ${ERROR_CODES['EG-304']}`) {
+        useToastStore().error('Laboratory name already taken. Please try again.');
+      } else if (error.message === `Request error: ${ERROR_CODES['EG-308']}`) {
+        useToastStore().error('Invalid Workspace ID or Personal Access Token. Please try again.');
+      } else {
+        useToastStore().error('An unknown error occurred. Please refresh the page and try again.');
+      }
     } finally {
       useUiStore().setRequestComplete('createLab');
       useUiStore().setRequestComplete('updateLab');
@@ -365,7 +348,7 @@
       <EGFormGroup label="Lab Name" name="Name" eager-validation required>
         <EGInput
           v-model="state.Name"
-          :disabled="isNameFieldDisabled || isSubmittingFormData"
+          :disabled="!isEditing || isSubmittingFormData"
           placeholder="Enter lab name (required and must be unique)"
           required
           autofocus
@@ -376,7 +359,7 @@
       <EGFormGroup label="Lab Description" name="Description" eager-validation>
         <EGTextArea
           v-model="state.Description"
-          :disabled="isDescriptionFieldDisabled || isSubmittingFormData"
+          :disabled="!isEditing || isSubmittingFormData"
           placeholder="Describe your lab and what runs should be launched by Lab users."
         />
       </EGFormGroup>
@@ -390,24 +373,41 @@
         <EGSelect
           :options="s3Directories"
           v-model="selectedS3Bucket"
-          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled || isSubmittingFormData"
+          :disabled="!isEditing || isSubmittingFormData"
           placeholder="Please select an S3 bucket from the list below"
           searchable-placeholder="Search existing S3 buckets..."
         />
       </EGFormGroup>
 
+      <hr class="mb-6" />
+
+      <!-- Next Flow Tower Toggle -->
+      <EGFormGroup
+        label="Enable Seqera Integration"
+        name="NextFlowTowerEnable"
+        eager-validation
+        class="flex justify-between"
+      >
+        <UToggle class="ml-2" v-model="state.NextFlowTowerEnabled" :disabled="!isEditing || isSubmittingFormData" />
+      </EGFormGroup>
+
       <!-- Next Flow Tower Workspace ID -->
-      <EGFormGroup label="Workspace ID" name="NextFlowTowerWorkspaceId" eager-validation>
+      <EGFormGroup
+        label="Workspace ID"
+        name="NextFlowTowerWorkspaceId"
+        eager-validation
+        v-if="state.NextFlowTowerEnabled"
+      >
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
           placeholder="Defaults to the Next Flow Tower personal workspace if not specified."
-          :disabled="isNextFlowTowerWorkspaceIdFieldDisabled || isSubmittingFormData"
+          :disabled="!isEditing || isSubmittingFormData"
         />
       </EGFormGroup>
 
       <!-- Next Flow Tower Access Token -->
       <EGFormGroup
-        v-if="!isNextFlowTowerAccessTokenFieldHidden"
+        v-if="isEditing && state.NextFlowTowerEnabled"
         label="Personal Access Token"
         name="NextFlowTowerAccessToken"
         eager-validation
@@ -418,7 +418,7 @@
           v-model="state.NextFlowTowerAccessToken"
           :password="true"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
-          :disabled="isSubmittingFormData"
+          :disabled="!isEditing || isSubmittingFormData"
         />
         <!-- Next Flow Tower Access Token: Edit  Mode -->
         <EGPasswordInput
@@ -430,8 +430,20 @@
           :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
           eager-validation
-          :disabled="isSubmittingFormData"
+          :disabled="!isEditing || isSubmittingFormData"
         />
+      </EGFormGroup>
+
+      <hr class="mb-6" />
+
+      <!-- HealthOmics Toggle -->
+      <EGFormGroup
+        label="Enable HealthOmics Integration"
+        name="HealthOmicsEnable"
+        eager-validation
+        class="flex justify-between"
+      >
+        <UToggle class="ml-2" v-model="state.AwsHealthOmicsEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
     </EGCard>
 

@@ -1,6 +1,13 @@
 import { test, expect } from 'playwright/test';
 import { envConfig } from '../../../config/env-config';
 
+/*
+ * Test preconditions:
+ * - a lab exists named 'Playwright test lab' or 'Automated Lab - Updated' (labName or labNameUpdated)
+ *   - has workspace ID/PAT set (so the alert popup doesn't appear)
+ *   - has user 'Lab Manager' on lab
+ */
+
 const orgName = 'Default Organization';
 const labName = 'Playwright test lab';
 const labNameUpdated = 'Automated Lab - Updated';
@@ -153,18 +160,17 @@ test('03 - Create a Laboratory Successfully', async ({ page, baseURL }) => {
   }
   // create new Laboratory
   await page.getByRole('button', { name: 'Create a new Lab' }).click();
-  await page.getByLabel('Workspace ID').fill('');
-  await page.getByLabel('Personal Access Token').fill('P@ssw0rd');
   await page.getByPlaceholder('Enter lab name (required and').click();
   await page.getByPlaceholder('Enter lab name (required and').fill('Playwright test lab');
   await page.getByPlaceholder('Describe your lab and what').click();
   await page.getByPlaceholder('Describe your lab and what').fill('Playwright test lab description');
   await page.getByLabel('Default S3 bucket directory').click();
   await page.getByText(envConfig.testS3Url).click();
+  await page.getByLabel('Enable Seqera Integration').check();
   await page.getByLabel('Workspace ID').click();
-  await page.getByLabel('Workspace ID').fill('');
+  await page.getByLabel('Workspace ID').fill(envConfig.testWorkspaceId);
   await page.getByLabel('Personal Access Token').click();
-  await page.getByLabel('Personal Access Token').fill('');
+  await page.getByLabel('Personal Access Token').fill(envConfig.testAccessToken);
   await page.getByRole('button', { name: 'Create Lab' }).click();
   page.getByRole('cell', { name: 'Playwright test lab' });
   page.getByRole('cell', { name: 'Playwright test lab description' });
@@ -196,13 +202,15 @@ test('04 - Update a Laboratory Successfully', async ({ page, baseURL }) => {
     // update Laboratory
     await page.getByRole('row', { name: labName }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('button', { name: 'Okay' }).click();
+    await page.waitForTimeout(5 * 1000); // this waits for s3 bucket info to load
+    await page.getByRole('tab', { name: 'Details' }).click();
     await page.getByRole('button', { name: 'Edit' }).click();
 
     await page.getByPlaceholder('Enter lab name (required and').click();
     await page.getByPlaceholder('Enter lab name (required and').fill(labNameUpdated);
     await page.getByPlaceholder('Describe your lab and what').click();
     await page.getByPlaceholder('Describe your lab and what').fill('Automation test lab description');
+    await page.getByLabel('Enable Seqera Integration').check();
     await page.getByLabel('Workspace ID').click();
     await page.getByLabel('Workspace ID').fill(envConfig.testWorkspaceId);
     await page.getByLabel('Personal Access Token').click();

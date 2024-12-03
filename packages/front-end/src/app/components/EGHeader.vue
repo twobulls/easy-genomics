@@ -10,6 +10,9 @@
     },
   );
 
+  const userStore = useUserStore();
+  const orgsStore = useOrgsStore();
+
   const { signOut, isAuthed } = useAuth();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
@@ -24,26 +27,19 @@
   const items = [
     [
       {
-        label: '(Sample) Your Name',
-      },
-      {
-        label: '(Sample) Organization Name',
+        slot: 'profile',
+        class: 'bg-background-light-grey p-4',
       },
     ],
     [
       {
-        label: '(Sample) Other Organizations',
-      },
-      {
-        label: '(Sample) [Org Name]',
-      },
-      {
-        label: '(Sample) [Org Name]',
+        slot: 'other-orgs',
+        class: 'bg-background-light-grey',
       },
     ],
     [
       {
-        label: 'Sign Out',
+        slot: 'sign-out',
       },
     ],
   ];
@@ -58,7 +54,7 @@
         </div>
         <div class="flex items-center gap-2">
           <ULink
-            v-if="!useUserStore().isSuperuser"
+            v-if="!userStore.isSuperuser"
             to="/labs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
@@ -68,7 +64,7 @@
             Labs
           </ULink>
           <ULink
-            v-if="useUserStore().canManageOrgs()"
+            v-if="userStore.canManageOrgs()"
             to="/orgs"
             inactive-class="text-body"
             :active-class="'text-primary-dark bg-primary-muted'"
@@ -77,10 +73,42 @@
           >
             Organizations
           </ULink>
-          <UDropdown v-model:open="acctDropdownIsOpen" :items="items">
-            <div class="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-xs text-white">
-              {{ useUserStore().initials }}
-            </div>
+          <UDropdown
+            v-model:open="acctDropdownIsOpen"
+            :items="items"
+            :ui="{
+              padding: '',
+              width: 'w-80',
+              item: {
+                base: 'flex flex-col items-start',
+                rounded: '',
+              },
+            }"
+          >
+            <EGInitialsCircle />
+
+            <template #profile>
+              <div class="flex flex-row items-center gap-3">
+                <EGInitialsCircle />
+
+                <div class="flex flex-col items-start gap-1">
+                  <div class="font-medium">
+                    {{ userStore.currentUserDetails.firstName }} {{ userStore.currentUserDetails.lastName }}
+                  </div>
+                  <div class="text-muted">
+                    {{ orgsStore.orgs[userStore.currentOrgId].Name }}
+                  </div>
+                </div>
+              </div>
+            </template>
+
+            <template #other-orgs>
+              <p>other organizations</p>
+              <p>organization name</p>
+              <p>organization name</p>
+            </template>
+
+            <template #sign-out>sign out</template>
           </UDropdown>
           <EGButton
             :size="ButtonSizeEnum.enum.sm"

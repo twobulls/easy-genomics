@@ -76,7 +76,8 @@ class HttpFactory {
 
       if (shouldRefresh && token) {
         // Ensure permissions are reloaded before remounting the app
-        await useUserStore().loadCurrentUserPermissions();
+        const { $api } = useNuxtApp();
+        await useUser($api).setCurrentUserDataFromToken();
         useUiStore().incrementRemountAppKey();
       }
 

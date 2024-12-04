@@ -30,7 +30,6 @@ jspm_packages/
 .yarn-integrity
 .cache
 /coverage/
-!/.github/pull_request_template.md
 !/.prettierignore
 !/.prettierrc.json
 !/.npmrc

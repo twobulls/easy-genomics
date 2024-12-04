@@ -4,7 +4,6 @@
 *.snap linguist-generated
 /.eslintrc.json linguist-generated
 /.gitattributes linguist-generated
-/.github/pull_request_template.md linguist-generated
 /.github/workflows/cicd-release-quality.yml linguist-generated
 /.github/workflows/cicd-release-sandbox.yml linguist-generated
 /.github/workflows/pull-request-lint.yml linguist-generated

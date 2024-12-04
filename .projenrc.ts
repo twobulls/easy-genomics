@@ -157,6 +157,7 @@ const root = new typescript.TypeScriptProject({
   // by projen as we will generate our own later (that uses nx)
   depsUpgradeOptions: { workflow: false },
   buildWorkflow: false,
+  pullRequestTemplate: false,
   release: false,
   devDeps: [
     '@aws-sdk/types',

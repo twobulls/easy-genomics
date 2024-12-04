@@ -25,3 +25,6 @@
 ## Checklist*
 - [ ] No new errors or warnings have been introduced.
 - [ ] All tests pass successfully and new tests added as necessary.
+- [ ] Documentation has been updated accordingly.
+- [ ] Code adheres to the coding and style guidelines of the project.
+- [ ] Code has been commented in particularly hard-to-understand areas.

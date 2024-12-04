@@ -285,7 +285,7 @@
               'addUserToLab',
               'assignLabRole',
               'removeUserFromLab',
-            ])
+            ]) || useUserStore().isSuperuser
           "
           :user="row"
           @assign-role="handleAssignRole($event.labUser)"
@@ -305,6 +305,7 @@
         label="Grant access"
         variant="secondary"
         size="sm"
+        :disabled="useUserStore().isSuperuser"
       />
       <EGActionButton v-else-if="actionItems" :items="actionItems(row)" />
     </template>

@@ -79,22 +79,38 @@ export default function useUser($api?: any) {
   }
 
   /**
-   * @description Obtains the user's current org id from the auth JWT then sets it as the current org in the user store
+   * @description Obtains details about the current user from the auth JWT then sets them in the user store
    */
-  async function setCurrentUserOrg() {
+  async function setCurrentUserDataFromToken() {
     try {
-      if (useUserStore().isSuperuser) {
-        // superuser won't have org access data so we can't do this, and it shouldn't need it anyway
+      const userStore = useUserStore();
+
+      // decode token
+      const token = await useAuth().getToken();
+      const decodedToken: any = decodeJwt(token);
+
+      // retrieve and set account email
+      userStore.currentUserDetails.email = decodedToken.email;
+
+      // check and set superuser status
+      userStore.currentUserPermissions.isSuperuser = decodedToken['cognito:groups']?.includes('SystemAdmin');
+
+      // if superuser, quit now, as su accounts won't have any of the details retrieved in the rest of this function
+      if (userStore.currentUserPermissions.isSuperuser) {
         return;
       }
 
-      const token = await useAuth().getToken();
-      const decodedToken: any = decodeJwt(token);
+      // retrieve and set org access
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
       const currentOrgId = Object.keys(parsedOrgAccess)[0];
       const orgs = await $api.orgs.list();
       const currentOrg = orgs.find((org: Organization) => org.OrganizationId === currentOrgId);
-      useUserStore().setOrgAccess(currentOrg);
+      userStore.setOrgAccess(currentOrg);
+
+      // retrieve and set personal details
+      userStore.currentUserDetails.firstName = decodedToken.FirstName;
+      userStore.currentUserDetails.lastName = decodedToken.LastName;
+      userStore.currentUserDetails.preferredName = decodedToken.PreferredName;
     } catch (error) {
       console.error('Error occurred setting the current organisation.', error);
       throw error;
@@ -106,6 +122,6 @@ export default function useUser($api?: any) {
     labsCount,
     invite,
     resendInvite,
-    setCurrentUserOrg,
+    setCurrentUserDataFromToken,
   };
 }

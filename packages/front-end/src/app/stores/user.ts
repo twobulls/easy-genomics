@@ -13,6 +13,8 @@ interface UserStoreState {
   currentUserDetails: {
     firstName: string | null;
     lastName: string | null;
+    preferredName: string | null;
+    email: string | null;
   };
 }
 
@@ -27,6 +29,8 @@ const initialState = (): UserStoreState => ({
   currentUserDetails: {
     firstName: null,
     lastName: null,
+    preferredName: null,
+    email: null,
   },
 });
 
@@ -94,29 +98,6 @@ const useUserStore = defineStore('userStore', {
     },
     reset() {
       Object.assign(this, initialState());
-    },
-
-    async loadCurrentUserPermissions(): Promise<void> {
-      const token = await useAuth().getToken();
-      const decodedToken: any = decodeJwt(token);
-
-      if (decodedToken['cognito:groups']?.includes('SystemAdmin')) {
-        this.currentUserPermissions.isSuperuser = true;
-        return;
-      }
-
-      this.currentUserPermissions.isSuperuser = false;
-
-      const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
-      this.currentUserPermissions.orgPermissions = parsedOrgAccess;
-    },
-
-    async loadCurrentUserDetails(): Promise<void> {
-      const token = await useAuth().getToken();
-      const decodedToken: any = decodeJwt(token);
-
-      this.currentUserDetails.firstName = decodedToken.FirstName;
-      this.currentUserDetails.lastName = decodedToken.LastName;
     },
   },
 

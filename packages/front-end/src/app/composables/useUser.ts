@@ -1,5 +1,4 @@
 import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
-import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { VALIDATION_MESSAGES } from '@FE/constants/validation';
@@ -100,12 +99,15 @@ export default function useUser($api?: any) {
         return;
       }
 
-      // retrieve and set org access
+      // retrieve and set current org id and org access
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
+
       const currentOrgId = Object.keys(parsedOrgAccess)[0];
-      const orgs = await $api.orgs.list();
-      const currentOrg = orgs.find((org: Organization) => org.OrganizationId === currentOrgId);
-      userStore.setOrgAccess(currentOrg);
+      userStore.currentOrg.OrganizationId = currentOrgId;
+
+      userStore.currentUserPermissions.orgPermissions = {
+        [currentOrgId]: parsedOrgAccess[currentOrgId],
+      };
 
       // retrieve and set personal details
       userStore.currentUserDetails.firstName = decodedToken.FirstName;

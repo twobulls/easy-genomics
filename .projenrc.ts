@@ -420,6 +420,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'date-fns',
     'dotenv',
     'esrun',
+    'file-saver',
     'jwt-decode',
     'nuxt',
     'pinia',

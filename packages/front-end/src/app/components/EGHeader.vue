@@ -110,10 +110,10 @@
 
                 <div class="flex flex-col items-start gap-1">
                   <div class="font-medium">
-                    {{ userStore.currentUserDetails.firstName }} {{ userStore.currentUserDetails.lastName }}
+                    {{ userStore.currentUserDisplayName }}
                   </div>
                   <div class="text-muted">
-                    {{ orgsStore.orgs[userStore.currentOrgId].Name }}
+                    {{ orgsStore.orgs[userStore.currentOrgId]?.Name || '' }}
                   </div>
                 </div>
               </div>

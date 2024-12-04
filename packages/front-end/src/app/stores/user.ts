@@ -88,8 +88,32 @@ const useUserStore = defineStore('userStore', {
 
     // user details
 
-    initials: (_state: UserStoreState): string =>
-      (_state.currentUserDetails.firstName?.charAt(0) || '?') + (_state.currentUserDetails.lastName?.charAt(0) || '?'),
+    currentUserPreferredOrFirstName: (_state: UserStoreState): string | null =>
+      _state.currentUserDetails.preferredName || _state.currentUserDetails.firstName,
+
+    currentUserInitials: (_state: UserStoreState): string => {
+      if (_state.currentUserPermissions.isSuperuser) {
+        return '#';
+      }
+
+      const firstInitial: string = useUserStore().currentUserPreferredOrFirstName?.charAt(0) || '?';
+      const lastInitial: string = _state.currentUserDetails.lastName?.charAt(0) || '?';
+      return firstInitial + lastInitial;
+    },
+
+    currentUserDisplayName: (_state: UserStoreState): string => {
+      const preferredOrFirstName = useUserStore().currentUserPreferredOrFirstName;
+      const lastName = _state.currentUserDetails.lastName;
+      const email = _state.currentUserDetails.email;
+
+      if (preferredOrFirstName) {
+        return `${preferredOrFirstName} ${lastName}`;
+      } else if (email) {
+        return email;
+      } else {
+        return '???';
+      }
+    },
   },
 
   actions: {

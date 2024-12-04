@@ -34,7 +34,7 @@
       },
     ]);
 
-    if (otherOrgs.value.length > 0) {
+    if (!userStore.isSuperuser && otherOrgs.value.length > 0) {
       items.push([
         {
           slot: 'other-orgs',

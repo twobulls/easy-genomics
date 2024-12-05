@@ -92,7 +92,7 @@
   }
 
   /**
-   * Converts the user input value to one supported by the Next Flow Tower API.
+   * Converts the user input value to one supported by the Seqera API.
    *
    * Allows only alphanumeric characters, hyphens, and underscores.
    * Removes any other characters and replaces multiple hyphens and underscores with a single instance.

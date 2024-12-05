@@ -21,7 +21,7 @@
   const props = withDefaults(
     defineProps<{
       labId: string;
-      nextFlowRunId: string;
+      seqeraRunId: string;
       s3Contents: S3Response | null;
       isLoading?: boolean;
     }>(),
@@ -158,7 +158,7 @@
               ? handleS3Download(
                   props.labId,
                   row.name,
-                  useRunStore().seqeraRuns[props.labId][props.nextFlowRunId].workDir.replace(/\/work$/, ''),
+                  useRunStore().seqeraRuns[props.labId][props.seqeraRunId].workDir.replace(/\/work$/, ''),
                   row.size,
                 )
               : downloadFolder(),

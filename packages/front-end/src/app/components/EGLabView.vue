@@ -209,9 +209,9 @@
     }
   });
 
-  async function pollFetchNextFlowRuns() {
-    await getNextFlowRuns();
-    intervalId = window.setTimeout(pollFetchNextFlowRuns, 2 * 60 * 1000);
+  async function pollFetchSeqeraRuns() {
+    await getSeqeraRuns();
+    intervalId = window.setTimeout(pollFetchSeqeraRuns, 2 * 60 * 1000);
   }
 
   function showRedirectModal() {
@@ -334,7 +334,7 @@
     }
   }
 
-  async function getNextFlowPipelines(): Promise<void> {
+  async function getSeqeraPipelines(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraPipelines');
     try {
       const res = await $api.seqeraPipelines.list(props.labId);
@@ -351,12 +351,12 @@
     }
   }
 
-  async function getNextFlowRuns(): Promise<void> {
+  async function getSeqeraRuns(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraRuns');
     try {
       await runStore.loadSeqeraRunsForLab(props.labId);
     } catch (error) {
-      console.error('Error retrieving NextFlow runs', error);
+      console.error('Error retrieving Seqera runs', error);
     } finally {
       useUiStore().setRequestComplete('getSeqeraRuns');
     }
@@ -375,7 +375,7 @@
     viewRunDetails(row);
   }
 
-  function onNextFlowPipelinesRowClicked(row: SeqeraRun) {
+  function onSeqeraPipelinesRowClicked(row: SeqeraRun) {
     viewRunPipeline(row);
   }
 
@@ -424,7 +424,7 @@
     runToCancel.value = null;
     uiStore.setRequestComplete('cancelSeqeraRun');
 
-    await getNextFlowRuns();
+    await getSeqeraRuns();
   }
 
   watch(lab, async (lab) => {
@@ -435,7 +435,7 @@
           // superuser doesn't view pipelines or runs so don't fetch those
           await getLabUsers();
         } else {
-          await Promise.all([getNextFlowPipelines(), pollFetchNextFlowRuns(), getLabUsers()]);
+          await Promise.all([getSeqeraPipelines(), pollFetchSeqeraRuns(), getLabUsers()]);
           canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
         }
       } else {
@@ -512,10 +512,10 @@
     "
   >
     <template #item="{ item }">
-      <!-- NextFlow Pipelines tab -->
+      <!-- Seqera Pipelines tab -->
       <div v-if="item.key === 'seqeraPipelines'" class="space-y-3">
         <EGTable
-          :row-click-action="onNextFlowPipelinesRowClicked"
+          :row-click-action="onSeqeraPipelinesRowClicked"
           :table-data="seqeraPipelines"
           :columns="seqeraPipelinesTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
@@ -559,22 +559,22 @@
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
         >
-          <template #runName-data="{ row: nextFlowRun }">
-            <div class="text-body text-sm font-medium">{{ nextFlowRun.runName }}</div>
-            <div class="text-muted text-xs font-normal">{{ nextFlowRun.projectName }}</div>
+          <template #runName-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ seqeraRun.runName }}</div>
+            <div class="text-muted text-xs font-normal">{{ seqeraRun.projectName }}</div>
           </template>
 
-          <template #lastUpdated-data="{ row: nextFlowRun }">
-            <div class="text-body text-sm font-medium">{{ getDate(nextFlowRun.lastUpdated) }}</div>
-            <div class="text-muted">{{ getTime(nextFlowRun.lastUpdated) }}</div>
+          <template #lastUpdated-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ getDate(seqeraRun.lastUpdated) }}</div>
+            <div class="text-muted">{{ getTime(seqeraRun.lastUpdated) }}</div>
           </template>
 
-          <template #status-data="{ row: nextFlowRun }">
-            <EGStatusChip :status="nextFlowRun.status" />
+          <template #status-data="{ row: seqeraRun }">
+            <EGStatusChip :status="seqeraRun.status" />
           </template>
 
-          <template #owner-data="{ row: nextFlowRun }">
-            <div class="text-body text-sm font-medium">{{ nextFlowRun?.userName ?? '-' }}</div>
+          <template #owner-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ seqeraRun?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">

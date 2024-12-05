@@ -133,8 +133,12 @@
 
     if (!missingPAT.value) {
       if (!props.superuser) {
-        items.push({ key: 'seqeraPipelines', label: 'Seqera Pipelines' });
-        items.push({ key: 'omicsWorkflows', label: 'HealthOmics Workflows' });
+        if (lab.value?.NextFlowTowerEnabled) {
+          items.push({ key: 'seqeraPipelines', label: 'Seqera Pipelines' });
+        }
+        if (lab.value?.AwsHealthOmicsEnabled) {
+          items.push({ key: 'omicsWorkflows', label: 'HealthOmics Workflows' });
+        }
         items.push({ key: 'runs', label: 'Lab Runs' });
       }
       items.push({ key: 'users', label: 'Lab Users' });

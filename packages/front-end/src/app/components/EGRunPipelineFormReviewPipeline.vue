@@ -39,7 +39,7 @@
         throw new Error('pipeline id not found in wip run config');
       }
 
-      const launchDetails = await $api.nextFlowPipelines.readPipelineLaunchDetails(pipelineId, labId);
+      const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(pipelineId, labId);
 
       const workDir: string = `s3://${wipNextFlowRun.value?.s3Bucket}/${wipNextFlowRun.value?.s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
@@ -53,7 +53,7 @@
           paramsText: paramsText,
         },
       };
-      await $api.nextFlowRuns.createPipelineRun(labId, launchRequest);
+      await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
       delete runStore.wipNextFlowRuns[nextFlowRunTempId];
       emit('has-launched');
     } catch (error) {

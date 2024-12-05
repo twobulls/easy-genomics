@@ -10,7 +10,7 @@ import {
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse, stripNullProperties } from '@FE/utils/api-utils';
 
-class NextFlowPipelinesModule extends HttpFactory {
+class SeqeraPipelinesModule extends HttpFactory {
   async list(labId: string): Promise<ListPipelinesResponse> {
     const res = await this.callNextflowTower<ListPipelinesResponse>(
       'GET',
@@ -57,4 +57,4 @@ class NextFlowPipelinesModule extends HttpFactory {
   }
 }
 
-export default NextFlowPipelinesModule;
+export default SeqeraPipelinesModule;

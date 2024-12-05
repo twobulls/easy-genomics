@@ -2,9 +2,9 @@ import { defineNuxtPlugin } from '#app';
 import FileModule from '@FE/repository/modules/file';
 import InfraModules from '@FE/repository/modules/infra';
 import LabsModule from '@FE/repository/modules/labs';
-import NextFlowPipelinesModule from '@FE/repository/modules/nextflow-pipelines';
-import NextFlowRunsModules from '@FE/repository/modules/nextflow-runs';
 import OrgsModule from '@FE/repository/modules/orgs';
+import SeqeraPipelinesModule from '@FE/repository/modules/seqera-pipelines';
+import SeqeraRunsModules from '@FE/repository/modules/seqera-runs';
 import UploadsModule from '@FE/repository/modules/uploads';
 import UsersModule from '@FE/repository/modules/users';
 
@@ -13,8 +13,8 @@ interface IApiInstance {
   infra: InfraModules;
   labs: LabsModule;
   orgs: OrgsModule;
-  nextFlowPipelines: NextFlowPipelinesModule;
-  nextFlowRuns: NextFlowRunsModules;
+  seqeraPipelines: SeqeraPipelinesModule;
+  seqeraRuns: SeqeraRunsModules;
   uploads: UploadsModule;
   users: UsersModule;
 }
@@ -32,8 +32,8 @@ const createApiInstance = (apiFetcher: any): IApiInstance => ({
   infra: new InfraModules(apiFetcher),
   labs: new LabsModule(apiFetcher),
   orgs: new OrgsModule(apiFetcher),
-  nextFlowPipelines: new NextFlowPipelinesModule(apiFetcher),
-  nextFlowRuns: new NextFlowRunsModules(apiFetcher),
+  seqeraPipelines: new SeqeraPipelinesModule(apiFetcher),
+  seqeraRuns: new SeqeraRunsModules(apiFetcher),
   uploads: new UploadsModule(apiFetcher),
   users: new UsersModule(apiFetcher),
 });

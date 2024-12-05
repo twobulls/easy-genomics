@@ -10,7 +10,7 @@ import {
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse } from '@FE/utils/api-utils';
 
-class NextFlowRunsModule extends HttpFactory {
+class SeqeraRunsModule extends HttpFactory {
   async createPipelineRun(labId: string, pipelineLaunchRequest: CreateWorkflowLaunchRequest): Promise<any> {
     const res = await this.callNextflowTower<any>(
       'POST',
@@ -132,4 +132,4 @@ class NextFlowRunsModule extends HttpFactory {
   }
 }
 
-export default NextFlowRunsModule;
+export default SeqeraRunsModule;

@@ -38,10 +38,10 @@ class SeqeraRunsModule extends HttpFactory {
     return workflows || [];
   }
 
-  async cancelPipelineRun(labId: string, nextFlowRunId: string): Promise<any> {
+  async cancelPipelineRun(labId: string, seqeraRunId: string): Promise<any> {
     const res = await this.callSeqera<any>(
       'PUT',
-      `/workflow/cancel-workflow-execution/${nextFlowRunId}?laboratoryId=${labId}`,
+      `/workflow/cancel-workflow-execution/${seqeraRunId}?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -64,13 +64,12 @@ class SeqeraRunsModule extends HttpFactory {
   }
 
   /**
-   * Calls '/nf-tower/file/request-file-download' API to download the contents
-   * of a specified NextFlow Tower Workflow Run results file.
+   * Calls '/nf-tower/file/request-file-download' API to download the contents of a specified Seqera Run results file.
    *
    * @param labId
    * @param contentUri
    */
-  async downloadNextflowFile(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+  async downloadSeqeraFile(labId: string, contentUri: string): Promise<FileDownloadResponse> {
     const res: FileDownloadResponse | undefined = await this.callSeqera<FileDownloadResponse>(
       'POST',
       '/file/request-file-download',
@@ -113,10 +112,10 @@ class SeqeraRunsModule extends HttpFactory {
     return res;
   }
 
-  async get(labId: string, nextFlowRunId: string): Promise<Workflow> {
+  async get(labId: string, seqeraRunId: string): Promise<Workflow> {
     const res = await this.callSeqera<DescribeWorkflowResponse>(
       'GET',
-      `/workflow/read-workflow/${nextFlowRunId}?laboratoryId=${labId}`,
+      `/workflow/read-workflow/${seqeraRunId}?laboratoryId=${labId}`,
     );
 
     if (!res) {

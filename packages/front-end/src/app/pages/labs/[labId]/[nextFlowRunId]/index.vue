@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { getDate, getTime } from '@FE/utils/date-time';
-  import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+  import { Workflow as SeqeraRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
   import { S3Response } from '@/packages/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
   import { useRunStore } from '@FE/stores';
 
@@ -33,7 +33,7 @@
     },
   ]);
 
-  const nextFlowRun = computed<NextFlowRun | null>(() => runStore.seqeraRuns[labId][nextFlowRunId]);
+  const nextFlowRun = computed<SeqeraRun | null>(() => runStore.seqeraRuns[labId][nextFlowRunId]);
 
   const createdDateTime = computed(() => {
     const createdDate = getDate(nextFlowRun.value?.dateCreated);

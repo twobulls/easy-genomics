@@ -15,8 +15,8 @@
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
   import {
-    Workflow as NextFlowRun,
-    Pipeline as NextFlowPipeline,
+    Workflow as SeqeraRun,
+    Pipeline as SeqeraPipeline,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
@@ -35,12 +35,12 @@
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
-  const nextFlowPipelines = ref<NextFlowPipeline[]>([]);
+  const nextFlowPipelines = ref<SeqeraPipeline[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<NextFlowRun | null>(null);
+  const runToCancel = ref<SeqeraRun | null>(null);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
@@ -51,7 +51,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const nextFlowRuns = computed<NextFlowRun[]>(() => runStore.seqeraRunsForLab(props.labId));
+  const nextFlowRuns = computed<SeqeraRun[]>(() => runStore.seqeraRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -154,7 +154,7 @@
     ],
   ];
 
-  function runsActionItems(row: NextFlowRun): object[] {
+  function runsActionItems(row: SeqeraRun): object[] {
     const buttons: object[][] = [
       [
         {
@@ -371,15 +371,15 @@
     await getLabUsers();
   }
 
-  function onRunsRowClicked(row: NextFlowRun) {
+  function onRunsRowClicked(row: SeqeraRun) {
     viewRunDetails(row);
   }
 
-  function onNextFlowPipelinesRowClicked(row: NextFlowRun) {
+  function onNextFlowPipelinesRowClicked(row: SeqeraRun) {
     viewRunPipeline(row);
   }
 
-  function viewRunPipeline(pipeline: NextFlowRun) {
+  function viewRunPipeline(pipeline: SeqeraRun) {
     const seqeraRunTempId = uuidv4();
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
@@ -399,7 +399,7 @@
     });
   }
 
-  function viewRunDetails(row: NextFlowRun) {
+  function viewRunDetails(row: SeqeraRun) {
     $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 

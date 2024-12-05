@@ -407,3 +407,17 @@ export class UserNotInOrganizationError extends HttpError {
     super('User not permitted access without first granted access to the Organization', 409, 'EG-405', messageOpt);
   }
 }
+
+// AWS Omics errors
+
+/**
+ * Omics Workflow not found
+ *
+ * @param workflowId
+ * @param messageOpt - optional additional message
+ */
+export class OmicsWorkflowNotFoundError extends HttpError {
+  constructor(workflowId: string, messageOpt?: string) {
+    super(`Workflow '${workflowId}' could not be found`, 404, 'EG-503', messageOpt);
+  }
+}

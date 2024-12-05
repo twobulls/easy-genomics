@@ -43,9 +43,9 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const labId = $route.params.labId as string;
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -288,7 +288,7 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    useRunStore().updateWipNextFlowRun(nextFlowRunTempId, {
+    useRunStore().updateWipSeqeraRun(seqeraRunTempId, {
       sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
       s3Path: sampleSheetResponse.SampleSheetInfo.Path,
@@ -336,7 +336,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: wipNextFlowRun.value?.transactionId || '',
+      TransactionId: wipSeqeraRun.value?.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -356,7 +356,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: wipNextFlowRun.value?.transactionId || '',
+      TransactionId: wipSeqeraRun.value?.transactionId || '',
       Files: files,
     };
 
@@ -546,7 +546,7 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="downloadSampleSheet(nextFlowRunTempId)"
+        @click="downloadSampleSheet(seqeraRunTempId)"
       />
       <EGButton
         @click="startUploadProcess"

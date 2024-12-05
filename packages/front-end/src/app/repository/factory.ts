@@ -20,7 +20,7 @@ class HttpFactory {
   /**
    * NF Tower API request handler
    */
-  callNextflowTower<T>(
+  callSeqera<T>(
     method = 'GET',
     url: string,
     data: unknown = '',

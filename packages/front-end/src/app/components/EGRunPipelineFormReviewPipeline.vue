@@ -17,14 +17,14 @@
 
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
   const isLaunchingRun = ref(false);
   const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -34,18 +34,18 @@
 
     try {
       isLaunchingRun.value = true;
-      const pipelineId = wipNextFlowRun.value?.pipelineId;
+      const pipelineId = wipSeqeraRun.value?.pipelineId;
       if (pipelineId === undefined) {
         throw new Error('pipeline id not found in wip run config');
       }
 
-      const launchDetails = await $api.nextFlowPipelines.readPipelineLaunchDetails(pipelineId, labId);
+      const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(pipelineId, labId);
 
-      const workDir: string = `s3://${wipNextFlowRun.value?.s3Bucket}/${wipNextFlowRun.value?.s3Path}/work`;
+      const workDir: string = `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
           computeEnvId: launchDetails.launch?.computeEnv?.id,
-          runName: wipNextFlowRun.value?.userPipelineRunName,
+          runName: wipSeqeraRun.value?.userPipelineRunName,
           pipeline: launchDetails.launch?.pipeline,
           revision: launchDetails.launch?.revision,
           configProfiles: launchDetails.launch?.configProfiles,
@@ -53,8 +53,8 @@
           paramsText: paramsText,
         },
       };
-      await $api.nextFlowRuns.createPipelineRun(labId, launchRequest);
-      delete runStore.wipNextFlowRuns[nextFlowRunTempId];
+      await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+      delete runStore.wipSeqeraRuns[seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
@@ -102,7 +102,7 @@
       <dl>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Pipeline</dt>
-          <dd class="text-muted text-left">{{ wipNextFlowRun?.pipelineName }}</dd>
+          <dd class="text-muted text-left">{{ wipSeqeraRun?.pipelineName }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Laboratory</dt>
@@ -110,7 +110,7 @@
         </div>
         <div class="text-md flex px-4 py-4">
           <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ wipNextFlowRun?.userPipelineRunName }}</dd>
+          <dd class="text-muted text-left">{{ wipSeqeraRun?.userPipelineRunName }}</dd>
         </div>
       </dl>
     </section>

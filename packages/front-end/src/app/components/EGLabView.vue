@@ -15,8 +15,8 @@
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
   import {
-    Workflow as NextFlowRun,
-    Pipeline as NextFlowPipeline,
+    Workflow as SeqeraRun,
+    Pipeline as SeqeraPipeline,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
@@ -35,12 +35,12 @@
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
-  const nextFlowPipelines = ref<NextFlowPipeline[]>([]);
+  const seqeraPipelines = ref<SeqeraPipeline[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<NextFlowRun | null>(null);
+  const runToCancel = ref<SeqeraRun | null>(null);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
@@ -51,7 +51,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const nextFlowRuns = computed<NextFlowRun[]>(() => runStore.nextFlowRunsForLab(props.labId));
+  const seqeraRuns = computed<SeqeraRun[]>(() => runStore.seqeraRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -90,7 +90,7 @@
     },
   ];
 
-  const nextFlowPipelinesTableColumns = [
+  const seqeraPipelinesTableColumns = [
     {
       key: 'Name',
       label: 'Name',
@@ -133,7 +133,7 @@
 
     if (!missingPAT.value) {
       if (!props.superuser) {
-        items.push({ key: 'nextflowPipelines', label: 'Seqera Pipelines' });
+        items.push({ key: 'seqeraPipelines', label: 'Seqera Pipelines' });
         items.push({ key: 'omicsWorkflows', label: 'HealthOmics Workflows' });
         items.push({ key: 'runs', label: 'Lab Runs' });
       }
@@ -145,7 +145,7 @@
     return items;
   });
 
-  const nextFlowPipelinesActionItems = (pipeline: any) => [
+  const seqeraPipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',
@@ -154,7 +154,7 @@
     ],
   ];
 
-  function runsActionItems(row: NextFlowRun): object[] {
+  function runsActionItems(row: SeqeraRun): object[] {
     const buttons: object[][] = [
       [
         {
@@ -209,9 +209,9 @@
     }
   });
 
-  async function pollFetchNextFlowRuns() {
-    await getNextFlowRuns();
-    intervalId = window.setTimeout(pollFetchNextFlowRuns, 2 * 60 * 1000);
+  async function pollFetchSeqeraRuns() {
+    await getSeqeraRuns();
+    intervalId = window.setTimeout(pollFetchSeqeraRuns, 2 * 60 * 1000);
   }
 
   function showRedirectModal() {
@@ -334,31 +334,31 @@
     }
   }
 
-  async function getNextFlowPipelines(): Promise<void> {
-    useUiStore().setRequestPending('getNextFlowPipelines');
+  async function getSeqeraPipelines(): Promise<void> {
+    useUiStore().setRequestPending('getSeqeraPipelines');
     try {
-      const res = await $api.nextFlowPipelines.list(props.labId);
+      const res = await $api.seqeraPipelines.list(props.labId);
 
       if (!res.pipelines) {
         throw new Error('response did not contain pipeline object');
       }
 
-      nextFlowPipelines.value = res.pipelines;
+      seqeraPipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {
-      useUiStore().setRequestComplete('getNextFlowPipelines');
+      useUiStore().setRequestComplete('getSeqeraPipelines');
     }
   }
 
-  async function getNextFlowRuns(): Promise<void> {
-    useUiStore().setRequestPending('getNextFlowRuns');
+  async function getSeqeraRuns(): Promise<void> {
+    useUiStore().setRequestPending('getSeqeraRuns');
     try {
-      await runStore.loadNextFlowRunsForLab(props.labId);
+      await runStore.loadSeqeraRunsForLab(props.labId);
     } catch (error) {
-      console.error('Error retrieving NextFlow runs', error);
+      console.error('Error retrieving Seqera runs', error);
     } finally {
-      useUiStore().setRequestComplete('getNextFlowRuns');
+      useUiStore().setRequestComplete('getSeqeraRuns');
     }
   }
 
@@ -371,20 +371,20 @@
     await getLabUsers();
   }
 
-  function onRunsRowClicked(row: NextFlowRun) {
+  function onRunsRowClicked(row: SeqeraRun) {
     viewRunDetails(row);
   }
 
-  function onNextFlowPipelinesRowClicked(row: NextFlowRun) {
+  function onSeqeraPipelinesRowClicked(row: SeqeraRun) {
     viewRunPipeline(row);
   }
 
-  function viewRunPipeline(pipeline: NextFlowRun) {
-    const nextFlowRunTempId = uuidv4();
+  function viewRunPipeline(pipeline: SeqeraRun) {
+    const seqeraRunTempId = uuidv4();
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipSeqeraRun(seqeraRunTempId, {
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',
@@ -394,12 +394,12 @@
     $router.push({
       path: `/labs/${props.labId}/${pipelineId}/run-pipeline`,
       query: {
-        nextFlowRunTempId,
+        seqeraRunTempId,
       },
     });
   }
 
-  function viewRunDetails(row: NextFlowRun) {
+  function viewRunDetails(row: SeqeraRun) {
     $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Details' } });
   }
 
@@ -411,10 +411,10 @@
       throw new Error("runToCancel runId should have a value but doesn't");
     }
 
-    uiStore.setRequestPending('cancelNextFlowRun');
+    uiStore.setRequestPending('cancelSeqeraRun');
 
     try {
-      await $api.nextFlowRuns.cancelPipelineRun(props.labId, runId);
+      await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
       useToastStore().success(`${runName} has been successfully cancelled`);
     } catch (e) {
       useToastStore().error('Failed to cancel run');
@@ -422,9 +422,9 @@
 
     isCancelDialogOpen.value = false;
     runToCancel.value = null;
-    uiStore.setRequestComplete('cancelNextFlowRun');
+    uiStore.setRequestComplete('cancelSeqeraRun');
 
-    await getNextFlowRuns();
+    await getSeqeraRuns();
   }
 
   watch(lab, async (lab) => {
@@ -435,7 +435,7 @@
           // superuser doesn't view pipelines or runs so don't fetch those
           await getLabUsers();
         } else {
-          await Promise.all([getNextFlowPipelines(), pollFetchNextFlowRuns(), getLabUsers()]);
+          await Promise.all([getSeqeraPipelines(), pollFetchSeqeraRuns(), getLabUsers()]);
           canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
         }
       } else {
@@ -512,14 +512,14 @@
     "
   >
     <template #item="{ item }">
-      <!-- NextFlow Pipelines tab -->
-      <div v-if="item.key === 'nextflowPipelines'" class="space-y-3">
+      <!-- Seqera Pipelines tab -->
+      <div v-if="item.key === 'seqeraPipelines'" class="space-y-3">
         <EGTable
-          :row-click-action="onNextFlowPipelinesRowClicked"
-          :table-data="nextFlowPipelines"
-          :columns="nextFlowPipelinesTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getNextFlowPipelines'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getNextFlowPipelines'])"
+          :row-click-action="onSeqeraPipelinesRowClicked"
+          :table-data="seqeraPipelines"
+          :columns="seqeraPipelinesTableColumns"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
         >
           <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
@@ -533,11 +533,7 @@
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton
-                :items="nextFlowPipelinesActionItems(row)"
-                class="ml-2"
-                @click="$event.stopPropagation()"
-              />
+              <EGActionButton :items="seqeraPipelinesActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
             </div>
           </template>
 
@@ -558,27 +554,27 @@
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable
           :row-click-action="onRunsRowClicked"
-          :table-data="nextFlowRuns"
+          :table-data="seqeraRuns"
           :columns="runsTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
         >
-          <template #runName-data="{ row: nextFlowRun }">
-            <div class="text-body text-sm font-medium">{{ nextFlowRun.runName }}</div>
-            <div class="text-muted text-xs font-normal">{{ nextFlowRun.projectName }}</div>
+          <template #runName-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ seqeraRun.runName }}</div>
+            <div class="text-muted text-xs font-normal">{{ seqeraRun.projectName }}</div>
           </template>
 
-          <template #lastUpdated-data="{ row: nextFlowRun }">
-            <div class="text-body text-sm font-medium">{{ getDate(nextFlowRun.lastUpdated) }}</div>
-            <div class="text-muted">{{ getTime(nextFlowRun.lastUpdated) }}</div>
+          <template #lastUpdated-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ getDate(seqeraRun.lastUpdated) }}</div>
+            <div class="text-muted">{{ getTime(seqeraRun.lastUpdated) }}</div>
           </template>
 
-          <template #status-data="{ row: nextFlowRun }">
-            <EGStatusChip :status="nextFlowRun.status" />
+          <template #status-data="{ row: seqeraRun }">
+            <EGStatusChip :status="seqeraRun.status" />
           </template>
 
-          <template #owner-data="{ row: nextFlowRun }">
-            <div class="text-body text-sm font-medium">{{ nextFlowRun?.userName ?? '-' }}</div>
+          <template #owner-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ seqeraRun?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">
@@ -671,6 +667,6 @@
     :primary-message="`Are you sure you would like to cancel ${runToCancel?.runName}?`"
     secondary-message="This will stop any progress made."
     v-model="isCancelDialogOpen"
-    :buttons-disabled="uiStore.isRequestPending('cancelNextFlowRun')"
+    :buttons-disabled="uiStore.isRequestPending('cancelSeqeraRun')"
   />
 </template>

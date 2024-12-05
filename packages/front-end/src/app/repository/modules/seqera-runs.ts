@@ -10,9 +10,9 @@ import {
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse } from '@FE/utils/api-utils';
 
-class NextFlowRunsModule extends HttpFactory {
+class SeqeraRunsModule extends HttpFactory {
   async createPipelineRun(labId: string, pipelineLaunchRequest: CreateWorkflowLaunchRequest): Promise<any> {
-    const res = await this.callNextflowTower<any>(
+    const res = await this.callSeqera<any>(
       'POST',
       `/workflow/create-workflow-execution?laboratoryId=${labId}`,
       pipelineLaunchRequest,
@@ -26,10 +26,7 @@ class NextFlowRunsModule extends HttpFactory {
   }
 
   async list(labId: string): Promise<Workflow[]> {
-    const res = await this.callNextflowTower<ListWorkflowsResponse>(
-      'GET',
-      `/workflow/list-workflows?laboratoryId=${labId}`,
-    );
+    const res = await this.callSeqera<ListWorkflowsResponse>('GET', `/workflow/list-workflows?laboratoryId=${labId}`);
     if (!res) {
       throw new Error('Failed to retrieve workflows');
     }
@@ -41,10 +38,10 @@ class NextFlowRunsModule extends HttpFactory {
     return workflows || [];
   }
 
-  async cancelPipelineRun(labId: string, nextFlowRunId: string): Promise<any> {
-    const res = await this.callNextflowTower<any>(
+  async cancelPipelineRun(labId: string, seqeraRunId: string): Promise<any> {
+    const res = await this.callSeqera<any>(
       'PUT',
-      `/workflow/cancel-workflow-execution/${nextFlowRunId}?laboratoryId=${labId}`,
+      `/workflow/cancel-workflow-execution/${seqeraRunId}?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -55,7 +52,7 @@ class NextFlowRunsModule extends HttpFactory {
   }
 
   async readWorkflowReports(workspaceId: string, labId: string): Promise<any> {
-    const res = await this.callNextflowTower<any>(
+    const res = await this.callSeqera<any>(
       'GET',
       `/workflow/read-workflow-reports/${workspaceId}?laboratoryId=${labId}`,
     );
@@ -67,14 +64,13 @@ class NextFlowRunsModule extends HttpFactory {
   }
 
   /**
-   * Calls '/nf-tower/file/request-file-download' API to download the contents
-   * of a specified NextFlow Tower Workflow Run results file.
+   * Calls '/nf-tower/file/request-file-download' API to download the contents of a specified Seqera Run results file.
    *
    * @param labId
    * @param contentUri
    */
-  async downloadNextflowFile(labId: string, contentUri: string): Promise<FileDownloadResponse> {
-    const res: FileDownloadResponse | undefined = await this.callNextflowTower<FileDownloadResponse>(
+  async downloadSeqeraFile(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+    const res: FileDownloadResponse | undefined = await this.callSeqera<FileDownloadResponse>(
       'POST',
       '/file/request-file-download',
       {
@@ -116,10 +112,10 @@ class NextFlowRunsModule extends HttpFactory {
     return res;
   }
 
-  async get(labId: string, nextFlowRunId: string): Promise<Workflow> {
-    const res = await this.callNextflowTower<DescribeWorkflowResponse>(
+  async get(labId: string, seqeraRunId: string): Promise<Workflow> {
+    const res = await this.callSeqera<DescribeWorkflowResponse>(
       'GET',
-      `/workflow/read-workflow/${nextFlowRunId}?laboratoryId=${labId}`,
+      `/workflow/read-workflow/${seqeraRunId}?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -132,4 +128,4 @@ class NextFlowRunsModule extends HttpFactory {
   }
 }
 
-export default NextFlowRunsModule;
+export default SeqeraRunsModule;

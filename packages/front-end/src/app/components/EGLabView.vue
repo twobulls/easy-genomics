@@ -14,7 +14,10 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
-  import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import {
+    Workflow as NextFlowRun,
+    Pipeline as NextFlowPipeline,
+  } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -32,7 +35,7 @@
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
-  const pipelines = ref<[]>([]);
+  const nextFlowPipelines = ref<NextFlowPipeline[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
@@ -87,7 +90,7 @@
     },
   ];
 
-  const pipelinesTableColumns = [
+  const nextFlowPipelinesTableColumns = [
     {
       key: 'Name',
       label: 'Name',
@@ -130,8 +133,8 @@
 
     if (!missingPAT.value) {
       if (!props.superuser) {
-        items.push({ key: 'nextflowPipelines', label: 'NextFlow Pipelines' });
-        items.push({ key: 'omicsPipelines', label: 'HealthOmics Workflows' });
+        items.push({ key: 'nextflowPipelines', label: 'Seqera Pipelines' });
+        items.push({ key: 'omicsWorkflows', label: 'HealthOmics Workflows' });
         items.push({ key: 'runs', label: 'Lab Runs' });
       }
       items.push({ key: 'users', label: 'Lab Users' });
@@ -142,7 +145,7 @@
     return items;
   });
 
-  const pipelinesActionItems = (pipeline: any) => [
+  const nextFlowPipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',
@@ -186,7 +189,7 @@
   }
 
   /**
-   * Fetch Lab details, pipelines, workflows and Lab users before component mount and start periodic fetching
+   * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
    */
   onBeforeMount(loadLabData);
 
@@ -331,15 +334,20 @@
     }
   }
 
-  async function getPipelines(): Promise<void> {
-    useUiStore().setRequestPending('getPipelines');
+  async function getNextFlowPipelines(): Promise<void> {
+    useUiStore().setRequestPending('getNextFlowPipelines');
     try {
       const res = await $api.pipelines.list(props.labId);
-      pipelines.value = res.pipelines;
+
+      if (!res.pipelines) {
+        throw new Error('response did not contain pipeline object');
+      }
+
+      nextFlowPipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {
-      useUiStore().setRequestComplete('getPipelines');
+      useUiStore().setRequestComplete('getNextFlowPipelines');
     }
   }
 
@@ -367,7 +375,7 @@
     viewRunDetails(row);
   }
 
-  function onPipelinesRowClicked(row: NextFlowRun) {
+  function onNextFlowPipelinesRowClicked(row: NextFlowRun) {
     viewRunPipeline(row);
   }
 
@@ -427,7 +435,7 @@
           // superuser doesn't view pipelines or runs so don't fetch those
           await getLabUsers();
         } else {
-          await Promise.all([getPipelines(), pollFetchNextFlowRuns(), getLabUsers()]);
+          await Promise.all([getNextFlowPipelines(), pollFetchNextFlowRuns(), getLabUsers()]);
           canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
         }
       } else {
@@ -469,7 +477,7 @@
 <template>
   <EGPageHeader
     :title="labName"
-    description="View your Lab users, details and pipelines"
+    description="View your Lab users, details and pipelines/workflows"
     :back-action="() => (superuser ? $router.push(`/orgs/${orgId}`) : $router.push('/labs'))"
     :show-back="true"
   >
@@ -507,11 +515,11 @@
       <!-- NextFlow Pipelines tab -->
       <div v-if="item.key === 'nextflowPipelines'" class="space-y-3">
         <EGTable
-          :row-click-action="onPipelinesRowClicked"
-          :table-data="pipelines"
-          :columns="pipelinesTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getPipelines'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getPipelines'])"
+          :row-click-action="onNextFlowPipelinesRowClicked"
+          :table-data="nextFlowPipelines"
+          :columns="nextFlowPipelinesTableColumns"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getNextFlowPipelines'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getNextFlowPipelines'])"
         >
           <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
@@ -525,7 +533,11 @@
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton :items="pipelinesActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+              <EGActionButton
+                :items="nextFlowPipelinesActionItems(row)"
+                class="ml-2"
+                @click="$event.stopPropagation()"
+              />
             </div>
           </template>
 
@@ -538,8 +550,8 @@
       </div>
 
       <!-- HealthOmics Pipelines tab -->
-      <div v-if="item.key === 'omicsPipelines'" class="space-y-3">
-        <!-- HealthOmics pipelines will go here -->
+      <div v-if="item.key === 'omicsWorkflows'" class="space-y-3">
+        <!-- HealthOmics workflows will go here -->
       </div>
 
       <!-- Runs tab -->

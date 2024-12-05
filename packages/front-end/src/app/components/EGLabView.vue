@@ -335,7 +335,7 @@
   }
 
   async function getNextFlowPipelines(): Promise<void> {
-    useUiStore().setRequestPending('getNextFlowPipelines');
+    useUiStore().setRequestPending('getSeqeraPipelines');
     try {
       const res = await $api.seqeraPipelines.list(props.labId);
 
@@ -347,18 +347,18 @@
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {
-      useUiStore().setRequestComplete('getNextFlowPipelines');
+      useUiStore().setRequestComplete('getSeqeraPipelines');
     }
   }
 
   async function getNextFlowRuns(): Promise<void> {
-    useUiStore().setRequestPending('getNextFlowRuns');
+    useUiStore().setRequestPending('getSeqeraRuns');
     try {
       await runStore.loadNextFlowRunsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving NextFlow runs', error);
     } finally {
-      useUiStore().setRequestComplete('getNextFlowRuns');
+      useUiStore().setRequestComplete('getSeqeraRuns');
     }
   }
 
@@ -411,7 +411,7 @@
       throw new Error("runToCancel runId should have a value but doesn't");
     }
 
-    uiStore.setRequestPending('cancelNextFlowRun');
+    uiStore.setRequestPending('cancelSeqeraRun');
 
     try {
       await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
@@ -422,7 +422,7 @@
 
     isCancelDialogOpen.value = false;
     runToCancel.value = null;
-    uiStore.setRequestComplete('cancelNextFlowRun');
+    uiStore.setRequestComplete('cancelSeqeraRun');
 
     await getNextFlowRuns();
   }
@@ -518,8 +518,8 @@
           :row-click-action="onNextFlowPipelinesRowClicked"
           :table-data="nextFlowPipelines"
           :columns="nextFlowPipelinesTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getNextFlowPipelines'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getNextFlowPipelines'])"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
         >
           <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
@@ -560,8 +560,8 @@
           :row-click-action="onRunsRowClicked"
           :table-data="nextFlowRuns"
           :columns="runsTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getNextFlowRuns'])"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
         >
           <template #runName-data="{ row: nextFlowRun }">
             <div class="text-body text-sm font-medium">{{ nextFlowRun.runName }}</div>
@@ -671,6 +671,6 @@
     :primary-message="`Are you sure you would like to cancel ${runToCancel?.runName}?`"
     secondary-message="This will stop any progress made."
     v-model="isCancelDialogOpen"
-    :buttons-disabled="uiStore.isRequestPending('cancelNextFlowRun')"
+    :buttons-disabled="uiStore.isRequestPending('cancelSeqeraRun')"
   />
 </template>

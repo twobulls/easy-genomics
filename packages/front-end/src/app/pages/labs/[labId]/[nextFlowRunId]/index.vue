@@ -120,7 +120,7 @@
     :description="nextFlowRun?.projectName || ''"
     :show-back="true"
     :back-action="() => $router.push(`/labs/${labId}`)"
-    :is-loading="useUiStore().isRequestPending('loadNextFlowRun')"
+    :is-loading="useUiStore().isRequestPending('loadSeqeraRun')"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />
 

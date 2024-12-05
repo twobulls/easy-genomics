@@ -9,7 +9,7 @@
 
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipNextFlowRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -76,18 +76,18 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipSeqeraRun(nextFlowRunTempId, {
       laboratoryId: labId,
       pipelineDescription: schema.value.description,
     });
     if (res.params) {
-      runStore.updateWipNextFlowRun(nextFlowRunTempId, { params: JSON.parse(res.params) });
+      runStore.updateWipSeqeraRun(nextFlowRunTempId, { params: JSON.parse(res.params) });
     }
   }
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete runStore.wipNextFlowRuns[nextFlowRunTempId];
+    delete runStore.wipSeqeraRuns[nextFlowRunTempId];
     $router.push(nextRoute.value!);
   }
 
@@ -98,7 +98,7 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipSeqeraRun(nextFlowRunTempId, {
       userPipelineRunName: '',
       pipelineDescription: '',
       params: {},

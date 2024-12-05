@@ -24,7 +24,7 @@
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipNextFlowRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -54,7 +54,7 @@
         },
       };
       await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
-      delete runStore.wipNextFlowRuns[nextFlowRunTempId];
+      delete runStore.wipSeqeraRuns[nextFlowRunTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');

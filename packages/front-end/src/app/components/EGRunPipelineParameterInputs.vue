@@ -48,15 +48,15 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      runStore.wipNextFlowRuns[nextFlowRunTempId].params[key] = propValues[key];
+      runStore.wipSeqeraRuns[nextFlowRunTempId].params[key] = propValues[key];
     }
   });
 
   watch(
-    () => runStore.wipNextFlowRuns[nextFlowRunTempId].sampleSheetS3Url,
+    () => runStore.wipSeqeraRuns[nextFlowRunTempId].sampleSheetS3Url,
     () => {
-      runStore.wipNextFlowRuns[nextFlowRunTempId].params['input'] =
-        runStore.wipNextFlowRuns[nextFlowRunTempId].sampleSheetS3Url;
+      runStore.wipSeqeraRuns[nextFlowRunTempId].params['input'] =
+        runStore.wipSeqeraRuns[nextFlowRunTempId].sampleSheetS3Url;
     },
   );
 </script>
@@ -83,7 +83,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="runStore.wipNextFlowRuns[nextFlowRunTempId].sampleSheetS3Url" />
+        <EGInput name="input" v-model="runStore.wipSeqeraRuns[nextFlowRunTempId].sampleSheetS3Url" />
       </template>
     </div>
   </div>

@@ -11,7 +11,7 @@
 
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipNextFlowRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
 
   const labId = $route.params.labId as string;
 

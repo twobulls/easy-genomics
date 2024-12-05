@@ -51,7 +51,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const nextFlowRuns = computed<NextFlowRun[]>(() => runStore.nextFlowRunsForLab(props.labId));
+  const nextFlowRuns = computed<NextFlowRun[]>(() => runStore.seqeraRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -354,7 +354,7 @@
   async function getNextFlowRuns(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraRuns');
     try {
-      await runStore.loadNextFlowRunsForLab(props.labId);
+      await runStore.loadSeqeraRunsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving NextFlow runs', error);
     } finally {
@@ -384,7 +384,7 @@
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipSeqeraRun(nextFlowRunTempId, {
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',

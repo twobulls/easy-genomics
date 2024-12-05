@@ -33,7 +33,7 @@
     },
   ]);
 
-  const nextFlowRun = computed<NextFlowRun | null>(() => runStore.nextFlowRuns[labId][nextFlowRunId]);
+  const nextFlowRun = computed<NextFlowRun | null>(() => runStore.seqeraRuns[labId][nextFlowRunId]);
 
   const createdDateTime = computed(() => {
     const createdDate = getDate(nextFlowRun.value?.dateCreated);

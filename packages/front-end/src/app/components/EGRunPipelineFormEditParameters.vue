@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useRunStore } from '@FE/stores';
-  import { WipNextFlowRunData } from '@FE/stores/run';
+  import { WipSeqeraRunData } from '@FE/stores/run';
 
   const props = defineProps<{
     schema: object;
@@ -16,7 +16,7 @@
   const activeSection = ref<string | null>(null);
   const runStore = useRunStore();
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipNextFlowRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
 
   const localProps = reactive({
     schema: props.schema,
@@ -80,7 +80,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        runStore.updateWipNextFlowRun(nextFlowRunTempId, { params: val });
+        runStore.updateWipSeqeraRun(nextFlowRunTempId, { params: val });
       }
     },
     { deep: true },

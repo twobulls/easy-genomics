@@ -158,7 +158,7 @@
               ? handleS3Download(
                   props.labId,
                   row.name,
-                  useRunStore().nextFlowRuns[props.labId][props.nextFlowRunId].workDir.replace(/\/work$/, ''),
+                  useRunStore().seqeraRuns[props.labId][props.nextFlowRunId].workDir.replace(/\/work$/, ''),
                   row.size,
                 )
               : downloadFolder(),

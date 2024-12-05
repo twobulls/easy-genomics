@@ -11,7 +11,7 @@ type PendingRequest =
   | 'getLabUsers'
   | 'addUserToLab'
   | 'updateUser'
-  | 'getPipelines'
+  | 'getNextFlowPipelines'
   | 'getNextFlowRuns'
   | 'loadNextFlowRun'
   | 'cancelNextFlowRun'

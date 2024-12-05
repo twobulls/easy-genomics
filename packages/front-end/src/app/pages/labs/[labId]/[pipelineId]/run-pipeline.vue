@@ -55,7 +55,7 @@
    * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
    */
   async function initializePipelineData() {
-    const res = await $api.pipelines.readPipelineSchema(pipelineId, labId);
+    const res = await $api.nextFlowPipelines.readPipelineSchema(pipelineId, labId);
     const originalSchema = JSON.parse(res.schema);
 
     // Filter Schema to exclude any sections that do not have any visible parameters for user input

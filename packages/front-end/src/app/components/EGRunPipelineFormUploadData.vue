@@ -45,7 +45,7 @@
   const labId = $route.params.labId as string;
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipNextFlowRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -336,7 +336,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: wipNextFlowRun.value?.transactionId || '',
+      TransactionId: wipSeqeraRun.value?.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -356,7 +356,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: wipNextFlowRun.value?.transactionId || '',
+      TransactionId: wipSeqeraRun.value?.transactionId || '',
       Files: files,
     };
 

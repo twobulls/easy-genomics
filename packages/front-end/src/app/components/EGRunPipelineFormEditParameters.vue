@@ -16,14 +16,14 @@
   const activeSection = ref<string | null>(null);
   const runStore = useRunStore();
 
-  const wipNextFlowRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
 
   const localProps = reactive({
     schema: props.schema,
     params: {
       ...props.params,
-      input: wipNextFlowRun.value?.sampleSheetS3Url,
-      outdir: `s3://${wipNextFlowRun.value?.s3Bucket}/${wipNextFlowRun.value?.s3Path}/results`,
+      input: wipSeqeraRun.value?.sampleSheetS3Url,
+      outdir: `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/results`,
     },
   });
 

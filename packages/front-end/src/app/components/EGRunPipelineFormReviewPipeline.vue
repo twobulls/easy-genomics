@@ -24,7 +24,7 @@
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipNextFlowRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -34,18 +34,18 @@
 
     try {
       isLaunchingRun.value = true;
-      const pipelineId = wipNextFlowRun.value?.pipelineId;
+      const pipelineId = wipSeqeraRun.value?.pipelineId;
       if (pipelineId === undefined) {
         throw new Error('pipeline id not found in wip run config');
       }
 
       const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(pipelineId, labId);
 
-      const workDir: string = `s3://${wipNextFlowRun.value?.s3Bucket}/${wipNextFlowRun.value?.s3Path}/work`;
+      const workDir: string = `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
           computeEnvId: launchDetails.launch?.computeEnv?.id,
-          runName: wipNextFlowRun.value?.userPipelineRunName,
+          runName: wipSeqeraRun.value?.userPipelineRunName,
           pipeline: launchDetails.launch?.pipeline,
           revision: launchDetails.launch?.revision,
           configProfiles: launchDetails.launch?.configProfiles,
@@ -102,7 +102,7 @@
       <dl>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Pipeline</dt>
-          <dd class="text-muted text-left">{{ wipNextFlowRun?.pipelineName }}</dd>
+          <dd class="text-muted text-left">{{ wipSeqeraRun?.pipelineName }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Laboratory</dt>
@@ -110,7 +110,7 @@
         </div>
         <div class="text-md flex px-4 py-4">
           <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ wipNextFlowRun?.userPipelineRunName }}</dd>
+          <dd class="text-muted text-left">{{ wipSeqeraRun?.userPipelineRunName }}</dd>
         </div>
       </dl>
     </section>

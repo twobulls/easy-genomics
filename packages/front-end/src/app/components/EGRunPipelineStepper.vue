@@ -11,7 +11,7 @@
 
   const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
 
-  const wipNextFlowRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
 
   const labId = $route.params.labId as string;
 
@@ -206,7 +206,7 @@
             <EGRunPipelineFormReviewPipeline
               :can-launch="true"
               :schema="props.schema"
-              :params="wipNextFlowRun?.params"
+              :params="wipSeqeraRun?.params"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"

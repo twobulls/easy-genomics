@@ -249,6 +249,7 @@ const sharedLib = new typescript.TypeScriptProject({
   deps: [
     '@aws-sdk/client-api-gateway',
     '@aws-sdk/client-cognito-identity-provider',
+    '@aws-sdk/client-omics',
     '@nestjs/config',
     'aws-cdk',
     'aws-cdk-lib',

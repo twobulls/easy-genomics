@@ -78,6 +78,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/client-omics",
+      "type": "runtime"
+    },
+    {
       "name": "@nestjs/config",
       "type": "runtime"
     },

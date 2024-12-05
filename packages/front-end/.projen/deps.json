@@ -196,6 +196,10 @@
       "type": "runtime"
     },
     {
+      "name": "file-saver",
+      "type": "runtime"
+    },
+    {
       "name": "jwt-decode",
       "type": "runtime"
     },

@@ -104,7 +104,6 @@
     "playwright-slack-report": "^1.1.88",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "sass": "^1.79.4",
-    "streamsaver": "^2.0.6",
     "tailwind-merge": "^2.5.3",
     "tailwindcss": "^3.4.13",
     "unplugin-icons": "^0.19.3",

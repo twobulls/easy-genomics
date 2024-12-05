@@ -21,7 +21,7 @@ const laboratoryService = new LaboratoryService();
 const omicsService = new OmicsService();
 
 /**
- * This GET /aws-healthomics/workflow/read-private-workflow/{:id}?workflowId={workflowId}
+ * This GET /aws-healthomics/workflow/read-private-workflow/{:id}?laboratoryId={laboratoryId}
  * API queries the same region's AWS HealthOmics service to retrieve a Private Workflow.
  * This endpoint expects:
  *  - Required Path Parameter:

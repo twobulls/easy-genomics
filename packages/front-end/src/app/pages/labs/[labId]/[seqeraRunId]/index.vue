@@ -10,7 +10,7 @@
   const runStore = useRunStore();
 
   const labId = $route.params.labId as string;
-  const seqeraRunId = $route.params.nextFlowRunId as string;
+  const seqeraRunId = $route.params.seqeraRunId as string;
   const seqeraRunReports = ref([]);
   const s3Contents = ref<S3Response>(null);
   const tabIndex = ref(0);

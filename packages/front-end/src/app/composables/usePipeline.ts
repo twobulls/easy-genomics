@@ -5,8 +5,8 @@ export default function usePipeline($api: any) {
   /**
    * Downloads the sample sheet as a CSV file.
    */
-  async function downloadSampleSheet(nextFlowRunTempId: string) {
-    const wipSeqeraRun: WipSeqeraRunData = useRunStore().wipSeqeraRuns[nextFlowRunTempId];
+  async function downloadSampleSheet(seqeraRunTempId: string) {
+    const wipSeqeraRun: WipSeqeraRunData = useRunStore().wipSeqeraRuns[seqeraRunTempId];
 
     const fileDownloadUrlResponse = await $api.file.requestFileDownloadUrl({
       LaboratoryId: `${wipSeqeraRun.laboratoryId}`,

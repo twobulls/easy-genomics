@@ -12,7 +12,7 @@
   const $route = useRoute();
   const runStore = useRunStore();
 
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -48,15 +48,15 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      runStore.wipSeqeraRuns[nextFlowRunTempId].params[key] = propValues[key];
+      runStore.wipSeqeraRuns[seqeraRunTempId].params[key] = propValues[key];
     }
   });
 
   watch(
-    () => runStore.wipSeqeraRuns[nextFlowRunTempId].sampleSheetS3Url,
+    () => runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url,
     () => {
-      runStore.wipSeqeraRuns[nextFlowRunTempId].params['input'] =
-        runStore.wipSeqeraRuns[nextFlowRunTempId].sampleSheetS3Url;
+      runStore.wipSeqeraRuns[seqeraRunTempId].params['input'] =
+        runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url;
     },
   );
 </script>
@@ -83,7 +83,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="runStore.wipSeqeraRuns[nextFlowRunTempId].sampleSheetS3Url" />
+        <EGInput name="input" v-model="runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url" />
       </template>
     </div>
   </div>

@@ -17,14 +17,14 @@
 
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
   const isLaunchingRun = ref(false);
   const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -54,7 +54,7 @@
         },
       };
       await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
-      delete runStore.wipSeqeraRuns[nextFlowRunTempId];
+      delete runStore.wipSeqeraRuns[seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');

@@ -380,11 +380,11 @@
   }
 
   function viewRunPipeline(pipeline: NextFlowRun) {
-    const nextFlowRunTempId = uuidv4();
+    const seqeraRunTempId = uuidv4();
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    runStore.updateWipSeqeraRun(nextFlowRunTempId, {
+    runStore.updateWipSeqeraRun(seqeraRunTempId, {
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',
@@ -394,7 +394,7 @@
     $router.push({
       path: `/labs/${props.labId}/${pipelineId}/run-pipeline`,
       query: {
-        nextFlowRunTempId,
+        seqeraRunTempId,
       },
     });
   }

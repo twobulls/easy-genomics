@@ -11,12 +11,12 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const $route = useRoute();
 
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   const activeSection = ref<string | null>(null);
   const runStore = useRunStore();
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const localProps = reactive({
     schema: props.schema,
@@ -80,7 +80,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        runStore.updateWipSeqeraRun(nextFlowRunTempId, { params: val });
+        runStore.updateWipSeqeraRun(seqeraRunTempId, { params: val });
       }
     },
     { deep: true },

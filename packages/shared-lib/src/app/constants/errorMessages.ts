@@ -26,6 +26,8 @@ export const ERROR_CODES: ErrorMessages = {
   'EG-312': 'Removing user from laboratory failed',
   'EG-313': 'Laboratory User not found',
   'EG-314': 'Laboratory Bucket not found',
+  'EG-315': 'Laboratory does not have AWS HealthOmics enabled',
+  'EG-316': 'Laboratory does not have Seqera Cloud / NextFlow Tower enabled',
   'EG-401': 'User already exists',
   'EG-402': 'User deletion failed',
   'EG-403': 'User not found',

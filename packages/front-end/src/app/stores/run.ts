@@ -53,7 +53,7 @@ const useRunStore = defineStore('runStore', {
       const { $api } = useNuxtApp();
 
       // fetch new runs without modifying existing state
-      const runs: NextFlowRun[] = await $api.workflows.list(labId);
+      const runs: NextFlowRun[] = await $api.nextFlowRuns.list(labId);
 
       // prepare temporary storage
       const newRuns: Record<string, NextFlowRun> = {};
@@ -74,7 +74,7 @@ const useRunStore = defineStore('runStore', {
     async loadSingleNextFlowRun(labId: string, runId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
-      const run: NextFlowRun = await $api.workflows.get(labId, runId);
+      const run: NextFlowRun = await $api.nextFlowRuns.get(labId, runId);
 
       if (!this.nextFlowRuns[labId]) {
         this.nextFlowRuns[labId] = {};

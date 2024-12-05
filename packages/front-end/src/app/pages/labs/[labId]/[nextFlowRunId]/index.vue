@@ -53,7 +53,7 @@
 
   async function loadRunReports() {
     useUiStore().setRequestPending('loadRunReports');
-    const res = await $api.workflows.readWorkflowReports(nextFlowRunId, labId);
+    const res = await $api.nextFlowRuns.readWorkflowReports(nextFlowRunId, labId);
     nextFlowRunReports.value = res.reports;
     useUiStore().setRequestComplete('loadRunReports');
   }

@@ -337,7 +337,7 @@
   async function getNextFlowPipelines(): Promise<void> {
     useUiStore().setRequestPending('getNextFlowPipelines');
     try {
-      const res = await $api.pipelines.list(props.labId);
+      const res = await $api.nextFlowPipelines.list(props.labId);
 
       if (!res.pipelines) {
         throw new Error('response did not contain pipeline object');
@@ -414,7 +414,7 @@
     uiStore.setRequestPending('cancelNextFlowRun');
 
     try {
-      await $api.workflows.cancelPipelineRun(props.labId, runId);
+      await $api.nextFlowRuns.cancelPipelineRun(props.labId, runId);
       useToastStore().success(`${runName} has been successfully cancelled`);
     } catch (e) {
       useToastStore().error('Failed to cancel run');

@@ -10,8 +10,8 @@
   const runStore = useRunStore();
 
   const labId = $route.params.labId as string;
-  const nextFlowRunId = $route.params.nextFlowRunId as string;
-  const nextFlowRunReports = ref([]);
+  const seqeraRunId = $route.params.nextFlowRunId as string;
+  const seqeraRunReports = ref([]);
   const s3Contents = ref<S3Response>(null);
   const tabIndex = ref(0);
 
@@ -33,28 +33,28 @@
     },
   ]);
 
-  const nextFlowRun = computed<SeqeraRun | null>(() => runStore.seqeraRuns[labId][nextFlowRunId]);
+  const seqeraRun = computed<SeqeraRun | null>(() => runStore.seqeraRuns[labId][seqeraRunId]);
 
   const createdDateTime = computed(() => {
-    const createdDate = getDate(nextFlowRun.value?.dateCreated);
-    const createdTime = getTime(nextFlowRun.value?.dateCreated);
+    const createdDate = getDate(seqeraRun.value?.dateCreated);
+    const createdTime = getTime(seqeraRun.value?.dateCreated);
     return createdDate && createdTime ? `${createdTime} ⋅ ${createdDate}` : '—';
   });
   const startedDateTime = computed(() => {
-    const startedDate = getDate(nextFlowRun.value?.start);
-    const startedTime = getTime(nextFlowRun.value?.start);
+    const startedDate = getDate(seqeraRun.value?.start);
+    const startedTime = getTime(seqeraRun.value?.start);
     return startedDate && startedTime ? `${startedTime} ⋅ ${startedDate}` : '—';
   });
   const stoppedDateTime = computed(() => {
-    const stoppedDate = getDate(nextFlowRun.value?.complete);
-    const stoppedTime = getTime(nextFlowRun.value?.complete);
+    const stoppedDate = getDate(seqeraRun.value?.complete);
+    const stoppedTime = getTime(seqeraRun.value?.complete);
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
 
   async function loadRunReports() {
     useUiStore().setRequestPending('loadRunReports');
-    const res = await $api.seqeraRuns.readWorkflowReports(nextFlowRunId, labId);
-    nextFlowRunReports.value = res.reports;
+    const res = await $api.seqeraRuns.readWorkflowReports(seqeraRunId, labId);
+    seqeraRunReports.value = res.reports;
     useUiStore().setRequestComplete('loadRunReports');
   }
 
@@ -116,8 +116,8 @@
 
 <template>
   <EGPageHeader
-    :title="nextFlowRun?.runName || ''"
-    :description="nextFlowRun?.projectName || ''"
+    :title="seqeraRun?.runName || ''"
+    :description="seqeraRun?.projectName || ''"
     :show-back="true"
     :back-action="() => $router.push(`/labs/${labId}`)"
     :is-loading="useUiStore().isRequestPending('loadSeqeraRun')"
@@ -140,7 +140,7 @@
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"
-          :next-flow-run-id="nextFlowRunId"
+          :next-flow-run-id="seqeraRunId"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>
@@ -151,7 +151,7 @@
           <dl class="mt-4">
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Run Status</dt>
-              <dd class="text-muted text-left"><EGStatusChip :status="nextFlowRun?.status" /></dd>
+              <dd class="text-muted text-left"><EGStatusChip :status="seqeraRun?.status" /></dd>
             </div>
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Creation Time</dt>

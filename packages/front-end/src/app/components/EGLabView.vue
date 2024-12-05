@@ -35,7 +35,7 @@
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
-  const nextFlowPipelines = ref<SeqeraPipeline[]>([]);
+  const seqeraPipelines = ref<SeqeraPipeline[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
@@ -51,7 +51,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const nextFlowRuns = computed<SeqeraRun[]>(() => runStore.seqeraRunsForLab(props.labId));
+  const seqeraRuns = computed<SeqeraRun[]>(() => runStore.seqeraRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -90,7 +90,7 @@
     },
   ];
 
-  const nextFlowPipelinesTableColumns = [
+  const seqeraPipelinesTableColumns = [
     {
       key: 'Name',
       label: 'Name',
@@ -133,7 +133,7 @@
 
     if (!missingPAT.value) {
       if (!props.superuser) {
-        items.push({ key: 'nextflowPipelines', label: 'Seqera Pipelines' });
+        items.push({ key: 'seqeraPipelines', label: 'Seqera Pipelines' });
         items.push({ key: 'omicsWorkflows', label: 'HealthOmics Workflows' });
         items.push({ key: 'runs', label: 'Lab Runs' });
       }
@@ -145,7 +145,7 @@
     return items;
   });
 
-  const nextFlowPipelinesActionItems = (pipeline: any) => [
+  const seqeraPipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',
@@ -343,7 +343,7 @@
         throw new Error('response did not contain pipeline object');
       }
 
-      nextFlowPipelines.value = res.pipelines;
+      seqeraPipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {
@@ -513,11 +513,11 @@
   >
     <template #item="{ item }">
       <!-- NextFlow Pipelines tab -->
-      <div v-if="item.key === 'nextflowPipelines'" class="space-y-3">
+      <div v-if="item.key === 'seqeraPipelines'" class="space-y-3">
         <EGTable
           :row-click-action="onNextFlowPipelinesRowClicked"
-          :table-data="nextFlowPipelines"
-          :columns="nextFlowPipelinesTableColumns"
+          :table-data="seqeraPipelines"
+          :columns="seqeraPipelinesTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
         >
@@ -533,11 +533,7 @@
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton
-                :items="nextFlowPipelinesActionItems(row)"
-                class="ml-2"
-                @click="$event.stopPropagation()"
-              />
+              <EGActionButton :items="seqeraPipelinesActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
             </div>
           </template>
 
@@ -558,7 +554,7 @@
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable
           :row-click-action="onRunsRowClicked"
-          :table-data="nextFlowRuns"
+          :table-data="seqeraRuns"
           :columns="runsTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"

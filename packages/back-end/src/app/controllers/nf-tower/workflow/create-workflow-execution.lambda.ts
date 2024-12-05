@@ -9,6 +9,7 @@ import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src
 import {
   LaboratoryAccessTokenUnavailableError,
   LaboratoryNotFoundError,
+  MissingNextFlowTowerAccessError,
   RequiredIdNotFoundError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
@@ -65,6 +66,11 @@ export const handler: Handler = async (
       )
     ) {
       throw new UnauthorizedAccessError();
+    }
+
+    // Laboratory requires access to NextFlow Tower
+    if (!laboratory.NextFlowTowerEnabled) {
+      throw new MissingNextFlowTowerAccessError();
     }
 
     // Fetch the user

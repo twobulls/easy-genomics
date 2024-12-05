@@ -140,7 +140,7 @@
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"
-          :next-flow-run-id="seqeraRunId"
+          :seqera-run-id="seqeraRunId"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>

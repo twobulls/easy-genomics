@@ -27,9 +27,7 @@
     $router.push('/labs');
   }
 
-  onBeforeMount(async () => {
-    await initializePipelineData();
-  });
+  onBeforeMount(initializePipelineData);
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
@@ -113,7 +111,7 @@
     title="Run Pipeline"
     :description="labName"
     :show-back="!hasLaunched"
-    :back-action="() => (nextRoute = `/labs/${labId}?tab=Pipelines`)"
+    :back-action="() => (nextRoute = `/labs/${labId}?tab=Seqera+Pipelines`)"
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper

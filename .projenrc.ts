@@ -403,6 +403,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-amplify/ui-vue@3.1.30',
     '@aws-sdk/s3-request-presigner',
     '@aws-sdk/util-format-url',
+    '@aws-sdk/client-omics',
     '@easy-genomics/shared-lib@workspace:*',
     '@nuxt/ui@2.18.4', // Lock to version 2.18.4 due to input text bug
     '@pinia/nuxt',

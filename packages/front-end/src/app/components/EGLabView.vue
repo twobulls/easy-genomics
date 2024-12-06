@@ -233,7 +233,7 @@
         {
           label: 'View Results',
           click: () => {
-            console.log('you viewed the omics run results', row.id, row.name);
+            $router.push({ path: `/labs/${props.labId}/omics-run/${row.id}`, query: { tab: 'Run Results' } });
           },
         },
       ],
@@ -514,7 +514,7 @@
   }
 
   function viewOmicsRunDetails(row: OmicsRun) {
-    console.log('you viewed the omics run details', row.id, row.name);
+    $router.push({ path: `/labs/${props.labId}/omics-run/${row.id}`, query: { tab: 'Run Details' } });
   }
 
   async function handleCancelSeqeraDialogAction() {

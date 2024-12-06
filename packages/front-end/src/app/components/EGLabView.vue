@@ -484,7 +484,7 @@
     });
 
     $router.push({
-      path: `/labs/${props.labId}/${pipelineId}/run-pipeline`,
+      path: `/labs/${props.labId}/run-pipeline/${pipelineId}`,
       query: {
         seqeraRunTempId,
       },
@@ -502,7 +502,7 @@
     });
 
     $router.push({
-      path: `/labs/${props.labId}/${workflow.id}/run-workflow`,
+      path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
       query: {
         omicsRunTempId,
       },

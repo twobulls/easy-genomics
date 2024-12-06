@@ -18,6 +18,7 @@
     Workflow as SeqeraRun,
     Pipeline as SeqeraPipeline,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import { WorkflowListItem } from '@aws-sdk/client-omics';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -36,6 +37,7 @@
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = ref<SeqeraPipeline[]>([]);
+  const omicsWorkflows = ref<WorkflowListItem[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
@@ -105,6 +107,21 @@
     },
   ];
 
+  const omicsWorkflowsTableColumns = [
+    {
+      key: 'Name',
+      label: 'Name',
+    },
+    {
+      key: 'description',
+      label: 'Description',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
+
   const runsTableColumns = [
     {
       key: 'runName',
@@ -153,7 +170,16 @@
     [
       {
         label: 'Run',
-        click: () => viewRunPipeline(pipeline),
+        click: () => viewRunSeqeraPipeline(pipeline),
+      },
+    ],
+  ];
+
+  const omicsWorkflowsActionItems = (workflow: any) => [
+    [
+      {
+        label: 'Run',
+        click: () => viewRunOmicsWorkflow(workflow),
       },
     ],
   ];
@@ -355,6 +381,23 @@
     }
   }
 
+  async function getOmicsWorkflows(): Promise<void> {
+    useUiStore().setRequestPending('getOmicsWorkflows');
+    try {
+      const res = await $api.omicsWorkflows.list(props.labId);
+
+      if (res.items === undefined) {
+        throw new Error('response did not contain omics workflows');
+      }
+
+      omicsWorkflows.value = res.items;
+    } catch (error) {
+      console.error('Error retrieving pipelines', error);
+    } finally {
+      useUiStore().setRequestComplete('getOmicsWorkflows');
+    }
+  }
+
   async function getSeqeraRuns(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraRuns');
     try {
@@ -380,10 +423,14 @@
   }
 
   function onSeqeraPipelinesRowClicked(row: SeqeraRun) {
-    viewRunPipeline(row);
+    viewRunSeqeraPipeline(row);
   }
 
-  function viewRunPipeline(pipeline: SeqeraRun) {
+  function onOmicsWorkflowsRowClicked(row: SeqeraRun) {
+    viewRunOmicsWorkflow(row);
+  }
+
+  function viewRunSeqeraPipeline(pipeline: SeqeraRun) {
     const seqeraRunTempId = uuidv4();
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
@@ -401,6 +448,10 @@
         seqeraRunTempId,
       },
     });
+  }
+
+  function viewRunOmicsWorkflow(workflow: WorkflowListItem) {
+    console.log('you sure are running that omics workflow:', workflow);
   }
 
   function viewRunDetails(row: SeqeraRun) {
@@ -439,7 +490,7 @@
           // superuser doesn't view pipelines or runs so don't fetch those
           await getLabUsers();
         } else {
-          await Promise.all([getSeqeraPipelines(), pollFetchSeqeraRuns(), getLabUsers()]);
+          await Promise.all([getSeqeraPipelines(), getOmicsWorkflows(), pollFetchSeqeraRuns(), getLabUsers()]);
           canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
         }
       } else {
@@ -551,7 +602,39 @@
 
       <!-- HealthOmics Pipelines tab -->
       <div v-if="item.key === 'omicsWorkflows'" class="space-y-3">
-        <!-- HealthOmics workflows will go here -->
+        <EGTable
+          :row-click-action="onOmicsWorkflowsRowClicked"
+          :table-data="omicsWorkflows"
+          :columns="omicsWorkflowsTableColumns"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
+        >
+          <template #Name-data="{ row: workflow }">
+            <div class="flex items-center">
+              {{ workflow?.name }}
+            </div>
+          </template>
+
+          <template #description-data="{ row: workflow }">
+            {{ workflow?.description }}
+          </template>
+
+          <template #actions-data="{ row: workflow }">
+            <div class="flex justify-end">
+              <EGActionButton
+                :items="omicsWorkflowsActionItems(workflow)"
+                class="ml-2"
+                @click="$event.stopPropagation()"
+              />
+            </div>
+          </template>
+
+          <template #empty-state>
+            <div class="text-muted flex h-24 items-center justify-center font-normal">
+              There are no Workflows assigned to this Lab
+            </div>
+          </template>
+        </EGTable>
       </div>
 
       <!-- Runs tab -->

@@ -199,7 +199,7 @@
         {
           label: 'View Results',
           click: () => {
-            $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Results' } });
+            $router.push({ path: `/labs/${props.labId}/seqera-run/${row.id}`, query: { tab: 'Run Results' } });
           },
         },
       ],
@@ -510,7 +510,7 @@
   }
 
   function viewSeqeraRunDetails(row: SeqeraRun) {
-    $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Details' } });
+    $router.push({ path: `/labs/${props.labId}/seqera-run/${row.id}`, query: { tab: 'Run Details' } });
   }
 
   function viewOmicsRunDetails(row: OmicsRun) {

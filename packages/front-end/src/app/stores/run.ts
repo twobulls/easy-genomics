@@ -1,3 +1,6 @@
+// this import triggers a bizarre eslint problem
+// eslint-disable-next-line import/named
+import { RunListItem as OmicsRun } from '@aws-sdk/client-omics';
 import { Workflow as SeqeraRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import { defineStore } from 'pinia';
 
@@ -33,6 +36,10 @@ interface RunState {
   seqeraRunIdsByLab: Record<string, string[]>;
   // configs of new Seqera runs yet to be launched
   wipSeqeraRuns: Record<string, WipSeqeraRunData>;
+  // lookup object for Omics runs
+  omicsRuns: Record<string, Record<string, OmicsRun>>;
+  // ordered lists for Omics runs by lab
+  omicsRunIdsByLab: Record<string, string[]>;
   // configs of new Omics runs yet to be launched
   wipOmicsRuns: Record<string, WipOmicsRunData>;
 }
@@ -41,6 +48,8 @@ const initialState = (): RunState => ({
   seqeraRuns: {},
   seqeraRunIdsByLab: {},
   wipSeqeraRuns: {},
+  omicsRuns: {},
+  omicsRunIdsByLab: {},
   wipOmicsRuns: {},
 });
 
@@ -51,7 +60,12 @@ const useRunStore = defineStore('runStore', {
     seqeraRunsForLab:
       (state: RunState) =>
       (labId: string): SeqeraRun[] =>
-        state.seqeraRunIdsByLab[labId]?.map((pipelineId) => state.seqeraRuns[labId][pipelineId]) || [],
+        state.seqeraRunIdsByLab[labId]?.map((runId) => state.seqeraRuns[labId][runId]) || [],
+
+    omicsRunsForLab:
+      (state: RunState) =>
+      (labId: string): OmicsRun[] =>
+        state.omicsRunIdsByLab[labId]?.map((runId) => state.omicsRuns[labId][runId]) || [],
   },
 
   actions: {
@@ -79,6 +93,29 @@ const useRunStore = defineStore('runStore', {
       // update state with the new data
       this.seqeraRuns[labId] = newRuns;
       this.seqeraRunIdsByLab[labId] = newRunIds;
+    },
+
+    async loadOmicsRunsForLab(labId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+
+      // fetch new runs without modifying existing state
+      const res = await $api.omicsRuns.list(labId);
+      const runs: OmicsRun[] = res.items || [];
+
+      // prepare temporary storage
+      const newRuns: Record<string, OmicsRun> = {};
+      const newRunIds: string[] = [];
+
+      for (const run of runs) {
+        if (run.id !== undefined) {
+          newRuns[run.id] = run;
+          newRunIds.push(run.id);
+        }
+      }
+
+      // update state with the new data
+      this.omicsRuns[labId] = newRuns;
+      this.omicsRunIdsByLab[labId] = newRunIds;
     },
 
     async loadSingleSeqeraRun(labId: string, runId: string): Promise<void> {

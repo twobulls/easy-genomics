@@ -31,7 +31,7 @@ class HttpFactory {
   }
 
   /**
-   * NF Tower API request handler
+   * AWS HealthOmics API request handler
    */
   callOmics<T>(
     method = 'GET',

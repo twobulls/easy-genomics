@@ -6,6 +6,7 @@ class HttpFactory {
   private baseApiUrl = useRuntimeConfig().public.BASE_API_URL;
   private defaultApiUrl = `${this.baseApiUrl}/easy-genomics`;
   private nfTowerApiUrl = `${this.baseApiUrl}/nf-tower`;
+  private omicsApiUrl = `${this.baseApiUrl}/aws-healthomics`;
 
   private isRefreshingToken = false;
   private tokenRefreshPromise: Promise<string> | null = null;
@@ -27,6 +28,18 @@ class HttpFactory {
     shouldRefresh: boolean = false,
   ): Promise<T | undefined> {
     return this.performRequest<T>(method, this.nfTowerApiUrl + url, data, shouldRefresh);
+  }
+
+  /**
+   * NF Tower API request handler
+   */
+  callOmics<T>(
+    method = 'GET',
+    url: string,
+    data: unknown = '',
+    shouldRefresh: boolean = false,
+  ): Promise<T | undefined> {
+    return this.performRequest<T>(method, this.omicsApiUrl + url, data, shouldRefresh);
   }
 
   /**

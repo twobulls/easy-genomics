@@ -19,6 +19,13 @@ export interface WipSeqeraRunData {
   s3Path?: string;
 }
 
+export interface WipOmicsRunData {
+  laboratoryId?: string;
+  workflowId?: string;
+  workflowName?: string;
+  transactionId?: string;
+}
+
 interface RunState {
   // lookup object for Seqera runs
   seqeraRuns: Record<string, Record<string, SeqeraRun>>;
@@ -26,12 +33,15 @@ interface RunState {
   seqeraRunIdsByLab: Record<string, string[]>;
   // configs of new Seqera runs yet to be launched
   wipSeqeraRuns: Record<string, WipSeqeraRunData>;
+  // configs of new Omics runs yet to be launched
+  wipOmicsRuns: Record<string, WipOmicsRunData>;
 }
 
 const initialState = (): RunState => ({
   seqeraRuns: {},
   seqeraRunIdsByLab: {},
   wipSeqeraRuns: {},
+  wipOmicsRuns: {},
 });
 
 const useRunStore = defineStore('runStore', {
@@ -85,6 +95,13 @@ const useRunStore = defineStore('runStore', {
     updateWipSeqeraRun(tempId: string, updates: Partial<WipSeqeraRunData>): void {
       this.wipSeqeraRuns[tempId] = {
         ...(this.wipSeqeraRuns[tempId] || {}),
+        ...updates,
+      };
+    },
+
+    updateWipOmicsRun(tempId: string, updates: Partial<WipOmicsRunData>): void {
+      this.wipOmicsRuns[tempId] = {
+        ...(this.wipOmicsRuns[tempId] || {}),
         ...updates,
       };
     },

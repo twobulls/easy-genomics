@@ -451,7 +451,21 @@
   }
 
   function viewRunOmicsWorkflow(workflow: WorkflowListItem) {
-    console.log('you sure are running that omics workflow:', workflow);
+    const omicsRunTempId = uuidv4();
+
+    runStore.updateWipOmicsRun(omicsRunTempId, {
+      laboratoryId: props.labId,
+      workflowId: workflow.id,
+      workflowName: workflow.name,
+      transactionId: uuidv4(),
+    });
+
+    $router.push({
+      path: `/labs/${props.labId}/${workflow.id}/run-workflow`,
+      query: {
+        omicsRunTempId,
+      },
+    });
   }
 
   function viewRunDetails(row: SeqeraRun) {

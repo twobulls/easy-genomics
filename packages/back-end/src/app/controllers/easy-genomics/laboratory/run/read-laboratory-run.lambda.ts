@@ -1,7 +1,11 @@
 import { ReadLaboratoryRun } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { RequiredIdNotFoundError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import {
+  LaboratoryRunNotFoundError,
+  RequiredIdNotFoundError,
+  UnauthorizedAccessError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import {
@@ -21,8 +25,12 @@ export const handler: Handler = async (
     const id: string = event.pathParameters?.id || '';
     if (id === '') throw new RequiredIdNotFoundError();
 
-    // Lookup by GSI Id for convenience
+    // Get Laboratory Run
     const existing: LaboratoryRun = await laboratoryRunService.queryByRunId(id);
+
+    if (!existing) {
+      throw new LaboratoryRunNotFoundError(id);
+    }
 
     // Only available for Org Admins or Laboratory Managers and Technicians
     if (

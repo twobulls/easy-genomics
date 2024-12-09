@@ -35,6 +35,7 @@
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
+  const labRuns = ref<LaboratoryRun[]>([]);
   const seqeraPipelines = ref<SeqeraPipeline[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
@@ -191,7 +192,7 @@
   /**
    * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
    */
-  onBeforeMount(loadLabData);
+  onBeforeMount(loadLabData(), listLabRuns());
 
   // set tabIndex according to query param
   onMounted(() => {
@@ -331,6 +332,14 @@
       console.error('Error retrieving Lab data', error);
     } finally {
       useUiStore().setRequestComplete('loadLabData');
+    }
+  }
+
+  async function listLabRuns(): Promise<void> {
+    try {
+      labRuns.value = await $api.labs.listLabRuns(props.labId);
+    } catch (error) {
+      console.error('Error retrieving Lab runs', error);
     }
   }
 

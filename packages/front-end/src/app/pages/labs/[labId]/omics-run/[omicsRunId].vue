@@ -1,11 +1,8 @@
 <script setup lang="ts">
   import { getDate, getTime } from '@FE/utils/date-time';
-  import { Workflow as SeqeraRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
-  import { S3Response } from '@/packages/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
   import { useRunStore } from '@FE/stores';
-  import { WorkflowListItem as OmicsWorkflow, RunListItem as OmicsRun } from '@aws-sdk/client-omics';
+  import { RunListItem as OmicsRun } from '@aws-sdk/client-omics';
 
-  const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
   const runStore = useRunStore();
@@ -32,19 +29,22 @@
 
   const omicsRun = computed<OmicsRun | null>(() => runStore.omicsRuns[labId][omicsRunId]);
 
+  // re: `as unknown as string` below: the schema for these time variables specifies `Date | undefined`, but we are
+  // receiving strings - this must be a mistake somewhere but for now we're casting them to the actual type
+
   const createdDateTime = computed(() => {
-    const createdDate = getDate(omicsRun.value?.creationTime?.toISOString());
-    const createdTime = getTime(omicsRun.value?.creationTime?.toISOString());
+    const createdDate = getDate(omicsRun.value?.creationTime as unknown as string);
+    const createdTime = getTime(omicsRun.value?.creationTime as unknown as string);
     return createdDate && createdTime ? `${createdTime} ⋅ ${createdDate}` : '—';
   });
   const startedDateTime = computed(() => {
-    const startedDate = getDate(omicsRun.value?.startTime?.toISOString());
-    const startedTime = getTime(omicsRun.value?.startTime?.toISOString());
+    const startedDate = getDate(omicsRun.value?.startTime as unknown as string);
+    const startedTime = getTime(omicsRun.value?.startTime as unknown as string);
     return startedDate && startedTime ? `${startedTime} ⋅ ${startedDate}` : '—';
   });
   const stoppedDateTime = computed(() => {
-    const stoppedDate = getDate(omicsRun.value?.stopTime?.toISOString());
-    const stoppedTime = getTime(omicsRun.value?.stopTime?.toISOString());
+    const stoppedDate = getDate(omicsRun.value?.stopTime as unknown as string);
+    const stoppedTime = getTime(omicsRun.value?.stopTime as unknown as string);
     return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
   });
 
@@ -117,15 +117,15 @@
             </div>
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Creation Time</dt>
-              <dd class="text-muted text-left">{{ omicsRun.creationTime }}</dd>
+              <dd class="text-muted text-left">{{ createdDateTime }}</dd>
             </div>
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Start Time</dt>
-              <dd class="text-muted text-left max-md:max-w-full">{{ omicsRun.startTime }}</dd>
+              <dd class="text-muted text-left max-md:max-w-full">{{ startedDateTime }}</dd>
             </div>
             <div class="flex p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Stop Time</dt>
-              <dd class="text-muted text-left max-md:max-w-full">{{ omicsRun.stopTime }}</dd>
+              <dd class="text-muted text-left max-md:max-w-full">{{ stoppedDateTime }}</dd>
             </div>
           </dl>
         </section>

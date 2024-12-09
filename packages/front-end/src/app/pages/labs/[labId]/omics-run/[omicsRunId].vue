@@ -55,6 +55,10 @@
     tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
   });
 
+  watch(tabIndex, (index) => {
+    if (index === 1) useToastStore().info('Viewing HealthOmics Run results is not yet implemented');
+  });
+
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
   //  Tailwind won't pick up and include the classes used and styles will be missing.
   // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
@@ -104,7 +108,7 @@
     "
   >
     <template #item="{ item }">
-      <div v-if="item.key === 'runResults'" class="space-y-3">Results go here</div>
+      <div v-if="item.key === 'runResults'" class="space-y-3"></div>
 
       <div v-if="item.key === 'runDetails'" class="space-y-3">
         <section

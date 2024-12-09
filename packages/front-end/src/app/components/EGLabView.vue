@@ -148,6 +148,7 @@
     { key: 'lastUpdated', label: 'Last Updated' },
     { key: 'status', label: 'Status' },
     { key: 'owner', label: 'Owner' },
+    { key: 'source', label: 'Source' },
     { key: 'actions', label: 'Actions' },
   ];
 
@@ -683,6 +684,10 @@
             <div class="text-body text-sm font-medium">{{ run.owner }}</div>
           </template>
 
+          <template #source-data="{ row: run }">
+            <div class="text-body text-sm font-medium capitalize">{{ run.type }}</div>
+          </template>
+
           <template #actions-data="{ row }">
             <div class="flex justify-end">
               <EGActionButton :items="runsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
@@ -696,6 +701,7 @@
           </template>
         </EGTable>
       </div>
+
       <!-- Lab Users tab -->
       <div v-else-if="item.key === 'users'" class="space-y-3">
         <EGSearchInput

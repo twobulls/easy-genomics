@@ -8,6 +8,7 @@ import {
   RequestListBucketObjects,
   S3Response,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
+import { FileDownloadResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/file/request-file-download';
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse } from '@FE/utils/api-utils';
 
@@ -40,6 +41,30 @@ class FileModule extends HttpFactory {
     }
 
     validateApiResponse(S3ResponseSchema, res);
+    return res;
+  }
+
+  /**
+   * Get signed URL for downloading a file from S3 Bucket
+   * @param labId
+   * @param contentUri
+   */
+  async downloadS3file(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+    const res: FileDownloadResponse | undefined = await this.call<FileDownloadResponse>(
+      'POST',
+      '/file/request-file-download-url',
+      {
+        LaboratoryId: labId,
+        S3Uri: contentUri,
+      },
+    );
+
+    if (!res) {
+      console.error('Error calling file download API');
+      throw new Error('Failed to perform file download');
+    }
+
+    validateApiResponse(FileDownloadUrlResponseSchema, res);
     return res;
   }
 }

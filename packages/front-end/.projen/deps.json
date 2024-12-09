@@ -103,6 +103,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/client-omics",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/s3-request-presigner",
       "type": "runtime"
     },

@@ -148,7 +148,7 @@
     { key: 'lastUpdated', label: 'Last Updated' },
     { key: 'status', label: 'Status' },
     { key: 'owner', label: 'Owner' },
-    { key: 'source', label: 'Source' },
+    { key: 'platform', label: 'Platform' },
     { key: 'actions', label: 'Actions' },
   ];
 
@@ -684,8 +684,8 @@
             <div class="text-body text-sm font-medium">{{ run.owner }}</div>
           </template>
 
-          <template #source-data="{ row: run }">
-            <div class="text-body text-sm font-medium capitalize">{{ run.type }}</div>
+          <template #platform-data="{ row: run }">
+            <div class="text-body text-sm font-medium">{{ run.type === 'seqera' ? 'Seqera' : 'HealthOmics' }}</div>
           </template>
 
           <template #actions-data="{ row }">

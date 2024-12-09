@@ -437,7 +437,7 @@
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',
-      transactionId: uuidv4(),
+      transactionId: seqeraRunTempId,
     });
 
     $router.push({
@@ -458,7 +458,7 @@
       laboratoryId: props.labId,
       workflowId: workflow.id,
       workflowName: workflow.name,
-      transactionId: uuidv4(),
+      transactionId: omicsRunTempId,
     });
 
     $router.push({

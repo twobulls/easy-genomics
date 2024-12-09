@@ -4,7 +4,7 @@
   const router = useRouter();
 
   // only allow org admins to access this page
-  if (!useUserStore().canCreateLab) {
+  if (!useUserStore().canCreateLab()) {
     router.push({ path: '/labs' });
   }
 </script>
@@ -16,5 +16,5 @@
     <EGText tag="h4" class="mb-4">Lab details</EGText>
   </div>
 
-  <EGLabDetailsForm :form-mode="LabDetailsFormModeEnum.enum.Create" />
+  <EGFormLabDetails :form-mode="LabDetailsFormModeEnum.enum.Create" />
 </template>

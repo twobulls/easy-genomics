@@ -31,6 +31,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       topics: <Topics>{
         ['organization-deletion-topic']: <TopicDetails>{ fifo: true },
         ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true },
+        ['user-deletion-topic']: <TopicDetails>{ fifo: true },
       },
     });
 
@@ -49,6 +50,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('laboratory-deletion-topic')],
+        },
+        ['user-management-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          snsTopics: [this.sns.snsTopics.get('user-deletion-topic')],
         },
       },
     });
@@ -111,6 +118,20 @@ export class EasyGenomicsNestedStack extends NestedStack {
           methodOptions: {
             // apiKeyRequired: true,
             authorizer: undefined, // Explicitly remove authorizer
+          },
+        },
+        '/easy-genomics/user/delete-user-request': {
+          environment: {
+            COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
+            COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
+            JWT_SECRET_KEY: this.props.jwtSecretKey,
+            SNS_USER_DELETION_TOPIC: this.sns.snsTopics.get('user-deletion-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/user/process-delete-user': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('user-management-queue')!, { batchSize: 1 })],
+          environment: {
+            SNS_USER_DELETION_TOPIC: this.sns.snsTopics.get('user-deletion-topic')?.topicArn || '',
           },
         },
         '/easy-genomics/organization/delete-organization': {
@@ -492,6 +513,14 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
         ],
         actions: ['dynamodb:DeleteItem'],
@@ -524,6 +553,14 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
         ],
         actions: ['dynamodb:DeleteItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:DeleteItem'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -671,6 +708,135 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
         ],
         actions: ['dynamodb:Scan'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/user/delete-user-request
+    this.iam.addPolicyStatements('/easy-genomics/user/delete-user-request', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+        ],
+        actions: ['dynamodb:DeleteItem', 'dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table/index/*`,
+        ],
+        actions: ['dynamodb:DeleteItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table/index/*`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool?.userPoolId}`,
+        ],
+        actions: ['cognito-idp:AdminDeleteUser'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('user-deletion-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/user/process-delete-user
+    this.iam.addPolicyStatements('/easy-genomics/user/process-delete-user', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+        ],
+        actions: ['dynamodb:DeleteItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/create-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/create-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/read-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/read-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/list-laboratory-runs
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/list-laboratory-runs', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/update-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/update-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/delete-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/delete-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:DeleteItem'],
         effect: Effect.ALLOW,
       }),
     ]);

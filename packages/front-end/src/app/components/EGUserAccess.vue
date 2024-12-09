@@ -150,13 +150,13 @@
       });
   });
 
-  async function handleAddUser(lab: { orgId: string; labId: string; name: string }) {
+  async function handleAddUser(lab: { labId: string; name: string }) {
     const userId = selectedUser.value!.UserId;
     try {
       useUiStore().setRequestPending('addUserToLab');
       useUiStore().setRequestPending(`addUserToLabButton-${userId}-${lab.labId}`);
 
-      const res = await $api.labs.addLabUser(lab.orgId, lab.labId, userId);
+      const res = await $api.labs.addLabUser(lab.labId, userId);
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
@@ -285,7 +285,7 @@
               'addUserToLab',
               'assignLabRole',
               'removeUserFromLab',
-            ])
+            ]) || useUserStore().isSuperuser
           "
           :user="row"
           @assign-role="handleAssignRole($event.labUser)"
@@ -298,7 +298,6 @@
         v-else-if="row.access"
         @click="
           handleAddUser({
-            orgId: $route.query.orgId,
             labId: row.LaboratoryId,
             name: row.Name,
           })
@@ -306,6 +305,7 @@
         label="Grant access"
         variant="secondary"
         size="sm"
+        :disabled="useUserStore().isSuperuser"
       />
       <EGActionButton v-else-if="actionItems" :items="actionItems(row)" />
     </template>

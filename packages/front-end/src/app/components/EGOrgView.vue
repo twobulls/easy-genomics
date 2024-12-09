@@ -9,8 +9,6 @@
   import type { FormSubmitEvent } from '#ui/types';
   import { OrgDetailsForm } from '@FE/types/forms';
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
-  import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
-  import { Laboratory } from '@/packages/shared-lib/src/app/types/easy-genomics/laboratory';
 
   const props = defineProps<{
     orgId: string;
@@ -23,11 +21,11 @@
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
-  const hasNoData = ref(false);
-  const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
-  const orgSettingsData = ref({} as Organization | undefined);
   const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
+
+  const hasNoData = computed<boolean>(() => orgUsersDetailsData.value.length === 0);
+  const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
 
   // Dynamic remove user dialog values
   const isOpen = ref(false);
@@ -189,10 +187,6 @@
 
       const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(props.orgId);
 
-      if (orgUsers?.length === 0) {
-        hasNoData.value = true;
-      }
-
       // Add displayName to each of the user records for display and sorting purposes
       orgUsersDetailsData.value = orgUsers.map((user) => ({
         ...user,
@@ -209,7 +203,6 @@
     } finally {
       useUiStore().setRequestComplete('fetchOrgData');
     }
-    return orgSettingsData.value;
   }
 
   // must be declared after store is set in fetchOrgData()
@@ -247,10 +240,6 @@
   async function refreshUserList() {
     try {
       const orgUsers: OrganizationUserDetails[] = await $api.orgs.usersDetailsByOrgId(props.orgId);
-
-      if (orgUsers?.length === 0) {
-        hasNoData.value = true;
-      }
 
       // Add displayName to each of the user records for display and sorting purposes
       orgUsersDetailsData.value = orgUsers.map((user) => ({
@@ -295,6 +284,33 @@
       useUiStore().setRequestComplete('editOrg');
     }
   }
+
+  // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
+  //  Tailwind won't pick up and include the classes used and styles will be missing.
+  // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
+  //  UTabs that use an "EGTabsStyles" as input to the :ui attribute.
+  const EGTabsStyles = {
+    base: 'focus:outline-none',
+    list: {
+      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      padding: 'p-0',
+      height: 'h-14',
+      marker: {
+        wrapper: 'duration-200 ease-out absolute bottom-0 ',
+        base: 'absolute bottom-0 rounded-none h-0.5',
+        background: 'bg-primary',
+        shadow: 'shadow-none',
+      },
+      tab: {
+        base: 'font-serif w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out mr-16',
+        active: 'text-primary h-14',
+        inactive: 'font-serif',
+        height: 'h-14',
+        padding: 'p-0',
+        size: 'text-lg',
+      },
+    },
+  };
 </script>
 
 <template>
@@ -324,7 +340,7 @@
     <template #users>
       <EGEmptyDataCTA
         v-if="!isLoading && hasNoData"
-        message="You don't have any users in this lab yet."
+        message="You don't have any users in this organization yet."
         img-src="/images/empty-state-user.jpg"
       />
 

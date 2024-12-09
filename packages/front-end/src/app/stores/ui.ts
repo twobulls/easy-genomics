@@ -11,9 +11,14 @@ type PendingRequest =
   | 'getLabUsers'
   | 'addUserToLab'
   | 'updateUser'
-  | 'getPipelines'
-  | 'getWorkflows'
-  | 'loadWorkflow'
+  | 'getSeqeraPipelines'
+  | 'getSeqeraRuns'
+  | 'loadSeqeraRun'
+  | 'cancelSeqeraRun'
+  | 'getOmicsWorkflows'
+  | 'getOmicsRuns'
+  | 'loadOmicsRun'
+  | 'cancelOmicsRun'
   | 'createOrg'
   | 'fetchOrgData'
   | 'editOrg'
@@ -24,7 +29,9 @@ type PendingRequest =
   | 'fetchOrgLabs'
   | 'fetchUserLabs'
   | 'loadLabData'
-  | `addUserToLabButton-${string}-${string}`;
+  | `addUserToLabButton-${string}-${string}`
+  | 'fetchS3Content'
+  | 'loadRunReports';
 
 interface UiStoreState {
   pendingRequests: Set<string>;

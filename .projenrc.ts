@@ -157,6 +157,7 @@ const root = new typescript.TypeScriptProject({
   // by projen as we will generate our own later (that uses nx)
   depsUpgradeOptions: { workflow: false },
   buildWorkflow: false,
+  pullRequestTemplate: false,
   release: false,
   devDeps: [
     '@aws-sdk/types',
@@ -248,6 +249,7 @@ const sharedLib = new typescript.TypeScriptProject({
   deps: [
     '@aws-sdk/client-api-gateway',
     '@aws-sdk/client-cognito-identity-provider',
+    '@aws-sdk/client-omics',
     '@nestjs/config',
     'aws-cdk',
     'aws-cdk-lib',
@@ -313,6 +315,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-crypto/encrypt-node',
     '@aws-sdk/client-cognito-identity-provider',
     '@aws-sdk/client-dynamodb',
+    '@aws-sdk/client-omics',
     '@aws-sdk/client-ses',
     '@aws-sdk/client-sns',
     '@aws-sdk/client-sqs',
@@ -400,12 +403,16 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-amplify/ui-vue@3.1.30',
     '@aws-sdk/s3-request-presigner',
     '@aws-sdk/util-format-url',
+    '@aws-sdk/client-omics',
     '@easy-genomics/shared-lib@workspace:*',
     '@nuxt/ui@2.18.4', // Lock to version 2.18.4 due to input text bug
     '@pinia/nuxt',
     '@playwright/test',
     '@smithy/types',
     '@smithy/url-parser',
+    '@vueuse/core',
+    '@vueuse/integrations',
+    '@vueuse/nuxt',
     'amazon-cognito-identity-js',
     'aws-amplify@5.3.18',
     'axios',
@@ -415,6 +422,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'date-fns',
     'dotenv',
     'esrun',
+    'file-saver',
     'jwt-decode',
     'nuxt',
     'pinia',

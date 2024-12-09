@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useWorkflowStore, useToastStore, useLabsStore } from '@FE/stores';
+  import { useRunStore, useToastStore, useLabsStore } from '@FE/stores';
   import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import EGAccordion from '@FE/components/EGAccordion.vue';
   import { ButtonSizeEnum } from '@FE/types/buttons';
@@ -13,37 +13,39 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
 
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
-  const workflowTempId = $route.query.workflowTempId as string;
-  const isLaunchingWorkflow = ref(false);
-  const emit = defineEmits(['launch-workflow', 'has-launched', 'previous-tab']);
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
+  const isLaunchingRun = ref(false);
+  const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
 
-  async function launchWorkflow() {
+  async function launchRun() {
+    emit('submit-launch-request');
+
     try {
-      isLaunchingWorkflow.value = true;
-      const pipelineId = wipWorkflow.value?.pipelineId;
+      isLaunchingRun.value = true;
+      const pipelineId = wipSeqeraRun.value?.pipelineId;
       if (pipelineId === undefined) {
-        throw new Error('pipeline id not found in wip workflow config');
+        throw new Error('pipeline id not found in wip run config');
       }
 
-      const launchDetails = await $api.pipelines.readPipelineLaunchDetails(pipelineId, labId);
+      const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(pipelineId, labId);
 
-      const workDir: string = `s3://${wipWorkflow.value?.s3Bucket}/${wipWorkflow.value?.s3Path}/work`;
+      const workDir: string = `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
           computeEnvId: launchDetails.launch?.computeEnv?.id,
-          runName: wipWorkflow.value?.userPipelineRunName,
+          runName: wipSeqeraRun.value?.userPipelineRunName,
           pipeline: launchDetails.launch?.pipeline,
           revision: launchDetails.launch?.revision,
           configProfiles: launchDetails.launch?.configProfiles,
@@ -51,14 +53,14 @@
           paramsText: paramsText,
         },
       };
-      await $api.workflows.createPipelineRun(labId, launchRequest);
-      delete workflowStore.wipWorkflows[workflowTempId];
+      await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+      delete runStore.wipSeqeraRuns[seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
       console.error('Error launching workflow:', error);
     } finally {
-      isLaunchingWorkflow.value = false;
+      isLaunchingRun.value = false;
     }
   }
 
@@ -100,7 +102,7 @@
       <dl>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Pipeline</dt>
-          <dd class="text-muted text-left">{{ wipWorkflow?.pipelineName }}</dd>
+          <dd class="text-muted text-left">{{ wipSeqeraRun?.pipelineName }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Laboratory</dt>
@@ -108,7 +110,7 @@
         </div>
         <div class="text-md flex px-4 py-4">
           <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ wipWorkflow?.userPipelineRunName }}</dd>
+          <dd class="text-muted text-left">{{ wipSeqeraRun?.userPipelineRunName }}</dd>
         </div>
       </dl>
     </section>
@@ -145,9 +147,9 @@
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-tab')" />
     <EGButton
       :disabled="!canLaunch"
-      :loading="isLaunchingWorkflow"
+      :loading="isLaunchingRun"
       :size="ButtonSizeEnum.enum.sm"
-      @click="launchWorkflow"
+      @click="launchRun"
       label="Launch Workflow Run"
     />
   </div>

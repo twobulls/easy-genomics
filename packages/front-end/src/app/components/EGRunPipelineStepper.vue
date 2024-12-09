@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
 
   const props = defineProps<{
     schema: object;
@@ -7,11 +7,11 @@
   }>();
 
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const labId = $route.params.labId as string;
 
@@ -150,8 +150,11 @@
 
   function handleLaunchSuccess() {
     hasLaunched.value = true;
-    disableAllSteps();
     emit('has-launched');
+  }
+
+  function handleSubmitLaunchRequest() {
+    disableAllSteps();
   }
 </script>
 
@@ -203,7 +206,8 @@
             <EGRunPipelineFormReviewPipeline
               :can-launch="true"
               :schema="props.schema"
-              :params="wipWorkflow?.params"
+              :params="wipSeqeraRun?.params"
+              @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"
             />
@@ -215,7 +219,7 @@
     <template v-if="hasLaunched">
       <EGEmptyDataCTA
         message="Your Workflow Run has Launched! Check on your progress via Runs."
-        :primary-button-action="() => $router.push(`/labs/${labId}?tab=Runs`)"
+        :primary-button-action="() => $router.push(`/labs/${labId}?tab=Lab+Runs`)"
         primary-button-label="Back to Runs"
         :secondary-button-action="() => emit('reset-run-pipeline')"
         secondary-button-label="Launch Another Workflow Run"

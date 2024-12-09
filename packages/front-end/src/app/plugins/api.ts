@@ -1,22 +1,26 @@
 import { defineNuxtPlugin } from '#app';
-import FilesModule from '@FE/repository/modules/files';
+import FileModule from '@FE/repository/modules/file';
 import InfraModules from '@FE/repository/modules/infra';
 import LabsModule from '@FE/repository/modules/labs';
+import OmicsRunsModule from '@FE/repository/modules/omics-runs';
+import OmicsWorkflowsModule from '@FE/repository/modules/omics-workflows';
 import OrgsModule from '@FE/repository/modules/orgs';
-import PipelinesModule from '@FE/repository/modules/pipelines';
+import SeqeraPipelinesModule from '@FE/repository/modules/seqera-pipelines';
+import SeqeraRunsModules from '@FE/repository/modules/seqera-runs';
 import UploadsModule from '@FE/repository/modules/uploads';
 import UsersModule from '@FE/repository/modules/users';
-import WorkflowsModules from '@FE/repository/modules/workflows';
 
 interface IApiInstance {
-  files: FilesModule;
+  file: FileModule;
   infra: InfraModules;
   labs: LabsModule;
   orgs: OrgsModule;
-  pipelines: PipelinesModule;
+  seqeraPipelines: SeqeraPipelinesModule;
+  seqeraRuns: SeqeraRunsModules;
+  omicsWorkflows: OmicsWorkflowsModule;
+  omicsRuns: OmicsRunsModule;
   uploads: UploadsModule;
   users: UsersModule;
-  workflows: WorkflowsModules;
 }
 
 interface FetchOptions {
@@ -28,14 +32,16 @@ const createFetchOptions = (nuxtApp): FetchOptions => ({
 });
 
 const createApiInstance = (apiFetcher: any): IApiInstance => ({
-  files: new FilesModule(apiFetcher),
+  file: new FileModule(apiFetcher),
   infra: new InfraModules(apiFetcher),
   labs: new LabsModule(apiFetcher),
   orgs: new OrgsModule(apiFetcher),
-  pipelines: new PipelinesModule(apiFetcher),
+  seqeraPipelines: new SeqeraPipelinesModule(apiFetcher),
+  seqeraRuns: new SeqeraRunsModules(apiFetcher),
+  omicsWorkflows: new OmicsWorkflowsModule(apiFetcher),
+  omicsRuns: new OmicsRunsModule(apiFetcher),
   uploads: new UploadsModule(apiFetcher),
   users: new UsersModule(apiFetcher),
-  workflows: new WorkflowsModules(apiFetcher),
 });
 
 export default defineNuxtPlugin((nuxtApp) => {

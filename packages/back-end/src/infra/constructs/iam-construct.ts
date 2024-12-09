@@ -78,6 +78,17 @@ export class IamConstruct extends Construct {
     return policyDocument;
   }
 
+  /**
+   * This function allows IAM roles to be defined in the appropriate nested stack
+   * and added to this construct's roles map collection for easy retrieval.
+   *
+   * @param name
+   * @param role
+   */
+  public addRole(name: string, role: Role) {
+    this.roles.set(name, role);
+  }
+
   public getRole(name: string): Role {
     const role: Role | undefined = this.roles.get(name);
     if (!role) {

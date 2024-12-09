@@ -29,6 +29,12 @@ import {
   RespondToAuthChallengeCommandInput,
   RespondToAuthChallengeCommandOutput,
   UserNotFoundException,
+  DeleteUserCommand,
+  DeleteUserCommandInput,
+  DeleteUserCommandOutput,
+  AdminDeleteUserCommandOutput,
+  AdminDeleteUserCommandInput,
+  AdminDeleteUserCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 
 export enum CognitoIdpCommand {
@@ -37,10 +43,12 @@ export enum CognitoIdpCommand {
   ADMIN_GET_USER = 'admin-get-user',
   ADMIN_SET_USER_PASSWORD = 'admin-set-user-password',
   ADMIN_UPDATE_USER_ATTRIBUTES = 'admin-update-user-attributes',
+  ADMIN_DELETE_USER = 'admin-delete-user',
   CONFIRM_FORGOT_PASSWORD = 'confirm-forgot-password',
   FORGOT_PASSWORD = 'forgot-password',
   INITIATE_AUTH = 'initiate-auth',
   RESPOND_TO_AUTH_CHALLENGE = 'respond-to-auth-challenge',
+  DELETE_USER = 'delete-user',
 }
 
 export interface CognitoIdpServiceProps {
@@ -357,6 +365,49 @@ export class CognitoIdpService {
     }
   };
 
+  /**
+   * This function deletes an existing User's own user account from Cognito
+   * @param accessToken
+   */
+  async deleteUser(accessToken: string): Promise<DeleteUserCommandOutput> {
+    console.log(`[cognito-idp-service : deleteUser] accessToken: ${accessToken}`);
+
+    const logRequestMessage = 'Deleting user to Platform request';
+    console.info(logRequestMessage);
+
+    const response: DeleteUserCommandOutput = await this.cognitoIdpRequest<
+      DeleteUserCommandInput,
+      DeleteUserCommandOutput
+    >(CognitoIdpCommand.DELETE_USER, {
+      AccessToken: accessToken,
+    });
+    if (response.$metadata.httpStatusCode === 200) {
+      return response;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  }
+
+  /**
+   * This function deletes a specific users account from cognito
+   * @param username
+   */
+  public adminDeleteUser = async (username: string): Promise<AdminDeleteUserCommandOutput> => {
+    console.log(`[cognito-idp-service : adminUpdateUserEmail] username: ${username}`);
+    const response: AdminDeleteUserCommandOutput = await this.cognitoIdpRequest<
+      AdminDeleteUserCommandInput,
+      AdminDeleteUserCommandOutput
+    >(CognitoIdpCommand.ADMIN_DELETE_USER, {
+      UserPoolId: this.props.userPoolId,
+      Username: username,
+    });
+    if (response.$metadata.httpStatusCode === 200) {
+      return response;
+    } else {
+      throw new Error(`Unable to delete cognito user request: ${JSON.stringify(response)}`);
+    }
+  };
+
   private handleError = (error: any): CognitoIdentityProviderServiceException => {
     if (error instanceof UserNotFoundException) {
       return error as UserNotFoundException;
@@ -383,6 +434,8 @@ export class CognitoIdpService {
         return new AdminSetUserPasswordCommand(data as AdminSetUserPasswordCommandInput);
       case CognitoIdpCommand.ADMIN_UPDATE_USER_ATTRIBUTES:
         return new AdminUpdateUserAttributesCommand(data as AdminUpdateUserAttributesCommandInput);
+      case CognitoIdpCommand.ADMIN_DELETE_USER:
+        return new AdminDeleteUserCommand(data as AdminDeleteUserCommandInput);
       case CognitoIdpCommand.CONFIRM_FORGOT_PASSWORD:
         return new ConfirmForgotPasswordCommand(data as ConfirmForgotPasswordCommandInput);
       case CognitoIdpCommand.FORGOT_PASSWORD:
@@ -391,6 +444,8 @@ export class CognitoIdpService {
         return new InitiateAuthCommand(data as InitiateAuthCommandInput);
       case CognitoIdpCommand.RESPOND_TO_AUTH_CHALLENGE:
         return new RespondToAuthChallengeCommand(data as RespondToAuthChallengeCommandInput);
+      case CognitoIdpCommand.DELETE_USER:
+        return new DeleteUserCommand(data as DeleteUserCommandInput);
       default:
         throw new Error(`Unsupported Cognito IDP Command '${command}'`);
     }

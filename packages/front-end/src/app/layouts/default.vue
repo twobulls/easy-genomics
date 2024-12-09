@@ -2,7 +2,7 @@
   const routeKey = ref(0);
 
   const { $api } = useNuxtApp();
-  const { setCurrentUserOrg } = useUser($api);
+  const { setCurrentUserDataFromToken } = useUser($api);
   const hasInit = ref(false);
 
   /**
@@ -10,7 +10,7 @@
    * future scope to add user display details (name, email, etc.)
    */
   onBeforeMount(async () => {
-    await setCurrentUserOrg();
+    await setCurrentUserDataFromToken();
     hasInit.value = true;
   });
 

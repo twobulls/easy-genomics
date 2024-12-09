@@ -3,16 +3,16 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
 
   const emit = defineEmits(['next-step', 'step-validated']);
 
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   /**
    * Seqera API spec
@@ -47,8 +47,8 @@
   type FormState = z.infer<typeof formStateSchema>;
 
   const formState = reactive<FormState>({
-    pipelineDescription: wipWorkflow.value?.pipelineDescription || '',
-    pipelineName: wipWorkflow.value?.pipelineName || '',
+    pipelineDescription: wipSeqeraRun.value?.pipelineDescription || '',
+    pipelineName: wipSeqeraRun.value?.pipelineName || '',
     runName: '',
   });
 
@@ -66,8 +66,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = wipWorkflow.value?.userPipelineRunName || '';
-    formState.pipelineDescription = wipWorkflow.value?.pipelineDescription || '';
+    formState.runName = wipSeqeraRun.value?.userPipelineRunName || '';
+    formState.pipelineDescription = wipSeqeraRun.value?.pipelineDescription || '';
     validate(formState);
   });
 
@@ -87,12 +87,12 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    useWorkflowStore().updateWipWorkflow(workflowTempId, { userPipelineRunName: safeRunName });
+    useRunStore().updateWipSeqeraRun(seqeraRunTempId, { userPipelineRunName: safeRunName });
     emit('next-step');
   }
 
   /**
-   * Converts the user input value to one supported by the Next Flow Tower API.
+   * Converts the user input value to one supported by the Seqera API.
    *
    * Allows only alphanumeric characters, hyphens, and underscores.
    * Removes any other characters and replaces multiple hyphens and underscores with a single instance.

@@ -10,12 +10,9 @@ import {
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse, stripNullProperties } from '@FE/utils/api-utils';
 
-class PipelinesModule extends HttpFactory {
+class SeqeraPipelinesModule extends HttpFactory {
   async list(labId: string): Promise<ListPipelinesResponse> {
-    const res = await this.callNextflowTower<ListPipelinesResponse>(
-      'GET',
-      `/pipeline/list-pipelines?laboratoryId=${labId}`,
-    );
+    const res = await this.callSeqera<ListPipelinesResponse>('GET', `/pipeline/list-pipelines?laboratoryId=${labId}`);
 
     if (!res) {
       throw new Error('Failed to retrieve pipeline launch details');
@@ -29,7 +26,7 @@ class PipelinesModule extends HttpFactory {
   }
 
   async readPipelineLaunchDetails(pipelineId: number, labId: string): Promise<DescribePipelineLaunchResponse> {
-    const res = await this.callNextflowTower<DescribePipelineLaunchResponse>(
+    const res = await this.callSeqera<DescribePipelineLaunchResponse>(
       'GET',
       `/pipeline/read-pipeline-launch-details/${pipelineId}?laboratoryId=${labId}`,
     );
@@ -43,7 +40,7 @@ class PipelinesModule extends HttpFactory {
   }
 
   async readPipelineSchema(pipelineId: number, labId: string): Promise<DescribePipelineSchemaResponse> {
-    const res = await this.callNextflowTower<DescribePipelineSchemaResponse>(
+    const res = await this.callSeqera<DescribePipelineSchemaResponse>(
       'GET',
       `/pipeline/read-pipeline-schema/${pipelineId}?laboratoryId=${labId}`,
     );
@@ -57,4 +54,4 @@ class PipelinesModule extends HttpFactory {
   }
 }
 
-export default PipelinesModule;
+export default SeqeraPipelinesModule;

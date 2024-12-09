@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useWorkflowStore } from '@FE/stores';
-  import { WipWorkflowData } from '@FE/stores/workflow';
+  import { useRunStore } from '@FE/stores';
+  import { WipSeqeraRunData } from '@FE/stores/run';
 
   const props = defineProps<{
     schema: object;
@@ -9,22 +9,21 @@
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
-  const { $api } = useNuxtApp();
   const $route = useRoute();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   const activeSection = ref<string | null>(null);
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const localProps = reactive({
     schema: props.schema,
     params: {
       ...props.params,
-      input: wipWorkflow.value?.sampleSheetS3Url,
-      outdir: `s3://${wipWorkflow.value?.s3Bucket}/${wipWorkflow.value?.s3Path}/results`,
+      input: wipSeqeraRun.value?.sampleSheetS3Url,
+      outdir: `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/results`,
     },
   });
 
@@ -81,7 +80,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        workflowStore.updateWipWorkflow(workflowTempId, { params: val });
+        runStore.updateWipSeqeraRun(seqeraRunTempId, { params: val });
       }
     },
     { deep: true },

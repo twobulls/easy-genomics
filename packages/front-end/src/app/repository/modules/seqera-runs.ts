@@ -1,6 +1,5 @@
 import { FileDownloadUrlResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/file/request-file-download-url';
 import { FileDownloadResponseSchema } from '@easy-genomics/shared-lib/src/app/schema/nf-tower/file/request-file-download';
-import { FileDownloadUrlResponse } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-file-download-url';
 import { FileDownloadResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/file/request-file-download';
 import {
   CreateWorkflowLaunchRequest,
@@ -11,9 +10,9 @@ import {
 import HttpFactory from '@FE/repository/factory';
 import { validateApiResponse } from '@FE/utils/api-utils';
 
-class WorkflowsModule extends HttpFactory {
+class SeqeraRunsModule extends HttpFactory {
   async createPipelineRun(labId: string, pipelineLaunchRequest: CreateWorkflowLaunchRequest): Promise<any> {
-    const res = await this.callNextflowTower<any>(
+    const res = await this.callSeqera<any>(
       'POST',
       `/workflow/create-workflow-execution?laboratoryId=${labId}`,
       pipelineLaunchRequest,
@@ -27,10 +26,7 @@ class WorkflowsModule extends HttpFactory {
   }
 
   async list(labId: string): Promise<Workflow[]> {
-    const res = await this.callNextflowTower<ListWorkflowsResponse>(
-      'GET',
-      `/workflow/list-workflows?laboratoryId=${labId}`,
-    );
+    const res = await this.callSeqera<ListWorkflowsResponse>('GET', `/workflow/list-workflows?laboratoryId=${labId}`);
     if (!res) {
       throw new Error('Failed to retrieve workflows');
     }
@@ -42,10 +38,10 @@ class WorkflowsModule extends HttpFactory {
     return workflows || [];
   }
 
-  async cancelPipelineRun(labId: string, workflowId: string): Promise<any> {
-    const res = await this.callNextflowTower<any>(
+  async cancelPipelineRun(labId: string, seqeraRunId: string): Promise<any> {
+    const res = await this.callSeqera<any>(
       'PUT',
-      `/workflow/cancel-workflow-execution/${workflowId}?laboratoryId=${labId}`,
+      `/workflow/cancel-workflow-execution/${seqeraRunId}?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -56,7 +52,7 @@ class WorkflowsModule extends HttpFactory {
   }
 
   async readWorkflowReports(workspaceId: string, labId: string): Promise<any> {
-    const res = await this.callNextflowTower<any>(
+    const res = await this.callSeqera<any>(
       'GET',
       `/workflow/read-workflow-reports/${workspaceId}?laboratoryId=${labId}`,
     );
@@ -68,40 +64,13 @@ class WorkflowsModule extends HttpFactory {
   }
 
   /**
-   * Calls '/easy-genomics/file/download/request-file-download-url' API to
-   * retrieve pre-signed S3 Download URL for secure file download.
-   *
-   * This method and API is only suitable for us when downloading a file that
-   * exists within an S3 Bucket that the AWS Account has access to and is within
-   * the same AWS Region.
-   *
-   * @param labId
-   * @param s3Uri
-   */
-  async getFileDownloadUrl(labId: string, s3Uri: string): Promise<FileDownloadUrlResponse> {
-    const res = await this.call<FileDownloadUrlResponse>('POST', '/file/download/request-file-download-url', {
-      LaboratoryId: labId,
-      S3Uri: s3Uri,
-    });
-
-    if (!res) {
-      console.error('Error calling file download url API');
-      throw new Error('Failed to get file download url');
-    }
-
-    validateApiResponse(FileDownloadUrlResponseSchema, res);
-    return res;
-  }
-
-  /**
-   * Calls '/nf-tower/file/request-file-download' API to download the contents
-   * of a specified NextFlow Tower Workflow Run results file.
+   * Calls '/nf-tower/file/request-file-download' API to download the contents of a specified Seqera Run results file.
    *
    * @param labId
    * @param contentUri
    */
-  async getNextFlowFileDownload(labId: string, contentUri: string): Promise<FileDownloadResponse> {
-    const res: FileDownloadResponse | undefined = await this.callNextflowTower<FileDownloadResponse>(
+  async downloadSeqeraFile(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+    const res: FileDownloadResponse | undefined = await this.callSeqera<FileDownloadResponse>(
       'POST',
       '/file/request-file-download',
       {
@@ -119,10 +88,34 @@ class WorkflowsModule extends HttpFactory {
     return res;
   }
 
-  async get(labId: string, workflowId: string): Promise<Workflow> {
-    const res = await this.callNextflowTower<DescribeWorkflowResponse>(
+  /**
+   * Get signed URL for downloading a file from S3 Bucket
+   * @param labId
+   * @param contentUri
+   */
+  async downloadS3file(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+    const res: FileDownloadResponse | undefined = await this.call<FileDownloadResponse>(
+      'POST',
+      '/file/request-file-download-url',
+      {
+        LaboratoryId: labId,
+        S3Uri: contentUri,
+      },
+    );
+
+    if (!res) {
+      console.error('Error calling file download API');
+      throw new Error('Failed to perform file download');
+    }
+
+    validateApiResponse(FileDownloadUrlResponseSchema, res);
+    return res;
+  }
+
+  async get(labId: string, seqeraRunId: string): Promise<Workflow> {
+    const res = await this.callSeqera<DescribeWorkflowResponse>(
       'GET',
-      `/workflow/read-workflow/${workflowId}?laboratoryId=${labId}`,
+      `/workflow/read-workflow/${seqeraRunId}?laboratoryId=${labId}`,
     );
 
     if (!res) {
@@ -135,4 +128,4 @@ class WorkflowsModule extends HttpFactory {
   }
 }
 
-export default WorkflowsModule;
+export default SeqeraRunsModule;

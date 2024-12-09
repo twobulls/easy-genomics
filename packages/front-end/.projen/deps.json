@@ -103,6 +103,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/client-omics",
+      "type": "runtime"
+    },
+    {
       "name": "@aws-sdk/s3-request-presigner",
       "type": "runtime"
     },
@@ -134,6 +138,18 @@
     },
     {
       "name": "@smithy/url-parser",
+      "type": "runtime"
+    },
+    {
+      "name": "@vueuse/core",
+      "type": "runtime"
+    },
+    {
+      "name": "@vueuse/integrations",
+      "type": "runtime"
+    },
+    {
+      "name": "@vueuse/nuxt",
       "type": "runtime"
     },
     {
@@ -181,6 +197,10 @@
     },
     {
       "name": "esrun",
+      "type": "runtime"
+    },
+    {
+      "name": "file-saver",
       "type": "runtime"
     },
     {

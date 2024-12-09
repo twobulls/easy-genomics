@@ -264,6 +264,17 @@ export class LaboratoryAccessTokenUnavailableError extends HttpError {
 }
 
 /**
+ * Laboratory WorkspaceId Or Access Token Incorrect
+ *
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryWorkspaceIdOrAccessTokenIncorrectError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Laboratory WorkspaceId or Access Token is incorrect', 400, 'EG-308', messageOpt);
+  }
+}
+
+/**
  * Laboratory User already exists
  *
  * @param messageOpt - optional additional message
@@ -299,6 +310,30 @@ export class LaboratoryUserNotFoundError extends HttpError {
 }
 
 /**
+ * Laboratory Run failed to delete
+ *
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryRunDeleteFailedError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Removing run from laboratory failed', 500, 'EG-322', messageOpt);
+  }
+}
+
+/**
+ * Laboratory Run not found
+ *
+ * @param runId
+ * @param laboratoryId - optional additional message
+ * @param messageOpt - optional additional message
+ */
+export class LaboratoryRunNotFoundError extends HttpError {
+  constructor(runId: string, laboratoryId: string = 'unknown', messageOpt?: string) {
+    super(`Run '${runId}' for laboratory '${laboratoryId}' could not be found`, 404, 'EG-323', messageOpt);
+  }
+}
+
+/**
  * Laboratory Bucket not found
  *
  * @param laboratoryId
@@ -313,6 +348,28 @@ export class LaboratoryBucketNotFoundError extends HttpError {
       404,
       'EG-314',
     );
+  }
+}
+
+/**
+ * Laboratory does not have access to AWS Health Omics
+ *
+ * @param messageOpt - optional additional message
+ */
+export class MissingAWSHealthOmicsAccessError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Laboratory does not have AWS HealthOmics enabled', 403, 'EG-315', messageOpt);
+  }
+}
+
+/**
+ * Laboratory does not have access to NextFlow Tower / Seqera Cloud
+ *
+ * @param messageOpt - optional additional message
+ */
+export class MissingNextFlowTowerAccessError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Laboratory does not have Seqera Cloud / NextFlow Tower enabled', 403, 'EG-316', messageOpt);
   }
 }
 
@@ -370,5 +427,19 @@ export class UserNameTakenError extends HttpError {
 export class UserNotInOrganizationError extends HttpError {
   constructor(messageOpt?: string) {
     super('User not permitted access without first granted access to the Organization', 409, 'EG-405', messageOpt);
+  }
+}
+
+// AWS Omics errors
+
+/**
+ * Omics Workflow not found
+ *
+ * @param workflowId
+ * @param messageOpt - optional additional message
+ */
+export class OmicsWorkflowNotFoundError extends HttpError {
+  constructor(workflowId: string, messageOpt?: string) {
+    super(`Workflow '${workflowId}' could not be found`, 404, 'EG-503', messageOpt);
   }
 }

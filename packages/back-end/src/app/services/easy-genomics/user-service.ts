@@ -219,7 +219,35 @@ export class UserService extends DynamoDBService implements Service {
   }
 
   async delete(user: User): Promise<boolean> {
-    console.error(user);
-    throw new Error('TBD');
+    const logRequestMessage = `Delete User UserId=${user.UserId} request`;
+    console.info(logRequestMessage);
+
+    const response: TransactWriteItemsCommandOutput = await this.transactWriteItems({
+      TransactItems: [
+        {
+          Delete: {
+            TableName: this.USER_TABLE_NAME,
+            Key: {
+              UserId: { S: user.UserId },
+            },
+          },
+        },
+        {
+          Delete: {
+            TableName: this.UNIQUE_REFERENCE_TABLE_NAME,
+            Key: {
+              Value: { S: user.Email.toLowerCase() },
+              Type: { S: 'user-email' },
+            },
+          },
+        },
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
   }
 }

@@ -19,7 +19,8 @@ export default function useAuth() {
       useUiStore().setRequestPending('signIn');
       const user = await Auth.signIn(username, password);
       if (user) {
-        await useUserStore().loadCurrentUserPermissions();
+        const { $api } = useNuxtApp();
+        await useUser($api).setCurrentUserDataFromToken();
         await useOrgsStore().loadOrgs();
         if (useUserStore().isSuperuser) {
           await navigateTo('/orgs');

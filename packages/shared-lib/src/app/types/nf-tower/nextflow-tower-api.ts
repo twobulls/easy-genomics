@@ -37,6 +37,7 @@ export type DescribeComputeEnvsResponse = components['schemas']['DescribeCompute
 /** GET /pipelines **/
 export type ListPipelinesQuery = operations['ListPipelines']['parameters']['query'];
 export type ListPipelinesResponse = components['schemas']['ListPipelinesResponse'];
+export type Pipeline = components['schemas']['PipelineDbDto'];
 
 /** GET /pipelines/{pipelineId} **/
 export type DescribePipelinesQuery = operations['DescribePipeline']['parameters']['query'];

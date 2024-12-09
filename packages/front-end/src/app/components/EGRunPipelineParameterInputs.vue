@@ -2,7 +2,7 @@
   import StringField from './EGParametersStringField.vue';
   import NumberField from './EGParametersNumberField.vue';
   import BooleanField from './EGParametersBooleanField.vue';
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
 
   const props = defineProps<{
     section: Record<string, any>;
@@ -10,9 +10,9 @@
   }>();
 
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   function propertyType(property) {
     if (property.type === 'string' && property.format === undefined) return 'EGParametersStringField';
@@ -48,9 +48,17 @@
 
   watchEffect(() => {
     for (const key in propValues) {
-      workflowStore.wipWorkflows[workflowTempId].params[key] = propValues[key];
+      runStore.wipSeqeraRuns[seqeraRunTempId].params[key] = propValues[key];
     }
   });
+
+  watch(
+    () => runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url,
+    () => {
+      runStore.wipSeqeraRuns[seqeraRunTempId].params['input'] =
+        runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url;
+    },
+  );
 </script>
 
 <template>
@@ -75,7 +83,7 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="workflowStore.wipWorkflows[workflowTempId].sampleSheetS3Url" />
+        <EGInput name="input" v-model="runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url" />
       </template>
     </div>
   </div>

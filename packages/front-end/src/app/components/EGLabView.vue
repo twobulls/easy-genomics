@@ -7,15 +7,18 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useWorkflowStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useRunStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-  import { EGTabsStyles } from '@FE/styles/nuxtui/UTabs';
   import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
-  import { Workflow } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import {
+    Workflow as SeqeraRun,
+    Pipeline as SeqeraPipeline,
+  } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import { WorkflowListItem as OmicsWorkflow, RunListItem as OmicsRun } from '@aws-sdk/client-omics';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -27,52 +30,33 @@
   const $router = useRouter();
   const modal = useModal();
 
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
   const labStore = useLabsStore();
+  const uiStore = useUiStore();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
-
   const labUsers = ref<LabUser[]>([]);
+  const seqeraPipelines = ref<SeqeraPipeline[]>([]);
+  const omicsWorkflows = ref<OmicsWorkflow[]>([]);
   const canAddUsers = ref(false);
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
-  const pipelines = ref<[]>([]);
-
-  // Dynamic remove user dialog values
+  const isCancelSeqeraDialogOpen = ref<boolean>(false);
+  const seqeraRunToCancel = ref<SeqeraRun | null>(null);
+  const isCancelOmicsDialogOpen = ref<boolean>(false);
+  const omicsRunToCancel = ref<OmicsRun | null>(null);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
-
-  let intervalId: number | undefined;
-
   const missingPAT = ref<boolean>(false);
-
   const tabIndex = ref(0);
-  // set tabIndex according to query param
-  onMounted(() => {
-    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
-    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
-  });
-
-  /**
-   * Fetch Lab details, pipelines, workflows and Lab users before component mount and start periodic fetching
-   */
-  onBeforeMount(loadLabData);
-
-  onUnmounted(() => {
-    if (intervalId) {
-      clearTimeout(intervalId);
-    }
-  });
-  async function pollFetchWorkflows() {
-    await getWorkflows();
-    intervalId = window.setTimeout(pollFetchWorkflows, 2 * 60 * 1000);
-  }
+  let intervalId: number | undefined;
 
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const workflows = computed<Workflow[]>(() => workflowStore.workflowsForLab(props.labId));
+  const seqeraRuns = computed<SeqeraRun[]>(() => runStore.seqeraRunsForLab(props.labId));
+  const omicsRuns = computed<OmicsRun[]>(() => runStore.omicsRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -111,7 +95,7 @@
     },
   ];
 
-  const pipelinesTableColumns = [
+  const seqeraPipelinesTableColumns = [
     {
       key: 'Name',
       label: 'Name',
@@ -126,7 +110,22 @@
     },
   ];
 
-  const workflowsTableColumns = [
+  const omicsWorkflowsTableColumns = [
+    {
+      key: 'Name',
+      label: 'Name',
+    },
+    {
+      key: 'description',
+      label: 'Description',
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+    },
+  ];
+
+  const runsTableColumns = [
     {
       key: 'runName',
       label: 'Run Name',
@@ -154,8 +153,13 @@
 
     if (!missingPAT.value) {
       if (!props.superuser) {
-        items.push({ key: 'runs', label: 'Runs' });
-        items.push({ key: 'pipelines', label: 'Pipelines' });
+        if (lab.value?.NextFlowTowerEnabled) {
+          items.push({ key: 'seqeraPipelines', label: 'Seqera Pipelines' });
+        }
+        if (lab.value?.AwsHealthOmicsEnabled) {
+          items.push({ key: 'omicsWorkflows', label: 'HealthOmics Workflows' });
+        }
+        items.push({ key: 'runs', label: 'Lab Runs' });
       }
       items.push({ key: 'users', label: 'Lab Users' });
     }
@@ -165,28 +169,37 @@
     return items;
   });
 
-  const pipelinesActionItems = (pipeline: any) => [
+  const seqeraPipelinesActionItems = (pipeline: any) => [
     [
       {
         label: 'Run',
-        click: () => viewRunPipeline(pipeline),
+        click: () => viewRunSeqeraPipeline(pipeline),
       },
     ],
   ];
 
-  function workflowsActionItems(row: Workflow): object[] {
+  const omicsWorkflowsActionItems = (workflow: any) => [
+    [
+      {
+        label: 'Run',
+        click: () => viewRunOmicsWorkflow(workflow),
+      },
+    ],
+  ];
+
+  function seqeraRunsActionItems(row: SeqeraRun): object[] {
     const buttons: object[][] = [
       [
         {
           label: 'View Details',
-          click: () => viewRunDetails(row),
+          click: () => viewSeqeraRunDetails(row),
         },
       ],
       [
         {
           label: 'View Results',
           click: () => {
-            $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Results' } });
+            $router.push({ path: `/labs/${props.labId}/seqera-run/${row.id}`, query: { tab: 'Run Results' } });
           },
         },
       ],
@@ -197,8 +210,8 @@
         {
           label: 'Cancel Run',
           click: () => {
-            runToCancel.value = row;
-            isCancelDialogOpen.value = true;
+            seqeraRunToCancel.value = row;
+            isCancelSeqeraDialogOpen.value = true;
           },
           isHighlighted: true,
         },
@@ -208,24 +221,70 @@
     return buttons;
   }
 
-  watch(lab, async (lab) => {
-    if (lab !== null) {
-      if (lab.HasNextFlowTowerAccessToken) {
-        // load pipelines/workflows/labUsers after lab loads
-        if (props.superuser) {
-          // superuser doesn't view pipelines or workflows so don't fetch those
-          await getLabUsers();
-        } else {
-          await Promise.all([getPipelines(), pollFetchWorkflows(), getLabUsers()]);
-          canAddUsers.value = useUserStore().canAddLabUsers(orgId, props.labId);
-        }
-      } else {
-        // missing personal access token message
-        missingPAT.value = true;
-        showRedirectModal();
-      }
+  function omicsRunsActionItems(row: OmicsRun): object[] {
+    const buttons: object[][] = [
+      [
+        {
+          label: 'View Details',
+          click: () => viewOmicsRunDetails(row),
+        },
+      ],
+      [
+        {
+          label: 'View Results',
+          click: () => {
+            $router.push({ path: `/labs/${props.labId}/omics-run/${row.id}`, query: { tab: 'Run Results' } });
+          },
+        },
+      ],
+    ];
+
+    if (['SUBMITTED', 'RUNNING'].includes(row.status || '')) {
+      buttons.push([
+        {
+          label: 'Cancel Run',
+          click: () => {
+            omicsRunToCancel.value = row;
+            isCancelOmicsDialogOpen.value = true;
+          },
+          isHighlighted: true,
+        },
+      ]);
+    }
+
+    return buttons;
+  }
+
+  /**
+   * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
+   */
+  onBeforeMount(loadLabData);
+
+  // set tabIndex according to query param
+  onMounted(() => {
+    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
+    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+
+    if (intervalId) {
+      clearTimeout(intervalId);
     }
   });
+
+  onBeforeRouteLeave(() => {
+    if (intervalId) {
+      clearTimeout(intervalId);
+    }
+  });
+
+  async function pollFetchSeqeraRuns() {
+    await getSeqeraRuns();
+    intervalId = window.setTimeout(pollFetchSeqeraRuns, 2 * 60 * 1000);
+  }
+
+  async function pollFetchOmicsRuns() {
+    await getOmicsRuns();
+    intervalId = window.setTimeout(pollFetchOmicsRuns, 2 * 60 * 1000);
+  }
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -347,26 +406,59 @@
     }
   }
 
-  async function getPipelines(): Promise<void> {
-    useUiStore().setRequestPending('getPipelines');
+  async function getSeqeraPipelines(): Promise<void> {
+    useUiStore().setRequestPending('getSeqeraPipelines');
     try {
-      const res = await $api.pipelines.list(props.labId);
-      pipelines.value = res.pipelines;
+      const res = await $api.seqeraPipelines.list(props.labId);
+
+      if (!res.pipelines) {
+        throw new Error('response did not contain pipeline object');
+      }
+
+      seqeraPipelines.value = res.pipelines;
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {
-      useUiStore().setRequestComplete('getPipelines');
+      useUiStore().setRequestComplete('getSeqeraPipelines');
     }
   }
 
-  async function getWorkflows(): Promise<void> {
-    useUiStore().setRequestPending('getWorkflows');
+  async function getOmicsWorkflows(): Promise<void> {
+    useUiStore().setRequestPending('getOmicsWorkflows');
     try {
-      await workflowStore.loadWorkflowsForLab(props.labId);
+      const res = await $api.omicsWorkflows.list(props.labId);
+
+      if (res.items === undefined) {
+        throw new Error('response did not contain omics workflows');
+      }
+
+      omicsWorkflows.value = res.items;
     } catch (error) {
-      console.error('Error retrieving workflows/runs', error);
+      console.error('Error retrieving pipelines', error);
     } finally {
-      useUiStore().setRequestComplete('getWorkflows');
+      useUiStore().setRequestComplete('getOmicsWorkflows');
+    }
+  }
+
+  async function getSeqeraRuns(): Promise<void> {
+    useUiStore().setRequestPending('getSeqeraRuns');
+    try {
+      await runStore.loadSeqeraRunsForLab(props.labId);
+    } catch (error) {
+      console.error('Error retrieving Seqera runs', error);
+    } finally {
+      useUiStore().setRequestComplete('getSeqeraRuns');
+    }
+  }
+
+  async function getOmicsRuns(): Promise<void> {
+    useUiStore().setRequestPending('getOmicsRuns');
+    try {
+      await runStore.loadOmicsRunsForLab(props.labId);
+    } catch (error) {
+      console.error('Error retrieving Omics runs', error);
+    } finally {
+      useUiStore().setRequestComplete('getOmicsRuns');
     }
   }
 
@@ -379,20 +471,12 @@
     await getLabUsers();
   }
 
-  function onRunsRowClicked(row: Workflow) {
-    viewRunDetails(row);
-  }
-
-  function onPipelinesRowClicked(row: Workflow) {
-    viewRunPipeline(row);
-  }
-
-  function viewRunPipeline(pipeline: Workflow) {
-    const workflowTempId = uuidv4();
+  function viewRunSeqeraPipeline(pipeline: SeqeraRun) {
+    const seqeraRunTempId = uuidv4();
 
     const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
 
-    workflowStore.updateWipWorkflow(workflowTempId, {
+    runStore.updateWipSeqeraRun(seqeraRunTempId, {
       pipelineId,
       pipelineName,
       pipelineDescription: pipelineDescription || '',
@@ -400,46 +484,135 @@
     });
 
     $router.push({
-      path: `/labs/${props.labId}/${pipelineId}/run-pipeline`,
+      path: `/labs/${props.labId}/run-pipeline/${pipelineId}`,
       query: {
-        workflowTempId,
+        seqeraRunTempId,
       },
     });
   }
 
-  function viewRunDetails(row: Workflow) {
-    $router.push({ path: `/labs/${props.labId}/${row.id}`, query: { tab: 'Run Details' } });
+  function viewRunOmicsWorkflow(workflow: OmicsRun) {
+    const omicsRunTempId = uuidv4();
+
+    runStore.updateWipOmicsRun(omicsRunTempId, {
+      laboratoryId: props.labId,
+      workflowId: workflow.id,
+      workflowName: workflow.name,
+      transactionId: uuidv4(),
+    });
+
+    $router.push({
+      path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
+      query: {
+        omicsRunTempId,
+      },
+    });
   }
 
-  const isCancelDialogOpen = ref<boolean>(false);
-  const runToCancel = ref<Workflow | null>(null);
+  function viewSeqeraRunDetails(row: SeqeraRun) {
+    $router.push({ path: `/labs/${props.labId}/seqera-run/${row.id}`, query: { tab: 'Run Details' } });
+  }
 
-  async function handleCancelDialogAction() {
-    const runId = runToCancel.value?.id;
-    const runName = runToCancel.value?.runName;
+  function viewOmicsRunDetails(row: OmicsRun) {
+    $router.push({ path: `/labs/${props.labId}/omics-run/${row.id}`, query: { tab: 'Run Details' } });
+  }
+
+  async function handleCancelSeqeraDialogAction() {
+    const runId = seqeraRunToCancel.value?.id;
+    const runName = seqeraRunToCancel.value?.runName;
 
     if (!runId) {
-      throw new Error("runToCancel workflow id should have a value but doesn't");
+      throw new Error("seqeraRunToCancel runId should have a value but doesn't");
     }
 
+    uiStore.setRequestPending('cancelSeqeraRun');
+
     try {
-      await $api.workflows.cancelPipelineRun(props.labId, runId);
+      await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
       useToastStore().success(`${runName} has been successfully cancelled`);
     } catch (e) {
       useToastStore().error('Failed to cancel run');
     }
 
-    isCancelDialogOpen.value = false;
-    runToCancel.value = null;
+    isCancelSeqeraDialogOpen.value = false;
+    seqeraRunToCancel.value = null;
+    uiStore.setRequestComplete('cancelSeqeraRun');
 
-    await getWorkflows();
+    await getSeqeraRuns();
   }
+
+  async function handleCancelOmicsDialogAction() {
+    uiStore.setRequestPending('cancelOmicsRun');
+
+    const runId = omicsRunToCancel.value?.id;
+    const runName = omicsRunToCancel.value?.name;
+
+    console.log('you sure did cancel that omics run', runId, runName);
+
+    isCancelOmicsDialogOpen.value = false;
+    omicsRunToCancel.value = null;
+    uiStore.setRequestComplete('cancelOmicsRun');
+
+    await getOmicsRuns();
+  }
+
+  watch(lab, async (lab) => {
+    if (lab !== null) {
+      if (lab.HasNextFlowTowerAccessToken) {
+        // load pipelines/runs/labUsers after lab loads
+        if (props.superuser) {
+          // superuser doesn't view pipelines or runs so don't fetch those
+          await getLabUsers();
+        } else {
+          await Promise.all([
+            getSeqeraPipelines(),
+            getOmicsWorkflows(),
+            pollFetchSeqeraRuns(),
+            pollFetchOmicsRuns(),
+            getLabUsers(),
+          ]);
+          canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
+        }
+      } else {
+        // missing personal access token message
+        missingPAT.value = true;
+        showRedirectModal();
+      }
+    }
+  });
+
+  // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
+  //  Tailwind won't pick up and include the classes used and styles will be missing.
+  // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
+  //  UTabs that use an "EGTabsStyles" as input to the :ui attribute.
+  const EGTabsStyles = {
+    base: 'focus:outline-none',
+    list: {
+      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      padding: 'p-0',
+      height: 'h-14',
+      marker: {
+        wrapper: 'duration-200 ease-out absolute bottom-0 ',
+        base: 'absolute bottom-0 rounded-none h-0.5',
+        background: 'bg-primary',
+        shadow: 'shadow-none',
+      },
+      tab: {
+        base: 'font-serif w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out mr-16',
+        active: 'text-primary h-14',
+        inactive: 'font-serif',
+        height: 'h-14',
+        padding: 'p-0',
+        size: 'text-lg',
+      },
+    },
+  };
 </script>
 
 <template>
   <EGPageHeader
     :title="labName"
-    description="View your Lab users, details and pipelines"
+    description="View your Lab users, details and pipelines/workflows"
     :back-action="() => (superuser ? $router.push(`/orgs/${orgId}`) : $router.push('/labs'))"
     :show-back="true"
   >
@@ -473,15 +646,15 @@
       }
     "
   >
-    <!-- Pipelines tab -->
     <template #item="{ item }">
-      <div v-if="item.key === 'pipelines'" class="space-y-3">
+      <!-- Seqera Pipelines tab -->
+      <div v-if="item.key === 'seqeraPipelines'" class="space-y-3">
         <EGTable
-          :row-click-action="onPipelinesRowClicked"
-          :table-data="pipelines"
-          :columns="pipelinesTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getPipelines'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getPipelines'])"
+          :row-click-action="viewRunSeqeraPipeline"
+          :table-data="seqeraPipelines"
+          :columns="seqeraPipelinesTableColumns"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
         >
           <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
@@ -495,7 +668,7 @@
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton :items="pipelinesActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+              <EGActionButton :items="seqeraPipelinesActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
             </div>
           </template>
 
@@ -506,36 +679,111 @@
           </template>
         </EGTable>
       </div>
+
+      <!-- HealthOmics Pipelines tab -->
+      <div v-if="item.key === 'omicsWorkflows'" class="space-y-3">
+        <EGTable
+          :row-click-action="viewRunOmicsWorkflow"
+          :table-data="omicsWorkflows"
+          :columns="omicsWorkflowsTableColumns"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
+        >
+          <template #Name-data="{ row: workflow }">
+            <div class="flex items-center">
+              {{ workflow?.name }}
+            </div>
+          </template>
+
+          <template #description-data="{ row: workflow }">
+            {{ workflow?.description }}
+          </template>
+
+          <template #actions-data="{ row: workflow }">
+            <div class="flex justify-end">
+              <EGActionButton
+                :items="omicsWorkflowsActionItems(workflow)"
+                class="ml-2"
+                @click="$event.stopPropagation()"
+              />
+            </div>
+          </template>
+
+          <template #empty-state>
+            <div class="text-muted flex h-24 items-center justify-center font-normal">
+              There are no Workflows assigned to this Lab
+            </div>
+          </template>
+        </EGTable>
+      </div>
+
       <!-- Runs tab -->
       <div v-else-if="item.key === 'runs'" class="space-y-3">
         <EGTable
-          :row-click-action="onRunsRowClicked"
-          :table-data="workflows"
-          :columns="workflowsTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getWorkflows'])"
+          :row-click-action="viewOmicsRunDetails"
+          :table-data="omicsRuns"
+          :columns="runsTableColumns"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getOmicsRuns'])"
         >
-          <template #runName-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow.runName }}</div>
-            <div class="text-muted text-xs font-normal">{{ workflow.projectName }}</div>
+          <template #runName-data="{ row: omicsRun }">
+            <div class="text-body text-sm font-medium">{{ omicsRun.name }}</div>
           </template>
 
-          <template #lastUpdated-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ getDate(workflow.lastUpdated) }}</div>
-            <div class="text-muted">{{ getTime(workflow.lastUpdated) }}</div>
+          <template #lastUpdated-data="{ row: omicsRun }">
+            <div class="text-body text-sm font-medium">{{ getDate(omicsRun.creationTime) }}</div>
+            <div class="text-muted">{{ getTime(omicsRun.creationTime) }}</div>
           </template>
 
-          <template #status-data="{ row: workflow }">
-            <EGStatusChip :status="workflow.status" />
+          <template #status-data="{ row: omicsRun }">
+            <EGStatusChip :status="omicsRun.status" />
           </template>
 
-          <template #owner-data="{ row: workflow }">
-            <div class="text-body text-sm font-medium">{{ workflow?.userName ?? '-' }}</div>
+          <template #owner-data="{ row: omicsRun }">
+            <div class="text-body text-sm font-medium">{{ omicsRun?.userName ?? '-' }}</div>
           </template>
 
           <template #actions-data="{ row }">
             <div class="flex justify-end">
-              <EGActionButton :items="workflowsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+              <EGActionButton :items="omicsRunsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+            </div>
+          </template>
+
+          <template #empty-state>
+            <div class="text-muted flex h-24 items-center justify-center font-normal">
+              There are no Omics Runs in your Lab
+            </div>
+          </template>
+        </EGTable>
+
+        <EGTable
+          :row-click-action="viewSeqeraRunDetails"
+          :table-data="seqeraRuns"
+          :columns="runsTableColumns"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns'])"
+        >
+          <template #runName-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ seqeraRun.runName }}</div>
+            <div class="text-muted text-xs font-normal">{{ seqeraRun.projectName }}</div>
+          </template>
+
+          <template #lastUpdated-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ getDate(seqeraRun.lastUpdated) }}</div>
+            <div class="text-muted">{{ getTime(seqeraRun.lastUpdated) }}</div>
+          </template>
+
+          <template #status-data="{ row: seqeraRun }">
+            <EGStatusChip :status="seqeraRun.status" />
+          </template>
+
+          <template #owner-data="{ row: seqeraRun }">
+            <div class="text-body text-sm font-medium">{{ seqeraRun?.userName ?? '-' }}</div>
+          </template>
+
+          <template #actions-data="{ row }">
+            <div class="flex justify-end">
+              <EGActionButton :items="seqeraRunsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
             </div>
           </template>
 
@@ -593,7 +841,7 @@
                 :key="labUser?.LabManager"
                 :disabled="
                   useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
-                  !useUserStore().canEditLab(labId) ||
+                  !useUserStore().canEditLabUsers(labId) ||
                   useUserStore().isSuperuser
                 "
                 :user="labUser"
@@ -611,7 +859,7 @@
         </EGTable>
       </div>
       <div v-else-if="item.key === 'details'" class="space-y-3">
-        <EGLabDetailsForm @updated="loadLabData" />
+        <EGFormLabDetails @updated="loadLabData" />
       </div>
     </template>
   </UTabs>
@@ -619,9 +867,20 @@
   <EGDialog
     action-label="Cancel Run"
     :action-variant="ButtonVariantEnum.enum.destructive"
-    @action-triggered="handleCancelDialogAction"
-    :primary-message="`Are you sure you would like to cancel ${runToCancel?.runName}?`"
+    @action-triggered="handleCancelSeqeraDialogAction"
+    :primary-message="`Are you sure you would like to cancel ${seqeraRunToCancel?.runName}?`"
     secondary-message="This will stop any progress made."
-    v-model="isCancelDialogOpen"
+    v-model="isCancelSeqeraDialogOpen"
+    :buttons-disabled="uiStore.isRequestPending('cancelSeqeraRun')"
+  />
+
+  <EGDialog
+    action-label="Cancel Run"
+    :action-variant="ButtonVariantEnum.enum.destructive"
+    @action-triggered="handleCancelOmicsDialogAction"
+    :primary-message="`Are you sure you would like to cancel ${omicsRunToCancel?.name}?`"
+    secondary-message="This will stop any progress made."
+    v-model="isCancelOmicsDialogOpen"
+    :buttons-disabled="uiStore.isRequestPending('cancelOmicsRun')"
   />
 </template>

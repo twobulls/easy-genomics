@@ -1,15 +1,15 @@
 <script setup lang="ts">
-  import { useWorkflowStore } from '@FE/stores';
+  import { useRunStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
-  const workflowStore = useWorkflowStore();
+  const runStore = useRunStore();
 
-  const workflowTempId = $route.query.workflowTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
-  const wipWorkflow = computed<WipWorkflowData | undefined>(() => workflowStore.wipWorkflows[workflowTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -20,14 +20,14 @@
   const schema = ref({});
   const resetStepperKey = ref(0);
 
+  const labName = computed<string>(() => useLabsStore().labs[labId].Name);
+
   // check permissions to be on this page
-  if (!useUserStore().canViewLab(useUserStore().currentOrgId, labId)) {
+  if (!useUserStore().canViewLab(labId)) {
     $router.push('/labs');
   }
 
-  onBeforeMount(async () => {
-    await initializePipelineData();
-  });
+  onBeforeMount(initializePipelineData);
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
@@ -53,7 +53,7 @@
    * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
    */
   async function initializePipelineData() {
-    const res = await $api.pipelines.readPipelineSchema(pipelineId, labId);
+    const res = await $api.seqeraPipelines.readPipelineSchema(pipelineId, labId);
     const originalSchema = JSON.parse(res.schema);
 
     // Filter Schema to exclude any sections that do not have any visible parameters for user input
@@ -74,29 +74,29 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    workflowStore.updateWipWorkflow(workflowTempId, {
+    runStore.updateWipSeqeraRun(seqeraRunTempId, {
       laboratoryId: labId,
       pipelineDescription: schema.value.description,
     });
     if (res.params) {
-      workflowStore.updateWipWorkflow(workflowTempId, { params: JSON.parse(res.params) });
+      runStore.updateWipSeqeraRun(seqeraRunTempId, { params: JSON.parse(res.params) });
     }
   }
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete workflowStore.wipWorkflows[workflowTempId];
+    delete runStore.wipSeqeraRuns[seqeraRunTempId];
     $router.push(nextRoute.value!);
   }
 
   /**
-   * Resets the pipeline run workflow:
+   * Resets the pipeline run:
    * - clears some store values
    * - re-initializes the schema + prefills params
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    workflowStore.updateWipWorkflow(workflowTempId, {
+    runStore.updateWipSeqeraRun(seqeraRunTempId, {
       userPipelineRunName: '',
       pipelineDescription: '',
       params: {},
@@ -111,13 +111,13 @@
     title="Run Pipeline"
     :description="labName"
     :show-back="!hasLaunched"
-    :back-action="() => (nextRoute = `/labs/${labId}?tab=Pipelines`)"
+    :back-action="() => (nextRoute = `/labs/${labId}?tab=Seqera+Pipelines`)"
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="wipWorkflow?.params"
+    :params="wipSeqeraRun?.params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
   />

@@ -10,6 +10,12 @@ interface UserStoreState {
     isSuperuser: boolean | null;
     orgPermissions: OrganizationAccess | null;
   };
+  currentUserDetails: {
+    firstName: string | null;
+    lastName: string | null;
+    preferredName: string | null;
+    email: string | null;
+  };
 }
 
 const initialState = (): UserStoreState => ({
@@ -19,6 +25,12 @@ const initialState = (): UserStoreState => ({
   currentUserPermissions: {
     isSuperuser: null,
     orgPermissions: null,
+  },
+  currentUserDetails: {
+    firstName: null,
+    lastName: null,
+    preferredName: null,
+    email: null,
   },
 });
 
@@ -31,49 +43,77 @@ const useUserStore = defineStore('userStore', {
   getters: {
     currentOrgId: (state) => state.currentOrg.OrganizationId,
 
+    // permissions
+
     isSuperuser: (state: UserStoreState): boolean => !!state.currentUserPermissions.isSuperuser,
 
-    isOrgAdmin:
-      (state: UserStoreState) =>
-      (orgId: string): boolean => {
-        return useUserStore().isSuperuser || !!state.currentUserPermissions.orgPermissions?.[orgId]?.OrganizationAdmin;
-      },
+    isOrgAdmin: (state: UserStoreState) => (): boolean =>
+      useUserStore().isSuperuser ||
+      !!state.currentUserPermissions.orgPermissions?.[useUserStore().currentOrgId]?.OrganizationAdmin,
 
     isLabMember:
       (state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        !!state.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId],
+      (labId: string): boolean =>
+        !!state.currentUserPermissions.orgPermissions?.[useUserStore().currentOrgId]?.LaboratoryAccess?.[labId],
 
     isLabManager:
       (state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        !!state.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId]?.LabManager,
-    // currently we don't have any granular org permission logic so this is it
-    canManageOrgs: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(useUserStore().currentOrgId),
+      (labId: string): boolean =>
+        !!state.currentUserPermissions.orgPermissions?.[useUserStore().currentOrgId]?.LaboratoryAccess?.[labId]
+          ?.LabManager,
 
-    canCreateLab: (_state: UserStoreState) => (): boolean =>
-      !useUserStore().isSuperuser && useUserStore().isOrgAdmin(useUserStore().currentOrgId),
+    // currently we don't have any granular org permission logic so this is it
+    canManageOrgs: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(),
+
+    canCreateLab: (_state: UserStoreState) => (): boolean => !useUserStore().isSuperuser && useUserStore().isOrgAdmin(),
 
     canViewLab:
       (_state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        useUserStore().isOrgAdmin(orgId) || useUserStore().isLabMember(orgId, labId),
+      (labId: string): boolean =>
+        useUserStore().isOrgAdmin() || useUserStore().isLabMember(labId),
 
-    canEditLab:
+    canEditLabUsers:
       (_state: UserStoreState) =>
       (labId: string): boolean =>
-        useUserStore().isOrgAdmin(useUserStore().currentOrgId) ||
-        useUserStore().isLabManager(useUserStore().currentOrgId, labId),
+        useUserStore().isOrgAdmin() || useUserStore().isLabManager(labId),
 
-    canDeleteLab:
-      (_state: UserStoreState) =>
-      (orgId: string): boolean =>
-        useUserStore().isOrgAdmin(orgId),
+    canEditLabDetails: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(),
+
+    canDeleteLab: (_state: UserStoreState) => (): boolean => useUserStore().isOrgAdmin(),
 
     canAddLabUsers:
       (_state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        useUserStore().isOrgAdmin(orgId) || useUserStore().isLabManager(orgId, labId),
+      (labId: string): boolean =>
+        useUserStore().isOrgAdmin() || useUserStore().isLabManager(labId),
+
+    // user details
+
+    currentUserPreferredOrFirstName: (_state: UserStoreState): string | null =>
+      _state.currentUserDetails.preferredName || _state.currentUserDetails.firstName,
+
+    currentUserInitials: (_state: UserStoreState): string => {
+      if (_state.currentUserPermissions.isSuperuser) {
+        return '#';
+      }
+
+      const firstInitial: string = useUserStore().currentUserPreferredOrFirstName?.charAt(0) || '?';
+      const lastInitial: string = _state.currentUserDetails.lastName?.charAt(0) || '?';
+      return firstInitial + lastInitial;
+    },
+
+    currentUserDisplayName: (_state: UserStoreState): string => {
+      const preferredOrFirstName = useUserStore().currentUserPreferredOrFirstName;
+      const lastName = _state.currentUserDetails.lastName;
+      const email = _state.currentUserDetails.email;
+
+      if (preferredOrFirstName) {
+        return `${preferredOrFirstName} ${lastName}`;
+      } else if (email) {
+        return email;
+      } else {
+        return '???';
+      }
+    },
   },
 
   actions: {
@@ -82,21 +122,6 @@ const useUserStore = defineStore('userStore', {
     },
     reset() {
       Object.assign(this, initialState());
-    },
-
-    async loadCurrentUserPermissions(): Promise<void> {
-      const token = await useAuth().getToken();
-      const decodedToken: any = decodeJwt(token);
-
-      if (decodedToken['cognito:groups']?.includes('SystemAdmin')) {
-        this.currentUserPermissions.isSuperuser = true;
-        return;
-      }
-
-      this.currentUserPermissions.isSuperuser = false;
-
-      const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
-      this.currentUserPermissions.orgPermissions = parsedOrgAccess;
     },
   },
 

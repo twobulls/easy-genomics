@@ -9,6 +9,7 @@
     actionVariant: string;
     cancelLabel?: string;
     cancelVariant?: string;
+    buttonsDisabled?: boolean;
   }>();
 
   const emit = defineEmits(['action-triggered', 'update:modelValue']);
@@ -46,6 +47,7 @@
                 :label="cancelLabel"
                 :variant="ButtonVariantEnum.enum.secondary"
                 :size="ButtonSizeEnum.enum.sm"
+                :disabled="buttonsDisabled"
               />
             </div>
             <EGButton
@@ -53,6 +55,7 @@
               :label="actionLabel"
               :size="ButtonSizeEnum.enum.sm"
               :variant="ButtonVariantEnum.enum.destructive"
+              :disabled="buttonsDisabled"
               autofocus
             />
           </div>

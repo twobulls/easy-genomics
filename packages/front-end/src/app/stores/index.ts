@@ -1,15 +1,15 @@
 import useLabsStore from './labs';
 import useOrgsStore from './orgs';
+import useRunStore from './run';
 import useToastStore from './toast';
 import useUiStore from './ui';
 import useUserStore from './user';
-import useWorkflowStore from './workflow';
 
 function resetStores() {
   useLabsStore().reset();
   useOrgsStore().reset();
-  useWorkflowStore().reset();
+  useRunStore().reset();
   useUiStore().reset();
   useUserStore().reset();
 }
-export { resetStores, useOrgsStore, useToastStore, useUserStore, useUiStore, useLabsStore, useWorkflowStore };
+export { resetStores, useOrgsStore, useToastStore, useUserStore, useUiStore, useLabsStore, useRunStore };

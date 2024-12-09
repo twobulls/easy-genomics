@@ -449,6 +449,9 @@
   }
 
   function viewRunOmicsWorkflow(workflow: OmicsRun) {
+    useToastStore().info('Running HealthOmics Workflows is not yet implemented');
+    return;
+
     const omicsRunTempId = uuidv4();
 
     runStore.updateWipOmicsRun(omicsRunTempId, {

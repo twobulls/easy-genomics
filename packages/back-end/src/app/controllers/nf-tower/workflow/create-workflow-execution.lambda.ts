@@ -119,10 +119,7 @@ export const handler: Handler = async (
     console.log('Create workflow launch response from Next Flow Tower API:', nfTowerResponse);
 
     // Create laboratory run
-    const runId: string | undefined = createWorkflowLaunchRequest.launch?.id;
-    if (!runId) {
-      throw new RequiredIdNotFoundError('Seqera Pipeline Run Launch Id (Transaction Id) missing');
-    }
+    const runId: string = crypto.randomUUID().toLowerCase();
 
     const response = await laboratoryRunService
       .add({

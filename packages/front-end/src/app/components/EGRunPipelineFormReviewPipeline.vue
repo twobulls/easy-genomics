@@ -44,7 +44,6 @@
       const workDir: string = `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
-          id: wipSeqeraRun?.transactionId, // Specify Easy Genomics' generated random Transaction ID for Seqera Pipeline Run Launch ID
           computeEnvId: launchDetails.launch?.computeEnv?.id,
           runName: wipSeqeraRun.value?.userPipelineRunName,
           pipeline: launchDetails.launch?.pipeline,

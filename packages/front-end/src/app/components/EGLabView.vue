@@ -39,7 +39,7 @@
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = ref<SeqeraPipeline[]>([]);
   const omicsWorkflows = ref<OmicsWorkflow[]>([]);
-  const canAddUsers = ref(false);
+  const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const runToCancel = ref<GenericRun | null>(null);
@@ -515,8 +515,6 @@
       await Promise.all(promises);
       return;
     }
-
-    canAddUsers.value = userStore.canAddLabUsers(props.labId);
 
     if (lab.NextFlowTowerEnabled) {
       if (!lab.HasNextFlowTowerAccessToken) {

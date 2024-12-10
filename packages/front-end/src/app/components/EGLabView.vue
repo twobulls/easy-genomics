@@ -33,12 +33,13 @@
   const runStore = useRunStore();
   const labStore = useLabsStore();
   const uiStore = useUiStore();
+  const userStore = useUserStore();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = ref<SeqeraPipeline[]>([]);
   const omicsWorkflows = ref<OmicsWorkflow[]>([]);
-  const canAddUsers = ref(false);
+  const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const runToCancel = ref<GenericRun | null>(null);
@@ -152,22 +153,24 @@
   ];
 
   const tabItems = computed<{ key: string; label: string }[]>(() => {
+    const seqeraPipelinesTab = { key: 'seqeraPipelines', label: 'Seqera Pipelines' };
+    const omicsWorkflowsTab = { key: 'omicsWorkflows', label: 'HealthOmics Workflows' };
+    const runsTab = { key: 'runs', label: 'Lab Runs' };
+    const usersTab = { key: 'users', label: 'Lab Users' };
+    const detailsTab = { key: 'details', label: 'Details' };
+
+    const seqeraAvailable = lab.value?.NextFlowTowerEnabled && !missingPAT.value;
+    const omicsAvailable = lab.value?.AwsHealthOmicsEnabled;
+
     const items = [];
 
-    if (!missingPAT.value) {
-      if (!props.superuser) {
-        if (lab.value?.NextFlowTowerEnabled) {
-          items.push({ key: 'seqeraPipelines', label: 'Seqera Pipelines' });
-        }
-        if (lab.value?.AwsHealthOmicsEnabled) {
-          items.push({ key: 'omicsWorkflows', label: 'HealthOmics Workflows' });
-        }
-        items.push({ key: 'runs', label: 'Lab Runs' });
-      }
-      items.push({ key: 'users', label: 'Lab Users' });
+    if (!props.superuser) {
+      if (seqeraAvailable) items.push(seqeraPipelinesTab);
+      if (omicsAvailable) items.push(omicsWorkflowsTab);
+      if (seqeraAvailable || omicsAvailable) items.push(runsTab);
     }
-
-    items.push({ key: 'details', label: 'Details' });
+    items.push(usersTab);
+    items.push(detailsTab);
 
     return items;
   });
@@ -249,7 +252,7 @@
         "A Personal Access Token is required to run a pipeline. Please click 'Edit' in the next screen to set it.",
       confirmLabel: 'Okay',
       confirmAction() {
-        tabIndex.value = 0;
+        tabIndex.value = tabItems.value.findIndex((tab) => tab.key === 'details');
         $router.push({ query: { ...$router.currentRoute.query, tab: tabItems.value[tabIndex.value].label } });
         modal.close();
       },
@@ -499,28 +502,37 @@
   }
 
   watch(lab, async (lab) => {
-    if (lab !== null) {
-      if (lab.HasNextFlowTowerAccessToken) {
-        // load pipelines/runs/labUsers after lab loads
-        if (props.superuser) {
-          // superuser doesn't view pipelines or runs so don't fetch those
-          await getLabUsers();
-        } else {
-          await Promise.all([
-            getSeqeraPipelines(),
-            getOmicsWorkflows(),
-            pollFetchSeqeraRuns(),
-            pollFetchOmicsRuns(),
-            getLabUsers(),
-          ]);
-          canAddUsers.value = useUserStore().canAddLabUsers(props.labId);
-        }
-      } else {
-        // missing personal access token message
+    if (lab === null) {
+      return;
+    }
+
+    const promises = [getLabUsers()];
+
+    if (props.superuser) {
+      // superuser doesn't view pipelines/workflows or runs so just fetch the users
+      await Promise.all(promises);
+      return;
+    }
+
+    if (lab.NextFlowTowerEnabled) {
+      if (!lab.HasNextFlowTowerAccessToken) {
+        // Seqera enabled but creds not present, show the modal
         missingPAT.value = true;
         showRedirectModal();
+      } else {
+        // fetch the Seqera stuff
+        promises.push(getSeqeraPipelines());
+        promises.push(pollFetchSeqeraRuns());
       }
     }
+
+    if (lab.AwsHealthOmicsEnabled) {
+      // fetch the Omics stuff
+      promises.push(getOmicsWorkflows());
+      promises.push(pollFetchOmicsRuns());
+    }
+
+    await Promise.all(promises);
   });
 
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
@@ -747,8 +759,8 @@
                 :key="labUser?.LabManager"
                 :disabled="
                   useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
-                  !useUserStore().canEditLabUsers(labId) ||
-                  useUserStore().isSuperuser
+                  !userStore.canEditLabUsers(labId) ||
+                  userStore.isSuperuser
                 "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"

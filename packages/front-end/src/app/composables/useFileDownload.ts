@@ -10,7 +10,7 @@ export default function useFileDownload() {
 
     try {
       // Fetch the presigned URL from the API
-      const fileDownloadResponse: FileDownloadResponse = await $api.seqeraRuns.downloadS3file(labId, fileDownloadPath);
+      const fileDownloadResponse: FileDownloadResponse = await $api.file.downloadS3file(labId, fileDownloadPath);
 
       if (!fileDownloadResponse || !fileDownloadResponse.DownloadUrl) {
         console.error('Download URL is undefined or empty');

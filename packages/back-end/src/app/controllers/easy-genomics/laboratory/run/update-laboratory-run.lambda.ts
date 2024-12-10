@@ -7,6 +7,7 @@ import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-geno
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
+  LaboratoryRunNotFoundError,
   RequiredIdNotFoundError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
@@ -41,6 +42,10 @@ export const handler: Handler = async (
 
     // Lookup by RunId to confirm existence before updating
     const existing: LaboratoryRun = await laboratoryRunService.queryByRunId(id);
+
+    if (!existing) {
+      throw new LaboratoryRunNotFoundError(id);
+    }
 
     // Only available for Org Admins or Laboratory Managers and Technicians
     if (

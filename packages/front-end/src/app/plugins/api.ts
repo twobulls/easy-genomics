@@ -2,6 +2,8 @@ import { defineNuxtPlugin } from '#app';
 import FileModule from '@FE/repository/modules/file';
 import InfraModules from '@FE/repository/modules/infra';
 import LabsModule from '@FE/repository/modules/labs';
+import OmicsRunsModule from '@FE/repository/modules/omics-runs';
+import OmicsWorkflowsModule from '@FE/repository/modules/omics-workflows';
 import OrgsModule from '@FE/repository/modules/orgs';
 import SeqeraPipelinesModule from '@FE/repository/modules/seqera-pipelines';
 import SeqeraRunsModules from '@FE/repository/modules/seqera-runs';
@@ -15,6 +17,8 @@ interface IApiInstance {
   orgs: OrgsModule;
   seqeraPipelines: SeqeraPipelinesModule;
   seqeraRuns: SeqeraRunsModules;
+  omicsWorkflows: OmicsWorkflowsModule;
+  omicsRuns: OmicsRunsModule;
   uploads: UploadsModule;
   users: UsersModule;
 }
@@ -34,6 +38,8 @@ const createApiInstance = (apiFetcher: any): IApiInstance => ({
   orgs: new OrgsModule(apiFetcher),
   seqeraPipelines: new SeqeraPipelinesModule(apiFetcher),
   seqeraRuns: new SeqeraRunsModules(apiFetcher),
+  omicsWorkflows: new OmicsWorkflowsModule(apiFetcher),
+  omicsRuns: new OmicsRunsModule(apiFetcher),
   uploads: new UploadsModule(apiFetcher),
   users: new UsersModule(apiFetcher),
 });

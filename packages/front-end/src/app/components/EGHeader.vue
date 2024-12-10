@@ -109,13 +109,15 @@
                 <EGInitialsCircle />
 
                 <div class="flex flex-col items-start gap-1">
-                  <div class="font-medium">
+                  <div class="text-left font-medium">
                     {{ userStore.currentUserDisplayName }}
                   </div>
-                  <div class="text-muted">
+                  <div class="text-muted text-left">
                     {{ orgsStore.orgs[userStore.currentOrgId]?.Name || '' }}
                   </div>
                 </div>
+
+                <UIcon name="i-heroicons-chevron-right" class="h-6 w-6" />
               </div>
             </template>
 

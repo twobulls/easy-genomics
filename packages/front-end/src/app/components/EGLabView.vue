@@ -148,7 +148,6 @@
     { key: 'lastUpdated', label: 'Last Updated' },
     { key: 'status', label: 'Status' },
     { key: 'owner', label: 'Owner' },
-    { key: 'platform', label: 'Platform' },
     { key: 'actions', label: 'Actions' },
   ];
 
@@ -685,10 +684,6 @@
 
           <template #owner-data="{ row: run }">
             <div class="text-body text-sm font-medium">{{ run.owner }}</div>
-          </template>
-
-          <template #platform-data="{ row: run }">
-            <div class="text-body text-sm font-medium">{{ run.type === 'seqera' ? 'Seqera' : 'HealthOmics' }}</div>
           </template>
 
           <template #actions-data="{ row }">

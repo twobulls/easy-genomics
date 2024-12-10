@@ -159,18 +159,16 @@
     const usersTab = { key: 'users', label: 'Lab Users' };
     const detailsTab = { key: 'details', label: 'Details' };
 
-    if (props.superuser) {
-      return [detailsTab];
-    }
-
     const seqeraAvailable = lab.value?.NextFlowTowerEnabled && !missingPAT.value;
     const omicsAvailable = lab.value?.AwsHealthOmicsEnabled;
 
     const items = [];
 
-    if (seqeraAvailable) items.push(seqeraPipelinesTab);
-    if (omicsAvailable) items.push(omicsWorkflowsTab);
-    if (seqeraAvailable || omicsAvailable) items.push(runsTab);
+    if (!props.superuser) {
+      if (seqeraAvailable) items.push(seqeraPipelinesTab);
+      if (omicsAvailable) items.push(omicsWorkflowsTab);
+      if (seqeraAvailable || omicsAvailable) items.push(runsTab);
+    }
     items.push(usersTab);
     items.push(detailsTab);
 

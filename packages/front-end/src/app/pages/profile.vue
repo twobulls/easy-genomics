@@ -3,6 +3,7 @@
 
   const { $api } = useNuxtApp();
   const userStore = useUserStore();
+  const uiStore = useUiStore();
 
   const state = ref<ProfileDetails>({
     firstName: userStore.currentUserDetails.firstName || '',
@@ -16,11 +17,13 @@
 
     const formValid = ProfileDetailsSchema.safeParse(state.value).success;
 
-    return formDirty && formValid;
+    const formSubmitting = uiStore.isRequestPending('editProfileDetails');
+
+    return formDirty && formValid && !formSubmitting;
   });
 
   async function onSubmit(): Promise<void> {
-    useUiStore().setRequestPending('editProfileDetails');
+    uiStore.setRequestPending('editProfileDetails');
 
     try {
       // TODO: call api to set new details
@@ -40,7 +43,7 @@
       console.error('error while updating user details:', e);
     }
 
-    useUiStore().setRequestComplete('editProfileDetails');
+    uiStore.setRequestComplete('editProfileDetails');
   }
 </script>
 
@@ -59,11 +62,11 @@
 
     <UForm :schema="ProfileDetailsSchema" :state="state" @submit="onSubmit">
       <EGFormGroup label="First Name" name="firstName" eager-validation required>
-        <EGInput v-model="state.firstName" required />
+        <EGInput v-model="state.firstName" required :disabled="uiStore.isRequestPending('editProfileDetails')" />
       </EGFormGroup>
 
       <EGFormGroup label="Last Name" name="lastName" eager-validation required>
-        <EGInput v-model="state.lastName" required />
+        <EGInput v-model="state.lastName" required :disabled="uiStore.isRequestPending('editProfileDetails')" />
       </EGFormGroup>
 
       <div class="flex flex-row items-center justify-between">

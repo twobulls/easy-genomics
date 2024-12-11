@@ -1,6 +1,5 @@
 <script setup lang="ts">
-  import { FormError } from '#ui/types';
-  import { FirstNameSchema, LastNameSchema, ProfileDetails, ProfileDetailsSchema } from '@FE/types/user';
+  import { ProfileDetails, ProfileDetailsSchema } from '@FE/types/user';
 
   const userStore = useUserStore();
 

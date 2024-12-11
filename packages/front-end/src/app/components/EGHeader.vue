@@ -47,7 +47,7 @@
     items.push([
       {
         label: 'Sign Out',
-        class: 'p-4',
+        class: 'p-4 text-primary underline',
         click: signOut,
       },
     ]);

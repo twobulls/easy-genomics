@@ -63,8 +63,6 @@ export type AddLaboratoryRun = z.infer<typeof AddLaboratoryRunSchema>;
 
 export const EditLaboratoryRunSchema = z
   .object({
-    LaboratoryId: z.string().uuid(),
-    RunId: z.string().uuid(),
     Title: z.string().optional(),
     Status: z.string(),
     Settings: z.record(z.string(), jsonSchema).optional(),

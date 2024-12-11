@@ -31,7 +31,7 @@
       {
         slot: 'profile',
         class: 'bg-background-light-grey p-4',
-        click: () => $router.push('/profile'),
+        click: userStore.isSuperuser ? undefined : () => $router.push('/profile'),
       },
     ]);
 
@@ -118,7 +118,7 @@
                   </div>
                 </div>
 
-                <UIcon name="i-heroicons-chevron-right" class="h-6 w-6" />
+                <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
               </div>
             </template>
 

@@ -106,10 +106,10 @@
             <EGInitialsCircle />
 
             <template #profile>
-              <div class="flex flex-row items-center gap-3">
+              <div class="flex w-full flex-row items-center gap-3">
                 <EGInitialsCircle />
 
-                <div class="flex flex-col items-start gap-1">
+                <div class="flex grow flex-col items-start gap-1">
                   <div class="text-left font-medium">
                     {{ userStore.currentUserDisplayName }}
                   </div>

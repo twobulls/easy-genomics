@@ -190,8 +190,18 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         actions: ['dynamodb:Query'],
       }),
       new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
+        resources: [
+          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`,
+          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
+        ],
         actions: ['omics:StartRun'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:iam::${this.props.env.account!}:role/${this.props.namePrefix}-easy-genomics-healthomics-workflow-run-role`,
+        ],
+        actions: ['iam:PassRole'],
         effect: Effect.ALLOW,
       }),
     ]);

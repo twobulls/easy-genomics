@@ -16,10 +16,10 @@
   const { signOut, isAuthed } = useAuth();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
-  const { currentRoute } = useRouter();
+  const $router = useRouter();
 
   function isSubpath(url: string) {
-    return currentRoute.value.path.includes(url);
+    return $router.currentRoute.value.path.includes(url);
   }
 
   const acctDropdownIsOpen = ref<boolean>(false);
@@ -31,6 +31,7 @@
       {
         slot: 'profile',
         class: 'bg-background-light-grey p-4',
+        click: () => $router.push('/profile'),
       },
     ]);
 
@@ -68,12 +69,12 @@
         <div class="flex">
           <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-4">
           <ULink
             v-if="!userStore.isSuperuser"
             to="/labs"
             inactive-class="text-body"
-            :active-class="'text-primary-dark bg-primary-muted'"
+            active-class="text-primary-dark bg-primary-muted"
             :class="isSubpath(labsPath) ? 'text-primary-dark bg-primary-muted' : ''"
             class="ULink text-body flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 font-serif text-sm tracking-normal"
           >
@@ -83,7 +84,7 @@
             v-if="userStore.canManageOrgs()"
             to="/orgs"
             inactive-class="text-body"
-            :active-class="'text-primary-dark bg-primary-muted'"
+            active-class="text-primary-dark bg-primary-muted"
             :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"
             class="ULink text-body flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 font-serif text-sm tracking-normal"
           >

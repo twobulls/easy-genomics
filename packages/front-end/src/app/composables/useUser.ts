@@ -15,7 +15,7 @@ type UserNameOptions = {
 /**
  * Composables for any User related functionality
  */
-export default function useUser($api?: any) {
+export default function useUser() {
   /**
    * Returns the display name of a user
    */
@@ -31,6 +31,7 @@ export default function useUser($api?: any) {
   }
 
   async function handleInvite(reqBody: CreateUserInvitationRequest, action: 'resend' | 'send') {
+    const { $api } = useNuxtApp();
     const result = CreateUserInvitationRequestSchema.safeParse(reqBody);
     if (!result.success) {
       console.error('Zod validation failed', result.error);

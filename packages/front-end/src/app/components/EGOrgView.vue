@@ -17,7 +17,7 @@
 
   const { $api } = useNuxtApp();
   const router = useRouter();
-  const { resendInvite, labsCount } = useUser($api);
+  const { resendInvite, labsCount } = useUser();
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});

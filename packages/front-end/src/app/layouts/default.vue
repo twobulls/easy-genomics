@@ -1,8 +1,7 @@
 <script setup lang="ts">
   const routeKey = ref(0);
 
-  const { $api } = useNuxtApp();
-  const { setCurrentUserDataFromToken } = useUser($api);
+  const { setCurrentUserDataFromToken } = useUser();
   const hasInit = ref(false);
 
   /**

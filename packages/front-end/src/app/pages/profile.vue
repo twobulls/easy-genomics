@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { ProfileDetails, ProfileDetailsSchema } from '@FE/types/user';
 
-  const { $api } = useNuxtApp();
   const userStore = useUserStore();
   const uiStore = useUiStore();
 
@@ -33,7 +32,7 @@
 
       // refresh auth session to get updated user details
       await useAuth().getRefreshedToken();
-      await useUser($api).setCurrentUserDataFromToken();
+      await useUser().setCurrentUserDataFromToken();
 
       state.value = {
         firstName: userStore.currentUserDetails.firstName || '',

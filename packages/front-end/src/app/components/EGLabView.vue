@@ -107,12 +107,10 @@
     let filteredLabUsers = labUsers.value;
 
     if (searchOutput.value.trim()) {
-      filteredLabUsers = labUsers.value
-        .filter((labUser: LabUser) => {
-          const searchString = `${labUser.displayName} ${labUser.UserEmail}`.toLowerCase();
-          return searchString.includes(searchOutput.value.toLowerCase());
-        })
-        .map((labUser) => labUser);
+      filteredLabUsers = labUsers.value.filter((labUser: LabUser) => {
+        const searchString = `${labUser.displayName} ${labUser.UserEmail}`.toLowerCase();
+        return searchString.includes(searchOutput.value.toLowerCase());
+      });
     }
 
     return filteredLabUsers.sort((userA, userB) => {
@@ -737,19 +735,10 @@
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
         >
-          <template #Name-data="{ row: labUser }">
+          <template #displayName-data="{ row: labUser }">
             <div class="flex items-center">
-              <EGUserDisplay
-                :display-name="labUser?.displayName"
-                :email="labUser?.UserEmail"
-                :status="labUser?.status"
-                :showAvatar="true"
-              />
+              <EGUserDisplay :name="labUser.displayName" :email="labUser.UserEmail" />
             </div>
-          </template>
-
-          <template #assignedRole-data="{ row: labUser }">
-            <span class="text-black">{{ labUser?.assignedRole }}</span>
           </template>
 
           <template #actions-data="{ row: labUser }">

@@ -13,7 +13,7 @@
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
 
-  const { signOut, isAuthed } = useAuth();
+  const { signOut } = useAuth();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
   const $router = useRouter();
@@ -103,20 +103,15 @@
               },
             }"
           >
-            <EGInitialsCircle />
+            <EGUserDisplay :initials="userStore.currentUserInitials" />
 
             <template #profile>
               <div class="flex w-full flex-row items-center gap-3">
-                <EGInitialsCircle />
-
-                <div class="flex grow flex-col items-start gap-1">
-                  <div class="text-left font-medium">
-                    {{ userStore.currentUserDisplayName }}
-                  </div>
-                  <div class="text-muted text-left">
-                    {{ orgsStore.orgs[userStore.currentOrgId]?.Name || '' }}
-                  </div>
-                </div>
+                <EGUserDisplay
+                  :initials="userStore.currentUserInitials"
+                  :name="userStore.currentUserDisplayName"
+                  :organization="orgsStore.orgs[userStore.currentOrgId]?.Name ?? null"
+                />
 
                 <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
               </div>

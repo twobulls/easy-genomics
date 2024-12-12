@@ -13,12 +13,15 @@
   const emit = defineEmits(['update-user']);
   const { UserId, OrganizationId, UserEmail, OrganizationUserStatus } = props.user;
   const toggleVal = ref(props.user.OrganizationAdmin);
-  const displayName = useUser().displayName({
+
+  const nameDetails = {
     preferredName: props.user?.PreferredName,
     firstName: props.user?.FirstName,
     lastName: props.user?.LastName,
     email: props.user.UserEmail,
-  });
+  };
+  const displayName = useUser().displayName(nameDetails);
+  const initials = useUser().initials(nameDetails);
 
   async function toggleOrgAdminPerm() {
     toggleVal.value = !toggleVal.value;
@@ -55,16 +58,12 @@
     class="border-stroke-light flex h-[82px] items-center justify-between gap-3 rounded border border-solid bg-white p-4"
   >
     <div class="flex items-center gap-3">
-      <EGUserAvatar
+      <EGUserDisplay
+        :initials="initials"
         :name="displayName"
-        :email="UserEmail"
-        size="large"
-        :is-active="OrganizationUserStatus === 'Active'"
+        :email="showEmail ? UserEmail : null"
+        :inactive="OrganizationUserStatus !== 'Active'"
       />
-      <div class="flex flex-col">
-        <EGText tag="div" color-class="text-black">{{ displayName }}</EGText>
-        <EGText v-if="showEmail" tag="small" color-class="text-muted">{{ UserEmail }}</EGText>
-      </div>
     </div>
     <div class="flex cursor-pointer items-center" @click="toggleOrgAdminPerm()">
       <span class="text-xs">Organization Admin</span>

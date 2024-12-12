@@ -88,31 +88,25 @@ const useUserStore = defineStore('userStore', {
 
     // user details
 
-    currentUserPreferredOrFirstName: (_state: UserStoreState): string | null =>
-      _state.currentUserDetails.preferredName || _state.currentUserDetails.firstName,
-
-    currentUserInitials: (_state: UserStoreState): string => {
-      if (_state.currentUserPermissions.isSuperuser) {
-        return '#';
-      }
-
-      const firstInitial: string = useUserStore().currentUserPreferredOrFirstName?.charAt(0) || '?';
-      const lastInitial: string = _state.currentUserDetails.lastName?.charAt(0) || '?';
-      return firstInitial + lastInitial;
+    currentUserDisplayName: (_state: UserStoreState): string => {
+      return useUser().displayName({
+        firstName: _state.currentUserDetails.firstName,
+        preferredName: _state.currentUserDetails.preferredName,
+        lastName: _state.currentUserDetails.lastName,
+        email: _state.currentUserDetails.email,
+      });
     },
 
-    currentUserDisplayName: (_state: UserStoreState): string => {
-      const preferredOrFirstName = useUserStore().currentUserPreferredOrFirstName;
-      const lastName = _state.currentUserDetails.lastName;
-      const email = _state.currentUserDetails.email;
-
-      if (preferredOrFirstName) {
-        return `${preferredOrFirstName} ${lastName}`;
-      } else if (email) {
-        return email;
-      } else {
-        return '???';
-      }
+    currentUserInitials: (_state: UserStoreState): string => {
+      return useUser().initials(
+        {
+          firstName: _state.currentUserDetails.firstName,
+          preferredName: _state.currentUserDetails.preferredName,
+          lastName: _state.currentUserDetails.lastName,
+          email: _state.currentUserDetails.email,
+        },
+        useUserStore().isSuperuser,
+      );
     },
   },
 

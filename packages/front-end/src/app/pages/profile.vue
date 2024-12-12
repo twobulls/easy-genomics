@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { ProfileDetails, ProfileDetailsSchema } from '@FE/types/user';
 
-  const { $api } = useNuxtApp();
   const userStore = useUserStore();
   const uiStore = useUiStore();
 
@@ -33,7 +32,7 @@
 
       // refresh auth session to get updated user details
       await useAuth().getRefreshedToken();
-      await useUser($api).setCurrentUserDataFromToken();
+      await useUser().setCurrentUserDataFromToken();
 
       state.value = {
         firstName: userStore.currentUserDetails.firstName || '',
@@ -52,12 +51,11 @@
     <EGPageHeader title="Edit Your Profile" :show-back="false" />
 
     <div class="border-stroke-light mb-12 flex flex-row items-center gap-3 rounded border bg-white p-4">
-      <EGInitialsCircle />
-
-      <div class="flex flex-col">
-        <div class="pb-1 text-sm font-medium">{{ userStore.currentUserDisplayName }}</div>
-        <div class="text-muted text-xs font-normal">{{ userStore.currentUserDetails.email }}</div>
-      </div>
+      <EGUserDisplay
+        :initials="userStore.currentUserInitials"
+        :name="userStore.currentUserDisplayName"
+        :email="userStore.currentUserDetails.email"
+      />
     </div>
 
     <UForm :schema="ProfileDetailsSchema" :state="state" @submit="onSubmit">

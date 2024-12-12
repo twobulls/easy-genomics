@@ -380,20 +380,14 @@
           :show-pagination="!isLoading"
           :row-click-action="onRowClicked"
         >
-          <template #Name-data="{ user: row }">
+          <template #displayName-data="{ row }">
             <div class="flex items-center">
-              <EGUserAvatar
+              <EGUserDisplay
                 class="mr-4"
                 :name="row.displayName"
                 :email="row.UserEmail"
-                :is-active="row.OrganizationUserStatus === 'Active'"
+                :inactive="row.OrganizationUserStatus !== 'Active'"
               />
-              <div class="flex flex-col">
-                <div>
-                  {{ row.FirstName ? row.FirstName : row.displayName }}
-                </div>
-                <div class="text-muted text-xs font-normal">{{ (row as OrgUser).UserEmail }}</div>
-              </div>
             </div>
           </template>
           <template #status-data="{ row }">

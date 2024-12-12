@@ -5,11 +5,11 @@ import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 import { useToastStore } from '@FE/stores';
 import { decodeJwt } from '@FE/utils/jwt-utils';
 
-type UserNameOptions = {
-  preferredName?: string | undefined;
-  firstName?: string | undefined;
-  lastName?: string | undefined;
-  email: string;
+type NameOptions = {
+  firstName: string | null;
+  preferredName: string | null;
+  lastName: string | null;
+  email: string | null;
 };
 
 /**
@@ -19,15 +19,37 @@ export default function useUser() {
   /**
    * Returns the display name of a user
    */
-  function displayName(nameOptions: UserNameOptions): string {
+  function displayName(nameOptions: NameOptions): string {
+    const { firstName, preferredName, lastName, email } = nameOptions;
+    const preferredOrFirstName = preferredName || firstName;
+
+    if (preferredOrFirstName && lastName) return `${preferredOrFirstName} ${lastName}`;
+    if (preferredOrFirstName) return preferredOrFirstName;
+    if (lastName) return lastName;
+    if (email) return email;
+    return '???';
+  }
+
+  /**
+   * Returns the display initials of a user
+   */
+  function initials(nameOptions: NameOptions, superuser: boolean = false): string {
+    if (superuser) {
+      return '#';
+    }
+
     const { preferredName, firstName, lastName, email } = nameOptions;
     const preferredOrFirstName = preferredName || firstName;
 
-    if (preferredOrFirstName) {
-      return `${preferredOrFirstName} ${lastName}`;
-    } else {
-      return email;
-    }
+    const firstInitial = preferredOrFirstName?.charAt(0);
+    const lastInitial = lastName?.charAt(0);
+    const emailInitial = email?.charAt(0);
+
+    if (firstInitial && lastInitial) return firstInitial + lastInitial;
+    if (firstInitial) return firstInitial;
+    if (lastInitial) return lastInitial;
+    if (emailInitial) return emailInitial;
+    return '??';
   }
 
   async function handleInvite(reqBody: CreateUserInvitationRequest, action: 'resend' | 'send') {
@@ -122,6 +144,7 @@ export default function useUser() {
 
   return {
     displayName,
+    initials,
     labsCount,
     invite,
     resendInvite,

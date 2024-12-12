@@ -124,6 +124,8 @@ async function validateExistingNextFlowIntegration(
     `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiParameters.toString()}`,
     REST_API_METHOD.GET,
     { Authorization: `Bearer ${accessToken}` },
-  );
+  ).catch(() => {
+    throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
+  });
   return !!nfResponse;
 }

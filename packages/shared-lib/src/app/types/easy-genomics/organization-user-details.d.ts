@@ -7,7 +7,6 @@
  *   UserId: <string>,
  *   UserEmail: <string>,
  *   UserStatus: UserStatus,
- *   Title?: <string>
  *   PreferredName?: <string>
  *   FirstName?: <string>
  *   LastName?: <string>
@@ -24,7 +23,6 @@ export interface OrganizationUserDetails {
   UserId: string;
   UserEmail: string;
   UserStatus: UserStatus;
-  Title?: string;
   PreferredName?: string;
   FirstName?: string;
   LastName?: string;

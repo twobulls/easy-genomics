@@ -700,6 +700,25 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+    // /easy-genomics/user/update-user-request
+    this.iam.addPolicyStatements('/easy-genomics/user/update-user-request', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+        ],
+        actions: ['dynamodb:GetItem', 'dynamodb:DeleteItem', 'dynamodb:Query', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table/index/*`,
+        ],
+        actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /easy-genomics/user/delete-user-request
     this.iam.addPolicyStatements('/easy-genomics/user/delete-user-request', [
       new PolicyStatement({

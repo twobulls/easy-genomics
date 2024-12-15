@@ -6,11 +6,13 @@
   import { DeletedResponse } from '@FE/types/api';
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
-  const props = defineProps<{}>();
+  const props = defineProps<{
+    orgId: string;
+    userId: string;
+  }>();
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
-  const $route = useRoute();
 
   const selectedUser = ref<OrganizationUserDetails | null>(null);
   const getSelectedUserDisplayName = computed<string>(() =>
@@ -45,9 +47,7 @@
   const isRemoveUserDialogOpen = ref<boolean>(false);
 
   onBeforeMount(async () => {
-    await Promise.all([fetchOrgLabs(), updateSelectedUser()]);
-    // fetchUserLabs has to wait until updateSelectedUser has run
-    await fetchUserLabs();
+    await Promise.all([fetchOrgLabs(), updateSelectedUser(), fetchUserLabs()]);
   });
 
   function updateSearchOutput(newVal: string) {
@@ -57,7 +57,7 @@
   async function updateSelectedUser() {
     try {
       useUiStore().setRequestPending('updateUser');
-      const user = await $api.orgs.usersDetailsByUserId($route.query.userId);
+      const user = await $api.orgs.usersDetailsByUserId(props.userId);
       if (user.length) {
         selectedUser.value = user[0];
       }
@@ -71,7 +71,7 @@
   async function fetchOrgLabs() {
     try {
       useUiStore().setRequestPending('fetchOrgLabs');
-      orgLabsData.value = await $api.labs.list($route.query.orgId);
+      orgLabsData.value = await $api.labs.list(props.orgId);
 
       if (!orgLabsData.value.length) {
         hasNoData.value = true;
@@ -88,10 +88,9 @@
    * Fetch the user's details for each lab
    */
   async function fetchUserLabs() {
-    // note: this needs to run after selectedUser has been set so the UserId is available
     try {
       useUiStore().setRequestPending('fetchUserLabs');
-      selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(selectedUser.value?.UserId);
+      selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(props.userId);
       if (!orgLabsData.value.length) {
         hasNoData.value = true;
       }
@@ -146,12 +145,11 @@
   });
 
   async function handleAddUser(lab: { labId: string; name: string }) {
-    const userId = selectedUser.value!.UserId;
     try {
       useUiStore().setRequestPending('addUserToLab');
-      useUiStore().setRequestPending(`addUserToLabButton-${userId}-${lab.labId}`);
+      useUiStore().setRequestPending(`addUserToLabButton-${props.userId}-${lab.labId}`);
 
-      const res = await $api.labs.addLabUser(lab.labId, userId);
+      const res = await $api.labs.addLabUser(lab.labId, props.userId);
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
@@ -167,15 +165,14 @@
       throw error;
     } finally {
       useUiStore().setRequestComplete('addUserToLab');
-      useUiStore().setRequestComplete(`addUserToLabButton-${userId}-${lab.labId}`);
+      useUiStore().setRequestComplete(`addUserToLabButton-${props.userId}-${lab.labId}`);
     }
   }
 
   async function handleAssignRole(user: LaboratoryUserDetails) {
-    const userId = selectedUser.value!.UserId;
     try {
       useUiStore().setRequestPending('assignLabRole');
-      const res = await $api.labs.editUserLabAccess(user.LaboratoryId, userId, user.LabManager);
+      const res = await $api.labs.editUserLabAccess(user.LaboratoryId, props.userId, user.LabManager);
       if (res?.Status === 'Success') {
         await fetchUserLabs();
         let maybeLabName = 'Lab';
@@ -208,13 +205,12 @@
     const labId = labToRemoveFrom.value?.id;
     isRemoveUserDialogOpen.value = false;
 
-    const { UserId } = selectedUser.value;
     const displayName = getSelectedUserDisplayName.value;
 
     try {
       useUiStore().setRequestPending('removeUserFromLab');
 
-      const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
+      const res: DeletedResponse = await $api.labs.removeUser(labId, props.userId);
 
       if (res?.Status !== 'Success') {
         throw new Error(`Failed to remove ${displayName} from ${labName}`);
@@ -231,17 +227,13 @@
 </script>
 
 <template>
-  <EGPageHeader
-    title="Edit User Access"
-    :show-back="true"
-    :back-action="() => $router.push(`/orgs/${$route.query.orgId}`)"
-  />
+  <EGPageHeader title="Edit User Access" :show-back="true" :back-action="() => $router.push(`/orgs/${props.orgId}`)" />
 
   <div class="mb-4">
     <EGUserOrgAdminToggle
       v-if="selectedUser"
       :is-loading="isLoading"
-      :key="selectedUser?.UserId"
+      :key="props.userId"
       :user="selectedUser"
       @update-user="updateSelectedUser($event)"
     />
@@ -254,7 +246,6 @@
     class="my-6 w-[408px]"
   />
 
-  <!-- TODO: this needs an orgId param and refactoring to be in accord with that -->
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="There are no labs in your Organization"
@@ -290,7 +281,7 @@
         />
       </div>
       <EGButton
-        :loading="useUiStore().isRequestPending(`addUserToLabButton-${selectedUser?.UserId}-${row.LaboratoryId}`)"
+        :loading="useUiStore().isRequestPending(`addUserToLabButton-${props.userId}-${row.LaboratoryId}`)"
         v-else-if="row.access"
         @click="
           handleAddUser({

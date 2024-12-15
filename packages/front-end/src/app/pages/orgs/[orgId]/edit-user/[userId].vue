@@ -1,14 +1,17 @@
 <script setup lang="ts">
-  // TODO: this should have the org id as a url param
   const $router = useRouter();
+  const $route = useRoute();
 
   if (!useUserStore().canManageOrgs()) {
     $router.push({ path: '/' });
   }
+
+  const orgId = $route.params.orgId;
+  const userId = $route.params.userId;
 </script>
 
 <template>
-  <EGUserAccess />
+  <EGUserAccess :org-id="orgId" :user-id="userId" />
 </template>
 
 <style scoped></style>

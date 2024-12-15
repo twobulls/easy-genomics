@@ -6,10 +6,7 @@
   import { DeletedResponse } from '@FE/types/api';
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
 
-  const props = defineProps<{
-    superuser?: boolean;
-    orgAdmin: boolean;
-  }>();
+  const props = defineProps<{}>();
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -257,6 +254,7 @@
     class="my-6 w-[408px]"
   />
 
+  <!-- TODO: this needs an orgId param and refactoring to be in accord with that -->
   <EGEmptyDataCTA
     v-if="hasNoData"
     message="There are no labs in your Organization"

@@ -1,3 +1,3 @@
 <template>
-  <EGUserAccess :org-admin="false" />
+  <EGUserAccess />
 </template>

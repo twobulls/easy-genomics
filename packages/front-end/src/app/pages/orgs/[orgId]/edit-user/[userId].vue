@@ -8,7 +8,7 @@
 </script>
 
 <template>
-  <EGUserAccess :org-admin="useUserStore().isOrgAdmin()" />
+  <EGUserAccess />
 </template>
 
 <style scoped></style>

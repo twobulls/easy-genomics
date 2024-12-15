@@ -77,11 +77,7 @@
 
   function editUser(userId: string) {
     router.push({
-      path: '/orgs/edit-user',
-      query: {
-        userId,
-        orgId: props.orgId,
-      },
+      path: `/orgs/${props.orgId}/edit-user/${userId}`,
     });
   }
 

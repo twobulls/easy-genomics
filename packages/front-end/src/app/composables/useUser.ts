@@ -5,7 +5,7 @@ import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 import { useToastStore } from '@FE/stores';
 import { decodeJwt } from '@FE/utils/jwt-utils';
 
-type NameOptions = {
+export type NameOptions = {
   firstName: string | null;
   preferredName: string | null;
   lastName: string | null;

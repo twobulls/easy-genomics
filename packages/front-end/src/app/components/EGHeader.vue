@@ -14,9 +14,9 @@
   const orgsStore = useOrgsStore();
 
   const { signOut } = useAuth();
+  const $router = useRouter();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
-  const $router = useRouter();
 
   function isSubpath(url: string) {
     return $router.currentRoute.value.path.includes(url);
@@ -72,7 +72,7 @@
         <div class="flex items-center gap-4">
           <ULink
             v-if="!userStore.isSuperuser"
-            to="/labs"
+            :to="labsPath"
             inactive-class="text-body"
             active-class="text-primary-dark bg-primary-muted"
             :class="isSubpath(labsPath) ? 'text-primary-dark bg-primary-muted' : ''"
@@ -82,7 +82,7 @@
           </ULink>
           <ULink
             v-if="userStore.canManageOrgs()"
-            to="/orgs"
+            :to="orgsPath"
             inactive-class="text-body"
             active-class="text-primary-dark bg-primary-muted"
             :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"

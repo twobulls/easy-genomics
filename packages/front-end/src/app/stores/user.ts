@@ -1,4 +1,7 @@
-import { OrganizationAccess } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
+import {
+  OrganizationAccess,
+  OrganizationAccessDetails,
+} from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { defineStore } from 'pinia';
 
 interface UserStoreState {
@@ -66,11 +69,14 @@ const useUserStore = defineStore('userStore', {
         !!state.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId]?.LabManager,
 
     // currently we don't have any granular org permission logic so this is it
-    // you can manage orgs if you're an org admin
+    // you can manage orgs if you're an admin of any org
     canManageOrgsForOrg:
-      (_state: UserStoreState) =>
-      (orgId: string): boolean =>
-        useUserStore().isOrgAdminForOrg(orgId),
+      (state: UserStoreState) =>
+      (_orgId: string): boolean =>
+        state.currentUserPermissions.isSuperuser ||
+        Object.values(state.currentUserPermissions.orgPermissions ?? {}).some(
+          (perms: OrganizationAccessDetails) => !!perms.OrganizationAdmin,
+        ),
 
     canCreateLabForOrg:
       (_state: UserStoreState) =>
@@ -118,8 +124,6 @@ const useUserStore = defineStore('userStore', {
       (labId: string): boolean =>
         useUserStore().isLabManagerForOrg(state.currentOrg.OrganizationId, labId),
 
-    // currently we don't have any granular org permission logic so this is it
-    // you can manage orgs if you're an org admin
     canManageOrgs: (state: UserStoreState) => (): boolean =>
       useUserStore().canManageOrgsForOrg(state.currentOrg.OrganizationId),
 

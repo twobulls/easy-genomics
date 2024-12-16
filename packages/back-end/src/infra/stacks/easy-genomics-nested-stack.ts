@@ -32,6 +32,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ['organization-deletion-topic']: <TopicDetails>{ fifo: true },
         ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true },
         ['user-deletion-topic']: <TopicDetails>{ fifo: true },
+        ['zip-results-topic']: <TopicDetails>{ fifo: true },
       },
     });
 
@@ -56,6 +57,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('user-deletion-topic')],
+        },
+        ['zip-results-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          snsTopics: [this.sns.snsTopics.get('zip-results-topic')],
         },
       },
     });
@@ -164,6 +171,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
           events: [new SqsEventSource(this.sqs.sqsQueues.get('laboratory-management-queue')!, { batchSize: 1 })],
           environment: {
             SNS_LABORATORY_DELETION_TOPIC: this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/file/create-s3-zip': {
+          environment: {
+            SNS_ZIP_RESULTS_CREATION_TOPIC: this.sns.snsTopics.get('zip-results-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/file/process-s3-zip': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('zip-results-queue')!, { batchSize: 5 })],
+          environment: {
+            SNS_ZIP_RESULTS_CREATION_TOPIC: this.sns.snsTopics.get('zip-results-topic')?.topicArn || '',
           },
         },
       },
@@ -991,6 +1009,19 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         actions: ['dynamodb:Query'],
       }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*'],
+        actions: ['s3:ListBucket', 's3:GetObject', 's3:PutObject'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('zip-results-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/file/process-s3-zip
+    this.iam.addPolicyStatements('/easy-genomics/file/process-s3-zip', [
       new PolicyStatement({
         resources: ['arn:aws:s3:::*'],
         actions: ['s3:ListBucket', 's3:GetObject', 's3:PutObject'],

@@ -17,14 +17,12 @@
 
   const selectedUser = ref<OrganizationUserDetails | null>(null);
   const getSelectedUserDisplayName = computed<string>(() =>
-    String(
-      useUser().displayName({
-        preferredName: selectedUser.value?.PreferredName || '',
-        firstName: selectedUser.value?.FirstName || '',
-        lastName: selectedUser.value?.LastName || '',
-        email: selectedUser.value?.UserEmail || '',
-      }),
-    ),
+    useUser().displayName({
+      preferredName: selectedUser.value?.PreferredName,
+      firstName: selectedUser.value?.FirstName,
+      lastName: selectedUser.value?.LastName,
+      email: selectedUser.value?.UserEmail!,
+    }),
   );
 
   const orgLabsData = ref([] as Laboratory[]);

@@ -11,6 +11,7 @@ import {
   InvalidRequestError,
   LaboratoryAlreadyExistsError,
   LaboratoryNameTakenError,
+  LaboratoryWorkspaceIdOrAccessTokenIncorrectError,
   OrganizationNotFoundError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
@@ -50,7 +51,7 @@ export const handler: Handler = async (
     }
 
     if (!(await validateNewNextFlowIntegration(request.NextFlowTowerWorkspaceId, request.NextFlowTowerAccessToken))) {
-      throw new InvalidRequestError();
+      throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
     }
 
     // Automatically create an S3 Bucket for this Lab based on the LaboratoryId, and must be less than 63
@@ -64,8 +65,8 @@ export const handler: Handler = async (
         Description: request.Description,
         Status: 'Active',
         S3Bucket: request.S3Bucket, // S3 Bucket Full Name
-        AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || organization.AwsHealthOmicsEnabled || false,
-        NextFlowTowerEnabled: request.NextFlowTowerEnabled || organization.NextFlowTowerEnabled || false,
+        AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled ?? organization.AwsHealthOmicsEnabled ?? false,
+        NextFlowTowerEnabled: request.NextFlowTowerEnabled ?? organization.NextFlowTowerEnabled ?? false,
         NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
         CreatedAt: new Date().toISOString(),
         CreatedBy: currentUserId,
@@ -113,6 +114,8 @@ async function validateNewNextFlowIntegration(workspaceId?: string, accessToken?
     `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiParameters.toString()}`,
     REST_API_METHOD.GET,
     { Authorization: `Bearer ${accessToken}` },
-  );
+  ).catch(() => {
+    throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
+  });
   return !!nfResponse;
 }

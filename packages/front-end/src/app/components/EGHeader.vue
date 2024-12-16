@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const props = withDefaults(
     defineProps<{
@@ -12,7 +13,6 @@
 
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
-  const labsStore = useLabsStore();
 
   const { signOut } = useAuth();
   const $router = useRouter();
@@ -24,6 +24,21 @@
   }
 
   const acctDropdownIsOpen = ref<boolean>(false);
+
+  const switchToOrgId = ref<string | null>(null);
+  const switchOrgDialogOpen = ref<boolean>(false);
+
+  function selectSwitchToOrg(orgId: string): void {
+    switchToOrgId.value = orgId;
+    switchOrgDialogOpen.value = true;
+  }
+
+  function doSwitchOrg(): void {
+    userStore.currentOrg.OrganizationId = switchToOrgId.value!;
+    $router.push('/');
+    useUiStore().incrementRemountAppKey();
+    useToastStore().success('You have switched organizations');
+  }
 
   const dropdownItems = computed<object[][]>(() => {
     const items = [];
@@ -61,12 +76,6 @@
       .filter((org) => org.OrganizationId !== userStore.currentOrgId)
       .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
   );
-
-  function changeCurrentOrg(newOrgId: string): void {
-    userStore.currentOrg.OrganizationId = newOrgId;
-
-    $router.push('/');
-  }
 </script>
 
 <template>
@@ -130,7 +139,7 @@
               <div class="flex w-full flex-col items-start" v-for="(org, i) of otherOrgs">
                 <div v-if="i > 0" class="w-full border-t" />
 
-                <div @click="() => changeCurrentOrg(org.OrganizationId)" class="w-full py-3 text-left font-medium">
+                <div @click="() => selectSwitchToOrg(org.OrganizationId)" class="w-full py-3 text-left font-medium">
                   {{ org.Name }}
                 </div>
               </div>
@@ -145,6 +154,16 @@
       </template>
     </div>
   </header>
+
+  <EGDialog
+    cancel-label="Cancel"
+    action-label="Continue"
+    :action-variant="ButtonVariantEnum.enum.primary"
+    @action-triggered="doSwitchOrg"
+    primary-message="Are you sure you would like to switch organizations?"
+    secondary-message="You are about to switch organisation accounts. Ensure all unsaved work is saved and reviewed before proceeding. Switching accounts may result in losing access to current session data or active tasks."
+    v-model="switchOrgDialogOpen"
+  />
 </template>
 
 <style scoped lang="scss">

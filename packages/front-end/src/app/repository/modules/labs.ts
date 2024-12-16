@@ -207,6 +207,16 @@ class LabsModule extends HttpFactory {
     validateApiResponse(LaboratoryRunSchema, res);
     return res;
   }
+
+  async createLaboratoryRun(labRunRequest: any): Promise<any> {
+    const res = await this.call<any>('POST', '/laboratory/run/create-laboratory-run', labRunRequest);
+    console.log('createPipelineRun response:', res);
+    if (!res) {
+      console.error('Error calling create pipeline run API');
+      throw new Error('Failed to create pipeline run');
+    }
+    return res;
+  }
 }
 
 export default LabsModule;

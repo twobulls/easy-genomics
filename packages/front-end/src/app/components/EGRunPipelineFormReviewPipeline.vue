@@ -51,6 +51,7 @@
           configProfiles: launchDetails.launch?.configProfiles,
           workDir: workDir,
           paramsText: paramsText,
+          runId: wipSeqeraRun.value?.transactionId,
         },
       };
       await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
@@ -115,7 +116,6 @@
       </dl>
     </section>
   </EGCard>
-
   <EGCard>
     <div class="mb-4 flex items-center justify-between">
       <EGText tag="h4" class="text-muted">Selected Workflow Parameters</EGText>

@@ -390,7 +390,18 @@
     } else {
       uploadStatus.value = 'success';
       useToastStore().success('Files uploaded successfully');
-      console.debug('Uploaded files:', filesToUpload.value.length);
+
+      const labRunRequest = {
+        'Title': wipSeqeraRun.value?.userPipelineRunName,
+        'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
+        'Status': 'Active',
+        'Type': 'Seqera Cloud', // TODO: make this dynamic
+        'OrganizationId': useUserStore().currentOrgId,
+        Settings: {
+          runId: wipSeqeraRun.value?.transactionId,
+        },
+      };
+      $api.labs.createLaboratoryRun(labRunRequest);
     }
   }
 
@@ -406,7 +417,6 @@
           const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
           fileDetails.progress = progress;
           fileDetails.percentage = progress;
-          console.debug(`${name}; Upload progress: ${progress}%`);
         },
       });
 

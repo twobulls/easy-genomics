@@ -76,17 +76,3 @@ export const EditLaboratoryRunSchema = z
   })
   .strict();
 export type EditLaboratoryRun = z.infer<typeof EditLaboratoryRunSchema>;
-
-export const RemoveLaboratoryRunSchema = z
-  .object({
-    LaboratoryId: z.string().uuid(),
-    RunId: z.string().uuid(),
-  })
-  .strict();
-
-export const RequestLaboratoryRunSchema = z
-  .object({
-    LaboratoryId: z.string().uuid(),
-    RunId: z.string().uuid(),
-  })
-  .strict();

@@ -1,7 +1,6 @@
 import {
   EditLaboratoryRun,
   EditLaboratoryRunSchema,
-  ReadLaboratoryRun,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
@@ -53,23 +52,13 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
-    const updatedLaboratoryRun = await laboratoryRunService
-      .update({
-        ...existing,
-        ...request,
-        Settings: request.Settings ? JSON.stringify(request.Settings) : existing.Settings,
-        ModifiedAt: new Date().toISOString(),
-        ModifiedBy: currentUserId,
-      })
-      .catch((error: any) => {
-        throw error;
-      });
-
-    // Return Laboratory Run with settings object
-    const response: ReadLaboratoryRun = {
-      ...updatedLaboratoryRun,
-      Settings: JSON.parse(updatedLaboratoryRun.Settings || '{}'),
-    };
+    const response: LaboratoryRun = await laboratoryRunService.update({
+      ...existing,
+      ...request,
+      Settings: JSON.stringify(request.Settings),
+      ModifiedAt: new Date().toISOString(),
+      ModifiedBy: currentUserId,
+    });
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

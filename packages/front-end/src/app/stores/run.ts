@@ -14,7 +14,7 @@ export interface WipSeqeraRunData {
   pipelineId?: number;
   pipelineName?: string;
   pipelineDescription?: string;
-  runId?: string;
+  transactionId?: string;
   userPipelineRunName?: string;
   params?: object;
   sampleSheetS3Url?: string;
@@ -26,7 +26,7 @@ export interface WipOmicsRunData {
   laboratoryId?: string;
   workflowId?: string;
   workflowName?: string;
-  runId?: string;
+  transactionId?: string;
 }
 
 interface RunState {

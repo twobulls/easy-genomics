@@ -336,7 +336,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: wipSeqeraRun.value?.runId || '',
+      TransactionId: wipSeqeraRun.value?.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -356,7 +356,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: wipSeqeraRun.value?.runId || '',
+      TransactionId: wipSeqeraRun.value?.transactionId || '',
       Files: files,
     };
 
@@ -392,12 +392,14 @@
       useToastStore().success('Files uploaded successfully');
 
       const labRunRequest = {
-        'RunId': wipSeqeraRun.value?.runId,
         'Title': wipSeqeraRun.value?.userPipelineRunName,
         'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
         'Status': 'Active',
         'Type': 'Seqera Cloud', // TODO: make this dynamic
         'OrganizationId': useUserStore().currentOrgId,
+        Settings: {
+          runId: wipSeqeraRun.value?.transactionId,
+        },
       };
       $api.labs.createLaboratoryRun(labRunRequest);
     }

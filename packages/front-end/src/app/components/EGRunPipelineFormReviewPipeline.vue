@@ -51,7 +51,7 @@
           configProfiles: launchDetails.launch?.configProfiles,
           workDir: workDir,
           paramsText: paramsText,
-          runId: wipSeqeraRun.value?.transactionId,
+          runId: wipSeqeraRun.value?.runId,
         },
       };
       await $api.seqeraRuns.createPipelineRun(labId, launchRequest);

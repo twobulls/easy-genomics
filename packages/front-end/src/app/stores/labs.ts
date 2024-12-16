@@ -46,16 +46,6 @@ const useLabsStore = defineStore('labsStore', {
         this.labIdsByOrg[orgId].push(lab.LaboratoryId);
       }
     },
-
-    async loadAllLabsForCurrentUser(): Promise<void> {
-      const currentUserPermissions = useUserStore().currentUserPermissions.orgPermissions;
-      if (currentUserPermissions === null) {
-        return;
-      }
-
-      const orgIds = Object.keys(currentUserPermissions);
-      await Promise.all(orgIds.map(this.loadLabsForOrg));
-    },
   },
 
   persist: true,

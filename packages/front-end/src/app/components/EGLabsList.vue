@@ -124,11 +124,7 @@
   async function getLabs() {
     useUiStore().setRequestPending('getLabs');
     try {
-      if (props.superuser) {
-        await labsStore.loadLabsForOrg(props.orgId);
-      } else {
-        await labsStore.loadAllLabsForCurrentUser();
-      }
+      await labsStore.loadLabsForOrg(props.orgId);
     } catch (error) {
       console.error(error);
       throw error;

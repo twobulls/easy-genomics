@@ -7,7 +7,7 @@ import { defineStore } from 'pinia';
 interface UserStoreState {
   currentOrg: {
     // this is a temporary thing while there is no actual multi org handling
-    OrganizationId: string;
+    OrganizationId: string | null;
   };
   currentUserPermissions: {
     isSuperuser: boolean | null;
@@ -23,7 +23,7 @@ interface UserStoreState {
 
 const initialState = (): UserStoreState => ({
   currentOrg: {
-    OrganizationId: '',
+    OrganizationId: null,
   },
   currentUserPermissions: {
     isSuperuser: null,

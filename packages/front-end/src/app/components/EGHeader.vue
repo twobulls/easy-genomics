@@ -12,6 +12,7 @@
 
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
+  const labsStore = useLabsStore();
 
   const { signOut } = useAuth();
   const $router = useRouter();
@@ -39,7 +40,7 @@
       items.push([
         {
           slot: 'other-orgs',
-          class: 'bg-background-light-grey p-4',
+          class: 'bg-background-light-grey px-4',
         },
       ]);
     }
@@ -60,6 +61,12 @@
       .filter((org) => org.OrganizationId !== userStore.currentOrgId)
       .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
   );
+
+  function changeCurrentOrg(newOrgId: string): void {
+    userStore.currentOrg.OrganizationId = newOrgId;
+
+    $router.push('/');
+  }
 </script>
 
 <template>
@@ -98,7 +105,7 @@
               padding: '',
               width: 'w-80',
               item: {
-                base: 'flex flex-col items-start',
+                base: 'flex flex-col items-start gap-0',
                 rounded: '',
               },
             }"
@@ -118,12 +125,14 @@
             </template>
 
             <template #other-orgs>
-              <div class="text-muted pb-2">Other Organizations</div>
+              <div class="text-muted pt-2">Other Organizations</div>
 
-              <div class="flex w-full flex-col items-start gap-3" v-for="(org, i) of otherOrgs">
-                <div v-if="i > 0" class="mt-2 w-full border" />
+              <div class="flex w-full flex-col items-start" v-for="(org, i) of otherOrgs">
+                <div v-if="i > 0" class="w-full border-t" />
 
-                <div class="font-medium">{{ org.Name }}</div>
+                <div @click="() => changeCurrentOrg(org.OrganizationId)" class="w-full py-3 text-left font-medium">
+                  {{ org.Name }}
+                </div>
               </div>
             </template>
           </UDropdown>

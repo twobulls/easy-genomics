@@ -15,6 +15,7 @@ export const LaboratoryRunSchema = z
     Status: z.string(),
     Title: z.string().optional(),
     WorkflowName: z.string().optional(),
+    ExternalRunId: z.string().optional(),
     S3Input: z.string().optional(),
     S3Output: z.string().optional(),
     Settings: z.string().optional(), // JSON as a string
@@ -35,6 +36,7 @@ export const ReadLaboratoryRunSchema = z
     Status: z.string(),
     Title: z.string().optional(),
     WorkflowName: z.string().optional(),
+    ExternalRunId: z.string().optional(),
     S3Input: z.string().optional(),
     S3Output: z.string().optional(),
     Settings: z.record(z.string(), jsonSchema).optional(), // JSON
@@ -49,6 +51,7 @@ export type ReadLaboratoryRun = z.infer<typeof ReadLaboratoryRunSchema>;
 export const AddLaboratoryRunSchema = z
   .object({
     LaboratoryId: z.string().uuid(),
+    RunId: z.string().uuid(),
     OrganizationId: z.string().uuid(),
     Type: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     Status: z.string(),
@@ -69,6 +72,7 @@ export const EditLaboratoryRunSchema = z
     Status: z.string(),
     Settings: z.record(z.string(), jsonSchema).optional(),
     WorkflowName: z.string().optional(),
+    ExternalRunId: z.string().optional(),
     S3Input: z.string().optional(),
     S3Output: z.string().optional(),
   })

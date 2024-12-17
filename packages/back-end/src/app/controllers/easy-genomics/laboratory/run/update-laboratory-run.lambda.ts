@@ -57,10 +57,12 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
+    const settings: string | undefined = request.Settings ? JSON.stringify(request.Settings) : existing.Settings;
+
     const response: LaboratoryRun = await laboratoryRunService.update({
       ...existing,
       ...request,
-      Settings: JSON.stringify(request.Settings),
+      Settings: settings,
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: currentUserId,
     });

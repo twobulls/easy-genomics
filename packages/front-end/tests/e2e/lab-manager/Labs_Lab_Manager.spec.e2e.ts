@@ -4,7 +4,7 @@ import { envConfig } from '../../../config/env-config';
 
 const labName = 'Playwright test lab';
 const labNameUpdated = 'Automated Lab - Updated';
-const seqeraPipeline = 'k-florek_workshop-quality';
+const seqeraPipeline = 'quality-e2e-test-pipeline';
 const filePath1 = './tests/e2e/fixtures/GOL2051A64544_S114_L002_R1_001.fastq.gz';
 const filePath2 = './tests/e2e/fixtures/GOL2051A64544_S114_L002_R2_001.fastq.gz';
 

@@ -7,9 +7,9 @@
   const $route = useRoute();
   const runStore = useRunStore();
 
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -27,9 +27,7 @@
     $router.push('/labs');
   }
 
-  onBeforeMount(async () => {
-    await initializePipelineData();
-  });
+  onBeforeMount(initializePipelineData);
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
@@ -55,7 +53,7 @@
    * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
    */
   async function initializePipelineData() {
-    const res = await $api.nextFlowPipelines.readPipelineSchema(pipelineId, labId);
+    const res = await $api.seqeraPipelines.readPipelineSchema(pipelineId, labId);
     const originalSchema = JSON.parse(res.schema);
 
     // Filter Schema to exclude any sections that do not have any visible parameters for user input
@@ -76,18 +74,18 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipSeqeraRun(seqeraRunTempId, {
       laboratoryId: labId,
       pipelineDescription: schema.value.description,
     });
     if (res.params) {
-      runStore.updateWipNextFlowRun(nextFlowRunTempId, { params: JSON.parse(res.params) });
+      runStore.updateWipSeqeraRun(seqeraRunTempId, { params: JSON.parse(res.params) });
     }
   }
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete runStore.wipNextFlowRuns[nextFlowRunTempId];
+    delete runStore.wipSeqeraRuns[seqeraRunTempId];
     $router.push(nextRoute.value!);
   }
 
@@ -98,7 +96,7 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    runStore.updateWipNextFlowRun(nextFlowRunTempId, {
+    runStore.updateWipSeqeraRun(seqeraRunTempId, {
       userPipelineRunName: '',
       pipelineDescription: '',
       params: {},
@@ -113,13 +111,13 @@
     title="Run Pipeline"
     :description="labName"
     :show-back="!hasLaunched"
-    :back-action="() => (nextRoute = `/labs/${labId}?tab=Pipelines`)"
+    :back-action="() => (nextRoute = `/labs/${labId}?tab=Seqera+Pipelines`)"
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="wipNextFlowRun?.params"
+    :params="wipSeqeraRun?.params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
   />

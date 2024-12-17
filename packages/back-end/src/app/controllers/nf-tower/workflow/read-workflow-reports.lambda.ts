@@ -2,7 +2,11 @@ import { GetParameterCommandOutput } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { DescribeWorkflowReportsResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/workflow-reports';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { LaboratoryNotFoundError, UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import {
+  LaboratoryNotFoundError,
+  MissingNextFlowTowerAccessError,
+  UnauthorizedAccessError,
+} from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { SsmService } from '@BE/services/ssm-service';
@@ -55,6 +59,11 @@ export const handler: Handler = async (
       )
     ) {
       throw new UnauthorizedAccessError();
+    }
+
+    // Laboratory requires access to NextFlow Tower
+    if (!laboratory.NextFlowTowerEnabled) {
+      throw new MissingNextFlowTowerAccessError();
     }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM

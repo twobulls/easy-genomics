@@ -1,12 +1,15 @@
-import { Workflow as NextFlowRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+// this import triggers a bizarre eslint problem
+// eslint-disable-next-line import/named
+import { RunListItem as OmicsRun } from '@aws-sdk/client-omics';
+import { Workflow as SeqeraRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import { defineStore } from 'pinia';
 
 /*
-The WIP NextFlow Run is a construct for storing all of the data for a pipeline run that's being configured but hasn't
-been launched yet. They're addressed by nextFlowRunTempId which is generated on pipeline click and stored as a query
-parameter. This allows multiple runs to be configured simultaneously without overwriting each other.
+The WIP run is a construct for storing all of the data for a pipeline run that's being configured but hasn't been
+launched yet. They're addressed by a temp id, which is generated on pipeline click and stored as a query parameter. This
+allows multiple runs to be configured simultaneously without overwriting each other.
 */
-export interface WipNextFlowRunData {
+export interface WipSeqeraRunData {
   laboratoryId?: string;
   pipelineId?: number;
   pipelineName?: string;
@@ -19,29 +22,50 @@ export interface WipNextFlowRunData {
   s3Path?: string;
 }
 
+export interface WipOmicsRunData {
+  laboratoryId?: string;
+  workflowId?: string;
+  workflowName?: string;
+  transactionId?: string;
+}
+
 interface RunState {
-  // lookup object for NextFlow runs
-  nextFlowRuns: Record<string, Record<string, NextFlowRun>>;
-  // ordered lists for NextFlow runs by lab
-  nextFlowRunIdsByLab: Record<string, string[]>;
-  // configs of new NextFlow runs yet to be launched
-  wipNextFlowRuns: Record<string, WipNextFlowRunData>;
+  // lookup object for Seqera runs
+  seqeraRuns: Record<string, Record<string, SeqeraRun>>;
+  // ordered lists for Seqera runs by lab
+  seqeraRunIdsByLab: Record<string, string[]>;
+  // configs of new Seqera runs yet to be launched
+  wipSeqeraRuns: Record<string, WipSeqeraRunData>;
+  // lookup object for Omics runs
+  omicsRuns: Record<string, Record<string, OmicsRun>>;
+  // ordered lists for Omics runs by lab
+  omicsRunIdsByLab: Record<string, string[]>;
+  // configs of new Omics runs yet to be launched
+  wipOmicsRuns: Record<string, WipOmicsRunData>;
 }
 
 const initialState = (): RunState => ({
-  nextFlowRuns: {},
-  nextFlowRunIdsByLab: {},
-  wipNextFlowRuns: {},
+  seqeraRuns: {},
+  seqeraRunIdsByLab: {},
+  wipSeqeraRuns: {},
+  omicsRuns: {},
+  omicsRunIdsByLab: {},
+  wipOmicsRuns: {},
 });
 
 const useRunStore = defineStore('runStore', {
   state: initialState,
 
   getters: {
-    nextFlowRunsForLab:
+    seqeraRunsForLab:
       (state: RunState) =>
-      (labId: string): NextFlowRun[] =>
-        state.nextFlowRunIdsByLab[labId]?.map((pipelineId) => state.nextFlowRuns[labId][pipelineId]) || [],
+      (labId: string): SeqeraRun[] =>
+        state.seqeraRunIdsByLab[labId]?.map((runId) => state.seqeraRuns[labId][runId]) || [],
+
+    omicsRunsForLab:
+      (state: RunState) =>
+      (labId: string): OmicsRun[] =>
+        state.omicsRunIdsByLab[labId]?.map((runId) => state.omicsRuns[labId][runId]) || [],
   },
 
   actions: {
@@ -49,14 +73,14 @@ const useRunStore = defineStore('runStore', {
       Object.assign(this, initialState());
     },
 
-    async loadNextFlowRunsForLab(labId: string): Promise<void> {
+    async loadSeqeraRunsForLab(labId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
       // fetch new runs without modifying existing state
-      const runs: NextFlowRun[] = await $api.nextFlowRuns.list(labId);
+      const runs: SeqeraRun[] = await $api.seqeraRuns.list(labId);
 
       // prepare temporary storage
-      const newRuns: Record<string, NextFlowRun> = {};
+      const newRuns: Record<string, SeqeraRun> = {};
       const newRunIds: string[] = [];
 
       for (const run of runs) {
@@ -67,24 +91,54 @@ const useRunStore = defineStore('runStore', {
       }
 
       // update state with the new data
-      this.nextFlowRuns[labId] = newRuns;
-      this.nextFlowRunIdsByLab[labId] = newRunIds;
+      this.seqeraRuns[labId] = newRuns;
+      this.seqeraRunIdsByLab[labId] = newRunIds;
     },
 
-    async loadSingleNextFlowRun(labId: string, runId: string): Promise<void> {
+    async loadOmicsRunsForLab(labId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
-      const run: NextFlowRun = await $api.nextFlowRuns.get(labId, runId);
+      // fetch new runs without modifying existing state
+      const res = await $api.omicsRuns.list(labId);
+      const runs: OmicsRun[] = res.items || [];
 
-      if (!this.nextFlowRuns[labId]) {
-        this.nextFlowRuns[labId] = {};
+      // prepare temporary storage
+      const newRuns: Record<string, OmicsRun> = {};
+      const newRunIds: string[] = [];
+
+      for (const run of runs) {
+        if (run.id !== undefined) {
+          newRuns[run.id] = run;
+          newRunIds.push(run.id);
+        }
       }
-      this.nextFlowRuns[labId][run.id] = run;
+
+      // update state with the new data
+      this.omicsRuns[labId] = newRuns;
+      this.omicsRunIdsByLab[labId] = newRunIds;
     },
 
-    updateWipNextFlowRun(tempId: string, updates: Partial<WipNextFlowRunData>): void {
-      this.wipNextFlowRuns[tempId] = {
-        ...(this.wipNextFlowRuns[tempId] || {}),
+    async loadSingleSeqeraRun(labId: string, runId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+
+      const run: SeqeraRun = await $api.seqeraRuns.get(labId, runId);
+
+      if (!this.seqeraRuns[labId]) {
+        this.seqeraRuns[labId] = {};
+      }
+      this.seqeraRuns[labId][run.id] = run;
+    },
+
+    updateWipSeqeraRun(tempId: string, updates: Partial<WipSeqeraRunData>): void {
+      this.wipSeqeraRuns[tempId] = {
+        ...(this.wipSeqeraRuns[tempId] || {}),
+        ...updates,
+      };
+    },
+
+    updateWipOmicsRun(tempId: string, updates: Partial<WipOmicsRunData>): void {
+      this.wipOmicsRuns[tempId] = {
+        ...(this.wipOmicsRuns[tempId] || {}),
         ...updates,
       };
     },

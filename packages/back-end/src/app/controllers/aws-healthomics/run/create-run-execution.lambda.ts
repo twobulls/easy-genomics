@@ -1,12 +1,14 @@
-import { ListRunsCommandInput, RunStatus } from '@aws-sdk/client-omics';
+import { StartRunCommandInput } from '@aws-sdk/client-omics';
+import { CreateRunRequestSchema } from '@easy-genomics/shared-lib/lib/app/schema/aws-healthomics/aws-healthomics-api';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
+  InvalidRequestError,
   LaboratoryNotFoundError,
   RequiredIdNotFoundError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
+import { CreateRunRequest } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-import { MissingAWSHealthOmicsAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { OmicsService } from '@BE/services/omics-service';
@@ -15,22 +17,21 @@ import {
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
-import { AwsHealthOmicsQueryParameters, getAwsHealthOmicsApiQueryParameters } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const omicsService = new OmicsService();
 
 /**
- * This GET /aws-healthomics/run/list-runs?laboratoryId={LaboratoryId}
- * API queries the same region's AWS HealthOmics service to retrieve a list of
- * Runs, and it expects:
+ * This POST /aws-healthomics/run/create-run-execution?laboratoryId={LaboratoryId}
+ * API issues the command to the same region's AWS HealthOmics service to create
+ * a new Workflow Run, and it expects:
  *  - Required Query Parameter:
  *    - 'laboratoryId': to retrieve the Laboratory to verify access to AWS HealthOmics
- *  - Optional Query Parameters:
- *    - 'maxResults': pagination number of results
- *    - 'nextToken': pagination results offset index
- *    - 'name': string to search by the Workflow name attribute
- *    - 'status': string to search by Status of Workflow Run
+ *  - JSON payload defining the input parameters for starting a Workflow Run
+ *    - workflowId
+ *    - requestId (transactionId)
+ *    - name
+ *    - parameters (JSON document defining the inputs for the Workflow including the sample-sheet)
  *
  * @param event
  */
@@ -39,6 +40,11 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
+    // Post Request Body
+    const request: CreateRunRequest = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
+    // Data validation safety check
+    if (!CreateRunRequestSchema.safeParse(request).success) throw new InvalidRequestError();
+
     // Get required query parameter
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
     if (laboratoryId === '') throw new RequiredIdNotFoundError('laboratoryId');
@@ -47,6 +53,10 @@ export const handler: Handler = async (
 
     if (!laboratory) {
       throw new LaboratoryNotFoundError();
+    }
+
+    if (!laboratory.AwsHealthOmicsEnabled) {
+      throw new UnauthorizedAccessError('Laboratory does not have AWS HealthOmics enabled');
     }
 
     // Only available for Org Admins or Laboratory Managers and Technicians
@@ -60,15 +70,16 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
-    // Requires AWS Health Omics access
-    if (!laboratory.AwsHealthOmicsEnabled) {
-      throw new MissingAWSHealthOmicsAccessError();
-    }
-
-    const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
-    const response = await omicsService.listRuns(<ListRunsCommandInput>{
-      ...queryParameters,
-      status: validateRunStatusQueryParameter(queryParameters.status),
+    const parameters = JSON.parse(request.parameters.toString());
+    const response = await omicsService.startRun(<StartRunCommandInput>{
+      ...request,
+      parameters: {
+        ...parameters,
+        outdir: '/mnt/workflow/pubdir', // AWS HealthOmics requires explicitly setting 'outdir' = '/mnt/workflow/pubdir' for internal output
+      },
+      outputUri: parameters.outdir, // AWS HealthOmics requires setting outputUri for copying 'outdir' output to the final destination
+      workflowType: 'PRIVATE',
+      roleArn: `arn:aws:iam::${process.env.ACCOUNT_ID}:role/${process.env.NAME_PREFIX}-easy-genomics-healthomics-workflow-run-role`,
     });
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
@@ -76,33 +87,3 @@ export const handler: Handler = async (
     return buildErrorResponse(err, event);
   }
 };
-
-/**
- * Helper function to validate status query parameter and return the corresponding RunStatus filter.
- */
-function validateRunStatusQueryParameter(status: string | undefined): RunStatus | undefined {
-  if (!status) {
-    return undefined;
-  }
-
-  switch (status.toUpperCase()) {
-    case 'CANCELLED':
-      return RunStatus.CANCELLED;
-    case 'COMPLETED':
-      return RunStatus.COMPLETED;
-    case 'DELETED':
-      return RunStatus.DELETED;
-    case 'FAILED':
-      return RunStatus.FAILED;
-    case 'PENDING':
-      return RunStatus.PENDING;
-    case 'RUNNING':
-      return RunStatus.RUNNING;
-    case 'STARTING':
-      return RunStatus.STARTING;
-    case 'STOPPING':
-      return RunStatus.STOPPING;
-    default:
-      return undefined;
-  }
-}

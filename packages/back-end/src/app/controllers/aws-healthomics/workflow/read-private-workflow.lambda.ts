@@ -4,6 +4,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   LaboratoryNotFoundError,
+  MissingAWSHealthOmicsAccessError,
   OmicsWorkflowNotFoundError,
   RequiredIdNotFoundError,
   UnauthorizedAccessError,
@@ -50,10 +51,6 @@ export const handler: Handler = async (
       throw new LaboratoryNotFoundError();
     }
 
-    if (!laboratory.AwsHealthOmicsEnabled) {
-      throw new UnauthorizedAccessError('Laboratory does not have AWS HealthOmics enabled');
-    }
-
     // Only available for Org Admins or Laboratory Managers and Technicians
     if (
       !(
@@ -63,6 +60,11 @@ export const handler: Handler = async (
       )
     ) {
       throw new UnauthorizedAccessError();
+    }
+
+    // Requires AWS Health Omics access
+    if (!laboratory.AwsHealthOmicsEnabled) {
+      throw new MissingAWSHealthOmicsAccessError();
     }
 
     const response = await omicsService

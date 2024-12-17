@@ -9,9 +9,9 @@
   const $route = useRoute();
   const runStore = useRunStore();
 
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const labId = $route.params.labId as string;
 
@@ -206,7 +206,7 @@
             <EGRunPipelineFormReviewPipeline
               :can-launch="true"
               :schema="props.schema"
-              :params="wipNextFlowRun?.params"
+              :params="wipSeqeraRun?.params"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"
@@ -219,7 +219,7 @@
     <template v-if="hasLaunched">
       <EGEmptyDataCTA
         message="Your Workflow Run has Launched! Check on your progress via Runs."
-        :primary-button-action="() => $router.push(`/labs/${labId}?tab=Runs`)"
+        :primary-button-action="() => $router.push(`/labs/${labId}?tab=Lab+Runs`)"
         primary-button-label="Back to Runs"
         :secondary-button-action="() => emit('reset-run-pipeline')"
         secondary-button-label="Launch Another Workflow Run"

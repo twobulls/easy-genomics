@@ -10,9 +10,9 @@
   const $route = useRoute();
   const runStore = useRunStore();
 
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   /**
    * Seqera API spec
@@ -47,8 +47,8 @@
   type FormState = z.infer<typeof formStateSchema>;
 
   const formState = reactive<FormState>({
-    pipelineDescription: wipNextFlowRun.value?.pipelineDescription || '',
-    pipelineName: wipNextFlowRun.value?.pipelineName || '',
+    pipelineDescription: wipSeqeraRun.value?.pipelineDescription || '',
+    pipelineName: wipSeqeraRun.value?.pipelineName || '',
     runName: '',
   });
 
@@ -66,8 +66,8 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = wipNextFlowRun.value?.userPipelineRunName || '';
-    formState.pipelineDescription = wipNextFlowRun.value?.pipelineDescription || '';
+    formState.runName = wipSeqeraRun.value?.userPipelineRunName || '';
+    formState.pipelineDescription = wipSeqeraRun.value?.pipelineDescription || '';
     validate(formState);
   });
 
@@ -87,12 +87,12 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    useRunStore().updateWipNextFlowRun(nextFlowRunTempId, { userPipelineRunName: safeRunName });
+    useRunStore().updateWipSeqeraRun(seqeraRunTempId, { userPipelineRunName: safeRunName });
     emit('next-step');
   }
 
   /**
-   * Converts the user input value to one supported by the Next Flow Tower API.
+   * Converts the user input value to one supported by the Seqera API.
    *
    * Allows only alphanumeric characters, hyphens, and underscores.
    * Removes any other characters and replaces multiple hyphens and underscores with a single instance.

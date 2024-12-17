@@ -10,10 +10,7 @@ export default function useFileDownload() {
 
     try {
       // Fetch the presigned URL from the API
-      const fileDownloadResponse: FileDownloadResponse = await $api.nextFlowRuns.downloadS3file(
-        labId,
-        fileDownloadPath,
-      );
+      const fileDownloadResponse: FileDownloadResponse = await $api.file.downloadS3file(labId, fileDownloadPath);
 
       if (!fileDownloadResponse || !fileDownloadResponse.DownloadUrl) {
         console.error('Download URL is undefined or empty');
@@ -59,7 +56,7 @@ export default function useFileDownload() {
 
   // Opens a file in a new window or tab, displaying it in an iframe
   async function openFileInNewWindow(labId: string, path: string, mimeType: string) {
-    const fileDownload: FileDownloadResponse = await $api.nextFlowRuns.downloadNextflowFile(labId, path);
+    const fileDownload: FileDownloadResponse = await $api.seqeraRuns.downloadSeqeraFile(labId, path);
     if (fileDownload) {
       const blob = base64ToBlob(fileDownload.Data, mimeType);
       const fileURL = URL.createObjectURL(blob);

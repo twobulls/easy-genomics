@@ -24,6 +24,8 @@ export type ErrorCodeKeys =
   | 'EG-312'
   | 'EG-313'
   | 'EG-314'
+  | 'EG-315'
+  | 'EG-316'
   | 'EG-401'
   | 'EG-402'
   | 'EG-403'

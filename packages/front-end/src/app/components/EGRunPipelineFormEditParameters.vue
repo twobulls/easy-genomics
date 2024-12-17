@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useRunStore } from '@FE/stores';
-  import { WipNextFlowRunData } from '@FE/stores/run';
+  import { WipSeqeraRunData } from '@FE/stores/run';
 
   const props = defineProps<{
     schema: object;
@@ -11,19 +11,19 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const $route = useRoute();
 
-  const nextFlowRunTempId = $route.query.nextFlowRunTempId as string;
+  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   const activeSection = ref<string | null>(null);
   const runStore = useRunStore();
 
-  const wipNextFlowRun = computed<WipNextFlowRunData | undefined>(() => runStore.wipNextFlowRuns[nextFlowRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const localProps = reactive({
     schema: props.schema,
     params: {
       ...props.params,
-      input: wipNextFlowRun.value?.sampleSheetS3Url,
-      outdir: `s3://${wipNextFlowRun.value?.s3Bucket}/${wipNextFlowRun.value?.s3Path}/results`,
+      input: wipSeqeraRun.value?.sampleSheetS3Url,
+      outdir: `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/results`,
     },
   });
 
@@ -80,7 +80,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        runStore.updateWipNextFlowRun(nextFlowRunTempId, { params: val });
+        runStore.updateWipSeqeraRun(seqeraRunTempId, { params: val });
       }
     },
     { deep: true },

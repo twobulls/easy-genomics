@@ -351,6 +351,28 @@ export class LaboratoryBucketNotFoundError extends HttpError {
   }
 }
 
+/**
+ * Laboratory does not have access to AWS Health Omics
+ *
+ * @param messageOpt - optional additional message
+ */
+export class MissingAWSHealthOmicsAccessError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Laboratory does not have AWS HealthOmics enabled', 403, 'EG-315', messageOpt);
+  }
+}
+
+/**
+ * Laboratory does not have access to NextFlow Tower / Seqera Cloud
+ *
+ * @param messageOpt - optional additional message
+ */
+export class MissingNextFlowTowerAccessError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Laboratory does not have Seqera Cloud / NextFlow Tower enabled', 403, 'EG-316', messageOpt);
+  }
+}
+
 // User Errors
 
 /**

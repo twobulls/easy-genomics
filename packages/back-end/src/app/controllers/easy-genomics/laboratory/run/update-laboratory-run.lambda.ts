@@ -6,6 +6,7 @@ import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-geno
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
+  LaboratoryRunNotFoundError,
   RequiredIdNotFoundError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
@@ -41,6 +42,10 @@ export const handler: Handler = async (
     // Lookup by RunId to confirm existence before updating
     const existing: LaboratoryRun = await laboratoryRunService.queryByRunId(id);
 
+    if (!existing) {
+      throw new LaboratoryRunNotFoundError(id);
+    }
+
     // Only available for Org Admins or Laboratory Managers and Technicians
     if (
       !(
@@ -52,10 +57,12 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
+    const settings: string | undefined = request.Settings ? JSON.stringify(request.Settings) : existing.Settings;
+
     const response: LaboratoryRun = await laboratoryRunService.update({
       ...existing,
       ...request,
-      Settings: JSON.stringify(request.Settings),
+      Settings: settings,
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: currentUserId,
     });

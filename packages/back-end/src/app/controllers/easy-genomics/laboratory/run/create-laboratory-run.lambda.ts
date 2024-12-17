@@ -1,10 +1,9 @@
-import crypto from 'crypto';
 import {
   AddLaboratoryRun,
   AddLaboratoryRunSchema,
-  ReadLaboratoryRun,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
@@ -53,35 +52,23 @@ export const handler: Handler = async (
       throw new LaboratoryNotFoundError();
     }
 
-    const runId: string = crypto.randomUUID().toLowerCase();
-
-    const laboratoryRun = await laboratoryRunService
-      .add({
-        RunId: runId,
-        OrganizationId: laboratory.OrganizationId,
+    const response = await laboratoryRunService
+      .add(<LaboratoryRun>{
         LaboratoryId: laboratory.LaboratoryId,
-        Status: 'Active',
-        Type: request.Type,
-        S3Input: request.S3Input,
-        S3Output: request.S3Output,
-        Settings: JSON.stringify(request.Settings ? request.Settings : {}),
-        WorkflowName: request.WorkflowName,
+        RunId: request.RunId,
         UserId: currentUserId,
+        OrganizationId: laboratory.OrganizationId,
+        Type: request.Type,
+        Status: 'Created',
+        Title: request.Title,
+        WorkflowName: request.WorkflowName,
+        Settings: JSON.stringify(request.Settings),
         CreatedAt: new Date().toISOString(),
         CreatedBy: currentUserId,
-        ModifiedAt: new Date().toISOString(),
-        ModifiedBy: currentUserId,
       })
       .catch((error: any) => {
         throw error;
       });
-
-    // Return Laboratory Run with settings object
-    const response: ReadLaboratoryRun = {
-      ...laboratoryRun,
-      Settings: JSON.parse(laboratoryRun.Settings || '{}'),
-    };
-
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);

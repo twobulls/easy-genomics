@@ -15,9 +15,10 @@
  *   Status: <string>,
  *   Title?: <string>,
  *   WorkflowName?: <string>,
+ *   ExternalRunId?: <string>,
  *   S3Input?: <string>,
  *   S3Output?: <string>,
- *   Settings?: <string>, // JSON
+ *   Settings?: <string>, // JSON string
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
  *   ModifiedAt?: <string>,
@@ -35,7 +36,8 @@ export interface LaboratoryRun extends BaseAttributes {
   Status: string;
   Title?: string;
   WorkflowName?: string;
+  ExternalRunId?: string;
   S3Input?: string;
   S3Output?: string;
-  Settings?: string; // JSON
+  Settings?: string; // JSON string
 }

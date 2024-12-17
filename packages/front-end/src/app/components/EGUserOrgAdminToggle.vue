@@ -6,12 +6,13 @@
 
   const { $api } = useNuxtApp();
   const props = defineProps<{
+    orgId: string;
     user: OrganizationUserDetails;
     isLoading?: boolean;
   }>();
 
   const emit = defineEmits(['update-user']);
-  const { UserId, OrganizationId, UserEmail, OrganizationUserStatus } = props.user;
+  const { UserId, UserEmail, OrganizationUserStatus } = props.user;
   const toggleVal = ref(props.user.OrganizationAdmin);
 
   const nameDetails = {
@@ -26,7 +27,7 @@
   async function toggleOrgAdminPerm() {
     toggleVal.value = !toggleVal.value;
     try {
-      await $api.orgs.editOrgUser(OrganizationId, UserId, OrganizationUserStatus, toggleVal.value);
+      await $api.orgs.editOrgUser(props.orgId, UserId, OrganizationUserStatus, toggleVal.value);
       emit('update-user');
       useToastStore().success(`${displayName}’s Lab Access has been successfully updated`);
     } catch (error) {

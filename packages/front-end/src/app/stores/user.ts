@@ -11,6 +11,7 @@ interface UserStoreState {
     orgPermissions: OrganizationAccess | null;
   };
   currentUserDetails: {
+    id: string | null;
     firstName: string | null;
     lastName: string | null;
     preferredName: string | null;
@@ -27,6 +28,7 @@ const initialState = (): UserStoreState => ({
     orgPermissions: null,
   },
   currentUserDetails: {
+    id: null,
     firstName: null,
     lastName: null,
     preferredName: null,

@@ -111,7 +111,8 @@ export default function useUser() {
       const token = await useAuth().getToken();
       const decodedToken: any = decodeJwt(token);
 
-      // retrieve and set account email
+      // retrieve and set account id and email
+      userStore.currentUserDetails.id = decodedToken['cognito:username'];
       userStore.currentUserDetails.email = decodedToken.email;
 
       // check and set superuser status

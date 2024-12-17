@@ -1,3 +1,4 @@
+import { UpdateUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
 import {
   ConfirmUpdateUserInvitationRequestSchema,
   CreateUserInvitationRequestSchema,
@@ -114,6 +115,29 @@ class UsersModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Error creating user account from invite');
+    }
+
+    return res;
+  }
+
+  async updateUser(
+    userId: string,
+    data: {
+      FirstName?: string;
+      PreferredName?: string;
+      LastName?: string;
+    },
+  ) {
+    const parseResult = UpdateUserSchema.safeParse(data);
+    if (!parseResult.success) {
+      console.error('Error; updateUser; safe parse failed; parseResult: ', parseResult);
+      throw new Error(`Error; updateUser; safe parse failed; parseResult: ${JSON.stringify(parseResult, null, 2)}`);
+    }
+
+    const res = await this.call<User>('PUT', `/user/update-user-request/${userId}`, data);
+
+    if (!res) {
+      throw new Error('Error updating user details');
     }
 
     return res;

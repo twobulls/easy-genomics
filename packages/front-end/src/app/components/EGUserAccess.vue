@@ -207,7 +207,7 @@
 
   async function handleRemoveUserFromLab() {
     const labName = labToRemoveFrom.value?.name;
-    const labId = labToRemoveFrom.value?.id;
+    const labId = labToRemoveFrom.value?.id!;
     isRemoveUserDialogOpen.value = false;
 
     const displayName = getSelectedUserDisplayName.value;

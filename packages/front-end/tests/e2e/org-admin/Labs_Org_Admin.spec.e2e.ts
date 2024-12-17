@@ -222,7 +222,6 @@ test('04 - Update a Laboratory Successfully', async ({ page, baseURL }) => {
     // confirm update toast message
     await expect(page.getByText(labNameUpdated + ' successfully updated').nth(0)).toBeVisible();
     await expect(page.getByText(labNameUpdated).nth(1)).toBeVisible();
-    //await expect(page.getByText('Automation test lab description')).toBeVisible();
 
     // go back to lab list and confirm
     await page.goto(`${baseURL}/labs`);
@@ -322,6 +321,53 @@ test('07 - Add a user to a Laboratory Successfully', async ({ page, baseURL }) =
     await page.getByRole('option', { name: labManagerName }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
     await page.getByText('Successfully added ' + labManagerName + ' to ' + labNameUpdated).click();
+  }
+});
+
+test('08 - Enable HealthOmics Integration Successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasUpdatedTestLab = false;
+  try {
+    hasUpdatedTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log(labNameUpdated + ' lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasUpdatedTestLab) {
+    // update Laboratory
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000); // this waits for s3 bucket info to load
+    await page.getByRole('tab', { name: 'Details' }).click();
+    await page.getByRole('button', { name: 'Edit' }).click();
+
+    let omicsEnabled = true;
+    try {
+      omicsEnabled = await page.getByLabel('Enable HealthOmics Integration').isChecked();
+    } catch (error) {
+      console.log('OMICS toggle is already enabled!', error);
+    }
+
+    if (omicsEnabled == false) {
+      await page.getByLabel('Enable HealthOmics Integration').check();
+
+      await page.getByRole('button', { name: 'Save Changes' }).click();
+      await page.waitForTimeout(2000);
+
+      // confirm update toast message
+      await expect(page.getByText(labNameUpdated + ' successfully updated').nth(0)).toBeVisible();
+      await expect(page.getByText(labNameUpdated).nth(1)).toBeVisible();
+      await page.waitForLoadState('networkidle');
+
+      // confirm if the 'HealthOmics Workflows' tab is visible
+      await expect(page.getByRole('tab', { name: 'HealthOmics Workflows' })).toBeVisible();
+    } else {
+      console.log('OMICS toggle is already enabled!');
+    }
   }
 });
 

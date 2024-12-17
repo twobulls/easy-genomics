@@ -76,9 +76,7 @@
   ];
 
   function editUser(userId: string) {
-    router.push({
-      path: `/orgs/${props.orgId}/edit-user/${userId}`,
-    });
+    router.push({ path: `/orgs/${props.orgId}/edit-user/${userId}` });
   }
 
   function onRowClicked(row: OrgUser) {

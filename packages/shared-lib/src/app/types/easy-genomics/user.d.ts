@@ -11,11 +11,9 @@
  * {
  *   UserId: <string>,
  *   Email: <string>,
- *   Title?: 'Prof' | 'Dr' | 'Mr' | 'Mrs' | 'Ms',
  *   PreferredName?: <string>,
  *   FirstName?: <string>,
  *   LastName?: <string>,
- *   PhoneNumber?: <string>,
  *   Status: 'Active' | 'Inactive' | 'Invited',
  *   OrganizationAccess?: <OrganizationAccess>,
  *   CreatedAt?: <string>,
@@ -29,11 +27,9 @@ import { BaseAttributes, OrgUserStatus, Status, UserStatus } from "../base-entit
 export interface User extends BaseAttributes {
   UserId: string; // DynamoDB Partition Key (String)
   Email: string;
-  Title?: UserTitle;
   PreferredName?: string;
   FirstName?: string;
   LastName?: string;
-  PhoneNumber?: string;
   Status: UserStatus;
   OrganizationAccess?: OrganizationAccess;
 }
@@ -53,5 +49,3 @@ export type LaboratoryAccessDetails = {
   LabManager?: boolean,
   LabTechnician?: boolean,
 };
-
-export type UserTitle = 'Prof' | 'Dr' | 'Mr' | 'Mrs' | 'Ms';

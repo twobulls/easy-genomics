@@ -17,14 +17,12 @@
 
   const selectedUser = ref<OrganizationUserDetails | null>(null);
 
-  const selectedUserNameDetails = computed<NameOptions>(() => {
-    return {
-      preferredName: selectedUser.value?.PreferredName || null,
-      firstName: selectedUser.value?.FirstName || null,
-      lastName: selectedUser.value?.LastName || null,
-      email: selectedUser.value?.UserEmail || null,
-    };
-  });
+  const selectedUserNameDetails = computed<NameOptions>(() => ({
+    preferredName: selectedUser.value?.PreferredName || null,
+    firstName: selectedUser.value?.FirstName || null,
+    lastName: selectedUser.value?.LastName || null,
+    email: selectedUser.value?.UserEmail || null,
+  }));
   const getSelectedUserDisplayName = computed<string>(() => useUser().displayName(selectedUserNameDetails.value));
   const getSelectedUserInitials = computed<string>(() => useUser().initials(selectedUserNameDetails.value));
 

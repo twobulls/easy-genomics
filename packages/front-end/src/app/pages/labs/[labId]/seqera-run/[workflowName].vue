@@ -60,9 +60,8 @@
     $router.replace({ path: $route.path, query: { ...$route.query, ...params } });
   }, 300);
 
-  onBeforeMount(async () => {
-    await loadRunReports();
-    await fetchS3Content();
+  onBeforeMount(() => {
+    Promise.all([fetchS3Content(), loadRunReports()]);
   });
 
   onMounted(() => {

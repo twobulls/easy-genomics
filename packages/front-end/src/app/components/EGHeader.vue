@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+  import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const props = withDefaults(
     defineProps<{
@@ -14,15 +15,30 @@
   const orgsStore = useOrgsStore();
 
   const { signOut } = useAuth();
+  const $router = useRouter();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
-  const $router = useRouter();
 
   function isSubpath(url: string) {
     return $router.currentRoute.value.path.includes(url);
   }
 
   const acctDropdownIsOpen = ref<boolean>(false);
+
+  const switchToOrgId = ref<string | null>(null);
+  const switchOrgDialogOpen = ref<boolean>(false);
+
+  function selectSwitchToOrg(orgId: string): void {
+    switchToOrgId.value = orgId;
+    switchOrgDialogOpen.value = true;
+  }
+
+  function doSwitchOrg(): void {
+    userStore.currentOrg.OrganizationId = switchToOrgId.value!;
+    $router.push('/');
+    useUiStore().incrementRemountAppKey();
+    useToastStore().success('You have switched organizations');
+  }
 
   const dropdownItems = computed<object[][]>(() => {
     const items = [];
@@ -39,7 +55,7 @@
       items.push([
         {
           slot: 'other-orgs',
-          class: 'bg-background-light-grey p-4',
+          class: 'bg-background-light-grey px-4',
         },
       ]);
     }
@@ -72,7 +88,7 @@
         <div class="flex items-center gap-4">
           <ULink
             v-if="!userStore.isSuperuser"
-            to="/labs"
+            :to="labsPath"
             inactive-class="text-body"
             active-class="text-primary-dark bg-primary-muted"
             :class="isSubpath(labsPath) ? 'text-primary-dark bg-primary-muted' : ''"
@@ -82,7 +98,7 @@
           </ULink>
           <ULink
             v-if="userStore.canManageOrgs()"
-            to="/orgs"
+            :to="orgsPath"
             inactive-class="text-body"
             active-class="text-primary-dark bg-primary-muted"
             :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"
@@ -98,7 +114,7 @@
               padding: '',
               width: 'w-80',
               item: {
-                base: 'flex flex-col items-start',
+                base: 'flex flex-col items-start gap-0',
                 rounded: '',
               },
             }"
@@ -118,12 +134,14 @@
             </template>
 
             <template #other-orgs>
-              <div class="text-muted pb-2">Other Organizations</div>
+              <div class="text-muted pt-2">Other Organizations</div>
 
-              <div class="flex w-full flex-col items-start gap-3" v-for="(org, i) of otherOrgs">
-                <div v-if="i > 0" class="mt-2 w-full border" />
+              <div class="flex w-full flex-col items-start" v-for="(org, i) of otherOrgs">
+                <div v-if="i > 0" class="w-full border-t" />
 
-                <div class="font-medium">{{ org.Name }}</div>
+                <div @click="() => selectSwitchToOrg(org.OrganizationId)" class="w-full py-3 text-left font-medium">
+                  {{ org.Name }}
+                </div>
               </div>
             </template>
           </UDropdown>
@@ -136,6 +154,16 @@
       </template>
     </div>
   </header>
+
+  <EGDialog
+    cancel-label="Cancel"
+    action-label="Continue"
+    :action-variant="ButtonVariantEnum.enum.primary"
+    @action-triggered="doSwitchOrg"
+    primary-message="Are you sure you would like to switch organizations?"
+    secondary-message="You are about to switch organisation accounts. Ensure all unsaved work is saved and reviewed before proceeding. Switching accounts may result in losing access to current session data or active tasks."
+    v-model="switchOrgDialogOpen"
+  />
 </template>
 
 <style scoped lang="scss">

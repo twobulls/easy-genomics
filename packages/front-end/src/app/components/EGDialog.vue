@@ -54,7 +54,7 @@
               @click="emit('action-triggered')"
               :label="actionLabel"
               :size="ButtonSizeEnum.enum.sm"
-              :variant="ButtonVariantEnum.enum.destructive"
+              :variant="actionVariant"
               :disabled="buttonsDisabled"
               autofocus
             />

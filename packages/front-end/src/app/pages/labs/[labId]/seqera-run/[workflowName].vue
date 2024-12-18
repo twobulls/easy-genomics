@@ -2,9 +2,8 @@
   import { getDate, getTime } from '@FE/utils/date-time';
   import { S3Response } from '@/packages/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
   import { useRunStore } from '@FE/stores';
-  import { useDebounceFn } from '@vueuse/core'; // Importing useDebounceFn
+  import { useDebounceFn } from '@vueuse/core';
 
-  // Dependencies
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
@@ -23,7 +22,6 @@
     $router.push('/labs');
   }
 
-  // Computed Properties
   const tabItems = computed(() => [
     { key: 'runDetails', label: 'Run Details' },
     { key: 'runResults', label: 'Run Results' },
@@ -35,16 +33,12 @@
   const startedDateTime = computed(() => formatDateTime(seqeraRun.value?.start));
   const stoppedDateTime = computed(() => formatDateTime(seqeraRun.value?.complete));
 
-  const s3Prefix = computed(() => `${useUserStore().currentOrgId}/${labId}/next-flow/${runId.value}`);
-
-  // Helper Method: Format Date & Time
   function formatDateTime(date: string | undefined): string {
     const datePart = getDate(date);
     const timePart = getTime(date);
     return datePart && timePart ? `${timePart} ⋅ ${datePart}` : '—';
   }
 
-  // Tab & Query Parameter Logic
   function validateAndSetTabIndex(queryTab: string): void {
     const matchedIndex = tabItems.value.findIndex((item) => item.label === queryTab);
     if (matchedIndex !== -1) {
@@ -61,19 +55,19 @@
   }, 300);
 
   onBeforeMount(() => {
+    runId.value = ($route.query.runId as string) || '';
     Promise.all([fetchS3Content(), loadRunReports()]);
   });
 
   onMounted(() => {
-    // Initialize Query Parameters
     validateAndSetTabIndex(($route.query.tab as string) || tabItems.value[0]?.label);
-    runId.value = ($route.query.runId as string) || '';
   });
 
   watch(
     () => runId.value,
-    (newRunId) => updateQueryParams({ runId: newRunId }),
-    { immediate: true },
+    (newRunId) => {
+      updateQueryParams({ runId: newRunId }), { immediate: true };
+    },
   );
 
   watch(
@@ -123,7 +117,7 @@
     try {
       const res = await $api.file.requestListBucketObjects({
         LaboratoryId: labId,
-        S3Prefix: s3Prefix.value,
+        S3Prefix: `${useUserStore().currentOrgId}/${labId}/next-flow/${runId.value}`,
       });
       s3Contents.value = res || null;
     } catch (error) {

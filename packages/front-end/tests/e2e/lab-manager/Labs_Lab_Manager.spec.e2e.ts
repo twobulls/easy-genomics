@@ -7,6 +7,7 @@ const labNameUpdated = 'Automated Lab - Updated';
 const seqeraPipeline = 'quality-e2e-test-pipeline';
 const filePath1 = './tests/e2e/fixtures/GOL2051A64544_S114_L002_R1_001.fastq.gz';
 const filePath2 = './tests/e2e/fixtures/GOL2051A64544_S114_L002_R2_001.fastq.gz';
+const labTechnicianName = 'Lab Technician';
 
 test('01 - Hide Create a new Laboratory button', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
@@ -162,7 +163,71 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
   }
 });
 
-test('06 - Check if Reset Password fails', async ({ page, baseURL }) => {
+test('06 - Remove user from a Laboratory Successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  let hasUpdatedTestLab = true;
+  try {
+    hasUpdatedTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Test lab not found', error);
+  }
+
+  if (hasUpdatedTestLab) {
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.getByRole('tab', { name: 'Lab Users' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.waitForLoadState('networkidle');
+
+    let userVisible = false;
+    try {
+      userVisible = await page.getByRole('row', { name: labTechnicianName }).isVisible();
+    } catch (error) {
+      console.log('User is not added yet to Automation Lab!', error);
+    }
+
+    if (userVisible == true) {
+      await page.getByRole('row', { name: labTechnicianName }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Remove From Lab' }).click();
+      await page.getByRole('button', { name: 'Remove User' }).click();
+      await page.waitForTimeout(2000);
+      //await page.getByRole('status').locator('div').nth(1).click();
+      await expect(
+        page.getByText('Successfully removed ' + labTechnicianName + ' from ' + labNameUpdated).nth(0),
+      ).toBeVisible();
+    }
+  }
+});
+
+test('07 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }) => {
+  // Check if the user has been added already to a Lab
+  await page.goto(`${baseURL}/labs`);
+  await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+  await page.getByRole('tab', { name: 'Lab Users' }).click();
+
+  let userHidden = false;
+  try {
+    userHidden = await page.getByRole('row', { name: labTechnicianName }).isHidden();
+  } catch (error) {
+    console.log('User is not added yet to Automation Lab!', error);
+  }
+
+  if (userHidden == true) {
+    await page.getByRole('button', { name: 'Add Lab Users' }).click();
+    await page.getByText('Select User').click();
+    await page.getByPlaceholder('Search all users...').click();
+    await page.keyboard.type(envConfig.labTechnicianEmail);
+    await page.getByRole('option', { name: labTechnicianName }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.getByText('Successfully added ' + labTechnicianName + ' to ' + labNameUpdated)).toBeVisible();
+  }
+});
+
+test('08 - Check if Reset Password fails', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}`);
   await page.waitForLoadState('networkidle');
 

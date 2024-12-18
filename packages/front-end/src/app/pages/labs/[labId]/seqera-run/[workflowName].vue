@@ -10,7 +10,7 @@
   const runStore = useRunStore();
 
   const labId = $route.params.labId as string;
-  const seqeraRunId = $route.params.seqeraRunId as string;
+  const workflowName = $route.params.workflowName as string;
   const seqeraRunReports = ref([]);
   const s3Contents = ref<S3Response>(null);
   const tabIndex = ref(0);
@@ -21,7 +21,7 @@
   }
 
   // TODO: switch 'healthomics' suffix for HealthOmics labs
-  const s3Prefix = computed(() => `${useUserStore().currentOrgId}/${labId}/next-flow`);
+  const s3Prefix = computed(() => `${useUserStore().currentOrgId}/${labId}/next-flow/${runId.value}`);
   const tabItems = computed(() => [
     {
       key: 'runDetails',
@@ -33,7 +33,7 @@
     },
   ]);
 
-  const seqeraRun = computed<SeqeraRun | null>(() => runStore.seqeraRuns[labId][seqeraRunId]);
+  const seqeraRun = computed<SeqeraRun | null>(() => runStore.seqeraRuns[labId][workflowName]);
 
   const createdDateTime = computed(() => {
     const createdDate = getDate(seqeraRun.value?.dateCreated);
@@ -53,7 +53,7 @@
 
   async function loadRunReports() {
     useUiStore().setRequestPending('loadRunReports');
-    const res = await $api.seqeraRuns.readWorkflowReports(seqeraRunId, labId);
+    const res = await $api.seqeraRuns.readWorkflowReports(workflowName, labId);
     seqeraRunReports.value = res.reports;
     useUiStore().setRequestComplete('loadRunReports');
   }
@@ -79,12 +79,62 @@
     await fetchS3Content();
   });
 
+  const runId = ref('');
+
   // set tabIndex according to query param
   onMounted(() => {
-    const queryTab = $route.query.tab as string;
-    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
-    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+    if ($route.query.runId) {
+      runId.value = $route.query.runId as string; // Set runId from query if available
+    }
+
+    const queryTab = $route.query.tab as string; // Get the tab query parameter
+    console.log('Query Tab on Load:', queryTab); // Debug
+
+    // Validate if the tab exists in `tabItems`
+    const matchedTabIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
+
+    if (matchedTabIndex !== -1) {
+      // If the tab exists in tabItems, set the tab index
+      tabIndex.value = matchedTabIndex;
+    } else {
+      // Otherwise, set a default (first tab) and update the query to match
+      console.log('Invalid or missing tab query. Defaulting to first tab.'); // Debug
+      tabIndex.value = 0;
+
+      $router.replace({
+        path: $route.path,
+        query: {
+          ...$route.query,
+          tab: tabItems.value[0]?.label, // Default tab label
+        },
+      });
+    }
   });
+
+  watch(
+    () => runId.value,
+    (newRunId) => {
+      $router.replace({
+        path: $route.path,
+        query: {
+          ...$route.query,
+          runId: newRunId, // Set runId as a query parameter
+        },
+      });
+    },
+    { immediate: true }, // This ensures the watcher runs immediately with the initial value
+  );
+
+  watch(
+    () => $route.query.tab,
+    (newTab) => {
+      const matchedTabIndex = tabItems.value.findIndex((tab) => tab.label === newTab);
+
+      if (matchedTabIndex !== -1) {
+        tabIndex.value = matchedTabIndex;
+      }
+    },
+  );
 
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
   //  Tailwind won't pick up and include the classes used and styles will be missing.
@@ -93,7 +143,7 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      base: '!flex border-b-2 rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {
@@ -112,6 +162,22 @@
       },
     },
   };
+
+  function updateTab(newIndex: number) {
+    // Update the local tab index
+    tabIndex.value = newIndex;
+
+    // Replace the query in the URL with the updated tab
+    $router.replace({
+      path: $route.path,
+      query: {
+        ...$route.query,
+        tab: tabItems.value[newIndex].label, // Update the 'tab' query parameter with the corresponding label
+      },
+    });
+
+    console.log('Updated query tab:', tabItems.value[newIndex].label); // Optional debug log
+  }
 </script>
 
 <template>
@@ -124,23 +190,13 @@
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />
 
-  <UTabs
-    :ui="EGTabsStyles"
-    :model-value="tabIndex"
-    :items="tabItems"
-    @update:model-value="
-      (newIndex) => {
-        $router.push({ query: { ...$router.currentRoute.query, tab: tabItems[newIndex].label } });
-        tabIndex = newIndex;
-      }
-    "
-  >
+  <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="updateTab">
     <template #item="{ item }">
       <div v-if="item.key === 'runResults'" class="space-y-3">
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"
-          :seqera-run-id="seqeraRunId"
+          :seqera-run-id="workflowName"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>

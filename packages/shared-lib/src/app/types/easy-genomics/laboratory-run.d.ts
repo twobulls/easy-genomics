@@ -30,7 +30,7 @@ import { BaseAttributes, RunType } from "../base-entity";
 export interface LaboratoryRun extends BaseAttributes {
   LaboratoryId: string; // DynamoDB Partition Key (String)
   RunId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
-  UserId: string; // Global Secondary Index (String)
+  UserId?: string; // Global Secondary Index (String)
   OrganizationId: string; // Global Secondary Index (String)
   Type: RunType,
   Status: string;

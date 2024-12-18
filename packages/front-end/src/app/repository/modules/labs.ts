@@ -198,23 +198,36 @@ class LabsModule extends HttpFactory {
   }
 
   async listLabRuns(labId: string): Promise<LaboratoryRun[]> {
-    const res = await this.call<LaboratoryRun>('GET', `/laboratory/run/list-laboratory-runs?laboratoryId=${labId}`);
+    const res = await this.call<LaboratoryRun[]>('GET', `/laboratory/run/list-laboratory-runs?laboratoryId=${labId}`);
 
     if (!res) {
       throw new Error('Failed to retrieve Laboratory runs');
+    }
+
+    // FIXME
+    // validateApiResponse(ReadLaboratoryRunSchema, res);
+    return res;
+  }
+
+  async createLabRun(labRunRequest: LaboratoryRun): Promise<LaboratoryRun> {
+    const res = await this.call<any>('POST', '/laboratory/run/create-laboratory-run', labRunRequest);
+    if (!res) {
+      console.error('Error calling create pipeline run API');
+      throw new Error('Failed to create pipeline run');
     }
 
     validateApiResponse(LaboratoryRunSchema, res);
     return res;
   }
 
-  async createLaboratoryRun(labRunRequest: any): Promise<any> {
-    const res = await this.call<any>('POST', '/laboratory/run/create-laboratory-run', labRunRequest);
-    console.log('createPipelineRun response:', res);
+  async updateLabRun(runId: string, labRunRequest: LaboratoryRun): Promise<LaboratoryRun> {
+    const res = await this.call<any>('PUT', `/laboratory/run/update-laboratory-run/${runId}`, labRunRequest);
     if (!res) {
-      console.error('Error calling create pipeline run API');
-      throw new Error('Failed to create pipeline run');
+      console.error('Error calling edit laboratory run API');
+      throw new Error('Failed to edit laboratory run');
     }
+
+    validateApiResponse(LaboratoryRunSchema, res);
     return res;
   }
 }

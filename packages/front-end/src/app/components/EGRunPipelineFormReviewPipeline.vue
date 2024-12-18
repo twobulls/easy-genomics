@@ -51,12 +51,26 @@
           configProfiles: launchDetails.launch?.configProfiles,
           workDir: workDir,
           paramsText: paramsText,
-          runId: wipSeqeraRun.value?.transactionId,
         },
       };
-      await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
-      delete runStore.wipSeqeraRuns[seqeraRunTempId];
-      emit('has-launched');
+
+      const res = await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+
+      if (res) {
+        try {
+          await $api.labs.updateLabRun(wipSeqeraRun.value?.transactionId, {
+            'Status': 'Active',
+            'Settings': '',
+            'ExternalRunId': res.workflowId,
+          });
+        } catch (error) {
+          console.error('Error launching workflow:', error);
+          throw error;
+        }
+
+        delete runStore.wipSeqeraRuns[seqeraRunTempId];
+        emit('has-launched');
+      }
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
       console.error('Error launching workflow:', error);

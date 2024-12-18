@@ -397,16 +397,14 @@
         'Status': 'Active',
         'Type': 'Seqera Cloud', // TODO: make this dynamic
         'OrganizationId': useUserStore().currentOrgId,
-        Settings: {
-          runId: wipSeqeraRun.value?.transactionId,
-        },
+        'RunId': wipSeqeraRun.value?.transactionId,
       };
-      $api.labs.createLaboratoryRun(labRunRequest);
+      await $api.labs.createLabRun(labRunRequest);
     }
   }
 
   async function uploadFile(fileDetails: FileDetails) {
-    const { file, name } = fileDetails;
+    const { file } = fileDetails;
 
     try {
       const response = await axios.put(fileDetails.url!, file, {
@@ -414,7 +412,7 @@
           'Content-Type': 'multipart/form-data',
         },
         onUploadProgress: (progressEvent) => {
-          const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
+          const progress = Math.round((progressEvent?.loaded / progressEvent?.total) * 100);
           fileDetails.progress = progress;
           fileDetails.percentage = progress;
         },
@@ -432,7 +430,7 @@
     return uploadStatus.value === 'uploading' && progress < 100;
   }
 
-  function formatProgress(progress) {
+  function formatProgress(progress: number): string {
     if (progress === 0) {
       return '0';
     }

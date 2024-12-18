@@ -19,6 +19,7 @@
     Pipeline as SeqeraPipeline,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow, RunListItem as OmicsRun } from '@aws-sdk/client-omics';
+  import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -62,6 +63,7 @@
   type GenericRun = {
     type: 'seqera' | 'omics';
     id: string;
+    runId: string;
     name: string;
     subName: string;
     time: string;
@@ -73,6 +75,7 @@
     return {
       type: 'seqera',
       id: seqeraRun.id!,
+      // runId: seqeraRun.runId!,
       name: seqeraRun.runName,
       subName: seqeraRun.projectName,
       time: seqeraRun.lastUpdated?.replace(/\.\d\d\dZ/, 'Z') || '-',
@@ -92,6 +95,8 @@
       owner: '-',
     };
   }
+
+  const isAllDataLoaded = computed(() => !useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines']));
 
   const combinedRuns = computed<GenericRun[]>(() => {
     if (uiStore.anyRequestPending(['getSeqeraRuns', 'getOmicsRuns'])) {
@@ -183,11 +188,28 @@
   ];
 
   function viewRunDetails(run: GenericRun) {
-    $router.push({ path: `/labs/${props.labId}/${run.type}-run/${run.id}`, query: { tab: 'Run Details' } });
+    const foundRun = getLabRunId(run.id); // Get matching run
+
+    const query: Record<string, any> = { tab: 'Run Details' };
+    if (foundRun) {
+      query.runId = foundRun.RunId;
+
+      $router.push({
+        path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+        query,
+      });
+    }
   }
 
-  function viewRunResults(run: GenericRun) {
-    $router.push({ path: `/labs/${props.labId}/${run.type}-run/${run.id}`, query: { tab: 'Run Results' } });
+  function viewRunResults(run: GenericRun, runId?: string) {
+    console.log('viewRunResults runId:', runId); // Log the runId if present
+    const query: Record<string, any> = { tab: 'Run Results' };
+    if (runId) query.runId = runId;
+
+    $router.push({
+      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+      query,
+    });
   }
 
   function initCancelRun(run: GenericRun) {
@@ -216,7 +238,10 @@
   /**
    * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
    */
-  onBeforeMount(loadLabData(), listLabRuns());
+  onBeforeMount(async () => {
+    await loadLabData();
+    await listLabRuns();
+  });
 
   // set tabIndex according to query param
   onMounted(() => {
@@ -364,12 +389,27 @@
     }
   }
 
-  async function listLabRuns(): Promise<void> {
+  async function listLabRuns(): Promise<LaboratoryRun[]> {
     try {
       labRuns.value = await $api.labs.listLabRuns(props.labId);
     } catch (error) {
       console.error('Error retrieving Lab runs', error);
     }
+  }
+
+  // TODO
+  function getLabRunId(runId: string): LaboratoryRun | undefined {
+    // console.log('Full labRuns.value:', JSON.stringify(labRuns.value, null, 2)); // Inspect whole array
+    const foundRun = labRuns.value.find(
+      (item) => item.ExternalRunId?.trim().toLowerCase() === runId.trim().toLowerCase(),
+    );
+
+    if (foundRun) {
+      // console.log('Found run:', foundRun);
+      return foundRun;
+    }
+
+    return undefined;
   }
 
   async function getSeqeraPipelines(): Promise<void> {
@@ -549,7 +589,7 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      base: '!flex border-b-2 rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {
@@ -595,7 +635,7 @@
   </EGPageHeader>
 
   <UTabs
-    v-if="lab"
+    v-if="lab && isAllDataLoaded"
     :ui="EGTabsStyles"
     :default-index="0"
     :items="tabItems"
@@ -644,7 +684,7 @@
       <!-- HealthOmics Pipelines tab -->
       <div v-if="item.key === 'omicsWorkflows'" class="space-y-3">
         <EGTable
-          :row-click-action="viewRunOmicsWorkflow"
+          :row-click-action="(row) => viewRunDetails(row)"
           :table-data="omicsWorkflows"
           :columns="omicsWorkflowsTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"

@@ -186,28 +186,25 @@
   ];
 
   function viewRunDetails(run: GenericRun) {
-    const foundRun = getLabRunId(run.id); // Get matching run
+    const foundRun = getLabRunId(run.id);
 
-    const query: Record<string, any> = { tab: 'Run Details' };
     if (foundRun) {
-      query.runId = foundRun.RunId;
-
       $router.push({
         path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
-        query,
+        query: { tab: 'Run Details', runId: foundRun.RunId },
       });
     }
   }
 
-  function viewRunResults(run: GenericRun, runId?: string) {
-    console.log('viewRunResults runId:', runId); // Log the runId if present
-    const query: Record<string, any> = { tab: 'Run Results' };
-    if (runId) query.runId = runId;
+  function viewRunResults(run: GenericRun) {
+    const foundRun = getLabRunId(run.id);
 
-    $router.push({
-      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
-      query,
-    });
+    if (foundRun) {
+      $router.push({
+        path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+        query: { tab: 'Run Results', runId: foundRun.RunId },
+      });
+    }
   }
 
   function initCancelRun(run: GenericRun) {

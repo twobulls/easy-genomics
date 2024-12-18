@@ -5,6 +5,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
+import { z } from 'zod';
 import HttpFactory from '@FE/repository/factory';
 import { DeletedResponse, EditUserResponse } from '@FE/types/api';
 import { validateApiResponse } from '@FE/utils/api-utils';
@@ -204,7 +205,8 @@ class LabsModule extends HttpFactory {
       throw new Error('Failed to retrieve Laboratory runs');
     }
 
-    validateApiResponse(LaboratoryRunSchema, res);
+    const LaboratoryRunArraySchema = z.array(LaboratoryRunSchema); // Define an array schema
+    validateApiResponse(LaboratoryRunArraySchema, res);
     return res;
   }
 

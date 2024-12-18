@@ -204,8 +204,7 @@ class LabsModule extends HttpFactory {
       throw new Error('Failed to retrieve Laboratory runs');
     }
 
-    // FIXME
-    // validateApiResponse(ReadLaboratoryRunSchema, res);
+    validateApiResponse(LaboratoryRunSchema, res);
     return res;
   }
 

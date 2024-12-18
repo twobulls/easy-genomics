@@ -145,7 +145,7 @@
 
   <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="handleTabChange">
     <template #item="{ item }">
-      <div v-if="item.key === 'runResults'" class="space-y-3">
+      <div v-show="item.key === 'runResults'" class="space-y-3">
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"

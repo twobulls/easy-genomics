@@ -12,7 +12,6 @@
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { getDate, getTime } from '@FE/utils/date-time';
-  import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
   import {
     Workflow as SeqeraRun,
@@ -75,7 +74,6 @@
     return {
       type: 'seqera',
       id: seqeraRun.id!,
-      // runId: seqeraRun.runId!,
       name: seqeraRun.runName,
       subName: seqeraRun.projectName,
       time: seqeraRun.lastUpdated?.replace(/\.\d\d\dZ/, 'Z') || '-',
@@ -397,19 +395,8 @@
     }
   }
 
-  // TODO
   function getLabRunId(runId: string): LaboratoryRun | undefined {
-    // console.log('Full labRuns.value:', JSON.stringify(labRuns.value, null, 2)); // Inspect whole array
-    const foundRun = labRuns.value.find(
-      (item) => item.ExternalRunId?.trim().toLowerCase() === runId.trim().toLowerCase(),
-    );
-
-    if (foundRun) {
-      // console.log('Found run:', foundRun);
-      return foundRun;
-    }
-
-    return undefined;
+    return labRuns.value.find((item) => item.ExternalRunId?.trim().toLowerCase() === runId.trim().toLowerCase());
   }
 
   async function getSeqeraPipelines(): Promise<void> {

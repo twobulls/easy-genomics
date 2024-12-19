@@ -666,7 +666,7 @@
       <!-- HealthOmics Pipelines tab -->
       <div v-if="item.key === 'omicsWorkflows'" class="space-y-3">
         <EGTable
-          :row-click-action="(row) => viewRunDetails(row)"
+          :row-click-action="viewRunOmicsWorkflow"
           :table-data="omicsWorkflows"
           :columns="omicsWorkflowsTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"

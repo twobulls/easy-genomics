@@ -94,8 +94,6 @@
     };
   }
 
-  const isAllDataLoaded = computed(() => !useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines']));
-
   const combinedRuns = computed<GenericRun[]>(() => {
     if (uiStore.anyRequestPending(['getSeqeraRuns', 'getOmicsRuns'])) {
       return [];

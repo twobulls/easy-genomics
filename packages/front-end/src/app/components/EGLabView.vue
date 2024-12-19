@@ -20,6 +20,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow, RunListItem as OmicsRun } from '@aws-sdk/client-omics';
   import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+  import useLabRunsStore from '@FE/stores/lab-runs';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -35,10 +36,11 @@
   const labStore = useLabsStore();
   const uiStore = useUiStore();
   const userStore = useUserStore();
+  const labRunsStore = useLabRunsStore();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
-  const labRuns = ref<LaboratoryRun[]>([]);
+  const labRuns = computed<LaboratoryRun[]>(() => labRunsStore.labRunsForLab(props.labId));
   const seqeraPipelines = ref<SeqeraPipeline[]>([]);
   const omicsWorkflows = ref<OmicsWorkflow[]>([]);
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
@@ -398,7 +400,7 @@
 
   async function listLabRuns(): Promise<LaboratoryRun[]> {
     try {
-      labRuns.value = await $api.labs.listLabRuns(props.labId);
+      await labRunsStore.loadLabRunsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving Lab runs', error);
     }

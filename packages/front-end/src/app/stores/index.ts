@@ -1,3 +1,4 @@
+import useLaboratoryRunsStore from './lab-runs';
 import useLabsStore from './labs';
 import useOrgsStore from './orgs';
 import useRunStore from './run';
@@ -11,5 +12,15 @@ function resetStores() {
   useRunStore().reset();
   useUiStore().reset();
   useUserStore().reset();
+  useLaboratoryRunsStore().reset();
 }
-export { resetStores, useOrgsStore, useToastStore, useUserStore, useUiStore, useLabsStore, useRunStore };
+export {
+  resetStores,
+  useOrgsStore,
+  useToastStore,
+  useUserStore,
+  useUiStore,
+  useLabsStore,
+  useRunStore,
+  useLaboratoryRunsStore,
+};

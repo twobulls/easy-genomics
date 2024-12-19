@@ -639,8 +639,8 @@
           :row-click-action="viewRunSeqeraPipeline"
           :table-data="seqeraPipelines"
           :columns="seqeraPipelinesTableColumns"
-          :is-loading="!isAllDataLoaded"
-          :show-pagination="isAllDataLoaded"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
         >
           <template #Name-data="{ row: pipeline }">
             <div class="flex items-center">
@@ -672,8 +672,8 @@
           :row-click-action="(row) => viewRunDetails(row)"
           :table-data="omicsWorkflows"
           :columns="omicsWorkflowsTableColumns"
-          :is-loading="!isAllDataLoaded"
-          :show-pagination="isAllDataLoaded"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
         >
           <template #Name-data="{ row: workflow }">
             <div class="flex items-center">
@@ -709,8 +709,8 @@
           :row-click-action="viewRunDetails"
           :table-data="combinedRuns"
           :columns="runsTableColumns"
-          :is-loading="!isAllDataLoaded"
-          :show-pagination="!isAllDataLoaded"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns', 'getOmicsRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns', 'getOmicsRuns'])"
         >
           <template #runName-data="{ row: run }">
             <div v-if="run.name" class="text-body text-sm font-medium">{{ run.name }}</div>
@@ -749,7 +749,7 @@
         <EGSearchInput
           @input-event="updateSearchOutput"
           placeholder="Search user"
-          :disabled="!isAllDataLoaded"
+          :disabled="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'addUserToLab'])"
           class="my-6 w-[408px]"
         />
 
@@ -766,8 +766,8 @@
         <EGTable
           :table-data="filteredTableData"
           :columns="usersTableColumns"
-          :is-loading="!isAllDataLoaded"
-          :show-pagination="isAllDataLoaded"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
         >
           <template #displayName-data="{ row: labUser }">
             <div class="flex items-center">
@@ -780,7 +780,11 @@
               <EGUserRoleDropdownNew
                 :show-remove-from-lab="true"
                 :key="labUser?.LabManager"
-                :disabled="!isAllDataLoaded || !userStore.canEditLabUsers(labId) || userStore.isSuperuser"
+                :disabled="
+                  useUiStore().anyRequestPending(['loadLabData', 'getLabUsers']) ||
+                  !userStore.canEditLabUsers(labId) ||
+                  userStore.isSuperuser
+                "
                 :user="labUser"
                 @assign-lab-role="handleAssignLabRole($event)"
                 @remove-user-from-lab="showRemoveUserDialog($event.user)"

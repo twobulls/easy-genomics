@@ -67,7 +67,7 @@
       try {
         await $api.labs.updateLabRun(wipSeqeraRun.value?.transactionId, {
           'Status': 'Active',
-          'Settings': '',
+          'Settings': '{}',
           'ExternalRunId': res.workflowId,
         });
       } catch (error) {

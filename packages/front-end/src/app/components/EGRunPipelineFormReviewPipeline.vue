@@ -56,21 +56,27 @@
 
       const res = await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
 
-      if (res) {
-        try {
-          await $api.labs.updateLabRun(wipSeqeraRun.value?.transactionId, {
-            'Status': 'Active',
-            'Settings': '',
-            'ExternalRunId': res.workflowId,
-          });
-        } catch (error) {
-          console.error('Error launching workflow:', error);
-          throw error;
-        }
-
-        delete runStore.wipSeqeraRuns[seqeraRunTempId];
-        emit('has-launched');
+      if (!res) {
+        throw new Error('Failed to create pipeline run. Response is empty.');
       }
+
+      if (!res.workflowId) {
+        throw new Error('Workflow ID is missing in the response');
+      }
+
+      try {
+        await $api.labs.updateLabRun(wipSeqeraRun.value?.transactionId, {
+          'Status': 'Active',
+          'Settings': '',
+          'ExternalRunId': res.workflowId,
+        });
+      } catch (error) {
+        console.error('Error launching workflow:', error);
+        throw error;
+      }
+
+      delete runStore.wipSeqeraRuns[seqeraRunTempId];
+      emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
       console.error('Error launching workflow:', error);

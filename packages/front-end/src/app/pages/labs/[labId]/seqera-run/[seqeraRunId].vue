@@ -10,7 +10,7 @@
   const runStore = useRunStore();
 
   const labId = $route.params.labId as string;
-  const workflowName = $route.params.workflowName as string;
+  const seqeraRunId = $route.params.seqeraRunId as string;
 
   const seqeraRunReports = ref([]);
   const s3Contents = ref<S3Response>(null);
@@ -27,7 +27,7 @@
     { key: 'runResults', label: 'Run Results' },
   ]);
 
-  const seqeraRun = computed(() => runStore.seqeraRuns[labId]?.[workflowName] || null);
+  const seqeraRun = computed(() => runStore.seqeraRuns[labId]?.[seqeraRunId] || null);
 
   const createdDateTime = computed(() => formatDateTime(seqeraRun.value?.dateCreated));
   const startedDateTime = computed(() => formatDateTime(seqeraRun.value?.start));
@@ -105,7 +105,7 @@
   async function loadRunReports() {
     useUiStore().setRequestPending('loadRunReports');
     try {
-      const res = await $api.seqeraRuns.readWorkflowReports(workflowName, labId);
+      const res = await $api.seqeraRuns.readWorkflowReports(seqeraRunId, labId);
       seqeraRunReports.value = res.reports || [];
     } finally {
       useUiStore().setRequestComplete('loadRunReports');
@@ -149,7 +149,7 @@
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"
-          :seqera-run-id="workflowName"
+          :seqera-run-id="seqeraRunId"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>

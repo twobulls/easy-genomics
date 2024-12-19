@@ -18,7 +18,7 @@ export const LaboratoryRunSchema = z
     ExternalRunId: z.string().optional(),
     S3Input: z.string().optional(),
     S3Output: z.string().optional(),
-    Settings: z.string().optional(), // JSON string
+    Settings: z.union([z.string(), z.record(z.string(), z.any())]).optional(), // JSON string
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -39,7 +39,7 @@ export const ReadLaboratoryRunSchema = z
     ExternalRunId: z.string().optional(),
     S3Input: z.string().optional(),
     S3Output: z.string().optional(),
-    Settings: z.string().optional(), // JSON string
+    Settings: z.union([z.string(), z.record(z.string(), z.any())]).optional(), // JSON string
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -59,7 +59,7 @@ export const AddLaboratoryRunSchema = z
     WorkflowName: z.string().optional(),
     S3Input: z.string().optional(),
     S3Output: z.string().optional(),
-    Settings: z.string().optional(), // JSON string
+    Settings: z.union([z.string(), z.record(z.string(), z.any())]).optional(), // JSON string
   })
   .strict();
 export type AddLaboratoryRun = z.infer<typeof AddLaboratoryRunSchema>;
@@ -68,7 +68,7 @@ export const EditLaboratoryRunSchema = z
   .object({
     Title: z.string().optional(),
     Status: z.string(),
-    Settings: z.string().optional(), // JSON string
+    Settings: z.union([z.string(), z.record(z.string(), z.any())]).optional(), // JSON string
     WorkflowName: z.string().optional(),
     ExternalRunId: z.string().optional(),
     S3Input: z.string().optional(),

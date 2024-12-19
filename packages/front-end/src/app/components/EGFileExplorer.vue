@@ -31,7 +31,7 @@
   const { handleS3Download, downloadFolder } = useFileDownload();
 
   const initialPath = computed(() => {
-    if (props.s3Contents && props.s3Contents.Contents.length > 0) {
+    if (props.s3Contents?.Contents?.length) {
       const firstKey = props.s3Contents.Contents[0].Key;
       return firstKey.split('/').slice(0, 3).join('/') + '/';
     }

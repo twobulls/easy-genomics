@@ -19,6 +19,7 @@
     Pipeline as SeqeraPipeline,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow, RunListItem as OmicsRun } from '@aws-sdk/client-omics';
+  import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -37,6 +38,7 @@
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
+  const labRuns = ref<LaboratoryRun[]>([]);
   const seqeraPipelines = ref<SeqeraPipeline[]>([]);
   const omicsWorkflows = ref<OmicsWorkflow[]>([]);
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
@@ -182,11 +184,39 @@
   ];
 
   function viewRunDetails(run: GenericRun) {
-    $router.push({ path: `/labs/${props.labId}/${run.type}-run/${run.id}`, query: { tab: 'Run Details' } });
+    try {
+      const foundRun = getLabRunId(run.id);
+
+      if (!foundRun) {
+        throw new Error(`Run with ID ${run.id} not found.`);
+      }
+
+      $router.push({
+        path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+        query: { tab: 'Run Details', runId: foundRun.RunId },
+      });
+    } catch (error) {
+      console.error('Error in viewRunDetails:', error);
+      throw error;
+    }
   }
 
   function viewRunResults(run: GenericRun) {
-    $router.push({ path: `/labs/${props.labId}/${run.type}-run/${run.id}`, query: { tab: 'Run Results' } });
+    try {
+      const foundRun = getLabRunId(run.id);
+
+      if (!foundRun) {
+        throw new Error(`Run with ID ${run.id} not found.`);
+      }
+
+      $router.push({
+        path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+        query: { tab: 'Run Results', runId: foundRun.RunId },
+      });
+    } catch (error) {
+      console.error('Error in viewRunResults:', error);
+      throw error;
+    }
   }
 
   function initCancelRun(run: GenericRun) {
@@ -215,7 +245,10 @@
   /**
    * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
    */
-  onBeforeMount(loadLabData);
+  onBeforeMount(async () => {
+    await loadLabData();
+    await listLabRuns();
+  });
 
   // set tabIndex according to query param
   onMounted(() => {
@@ -361,6 +394,18 @@
     } finally {
       useUiStore().setRequestComplete('loadLabData');
     }
+  }
+
+  async function listLabRuns(): Promise<LaboratoryRun[]> {
+    try {
+      labRuns.value = await $api.labs.listLabRuns(props.labId);
+    } catch (error) {
+      console.error('Error retrieving Lab runs', error);
+    }
+  }
+
+  function getLabRunId(runId: string): LaboratoryRun | undefined {
+    return labRuns.value.find((item) => item.ExternalRunId?.trim().toLowerCase() === runId.trim().toLowerCase());
   }
 
   async function getSeqeraPipelines(): Promise<void> {
@@ -540,7 +585,7 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      base: '!flex border-b-2 rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {

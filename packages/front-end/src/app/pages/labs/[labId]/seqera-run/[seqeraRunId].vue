@@ -15,18 +15,17 @@
   const seqeraRunReports = ref([]);
   const s3Contents = ref<S3Response>(null);
   const tabIndex = ref(0);
-  const runId = ref(''); // Run ID from query params
 
   // Permission Check
   if (!useUserStore().canViewLab(labId)) {
     $router.push('/labs');
   }
 
+  const runId = computed(() => ($route.query.runId as string) || '');
   const tabItems = computed(() => [
     { key: 'runDetails', label: 'Run Details' },
     { key: 'runResults', label: 'Run Results' },
   ]);
-
   const seqeraRun = computed(() => runStore.seqeraRuns[labId]?.[seqeraRunId] || null);
 
   const createdDateTime = computed(() => formatDateTime(seqeraRun.value?.dateCreated));
@@ -55,20 +54,12 @@
   }, 300);
 
   onBeforeMount(() => {
-    runId.value = ($route.query.runId as string) || '';
     Promise.all([fetchS3Content(), loadRunReports()]);
   });
 
   onMounted(() => {
     validateAndSetTabIndex(($route.query.tab as string) || tabItems.value[0]?.label);
   });
-
-  watch(
-    () => runId.value,
-    (newRunId) => {
-      updateQueryParams({ runId: newRunId }), { immediate: true };
-    },
-  );
 
   watch(
     () => $route.query.tab,

@@ -12,6 +12,7 @@
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { getDate, getTime } from '@FE/utils/date-time';
+  import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
   import {
     Workflow as SeqeraRun,

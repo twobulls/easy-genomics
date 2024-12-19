@@ -13,9 +13,9 @@
     $router.push({ query: { seqeraRunTempId: uuidv4() } });
   }
 
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
+  const seqeraRunTempId = computed<string>(() => $route.query.seqeraRunTempId as string);
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId.value]);
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -59,9 +59,9 @@
    * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
    */
   async function initializePipelineData() {
-    runStore.updateWipSeqeraRun(seqeraRunTempId, {
+    runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
       laboratoryId: labId,
-      transactionId: seqeraRunTempId,
+      transactionId: seqeraRunTempId.value,
     });
 
     const res = await $api.seqeraPipelines.readPipelineSchema(pipelineId, labId);
@@ -86,13 +86,13 @@
       definitions: filteredDefinitions,
     };
     if (res.params) {
-      runStore.updateWipSeqeraRun(seqeraRunTempId, { params: JSON.parse(res.params) });
+      runStore.updateWipSeqeraRun(seqeraRunTempId.value, { params: JSON.parse(res.params) });
     }
   }
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete runStore.wipSeqeraRuns[seqeraRunTempId];
+    delete runStore.wipSeqeraRuns[seqeraRunTempId.value];
     $router.push(nextRoute.value!);
   }
 
@@ -103,8 +103,14 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    initializePipelineData();
-    resetStepperKey.value++;
+    $router.push({ query: { seqeraRunTempId: uuidv4() } });
+
+    // without this short delay, initializePipelineData sets wip data for the old seqeraRunTempId, because the route
+    // change doesn't complete in time
+    setTimeout(() => {
+      initializePipelineData();
+      resetStepperKey.value++;
+    }, 100);
   }
 </script>
 

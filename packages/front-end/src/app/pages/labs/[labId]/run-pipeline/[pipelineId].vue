@@ -61,6 +61,7 @@
   async function initializePipelineData() {
     runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
       laboratoryId: labId,
+      pipelineId: pipelineId,
       transactionId: seqeraRunTempId.value,
     });
 

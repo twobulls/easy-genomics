@@ -63,7 +63,6 @@
   type GenericRun = {
     type: 'seqera' | 'omics';
     id: string;
-    runId: string;
     name: string;
     subName: string;
     time: string;

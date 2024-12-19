@@ -11,9 +11,6 @@ allows multiple runs to be configured simultaneously without overwriting each ot
 */
 export interface WipSeqeraRunData {
   laboratoryId?: string;
-  pipelineId?: number;
-  pipelineName?: string;
-  pipelineDescription?: string;
   transactionId?: string;
   userPipelineRunName?: string;
   params?: object;

@@ -41,6 +41,9 @@
   const { downloadSampleSheet } = usePipeline($api);
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
+  defineProps<{
+    pipelineId: string;
+  }>();
 
   const labId = $route.params.labId as string;
   const seqeraRunTempId = $route.query.seqeraRunTempId as string;

@@ -424,21 +424,10 @@
   }
 
   function viewRunSeqeraPipeline(pipeline: SeqeraPipeline) {
-    const seqeraRunTempId = uuidv4();
-
-    const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
-
-    runStore.updateWipSeqeraRun(seqeraRunTempId, {
-      pipelineId,
-      pipelineName,
-      pipelineDescription: pipelineDescription || '',
-      transactionId: seqeraRunTempId,
-    });
-
     $router.push({
-      path: `/labs/${props.labId}/run-pipeline/${pipelineId}`,
+      path: `/labs/${props.labId}/run-pipeline/${pipeline.pipelineId}`,
       query: {
-        seqeraRunTempId,
+        seqeraRunTempId: uuidv4(),
       },
     });
   }
@@ -447,19 +436,10 @@
     useToastStore().info('Running HealthOmics Workflows is not yet implemented');
     return;
 
-    const omicsRunTempId = uuidv4();
-
-    runStore.updateWipOmicsRun(omicsRunTempId, {
-      laboratoryId: props.labId,
-      workflowId: workflow.id,
-      workflowName: workflow.name,
-      transactionId: omicsRunTempId,
-    });
-
     $router.push({
       path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
       query: {
-        omicsRunTempId,
+        omicsRunTempId: uuidv4(),
       },
     });
   }

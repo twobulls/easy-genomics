@@ -1,11 +1,17 @@
 <script setup lang="ts">
   import { useRunStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
+  import { v4 as uuidv4 } from 'uuid';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
   const runStore = useRunStore();
+
+  // set a new seqeraRunTempId if not provided
+  if (!$route.query.seqeraRunTempId) {
+    $router.push({ query: { seqeraRunTempId: uuidv4() } });
+  }
 
   const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
@@ -53,6 +59,11 @@
    * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
    */
   async function initializePipelineData() {
+    runStore.updateWipSeqeraRun(seqeraRunTempId, {
+      laboratoryId: labId,
+      transactionId: seqeraRunTempId,
+    });
+
     const res = await $api.seqeraPipelines.readPipelineSchema(pipelineId, labId);
     const originalSchema = JSON.parse(res.schema);
 
@@ -74,10 +85,6 @@
       ...originalSchema,
       definitions: filteredDefinitions,
     };
-    runStore.updateWipSeqeraRun(seqeraRunTempId, {
-      laboratoryId: labId,
-      pipelineDescription: schema.value.description,
-    });
     if (res.params) {
       runStore.updateWipSeqeraRun(seqeraRunTempId, { params: JSON.parse(res.params) });
     }
@@ -96,11 +103,6 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    runStore.updateWipSeqeraRun(seqeraRunTempId, {
-      userPipelineRunName: '',
-      pipelineDescription: '',
-      params: {},
-    });
     initializePipelineData();
     resetStepperKey.value++;
   }
@@ -120,6 +122,7 @@
     :params="wipSeqeraRun?.params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
+    :pipeline-id="pipelineId"
   />
   <EGDialog
     action-label="Cancel Pipeline Run"

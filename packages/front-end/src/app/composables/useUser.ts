@@ -1,11 +1,12 @@
 import { CreateUserInvitationRequestSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user-invitation';
 import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+import { OrganizationAccess } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { CreateUserInvitationRequest } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 import { useToastStore } from '@FE/stores';
 import { decodeJwt } from '@FE/utils/jwt-utils';
 
-type NameOptions = {
+export type NameOptions = {
   firstName: string | null;
   preferredName: string | null;
   lastName: string | null;
@@ -111,7 +112,8 @@ export default function useUser() {
       const token = await useAuth().getToken();
       const decodedToken: any = decodeJwt(token);
 
-      // retrieve and set account email
+      // retrieve and set account id and email
+      userStore.currentUserDetails.id = decodedToken['cognito:username'];
       userStore.currentUserDetails.email = decodedToken.email;
 
       // check and set superuser status
@@ -125,12 +127,11 @@ export default function useUser() {
       // retrieve and set current org id and org access
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
 
-      const currentOrgId = Object.keys(parsedOrgAccess)[0];
-      userStore.currentOrg.OrganizationId = currentOrgId;
+      userStore.currentUserPermissions.orgPermissions = parsedOrgAccess as OrganizationAccess;
 
-      userStore.currentUserPermissions.orgPermissions = {
-        [currentOrgId]: parsedOrgAccess[currentOrgId],
-      };
+      if (userStore.currentOrg.OrganizationId === null) {
+        userStore.currentOrg.OrganizationId = Object.keys(parsedOrgAccess)[0];
+      }
 
       // retrieve and set personal details
       userStore.currentUserDetails.firstName = decodedToken.FirstName;

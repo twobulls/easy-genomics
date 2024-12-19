@@ -32,7 +32,8 @@ type PendingRequest =
   | `addUserToLabButton-${string}-${string}`
   | 'fetchS3Content'
   | 'loadRunReports'
-  | 'editProfileDetails';
+  | 'editProfileDetails'
+  | 'toggleOrgAdmin';
 
 interface UiStoreState {
   pendingRequests: Set<string>;

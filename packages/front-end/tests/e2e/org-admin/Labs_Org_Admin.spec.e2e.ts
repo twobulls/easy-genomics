@@ -13,6 +13,7 @@ const labName = 'Playwright test lab';
 const labNameUpdated = 'Automated Lab - Updated';
 const labManagerName = 'Lab Manager';
 const labManagerEmail = 'lab.manager@easygenomics.org';
+const labTechnicianName = 'Lab Technician';
 
 test('01 - Remove user from a Laboratory Successfully', async ({ page, baseURL }) => {
   // Check if the user has been added already to a Lab
@@ -296,19 +297,19 @@ test('06 - Remove user from a Lab via Edit User Access Successfully', async ({ p
   }
 });
 
-test('07 - Add a user to a Laboratory Successfully', async ({ page, baseURL }) => {
+test('07 - Add a Lab Manager to a Laboratory Successfully', async ({ page, baseURL }) => {
   // Check if the user has been added already to a Lab
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
 
-  let userNotAddedToLab = true;
+  let userNotAddedToLab = false;
   try {
     userNotAddedToLab = await page.getByRole('row', { name: 'Grant access' }).isHidden();
   } catch (error) {
     console.log('User is not added yet to Automation Lab!', error);
   }
 
-  if (userNotAddedToLab) {
+  if (userNotAddedToLab == true) {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.getByRole('tab', { name: 'Lab Users' }).click();
@@ -320,7 +321,17 @@ test('07 - Add a user to a Laboratory Successfully', async ({ page, baseURL }) =
     await page.keyboard.type(labManagerEmail);
     await page.getByRole('option', { name: labManagerName }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await page.getByText('Successfully added ' + labManagerName + ' to ' + labNameUpdated).click();
+    await expect(page.getByText('Successfully added ' + labManagerName + ' to ' + labNameUpdated)).toBeVisible();
+
+    // Update Lab Access to 'Lab Manager'
+    await page.getByRole('row', { name: labManagerName }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'Lab Manager' }).click();
+    await page.waitForTimeout(2000);
+
+    // Confirm success message
+    await expect(
+      page.getByText('Successfully assigned the Lab Manager role to ' + labManagerName + ' in ' + labNameUpdated),
+    ).toBeVisible();
   }
 });
 
@@ -368,6 +379,32 @@ test('08 - Enable HealthOmics Integration Successfully', async ({ page, baseURL 
     } else {
       console.log('OMICS toggle is already enabled!');
     }
+  }
+});
+
+test('09 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }) => {
+  // Check if the user has been added already to a Lab
+  await page.goto(`${baseURL}/labs`);
+  await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+  await page.getByRole('tab', { name: 'Lab Users' }).click();
+
+  let userVisible = false;
+  try {
+    userVisible = await page.getByRole('row', { name: labTechnicianName }).isHidden();
+  } catch (error) {
+    console.log('User is not added yet to Automation Lab!', error);
+  }
+
+  if (userVisible == true) {
+    await page.getByRole('button', { name: 'Add Lab Users' }).click();
+    await page.getByText('Select User').click();
+    await page.getByPlaceholder('Search all users...').click();
+    await page.keyboard.type(envConfig.labTechnicianEmail);
+    await page.getByRole('option', { name: labTechnicianName }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.getByText('Successfully added ' + labTechnicianName + ' to ' + labNameUpdated)).toBeVisible();
   }
 });
 

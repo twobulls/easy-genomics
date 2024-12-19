@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { ProfileDetails, ProfileDetailsSchema } from '@FE/types/user';
 
+  const { $api } = useNuxtApp();
   const userStore = useUserStore();
   const uiStore = useUiStore();
 
@@ -25,10 +26,12 @@
     uiStore.setRequestPending('editProfileDetails');
 
     try {
-      // TODO: call api to set new details
+      await $api.users.updateUser(userStore.currentUserDetails.id!, {
+        FirstName: state.value.firstName,
+        LastName: state.value.lastName,
+      });
 
-      // useToastStore().success('Your Profile has been updated');
-      useToastStore().info('Updating user details is not yet implemented');
+      useToastStore().success('Your Profile has been updated');
 
       // refresh auth session to get updated user details
       await useAuth().getRefreshedToken();
@@ -40,6 +43,7 @@
       };
     } catch (e) {
       console.error('error while updating user details:', e);
+      useToastStore().error('Error updating user details');
     }
 
     uiStore.setRequestComplete('editProfileDetails');

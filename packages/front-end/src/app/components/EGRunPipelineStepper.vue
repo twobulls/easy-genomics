@@ -4,6 +4,7 @@
   const props = defineProps<{
     schema: object;
     params: object;
+    pipelineId: string;
   }>();
 
   const $route = useRoute();
@@ -178,6 +179,7 @@
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunPipelineFormRunDetails
+              :pipeline-id="pipelineId"
               @next-step="() => nextStep('upload')"
               @step-validated="setStepEnabled('upload', $event)"
             />
@@ -186,6 +188,7 @@
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunPipelineFormUploadData
+              :pipeline-id="pipelineId"
               @next-step="() => nextStep('parameters')"
               @previous-step="() => previousStep()"
               @step-validated="setStepEnabled('parameters', $event)"
@@ -196,6 +199,7 @@
             <EGRunPipelineFormEditParameters
               :params="params"
               :schema="schema"
+              :pipeline-id="pipelineId"
               @next-step="() => nextStep('review')"
               @previous-step="() => previousStep()"
             />
@@ -207,6 +211,7 @@
               :can-launch="true"
               :schema="props.schema"
               :params="wipSeqeraRun?.params"
+              :pipeline-id="pipelineId"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"

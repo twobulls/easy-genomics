@@ -3,16 +3,22 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useRunStore } from '@FE/stores';
+  import { useRunStore, useSeqeraPipelinesStore } from '@FE/stores';
+  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const emit = defineEmits(['next-step', 'step-validated']);
+  const props = defineProps<{
+    pipelineId: string;
+  }>();
 
   const $route = useRoute();
   const runStore = useRunStore();
+  const seqeraPipelineStore = useSeqeraPipelinesStore();
 
   const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
 
   /**
    * Seqera API spec
@@ -40,15 +46,11 @@
     .max(MAX_RUN_NAME_LENGTH, `Pipeline run name must be ${MAX_RUN_NAME_LENGTH} characters or less`);
 
   const formStateSchema = z.object({
-    pipelineDescription: z.string(), // Seqera API spec doesn't define a max length for pipeline description
-    pipelineName: z.string(), // Seqera API spec doesn't define a max length for pipeline name a.k.a action name e.g. nf-core-viralrecon
     runName: runNameSchema,
   });
   type FormState = z.infer<typeof formStateSchema>;
 
   const formState = reactive<FormState>({
-    pipelineDescription: wipSeqeraRun.value?.pipelineDescription || '',
-    pipelineName: wipSeqeraRun.value?.pipelineName || '',
     runName: '',
   });
 
@@ -67,7 +69,6 @@
    */
   onBeforeMount(async () => {
     formState.runName = wipSeqeraRun.value?.userPipelineRunName || '';
-    formState.pipelineDescription = wipSeqeraRun.value?.pipelineDescription || '';
     validate(formState);
   });
 
@@ -131,7 +132,7 @@
       <EGText tag="h4" class="mb-0">Run Details</EGText>
       <UDivider class="py-4" />
       <EGFormGroup label="Pipeline" name="pipelineName">
-        <EGInput v-model="formState.pipelineName" :disabled="true" />
+        <EGInput :model-value="pipeline?.name" :disabled="true" />
       </EGFormGroup>
 
       <EGFormGroup
@@ -151,7 +152,7 @@
       </EGFormGroup>
 
       <EGFormGroup label="Description" name="pipelineDescription">
-        <EGTextArea v-model="formState.pipelineDescription" :disabled="true" />
+        <EGTextArea :model-value="pipeline?.description" :disabled="true" />
       </EGFormGroup>
     </EGCard>
     <div class="flex justify-end pt-4">

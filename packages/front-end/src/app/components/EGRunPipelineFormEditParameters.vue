@@ -6,6 +6,7 @@
   const props = defineProps<{
     schema: object;
     params: object;
+    pipelineId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);

@@ -4,7 +4,7 @@ import { defineStore } from 'pinia';
 interface LabsStoreState {
   // indexed by labId
   labs: Record<string, Laboratory>;
-  // ordered lists for pipelines by lab
+  // ordered lists for labs by org
   labIdsByOrg: Record<string, string[]>;
 }
 

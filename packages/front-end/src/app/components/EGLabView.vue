@@ -184,24 +184,38 @@
   ];
 
   function viewRunDetails(run: GenericRun) {
-    const foundRun = getLabRunId(run.id);
+    try {
+      const foundRun = getLabRunId(run.id);
 
-    if (foundRun) {
+      if (!foundRun) {
+        throw new Error(`Run with ID ${run.id} not found.`);
+      }
+
       $router.push({
         path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
         query: { tab: 'Run Details', runId: foundRun.RunId },
       });
+    } catch (error) {
+      console.error('Error in viewRunDetails:', error);
+      throw error;
     }
   }
 
   function viewRunResults(run: GenericRun) {
-    const foundRun = getLabRunId(run.id);
+    try {
+      const foundRun = getLabRunId(run.id);
 
-    if (foundRun) {
+      if (!foundRun) {
+        throw new Error(`Run with ID ${run.id} not found.`);
+      }
+
       $router.push({
         path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
         query: { tab: 'Run Results', runId: foundRun.RunId },
       });
+    } catch (error) {
+      console.error('Error in viewRunResults:', error);
+      throw error;
     }
   }
 

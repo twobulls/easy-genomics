@@ -1,18 +1,44 @@
-import { NestedStack } from 'aws-cdk-lib';
+import { Duration, NestedStack } from 'aws-cdk-lib';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
+import { SnsConstruct, TopicDetails, Topics } from '../constructs/sns-construct';
+import { QueueDetails, Queues, SqsConstruct } from '../constructs/sqs-construct';
 import { NFTowerNestedStackProps } from '../types/back-end-stack';
 
 export class NFTowerNestedStack extends NestedStack {
   props: NFTowerNestedStackProps;
   iam: IamConstruct;
   lambda: LambdaConstruct;
+  sns: SnsConstruct;
+  sqs: SqsConstruct;
 
   constructor(scope: Construct, id: string, props: NFTowerNestedStackProps) {
     super(scope, id);
     this.props = props;
+
+    this.sns = new SnsConstruct(this, `${this.props.constructNamespace}-sns`, {
+      namePrefix: this.props.namePrefix,
+      topics: <Topics>{
+        ['nf-tower-run-status-check-topic']: <TopicDetails>{ fifo: true },
+      },
+    });
+
+    this.sqs = new SqsConstruct(this, `${this.props.constructNamespace}-sqs`, {
+      namePrefix: this.props.namePrefix,
+      devEnv: this.props.devEnv,
+      queues: <Queues>{
+        ['nf-tower-run-status-check-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          deliveryDelay: Duration.minutes(5),
+          snsTopics: [this.sns.snsTopics.get('nf-tower-run-status-check-topic')],
+        },
+      },
+    });
 
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
       ...(<IamConstructProps>props), // Typecast to IamConstructProps
@@ -24,7 +50,22 @@ export class NFTowerNestedStack extends NestedStack {
       iamPolicyStatements: this.iam.policyStatements, // Pass declared Auth IAM policies for attaching to respective Lambda function
       lambdaFunctionsDir: 'src/app/controllers/nf-tower',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      lambdaFunctionsResources: {
+        // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+        '/nf-tower/workflow/create-workflow-execution': {
+          environment: {
+            SNS_NF_TOWER_RUN_STATUS_CHECK_TOPIC:
+              this.sns.snsTopics.get('nf-tower-run-status-check-topic')?.topicArn || '',
+          },
+        },
+        '/nf-tower/workflow/process-workflow-status-check': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('nf-tower-run-status-check-queue')!, { batchSize: 1 })],
+          environment: {
+            SNS_NF_TOWER_RUN_STATUS_CHECK_TOPIC:
+              this.sns.snsTopics.get('nf-tower-run-status-check-topic')?.topicArn || '',
+          },
+        },
+      },
       environment: {
         // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
@@ -59,6 +100,16 @@ export class NFTowerNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+    this.iam.addPolicyStatements('laboratory-run-id-query-policy', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     this.iam.addPolicyStatements('laboratory-run-create-policy', [
       new PolicyStatement({
         resources: [
@@ -74,6 +125,16 @@ export class NFTowerNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
         ],
         actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    this.iam.addPolicyStatements('laboratory-run-update-policy', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:UpdateItem'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -126,6 +187,11 @@ export class NFTowerNestedStack extends NestedStack {
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
       ...this.iam.getPolicyStatements('laboratory-run-create-policy'),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('nf-tower-run-status-check-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
     ]);
     // /nf-tower/workflow/list-workflows
     this.iam.addPolicyStatements('/nf-tower/workflow/list-workflows', [
@@ -151,6 +217,18 @@ export class NFTowerNestedStack extends NestedStack {
     this.iam.addPolicyStatements('/nf-tower/workflow/read-workflow-reports', [
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+    ]);
+    // /nf-tower/workflow/process-workflow-status-check
+    this.iam.addPolicyStatements('/nf-tower/workflow/process-workflow-status-check', [
+      ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
+      ...this.iam.getPolicyStatements('laboratory-run-id-query-policy'),
+      ...this.iam.getPolicyStatements('laboratory-run-update-policy'),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('nf-tower-run-status-check-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
     ]);
   };
 }

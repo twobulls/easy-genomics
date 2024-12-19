@@ -1,5 +1,6 @@
 import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sns-processing-event';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import {
   CreateWorkflowLaunchRequest,
@@ -14,9 +15,11 @@ import {
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { UserService } from '@BE/services/easy-genomics/user-service';
+import { SnsService } from '@BE/services/sns-service';
 import { SsmService } from '@BE/services/ssm-service';
 import {
   validateLaboratoryManagerAccess,
@@ -29,6 +32,7 @@ const userService = new UserService();
 const laboratoryService = new LaboratoryService();
 const laboratoryRunService = new LaboratoryRunService();
 const ssmService = new SsmService();
+const snsService = new SnsService();
 
 /**
  * This POST /nf-tower/workflow/create-workflow-execution?laboratoryId={LaboratoryId}
@@ -127,17 +131,31 @@ export const handler: Handler = async (
         RunId: runId,
         OrganizationId: laboratory.OrganizationId,
         WorkflowName: nfTowerResponse.workflowId,
-        Status: 'Active',
+        Status: 'PENDING',
         UserId: user?.UserId || 'unknown',
         Type: 'Seqera Cloud',
         Settings: '{}',
         CreatedAt: Date.now().toString(),
         CreatedBy: user?.UserId || 'unknown',
+        ExternalRunId: nfTowerResponse.workflowId,
       })
       .catch((error: any) => {
         throw error;
       });
     console.log('created lab run', response);
+
+    // Queue up run status checks
+    const record: SnsProcessingEvent = {
+      Operation: 'UPDATE',
+      Type: 'LaboratoryRun',
+      Record: response,
+    };
+    await snsService.publish({
+      TopicArn: process.env.SNS_NF_TOWER_RUN_STATUS_CHECK_TOPIC,
+      Message: JSON.stringify(record),
+      MessageGroupId: `update-laboratory-run-${response.RunId}`,
+      MessageDeduplicationId: uuidv4(),
+    });
 
     return buildResponse(200, JSON.stringify(nfTowerResponse), event);
   } catch (err: any) {

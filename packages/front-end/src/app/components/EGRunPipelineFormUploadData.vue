@@ -393,12 +393,21 @@
     } else {
       uploadStatus.value = 'success';
       useToastStore().success('Files uploaded successfully');
-      console.debug('Uploaded files:', filesToUpload.value.length);
+
+      const labRunRequest = {
+        'Title': wipSeqeraRun.value?.userPipelineRunName,
+        'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
+        'Status': 'Active',
+        'Type': 'Seqera Cloud', // TODO: make this dynamic
+        'OrganizationId': useUserStore().currentOrgId,
+        'RunId': wipSeqeraRun.value?.transactionId,
+      };
+      await $api.labs.createLabRun(labRunRequest);
     }
   }
 
   async function uploadFile(fileDetails: FileDetails) {
-    const { file, name } = fileDetails;
+    const { file } = fileDetails;
 
     try {
       const response = await axios.put(fileDetails.url!, file, {
@@ -406,10 +415,9 @@
           'Content-Type': 'multipart/form-data',
         },
         onUploadProgress: (progressEvent) => {
-          const progress = Math.round((progressEvent?.loaded / progressEvent.total) * 100);
+          const progress = Math.round((progressEvent?.loaded / progressEvent?.total) * 100);
           fileDetails.progress = progress;
           fileDetails.percentage = progress;
-          console.debug(`${name}; Upload progress: ${progress}%`);
         },
       });
 
@@ -425,7 +433,7 @@
     return uploadStatus.value === 'uploading' && progress < 100;
   }
 
-  function formatProgress(progress) {
+  function formatProgress(progress: number): string {
     if (progress === 0) {
       return '0';
     }

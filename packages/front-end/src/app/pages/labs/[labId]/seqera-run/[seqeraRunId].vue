@@ -1,8 +1,8 @@
 <script setup lang="ts">
   import { getDate, getTime } from '@FE/utils/date-time';
-  import { Workflow as SeqeraRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
   import { S3Response } from '@/packages/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
   import { useRunStore } from '@FE/stores';
+  import { useDebounceFn } from '@vueuse/core';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -11,80 +11,60 @@
 
   const labId = $route.params.labId as string;
   const seqeraRunId = $route.params.seqeraRunId as string;
+
   const seqeraRunReports = ref([]);
   const s3Contents = ref<S3Response>(null);
   const tabIndex = ref(0);
 
-  // check permissions to be on this page
+  // Permission Check
   if (!useUserStore().canViewLab(labId)) {
     $router.push('/labs');
   }
 
-  // TODO: switch 'healthomics' suffix for HealthOmics labs
-  const s3Prefix = computed(() => `${useUserStore().currentOrgId}/${labId}/next-flow`);
+  const runId = computed(() => ($route.query.runId as string) || '');
   const tabItems = computed(() => [
-    {
-      key: 'runDetails',
-      label: 'Run Details',
-    },
-    {
-      key: 'runResults',
-      label: 'Run Results',
-    },
+    { key: 'runDetails', label: 'Run Details' },
+    { key: 'runResults', label: 'Run Results' },
   ]);
+  const seqeraRun = computed(() => runStore.seqeraRuns[labId]?.[seqeraRunId] || null);
 
-  const seqeraRun = computed<SeqeraRun | null>(() => runStore.seqeraRuns[labId][seqeraRunId]);
+  const createdDateTime = computed(() => formatDateTime(seqeraRun.value?.dateCreated));
+  const startedDateTime = computed(() => formatDateTime(seqeraRun.value?.start));
+  const stoppedDateTime = computed(() => formatDateTime(seqeraRun.value?.complete));
 
-  const createdDateTime = computed(() => {
-    const createdDate = getDate(seqeraRun.value?.dateCreated);
-    const createdTime = getTime(seqeraRun.value?.dateCreated);
-    return createdDate && createdTime ? `${createdTime} ⋅ ${createdDate}` : '—';
-  });
-  const startedDateTime = computed(() => {
-    const startedDate = getDate(seqeraRun.value?.start);
-    const startedTime = getTime(seqeraRun.value?.start);
-    return startedDate && startedTime ? `${startedTime} ⋅ ${startedDate}` : '—';
-  });
-  const stoppedDateTime = computed(() => {
-    const stoppedDate = getDate(seqeraRun.value?.complete);
-    const stoppedTime = getTime(seqeraRun.value?.complete);
-    return stoppedDate && stoppedTime ? `${stoppedTime} ⋅ ${stoppedDate}` : '—';
-  });
-
-  async function loadRunReports() {
-    useUiStore().setRequestPending('loadRunReports');
-    const res = await $api.seqeraRuns.readWorkflowReports(seqeraRunId, labId);
-    seqeraRunReports.value = res.reports;
-    useUiStore().setRequestComplete('loadRunReports');
+  function formatDateTime(date: string | undefined): string {
+    const datePart = getDate(date);
+    const timePart = getTime(date);
+    return datePart && timePart ? `${timePart} ⋅ ${datePart}` : '—';
   }
 
-  async function fetchS3Content() {
-    useUiStore().setRequestPending('fetchS3Content');
-    try {
-      const res = await $api.file.requestListBucketObjects({
-        LaboratoryId: labId,
-        S3Prefix: s3Prefix.value,
-      });
-      s3Contents.value = res;
-    } catch (error) {
-      console.error('Error fetching S3 content', error);
-    } finally {
-      useUiStore().setRequestComplete('fetchS3Content');
+  function validateAndSetTabIndex(queryTab: string): void {
+    const matchedIndex = tabItems.value.findIndex((item) => item.label === queryTab);
+    if (matchedIndex !== -1) {
+      tabIndex.value = matchedIndex;
+    } else {
+      // Default to first tab if invalid
+      tabIndex.value = 0;
+      updateQueryParams({ tab: tabItems.value[0]?.label });
     }
   }
 
-  onBeforeMount(async () => {
-    await loadRunReports();
-    // TODO: add API call to get Run ID to construct s3 prefix for fetchS3Content() - see: Andrew
-    await fetchS3Content();
+  const updateQueryParams = useDebounceFn((params: Record<string, string | undefined>) => {
+    $router.replace({ path: $route.path, query: { ...$route.query, ...params } });
+  }, 300);
+
+  onBeforeMount(() => {
+    Promise.all([fetchS3Content(), loadRunReports()]);
   });
 
-  // set tabIndex according to query param
   onMounted(() => {
-    const queryTab = $route.query.tab as string;
-    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === queryTab);
-    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+    validateAndSetTabIndex(($route.query.tab as string) || tabItems.value[0]?.label);
   });
+
+  watch(
+    () => $route.query.tab,
+    (newTab) => validateAndSetTabIndex(newTab as string),
+  );
 
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
   //  Tailwind won't pick up and include the classes used and styles will be missing.
@@ -93,7 +73,7 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      base: '!flex border-b-2 rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {
@@ -112,6 +92,36 @@
       },
     },
   };
+
+  async function loadRunReports() {
+    useUiStore().setRequestPending('loadRunReports');
+    try {
+      const res = await $api.seqeraRuns.readWorkflowReports(seqeraRunId, labId);
+      seqeraRunReports.value = res.reports || [];
+    } finally {
+      useUiStore().setRequestComplete('loadRunReports');
+    }
+  }
+
+  async function fetchS3Content() {
+    useUiStore().setRequestPending('fetchS3Content');
+    try {
+      const res = await $api.file.requestListBucketObjects({
+        LaboratoryId: labId,
+        S3Prefix: `${useUserStore().currentOrgId}/${labId}/next-flow/${runId.value}`,
+      });
+      s3Contents.value = res || null;
+    } catch (error) {
+      console.error('Error fetching S3 content:', error);
+    } finally {
+      useUiStore().setRequestComplete('fetchS3Content');
+    }
+  }
+
+  function handleTabChange(newIndex: number) {
+    tabIndex.value = newIndex;
+    updateQueryParams({ tab: tabItems.value[newIndex]?.label });
+  }
 </script>
 
 <template>
@@ -124,19 +134,9 @@
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />
 
-  <UTabs
-    :ui="EGTabsStyles"
-    :model-value="tabIndex"
-    :items="tabItems"
-    @update:model-value="
-      (newIndex) => {
-        $router.push({ query: { ...$router.currentRoute.query, tab: tabItems[newIndex].label } });
-        tabIndex = newIndex;
-      }
-    "
-  >
+  <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="handleTabChange">
     <template #item="{ item }">
-      <div v-if="item.key === 'runResults'" class="space-y-3">
+      <div v-show="item.key === 'runResults'" class="space-y-3">
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"
@@ -148,10 +148,12 @@
         <section
           class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 pt-0 max-md:px-5"
         >
-          <dl class="mt-4">
+          <dl class="mt-4 space-y-4">
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Run Status</dt>
-              <dd class="text-muted text-left"><EGStatusChip :status="seqeraRun?.status" /></dd>
+              <dd class="text-muted text-left">
+                <EGStatusChip :status="seqeraRun?.status" />
+              </dd>
             </div>
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Creation Time</dt>
@@ -159,11 +161,11 @@
             </div>
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Start Time</dt>
-              <dd class="text-muted text-left max-md:max-w-full">{{ startedDateTime }}</dd>
+              <dd class="text-muted text-left">{{ startedDateTime }}</dd>
             </div>
             <div class="flex p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Stop Time</dt>
-              <dd class="text-muted text-left max-md:max-w-full">{{ stoppedDateTime }}</dd>
+              <dd class="text-muted text-left">{{ stoppedDateTime }}</dd>
             </div>
           </dl>
         </section>

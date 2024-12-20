@@ -7,7 +7,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/roles';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse, EditUserResponse } from '@FE/types/api';
-  import { useRunStore, useToastStore, useUiStore } from '@FE/stores';
+  import { useRunStore, useSeqeraPipelinesStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -35,11 +35,12 @@
   const labStore = useLabsStore();
   const uiStore = useUiStore();
   const userStore = useUserStore();
-  const labRunsStore = useLabRunsStore();
+  const seqeraPipelinesStore = useSeqeraPipelinesStore();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
-  const seqeraPipelines = ref<SeqeraPipeline[]>([]);
+  const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
+  const labRuns = ref<LaboratoryRun[]>([]);
   const omicsWorkflows = ref<OmicsWorkflow[]>([]);
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const showAddUserModule = ref(false);
@@ -382,13 +383,7 @@
   async function getSeqeraPipelines(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraPipelines');
     try {
-      const res = await $api.seqeraPipelines.list(props.labId);
-
-      if (!res.pipelines) {
-        throw new Error('response did not contain pipeline object');
-      }
-
-      seqeraPipelines.value = res.pipelines;
+      await seqeraPipelinesStore.loadPipelinesForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {
@@ -444,43 +439,23 @@
     await getLabUsers();
   }
 
-  function viewRunSeqeraPipeline(pipeline: SeqeraRun) {
-    const seqeraRunTempId = uuidv4();
-
-    const { description: pipelineDescription, pipelineId, name: pipelineName } = toRaw(pipeline);
-
-    runStore.updateWipSeqeraRun(seqeraRunTempId, {
-      pipelineId,
-      pipelineName,
-      pipelineDescription: pipelineDescription || '',
-      transactionId: seqeraRunTempId,
-    });
-
+  function viewRunSeqeraPipeline(pipeline: SeqeraPipeline) {
     $router.push({
-      path: `/labs/${props.labId}/run-pipeline/${pipelineId}`,
+      path: `/labs/${props.labId}/run-pipeline/${pipeline.pipelineId}`,
       query: {
-        seqeraRunTempId,
+        seqeraRunTempId: uuidv4(),
       },
     });
   }
 
-  function viewRunOmicsWorkflow(workflow: OmicsRun) {
+  function viewRunOmicsWorkflow(workflow: OmicsWorkflow) {
     useToastStore().info('Running HealthOmics Workflows is not yet implemented');
     return;
-
-    const omicsRunTempId = uuidv4();
-
-    runStore.updateWipOmicsRun(omicsRunTempId, {
-      laboratoryId: props.labId,
-      workflowId: workflow.id,
-      workflowName: workflow.name,
-      transactionId: omicsRunTempId,
-    });
 
     $router.push({
       path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
       query: {
-        omicsRunTempId,
+        omicsRunTempId: uuidv4(),
       },
     });
   }

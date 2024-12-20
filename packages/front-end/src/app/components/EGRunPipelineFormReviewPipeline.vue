@@ -3,17 +3,20 @@
   import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import EGAccordion from '@FE/components/EGAccordion.vue';
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
     canLaunch?: boolean;
     schema: object;
     params: object;
+    pipelineId: string;
   }>();
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
 
   const runStore = useRunStore();
+  const seqeraPipelineStore = useSeqeraPipelinesStore();
 
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
@@ -25,6 +28,7 @@
   const areAccordionsOpen = ref(true);
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -34,7 +38,7 @@
 
     try {
       isLaunchingRun.value = true;
-      const pipelineId = wipSeqeraRun.value?.pipelineId;
+      const pipelineId = props.pipelineId;
       if (pipelineId === undefined) {
         throw new Error('pipeline id not found in wip run config');
       }
@@ -123,7 +127,7 @@
       <dl>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Pipeline</dt>
-          <dd class="text-muted text-left">{{ wipSeqeraRun?.pipelineName }}</dd>
+          <dd class="text-muted text-left">{{ pipeline?.name }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Laboratory</dt>

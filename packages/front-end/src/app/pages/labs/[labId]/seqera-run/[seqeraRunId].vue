@@ -8,6 +8,7 @@
   const $router = useRouter();
   const $route = useRoute();
   const runStore = useRunStore();
+  const labRunsStore = useLabRunsStore();
 
   const labId = $route.params.labId as string;
   const seqeraRunId = $route.params.seqeraRunId as string;
@@ -21,7 +22,7 @@
     $router.push('/labs');
   }
 
-  const runId = computed(() => ($route.query.runId as string) || '');
+  const labRunId = computed<string | null>(() => labRunsStore.labRunByExternalId(seqeraRunId)?.RunId ?? null);
   const tabItems = computed(() => [
     { key: 'runDetails', label: 'Run Details' },
     { key: 'runResults', label: 'Run Results' },
@@ -54,7 +55,7 @@
   }, 300);
 
   onBeforeMount(() => {
-    Promise.all([fetchS3Content(), loadRunReports()]);
+    Promise.all([fetchS3Content(), loadRunReports(), fetchLaboratoryRuns()]);
   });
 
   onMounted(() => {
@@ -108,7 +109,7 @@
     try {
       const res = await $api.file.requestListBucketObjects({
         LaboratoryId: labId,
-        S3Prefix: `${useUserStore().currentOrgId}/${labId}/next-flow/${runId.value}`,
+        S3Prefix: `${useUserStore().currentOrgId}/${labId}/next-flow/${labRunId.value}`,
       });
       s3Contents.value = res || null;
     } catch (error) {
@@ -116,6 +117,10 @@
     } finally {
       useUiStore().setRequestComplete('fetchS3Content');
     }
+  }
+
+  async function fetchLaboratoryRuns(): Promise<void> {
+    await labRunsStore.loadLabRunsForLab(labId);
   }
 
   function handleTabChange(newIndex: number) {

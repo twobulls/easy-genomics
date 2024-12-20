@@ -185,39 +185,17 @@
   ];
 
   function viewRunDetails(run: GenericRun) {
-    try {
-      const foundRun = getLabRunId(run.id);
-
-      if (!foundRun) {
-        throw new Error(`Run with ID ${run.id} not found.`);
-      }
-
-      $router.push({
-        path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
-        query: { tab: 'Run Details', runId: foundRun.RunId },
-      });
-    } catch (error) {
-      console.error('Error in viewRunDetails:', error);
-      throw error;
-    }
+    $router.push({
+      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+      query: { tab: 'Run Details' },
+    });
   }
 
   function viewRunResults(run: GenericRun) {
-    try {
-      const foundRun = getLabRunId(run.id);
-
-      if (!foundRun) {
-        throw new Error(`Run with ID ${run.id} not found.`);
-      }
-
-      $router.push({
-        path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
-        query: { tab: 'Run Results', runId: foundRun.RunId },
-      });
-    } catch (error) {
-      console.error('Error in viewRunResults:', error);
-      throw error;
-    }
+    $router.push({
+      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+      query: { tab: 'Run Results' },
+    });
   }
 
   function initCancelRun(run: GenericRun) {
@@ -248,7 +226,7 @@
    */
   onBeforeMount(async () => {
     await loadLabData();
-    await listLabRuns();
+    await fetchLaboratoryRuns();
   });
 
   // set tabIndex according to query param
@@ -397,16 +375,9 @@
     }
   }
 
-  async function listLabRuns(): Promise<LaboratoryRun[]> {
-    try {
-      labRuns.value = await $api.labs.listLabRuns(props.labId);
-    } catch (error) {
-      console.error('Error retrieving Lab runs', error);
-    }
-  }
-
-  function getLabRunId(runId: string): LaboratoryRun | undefined {
-    return labRuns.value.find((item) => item.ExternalRunId?.trim().toLowerCase() === runId.trim().toLowerCase());
+  // this anticipates these store values being needed on run click
+  async function fetchLaboratoryRuns(): Promise<void> {
+    await labRunsStore.loadLabRunsForLab(props.labId);
   }
 
   async function getSeqeraPipelines(): Promise<void> {

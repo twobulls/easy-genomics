@@ -1,4 +1,4 @@
-import useLaboratoryRunsStore from './lab-runs';
+import useLabRunsStore from './lab-runs';
 import useLabsStore from './labs';
 import useOrgsStore from './orgs';
 import useRunStore from './run';
@@ -12,7 +12,7 @@ function resetStores() {
   useRunStore().reset();
   useUiStore().reset();
   useUserStore().reset();
-  useLaboratoryRunsStore().reset();
+  useLabRunsStore().reset();
 }
 export {
   resetStores,
@@ -22,5 +22,5 @@ export {
   useUiStore,
   useLabsStore,
   useRunStore,
-  useLaboratoryRunsStore,
+  useLabRunsStore,
 };

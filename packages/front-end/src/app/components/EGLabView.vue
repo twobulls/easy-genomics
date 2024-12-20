@@ -20,7 +20,6 @@
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow, RunListItem as OmicsRun } from '@aws-sdk/client-omics';
   import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
-  import useLabRunsStore from '@FE/stores/lab-runs';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -40,7 +39,6 @@
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
-  const labRuns = computed<LaboratoryRun[]>(() => labRunsStore.labRunsForLab(props.labId));
   const seqeraPipelines = ref<SeqeraPipeline[]>([]);
   const omicsWorkflows = ref<OmicsWorkflow[]>([]);
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
@@ -186,39 +184,17 @@
   ];
 
   function viewRunDetails(run: GenericRun) {
-    try {
-      const foundRun = getLabRunId(run.id);
-
-      if (!foundRun) {
-        throw new Error(`Run with ID ${run.id} not found.`);
-      }
-
-      $router.push({
-        path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
-        query: { tab: 'Run Details', runId: foundRun.RunId },
-      });
-    } catch (error) {
-      console.error('Error in viewRunDetails:', error);
-      throw error;
-    }
+    $router.push({
+      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+      query: { tab: 'Run Details' },
+    });
   }
 
   function viewRunResults(run: GenericRun) {
-    try {
-      const foundRun = getLabRunId(run.id);
-
-      if (!foundRun) {
-        throw new Error(`Run with ID ${run.id} not found.`);
-      }
-
-      $router.push({
-        path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
-        query: { tab: 'Run Results', runId: foundRun.RunId },
-      });
-    } catch (error) {
-      console.error('Error in viewRunResults:', error);
-      throw error;
-    }
+    $router.push({
+      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+      query: { tab: 'Run Results' },
+    });
   }
 
   function initCancelRun(run: GenericRun) {
@@ -249,7 +225,7 @@
    */
   onBeforeMount(async () => {
     await loadLabData();
-    await listLabRuns();
+    await fetchLaboratoryRuns();
   });
 
   // set tabIndex according to query param
@@ -398,16 +374,9 @@
     }
   }
 
-  async function listLabRuns(): Promise<LaboratoryRun[]> {
-    try {
-      await labRunsStore.loadLabRunsForLab(props.labId);
-    } catch (error) {
-      console.error('Error retrieving Lab runs', error);
-    }
-  }
-
-  function getLabRunId(runId: string): LaboratoryRun | undefined {
-    return labRuns.value.find((item) => item.ExternalRunId?.trim().toLowerCase() === runId.trim().toLowerCase());
+  // this anticipates these store values being needed on run click
+  async function fetchLaboratoryRuns(): Promise<void> {
+    await labRunsStore.loadLabRunsForLab(props.labId);
   }
 
   async function getSeqeraPipelines(): Promise<void> {

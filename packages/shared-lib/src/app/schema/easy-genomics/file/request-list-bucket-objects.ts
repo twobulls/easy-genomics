@@ -26,5 +26,5 @@ export const S3ResponseSchema = z.object({
     attempts: z.number(),
     totalRetryDelay: z.number(),
   }),
-  Contents: z.array(S3ObjectSchema),
+  Contents: z.array(S3ObjectSchema).optional(),
 });

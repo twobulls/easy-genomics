@@ -19,6 +19,7 @@
     Pipeline as SeqeraPipeline,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow, RunListItem as OmicsRun } from '@aws-sdk/client-omics';
+  import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -34,6 +35,7 @@
   const labStore = useLabsStore();
   const uiStore = useUiStore();
   const userStore = useUserStore();
+  const labRunsStore = useLabRunsStore();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
@@ -182,11 +184,17 @@
   ];
 
   function viewRunDetails(run: GenericRun) {
-    $router.push({ path: `/labs/${props.labId}/${run.type}-run/${run.id}`, query: { tab: 'Run Details' } });
+    $router.push({
+      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+      query: { tab: 'Run Details' },
+    });
   }
 
   function viewRunResults(run: GenericRun) {
-    $router.push({ path: `/labs/${props.labId}/${run.type}-run/${run.id}`, query: { tab: 'Run Results' } });
+    $router.push({
+      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+      query: { tab: 'Run Results' },
+    });
   }
 
   function initCancelRun(run: GenericRun) {
@@ -215,7 +223,10 @@
   /**
    * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
    */
-  onBeforeMount(loadLabData);
+  onBeforeMount(async () => {
+    await loadLabData();
+    await fetchLaboratoryRuns();
+  });
 
   // set tabIndex according to query param
   onMounted(() => {
@@ -361,6 +372,11 @@
     } finally {
       useUiStore().setRequestComplete('loadLabData');
     }
+  }
+
+  // this anticipates these store values being needed on run click
+  async function fetchLaboratoryRuns(): Promise<void> {
+    await labRunsStore.loadLabRunsForLab(props.labId);
   }
 
   async function getSeqeraPipelines(): Promise<void> {
@@ -540,7 +556,7 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      base: '!flex border-b-2 rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {

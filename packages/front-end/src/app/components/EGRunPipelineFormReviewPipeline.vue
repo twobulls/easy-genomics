@@ -53,7 +53,28 @@
           paramsText: paramsText,
         },
       };
-      await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+
+      const res = await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+
+      if (!res) {
+        throw new Error('Failed to create pipeline run. Response is empty.');
+      }
+
+      if (!res.workflowId) {
+        throw new Error('Workflow ID is missing in the response');
+      }
+
+      try {
+        await $api.labs.updateLabRun(wipSeqeraRun.value?.transactionId, {
+          'Status': 'Active',
+          'Settings': '{}',
+          'ExternalRunId': res.workflowId,
+        });
+      } catch (error) {
+        console.error('Error launching workflow:', error);
+        throw error;
+      }
+
       delete runStore.wipSeqeraRuns[seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
@@ -115,7 +136,6 @@
       </dl>
     </section>
   </EGCard>
-
   <EGCard>
     <div class="mb-4 flex items-center justify-between">
       <EGText tag="h4" class="text-muted">Selected Workflow Parameters</EGText>

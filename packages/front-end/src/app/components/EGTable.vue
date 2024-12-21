@@ -17,7 +17,6 @@
       rowClasses?: (row: any) => string;
     }>(),
     {
-      isLoading: false,
       showPagination: true,
       noResultsMsg: 'No results found',
     },

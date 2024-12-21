@@ -66,7 +66,7 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      base: '!flex border-b-2 rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {

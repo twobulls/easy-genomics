@@ -4,7 +4,8 @@ export function validateApiResponse<T>(schema: ZodSchema<T>, data: any) {
   const validation = schema.safeParse(data);
 
   if (!validation.success) {
-    throw new Error('Failed to validate API response: ', validation.error);
+    console.error('Validation error details:', validation.error.issues);
+    throw new Error('Failed to validate API response: ' + validation.error.message);
   }
 }
 

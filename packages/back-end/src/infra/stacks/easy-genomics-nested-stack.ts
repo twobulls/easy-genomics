@@ -32,6 +32,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ['organization-deletion-topic']: <TopicDetails>{ fifo: true },
         ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true },
         ['user-deletion-topic']: <TopicDetails>{ fifo: true },
+        ['laboratory-run-update-topic']: <TopicDetails>{ fifo: true },
       },
     });
 
@@ -56,6 +57,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('user-deletion-topic')],
+        },
+        ['laboratory-run-update-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          deliveryDelay: Duration.minutes(5),
+          snsTopics: [this.sns.snsTopics.get('laboratory-run-update-topic')],
         },
       },
     });
@@ -164,6 +172,23 @@ export class EasyGenomicsNestedStack extends NestedStack {
           events: [new SqsEventSource(this.sqs.sqsQueues.get('laboratory-management-queue')!, { batchSize: 1 })],
           environment: {
             SNS_LABORATORY_DELETION_TOPIC: this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/laboratory/run/create-laboratory-run': {
+          environment: {
+            SNS_LABORATORY_RUN_UPDATE_TOPIC: this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/laboratory/run/update-laboratory-run': {
+          environment: {
+            SNS_LABORATORY_RUN_UPDATE_TOPIC: this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/laboratory/run/process-update-laboratory-run': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('laboratory-run-update-queue')!, { batchSize: 5 })],
+          environment: {
+            SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
+            SNS_LABORATORY_RUN_UPDATE_TOPIC: this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || '',
           },
         },
       },
@@ -791,6 +816,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
         actions: ['dynamodb:GetItem'],
         effect: Effect.ALLOW,
       }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
     ]);
 
     // /easy-genomics/laboratory/run/read-laboratory-run
@@ -833,6 +863,48 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
         ],
         actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/process-update-laboratory-run
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/process-update-laboratory-run', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:UpdateItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+        ],
+        actions: ['ssm:GetParameter'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
+        actions: ['omics:GetWorkflow'],
         effect: Effect.ALLOW,
       }),
     ]);

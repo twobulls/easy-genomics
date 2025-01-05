@@ -3,6 +3,7 @@ import {
   EditLaboratoryRunSchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sns-processing-event';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
@@ -11,12 +12,16 @@ import {
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
+import { SnsService } from '@BE/services/sns-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+
+const snsService = new SnsService();
 
 const laboratoryRunService = new LaboratoryRunService();
 
@@ -65,6 +70,21 @@ export const handler: Handler = async (
       Settings: settings,
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: currentUserId,
+    });
+
+    //TODO: check if it is an active request
+
+    // Queue up run status checks
+    const record: SnsProcessingEvent = {
+      Operation: 'UPDATE',
+      Type: 'LaboratoryRun',
+      Record: response,
+    };
+    await snsService.publish({
+      TopicArn: process.env.SNS_LABORATORY_RUN_UPDATE_TOPIC,
+      Message: JSON.stringify(record),
+      MessageGroupId: `update-laboratory-run-${response.RunId}`,
+      MessageDeduplicationId: uuidv4(),
     });
 
     return buildResponse(200, JSON.stringify(response), event);

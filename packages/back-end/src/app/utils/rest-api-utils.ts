@@ -72,18 +72,18 @@ export async function httpRequest<T>(
  * @param event
  * @param workspaceId
  */
-export function getNextFlowApiQueryParameters(event: APIGatewayProxyEvent, workspaceId?: string): string {
+export function getNextFlowApiQueryParameters(event?: APIGatewayProxyEvent, workspaceId?: string): string {
   const apiQueryParameters: URLSearchParams = new URLSearchParams();
 
-  const max: string | undefined = event.queryStringParameters?.max;
+  const max: string | undefined = event?.queryStringParameters?.max;
   if (max && parseInt(max) > 0) {
     apiQueryParameters.set('max', max);
   }
-  const offset: string | undefined = event.queryStringParameters?.offset;
+  const offset: string | undefined = event?.queryStringParameters?.offset;
   if (offset && parseInt(offset) > 0) {
     apiQueryParameters.set('offset', offset);
   }
-  const search: string | undefined = event.queryStringParameters?.search;
+  const search: string | undefined = event?.queryStringParameters?.search;
   if (search) {
     apiQueryParameters.set('search', search);
   }

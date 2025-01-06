@@ -33,6 +33,8 @@
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
 
+  const schemaDefinitions = schema.$defs || schema.definitions;
+
   async function launchRun() {
     emit('submit-launch-request');
 
@@ -90,8 +92,8 @@
   }
 
   const accordionItems = computed(() => {
-    return Object.keys(schema.definitions).map((sectionName) => {
-      const section = schema.definitions[sectionName];
+    return Object.keys(schemaDefinitions).map((sectionName) => {
+      const section = schemaDefinitions[sectionName];
       return {
         label: section.title,
         defaultOpen: true,

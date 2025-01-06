@@ -160,6 +160,7 @@
     action-label="Continue"
     :action-variant="ButtonVariantEnum.enum.primary"
     @action-triggered="doSwitchOrg"
+    :trigger-delay="2000"
     primary-message="Are you sure you would like to switch organizations?"
     secondary-message="You are about to switch organisation accounts. Ensure all unsaved work is saved and reviewed before proceeding. Switching accounts may result in losing access to current session data or active tasks."
     v-model="switchOrgDialogOpen"

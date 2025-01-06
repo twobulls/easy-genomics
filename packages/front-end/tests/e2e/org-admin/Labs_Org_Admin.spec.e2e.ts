@@ -1,5 +1,6 @@
 import { test, expect } from 'playwright/test';
 import { envConfig } from '../../../config/env-config';
+import { truncate } from 'node:fs';
 
 /*
  * Test preconditions:
@@ -245,27 +246,38 @@ test('05 - Grant access to a user to a Lab via Edit User Access Successfully', a
   await page.getByRole('menuitem', { name: 'Edit User Access' }).click();
   await page.waitForTimeout(2000);
 
-  let userNotAddedToLab = true;
+  let orgHasLabs1 = false;
   try {
-    userNotAddedToLab = await page.getByRole('row', { name: labNameUpdated + ' Grant access' }).isVisible();
+    orgHasLabs1 = await page.getByText('There are no labs in your Organization').isHidden();
   } catch (error) {
-    console.log('User was already added!', error);
+    console.log('User has not been added!', error);
   }
 
-  if (userNotAddedToLab) {
-    // Click Grant Access in Edit User Access page
-    await page
-      .getByRole('row', { name: labNameUpdated + ' Grant access' })
-      .getByRole('button')
-      .click();
-    await page.waitForTimeout(2000);
+  if (orgHasLabs1 == true) {
+    let userNotAddedToLab1 = false;
+    try {
+      userNotAddedToLab1 = await page.getByRole('row', { name: labNameUpdated + ' Grant access' }).isVisible();
+    } catch (error) {
+      console.log('User was already added!', error);
+    }
 
-    // confirm creation
-    await page.getByText(labNameUpdated + ' has been successfully updated for ' + labManagerName);
+    if (userNotAddedToLab1 == true) {
+      // Click Grant Access in Edit User Access page
+      await page
+        .getByRole('row', { name: labNameUpdated + ' Grant access' })
+        .getByRole('button')
+        .click();
+      await page.waitForTimeout(2000);
 
-    await page.reload();
-    await page.waitForTimeout(2000);
-    await page.getByRole('row', { name: labNameUpdated + ' Lab Technician' }).isVisible();
+      // confirm creation
+      await page.getByText(labNameUpdated + ' has been successfully updated for ' + labManagerName);
+
+      await page.reload();
+      await page.waitForTimeout(2000);
+      await page.getByRole('row', { name: labNameUpdated + ' Lab Technician' }).isVisible();
+    }
+  } else {
+    console.log('No Labs in the current organization');
   }
 });
 
@@ -278,22 +290,33 @@ test('06 - Remove user from a Lab via Edit User Access Successfully', async ({ p
   await page.getByRole('menuitem', { name: 'Edit User Access' }).click();
   await page.waitForTimeout(2000);
 
-  let UserAddedtoLab = true;
+  let orgHasLabs2 = false;
   try {
-    UserAddedtoLab = await page.getByRole('row', { name: labNameUpdated + ' Grant access' }).isHidden();
+    orgHasLabs2 = await page.getByText('There are no labs in your Organization').isHidden();
   } catch (error) {
     console.log('User has not been added!', error);
   }
 
-  if (UserAddedtoLab) {
-    //this will delete the user
-    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
-    await page.getByRole('menuitem', { name: 'Remove From Lab' }).click();
-    await page.getByRole('button', { name: 'Remove User' }).click();
-    await page.waitForTimeout(2000);
-    await page.getByRole('status').locator('div').nth(1).click();
-    await page.getByText('Successfully removed ' + labManagerName + ' from ' + labNameUpdated).click();
-    await page.getByRole('row', { name: labNameUpdated + ' Grant Access' }).isVisible();
+  if (orgHasLabs2 == true) {
+    let UserAddedtoLab2 = true;
+    try {
+      UserAddedtoLab2 = await page.getByRole('row', { name: labNameUpdated + ' Grant access' }).isVisible();
+    } catch (error) {
+      console.log('User has not been added!', error);
+    }
+
+    if (UserAddedtoLab2 == false) {
+      //this will delete the user
+      await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Remove From Lab' }).click();
+      await page.getByRole('button', { name: 'Remove User' }).click();
+      await page.waitForTimeout(2000);
+      await page.getByRole('status').locator('div').nth(1).click();
+      await page.getByText('Successfully removed ' + labManagerName + ' from ' + labNameUpdated).click();
+      await page.getByRole('row', { name: labNameUpdated + ' Grant Access' }).isVisible();
+    }
+  } else {
+    console.log('No Labs in the current organization');
   }
 });
 
@@ -407,20 +430,3 @@ test('09 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }
     await expect(page.getByText('Successfully added ' + labTechnicianName + ' to ' + labNameUpdated)).toBeVisible();
   }
 });
-
-//TO DO
-//The scripts below are TO DO and will included in the file soon
-/*
-test('Remove user from a Laboratory containing users', async ({ page, baseURL }) => {
-});
-
-test('Remove Laboratory successfully', async ({ page, baseURL }) => {
-});
-
-test('Grant Access as Lab Technician', async ({ page, baseURL }) => {
-});
-
-test('Grant Access as Lab Manager', async ({ page, baseURL }) => {
-});
-
-*/

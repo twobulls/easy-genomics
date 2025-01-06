@@ -119,6 +119,22 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       }),
     ]);
 
+    // /aws-healthomics/workflow/list-shared-workflows
+    this.iam.addPolicyStatements('/aws-healthomics/workflow/list-shared-workflows', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
+        actions: ['omics:ListShares'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
     // /aws-healthomics/workflow/read-private-workflow
     this.iam.addPolicyStatements('/aws-healthomics/workflow/read-private-workflow', [
       new PolicyStatement({

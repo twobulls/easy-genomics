@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { ButtonVariantEnum, ButtonSizeEnum } from '@FE/types/buttons';
 
-  defineProps<{
+  const props = defineProps<{
     modelValue: any;
     primaryMessage?: string;
     secondaryMessage?: string;
@@ -10,12 +10,24 @@
     cancelLabel?: string;
     cancelVariant?: string;
     buttonsDisabled?: boolean;
+    triggerDelay?: number;
   }>();
 
   const emit = defineEmits(['action-triggered', 'update:modelValue']);
 
   function handleCancel() {
     emit('update:modelValue', false);
+  }
+
+  const delaying = ref<boolean>(false);
+
+  function handleClick() {
+    delaying.value = true;
+
+    setTimeout(() => {
+      delaying.value = false;
+      emit('action-triggered');
+    }, props.triggerDelay || 0);
   }
 </script>
 
@@ -34,6 +46,7 @@
                 color="black"
                 variant="ghost"
                 :ui="{ rounded: 'rounded-full' }"
+                :disabled="buttonsDisabled || delaying"
               />
             </div>
           </div>
@@ -47,15 +60,16 @@
                 :label="cancelLabel"
                 :variant="ButtonVariantEnum.enum.secondary"
                 :size="ButtonSizeEnum.enum.sm"
-                :disabled="buttonsDisabled"
+                :disabled="buttonsDisabled || delaying"
               />
             </div>
             <EGButton
-              @click="emit('action-triggered')"
+              @click="handleClick"
               :label="actionLabel"
               :size="ButtonSizeEnum.enum.sm"
               :variant="actionVariant"
-              :disabled="buttonsDisabled"
+              :disabled="buttonsDisabled || delaying"
+              :loading="delaying"
               autofocus
             />
           </div>

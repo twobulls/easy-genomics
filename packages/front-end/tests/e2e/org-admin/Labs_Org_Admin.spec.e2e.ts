@@ -1,6 +1,5 @@
 import { test, expect } from 'playwright/test';
 import { envConfig } from '../../../config/env-config';
-import { truncate } from 'node:fs';
 
 /*
  * Test preconditions:

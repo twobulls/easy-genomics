@@ -14,6 +14,9 @@ import {
   ListWorkflowsCommand,
   ListWorkflowsCommandInput,
   ListWorkflowsCommandOutput,
+  ListSharesCommand,
+  ListSharesCommandInput,
+  ListSharesCommandOutput,
   OmicsClient,
   OmicsServiceException,
   StartRunCommand,
@@ -27,6 +30,7 @@ export enum OmicsCommand {
   GET_WORKFLOW = 'get-workflow',
   LIST_RUNS = 'list-runs',
   LIST_WORKFLOWS = 'list-workflows',
+  LIST_SHARED_WORKFLOWS = 'list-shared-workflows',
   START_RUN = 'start-run',
 }
 
@@ -65,6 +69,15 @@ export class OmicsService {
     return this.omicsRequest<ListWorkflowsCommandInput, ListWorkflowsCommandOutput>(
       OmicsCommand.LIST_WORKFLOWS,
       listWorkflowsCommandInput,
+    );
+  };
+
+  public listSharedWorkflows = async (
+    listSharesCommandInput: ListSharesCommandInput,
+  ): Promise<ListSharesCommandOutput> => {
+    return this.omicsRequest<ListSharesCommandInput, ListSharesCommandOutput>(
+      OmicsCommand.LIST_SHARED_WORKFLOWS,
+      listSharesCommandInput,
     );
   };
 
@@ -107,6 +120,8 @@ export class OmicsService {
         return new ListRunsCommand(data);
       case OmicsCommand.LIST_WORKFLOWS:
         return new ListWorkflowsCommand(data);
+      case OmicsCommand.LIST_SHARED_WORKFLOWS:
+        return new ListSharesCommand(data);
       case OmicsCommand.START_RUN:
         return new StartRunCommand(data);
       default:

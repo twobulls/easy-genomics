@@ -138,7 +138,7 @@ export default function useUser() {
       userStore.currentUserDetails.lastName = decodedToken.LastName;
       userStore.currentUserDetails.preferredName = decodedToken.PreferredName;
     } catch (error) {
-      console.error('Error occurred setting the current organisation.', error);
+      console.error('Error occurred setting the current organization.', error);
       throw error;
     }
   }

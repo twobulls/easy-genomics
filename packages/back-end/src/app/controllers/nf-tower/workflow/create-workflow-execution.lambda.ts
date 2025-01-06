@@ -101,6 +101,7 @@ export const handler: Handler = async (
       { Authorization: `Bearer ${accessToken}` },
       createWorkflowLaunchRequest, // Delegate request body validation to Seqera Cloud / NextFlow Tower
     );
+
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);

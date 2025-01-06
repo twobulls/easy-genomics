@@ -79,12 +79,16 @@ export default function useAuth() {
     try {
       await Auth.signOut();
       useUserStore().reset();
-      await navigateTo('/signin');
-      useToastStore().success('You have been signed out.');
     } catch (error) {
       console.error('Error occurred during sign out.', error);
       throw error;
     }
+  }
+
+  async function signOutAndRedirect() {
+    await signOut();
+    useToastStore().success('You have been signed out.');
+    await navigateTo('/signin');
   }
 
   return {
@@ -93,5 +97,6 @@ export default function useAuth() {
     isAuthed,
     signIn,
     signOut,
+    signOutAndRedirect,
   };
 }

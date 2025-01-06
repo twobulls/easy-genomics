@@ -8,8 +8,8 @@ const baseURL = window.location.origin;
 export default defineNuxtRouteMiddleware(async (to) => {
   const url = new URL(to.fullPath, baseURL);
 
-  // If the URL contains an email query parameter (incoming from /accept-invite) do not redirect
-  if (url.search.startsWith('?email=')) {
+  // If the URL contains an email query parameter (incoming from /accept-invitation) do not redirect
+  if (url.pathname === '/accept-invitation' && url.search.startsWith('?email=')) {
     return;
   }
 
@@ -17,7 +17,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (url.pathname === '/accept-invitation') {
     const token = url.searchParams.get('invite');
 
-    // If the 'accept-password' query parameter is missing or empty, redirect to '/'
+    // If the 'invite' query parameter is missing or empty, redirect to '/'
     if (!token) {
       return navigateTo('/signin');
     }
@@ -52,6 +52,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
         return navigateTo('/signin');
       }
     }
+  }
+
+  /*
+   * @description Handles case where invite link is clicked while signed in as superuser: sign out, then continue
+   */
+  if (useUserStore().isSuperuser && url.pathname === '/accept-invitation') {
+    const { signOut } = useAuth();
+    await signOut();
+    return;
   }
 
   /**

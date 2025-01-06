@@ -68,10 +68,12 @@
     const res = await $api.seqeraPipelines.readPipelineSchema(pipelineId, labId);
     const originalSchema = JSON.parse(res.schema);
 
+    const definitions = originalSchema.$defs || originalSchema.definitions;
+
     // Filter Schema to exclude any sections that do not have any visible parameters for user input
-    const filteredDefinitions = Object.keys(originalSchema.definitions)
+    const filteredDefinitions = Object.keys(definitions)
       .flatMap((key) => {
-        const section = originalSchema.definitions[key];
+        const section = definitions[key];
         const hasAllHiddenSettings: boolean = Object.values(section.properties).every((x) => x?.hidden === true);
         if (!hasAllHiddenSettings) {
           return {
@@ -84,7 +86,7 @@
 
     schema.value = {
       ...originalSchema,
-      definitions: filteredDefinitions,
+      $defs: filteredDefinitions,
     };
     if (res.params) {
       runStore.updateWipSeqeraRun(seqeraRunTempId.value, { params: JSON.parse(res.params) });

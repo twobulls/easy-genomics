@@ -389,7 +389,6 @@
   }
 
   async function uploadFiles() {
-    console.debug('Uploading files:', filesToUpload.value.length);
     const results = await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
 
     const failedUploads: UploadError[] = results
@@ -408,7 +407,6 @@
       .filter((error): error is UploadError => error !== null);
 
     if (failedUploads.length > 0) {
-      console.error('Failed uploads:', failedUploads);
       uploadStatus.value = 'failed';
 
       // Check if there are any network errors and use their message

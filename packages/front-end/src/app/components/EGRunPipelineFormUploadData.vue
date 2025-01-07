@@ -388,6 +388,24 @@
     });
   }
 
+  /**
+   * Handles the process of uploading multiple files, tracks their progress, and manages upload results.
+   *
+   * @returns {Promise<UploadError[]>} - Resolves with an array of failed uploads (if any), containing error details.
+   *
+   * Purpose:
+   * - Initiates the upload of all files in `filesToUpload` using `uploadFile`.
+   * - Ensures that all file uploads are completed, regardless of individual successes or failures, using `Promise.allSettled`.
+   * - Collects detailed information about any failed uploads, including user-friendly error messages.
+   * - Displays meaningful toast notifications for both successful and failed uploads:
+   *   - Displays a success toast when all files are uploaded successfully.
+   *   - Displays specific error messages for network errors or generic messages for other failures.
+   * - Creates and submits a lab run request upon successful uploads.
+   *
+   * Toast Messaging:
+   * - For network errors, displays a detailed user-friendly message.
+   * - For other failures, displays specific error messages for individual files or a summary for multiple failed files.
+   */
   async function uploadFiles() {
     const results = await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
 
@@ -435,6 +453,19 @@
     await $api.labs.createLabRun(labRunRequest);
   }
 
+  /**
+   * Uploads a single file to the specified URL using an HTTP PUT request.
+   *
+   * @param {FileDetails} fileDetails - An object containing file information, including the file, URL, and progress details.
+   *
+   * @returns {Promise} - Resolves with the response if the upload is successful.
+   *                      Rejects with an error object containing the error message, code, and file details if the upload fails.
+   *
+   * Purpose:
+   * - Tracks the progress of the file upload and updates progress/percentage in `fileDetails`.
+   * - Handles network errors, rejecting with a detailed error message.
+   * - Logs any upload errors to the console for debugging purposes.
+   */
   async function uploadFile(fileDetails: FileDetails) {
     const { file } = fileDetails;
 

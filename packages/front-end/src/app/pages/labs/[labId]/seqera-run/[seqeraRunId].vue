@@ -14,7 +14,7 @@
   const seqeraRunId = $route.params.seqeraRunId as string;
 
   const seqeraRunReports = ref([]);
-  const s3Contents = ref<S3Response>(null);
+  const s3Contents = ref<S3Response | null>(null);
   const tabIndex = ref(0);
 
   // Permission Check

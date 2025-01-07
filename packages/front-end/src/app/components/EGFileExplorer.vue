@@ -85,7 +85,7 @@
 
   function transformS3Data(s3Contents: S3Response, s3prefix: string) {
     const map: MapType = {};
-    s3Contents.Contents.forEach((item: S3Object) => {
+    s3Contents?.Contents?.forEach((item: S3Object) => {
       if (item.Key.startsWith(s3prefix)) {
         const parts = item.Key.slice(s3prefix.length).split('/').filter(Boolean);
         parts.reduce((acc: MapType, part: string, index: number) => {

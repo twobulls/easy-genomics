@@ -228,10 +228,14 @@
     await fetchLaboratoryRuns();
   });
 
-  // set tabIndex according to query param
-  onMounted(() => {
+  function setTabIndexFromQuery() {
     const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
     tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+  }
+
+  onMounted(() => {
+    // set tabIndex according to query param
+    setTabIndexFromQuery();
 
     if (intervalId) {
       clearTimeout(intervalId);
@@ -487,6 +491,13 @@
 
     await getSeqeraRuns();
     await getOmicsRuns();
+  }
+
+  async function handleDetailsUpdated() {
+    await loadLabData();
+
+    // the tabs can change after details are updated from adding/removing a compute integration, so update tab index
+    setTimeout(setTabIndexFromQuery, 100); // there's a slight delay to get around a race condition
   }
 
   watch(lab, async (lab) => {
@@ -756,7 +767,7 @@
         </EGTable>
       </div>
       <div v-else-if="item.key === 'details'" class="space-y-3">
-        <EGFormLabDetails @updated="loadLabData" />
+        <EGFormLabDetails @updated="handleDetailsUpdated" />
       </div>
     </template>
   </UTabs>

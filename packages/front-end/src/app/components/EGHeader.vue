@@ -14,7 +14,7 @@
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
 
-  const { signOut } = useAuth();
+  const { signOutAndRedirect } = useAuth();
   const $router = useRouter();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
@@ -64,7 +64,7 @@
       {
         label: 'Sign Out',
         class: 'p-4 text-primary underline',
-        click: signOut,
+        click: signOutAndRedirect,
       },
     ]);
 

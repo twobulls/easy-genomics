@@ -5,8 +5,8 @@ import { envConfig } from '../../../config/env-config';
 const labName = 'Playwright test lab';
 const labNameUpdated = 'Automated Lab - Updated';
 const seqeraPipeline = 'quality-e2e-test-pipeline';
-const filePath1 = './tests/e2e/fixtures/GOL2051A64544_S114_L002_R1_001.fastq.gz';
-const filePath2 = './tests/e2e/fixtures/GOL2051A64544_S114_L002_R2_001.fastq.gz';
+const filePath1 = './tests/e2e/fixtures/NA1287820K_R1_001.fastq.gz';
+const filePath2 = './tests/e2e/fixtures/NA1287820K_R2_001.fastq.gz';
 const labTechnicianName = 'Lab Technician';
 
 test('01 - Hide Create a new Laboratory button', async ({ page, baseURL }) => {

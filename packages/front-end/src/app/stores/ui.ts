@@ -33,7 +33,8 @@ type PendingRequest =
   | 'fetchS3Content'
   | 'loadRunReports'
   | 'editProfileDetails'
-  | 'toggleOrgAdmin';
+  | 'toggleOrgAdmin'
+  | 'loadLabRuns';
 
 interface UiStoreState {
   pendingRequests: Set<string>;

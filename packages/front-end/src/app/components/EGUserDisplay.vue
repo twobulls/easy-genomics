@@ -22,7 +22,7 @@
 </script>
 
 <template>
-  <div class="flex w-full flex-row items-center gap-3">
+  <div class="flex flex-row items-center gap-3">
     <div
       v-if="initials"
       class="bg-primary flex h-8 w-8 items-center justify-center rounded-full text-xs text-white"

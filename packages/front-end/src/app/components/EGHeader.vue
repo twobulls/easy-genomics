@@ -127,10 +127,13 @@
             <template #profile>
               <div class="flex w-full flex-row items-center gap-3">
                 <EGUserDisplay
+                  class="grow"
                   :initials="userStore.currentUserInitials"
                   :name="userStore.currentUserDisplayName"
                   :organization="orgsStore.orgs[userStore.currentOrgId]?.Name ?? null"
                 />
+
+                <UIcon class="text-2xl" name="i-heroicons-star" />
 
                 <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
               </div>
@@ -147,6 +150,7 @@
                   class="flex w-full items-center justify-between py-3 text-left"
                 >
                   <div class="font-medium">{{ org.Name }}</div>
+
                   <UIcon class="text-2xl" name="i-heroicons-star" />
                 </div>
               </div>

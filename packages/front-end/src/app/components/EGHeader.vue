@@ -142,8 +142,12 @@
               <div class="flex w-full flex-col items-start" v-for="(org, i) of otherOrgs">
                 <div v-if="i > 0" class="w-full border-t" />
 
-                <div @click="() => selectSwitchToOrg(org.OrganizationId)" class="w-full py-3 text-left font-medium">
-                  {{ org.Name }}
+                <div
+                  @click="() => selectSwitchToOrg(org.OrganizationId)"
+                  class="flex w-full items-center justify-between py-3 text-left"
+                >
+                  <div class="font-medium">{{ org.Name }}</div>
+                  <UIcon class="text-2xl" name="i-heroicons-star" />
                 </div>
               </div>
             </template>

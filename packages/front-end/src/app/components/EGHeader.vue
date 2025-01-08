@@ -82,9 +82,12 @@
   <header class="lh flex flex-row items-center justify-center px-4">
     <div class="header-container" :class="{ 'flex w-full flex-row items-center justify-between': props.isAuthed }">
       <template v-if="props.isAuthed">
-        <div class="flex">
-          <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
+        <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
+
+        <div class="text-muted text-lg" v-if="!!orgsStore.orgs[userStore.currentOrgId]?.Name">
+          {{ orgsStore.orgs[userStore.currentOrgId].Name }}
         </div>
+
         <div class="flex items-center gap-4">
           <ULink
             v-if="!userStore.isSuperuser"

@@ -2,6 +2,10 @@
   import { useRunStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { v4 as uuidv4 } from 'uuid';
+  import {
+    DescribePipelineSchemaResponse,
+    DescribePipelinesResponse,
+  } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -56,17 +60,22 @@
   });
 
   /**
-   * Reads the pipeline schema and parameters from the API and initializes the pipeline run store
+   * Reads the pipeline details, schema, and parameters from the API and initializes the pipeline run store
    */
   async function initializePipelineData() {
+    const pipelineResponse: DescribePipelinesResponse = await $api.seqeraPipelines.read(pipelineId, labId);
     runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
       laboratoryId: labId,
       pipelineId: pipelineId,
+      pipelineName: pipelineResponse.pipeline?.name,
       transactionId: seqeraRunTempId.value,
     });
 
-    const res = await $api.seqeraPipelines.readPipelineSchema(pipelineId, labId);
-    const originalSchema = JSON.parse(res.schema);
+    const pipelineSchemaResponse: DescribePipelineSchemaResponse = await $api.seqeraPipelines.readPipelineSchema(
+      pipelineId,
+      labId,
+    );
+    const originalSchema = JSON.parse(pipelineSchemaResponse.schema);
 
     const definitions = originalSchema.$defs || originalSchema.definitions;
 
@@ -88,8 +97,8 @@
       ...originalSchema,
       $defs: filteredDefinitions,
     };
-    if (res.params) {
-      runStore.updateWipSeqeraRun(seqeraRunTempId.value, { params: JSON.parse(res.params) });
+    if (pipelineSchemaResponse.params) {
+      runStore.updateWipSeqeraRun(seqeraRunTempId.value, { params: JSON.parse(pipelineSchemaResponse.params) });
     }
   }
 

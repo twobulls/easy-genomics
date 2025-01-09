@@ -40,6 +40,23 @@
     useToastStore().success('You have switched organizations');
   }
 
+  function starIconForOrg(orgId: string): string {
+    return orgId === userStore.currentUserDetails.defaultOrgId ? 'i-heroicons-star-solid' : 'i-heroicons-star';
+  }
+
+  function handleStarClick($event: any, orgId: string): void {
+    $event.stopPropagation();
+    setDefaultOrg(orgId);
+  }
+
+  function setDefaultOrg(orgId: string): void {
+    if (orgId === userStore.currentUserDetails.defaultOrgId) {
+      return;
+    }
+
+    useToastStore().info('Setting default org is not implemented yet');
+  }
+
   const dropdownItems = computed<object[][]>(() => {
     const items = [];
 
@@ -133,7 +150,11 @@
                   :organization="orgsStore.orgs[userStore.currentOrgId]?.Name ?? null"
                 />
 
-                <UIcon class="text-2xl" name="i-heroicons-star" />
+                <UIcon
+                  class="text-2xl"
+                  :name="starIconForOrg(userStore.currentOrgId)"
+                  @click="($event) => handleStarClick($event, userStore.currentOrgId)"
+                />
 
                 <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
               </div>
@@ -151,7 +172,11 @@
                 >
                   <div class="font-medium">{{ org.Name }}</div>
 
-                  <UIcon class="text-2xl" name="i-heroicons-star" />
+                  <UIcon
+                    class="text-2xl"
+                    :name="starIconForOrg(org.OrganizationId)"
+                    @click="($event) => handleStarClick($event, org.OrganizationId)"
+                  />
                 </div>
               </div>
             </template>

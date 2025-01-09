@@ -133,6 +133,8 @@ export default function useUser() {
         userStore.currentOrg.OrganizationId = Object.keys(parsedOrgAccess)[0];
       }
 
+      // TODO: set default org id
+
       // retrieve and set personal details
       userStore.currentUserDetails.firstName = decodedToken.FirstName;
       userStore.currentUserDetails.lastName = decodedToken.LastName;

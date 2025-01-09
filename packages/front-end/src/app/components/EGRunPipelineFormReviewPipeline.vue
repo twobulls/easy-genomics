@@ -72,9 +72,11 @@
 
       try {
         await $api.labs.updateLabRun(wipSeqeraRun.value?.transactionId, {
-          'Status': 'Active',
-          'Settings': '{}',
+          'Status': 'LAUNCHED',
+          'Settings': paramsText,
           'ExternalRunId': res.workflowId,
+          'S3Input': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
+          'S3Output': props.params.outdir,
         });
       } catch (error) {
         console.error('Error launching workflow:', error);

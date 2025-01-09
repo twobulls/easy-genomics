@@ -27,6 +27,56 @@
       uiStore.setRequestComplete('loadLabRuns');
     }
   });
+
+  const tabItems = computed(() => [
+    { key: 'runResults', label: 'Run Results' },
+    { key: 'runDetails', label: 'Run Details' },
+    { key: 'fileManager', label: 'File Manager' },
+  ]);
+  const tabIndex = ref(0);
+
+  function setTabIndexFromQuery() {
+    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === $route.query.tab);
+    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+  }
+
+  onMounted(setTabIndexFromQuery);
+
+  const updateQueryParams = useDebounceFn((params: Record<string, string | undefined>) => {
+    $router.replace({ path: $route.path, query: { ...$route.query, ...params } });
+  }, 300);
+
+  function handleTabChange(newIndex: number) {
+    tabIndex.value = newIndex;
+    updateQueryParams({ tab: tabItems.value[newIndex]?.label });
+  }
+
+  // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
+  //  Tailwind won't pick up and include the classes used and styles will be missing.
+  // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
+  //  UTabs that use an "EGTabsStyles" as input to the :ui attribute.
+  const EGTabsStyles = {
+    base: 'focus:outline-none',
+    list: {
+      base: '!flex border-b-2 rounded-none mb-6 mt-0',
+      padding: 'p-0',
+      height: 'h-14',
+      marker: {
+        wrapper: 'duration-200 ease-out absolute bottom-0 ',
+        base: 'absolute bottom-0 rounded-none h-0.5',
+        background: 'bg-primary',
+        shadow: 'shadow-none',
+      },
+      tab: {
+        base: 'font-serif w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out mr-16',
+        active: 'text-primary h-14',
+        inactive: 'font-serif',
+        height: 'h-14',
+        padding: 'p-0',
+        size: 'text-lg',
+      },
+    },
+  };
 </script>
 
 <template>
@@ -39,5 +89,66 @@
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
   />
 
-  <div>{{ JSON.stringify(labRun) }}</div>
+  <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="handleTabChange">
+    <template #item="{ item }">
+      <!-- Run Results -->
+      <div v-if="item.key === 'runResults'" class="space-y-3">Run Results</div>
+
+      <!-- Run Details -->
+      <div v-if="item.key === 'runDetails'" class="space-y-3">
+        <section
+          class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 pt-0 max-md:px-5"
+        >
+          <dl class="mt-4 space-y-4">
+            <div class="flex border-b p-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">Run Name</dt>
+              <dd class="text-muted text-left">{{ labRun.Title }}</dd>
+            </div>
+
+            <div class="flex border-b p-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">Workflow</dt>
+              <dd class="text-muted text-left">{{ labRun.WorkflowName }}</dd>
+            </div>
+
+            <div class="flex border-b p-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">Workflow Run Status</dt>
+              <dd class="text-muted text-left">
+                <EGStatusChip :status="labRun?.Status" />
+              </dd>
+            </div>
+
+            <div class="flex border-b p-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">Owner</dt>
+              <dd class="text-muted text-left">{{ labRun.UserId }}</dd>
+            </div>
+
+            <div class="flex border-b p-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">Platform</dt>
+              <dd class="text-muted text-left">{{ labRun.Type }}</dd>
+            </div>
+
+            <div class="flex border-b p-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">External Run Id</dt>
+              <dd class="text-muted text-left">{{ labRun.ExternalRunId }}</dd>
+            </div>
+
+            <div class="flex border-b p-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">Created</dt>
+              <dd class="text-muted text-left">{{ `${getTime(labRun.CreatedAt)} ⋅ ${getDate(labRun.CreatedAt)}` }}</dd>
+            </div>
+
+            <div class="flex border-b p-4 text-sm">
+              <dt class="w-[200px] font-medium text-black">Last Modified</dt>
+              <dd class="text-muted text-left">
+                {{ `${getTime(labRun.ModifiedAt)} ⋅ ${getDate(labRun.ModifiedAt)}` }}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </div>
+
+      <!-- File Manager -->
+      <div v-if="item.key === 'fileManager'" class="space-y-3">File Manager</div>
+    </template>
+  </UTabs>
 </template>

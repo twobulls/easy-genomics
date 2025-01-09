@@ -180,14 +180,14 @@
     await fetchLaboratoryRuns();
   });
 
-  function setTabIndexFromQuery() {
-    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
-    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+  function setTabIndex() {
+    const tabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
+    tabIndex.value = tabMatchIndex !== -1 ? tabMatchIndex : 0;
   }
 
   onMounted(() => {
-    // set tabIndex according to query param
-    setTabIndexFromQuery();
+    // set tabIndex according to initialTab prop
+    setTabIndex();
 
     if (intervalId) {
       clearTimeout(intervalId);
@@ -454,7 +454,7 @@
     await loadLabData();
 
     // the tabs can change after details are updated from adding/removing a compute integration, so update tab index
-    setTimeout(setTabIndexFromQuery, 100); // there's a slight delay to get around a race condition
+    setTimeout(setTabIndex, 100); // there's a slight delay to get around a race condition
   }
 
   watch(lab, async (lab) => {

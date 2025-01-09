@@ -1,16 +1,21 @@
 <script setup lang="ts">
+  import { S3Response } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
   import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 
   const $route = useRoute();
   const $router = useRouter();
+  const { $api } = useNuxtApp();
 
   const labRunsStore = useLabRunsStore();
   const uiStore = useUiStore();
+  const userStore = useUserStore();
 
   const labId = $route.params.labId as string;
   const labRunId = $route.params.labRunId as string;
 
   const labRun = computed<LaboratoryRun | null>(() => labRunsStore.labRuns[labRunId] ?? null);
+
+  const s3Contents = ref<S3Response | null>(null);
 
   const isLoading = computed<boolean>(() => uiStore.isRequestPending('loadLabRuns'));
 
@@ -20,13 +25,36 @@
   }
 
   onBeforeMount(async () => {
+    await Promise.all([
+      fetchLabRuns(), // this is in case the runs haven't been loaded by the lab page already
+      fetchS3Content(),
+    ]);
+  });
+
+  async function fetchLabRuns() {
     uiStore.setRequestPending('loadLabRuns');
     try {
       await labRunsStore.loadLabRunsForLab(labId);
     } finally {
       uiStore.setRequestComplete('loadLabRuns');
     }
-  });
+  }
+
+  async function fetchS3Content() {
+    useUiStore().setRequestPending('fetchS3Content');
+    try {
+      const res = await $api.file.requestListBucketObjects({
+        LaboratoryId: labId,
+        // TODO: un-hardcode `next-flow`
+        S3Prefix: `${userStore.currentOrgId}/${labId}/next-flow/${labRunId}`,
+      });
+      s3Contents.value = res || null;
+    } catch (error) {
+      console.error('Error fetching S3 content:', error);
+    } finally {
+      useUiStore().setRequestComplete('fetchS3Content');
+    }
+  }
 
   const tabItems = computed(() => [
     { key: 'runResults', label: 'Run Results' },
@@ -92,7 +120,13 @@
   <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="handleTabChange">
     <template #item="{ item }">
       <!-- Run Results -->
-      <div v-if="item.key === 'runResults'" class="space-y-3">Run Results</div>
+      <div v-if="item.key === 'runResults'" class="space-y-3">
+        <EGFileExplorer
+          :s3-contents="s3Contents"
+          :lab-id="labId"
+          :is-loading="useUiStore().isRequestPending('fetchS3Content')"
+        />
+      </div>
 
       <!-- Run Details -->
       <div v-if="item.key === 'runDetails'" class="space-y-3">

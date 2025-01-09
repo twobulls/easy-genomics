@@ -21,6 +21,7 @@
   const props = withDefaults(
     defineProps<{
       labId: string;
+      // TODO: refactor seqeraRunId out
       seqeraRunId: string;
       s3Contents: S3Response | null;
       isLoading?: boolean;

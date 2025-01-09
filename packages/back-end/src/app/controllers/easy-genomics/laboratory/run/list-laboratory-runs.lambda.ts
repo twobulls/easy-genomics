@@ -25,16 +25,17 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     // Get Query Parameter
-    if (!event.queryStringParameters?.laboratoryId) {
-      throw new InvalidRequestError();
-    }
+    const laboratoryId: string | undefined = event.queryStringParameters?.laboratoryId;
 
     // Check if laboratory exists and use it for permissions check
-    const laboratoryId: string = event.queryStringParameters?.laboratoryId;
+    if (!laboratoryId) {
+      throw new InvalidRequestError();
+    }
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!laboratory) {
       throw new LaboratoryNotFoundError();
     }
+
     // Only available for Org Admins or Laboratory Managers and Technicians
     if (
       !(

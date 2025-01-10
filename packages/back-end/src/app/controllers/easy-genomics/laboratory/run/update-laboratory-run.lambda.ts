@@ -64,7 +64,7 @@ export const handler: Handler = async (
 
     const settings: string | undefined = request.Settings ? JSON.stringify(request.Settings) : existing.Settings;
 
-    const response: LaboratoryRun = await laboratoryRunService.update({
+    const response: LaboratoryRun = await laboratoryRunService.update(<LaboratoryRun>{
       ...existing,
       ...request,
       Settings: settings,

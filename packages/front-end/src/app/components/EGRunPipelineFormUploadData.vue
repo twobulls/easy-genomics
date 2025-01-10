@@ -442,16 +442,6 @@
 
     uploadStatus.value = 'success';
     useToastStore().success('Files uploaded successfully');
-
-    const labRunRequest = {
-      'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
-      'RunId': wipSeqeraRun.value?.transactionId,
-      'RunName': wipSeqeraRun.value?.userPipelineRunName,
-      'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
-      'Status': 'CREATED',
-      'WorkflowName': wipSeqeraRun.value?.pipelineName, // TODO: Extend to support AWS HealthOmics Workflow Name
-    };
-    await $api.labs.createLabRun(labRunRequest);
   }
 
   /**

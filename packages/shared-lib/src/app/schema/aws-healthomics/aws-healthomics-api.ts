@@ -13,7 +13,6 @@ import { z } from 'zod';
 export const CreateRunRequestSchema = z
   .object({
     workflowId: z.string(),
-    requestId: z.string(), // Easy Genomics TransactionId
     name: z.string(),
     parameters: z.string(),
     roleArn: z.string().optional(), // 'easy-genomics-healthomics-workflow-run-role'
@@ -25,6 +24,7 @@ export const CreateRunRequestSchema = z
     priority: z.number().optional(),
     storageCapacity: z.number().optional(),
     logLevel: z.enum(['ALL', 'ERROR', 'FATAL', 'OFF']).optional(),
+    requestId: z.string().optional(), // unique id to prevent multiple runs
     retentionMode: z.enum(['RETAIN', 'REMOVE']).optional(),
     storageType: z.enum(['STATIC', 'DYNAMIC']).optional(),
     workflowOwnerId: z.string().optional(),

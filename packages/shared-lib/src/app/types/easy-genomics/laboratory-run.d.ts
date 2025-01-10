@@ -11,13 +11,15 @@
  *   RunId: <string>,
  *   UserId: <string>,
  *   OrganizationId: <string>,
- *   Type: <string>,
+ *   RunName: <string>,
+ *   Platform: <string>,
  *   Status: <string>,
- *   Title?: <string>,
- *   WorkflowName?: <string>,
+ *   Owner: <string>, // User Email for display purposes
+ *   WorkflowName?: <string>, // Seqera Pipeline Name or AWS HealthOmics Workflow Name
  *   ExternalRunId?: <string>,
- *   S3Input?: <string>,
- *   S3Output?: <string>,
+ *   InputS3Url?: <string>,
+ *   OutputS3Url?: <string>,
+ *   SampleSheetS3Url?: <string>,
  *   Settings?: <string>, // JSON string
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
@@ -32,12 +34,14 @@ export interface LaboratoryRun extends BaseAttributes {
   RunId: string; // DynamoDB Sort Key (String) & Global Secondary Index (String)
   UserId: string; // Global Secondary Index (String)
   OrganizationId: string; // Global Secondary Index (String)
-  Type: RunType,
+  RunName: string;
+  Platform: RunType,
   Status: string;
-  Title?: string;
-  WorkflowName?: string;
+  Owner: string; // User Email for display purposes
+  WorkflowName?: string; // Seqera Pipeline Name or AWS HealthOmics Workflow Name
   ExternalRunId?: string;
-  S3Input?: string;
-  S3Output?: string;
+  InputS3Url?: string;
+  OutputS3Url?: string;
+  SampleSheetS3Url?: string;
   Settings?: string; // JSON string
 }

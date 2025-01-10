@@ -143,6 +143,7 @@ export class LaboratoryRunService extends DynamoDBService implements Service {
       'Platform',
       'Owner', // User Email for display purposes
       'WorkflowName', // Seqera Pipeline Name or AWS HealthOmics Workflow Name
+      'ExternalRunId',
       'CreatedAt',
       'CreatedBy',
     ];

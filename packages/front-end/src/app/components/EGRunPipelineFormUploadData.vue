@@ -15,6 +15,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useRunStore, useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
+  import { WipSeqeraRunData } from '@FE/stores/run';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -34,6 +35,13 @@
     url?: string;
     error?: string;
   };
+
+  interface UploadError {
+    fileName: string;
+    error: string;
+    code?: string;
+    userMessage?: string;
+  }
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
@@ -381,31 +389,74 @@
     });
   }
 
+  /**
+   * Handles the process of uploading multiple files, tracks their progress, and manages upload results.
+   *
+   * @returns {Promise<UploadError[]>} - Resolves with an array of failed uploads (if any), containing error details.
+   *
+   * Purpose:
+   * - Initiates the upload of all files in `filesToUpload` using `uploadFile`.
+   * - Ensures that all file uploads are completed, regardless of individual successes or failures, using `Promise.allSettled`.
+   * - Collects detailed information about any failed uploads, including user-friendly error messages.
+   * - Displays meaningful toast notifications for both successful and failed uploads:
+   *   - Displays a success toast when all files are uploaded successfully.
+   *   - Displays specific error messages for network errors or generic messages for other failures.
+   * - Creates and submits a lab run request upon successful uploads.
+   *
+   * Toast Messaging:
+   * - For network errors, displays a detailed user-friendly message.
+   * - For other failures, displays specific error messages for individual files or a summary for multiple failed files.
+   */
   async function uploadFiles() {
-    console.debug('Uploading files:', filesToUpload.value.length);
     const results = await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
 
-    const anyRejected = results.some((result) => result.status === 'rejected');
+    const failedUploads: UploadError[] = results
+      .map((result, index) => {
+        if (result.status === 'rejected') {
+          const fileDetails = filesToUpload.value[index];
+          return {
+            fileName: fileDetails.file.name,
+            error: result.reason.message,
+            code: result.reason.code,
+            userMessage: result.reason.userMessage, // Get the user message if it exists
+          };
+        }
+        return null;
+      })
+      .filter((error): error is UploadError => error !== null);
 
-    if (anyRejected) {
+    if (failedUploads.length > 0) {
       uploadStatus.value = 'failed';
-      useToastStore().error('Error uploading one or more files');
-    } else {
-      uploadStatus.value = 'success';
-      useToastStore().success('Files uploaded successfully');
 
-      const labRunRequest = {
-        'Title': wipSeqeraRun.value?.userPipelineRunName,
-        'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
-        'Status': 'Active',
-        'Type': 'Seqera Cloud', // TODO: make this dynamic
-        'OrganizationId': useUserStore().currentOrgId,
-        'RunId': wipSeqeraRun.value?.transactionId,
-      };
-      await $api.labs.createLabRun(labRunRequest);
+      // Check if there are any network errors and use their message
+      const networkError = failedUploads.find((f) => f.code === 'ERR_NETWORK');
+      const errorMessage = networkError
+        ? networkError.userMessage
+        : failedUploads.length === 1
+          ? `Failed to upload ${failedUploads[0].fileName}: ${failedUploads[0].error}`
+          : `Failed to upload ${failedUploads.length} files. Check console for details.`;
+
+      useToastStore().error(errorMessage);
+      return failedUploads;
     }
+
+    uploadStatus.value = 'success';
+    useToastStore().success('Files uploaded successfully');
   }
 
+  /**
+   * Uploads a single file to the specified URL using an HTTP PUT request.
+   *
+   * @param {FileDetails} fileDetails - An object containing file information, including the file, URL, and progress details.
+   *
+   * @returns {Promise} - Resolves with the response if the upload is successful.
+   *                      Rejects with an error object containing the error message, code, and file details if the upload fails.
+   *
+   * Purpose:
+   * - Tracks the progress of the file upload and updates progress/percentage in `fileDetails`.
+   * - Handles network errors, rejecting with a detailed error message.
+   * - Logs any upload errors to the console for debugging purposes.
+   */
   async function uploadFile(fileDetails: FileDetails) {
     const { file } = fileDetails;
 
@@ -423,9 +474,30 @@
 
       return response;
     } catch (error: any) {
-      console.error('Error uploading file:', error);
-      fileDetails.error = 'Failed to upload';
-      return Promise.reject(error);
+      if (error.code === 'ERR_NETWORK') {
+        fileDetails.error = 'Network error';
+        return Promise.reject({
+          message: 'Network error',
+          code: 'ERR_NETWORK',
+          fileName: file.name,
+          userMessage: 'Network error - please check your connection and try again',
+        });
+      }
+
+      fileDetails.error = error.message || 'Failed to upload';
+      fileDetails.percentage = 0;
+
+      console.error('Error uploading file:', {
+        fileName: file.name,
+        error: error.message,
+        code: error.code,
+      });
+
+      return Promise.reject({
+        message: error.message || 'Failed to upload',
+        code: error.code,
+        fileName: file.name,
+      });
     }
   }
 

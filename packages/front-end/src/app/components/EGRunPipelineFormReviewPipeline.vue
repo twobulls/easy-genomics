@@ -71,13 +71,20 @@
       }
 
       try {
-        await $api.labs.updateLabRun(wipSeqeraRun.value?.transactionId, {
-          'Status': 'LAUNCHED',
-          'Settings': paramsText,
+        const labRunRequest = {
+          'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
+          'RunId': wipSeqeraRun.value?.transactionId,
+          'RunName': wipSeqeraRun.value?.userPipelineRunName,
+          'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
+          'Status': 'SUBMITTED',
+          'WorkflowName': pipeline?.name, // TODO: Extend to support AWS HealthOmics Workflow name
           'ExternalRunId': res.workflowId,
-          'S3Input': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
-          'S3Output': props.params.outdir,
-        });
+          'InputS3Url': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
+          'OutputS3Url': props.params.outdir,
+          'SampleSheetS3Url': props.params.input,
+          'Settings': paramsText,
+        };
+        await $api.labs.createLabRun(labRunRequest);
       } catch (error) {
         console.error('Error launching workflow:', error);
         throw error;

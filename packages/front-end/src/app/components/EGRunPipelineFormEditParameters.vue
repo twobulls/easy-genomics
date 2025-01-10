@@ -6,6 +6,7 @@
   const props = defineProps<{
     schema: object;
     params: object;
+    pipelineId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
@@ -27,27 +28,28 @@
     },
   });
 
+  const schemaDefinitions = computed(() => props.schema.$defs || props.schema.definitions);
+
   onMounted(() => {
     // set first section in side panel of UI to active
-    const definitions = props.schema.definitions;
-    const firstKey = Object.keys(definitions)[0];
-    activeSection.value = definitions[firstKey].title;
+    const firstKey = Object.keys(schemaDefinitions.value)[0];
+    activeSection.value = schemaDefinitions.value[firstKey].title;
   });
 
   function nextSection() {
-    const currentIndex = Object.values(props.schema.definitions).findIndex(
+    const currentIndex = Object.values(schemaDefinitions.value).findIndex(
       (section) => section.title == activeSection.value,
     );
-    if (currentIndex < Object.values(props.schema.definitions).length - 1) {
-      activeSection.value = Object.values(props.schema.definitions)[currentIndex + 1].title;
+    if (currentIndex < Object.values(schemaDefinitions.value).length - 1) {
+      activeSection.value = Object.values(schemaDefinitions.value)[currentIndex + 1].title;
     }
   }
 
   function prevSection() {
-    if (!props.schema || !props.schema.definitions) {
+    if (!props.schema || !schemaDefinitions.value) {
       return; // Exit if schema or definitions is not available
     }
-    const definitionsArray = Object.values(props.schema.definitions);
+    const definitionsArray = Object.values(schemaDefinitions.value);
     const currentIndex = definitionsArray.findIndex((section) => section.title === activeSection.value);
 
     if (currentIndex > 0) {
@@ -96,7 +98,7 @@
         <UDivider class="py-4" />
         <div
           v-show="!checkIfAllSectionParametersHidden(section)"
-          v-for="(section, sectionIndex) in schema.definitions"
+          v-for="(section, sectionIndex) in schemaDefinitions"
           :key="`section-${sectionIndex}`"
         >
           <div
@@ -113,14 +115,14 @@
     </div>
     <div class="w-3/4">
       <EGCard
-        v-for="(section, sectionIndex) in Object.values(schema.definitions)"
+        v-for="(section, sectionIndex) in Object.values(schemaDefinitions)"
         :key="`section-${sectionIndex}`"
         v-show="activeSection === section.title"
       >
         <EGText tag="h4" class="mb-4">{{ section.title }}</EGText>
 
         <EGRunPipelineParameterInputs
-          v-for="(section, sectionIndex) in Object.values(schema.definitions)"
+          v-for="(section, sectionIndex) in Object.values(schemaDefinitions)"
           :key="`section-${sectionIndex}`"
           v-show="activeSection === section.title"
           :section="<Object>section"
@@ -142,7 +144,7 @@
           />
           <EGButton
             class="ml-4"
-            v-if="sectionIndex < Object.keys(schema.definitions).length - 1"
+            v-if="sectionIndex < Object.keys(schemaDefinitions).length - 1"
             :size="ButtonSizeEnum.enum.sm"
             variant="secondary"
             label="Next"

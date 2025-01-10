@@ -1,4 +1,4 @@
-import { CancelRunCommandInput } from '@aws-sdk/client-omics';
+import { ListSharesCommandInput } from '@aws-sdk/client-omics';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
   LaboratoryNotFoundError,
@@ -15,18 +15,21 @@ import {
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+import { AwsHealthOmicsQueryParameters, getAwsHealthOmicsApiQueryParameters } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const omicsService = new OmicsService();
 
 /**
- * This PUT /aws-healthomics/run/cancel-run/:{RunId}?laboratoryId={LaboratoryId}
- * API queries the same region's AWS HealthOmics service to cancel a specific
- * Run, and it expects:
- *  - Required Path Parameter:
- *    - 'runId': to retrieve the Run's details from AWS HealthOmics
+ * This GET /aws-healthomics/workflow/list-shared-workflows?laboratoryId={LaboratoryId}
+ * API queries the same region's AWS HealthOmics service to retrieve a list of
+ * Shared Workflows, and it expects:
  *  - Required Query Parameter:
  *    - 'laboratoryId': to retrieve the Laboratory to verify access to AWS HealthOmics
+ *  - Optional Query Parameters:
+ *    - 'maxResults': pagination number of results
+ *    - 'nextToken': pagination results offset index
+ *    - 'name': string to search by the Workflow name attribute
  *
  * @param event
  */
@@ -35,10 +38,6 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Get Path Parameter
-    const id: string = event.pathParameters?.id || '';
-    if (id === '') throw new RequiredIdNotFoundError();
-
     // Get required query parameter
     const laboratoryId: string = event.queryStringParameters?.laboratoryId || '';
     if (laboratoryId === '') throw new RequiredIdNotFoundError('laboratoryId');
@@ -65,8 +64,10 @@ export const handler: Handler = async (
       throw new MissingAWSHealthOmicsAccessError();
     }
 
-    const response = await omicsService.cancelRun(<CancelRunCommandInput>{
-      id: id,
+    const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
+    const response = await omicsService.listSharedWorkflows(<ListSharesCommandInput>{
+      resourceOwner: 'OTHER',
+      ...queryParameters,
     });
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

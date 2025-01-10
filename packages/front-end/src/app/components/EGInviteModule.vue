@@ -14,14 +14,13 @@
     },
   );
 
-  const { $api } = useNuxtApp();
   const $emit = defineEmits(['invite-success']);
   const formSchema = z.object({
     email: z.string().email(VALIDATION_MESSAGES.email),
   });
   const isFormDisabled = ref(true);
   const state = ref({ email: '' });
-  const { invite } = useUser($api);
+  const { invite } = useUser();
 
   async function onSubmit() {
     try {

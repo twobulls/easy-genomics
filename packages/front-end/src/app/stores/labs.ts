@@ -4,7 +4,7 @@ import { defineStore } from 'pinia';
 interface LabsStoreState {
   // indexed by labId
   labs: Record<string, Laboratory>;
-  // ordered lists for pipelines by lab
+  // ordered lists for labs by org
   labIdsByOrg: Record<string, string[]>;
 }
 
@@ -45,16 +45,6 @@ const useLabsStore = defineStore('labsStore', {
         this.labs[lab.LaboratoryId] = lab;
         this.labIdsByOrg[orgId].push(lab.LaboratoryId);
       }
-    },
-
-    async loadAllLabsForCurrentUser(): Promise<void> {
-      const currentUserPermissions = useUserStore().currentUserPermissions.orgPermissions;
-      if (currentUserPermissions === null) {
-        return;
-      }
-
-      const orgIds = Object.keys(currentUserPermissions);
-      await Promise.all(orgIds.map(this.loadLabsForOrg));
     },
   },
 

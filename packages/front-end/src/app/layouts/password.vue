@@ -7,7 +7,7 @@
   <EGHeader />
 
   <main class="mx-auto mt-10 flex flex-col justify-center px-4">
-    <EGBack label="Previous" @click="() => router.push({ path: '/' })" />
+    <EGBack label="Return" @click="() => router.push({ path: '/' })" />
     <div class="flex h-[60vh] items-center justify-center">
       <slot />
     </div>

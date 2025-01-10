@@ -3,17 +3,20 @@
   import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import EGAccordion from '@FE/components/EGAccordion.vue';
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
     canLaunch?: boolean;
     schema: object;
     params: object;
+    pipelineId: string;
   }>();
 
   const { $api } = useNuxtApp();
   const $route = useRoute();
 
   const runStore = useRunStore();
+  const seqeraPipelineStore = useSeqeraPipelinesStore();
 
   const labId = $route.params.labId as string;
   const labName = useLabsStore().labs[labId].Name;
@@ -25,16 +28,19 @@
   const areAccordionsOpen = ref(true);
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
+
+  const schemaDefinitions = schema.$defs || schema.definitions;
 
   async function launchRun() {
     emit('submit-launch-request');
 
     try {
       isLaunchingRun.value = true;
-      const pipelineId = wipSeqeraRun.value?.pipelineId;
+      const pipelineId = props.pipelineId;
       if (pipelineId === undefined) {
         throw new Error('pipeline id not found in wip run config');
       }
@@ -53,7 +59,37 @@
           paramsText: paramsText,
         },
       };
-      await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+
+      const res = await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+
+      if (!res) {
+        throw new Error('Failed to create pipeline run. Response is empty.');
+      }
+
+      if (!res.workflowId) {
+        throw new Error('Workflow ID is missing in the response');
+      }
+
+      try {
+        const labRunRequest = {
+          'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
+          'RunId': wipSeqeraRun.value?.transactionId,
+          'RunName': wipSeqeraRun.value?.userPipelineRunName,
+          'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
+          'Status': 'SUBMITTED',
+          'WorkflowName': pipeline?.name, // TODO: Extend to support AWS HealthOmics Workflow name
+          'ExternalRunId': res.workflowId,
+          'InputS3Url': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
+          'OutputS3Url': props.params.outdir,
+          'SampleSheetS3Url': props.params.input,
+          'Settings': paramsText,
+        };
+        await $api.labs.createLabRun(labRunRequest);
+      } catch (error) {
+        console.error('Error launching workflow:', error);
+        throw error;
+      }
+
       delete runStore.wipSeqeraRuns[seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
@@ -65,8 +101,8 @@
   }
 
   const accordionItems = computed(() => {
-    return Object.keys(schema.definitions).map((sectionName) => {
-      const section = schema.definitions[sectionName];
+    return Object.keys(schemaDefinitions).map((sectionName) => {
+      const section = schemaDefinitions[sectionName];
       return {
         label: section.title,
         defaultOpen: true,
@@ -102,7 +138,7 @@
       <dl>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Pipeline</dt>
-          <dd class="text-muted text-left">{{ wipSeqeraRun?.pipelineName }}</dd>
+          <dd class="text-muted text-left">{{ pipeline?.name }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Laboratory</dt>
@@ -115,7 +151,6 @@
       </dl>
     </section>
   </EGCard>
-
   <EGCard>
     <div class="mb-4 flex items-center justify-between">
       <EGText tag="h4" class="text-muted">Selected Workflow Parameters</EGText>

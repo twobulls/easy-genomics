@@ -24,7 +24,9 @@ export class NFTowerNestedStack extends NestedStack {
       iamPolicyStatements: this.iam.policyStatements, // Pass declared Auth IAM policies for attaching to respective Lambda function
       lambdaFunctionsDir: 'src/app/controllers/nf-tower',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
-      lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      lambdaFunctionsResources: {
+        // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      },
       environment: {
         // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,
@@ -56,24 +58,6 @@ export class NFTowerNestedStack extends NestedStack {
           `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
         ],
         actions: ['ssm:GetParameter'],
-        effect: Effect.ALLOW,
-      }),
-    ]);
-    this.iam.addPolicyStatements('laboratory-run-create-policy', [
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
-        ],
-        actions: ['dynamodb:PutItem'],
-        effect: Effect.ALLOW,
-      }),
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
-        ],
-        actions: ['dynamodb:Query'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -125,7 +109,6 @@ export class NFTowerNestedStack extends NestedStack {
     this.iam.addPolicyStatements('/nf-tower/workflow/create-workflow-execution', [
       ...this.iam.getPolicyStatements('laboratory-id-query-policy'),
       ...this.iam.getPolicyStatements('laboratory-get-ssm-access-token-policy'),
-      ...this.iam.getPolicyStatements('laboratory-run-create-policy'),
     ]);
     // /nf-tower/workflow/list-workflows
     this.iam.addPolicyStatements('/nf-tower/workflow/list-workflows', [

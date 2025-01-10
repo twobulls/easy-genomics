@@ -417,7 +417,7 @@
           v-if="formMode === LabDetailsFormModeEnum.enum.Create"
           v-model="state.NextFlowTowerAccessToken"
           :password="true"
-          :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+          :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
           :disabled="!isEditing || isSubmittingFormData"
         />
         <!-- Next Flow Tower Access Token: Edit  Mode -->

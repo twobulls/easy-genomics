@@ -1,10 +1,9 @@
-import crypto from 'crypto';
 import {
   AddLaboratoryRun,
   AddLaboratoryRunSchema,
-  ReadLaboratoryRun,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
@@ -29,6 +28,7 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     const currentUserId = event.requestContext.authorizer.claims['cognito:username'];
+    const currentUserEmail = event.requestContext.authorizer.claims.email;
     // Post Request Body
     const request: AddLaboratoryRun = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
@@ -36,52 +36,45 @@ export const handler: Handler = async (
       throw new InvalidRequestError();
     }
 
+    // Validate Laboratory exists before creating Laboratory Run
+    const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
+    if (!laboratory) {
+      throw new LaboratoryNotFoundError();
+    }
+
     // Only available for Org Admins or Laboratory Managers and Technicians
     if (
       !(
-        validateOrganizationAdminAccess(event, request.OrganizationId) ||
-        validateLaboratoryManagerAccess(event, request.OrganizationId, request.LaboratoryId) ||
-        validateLaboratoryTechnicianAccess(event, request.OrganizationId, request.LaboratoryId)
+        validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+        validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId) ||
+        validateLaboratoryTechnicianAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
       )
     ) {
       throw new UnauthorizedAccessError();
     }
 
-    // Validate Laboratory exists before creating Laboratory Run
-    const laboratory: Laboratory = await laboratoryService.get(request.OrganizationId, request.LaboratoryId);
-    if (!laboratory) {
-      throw new LaboratoryNotFoundError();
-    }
-
-    const runId: string = crypto.randomUUID().toLowerCase();
-
-    const laboratoryRun = await laboratoryRunService
-      .add({
-        RunId: runId,
-        OrganizationId: laboratory.OrganizationId,
+    const response = await laboratoryRunService
+      .add(<LaboratoryRun>{
         LaboratoryId: laboratory.LaboratoryId,
-        Status: 'Active',
-        Type: request.Type,
-        S3Input: request.S3Input,
-        S3Output: request.S3Output,
-        Settings: JSON.stringify(request.Settings ? request.Settings : {}),
-        WorkflowName: request.WorkflowName,
+        RunId: request.RunId,
         UserId: currentUserId,
+        OrganizationId: laboratory.OrganizationId,
+        RunName: request.RunName,
+        Platform: request.Platform,
+        Status: request.Status,
+        Owner: currentUserEmail,
+        WorkflowName: request.WorkflowName,
+        ExternalRunId: request.ExternalRunId,
+        InputS3Url: request.InputS3Url,
+        OutputS3Url: request.OutputS3Url,
+        SampleSheetS3Url: request.SampleSheetS3Url,
+        Settings: JSON.stringify(request.Settings || {}),
         CreatedAt: new Date().toISOString(),
         CreatedBy: currentUserId,
-        ModifiedAt: new Date().toISOString(),
-        ModifiedBy: currentUserId,
       })
       .catch((error: any) => {
         throw error;
       });
-
-    // Return Laboratory Run with settings object
-    const response: ReadLaboratoryRun = {
-      ...laboratoryRun,
-      Settings: JSON.parse(laboratoryRun.Settings || '{}'),
-    };
-
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {
     console.error(err);

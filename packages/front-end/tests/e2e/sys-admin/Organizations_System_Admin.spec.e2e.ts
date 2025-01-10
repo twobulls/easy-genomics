@@ -96,7 +96,6 @@ test('03 - Invite a user to an Org Successfully', async ({ page, baseURL }) => {
     await page.waitForTimeout(2000);
     const cell = page.getByRole('cell', {
       name: envConfig.testInviteEmail,
-      exact: true,
     });
     await expect(cell).toBeVisible();
   }

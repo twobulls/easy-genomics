@@ -3,6 +3,7 @@
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { useToastStore, useUiStore } from '@FE/stores';
   import { EditUserResponse } from '@FE/types/api';
+  import { UserStatusSchema } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/status';
 
   const props = defineProps<{
     orgId: string;
@@ -90,16 +91,20 @@
       const orgUsers = (await $api.orgs.usersDetailsByOrgId(props.orgId)) as OrganizationUserDetails[];
       const _otherOrgUsers = orgUsers.filter((user: OrganizationUserDetails) => !hasLabAccess(user, labUsers.value));
       otherOrgUsers.value = _otherOrgUsers.map((user: OrganizationUserDetails) => {
-        const displayName = useUser().displayName({
-          preferredName: user.PreferredName,
-          firstName: user.FirstName,
-          lastName: user.LastName,
-          email: user.UserEmail,
-        });
+        const nameData = {
+          preferredName: user.PreferredName || null,
+          firstName: user.FirstName || null,
+          lastName: user.LastName || null,
+          email: user.UserEmail || null,
+        };
+        const displayName = useUser().displayName(nameData);
+        const initials = useUser().initials(nameData);
+
         return {
           ...user,
           displayName,
-        } as OrgUser;
+          initials,
+        };
       });
     } catch (error) {
       console.error(error);
@@ -152,10 +157,10 @@
       >
         <template #option="{ option: user }">
           <EGUserDisplay
-            :display-name="user.displayName"
+            :initials="user.initials"
+            :name="user.displayName"
             :email="user.UserEmail"
-            :status="user.OrganizationUserStatus"
-            :show-avatar="true"
+            :inactive="user.OrganizationUserStatus !== UserStatusSchema.enum.Active"
           />
         </template>
 

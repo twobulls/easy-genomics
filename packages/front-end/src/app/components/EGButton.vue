@@ -10,6 +10,7 @@
     iconRight?: boolean;
     disabled?: boolean;
     uButtonType?: string;
+    loading?: boolean;
   };
 
   withDefaults(defineProps<ButtonProps>(), {
@@ -20,6 +21,7 @@
     iconRight: true,
     disabled: false,
     uButtonType: undefined,
+    loading: false,
   });
 
   const buttonVariants = cva(
@@ -112,5 +114,6 @@
       },
     }"
     :type="uButtonType"
+    :loading="loading"
   />
 </template>

@@ -134,7 +134,19 @@ export class LaboratoryRunService extends DynamoDBService implements Service {
     // Data validation safety check
     if (!LaboratoryRunSchema.safeParse(laboratoryRun).success) throw new Error('Invalid request');
 
-    const updateExclusions: string[] = ['LaboratoryId', 'RunId', 'CreatedAt', 'CreatedBy'];
+    const updateExclusions: string[] = [
+      'LaboratoryId',
+      'RunId',
+      'UserId',
+      'OrganizationId',
+      'RunName',
+      'Platform',
+      'Owner', // User Email for display purposes
+      'WorkflowName', // Seqera Pipeline Name or AWS HealthOmics Workflow Name
+      'ExternalRunId',
+      'CreatedAt',
+      'CreatedBy',
+    ];
 
     const expressionAttributeNames: { [p: string]: string } = this.getExpressionAttributeNamesDefinition(
       laboratoryRun,

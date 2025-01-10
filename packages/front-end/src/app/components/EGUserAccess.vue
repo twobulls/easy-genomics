@@ -5,26 +5,29 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse } from '@FE/types/api';
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
+  import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 
   const props = defineProps<{
-    superuser?: boolean;
-    orgAdmin: boolean;
+    orgId: string;
+    userId: string;
   }>();
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
-  const $route = useRoute();
 
   const selectedUser = ref<OrganizationUserDetails | null>(null);
-  const getSelectedUserDisplayName = computed<string>(() =>
-    String(
-      useUser().displayName({
-        preferredName: selectedUser.value?.PreferredName || '',
-        firstName: selectedUser.value?.FirstName || '',
-        lastName: selectedUser.value?.LastName || '',
-        email: selectedUser.value?.UserEmail || '',
-      }),
-    ),
+
+  const selectedUserNameDetails = computed<NameOptions>(() => ({
+    preferredName: selectedUser.value?.PreferredName || null,
+    firstName: selectedUser.value?.FirstName || null,
+    lastName: selectedUser.value?.LastName || null,
+    email: selectedUser.value?.UserEmail || null,
+  }));
+  const getSelectedUserDisplayName = computed<string>(() => useUser().displayName(selectedUserNameDetails.value));
+  const getSelectedUserInitials = computed<string>(() => useUser().initials(selectedUserNameDetails.value));
+
+  const selectedUserOrgAdmin = computed<boolean | null>(
+    () => selectedUser.value?.OrganizationAccess?.[props.orgId]?.OrganizationAdmin ?? null,
   );
 
   const orgLabsData = ref([] as Laboratory[]);
@@ -50,9 +53,7 @@
   const isRemoveUserDialogOpen = ref<boolean>(false);
 
   onBeforeMount(async () => {
-    await Promise.all([fetchOrgLabs(), updateSelectedUser()]);
-    // fetchUserLabs has to wait until updateSelectedUser has run
-    await fetchUserLabs();
+    await Promise.all([fetchOrgLabs(), updateSelectedUser(), fetchUserLabs()]);
   });
 
   function updateSearchOutput(newVal: string) {
@@ -62,10 +63,9 @@
   async function updateSelectedUser() {
     try {
       useUiStore().setRequestPending('updateUser');
-      const user = await $api.orgs.usersDetailsByUserId($route.query.userId);
-      if (user.length) {
-        selectedUser.value = user[0];
-      }
+      const user = await $api.orgs.usersDetailsByUserId(props.userId);
+
+      selectedUser.value = user[0] || null;
     } catch (error) {
       console.error(error);
     } finally {
@@ -76,7 +76,7 @@
   async function fetchOrgLabs() {
     try {
       useUiStore().setRequestPending('fetchOrgLabs');
-      orgLabsData.value = await $api.labs.list($route.query.orgId);
+      orgLabsData.value = await $api.labs.list(props.orgId);
 
       if (!orgLabsData.value.length) {
         hasNoData.value = true;
@@ -93,10 +93,9 @@
    * Fetch the user's details for each lab
    */
   async function fetchUserLabs() {
-    // note: this needs to run after selectedUser has been set so the UserId is available
     try {
       useUiStore().setRequestPending('fetchUserLabs');
-      selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(selectedUser.value?.UserId);
+      selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(props.userId);
       if (!orgLabsData.value.length) {
         hasNoData.value = true;
       }
@@ -151,12 +150,11 @@
   });
 
   async function handleAddUser(lab: { labId: string; name: string }) {
-    const userId = selectedUser.value!.UserId;
     try {
       useUiStore().setRequestPending('addUserToLab');
-      useUiStore().setRequestPending(`addUserToLabButton-${userId}-${lab.labId}`);
+      useUiStore().setRequestPending(`addUserToLabButton-${props.userId}-${lab.labId}`);
 
-      const res = await $api.labs.addLabUser(lab.labId, userId);
+      const res = await $api.labs.addLabUser(lab.labId, props.userId);
 
       if (res?.Status === 'Success') {
         await updateSelectedUser();
@@ -172,15 +170,14 @@
       throw error;
     } finally {
       useUiStore().setRequestComplete('addUserToLab');
-      useUiStore().setRequestComplete(`addUserToLabButton-${userId}-${lab.labId}`);
+      useUiStore().setRequestComplete(`addUserToLabButton-${props.userId}-${lab.labId}`);
     }
   }
 
   async function handleAssignRole(user: LaboratoryUserDetails) {
-    const userId = selectedUser.value!.UserId;
     try {
       useUiStore().setRequestPending('assignLabRole');
-      const res = await $api.labs.editUserLabAccess(user.LaboratoryId, userId, user.LabManager);
+      const res = await $api.labs.editUserLabAccess(user.LaboratoryId, props.userId, user.LabManager);
       if (res?.Status === 'Success') {
         await fetchUserLabs();
         let maybeLabName = 'Lab';
@@ -210,16 +207,15 @@
 
   async function handleRemoveUserFromLab() {
     const labName = labToRemoveFrom.value?.name;
-    const labId = labToRemoveFrom.value?.id;
+    const labId = labToRemoveFrom.value?.id!;
     isRemoveUserDialogOpen.value = false;
 
-    const { UserId } = selectedUser.value;
     const displayName = getSelectedUserDisplayName.value;
 
     try {
       useUiStore().setRequestPending('removeUserFromLab');
 
-      const res: DeletedResponse = await $api.labs.removeUser(labId, UserId);
+      const res: DeletedResponse = await $api.labs.removeUser(labId, props.userId);
 
       if (res?.Status !== 'Success') {
         throw new Error(`Failed to remove ${displayName} from ${labName}`);
@@ -233,23 +229,71 @@
       useUiStore().setRequestComplete('removeUserFromLab');
     }
   }
+
+  async function toggleOrgAdmin() {
+    if (selectedUser.value === null) return;
+
+    useUiStore().setRequestPending('toggleOrgAdmin');
+
+    try {
+      await $api.orgs.editOrgUser(
+        props.orgId,
+        props.userId,
+        selectedUser.value.OrganizationUserStatus,
+        !selectedUserOrgAdmin.value,
+      );
+      useToastStore().success(`${getSelectedUserDisplayName.value}’s Lab Access has been successfully updated`);
+      await updateSelectedUser();
+    } catch (error) {
+      useToastStore().error(VALIDATION_MESSAGES.network);
+      console.error(error);
+    }
+
+    useUiStore().setRequestComplete('toggleOrgAdmin');
+  }
 </script>
 
 <template>
-  <EGPageHeader
-    title="Edit User Access"
-    :show-back="true"
-    :back-action="() => $router.push(`/orgs/${$route.query.orgId}`)"
-  />
+  <EGPageHeader title="Edit User Access" :show-back="true" :back-action="() => $router.push(`/orgs/${props.orgId}`)" />
 
+  <!-- org admin toggle -->
   <div class="mb-4">
-    <EGUserOrgAdminToggle
-      v-if="selectedUser"
-      :is-loading="isLoading"
-      :key="selectedUser?.UserId"
-      :user="selectedUser"
-      @update-user="updateSelectedUser($event)"
-    />
+    <!-- loading skeleton -->
+    <div class="bg-skeleton-container flex h-[82px] items-center rounded p-4" v-if="isLoading">
+      <div class="mr-2">
+        <USkeleton class="h-[32px] w-[32px]" :ui="{ rounded: 'rounded-full' }" />
+      </div>
+      <div class="space-y-2">
+        <USkeleton class="h-4 w-[250px] rounded" />
+        <USkeleton class="h-3 w-[200px] rounded" />
+      </div>
+    </div>
+
+    <!-- toggle -->
+    <div
+      v-else
+      class="border-stroke-light flex h-[82px] items-center justify-between gap-3 rounded border border-solid bg-white p-4"
+    >
+      <div class="flex items-center gap-3">
+        <EGUserDisplay
+          :initials="getSelectedUserInitials"
+          :name="getSelectedUserDisplayName"
+          :email="selectedUser.UserEmail"
+          :inactive="selectedUser.OrganizationUserStatus !== 'Active'"
+        />
+      </div>
+      <div class="flex cursor-pointer items-center" @click="toggleOrgAdmin">
+        <span class="text-xs">Organization Admin</span>
+        <UToggle
+          class="ml-2"
+          :model-value="!!selectedUserOrgAdmin"
+          :disabled="selectedUserOrgAdmin === null || useUiStore().anyRequestPending(['updateUser', 'toggleOrgAdmin'])"
+          :ui="{
+            base: 'test-org-admin-toggle',
+          }"
+        />
+      </div>
+    </div>
   </div>
 
   <EGSearchInput
@@ -294,7 +338,7 @@
         />
       </div>
       <EGButton
-        :loading="useUiStore().isRequestPending(`addUserToLabButton-${selectedUser?.UserId}-${row.LaboratoryId}`)"
+        :loading="useUiStore().isRequestPending(`addUserToLabButton-${props.userId}-${row.LaboratoryId}`)"
         v-else-if="row.access"
         @click="
           handleAddUser({

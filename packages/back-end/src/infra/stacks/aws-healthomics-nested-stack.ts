@@ -119,6 +119,22 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       }),
     ]);
 
+    // /aws-healthomics/workflow/list-shared-workflows
+    this.iam.addPolicyStatements('/aws-healthomics/workflow/list-shared-workflows', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
+        actions: ['omics:ListShares'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
     // /aws-healthomics/workflow/read-private-workflow
     this.iam.addPolicyStatements('/aws-healthomics/workflow/read-private-workflow', [
       new PolicyStatement({
@@ -165,8 +181,8 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
-    // /aws-healthomics/run/cancel-run
-    this.iam.addPolicyStatements('/aws-healthomics/run/cancel-run', [
+    // /aws-healthomics/run/cancel-run-execution
+    this.iam.addPolicyStatements('/aws-healthomics/run/cancel-run-execution', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
@@ -177,6 +193,31 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
         actions: ['omics:CancelRun'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /aws-healthomics/run/create-run-execution
+    this.iam.addPolicyStatements('/aws-healthomics/run/create-run-execution', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`,
+          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
+        ],
+        actions: ['omics:StartRun'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:iam::${this.props.env.account!}:role/${this.props.namePrefix}-easy-genomics-healthomics-workflow-run-role`,
+        ],
+        actions: ['iam:PassRole'],
         effect: Effect.ALLOW,
       }),
     ]);

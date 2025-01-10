@@ -17,7 +17,7 @@
 
   const { $api } = useNuxtApp();
   const router = useRouter();
-  const { resendInvite, labsCount } = useUser($api);
+  const { resendInvite, labsCount } = useUser();
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
@@ -76,13 +76,7 @@
   ];
 
   function editUser(userId: string) {
-    router.push({
-      path: '/orgs/edit-user',
-      query: {
-        userId,
-        orgId: props.orgId,
-      },
-    });
+    router.push({ path: `/orgs/${props.orgId}/edit-user/${userId}` });
   }
 
   function onRowClicked(row: OrgUser) {
@@ -292,7 +286,7 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-4 mt-0',
+      base: '!flex border-b-2 rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {
@@ -380,20 +374,14 @@
           :show-pagination="!isLoading"
           :row-click-action="onRowClicked"
         >
-          <template #Name-data="{ user: row }">
+          <template #displayName-data="{ row }">
             <div class="flex items-center">
-              <EGUserAvatar
+              <EGUserDisplay
                 class="mr-4"
                 :name="row.displayName"
                 :email="row.UserEmail"
-                :is-active="row.OrganizationUserStatus === 'Active'"
+                :inactive="row.OrganizationUserStatus !== 'Active'"
               />
-              <div class="flex flex-col">
-                <div>
-                  {{ row.FirstName ? row.FirstName : row.displayName }}
-                </div>
-                <div class="text-muted text-xs font-normal">{{ (row as OrgUser).UserEmail }}</div>
-              </div>
             </div>
           </template>
           <template #status-data="{ row }">

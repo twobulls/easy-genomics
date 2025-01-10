@@ -1,10 +1,14 @@
 import { CreateLaboratory, UpdateLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+import { LaboratoryRunSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
+import { z } from 'zod';
 import HttpFactory from '@FE/repository/factory';
 import { DeletedResponse, EditUserResponse } from '@FE/types/api';
+import { validateApiResponse } from '@FE/utils/api-utils';
 
 class LabsModule extends HttpFactory {
   async create(lab: CreateLaboratory): Promise<Laboratory | undefined> {
@@ -191,6 +195,40 @@ class LabsModule extends HttpFactory {
       throw new Error('Failed to retrieve Laboratory users details');
     }
 
+    return res;
+  }
+
+  async listLabRuns(labId: string): Promise<LaboratoryRun[]> {
+    const res = await this.call<LaboratoryRun[]>('GET', `/laboratory/run/list-laboratory-runs?laboratoryId=${labId}`);
+
+    if (!res) {
+      throw new Error('Failed to retrieve Laboratory runs');
+    }
+
+    const LaboratoryRunArraySchema = z.array(LaboratoryRunSchema); // Define an array schema
+    validateApiResponse(LaboratoryRunArraySchema, res);
+    return res;
+  }
+
+  async createLabRun(labRunRequest: LaboratoryRun): Promise<LaboratoryRun> {
+    const res = await this.call<any>('POST', '/laboratory/run/create-laboratory-run', labRunRequest);
+    if (!res) {
+      console.error('Error calling create pipeline run API');
+      throw new Error('Failed to create pipeline run');
+    }
+
+    validateApiResponse(LaboratoryRunSchema, res);
+    return res;
+  }
+
+  async updateLabRun(runId: string, labRunRequest: LaboratoryRun): Promise<LaboratoryRun> {
+    const res = await this.call<any>('PUT', `/laboratory/run/update-laboratory-run/${runId}`, labRunRequest);
+    if (!res) {
+      console.error('Error calling edit laboratory run API');
+      throw new Error('Failed to edit laboratory run');
+    }
+
+    validateApiResponse(LaboratoryRunSchema, res);
     return res;
   }
 }

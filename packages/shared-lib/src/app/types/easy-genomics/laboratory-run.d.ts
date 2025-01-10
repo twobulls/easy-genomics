@@ -17,8 +17,9 @@
  *   Owner: <string>, // User Email for display purposes
  *   WorkflowName?: <string>, // Seqera Pipeline Name or AWS HealthOmics Workflow Name
  *   ExternalRunId?: <string>,
- *   S3Input?: <string>,
- *   S3Output?: <string>,
+ *   InputS3Url?: <string>,
+ *   OutputS3Url?: <string>,
+ *   SampleSheetS3Url?: <string>,
  *   Settings?: <string>, // JSON string
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
@@ -39,7 +40,8 @@ export interface LaboratoryRun extends BaseAttributes {
   Owner: string; // User Email for display purposes
   WorkflowName?: string; // Seqera Pipeline Name or AWS HealthOmics Workflow Name
   ExternalRunId?: string;
-  S3Input?: string;
-  S3Output?: string;
+  InputS3Url?: string;
+  OutputS3Url?: string;
+  SampleSheetS3Url?: string;
   Settings?: string; // JSON string
 }

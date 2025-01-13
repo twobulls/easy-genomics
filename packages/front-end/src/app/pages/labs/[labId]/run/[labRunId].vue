@@ -182,7 +182,7 @@
               <dd class="text-muted text-left">{{ `${getTime(labRun.CreatedAt)} ⋅ ${getDate(labRun.CreatedAt)}` }}</dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm">
+            <div class="flex border-b p-4 text-sm" v-if="labRun.ModifiedAt">
               <dt class="w-[200px] font-medium text-black">Last Modified</dt>
               <dd class="text-muted text-left">
                 {{ `${getTime(labRun.ModifiedAt)} ⋅ ${getDate(labRun.ModifiedAt)}` }}

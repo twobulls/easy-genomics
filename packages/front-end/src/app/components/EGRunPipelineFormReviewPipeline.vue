@@ -77,7 +77,7 @@
           'RunName': wipSeqeraRun.value?.userPipelineRunName,
           'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
           'Status': 'SUBMITTED',
-          'WorkflowName': pipeline?.name, // TODO: Extend to support AWS HealthOmics Workflow name
+          'WorkflowName': pipeline.value?.name, // TODO: Extend to support AWS HealthOmics Workflow name
           'ExternalRunId': res.workflowId,
           'InputS3Url': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
           'OutputS3Url': props.params.outdir,

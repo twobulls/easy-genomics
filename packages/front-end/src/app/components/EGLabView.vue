@@ -637,13 +637,13 @@
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
         >
           <template #runName-data="{ row: run }">
-            <div v-if="run.Title" class="text-body text-sm font-medium">{{ run.Title }}</div>
+            <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
             <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
           </template>
 
           <template #lastUpdated-data="{ row: run }">
-            <div class="text-body text-sm font-medium">TODO</div>
-            <div class="text-muted">TODO</div>
+            <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt ?? run.CreatedAt) }}</div>
+            <div class="text-muted">{{ getTime(run.ModifiedAt ?? run.CreatedAt) }}</div>
           </template>
 
           <template #status-data="{ row: run }">
@@ -651,7 +651,7 @@
           </template>
 
           <template #owner-data="{ row: run }">
-            <div class="text-body text-sm font-medium">{{ run.UserId }}</div>
+            <div class="text-body text-sm font-medium">{{ run.Owner }}</div>
           </template>
 
           <template #actions-data="{ row }">

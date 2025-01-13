@@ -79,6 +79,17 @@
     updateQueryParams({ tab: tabItems.value[newIndex]?.label });
   }
 
+  const pipelineOrWorkflow = computed<string | null>(() => {
+    switch (labRun.value?.Platform) {
+      case 'Seqera Cloud':
+        return 'Pipeline';
+      case 'AWS HealthOmics':
+        return 'Workflow';
+      default:
+        return null;
+    }
+  });
+
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
   //  Tailwind won't pick up and include the classes used and styles will be missing.
   // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
@@ -109,7 +120,7 @@
 
 <template>
   <EGPageHeader
-    :title="labRun?.Title || ''"
+    :title="labRun?.RunName || ''"
     :description="labRun?.WorkflowName || ''"
     :show-back="true"
     :back-action="() => $router.push(`/labs/${labId}?tab=Lab Runs`)"
@@ -136,11 +147,11 @@
           <dl class="mt-4 space-y-4">
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Run Name</dt>
-              <dd class="text-muted text-left">{{ labRun.Title }}</dd>
+              <dd class="text-muted text-left">{{ labRun.RunName }}</dd>
             </div>
 
             <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">Workflow</dt>
+              <dt class="w-[200px] font-medium text-black">{{ pipelineOrWorkflow }}</dt>
               <dd class="text-muted text-left">{{ labRun.WorkflowName }}</dd>
             </div>
 
@@ -153,12 +164,12 @@
 
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Owner</dt>
-              <dd class="text-muted text-left">{{ labRun.UserId }}</dd>
+              <dd class="text-muted text-left">{{ labRun.Owner }}</dd>
             </div>
 
             <div class="flex border-b p-4 text-sm">
               <dt class="w-[200px] font-medium text-black">Platform</dt>
-              <dd class="text-muted text-left">{{ labRun.Type }}</dd>
+              <dd class="text-muted text-left">{{ labRun.Platform }}</dd>
             </div>
 
             <div class="flex border-b p-4 text-sm">

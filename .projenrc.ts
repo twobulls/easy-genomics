@@ -11,9 +11,9 @@ import {
   TypescriptConfigOptions,
 } from 'projen/lib/javascript';
 import { pathsToModuleNameMapper } from 'ts-jest';
+import { ApacheLicense } from './projenrc/apache-license';
 import { setupProjectFolders } from './projenrc/easy-genomics-project-setup';
 import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
-import { ApacheLicense } from './projenrc/apache-license';
 import { Husky } from './projenrc/husky';
 import { Nx } from './projenrc/nx';
 import { PnpmWorkspace } from './projenrc/pnpm';
@@ -109,9 +109,11 @@ const jestOptions: JestOptions = {
   jestConfig: {
     // Add all the special paths to let Jest resolve them properly
     moduleNameMapper: {
-      ...pathsToModuleNameMapper(tsConfigOptions.compilerOptions?.paths!, {
-        prefix: '<rootDir>/',
-      }),
+      ...(tsConfigOptions.compilerOptions?.paths
+        ? pathsToModuleNameMapper(tsConfigOptions.compilerOptions?.paths, {
+            prefix: '<rootDir>/',
+          })
+        : {}),
     },
     coveragePathIgnorePatterns: ['/node_modules/'],
   },

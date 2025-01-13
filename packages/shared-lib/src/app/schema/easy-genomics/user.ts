@@ -21,6 +21,7 @@ export const UserSchema = z
     FirstName: z.string().optional(),
     LastName: z.string().optional(),
     Status: z.enum(['Active', 'Inactive', 'Invited']),
+    DefaultOrganization: z.string().optional(),
     OrganizationAccess: OrganizationAccessSchema.optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
@@ -35,8 +36,10 @@ export const CreateUserSchema = z
     PreferredName: z.string().optional(),
     FirstName: z.string().optional(),
     LastName: z.string().optional(),
+    DefaultOrganization: z.string().optional(),
   })
   .strict();
+export type CreateUser = z.infer<typeof CreateUserSchema>;
 
 export const UpdateUserSchema = z
   .object({
@@ -45,3 +48,11 @@ export const UpdateUserSchema = z
     LastName: z.string().optional(),
   })
   .strict();
+export type UpdateUser = z.infer<typeof UpdateUserSchema>;
+
+export const UpdateUserDefaultOrganizationSchema = z
+  .object({
+    DefaultOrganization: z.string().optional(),
+  })
+  .strict();
+export type UpdateUserDefaultOrganization = z.infer<typeof UpdateUserDefaultOrganizationSchema>;

@@ -36,6 +36,7 @@ export const orgAdminUser: User = {
   FirstName: 'Org',
   LastName: 'Admin',
   Status: 'Active',
+  DefaultOrganization: organizationId,
   OrganizationAccess: {
     [organizationId]: {
       Status: 'Active',
@@ -61,6 +62,7 @@ export const labManagerUser: User = {
   FirstName: 'Lab',
   LastName: 'Manager',
   Status: 'Active',
+  DefaultOrganization: organizationId,
   OrganizationAccess: {
     [organizationId]: {
       Status: 'Active',
@@ -102,6 +104,7 @@ export const labTechnicianUser: User = {
   FirstName: 'Lab',
   LastName: 'Technician',
   Status: 'Active',
+  DefaultOrganization: organizationId,
   OrganizationAccess: {
     [organizationId]: {
       Status: 'Active',

@@ -8,7 +8,7 @@ const seqeraPipeline = 'quality-e2e-test-pipeline';
 const filePath1 = './tests/e2e/fixtures/NA1287820K_R1_001.fastq.gz';
 const filePath2 = './tests/e2e/fixtures/NA1287820K_R2_001.fastq.gz';
 const labTechnicianName = 'Lab Technician';
-let RunNameVar: string;
+let runNameVar: string;
 
 test('01 - Hide Create a new Laboratory button', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
@@ -161,8 +161,8 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
       // ** Check if the run name appears in the Run List
       await expect(page.getByRole('row', { name: runName })).toBeVisible();
 
-      //set RunNameVar to be used by other steps
-      RunNameVar = runName;
+      //set runNameVar to be used by other steps
+      runNameVar = runName;
     }
   }
 });
@@ -279,12 +279,12 @@ test('09 - Check Run Details', async ({ page, baseURL }) => {
     await page.waitForLoadState('networkidle');
 
     // Go to Run Details
-    await page.getByRole('row', { name: RunNameVar }).locator('button').click();
+    await page.getByRole('row', { name: runNameVar }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View Details' }).click();
     await page.waitForTimeout(5 * 2000);
 
     // Check Run Name and other details
-    await expect(page.getByText(RunNameVar)).toBeVisible();
+    await expect(page.getByText(runNameVar)).toBeVisible();
     await expect(page.getByText('Submitted')).toBeVisible();
   }
 });

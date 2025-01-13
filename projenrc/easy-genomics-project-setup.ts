@@ -32,7 +32,7 @@ export function setupProjectFolders(project: Project) {
 function createProjectFolders(project: Project, projectFolder?: ProjectFolders.Structure[], folderPath: string = '') {
   const folder = projectFolder || [];
 
-  folder.map((s: ProjectFolders.Structure) => {
+  folder.forEach((s: ProjectFolders.Structure) => {
     if (s.name === 'README.md' && s.type === 'file') {
       createFolderReadMe(project, `${folderPath}/${s.name}`, s.content);
     } else {

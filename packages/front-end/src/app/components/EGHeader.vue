@@ -167,8 +167,8 @@
 
                 <UIcon
                   v-if="!userStore.isSuperuser && multipleOrgs"
-                  class="text-2xl"
-                  :class="{ 'text-muted': uiStore.isRequestPending('updateDefaultOrg') }"
+                  class="text-muted text-2xl"
+                  :class="{ 'text-neutral-300': uiStore.isRequestPending('updateDefaultOrg') }"
                   :name="starIconForOrg(userStore.currentOrgId)"
                   @click="async ($event) => await handleStarClick($event, userStore.currentOrgId)"
                 />
@@ -191,8 +191,8 @@
 
                   <UIcon
                     v-if="!userStore.isSuperuser && multipleOrgs"
-                    class="text-2xl"
-                    :class="{ 'text-muted': uiStore.isRequestPending('updateDefaultOrg') }"
+                    class="text-muted text-2xl"
+                    :class="{ 'text-neutral-300': uiStore.isRequestPending('updateDefaultOrg') }"
                     :name="starIconForOrg(org.OrganizationId)"
                     @click="async ($event) => await handleStarClick($event, org.OrganizationId)"
                   />

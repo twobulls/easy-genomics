@@ -104,6 +104,10 @@
       .filter((org) => org.OrganizationId !== userStore.currentOrgId)
       .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
   );
+
+  const multipleOrgs = computed<boolean>(
+    () => Object.keys(userStore.currentUserPermissions.orgPermissions || {}).length > 1,
+  );
 </script>
 
 <template>
@@ -162,7 +166,7 @@
                 />
 
                 <UIcon
-                  v-if="!userStore.isSuperuser"
+                  v-if="!userStore.isSuperuser && multipleOrgs"
                   class="text-2xl"
                   :class="{ 'text-muted': uiStore.isRequestPending('updateDefaultOrg') }"
                   :name="starIconForOrg(userStore.currentOrgId)"
@@ -186,6 +190,7 @@
                   <div class="font-medium">{{ org.Name }}</div>
 
                   <UIcon
+                    v-if="!userStore.isSuperuser && multipleOrgs"
                     class="text-2xl"
                     :class="{ 'text-muted': uiStore.isRequestPending('updateDefaultOrg') }"
                     :name="starIconForOrg(org.OrganizationId)"

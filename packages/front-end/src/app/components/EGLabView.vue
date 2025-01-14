@@ -43,8 +43,7 @@
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
   const runToCancel = ref<LaboratoryRun | null>(null);
-  const isCancelSeqeraDialogOpen = ref<boolean>(false);
-  const isCancelOmicsDialogOpen = ref<boolean>(false);
+  const isCancelDialogOpen = ref<boolean>(false);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
@@ -144,12 +143,7 @@
 
   function initCancelRun(run: LaboratoryRun) {
     runToCancel.value = run;
-
-    if (run.Type === 'Seqera Cloud') {
-      isCancelSeqeraDialogOpen.value = true;
-    } else {
-      isCancelOmicsDialogOpen.value = true;
-    }
+    isCancelDialogOpen.value = true;
   }
 
   function runsActionItems(run: LaboratoryRun): object[] {
@@ -412,15 +406,15 @@
 
   async function handleCancelDialogAction() {
     const runId = runToCancel.value?.RunId;
-    const runName = runToCancel.value?.Title;
-    const runType = runToCancel.value?.Type;
+    const runName = runToCancel.value?.RunName;
+    const runPlatform = runToCancel.value?.Platform;
 
-    if (!runId || !runName || !runType) {
+    if (!runId || !runName || !runPlatform) {
       throw new Error('runToCancel is missing required information');
     }
 
     try {
-      if (runType === 'Seqera Cloud') {
+      if (runPlatform === 'Seqera Cloud') {
         uiStore.setRequestPending('cancelSeqeraRun');
         await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
       } else {
@@ -431,8 +425,7 @@
       useToastStore().error('Failed to cancel run');
     }
 
-    isCancelSeqeraDialogOpen.value = false;
-    isCancelOmicsDialogOpen.value = false;
+    isCancelDialogOpen.value = false;
     uiStore.setRequestComplete('cancelSeqeraRun');
     uiStore.setRequestComplete('cancelOmicsRun');
 
@@ -723,19 +716,9 @@
     action-label="Cancel Run"
     :action-variant="ButtonVariantEnum.enum.destructive"
     @action-triggered="handleCancelDialogAction"
-    :primary-message="`Are you sure you would like to cancel ${runToCancel?.Title}?`"
+    :primary-message="`Are you sure you would like to cancel ${runToCancel?.RunName}?`"
     secondary-message="This will stop any progress made."
-    v-model="isCancelSeqeraDialogOpen"
-    :buttons-disabled="uiStore.isRequestPending('cancelSeqeraRun')"
-  />
-
-  <EGDialog
-    action-label="Cancel Run"
-    :action-variant="ButtonVariantEnum.enum.destructive"
-    @action-triggered="handleCancelDialogAction"
-    :primary-message="`Are you sure you would like to cancel ${runToCancel?.Title}?`"
-    secondary-message="This will stop any progress made."
-    v-model="isCancelOmicsDialogOpen"
-    :buttons-disabled="uiStore.isRequestPending('cancelOmicsRun')"
+    v-model="isCancelDialogOpen"
+    :buttons-disabled="uiStore.anyRequestPending(['cancelSeqeraRun', 'cancelOmicsRun'])"
   />
 </template>

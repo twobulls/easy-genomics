@@ -1,4 +1,7 @@
-import { UpdateUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
+import {
+  UpdateUserDefaultOrganizationSchema,
+  UpdateUserSchema,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
 import {
   ConfirmUpdateUserInvitationRequestSchema,
   CreateUserInvitationRequestSchema,
@@ -138,6 +141,25 @@ class UsersModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Error updating user details');
+    }
+
+    return res;
+  }
+
+  async updateUserDefaultOrg(userId: string, newDefaultOrgId: string) {
+    const data = { DefaultOrganization: newDefaultOrgId };
+    const parseResult = UpdateUserDefaultOrganizationSchema.safeParse(data);
+    if (!parseResult.success) {
+      console.error('Error; updateUserDefaultOrg; safe parse failed; parseResult: ', parseResult);
+      throw new Error(
+        `Error; updateUserDefaultOrg; safe parse failed; parseResult: ${JSON.stringify(parseResult, null, 2)}`,
+      );
+    }
+
+    const res = await this.call<User>('PUT', `/user/update-user-default-organization-request/${userId}`, data);
+
+    if (!res) {
+      throw new Error('Error updating user default organization');
     }
 
     return res;

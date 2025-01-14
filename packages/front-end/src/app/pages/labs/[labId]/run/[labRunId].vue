@@ -57,7 +57,6 @@
   }
 
   const tabItems = computed(() => [
-    { key: 'runResults', label: 'Run Results' },
     { key: 'runDetails', label: 'Run Details' },
     { key: 'fileManager', label: 'File Manager' },
   ]);
@@ -130,15 +129,6 @@
 
   <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="handleTabChange">
     <template #item="{ item }">
-      <!-- Run Results -->
-      <div v-if="item.key === 'runResults'" class="space-y-3">
-        <EGFileExplorer
-          :s3-contents="s3Contents"
-          :lab-id="labId"
-          :is-loading="useUiStore().isRequestPending('fetchS3Content')"
-        />
-      </div>
-
       <!-- Run Details -->
       <div v-if="item.key === 'runDetails'" class="space-y-3">
         <section
@@ -193,7 +183,13 @@
       </div>
 
       <!-- File Manager -->
-      <div v-if="item.key === 'fileManager'" class="space-y-3">File Manager</div>
+      <div v-if="item.key === 'fileManager'" class="space-y-3">
+        <EGFileExplorer
+          :s3-contents="s3Contents"
+          :lab-id="labId"
+          :is-loading="useUiStore().isRequestPending('fetchS3Content')"
+        />
+      </div>
     </template>
   </UTabs>
 </template>

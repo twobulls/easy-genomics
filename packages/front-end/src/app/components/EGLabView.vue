@@ -142,13 +142,6 @@
     });
   }
 
-  function viewRunResults(run: LaboratoryRun) {
-    $router.push({
-      path: `/labs/${props.labId}/run/${run.RunId}`,
-      query: { tab: 'Run Results' },
-    });
-  }
-
   function initCancelRun(run: LaboratoryRun) {
     runToCancel.value = run;
 
@@ -160,10 +153,7 @@
   }
 
   function runsActionItems(run: LaboratoryRun): object[] {
-    const buttons: object[][] = [
-      [{ label: 'View Details', click: () => viewRunDetails(run) }],
-      [{ label: 'View Results', click: () => viewRunResults(run) }],
-    ];
+    const buttons: object[][] = [[{ label: 'View Details', click: () => viewRunDetails(run) }]];
 
     if (['SUBMITTED', 'RUNNING'].includes(run.Status)) {
       buttons.push([{ label: 'Cancel Run', click: () => initCancelRun(run), isHighlighted: true }]);

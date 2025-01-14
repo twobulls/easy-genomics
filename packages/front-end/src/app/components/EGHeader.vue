@@ -11,8 +11,10 @@
     },
   );
 
+  const { $api } = useNuxtApp();
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
+  const uiStore = useUiStore();
 
   const { signOutAndRedirect } = useAuth();
   const $router = useRouter();
@@ -44,17 +46,23 @@
     return orgId === userStore.currentUserDetails.defaultOrgId ? 'i-heroicons-star-solid' : 'i-heroicons-star';
   }
 
-  function handleStarClick($event: any, orgId: string): void {
+  async function handleStarClick($event: any, orgId: string): Promise<void> {
     $event.stopPropagation();
-    setDefaultOrg(orgId);
+    await setDefaultOrg(orgId);
   }
 
-  function setDefaultOrg(orgId: string): void {
-    if (orgId === userStore.currentUserDetails.defaultOrgId) {
+  async function setDefaultOrg(orgId: string): Promise<void> {
+    if (orgId === userStore.currentUserDetails.defaultOrgId || uiStore.isRequestPending('updateDefaultOrg')) {
       return;
     }
 
-    useToastStore().info('Setting default org is not implemented yet');
+    uiStore.setRequestPending('updateDefaultOrg');
+    try {
+      await $api.users.updateUserDefaultOrg(userStore.currentUserDetails.id!, orgId);
+      userStore.currentUserDetails.defaultOrgId = orgId;
+    } finally {
+      uiStore.setRequestComplete('updateDefaultOrg');
+    }
   }
 
   const dropdownItems = computed<object[][]>(() => {
@@ -151,9 +159,11 @@
                 />
 
                 <UIcon
+                  v-if="!userStore.isSuperuser"
                   class="text-2xl"
+                  :class="{ 'text-muted': uiStore.isRequestPending('updateDefaultOrg') }"
                   :name="starIconForOrg(userStore.currentOrgId)"
-                  @click="($event) => handleStarClick($event, userStore.currentOrgId)"
+                  @click="async ($event) => await handleStarClick($event, userStore.currentOrgId)"
                 />
 
                 <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
@@ -174,8 +184,9 @@
 
                   <UIcon
                     class="text-2xl"
+                    :class="{ 'text-muted': uiStore.isRequestPending('updateDefaultOrg') }"
                     :name="starIconForOrg(org.OrganizationId)"
-                    @click="($event) => handleStarClick($event, org.OrganizationId)"
+                    @click="async ($event) => await handleStarClick($event, org.OrganizationId)"
                   />
                 </div>
               </div>

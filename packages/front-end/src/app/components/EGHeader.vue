@@ -59,7 +59,10 @@
     uiStore.setRequestPending('updateDefaultOrg');
     try {
       await $api.users.updateUserDefaultOrg(userStore.currentUserDetails.id!, orgId);
-      userStore.currentUserDetails.defaultOrgId = orgId;
+
+      // refresh auth session to get updated default org from token
+      await useAuth().getRefreshedToken();
+      await useUser().setCurrentUserDataFromToken();
     } finally {
       uiStore.setRequestComplete('updateDefaultOrg');
     }

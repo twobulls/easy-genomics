@@ -8,6 +8,7 @@ const seqeraPipeline = 'quality-e2e-test-pipeline';
 const filePath1 = './tests/e2e/fixtures/NA1287820K_R1_001.fastq.gz';
 const filePath2 = './tests/e2e/fixtures/NA1287820K_R2_001.fastq.gz';
 const labTechnicianName = 'Lab Technician';
+let runNameVar: string;
 
 test('01 - Hide Create a new Laboratory button', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
@@ -159,6 +160,9 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
 
       // ** Check if the run name appears in the Run List
       await expect(page.getByRole('row', { name: runName })).toBeVisible();
+
+      //set runNameVar to be used by other steps
+      runNameVar = runName;
     }
   }
 });
@@ -252,4 +256,35 @@ test('08 - Check if Reset Password fails', async ({ page, baseURL }) => {
   // check confirmation
   await page.waitForTimeout(2000);
   await expect(page.getByText('Reset link has been sent to ' + envConfig.testInviteEmail)).toBeVisible();
+});
+
+test('09 - Check Run Details', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.waitForLoadState('networkidle');
+
+    // Go to Run Details
+    await page.getByRole('row', { name: runNameVar }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
+    await page.waitForTimeout(5 * 2000);
+
+    // Check Run Name and other details
+    await expect(page.getByText(runNameVar)).toBeVisible();
+    await expect(page.getByText('Submitted')).toBeVisible();
+  }
 });

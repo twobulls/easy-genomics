@@ -1,7 +1,7 @@
-import { Project, LicenseOptions, License, IResolver } from 'projen';
-import { TypeScriptProject } from 'projen/lib/typescript';
-import { AwsCdkTypeScriptApp } from 'projen/lib/awscdk';
 import * as fs from 'fs';
+import { Project, LicenseOptions, License } from 'projen';
+import { AwsCdkTypeScriptApp } from 'projen/lib/awscdk';
+import { TypeScriptProject } from 'projen/lib/typescript';
 
 /**
  * Apply the Apache 2.0 license with the correct copyright date and name
@@ -31,7 +31,7 @@ export class ApacheLicense extends License {
 
     this.apacheText = text;
   }
-  synthesizeContent(_: IResolver) {
+  synthesizeContent() {
     return this.apacheText;
   }
 }

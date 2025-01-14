@@ -22,7 +22,7 @@ export class PlatformUserService extends DynamoDBService {
 
   /**
    * This function creates a DynamoDB transaction to:
-   *  - add a new User record
+   *  - add a new User record and set their new Organization as their Default Organization
    *  - add an Unique-Reference record to reserve the new User's email as taken
    *  - add an Organization-User access mapping record for the new User to access the Organization
    *
@@ -40,6 +40,7 @@ export class PlatformUserService extends DynamoDBService {
 
     const user: User = {
       ...newUser,
+      DefaultOrganization: organizationUser.OrganizationId,
       OrganizationAccess: {
         [organizationUser.OrganizationId]: {
           Status: organizationUser.Status,
@@ -99,6 +100,7 @@ export class PlatformUserService extends DynamoDBService {
    * This function creates a DynamoDB transaction to:
    *  - update the existing User to add OrganizationAccess meta-data simplify and improve data retrieval
    *  - add an Organization-User access mapping record for the existing User to access the Organization
+   *  - set the DefaultOrganization if the current User's DefaultOrganization is not defined yet / empty
    *
    * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
    * writing the User record.
@@ -113,9 +115,15 @@ export class PlatformUserService extends DynamoDBService {
     const logRequestMessage = `Add Existing User To Organization UserId=${organizationUser.UserId} OrganizationId=${organizationUser.OrganizationId} request`;
     console.info(logRequestMessage);
 
+    const defaultOrganization: string | undefined =
+      !existingUser.DefaultOrganization || existingUser.DefaultOrganization === ''
+        ? organizationUser.OrganizationId
+        : existingUser.DefaultOrganization;
+
     // Retrieve the User's OrganizationAccess metadata to update
     const user: User = {
       ...existingUser,
+      DefaultOrganization: defaultOrganization,
       OrganizationAccess: <OrganizationAccess>{
         ...existingUser.OrganizationAccess,
         [organizationUser.OrganizationId]: <OrganizationAccessDetails>{
@@ -163,6 +171,7 @@ export class PlatformUserService extends DynamoDBService {
   /**
    * This function creates a DynamoDB transaction to:
    *  - update the existing User to remove the OrganizationAccess meta-data to remove the tracking for the Organization
+   *  - remove the User's DefaultOrganization if it is the same Organization, and replace with the next available Organization
    *  - delete the Organization-User access mapping record for the existing User to remove access to the Organization
    *  - delete the existing Laboratory-User access mappings records associated with the removed Organization access
    *
@@ -192,8 +201,17 @@ export class PlatformUserService extends DynamoDBService {
       delete organizationAccess[organizationUser.OrganizationId];
     }
 
+    // Replace User's existing DefaultOrganization if it is the same Organization access being removed
+    const defaultOrganization: string | undefined =
+      existingUser.DefaultOrganization === organizationUser.OrganizationId
+        ? Object.keys(organizationAccess)
+            .filter((organizationId) => organizationId !== organizationUser.OrganizationId)
+            .shift()
+        : existingUser.DefaultOrganization;
+
     const user = {
       ...existingUser,
+      DefaultOrganization: defaultOrganization,
       OrganizationAccess: <OrganizationAccess>{
         ...organizationAccess,
       },

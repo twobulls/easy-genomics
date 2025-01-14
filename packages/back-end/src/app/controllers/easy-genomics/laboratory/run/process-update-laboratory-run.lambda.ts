@@ -63,19 +63,19 @@ async function processStatusCheckEvent(operation: SnsProcessingOperation, labora
 
       let currentStatus = existingRun.Status;
 
-      if (existingRun.Type === 'AWS HealthOmics') {
+      if (existingRun.Platform === 'AWS HealthOmics') {
         currentStatus = await getAWSHealthOmicsStatus(existingRun);
-      } else if (existingRun.Type === 'Seqera Cloud') {
+      } else if (existingRun.Platform === 'Seqera Cloud') {
         currentStatus = await getSeqeraCloudStatus(existingRun);
       }
 
       // Has status changed?
-      if (existingRun.Status != currentStatus) {
+      if (existingRun.Status.toUpperCase() != currentStatus.toUpperCase()) {
         console.log('status change', existingRun.Status, currentStatus);
 
         laboratoryRun = await laboratoryRunService.update({
           ...existingRun,
-          Status: currentStatus,
+          Status: currentStatus.toUpperCase(),
           ModifiedAt: new Date().toISOString(),
           ModifiedBy: 'Status Check',
         });
@@ -138,7 +138,7 @@ async function getSeqeraCloudStatus(laboratoryRun: LaboratoryRun): Promise<strin
   const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryRun.LaboratoryId);
 
   // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-  const getParameterResponse: GetParameterCommandOutput = await ssmService
+  const getParameterResponse: GetParameterCommandOutput | void = await ssmService
     .getParameter({
       Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
       WithDecryption: true,
@@ -150,6 +150,9 @@ async function getSeqeraCloudStatus(laboratoryRun: LaboratoryRun): Promise<strin
         throw error;
       }
     });
+  if (!getParameterResponse) {
+    throw new LaboratoryAccessTokenUnavailableError();
+  }
 
   const accessToken: string | undefined = getParameterResponse.Parameter?.Value;
   if (!accessToken) {

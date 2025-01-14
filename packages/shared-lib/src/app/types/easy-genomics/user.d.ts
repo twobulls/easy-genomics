@@ -15,6 +15,7 @@
  *   FirstName?: <string>,
  *   LastName?: <string>,
  *   Status: 'Active' | 'Inactive' | 'Invited',
+ *   DefaultOrganization?: <string>, // User chosen Default Organization
  *   OrganizationAccess?: <OrganizationAccess>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
@@ -31,6 +32,7 @@ export interface User extends BaseAttributes {
   FirstName?: string;
   LastName?: string;
   Status: UserStatus;
+  DefaultOrganization?: string; // User chosen Default Organization
   OrganizationAccess?: OrganizationAccess;
 }
 

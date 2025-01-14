@@ -15,6 +15,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useRunStore, useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
+  import { WipSeqeraRunData } from '@FE/stores/run';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -441,16 +442,6 @@
 
     uploadStatus.value = 'success';
     useToastStore().success('Files uploaded successfully');
-
-    const labRunRequest = {
-      'Title': wipSeqeraRun.value?.userPipelineRunName,
-      'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
-      'Status': 'Active',
-      'Type': 'Seqera Cloud',
-      'OrganizationId': useUserStore().currentOrgId,
-      'RunId': wipSeqeraRun.value?.transactionId,
-    };
-    await $api.labs.createLabRun(labRunRequest);
   }
 
   /**

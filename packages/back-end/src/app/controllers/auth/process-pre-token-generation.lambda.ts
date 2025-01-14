@@ -30,6 +30,7 @@ export const handler: Handler = async (
           ['FirstName']: user.FirstName || '',
           ['LastName']: user.LastName || '',
           ['Status']: user.Status,
+          ['DefaultOrganization']: user.DefaultOrganization || '', // User chosen Default Organization
           ['OrganizationAccess']: JSON.stringify(user.OrganizationAccess),
         },
       },

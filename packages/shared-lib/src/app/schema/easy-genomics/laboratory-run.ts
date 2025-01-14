@@ -11,13 +11,15 @@ export const LaboratoryRunSchema = z
     RunId: z.string().uuid(),
     UserId: z.string().uuid(),
     OrganizationId: z.string().uuid(),
-    Type: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
+    RunName: z.string(),
+    Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     Status: z.string(),
-    Title: z.string().optional(),
+    Owner: z.string(),
     WorkflowName: z.string().optional(),
     ExternalRunId: z.string().optional(),
-    S3Input: z.string().optional(),
-    S3Output: z.string().optional(),
+    InputS3Url: z.string().optional(),
+    OutputS3Url: z.string().optional(),
+    SampleSheetS3Url: z.string().optional(),
     Settings: z.union([z.string(), z.record(z.string(), z.any())]).optional(), // JSON string
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
@@ -32,13 +34,15 @@ export const ReadLaboratoryRunSchema = z
     RunId: z.string().uuid(),
     UserId: z.string().uuid(),
     OrganizationId: z.string().uuid(),
-    Type: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
+    RunName: z.string(),
+    Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     Status: z.string(),
-    Title: z.string().optional(),
-    WorkflowName: z.string().optional(),
+    Owner: z.string(), // User Email for display purposes
+    WorkflowName: z.string().optional(), // Seqera Pipeline Name or AWS HealthOmics Workflow Name
     ExternalRunId: z.string().optional(),
-    S3Input: z.string().optional(),
-    S3Output: z.string().optional(),
+    InputS3Url: z.string().optional(),
+    OutputS3Url: z.string().optional(),
+    SampleSheetS3Url: z.string().optional(),
     Settings: z.union([z.string(), z.record(z.string(), z.any())]).optional(), // JSON string
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
@@ -52,13 +56,14 @@ export const AddLaboratoryRunSchema = z
   .object({
     LaboratoryId: z.string().uuid(),
     RunId: z.string().uuid(),
-    OrganizationId: z.string().uuid(),
-    Type: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
+    RunName: z.string(),
+    Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     Status: z.string(),
-    Title: z.string().optional(),
-    WorkflowName: z.string().optional(),
-    S3Input: z.string().optional(),
-    S3Output: z.string().optional(),
+    WorkflowName: z.string().optional(), // Seqera Pipeline Name or AWS HealthOmics Workflow Name
+    ExternalRunId: z.string().optional(),
+    InputS3Url: z.string().optional(),
+    OutputS3Url: z.string().optional(),
+    SampleSheetS3Url: z.string().optional(),
     Settings: z.union([z.string(), z.record(z.string(), z.any())]).optional(), // JSON string
   })
   .strict();
@@ -66,13 +71,11 @@ export type AddLaboratoryRun = z.infer<typeof AddLaboratoryRunSchema>;
 
 export const EditLaboratoryRunSchema = z
   .object({
-    Title: z.string().optional(),
     Status: z.string(),
+    InputS3Url: z.string().optional(),
+    OutputS3Url: z.string().optional(),
+    SampleSheetS3Url: z.string().optional(),
     Settings: z.union([z.string(), z.record(z.string(), z.any())]).optional(), // JSON string
-    WorkflowName: z.string().optional(),
-    ExternalRunId: z.string().optional(),
-    S3Input: z.string().optional(),
-    S3Output: z.string().optional(),
   })
   .strict();
 export type EditLaboratoryRun = z.infer<typeof EditLaboratoryRunSchema>;

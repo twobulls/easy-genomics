@@ -17,7 +17,12 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
     this.iam = new IamConstruct(this, `${this.props.constructNamespace}-iam`, {
       ...(<IamConstructProps>props), // Typecast to IamConstructProps
     });
-    this.setupIamPolicies();
+
+    // The following setup order of IAM definitions is mandatory
+    this.setupPolicyStatements();
+    this.setupPolicyDocuments(); // Depends on policy statements
+    this.setupRoles(); // Depends on policy documents
+    this.setupLambdaPolicyStatements(); // Depends on policy documents / statements / roles
 
     this.lambda = new LambdaConstruct(this, `${this.props.constructNamespace}`, {
       ...this.props,
@@ -36,33 +41,39 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
   }
 
   // AWS HealthOmics specific IAM policies
-  private setupIamPolicies = () => {
-    /**
-     * To run an Omics workflow, a service role that allows HealthOmics service to access resources is required.
-     * The following policy statements provide the service role permission to:
-     * - All input files locations in S3 will need Read access
-     * - Any S3 output location will require read and write access
-     * - CloudWatch requires access
-     * - Ensure that all ECR containers and buckets required to run the workflow are in the same region
-     */
-    this.iam.addPolicyStatements('easy-genomics-healthomics-workflow-policy-statements', [
+  private setupPolicyStatements = () => {
+    // iam-get-role-pass-role-policy-statement
+    this.iam.addPolicyStatements('iam-get-role-pass-role-policy-statement', [
       new PolicyStatement({
-        resources: ['arn:aws:s3:::*/*'],
-        actions: ['s3:*'],
+        resources: ['arn:aws:iam:::role/*', `arn:aws:iam::${this.props.env.account!}:role/*`],
+        actions: ['iam:GetRole', 'iam:PassRole'],
         effect: Effect.ALLOW,
       }),
+    ]);
+
+    // omics-full-access-policy-statement
+    this.iam.addPolicyStatements('omics-full-access-policy-statement', [
       new PolicyStatement({
-        resources: ['arn:aws:s3:::*'],
-        actions: ['s3:*'],
+        resources: ['*'],
+        actions: ['omics:*'],
         effect: Effect.ALLOW,
       }),
+    ]);
+
+    // omics-start-run-policy-statement
+    this.iam.addPolicyStatements('omics-start-run-policy-statement', [
       new PolicyStatement({
         resources: [
-          `arn:aws:logs:${this.props.env.region!}:${this.props.env.account!}:log-group:/aws/omics/WorkflowLog:log-stream:*`,
+          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`,
+          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
         ],
-        actions: ['logs:CreateLogStream', 'logs:DescribeLogStreams', 'logs:PutLogEvents'],
+        actions: ['omics:StartRun'],
         effect: Effect.ALLOW,
       }),
+    ]);
+
+    // omics-log-policy-statement
+    this.iam.addPolicyStatements('omics-log-policy-statement', [
       new PolicyStatement({
         resources: [
           `arn:aws:logs:${this.props.env.region!}:${this.props.env.account!}:log-group:/aws/omics/WorkflowLog:*`,
@@ -70,16 +81,79 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         actions: ['logs:CreateLogGroup'],
         effect: Effect.ALLOW,
       }),
+    ]);
+    // omics-log-stream-policy-statement
+    this.iam.addPolicyStatements('omics-log-stream-policy-statement', [
       new PolicyStatement({
-        resources: [`arn:aws:logs:${this.props.env.region!}:${this.props.env.account!}:repository/*`],
-        actions: ['ecr:BatchCheckLayerAvailability', 'ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer'],
+        resources: [
+          `arn:aws:logs:${this.props.env.region!}:${this.props.env.account!}:log-group:/aws/omics/WorkflowLog:log-stream:*`,
+        ],
+        actions: ['logs:DescribeLogStreams', 'logs:CreateLogStream', 'logs:PutLogEvents'],
         effect: Effect.ALLOW,
       }),
     ]);
 
-    /**
-     * To start an Omics workflow run, a service role with the appropriate access policies is required.
-     */
+    // omics-ecr-policy-statement
+    this.iam.addPolicyStatements('omics-ecr-policy-statement', [
+      new PolicyStatement({
+        resources: [`arn:aws:ecr:${this.props.env.region!}:${this.props.env.account!}:repository/*`],
+        actions: ['ecr:BatchGetImage', 'ecr:GetDownloadUrlForLayer', 'ecr:BatchCheckLayerAvailability'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // omics-iam-pass-role-policy-statement
+    this.iam.addPolicyStatements('omics-iam-pass-role-policy-statement', [
+      new PolicyStatement({
+        resources: ['*'],
+        actions: ['iam:PassRole'],
+        effect: Effect.ALLOW,
+        conditions: {
+          stringEquals: {
+            'iam:PassedToService': 'omics.amazonaws.com',
+          },
+        },
+      }),
+    ]);
+
+    // omics-s3-bucket-policy-statement
+    this.iam.addPolicyStatements('omics-s3-bucket-policy-statement', [
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*/*'],
+        actions: ['s3:GetObject', 's3:PutObject'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*'],
+        actions: ['s3:ListBucket'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+  };
+
+  private setupPolicyDocuments() {
+    // omics-service-role-policy-document
+    this.iam.addPolicyDocument(
+      'omics-service-role-policy-document',
+      new PolicyDocument({
+        statements: [
+          // Omics Full Access Policy
+          ...this.iam.getPolicyStatements('omics-full-access-policy-statement'),
+          // Omics Logging Policies
+          ...this.iam.getPolicyStatements('omics-log-policy-statement'),
+          ...this.iam.getPolicyStatements('omics-log-stream-policy-statement'),
+          // Omics ECR Policy for private/custom workflows
+          ...this.iam.getPolicyStatements('omics-ecr-policy-statement'),
+          // Omics S3 Policies
+          ...this.iam.getPolicyStatements('omics-s3-bucket-policy-statement'),
+          // Omics Pass Role
+          ...this.iam.getPolicyStatements('iam-get-role-pass-role-policy-statement'),
+        ],
+      }),
+    );
+  }
+
+  private setupRoles() {
+    // easy-genomics-healthomics-workflow-run-role
     this.iam.addRole(
       'easy-genomics-healthomics-workflow-run-role',
       new Role(this, `${this.props.namePrefix}-easy-genomics-healthomics-workflow-run-role`, {
@@ -95,14 +169,15 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
             },
           },
         }),
+        description: 'Service Role that the Omics Service can use access resources from other services.',
         inlinePolicies: {
-          [`${this.props.namePrefix}-easy-genomics-healthomics-workflow-policy-document`]: new PolicyDocument({
-            statements: this.iam.getPolicyStatements('easy-genomics-healthomics-workflow-policy-statements'),
-          }),
+          ['omics-service-role-policy-document']: this.iam.getPolicyDocument('omics-service-role-policy-document'),
         },
       }),
     );
+  }
 
+  private setupLambdaPolicyStatements() {
     // /aws-healthomics/workflow/list-private-workflows
     this.iam.addPolicyStatements('/aws-healthomics/workflow/list-private-workflows', [
       new PolicyStatement({
@@ -118,7 +193,6 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
-
     // /aws-healthomics/workflow/list-shared-workflows
     this.iam.addPolicyStatements('/aws-healthomics/workflow/list-shared-workflows', [
       new PolicyStatement({
@@ -221,5 +295,5 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
-  };
+  }
 }

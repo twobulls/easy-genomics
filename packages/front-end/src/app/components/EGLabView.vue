@@ -193,7 +193,7 @@
   function viewRunResults(run: GenericRun) {
     $router.push({
       path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
-      query: { tab: 'Run Results' },
+      query: { tab: 'File Manager' },
     });
   }
 

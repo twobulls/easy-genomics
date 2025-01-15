@@ -28,6 +28,7 @@ export const handler: Handler = async (
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     const currentUserId = event.requestContext.authorizer.claims['cognito:username'];
+    const currentUserEmail = event.requestContext.authorizer.claims.email;
     // Post Request Body
     const request: AddLaboratoryRun = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
     // Data validation safety check
@@ -35,21 +36,21 @@ export const handler: Handler = async (
       throw new InvalidRequestError();
     }
 
+    // Validate Laboratory exists before creating Laboratory Run
+    const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(request.LaboratoryId);
+    if (!laboratory) {
+      throw new LaboratoryNotFoundError();
+    }
+
     // Only available for Org Admins or Laboratory Managers and Technicians
     if (
       !(
-        validateOrganizationAdminAccess(event, request.OrganizationId) ||
-        validateLaboratoryManagerAccess(event, request.OrganizationId, request.LaboratoryId) ||
-        validateLaboratoryTechnicianAccess(event, request.OrganizationId, request.LaboratoryId)
+        validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+        validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId) ||
+        validateLaboratoryTechnicianAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
       )
     ) {
       throw new UnauthorizedAccessError();
-    }
-
-    // Validate Laboratory exists before creating Laboratory Run
-    const laboratory: Laboratory = await laboratoryService.get(request.OrganizationId, request.LaboratoryId);
-    if (!laboratory) {
-      throw new LaboratoryNotFoundError();
     }
 
     const response = await laboratoryRunService
@@ -58,11 +59,16 @@ export const handler: Handler = async (
         RunId: request.RunId,
         UserId: currentUserId,
         OrganizationId: laboratory.OrganizationId,
-        Type: request.Type,
-        Status: 'Created',
-        Title: request.Title,
+        RunName: request.RunName,
+        Platform: request.Platform,
+        Status: request.Status,
+        Owner: currentUserEmail,
         WorkflowName: request.WorkflowName,
-        Settings: JSON.stringify(request.Settings),
+        ExternalRunId: request.ExternalRunId,
+        InputS3Url: request.InputS3Url,
+        OutputS3Url: request.OutputS3Url,
+        SampleSheetS3Url: request.SampleSheetS3Url,
+        Settings: JSON.stringify(request.Settings || {}),
         CreatedAt: new Date().toISOString(),
         CreatedBy: currentUserId,
       })

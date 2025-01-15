@@ -19,6 +19,7 @@ interface UserStoreState {
     lastName: string | null;
     preferredName: string | null;
     email: string | null;
+    defaultOrgId: string | null;
   };
 }
 
@@ -36,6 +37,7 @@ const initialState = (): UserStoreState => ({
     lastName: null,
     preferredName: null,
     email: null,
+    defaultOrgId: null,
   },
 });
 

@@ -11,8 +11,10 @@
     },
   );
 
+  const { $api } = useNuxtApp();
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
+  const uiStore = useUiStore();
 
   const { signOutAndRedirect } = useAuth();
   const $router = useRouter();
@@ -38,6 +40,32 @@
     $router.push('/');
     useUiStore().incrementRemountAppKey();
     useToastStore().success('You have switched organizations');
+  }
+
+  function starIconForOrg(orgId: string): string {
+    return orgId === userStore.currentUserDetails.defaultOrgId ? 'i-heroicons-star-solid' : 'i-heroicons-star';
+  }
+
+  async function handleStarClick($event: any, orgId: string): Promise<void> {
+    $event.stopPropagation();
+    await setDefaultOrg(orgId);
+  }
+
+  async function setDefaultOrg(orgId: string): Promise<void> {
+    if (orgId === userStore.currentUserDetails.defaultOrgId || uiStore.isRequestPending('updateDefaultOrg')) {
+      return;
+    }
+
+    uiStore.setRequestPending('updateDefaultOrg');
+    try {
+      await $api.users.updateUserDefaultOrg(userStore.currentUserDetails.id!, orgId);
+
+      // refresh auth session to get updated default org from token
+      await useAuth().getRefreshedToken();
+      await useUser().setCurrentUserDataFromToken();
+    } finally {
+      uiStore.setRequestComplete('updateDefaultOrg');
+    }
   }
 
   const dropdownItems = computed<object[][]>(() => {
@@ -76,15 +104,22 @@
       .filter((org) => org.OrganizationId !== userStore.currentOrgId)
       .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
   );
+
+  const multipleOrgs = computed<boolean>(
+    () => Object.keys(userStore.currentUserPermissions.orgPermissions || {}).length > 1,
+  );
 </script>
 
 <template>
   <header class="lh flex flex-row items-center justify-center px-4">
     <div class="header-container" :class="{ 'flex w-full flex-row items-center justify-between': props.isAuthed }">
       <template v-if="props.isAuthed">
-        <div class="flex">
-          <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
+        <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
+
+        <div class="text-muted text-lg" v-if="!!orgsStore.orgs[userStore.currentOrgId]?.Name">
+          {{ orgsStore.orgs[userStore.currentOrgId].Name }}
         </div>
+
         <div class="flex items-center gap-4">
           <ULink
             v-if="!userStore.isSuperuser"
@@ -124,9 +159,18 @@
             <template #profile>
               <div class="flex w-full flex-row items-center gap-3">
                 <EGUserDisplay
+                  class="grow"
                   :initials="userStore.currentUserInitials"
                   :name="userStore.currentUserDisplayName"
                   :organization="orgsStore.orgs[userStore.currentOrgId]?.Name ?? null"
+                />
+
+                <UIcon
+                  v-if="!userStore.isSuperuser && multipleOrgs"
+                  class="text-muted text-2xl"
+                  :class="{ 'text-neutral-300': uiStore.isRequestPending('updateDefaultOrg') }"
+                  :name="starIconForOrg(userStore.currentOrgId)"
+                  @click="async ($event) => await handleStarClick($event, userStore.currentOrgId)"
                 />
 
                 <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
@@ -139,8 +183,19 @@
               <div class="flex w-full flex-col items-start" v-for="(org, i) of otherOrgs">
                 <div v-if="i > 0" class="w-full border-t" />
 
-                <div @click="() => selectSwitchToOrg(org.OrganizationId)" class="w-full py-3 text-left font-medium">
-                  {{ org.Name }}
+                <div
+                  @click="() => selectSwitchToOrg(org.OrganizationId)"
+                  class="flex w-full items-center justify-between py-3 text-left"
+                >
+                  <div class="font-medium">{{ org.Name }}</div>
+
+                  <UIcon
+                    v-if="!userStore.isSuperuser && multipleOrgs"
+                    class="text-muted text-2xl"
+                    :class="{ 'text-neutral-300': uiStore.isRequestPending('updateDefaultOrg') }"
+                    :name="starIconForOrg(org.OrganizationId)"
+                    @click="async ($event) => await handleStarClick($event, org.OrganizationId)"
+                  />
                 </div>
               </div>
             </template>

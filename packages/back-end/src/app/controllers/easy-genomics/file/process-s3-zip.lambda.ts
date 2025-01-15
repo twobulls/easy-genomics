@@ -1,6 +1,6 @@
 import path from 'path';
 import * as stream from 'stream';
-import { Readable } from 'stream';
+//import { Readable } from 'stream';
 import { GetObjectCommandOutput, ListObjectsV2CommandOutput } from '@aws-sdk/client-s3';
 import { createS3Zip } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/create-s3-zip';
 import {
@@ -81,7 +81,7 @@ async function processCreateZipEvent(operation: SnsProcessingOperation, request:
 
     if (s3ObjectSteams.length > 0) {
       const uploadDir = path.parse(s3Prefix).dir;
-      const zipKey = `${uploadDir}/results.zip`;
+      const zipKey = `${uploadDir}/results-${Date.now()}.zip`; // this date postfix is just to make it easier for testing
       await generateZipArchive(request.S3Bucket, zipKey, s3ObjectSteams);
     }
   } else {
@@ -95,24 +95,42 @@ async function processCreateZipEvent(operation: SnsProcessingOperation, request:
  *
  * @param workFlowFileStream
  */
-const generateZipArchive = async (s3bucket: string, outputFileKey: string, s3ObjectStreams: S3ObjectStream[]) => {
-  return new Promise(async (resolve, reject) => {
-    const archive = archiver('zip');
-    archive.on('end', () => {
-      console.log('Zip Archive stream data has been drained: ' + archive.pointer() + ' total bytes');
-    });
-    archive.on('error', (error: ArchiverError) => {
-      console.error('Zip Archive stream encountered an error:', error);
-      reject(new Error(`${error.name} ${error.code} ${error.message} ${error.path}  ${error.stack}`));
-    });
+async function generateZipArchive(s3bucket: string, outputFileKey: string, s3ObjectStreams: S3ObjectStream[]) {
+  // If the memory limit for the buffer is too low then it fails
+  const highWaterMark = s3ObjectStreams.reduce(
+    (n, { output }) => n + (output.ContentLength || 0) + 10 * 1024 * 1024,
+    0,
+  );
+  console.log('Estimated memory', highWaterMark);
+  const archive = archiver('zip', {
+    zlib: { level: 4 },
+    highWaterMark,
+  });
 
-    const bucket = s3bucket;
-    console.log(`Proceeding with generating Zip Archive: Bucket:${bucket}, Key:${outputFileKey}`);
+  archive.on('end', () => {
+    console.log('Zip Archive stream data has been drained: ' + archive.pointer() + ' total bytes');
+  });
+  archive.on('error', (error: ArchiverError) => {
+    console.error('Zip Archive stream encountered an error:', error);
+    new Error(`${error.name} ${error.code} ${error.message} ${error.path}  ${error.stack}`);
+  });
 
-    const streamPassThrough = new stream.PassThrough();
+  const bucket = s3bucket;
+  console.log(`Proceeding with generating Zip Archive: Bucket:${bucket}, Key:${outputFileKey}`);
+  const streamPassThrough = new stream.PassThrough();
+
+  await new Promise(async (resolve, reject) => {
     streamPassThrough.on('end', resolve);
-    streamPassThrough.on('close', resolve);
-    streamPassThrough.on('error', reject);
+    //streamPassThrough.on('close', resolve);
+    //streamPassThrough.on('error', reject);
+    streamPassThrough.on('close', () => {
+      console.log('trying to close the stream');
+      return resolve;
+    });
+    streamPassThrough.on('error', (err) => {
+      console.log('error on the stream', err.message);
+      return reject;
+    });
 
     let totalFileSize = 0;
 
@@ -128,17 +146,25 @@ const generateZipArchive = async (s3bucket: string, outputFileKey: string, s3Obj
         totalFileSize += getObjectCommandOutput.ContentLength;
       }
       console.log(`file size so far: ${totalFileSize}`);
-      await archive.append(Readable.from(getObjectCommandOutput.Body! as AsyncIterable<ReadableStream>), {
-        name: filename,
-      });
+      if (getObjectCommandOutput.Body) {
+        let tempContents = await getObjectCommandOutput.Body.transformToString();
+
+        await archive
+          .append(tempContents, {
+            name: filename,
+          })
+          .pipe(streamPassThrough);
+      }
       console.log(`Finished appending: ${filename}`);
     }
 
-    archive.pipe(streamPassThrough);
     console.log(`Finalizing generated Zip Archive: Bucket:${bucket}, Key:${outputFileKey}`);
+
     await archive.finalize().catch((error) => {
       console.error('Finalize did not want to work: ', error);
     });
+
+    console.log('Finished Finalizing');
 
     console.log(
       `Uploading generated Zip Archive to S3: Bucket:${bucket}, Key:${outputFileKey}, Size: ${streamPassThrough.readableLength}`,
@@ -152,10 +178,13 @@ const generateZipArchive = async (s3bucket: string, outputFileKey: string, s3Obj
       ContentLength: streamPassThrough.readableLength, // Required for S3 upload to work
     });
 
+    console.log('Upload complete');
+
     // Ensure this promise is resolved to prevent unit tests from timing out
-    streamPassThrough.emit('close');
+    await streamPassThrough.emit('close');
   }).catch((error) => {
+    console.log('We getting errors?');
     console.error('Error encountered: ', error);
     throw new Error(`${error.code} ${error.message} ${error.data}`);
   });
-};
+}

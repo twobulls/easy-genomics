@@ -4,8 +4,8 @@
   import { useRunStore } from '@FE/stores';
   import { format } from 'date-fns';
   import {
-    S3Response,
     S3Object,
+    S3Response,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
 
   interface MapType {
@@ -159,8 +159,10 @@
               ? handleS3Download(
                   props.labId,
                   row.name,
-                  useRunStore().seqeraRuns[props.labId][props.seqeraRunId].workDir.replace(/\/work$/, ''),
-                  row.size,
+                  getSeqeraS3downloadPath(
+                    useRunStore().seqeraRuns[props.labId][props.seqeraRunId].workDir,
+                    fsPath.value,
+                  ),
                 )
               : downloadFolder(),
         },
@@ -168,6 +170,33 @@
     ];
     return items;
   };
+
+  /**
+   * Get the S3 download path from a Seqera
+   * @param workDir
+   * @param fsPath
+   */
+  function getSeqeraS3downloadPath(workDir, fsPath) {
+    const parts = workDir.split('/');
+    parts.splice(-2); // Remove last two segments
+    return parts.join('/') + fsPath;
+  }
+
+  /**
+   * Get the filesystem path based on the breadcrumb structure
+   * @returns {string} file path
+   */
+  const fsPath = computed(() => {
+    if (!breadcrumbs.value?.length) return '/';
+
+    // Map each breadcrumb name and join with forward slashes
+    // Skip "All Files" since it's the root level display name
+    const pathSegments = breadcrumbs.value.map((crumb) => crumb.name).filter((name) => name !== 'All Files');
+
+    // If there are no segments after filtering (only "All Files" existed),
+    // return root slash, otherwise join segments with slashes
+    return pathSegments.length ? `/${pathSegments.join('/')}` : '/';
+  });
 
   // Watchers to ensure data reactivity
   watch(currentPath, () => {});

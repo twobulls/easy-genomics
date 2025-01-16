@@ -25,7 +25,7 @@
   const labRunId = computed<string | null>(() => labRunsStore.labRunByExternalId(seqeraRunId)?.RunId ?? null);
   const tabItems = computed(() => [
     { key: 'runDetails', label: 'Run Details' },
-    { key: 'runResults', label: 'Run Results' },
+    { key: 'fileManager', label: 'File Manager' },
   ]);
   const seqeraRun = computed(() => runStore.seqeraRuns[labId]?.[seqeraRunId] || null);
 
@@ -141,7 +141,7 @@
 
   <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="handleTabChange">
     <template #item="{ item }">
-      <div v-show="item.key === 'runResults'" class="space-y-3">
+      <div v-show="item.key === 'fileManager'" class="space-y-3">
         <EGFileExplorer
           :s3-contents="s3Contents"
           :lab-id="labId"

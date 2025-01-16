@@ -2,7 +2,7 @@ import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-geno
 import { defineStore } from 'pinia';
 
 interface LabRunsStoreState {
-  // indexed by labId
+  // indexed by lab run id
   labRuns: Record<string, LaboratoryRun>;
   // ordered lists for lab runs by lab
   labRunIdsByLab: Record<string, string[]>;

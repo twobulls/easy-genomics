@@ -11,14 +11,11 @@
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-  import { getDate, getTime } from '@FE/utils/date-time';
   import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
-  import {
-    Workflow as SeqeraRun,
-    Pipeline as SeqeraPipeline,
-  } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-  import { WorkflowListItem as OmicsWorkflow, RunListItem as OmicsRun } from '@aws-sdk/client-omics';
+  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
+  import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -44,9 +41,8 @@
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
-  const runToCancel = ref<GenericRun | null>(null);
-  const isCancelSeqeraDialogOpen = ref<boolean>(false);
-  const isCancelOmicsDialogOpen = ref<boolean>(false);
+  const runToCancel = ref<LaboratoryRun | null>(null);
+  const isCancelDialogOpen = ref<boolean>(false);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
@@ -57,53 +53,7 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const seqeraRuns = computed<SeqeraRun[]>(() => runStore.seqeraRunsForLab(props.labId));
-  const omicsRuns = computed<OmicsRun[]>(() => runStore.omicsRunsForLab(props.labId));
-
-  type GenericRun = {
-    type: 'seqera' | 'omics';
-    id: string;
-    name: string;
-    subName: string;
-    time: string;
-    status: string;
-    owner: string;
-  };
-
-  function seqeraToGeneric(seqeraRun: SeqeraRun): GenericRun {
-    return {
-      type: 'seqera',
-      id: seqeraRun.id!,
-      name: seqeraRun.runName,
-      subName: seqeraRun.projectName,
-      time: seqeraRun.lastUpdated?.replace(/\.\d\d\dZ/, 'Z') || '-',
-      status: seqeraRun.status || '-',
-      owner: seqeraRun.userName || '-',
-    };
-  }
-
-  function omicsToGeneric(omicsRun: OmicsRun): GenericRun {
-    return {
-      type: 'omics',
-      id: omicsRun.id!,
-      name: omicsRun.name || '-',
-      subName: '',
-      time: omicsRun.creationTime?.toString()?.replace(/\.\d\d\dZ/, 'Z') || '-',
-      status: omicsRun.status || '-',
-      owner: '-',
-    };
-  }
-
-  const combinedRuns = computed<GenericRun[]>(() => {
-    if (uiStore.anyRequestPending(['getSeqeraRuns', 'getOmicsRuns'])) {
-      return [];
-    }
-
-    return seqeraRuns.value
-      .map(seqeraToGeneric)
-      .concat(omicsRuns.value.map(omicsToGeneric))
-      .sort((a, b) => (a.time > b.time ? -1 : 1));
-  });
+  const combinedRuns = computed<LaboratoryRun[]>(() => labRunsStore.labRunsForLab(props.labId));
 
   const filteredTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
@@ -183,37 +133,22 @@
     [{ label: 'Run', click: () => viewRunOmicsWorkflow(workflow) }],
   ];
 
-  function viewRunDetails(run: GenericRun) {
+  function viewRunDetails(run: LaboratoryRun) {
     $router.push({
-      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
+      path: `/labs/${props.labId}/run/${run.RunId}`,
       query: { tab: 'Run Details' },
     });
   }
 
-  function viewRunResults(run: GenericRun) {
-    $router.push({
-      path: `/labs/${props.labId}/${run.type}-run/${run.id}`,
-      query: { tab: 'File Manager' },
-    });
-  }
-
-  function initCancelRun(run: GenericRun) {
+  function initCancelRun(run: LaboratoryRun) {
     runToCancel.value = run;
-
-    if (run.type === 'seqera') {
-      isCancelSeqeraDialogOpen.value = true;
-    } else {
-      isCancelOmicsDialogOpen.value = true;
-    }
+    isCancelDialogOpen.value = true;
   }
 
-  function runsActionItems(run: GenericRun): object[] {
-    const buttons: object[][] = [
-      [{ label: 'View Details', click: () => viewRunDetails(run) }],
-      [{ label: 'View Results', click: () => viewRunResults(run) }],
-    ];
+  function runsActionItems(run: LaboratoryRun): object[] {
+    const buttons: object[][] = [[{ label: 'View Details', click: () => viewRunDetails(run) }]];
 
-    if (['SUBMITTED', 'RUNNING'].includes(run.status)) {
+    if (['SUBMITTED', 'RUNNING'].includes(run.Status)) {
       buttons.push([{ label: 'Cancel Run', click: () => initCancelRun(run), isHighlighted: true }]);
     }
 
@@ -228,14 +163,14 @@
     await fetchLaboratoryRuns();
   });
 
-  function setTabIndexFromQuery() {
-    const queryTabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
-    tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
+  function setTabIndex() {
+    const tabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
+    tabIndex.value = tabMatchIndex !== -1 ? tabMatchIndex : 0;
   }
 
   onMounted(() => {
-    // set tabIndex according to query param
-    setTabIndexFromQuery();
+    // set tabIndex according to initialTab prop
+    setTabIndex();
 
     if (intervalId) {
       clearTimeout(intervalId);
@@ -339,9 +274,9 @@
     const assignedRole = getAssignedLabRole(labUserDetails);
 
     const displayName = useUser().displayName({
-      preferredName: labUserDetails.PreferredName,
-      firstName: labUserDetails.FirstName,
-      lastName: labUserDetails.LastName,
+      preferredName: labUserDetails.PreferredName ?? null,
+      firstName: labUserDetails.FirstName ?? null,
+      lastName: labUserDetails.LastName ?? null,
       email: labUserDetails.UserEmail,
     });
 
@@ -380,7 +315,12 @@
 
   // this anticipates these store values being needed on run click
   async function fetchLaboratoryRuns(): Promise<void> {
-    await labRunsStore.loadLabRunsForLab(props.labId);
+    uiStore.setRequestPending('loadLabRuns');
+    try {
+      await labRunsStore.loadLabRunsForLab(props.labId);
+    } finally {
+      uiStore.setRequestComplete('loadLabRuns');
+    }
   }
 
   async function getSeqeraPipelines(): Promise<void> {
@@ -464,16 +404,16 @@
   }
 
   async function handleCancelDialogAction() {
-    const runId = runToCancel.value?.id;
-    const runName = runToCancel.value?.name;
-    const runType = runToCancel.value?.type;
+    const runId = runToCancel.value?.RunId;
+    const runName = runToCancel.value?.RunName;
+    const runPlatform = runToCancel.value?.Platform;
 
-    if (!runId || !runName || !runType) {
+    if (!runId || !runName || !runPlatform) {
       throw new Error('runToCancel is missing required information');
     }
 
     try {
-      if (runType === 'seqera') {
+      if (runPlatform === 'Seqera Cloud') {
         uiStore.setRequestPending('cancelSeqeraRun');
         await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
       } else {
@@ -484,8 +424,7 @@
       useToastStore().error('Failed to cancel run');
     }
 
-    isCancelSeqeraDialogOpen.value = false;
-    isCancelOmicsDialogOpen.value = false;
+    isCancelDialogOpen.value = false;
     uiStore.setRequestComplete('cancelSeqeraRun');
     uiStore.setRequestComplete('cancelOmicsRun');
 
@@ -497,7 +436,7 @@
     await loadLabData();
 
     // the tabs can change after details are updated from adding/removing a compute integration, so update tab index
-    setTimeout(setTabIndexFromQuery, 100); // there's a slight delay to get around a race condition
+    setTimeout(setTabIndex, 100); // there's a slight delay to get around a race condition
   }
 
   watch(lab, async (lab) => {
@@ -676,25 +615,25 @@
           :row-click-action="viewRunDetails"
           :table-data="combinedRuns"
           :columns="runsTableColumns"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns', 'getOmicsRuns'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraRuns', 'getOmicsRuns'])"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
         >
           <template #runName-data="{ row: run }">
-            <div v-if="run.name" class="text-body text-sm font-medium">{{ run.name }}</div>
-            <div v-if="run.subName" class="text-muted text-xs font-normal">{{ run.subName }}</div>
+            <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
+            <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
           </template>
 
           <template #lastUpdated-data="{ row: run }">
-            <div class="text-body text-sm font-medium">{{ getDate(run.time) }}</div>
-            <div class="text-muted">{{ getTime(run.time) }}</div>
+            <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt ?? run.CreatedAt) }}</div>
+            <div class="text-muted">{{ getTime(run.ModifiedAt ?? run.CreatedAt) }}</div>
           </template>
 
           <template #status-data="{ row: run }">
-            <EGStatusChip :status="run.status" />
+            <EGStatusChip :status="run.Status" />
           </template>
 
           <template #owner-data="{ row: run }">
-            <div class="text-body text-sm font-medium">{{ run.owner }}</div>
+            <div class="text-body text-sm font-medium">{{ run.Owner }}</div>
           </template>
 
           <template #actions-data="{ row }">
@@ -705,7 +644,7 @@
 
           <template #empty-state>
             <div class="text-muted flex h-24 items-center justify-center font-normal">
-              There are no Omics Runs in your Lab
+              There are no Runs in your Lab
             </div>
           </template>
         </EGTable>
@@ -776,19 +715,9 @@
     action-label="Cancel Run"
     :action-variant="ButtonVariantEnum.enum.destructive"
     @action-triggered="handleCancelDialogAction"
-    :primary-message="`Are you sure you would like to cancel ${runToCancel?.name}?`"
+    :primary-message="`Are you sure you would like to cancel ${runToCancel?.RunName}?`"
     secondary-message="This will stop any progress made."
-    v-model="isCancelSeqeraDialogOpen"
-    :buttons-disabled="uiStore.isRequestPending('cancelSeqeraRun')"
-  />
-
-  <EGDialog
-    action-label="Cancel Run"
-    :action-variant="ButtonVariantEnum.enum.destructive"
-    @action-triggered="handleCancelDialogAction"
-    :primary-message="`Are you sure you would like to cancel ${runToCancel?.name}?`"
-    secondary-message="This will stop any progress made."
-    v-model="isCancelOmicsDialogOpen"
-    :buttons-disabled="uiStore.isRequestPending('cancelOmicsRun')"
+    v-model="isCancelDialogOpen"
+    :buttons-disabled="uiStore.anyRequestPending(['cancelSeqeraRun', 'cancelOmicsRun'])"
   />
 </template>

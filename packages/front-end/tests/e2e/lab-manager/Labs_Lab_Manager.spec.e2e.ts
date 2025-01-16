@@ -284,7 +284,7 @@ test('09 - Check Run Details', async ({ page, baseURL }) => {
     await page.waitForTimeout(5 * 2000);
 
     // Check Run Name and other details
-    await expect(page.getByText(runNameVar)).toBeVisible();
+    await expect(page.getByText(runNameVar).nth(0)).toBeVisible();
     await expect(page.getByText('Submitted')).toBeVisible();
   }
 });

@@ -37,7 +37,7 @@
       case StatusEnum.enum.UNKNOWN:
         return 'Unknown';
       default:
-        return 'Unknown';
+        return props.status;
     }
   });
 

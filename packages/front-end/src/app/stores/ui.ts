@@ -34,6 +34,7 @@ type PendingRequest =
   | 'loadRunReports'
   | 'editProfileDetails'
   | 'toggleOrgAdmin'
+  | 'loadLabRuns'
   | 'updateDefaultOrg';
 
 interface UiStoreState {

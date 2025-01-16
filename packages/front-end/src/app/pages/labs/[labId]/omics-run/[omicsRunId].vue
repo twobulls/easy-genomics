@@ -22,8 +22,8 @@
       label: 'Run Details',
     },
     {
-      key: 'runResults',
-      label: 'Run Results',
+      key: 'fileManager',
+      label: 'File Manager',
     },
   ]);
 
@@ -108,7 +108,7 @@
     "
   >
     <template #item="{ item }">
-      <div v-if="item.key === 'runResults'" class="space-y-3"></div>
+      <div v-if="item.key === 'fileManager'" class="space-y-3"></div>
 
       <div v-if="item.key === 'runDetails'" class="space-y-3">
         <section

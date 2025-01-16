@@ -23,7 +23,7 @@ test('01 - Update names', async ({ page, baseURL }) => {
 
   await expect(page.getByText(fullName)).toBeVisible();
   await expect(page.getByText(email)).toBeVisible();
-  await expect(page.getByText(initials)).toHaveCount(2); // in header dropdown button and above text inputs
+  await expect(page.getByText(initials, { exact: true })).toHaveCount(2); // in header dropdown button and above text inputs
 
   await expect(saveButton).toBeDisabled();
 
@@ -59,7 +59,7 @@ test('01 - Update names', async ({ page, baseURL }) => {
 
   await expect(page.getByText(fullName)).toBeVisible();
   await expect(page.getByText(email)).toBeVisible();
-  await expect(page.getByText(initials)).toHaveCount(2);
+  await expect(page.getByText(initials, { exact: true })).toHaveCount(2);
 
   await expect(saveButton).toBeDisabled();
 });

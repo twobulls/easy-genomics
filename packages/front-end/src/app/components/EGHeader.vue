@@ -42,10 +42,6 @@
     useToastStore().success('You have switched organizations');
   }
 
-  function starIconForOrg(orgId: string): string {
-    return orgId === userStore.currentUserDetails.defaultOrgId ? 'i-heroicons-star-solid' : 'i-heroicons-star';
-  }
-
   async function handleStarClick($event: any, orgId: string): Promise<void> {
     $event.stopPropagation();
     await setDefaultOrg(orgId);
@@ -108,6 +104,17 @@
   const multipleOrgs = computed<boolean>(
     () => Object.keys(userStore.currentUserPermissions.orgPermissions || {}).length > 1,
   );
+
+  const defaultOrgButtonDynamicClasses = (orgId: string) => ({
+    // active style
+    'border-6': orgId === userStore.currentUserDetails.defaultOrgId,
+    'border-primary':
+      orgId === userStore.currentUserDetails.defaultOrgId && !uiStore.isRequestPending('updateDefaultOrg'),
+    // changing style
+    'border-primary-muted':
+      orgId === userStore.currentUserDetails.defaultOrgId && uiStore.isRequestPending('updateDefaultOrg'),
+    'bg-background-grey': uiStore.isRequestPending('updateDefaultOrg'),
+  });
 </script>
 
 <template>
@@ -165,11 +172,11 @@
                   :organization="orgsStore.orgs[userStore.currentOrgId]?.Name ?? null"
                 />
 
-                <UIcon
+                <button
                   v-if="!userStore.isSuperuser && multipleOrgs"
-                  class="text-muted text-2xl"
-                  :class="{ 'text-neutral-300': uiStore.isRequestPending('updateDefaultOrg') }"
-                  :name="starIconForOrg(userStore.currentOrgId)"
+                  class="h-6 w-6 rounded-full border bg-white"
+                  :class="defaultOrgButtonDynamicClasses(userStore.currentOrgId)"
+                  :disabled="uiStore.isRequestPending('updateDefaultOrg')"
                   @click="async ($event) => await handleStarClick($event, userStore.currentOrgId)"
                 />
 
@@ -189,11 +196,11 @@
                 >
                   <div class="font-medium">{{ org.Name }}</div>
 
-                  <UIcon
+                  <button
                     v-if="!userStore.isSuperuser && multipleOrgs"
-                    class="text-muted text-2xl"
-                    :class="{ 'text-neutral-300': uiStore.isRequestPending('updateDefaultOrg') }"
-                    :name="starIconForOrg(org.OrganizationId)"
+                    class="h-6 w-6 rounded-full border bg-white"
+                    :class="defaultOrgButtonDynamicClasses(org.OrganizationId)"
+                    :disabled="uiStore.isRequestPending('updateDefaultOrg')"
                     @click="async ($event) => await handleStarClick($event, org.OrganizationId)"
                   />
                 </div>
@@ -234,5 +241,9 @@
 
   .ULink {
     line-height: 1.4rem;
+  }
+
+  .border-6 {
+    border-width: 6px;
   }
 </style>

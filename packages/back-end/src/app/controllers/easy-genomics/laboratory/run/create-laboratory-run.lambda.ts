@@ -4,6 +4,7 @@ import {
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sns-processing-event';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
@@ -11,8 +12,10 @@ import {
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { SnsService } from '@BE/services/sns-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
@@ -21,6 +24,7 @@ import {
 
 const laboratoryRunService = new LaboratoryRunService();
 const laboratoryService = new LaboratoryService();
+const snsService = new SnsService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -53,7 +57,7 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
-    const response = await laboratoryRunService
+    const laboratoryRun: LaboratoryRun = await laboratoryRunService
       .add(<LaboratoryRun>{
         LaboratoryId: laboratory.LaboratoryId,
         RunId: request.RunId,
@@ -75,7 +79,23 @@ export const handler: Handler = async (
       .catch((error: any) => {
         throw error;
       });
-    return buildResponse(200, JSON.stringify(response), event);
+
+    if (laboratoryRun.ExternalRunId) {
+      // Queue up run status checks
+      const record: SnsProcessingEvent = {
+        Operation: 'UPDATE',
+        Type: 'LaboratoryRun',
+        Record: laboratoryRun,
+      };
+      await snsService.publish({
+        TopicArn: process.env.SNS_LABORATORY_RUN_UPDATE_TOPIC,
+        Message: JSON.stringify(record),
+        MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
+        MessageDeduplicationId: uuidv4(),
+      });
+    }
+
+    return buildResponse(200, JSON.stringify(laboratoryRun), event);
   } catch (err: any) {
     console.error(err);
     return buildErrorResponse(err, event);

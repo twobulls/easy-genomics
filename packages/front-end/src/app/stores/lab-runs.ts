@@ -22,6 +22,11 @@ const useLabRunsStore = defineStore('labRunsStore', {
       (labId: string): LaboratoryRun[] =>
         state.labRunIdsByLab[labId]?.map((labRunId) => state.labRuns[labRunId]) || [],
 
+    labRunById:
+      (state: LabRunsStoreState) =>
+      (labRunId: string): LaboratoryRun | null =>
+        Object.values(state.labRuns).find((labRun) => labRun.RunId === labRunId) ?? null,
+
     labRunByExternalId:
       (state: LabRunsStoreState) =>
       (externalId: string): LaboratoryRun | null =>

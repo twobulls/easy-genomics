@@ -227,7 +227,7 @@ if (process.env.CI_CD === 'true') {
 // Ensure the AWS Region for the CDK calls to correctly query the correct region.
 process.env.AWS_REGION = awsRegion;
 
-const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
+const namePrefix: string = `${envType}-${envName}`;
 const constructNamespace: string = `${namePrefix}-easy-genomics`;
 
 // Define Test User Accounts to seed for development and testing
@@ -256,7 +256,7 @@ const testUsers: TestUserDetails[] = devEnv ? <TestUserDetails[]>[
     ].filter((item: TestUserDetails | undefined) => item != undefined) : [];
 
 // Setups Back-End Stack which initiates the nested stacks for Auth, Easy Genomics, AWS HealthOmics and NextFlow Tower
-new BackEndStack(app, `${envName}-main-back-end-stack`, {
+new BackEndStack(app, `${namePrefix}-main-back-end-stack`, {
   env: {
     account: awsAccountId,
     region: awsRegion,

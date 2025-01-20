@@ -17,21 +17,24 @@ export interface ConfigurationSettings {
 
   // Back-End specific settings
   ['back-end']: {
-    ['jwt-secret-key']?: string; // Optional: If undefined, generate a random value on deployment for JWT Signature
+    ['jwt-secret-key']?: string; // Optional: If undefined, a random value will be generated on deployment for JWT Signature
+    ['seqera-api-base-url']?: string; // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+    ['vpc-peering']?: VpcPeeringSettings; // Optional: VPC Peering Accepter details
+    // The System Admin account is required
     ['sys-admin-email']?: string;
     ['sys-admin-password']?: string; // Initial Cognito password
+    // The following user accounts are only seeded for env-type: 'dev'
     ['org-admin-email']: string;
     ['org-admin-password']: string; // Initial Cognito password
     ['lab-manager-email']?: string;
     ['lab-manager-password']?: string; // Initial Cognito password
     ['lab-technician-email']?: string;
     ['lab-technician-password']?: string; // Initial Cognito password
+    // The following test settings are only used for E2E integration testing
     ['test-workspace-id']?: string;
     ['test-access-token']?: string;
     ['test-s3-url']?: string;
     ['test-invite-email']?: string;
-    ['seqera-api-base-url']?: string; // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
-    ['vpc-peering']?: VpcPeeringSettings; // Optional: VPC Peering Accepter details
   };
 
   // Front-End specific settings

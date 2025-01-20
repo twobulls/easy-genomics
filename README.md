@@ -201,11 +201,14 @@ obtain the Easy Genomics project source code and install the project dependencie
 
             # Back-End specific settings
             back-end:
+               jwt-secret-key: # Optional: If undefined, a random value will be generated on deployment for JWT Signature
+               seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+               # The System Admin account is required
                sys-admin-email: 'sysadmin@easygenomics.org' # Replace with your institution's preferred System Admin account
                sys-admin-password: # System Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               # The following user accounts are only seeded for env-type: 'dev'
                org-admin-email: 'admin@easygenomics.org' # Replace with your institution's preferred Admin account
                org-admin-password: # Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
-               seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
    ```
 
    - Please consult the

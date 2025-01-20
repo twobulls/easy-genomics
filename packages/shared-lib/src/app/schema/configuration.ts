@@ -19,21 +19,24 @@ export const ConfigurationSettingsSchema = z
 
     // Back-End specific settings
     ['back-end']: z.object({
-      ['jwt-secret-key']: z.string().nullable().optional(), // Optional: If undefined, generate a random value on deployment for JWT Signature
-      ['sys-admin-email']: z.string().nullable().optional(),
-      ['sys-admin-password']: z.string().nullable().optional(), // Initial Cognito password
-      ['org-admin-email']: z.string(),
-      ['org-admin-password']: z.string(), // Initial Cognito password
+      ['jwt-secret-key']: z.string().nullable().optional(), // Optional: If undefined, a random value will be generated on deployment for JWT Signature
+      ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+      ['vpc-peering']: z.object(VpcPeeringSchema.shape).nullable().optional(), // Optional: VPC Peering Accepter details
+      // The System Admin account is required
+      ['sys-admin-email']: z.string(),
+      ['sys-admin-password']: z.string(), // Initial Cognito password
+      // The following user accounts are only seeded for env-type: 'dev'
+      ['org-admin-email']: z.string().nullable().optional(),
+      ['org-admin-password']: z.string().nullable().optional(), // Initial Cognito password
       ['lab-manager-email']: z.string().nullable().optional(),
       ['lab-manager-password']: z.string().nullable().optional(), // Initial Cognito password
       ['lab-technician-email']: z.string().nullable().optional(),
       ['lab-technician-password']: z.string().nullable().optional(), // Initial Cognito password
+      // The following test settings are only used for E2E integration testing
       ['test-workspace-id']: z.string().nullable().optional(),
       ['test-access-token']: z.string().nullable().optional(),
       ['test-s3-url']: z.string().nullable().optional(),
       ['test-invite-email']: z.string().nullable().optional(),
-      ['seqera-api-base-url']: z.string().nullable().optional(), // Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
-      ['vpc-peering']: z.object(VpcPeeringSchema.shape).nullable().optional(), // Optional: VPC Peering Accepter details
     }),
 
     // Front-End specific settings

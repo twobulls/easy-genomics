@@ -5,6 +5,7 @@
   const $route = useRoute();
   const $router = useRouter();
   const { $api } = useNuxtApp();
+  const { handleS3Download } = useFileDownload();
 
   const labRunsStore = useLabRunsStore();
   const uiStore = useUiStore();
@@ -98,6 +99,28 @@
     }
   });
 
+  async function downloadSampleSheet(): Promise<void> {
+    const sampleSheetUrl = labRun.value?.SampleSheetS3Url;
+    if (!sampleSheetUrl) {
+      useToastStore().error('Sample Sheet url not available');
+      return;
+    }
+
+    const path = sampleSheetUrl.replace(/\/[^/]+$/, '');
+    const fileName = sampleSheetUrl.split('/').at(-1);
+
+    uiStore.setRequestPending('downloadSampleSheet');
+    try {
+      await handleS3Download(labId, fileName!, path);
+    } finally {
+      uiStore.setRequestComplete('downloadSampleSheet');
+    }
+  }
+
+  const rowStyle = 'flex border-b p-6 text-sm';
+  const rowLabelStyle = 'w-[200px] font-medium text-black';
+  const rowContentStyle = 'text-muted text-left';
+
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
   //  Tailwind won't pick up and include the classes used and styles will be missing.
   // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
@@ -143,52 +166,64 @@
         <section
           class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 pt-0 max-md:px-5"
         >
-          <dl class="mt-4 space-y-4">
-            <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">Run Name</dt>
-              <dd class="text-muted text-left">{{ labRun.RunName }}</dd>
+          <dl class="mt-4 space-y-0">
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">Run Name</dt>
+              <dd :class="rowContentStyle">{{ labRun.RunName }}</dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">{{ pipelineOrWorkflow }}</dt>
-              <dd class="text-muted text-left">{{ labRun.WorkflowName }}</dd>
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">{{ pipelineOrWorkflow }}</dt>
+              <dd :class="rowContentStyle">{{ labRun.WorkflowName }}</dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">{{ pipelineOrWorkflow }} Run Status</dt>
-              <dd class="text-muted text-left">
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">{{ pipelineOrWorkflow }} Run Status</dt>
+              <dd :class="rowContentStyle">
                 <EGStatusChip :status="labRun?.Status" />
               </dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">Platform</dt>
-              <dd class="text-muted text-left">{{ labRun.Platform }}</dd>
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">Platform</dt>
+              <dd :class="rowContentStyle">{{ labRun.Platform }}</dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">Owner</dt>
-              <dd class="text-muted text-left">{{ labRun.Owner }}</dd>
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">Owner</dt>
+              <dd :class="rowContentStyle">{{ labRun.Owner }}</dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">Internal Run Id</dt>
-              <dd class="text-muted text-left">{{ labRun.RunId }}</dd>
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">Internal Run Id</dt>
+              <dd :class="rowContentStyle">{{ labRun.RunId }}</dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">External Run Id</dt>
-              <dd class="text-muted text-left">{{ labRun.ExternalRunId }}</dd>
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">External Run Id</dt>
+              <dd :class="rowContentStyle">{{ labRun.ExternalRunId }}</dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm">
-              <dt class="w-[200px] font-medium text-black">Created</dt>
-              <dd class="text-muted text-left">{{ `${getTime(labRun.CreatedAt)} ⋅ ${getDate(labRun.CreatedAt)}` }}</dd>
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">Sample Sheet</dt>
+              <dd :class="rowContentStyle">
+                <EGButton
+                  label="Download"
+                  variant="secondary"
+                  @click="downloadSampleSheet"
+                  :loading="uiStore.isRequestPending('downloadSampleSheet')"
+                />
+              </dd>
             </div>
 
-            <div class="flex border-b p-4 text-sm" v-if="labRun.ModifiedAt">
-              <dt class="w-[200px] font-medium text-black">Last Modified</dt>
-              <dd class="text-muted text-left">
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">Created</dt>
+              <dd :class="rowContentStyle">{{ `${getTime(labRun.CreatedAt)} ⋅ ${getDate(labRun.CreatedAt)}` }}</dd>
+            </div>
+
+            <div :class="rowStyle" v-if="labRun.ModifiedAt">
+              <dt :class="rowLabelStyle">Last Modified</dt>
+              <dd :class="rowContentStyle">
                 {{ `${getTime(labRun.ModifiedAt)} ⋅ ${getDate(labRun.ModifiedAt)}` }}
               </dd>
             </div>

@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { useChangeCase } from '@vueuse/integrations/useChangeCase';
   import { useDebounceFn } from '@vueuse/core';
-  import { useRunStore } from '@FE/stores';
   import { format } from 'date-fns';
   import {
     S3Object,
@@ -21,8 +20,8 @@
   const props = withDefaults(
     defineProps<{
       labId: string;
-      // TODO: refactor seqeraRunId out
-      seqeraRunId: string;
+      s3Bucket: string;
+      s3Prefix: string;
       s3Contents: S3Response | null;
       isLoading?: boolean;
     }>(),
@@ -31,21 +30,14 @@
 
   const { handleS3Download, downloadFolder } = useFileDownload();
 
-  const initialPath = computed(() => {
-    if (props.s3Contents?.Contents?.length) {
-      const firstKey = props.s3Contents.Contents[0].Key;
-      return firstKey.split('/').slice(0, 3).join('/') + '/';
-    }
-    return '';
-  });
-
   const currentPath = ref([{ name: 'All Files', children: [] }]);
   const searchQuery = ref('');
-  const s3Prefix = computed(() => initialPath.value);
+  const s3Bucket = props.s3Bucket;
+  const s3Prefix = props.s3Prefix;
 
   const updatedS3Contents = computed(() => {
     if (props.s3Contents) {
-      const transformedData = transformS3Data(props.s3Contents, s3Prefix.value);
+      const transformedData = transformS3Data(props.s3Contents, s3Prefix);
       if (!currentPath.value[0].children.length) {
         currentPath.value[0].children = transformedData as any;
       }
@@ -84,11 +76,11 @@
     { key: 'actions', label: 'Actions' },
   ];
 
-  function transformS3Data(s3Contents: S3Response, s3prefix: string) {
+  function transformS3Data(s3Contents: S3Response, s3Prefix: string) {
     const map: MapType = {};
     s3Contents?.Contents?.forEach((item: S3Object) => {
-      if (item.Key.startsWith(s3prefix)) {
-        const parts = item.Key.slice(s3prefix.length).split('/').filter(Boolean);
+      if (item.Key.startsWith(s3Prefix)) {
+        const parts = item.Key.slice(s3Prefix.length).split('/').filter(Boolean);
         parts.reduce((acc: MapType, part: string, index: number) => {
           if (!acc[part]) {
             acc[part] = {
@@ -158,11 +150,8 @@
             row.type === 'file'
               ? handleS3Download(
                   props.labId,
-                  row.name,
-                  getSeqeraS3downloadPath(
-                    useRunStore().seqeraRuns[props.labId][props.seqeraRunId].workDir,
-                    fsPath.value,
-                  ),
+                  row.name, // Filename
+                  s3ObjectPath.value, // s3://{S3 Bucket}/{S3 Prefix} Path
                 )
               : downloadFolder(),
         },
@@ -171,31 +160,13 @@
     return items;
   };
 
-  /**
-   * Get the S3 download path from a Seqera
-   * @param workDir
-   * @param fsPath
-   */
-  function getSeqeraS3downloadPath(workDir, fsPath) {
-    const parts = workDir.split('/');
-    parts.splice(-2); // Remove last two segments
-    return parts.join('/') + fsPath;
-  }
+  const s3ObjectPath = computed(() => {
+    if (breadcrumbs.value?.length <= 1) {
+      return `s3://${s3Bucket}/${s3Prefix}`;
+    }
 
-  /**
-   * Get the filesystem path based on the breadcrumb structure
-   * @returns {string} file path
-   */
-  const fsPath = computed(() => {
-    if (!breadcrumbs.value?.length) return '/';
-
-    // Map each breadcrumb name and join with forward slashes
-    // Skip "All Files" since it's the root level display name
     const pathSegments = breadcrumbs.value.map((crumb) => crumb.name).filter((name) => name !== 'All Files');
-
-    // If there are no segments after filtering (only "All Files" existed),
-    // return root slash, otherwise join segments with slashes
-    return pathSegments.length ? `/${pathSegments.join('/')}` : '/';
+    return `s3://${s3Bucket}/${s3Prefix}/${pathSegments.join('/')}`;
   });
 
   // Watchers to ensure data reactivity

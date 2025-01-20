@@ -15,7 +15,12 @@
   const labRunId = $route.params.labRunId as string;
 
   const labRun = computed<LaboratoryRun | null>(() => labRunsStore.labRuns[labRunId] ?? null);
-
+  // The LaboratoryRun's InputS3Url is the authoritative reference to obtain S3Bucket & S3Prefix for the File Manager
+  const inputS3Url: string = labRun.value?.InputS3Url;
+  const s3Bucket: string | null = inputS3Url
+    .match(/(?<=^s3:\/\/)([a-z0-9][a-z0-9-]{1,61}[a-z0-9])(?=\/*)/g)
+    ?.toString();
+  const s3Prefix: string | null = inputS3Url.match(/(?<=^s3:\/\/[a-z0-9][a-z0-9-]{1,61}[a-z0-9]\/)(.*)/g)?.toString();
   const s3Contents = ref<S3Response | null>(null);
 
   const isLoading = computed<boolean>(() => uiStore.isRequestPending('loadLabRuns'));
@@ -43,17 +48,21 @@
 
   async function fetchS3Content() {
     useUiStore().setRequestPending('fetchS3Content');
-    try {
-      const res = await $api.file.requestListBucketObjects({
-        LaboratoryId: labId,
-        // TODO: un-hardcode `next-flow`
-        S3Prefix: `${userStore.currentOrgId}/${labId}/next-flow/${labRunId}`,
-      });
-      s3Contents.value = res || null;
-    } catch (error) {
-      console.error('Error fetching S3 content:', error);
-    } finally {
-      useUiStore().setRequestComplete('fetchS3Content');
+    if (s3Bucket && s3Prefix) {
+      try {
+        const res = await $api.file.requestListBucketObjects({
+          LaboratoryId: labId,
+          S3Bucket: `${s3Bucket}`,
+          S3Prefix: `${s3Prefix}`,
+        });
+        s3Contents.value = res || null;
+      } catch (error) {
+        console.error('Error fetching S3 content:', error);
+      } finally {
+        useUiStore().setRequestComplete('fetchS3Content');
+      }
+    } else {
+      s3Contents.value = null;
     }
   }
 
@@ -169,10 +178,15 @@
             </div>
 
             <div :class="rowStyle">
-              <dt :class="rowLabelStyle">Workflow Run Status</dt>
+              <dt :class="rowLabelStyle">{{ pipelineOrWorkflow }} Run Status</dt>
               <dd :class="rowContentStyle">
                 <EGStatusChip :status="labRun?.Status" />
               </dd>
+            </div>
+
+            <div :class="rowStyle">
+              <dt :class="rowLabelStyle">Platform</dt>
+              <dd :class="rowContentStyle">{{ labRun.Platform }}</dd>
             </div>
 
             <div :class="rowStyle">
@@ -181,8 +195,8 @@
             </div>
 
             <div :class="rowStyle">
-              <dt :class="rowLabelStyle">Platform</dt>
-              <dd :class="rowContentStyle">{{ labRun.Platform }}</dd>
+              <dt :class="rowLabelStyle">Internal Run Id</dt>
+              <dd :class="rowContentStyle">{{ labRun.RunId }}</dd>
             </div>
 
             <div :class="rowStyle">
@@ -220,8 +234,10 @@
       <!-- File Manager -->
       <div v-if="item.key === 'fileManager'" class="space-y-3">
         <EGFileExplorer
-          :s3-contents="s3Contents"
           :lab-id="labId"
+          :s3-bucket="s3Bucket"
+          :s3-prefix="s3Prefix"
+          :s3-contents="s3Contents"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>

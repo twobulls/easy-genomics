@@ -1100,12 +1100,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: ['arn:aws:s3:::*'],
-        actions: ['s3:GetBucketLocation'],
+        actions: ['s3:GetBucketLocation', 's3:ListBucket'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
         resources: ['arn:aws:s3:::*/*'],
-        actions: ['s3:GetObject', 's3:ListBucket'], // Required to generate pre-signed S3 Urls for downloading with GetObject request
+        actions: ['s3:GetObject'], // Required to generate pre-signed S3 Urls for downloading with GetObject request
         effect: Effect.ALLOW,
       }),
     ]);

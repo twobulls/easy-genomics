@@ -1,7 +1,6 @@
 import { RemovalPolicy } from 'aws-cdk-lib';
 import {
   AccountRecovery,
-  AdvancedSecurityMode,
   CfnUserPoolGroup,
   UserPool,
   UserPoolClient,
@@ -50,7 +49,6 @@ export class CognitoIdpConstruct extends Construct {
       },
       customSenderKmsKey: props.customSenderKmsKey,
       removalPolicy: removalPolicy,
-      advancedSecurityMode: AdvancedSecurityMode.OFF,
     });
 
     this.userPoolClient = this.userPool.addClient('client', {

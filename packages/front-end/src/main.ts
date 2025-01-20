@@ -108,11 +108,11 @@ if (process.env.CI_CD === 'true') {
 // Ensure the AWS Region for the CDK calls to correctly query the correct region.
 process.env.AWS_REGION = awsRegion;
 
-const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
+const namePrefix: string = `${envType}-${envName}`;
 const constructNamespace: string = `${namePrefix}-easy-genomics`;
 
 // Setups Front-End Stack to support static web hosting for the UI
-new FrontEndStack(app, `${envName}-main-front-end-stack`, {
+new FrontEndStack(app, `${namePrefix}-main-front-end-stack`, {
   env: {
     account: awsAccountId,
     region: awsRegion,

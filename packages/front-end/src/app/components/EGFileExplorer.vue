@@ -31,7 +31,6 @@
   );
 
   const { handleS3Download, downloadFolder } = useFileDownload();
-  const uiStore = useUiStore();
 
   const currentPath = ref([{ name: 'All Files', children: [] }]);
   const searchQuery = ref('');
@@ -58,7 +57,17 @@
 
   const currentItems = computed(() => {
     const currentDir = currentPath.value[currentPath.value.length - 1];
-    return currentDir.children || [];
+    const items = currentDir.children || [];
+    // add in download progress class
+    return items.map((node: FileTreeNode) => {
+      const uniqueString = nodeUniqueString(node);
+      const downloadProgress = downloads.value[uniqueString];
+
+      return {
+        ...node,
+        class: downloadProgress !== undefined ? `progress-bg-${downloadProgress}` : '',
+      };
+    });
   });
 
   const filteredItems = computed(() => {
@@ -167,6 +176,8 @@
     const progressRef: Ref<number> = ref(0);
     downloads.value[uniqueString] = progressRef;
 
+    useToastStore().success('Your files have begun downloading');
+
     if (node.type === 'file') {
       await handleS3Download(
         props.labId,
@@ -244,7 +255,7 @@
           <EGButton
             variant="secondary"
             :label="row?.type === 'file' ? 'Download' : 'Download as zip'"
-            :loading="downloads[nodeUniqueString(row)] !== undefined"
+            :loading="downloads[nodeUniqueString(row)] !== undefined && downloads[nodeUniqueString(row)] < 100"
             @click.stop="async () => await downloadFileTreeNode(row)"
           />
         </div>

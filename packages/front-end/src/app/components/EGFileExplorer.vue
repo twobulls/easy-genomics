@@ -155,7 +155,6 @@
 
   function nodeUniqueString(node: FileTreeNode): string {
     // this isn't an ideal unique string but it's pretty unlikely to match any other files so it's probably good enough
-    return node.name!;
     return `${node.type}${node.name}${node.size}${node.lastModified}${node.children?.length}`;
   }
 

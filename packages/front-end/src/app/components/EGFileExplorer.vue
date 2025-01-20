@@ -7,14 +7,16 @@
     S3Response,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
 
+  interface FileTreeNode {
+    type?: string;
+    name?: string;
+    size?: number;
+    lastModified?: string;
+    children?: MapType;
+  }
+
   interface MapType {
-    [key: string]: {
-      type?: string;
-      name?: string;
-      size?: number;
-      lastModified?: string;
-      children?: MapType;
-    };
+    [key: string]: FileTreeNode;
   }
 
   const props = withDefaults(
@@ -29,6 +31,7 @@
   );
 
   const { handleS3Download, downloadFolder } = useFileDownload();
+  const uiStore = useUiStore();
 
   const currentPath = ref([{ name: 'All Files', children: [] }]);
   const searchQuery = ref('');
@@ -141,25 +144,6 @@
     }
   };
 
-  const actionItems = (row: MapType) => {
-    const items: object[] = [
-      [
-        {
-          label: row?.type === 'file' ? 'Download' : 'Download as zip',
-          click: () =>
-            row.type === 'file'
-              ? handleS3Download(
-                  props.labId,
-                  row.name, // Filename
-                  s3ObjectPath.value, // s3://{S3 Bucket}/{S3 Prefix} Path
-                )
-              : downloadFolder(),
-        },
-      ],
-    ];
-    return items;
-  };
-
   const s3ObjectPath = computed(() => {
     if (breadcrumbs.value?.length <= 1) {
       return `s3://${s3Bucket}/${s3Prefix}`;
@@ -168,6 +152,30 @@
     const pathSegments = breadcrumbs.value.map((crumb) => crumb.name).filter((name) => name !== 'All Files');
     return `s3://${s3Bucket}/${s3Prefix}/${pathSegments.join('/')}`;
   });
+
+  function nodeUniqueString(node: FileTreeNode): string {
+    // this isn't an ideal unique string but it's pretty unlikely to match any other files so it's probably good enough
+    return node.name!;
+    return `${node.type}${node.name}${node.size}${node.lastModified}${node.children?.length}`;
+  }
+
+  async function downloadFileTreeNode(node: FileTreeNode): Promise<void> {
+    uiStore.setRequestPending(`downloadFileButton-${nodeUniqueString(node)}`);
+
+    try {
+      if (node.type === 'file') {
+        await handleS3Download(
+          props.labId,
+          node.name!, // Filename
+          s3ObjectPath.value, // s3://{S3 Bucket}/{S3 Prefix} Path
+        );
+      } else {
+        await downloadFolder();
+      }
+    } finally {
+      uiStore.setRequestComplete(`downloadFileButton-${nodeUniqueString(node)}`);
+    }
+  }
 
   // Watchers to ensure data reactivity
   watch(currentPath, () => {});
@@ -231,7 +239,12 @@
       </template>
       <template #actions-data="{ row }">
         <div class="flex justify-end">
-          <EGActionButton :items="actionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+          <EGButton
+            variant="secondary"
+            :label="row?.type === 'file' ? 'Download' : 'Download as zip'"
+            :loading="uiStore.isRequestPending(`downloadFileButton-${nodeUniqueString(row)}`)"
+            @click.stop="async () => await downloadFileTreeNode(row)"
+          />
         </div>
       </template>
     </EGTable>

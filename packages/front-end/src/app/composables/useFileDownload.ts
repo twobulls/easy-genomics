@@ -39,6 +39,7 @@ export default function useFileDownload() {
   // Placeholder for future functionality to download folders as zip files
   async function downloadFolder() {
     // TODO: Implement folder download as a zip file once the API is available
+    useToastStore().info('Downloading folders is not implemented yet');
   }
 
   // Checks if the file extension is supported for download

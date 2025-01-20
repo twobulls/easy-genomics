@@ -36,8 +36,7 @@ type PendingRequest =
   | 'toggleOrgAdmin'
   | 'loadLabRuns'
   | 'updateDefaultOrg'
-  | 'downloadSampleSheet'
-  | `downloadFileButton-${string}`;
+  | 'downloadSampleSheet';
 
 interface UiStoreState {
   pendingRequests: Set<string>;

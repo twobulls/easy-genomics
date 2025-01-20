@@ -79,6 +79,10 @@
     { key: 'actions', label: 'Actions' },
   ];
 
+  // key is the uniqueString of a file tree node
+  // value is the ref containing the progress of the download out of 100
+  const downloads = ref<Record<string, Ref<number>>>({});
+
   function transformS3Data(s3Contents: S3Response, s3Prefix: string) {
     const map: MapType = {};
     s3Contents?.Contents?.forEach((item: S3Object) => {
@@ -159,20 +163,19 @@
   }
 
   async function downloadFileTreeNode(node: FileTreeNode): Promise<void> {
-    uiStore.setRequestPending(`downloadFileButton-${nodeUniqueString(node)}`);
+    const uniqueString = nodeUniqueString(node);
+    const progressRef: Ref<number> = ref(0);
+    downloads.value[uniqueString] = progressRef;
 
-    try {
-      if (node.type === 'file') {
-        await handleS3Download(
-          props.labId,
-          node.name!, // Filename
-          s3ObjectPath.value, // s3://{S3 Bucket}/{S3 Prefix} Path
-        );
-      } else {
-        await downloadFolder();
-      }
-    } finally {
-      uiStore.setRequestComplete(`downloadFileButton-${nodeUniqueString(node)}`);
+    if (node.type === 'file') {
+      await handleS3Download(
+        props.labId,
+        node.name!, // Filename
+        s3ObjectPath.value, // s3://{S3 Bucket}/{S3 Prefix} Path
+        progressRef, // progress value ref to be updated by the function
+      );
+    } else {
+      await downloadFolder();
     }
   }
 
@@ -241,7 +244,7 @@
           <EGButton
             variant="secondary"
             :label="row?.type === 'file' ? 'Download' : 'Download as zip'"
-            :loading="uiStore.isRequestPending(`downloadFileButton-${nodeUniqueString(row)}`)"
+            :loading="downloads[nodeUniqueString(row)] !== undefined"
             @click.stop="async () => await downloadFileTreeNode(row)"
           />
         </div>

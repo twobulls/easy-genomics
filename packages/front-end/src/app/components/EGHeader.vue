@@ -186,7 +186,7 @@
 
                 <button
                   v-if="!userStore.isSuperuser && multipleOrgs"
-                  class="h-6 w-6 rounded-full border bg-white"
+                  class="h-6 w-6 shrink-0 rounded-full border bg-white"
                   :class="defaultOrgButtonDynamicClasses(userStore.currentOrgId)"
                   :disabled="uiStore.isRequestPending('updateDefaultOrg')"
                   @click="async ($event) => await handleStarClick($event, userStore.currentOrgId)"
@@ -206,11 +206,11 @@
                   @click="() => selectSwitchToOrg(org.OrganizationId)"
                   class="flex w-full items-center justify-between py-3 text-left"
                 >
-                  <div class="font-medium">{{ org.Name }}</div>
+                  <div class="truncate-text font-medium">{{ org.Name }}</div>
 
                   <button
                     v-if="!userStore.isSuperuser && multipleOrgs"
-                    class="h-6 w-6 rounded-full border bg-white"
+                    class="h-6 w-6 shrink-0 rounded-full border bg-white"
                     :class="defaultOrgButtonDynamicClasses(org.OrganizationId)"
                     :disabled="uiStore.isRequestPending('updateDefaultOrg')"
                     @click="async ($event) => await handleStarClick($event, org.OrganizationId)"
@@ -257,5 +257,11 @@
 
   .border-6 {
     border-width: 6px;
+  }
+
+  .truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>

@@ -15,9 +15,11 @@
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
   const uiStore = useUiStore();
+  const labsStore = useLabsStore();
 
   const { signOutAndRedirect } = useAuth();
   const $router = useRouter();
+  const $route = useRoute();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
 
@@ -110,6 +112,11 @@
       orgId === userStore.currentUserDetails.defaultOrgId && uiStore.isRequestPending('updateDefaultOrg'),
     'bg-background-grey': uiStore.isRequestPending('updateDefaultOrg'),
   });
+
+  const currentLabName = computed<string | null>(() => {
+    const currentLabId = $route.params.labId as string;
+    return labsStore.labs[currentLabId]?.Name ?? null;
+  });
 </script>
 
 <template>
@@ -118,8 +125,13 @@
       <template v-if="props.isAuthed">
         <img class="mr-2 w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
 
-        <div class="text-muted text-lg" v-if="!!orgsStore.orgs[userStore.currentOrgId]?.Name">
-          {{ orgsStore.orgs[userStore.currentOrgId].Name }}
+        <div class="flex flex-col items-center">
+          <div class="text-body text-lg" v-if="!!orgsStore.orgs[userStore.currentOrgId]?.Name">
+            {{ orgsStore.orgs[userStore.currentOrgId].Name }}
+          </div>
+          <div class="text-muted" v-if="currentLabName">
+            {{ currentLabName }}
+          </div>
         </div>
 
         <div class="flex items-center gap-4">
@@ -169,7 +181,7 @@
 
                 <button
                   v-if="!userStore.isSuperuser && multipleOrgs"
-                  class="h-6 w-6 rounded-full border bg-white"
+                  class="h-6 w-6 shrink-0 rounded-full border bg-white"
                   :class="defaultOrgButtonDynamicClasses(userStore.currentOrgId)"
                   :disabled="uiStore.isRequestPending('updateDefaultOrg')"
                   @click.stop="async () => await setDefaultOrg(userStore.currentOrgId)"
@@ -189,16 +201,20 @@
                   @click="() => selectSwitchToOrg(org.OrganizationId)"
                   class="flex w-full items-center justify-between py-3 text-left"
                 >
-                  <div class="font-medium">{{ org.Name }}</div>
+                  <div class="truncate-text font-medium">{{ org.Name }}</div>
 
                   <button
                     v-if="!userStore.isSuperuser && multipleOrgs"
-                    class="h-6 w-6 rounded-full border bg-white"
+                    class="ml-2 h-6 w-6 shrink-0 rounded-full border bg-white"
                     :class="defaultOrgButtonDynamicClasses(org.OrganizationId)"
                     :disabled="uiStore.isRequestPending('updateDefaultOrg')"
                     @click.stop="async () => await setDefaultOrg(org.OrganizationId)"
                   />
                 </div>
+              </div>
+
+              <div class="text-primary bg-primary-muted my-2 w-full rounded p-2 text-left text-xs">
+                Select the organisation that you would like to make your default organisation.
               </div>
             </template>
           </UDropdown>
@@ -240,5 +256,11 @@
 
   .border-6 {
     border-width: 6px;
+  }
+
+  .truncate-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>

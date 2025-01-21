@@ -1,0 +1,6 @@
+@for $i from 0 through 100 {
+  .progress-bg-#{$i} {
+    background: #daf4e2;
+    background: linear-gradient(90deg, #daf4e2 $i * 1%, rgba(0, 0, 0, 0) ($i + 5) * 1%);
+  }
+}

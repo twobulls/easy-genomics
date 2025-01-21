@@ -7,14 +7,16 @@
     S3Response,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
 
+  interface FileTreeNode {
+    type?: string;
+    name?: string;
+    size?: number;
+    lastModified?: string;
+    children?: MapType;
+  }
+
   interface MapType {
-    [key: string]: {
-      type?: string;
-      name?: string;
-      size?: number;
-      lastModified?: string;
-      children?: MapType;
-    };
+    [key: string]: FileTreeNode;
   }
 
   const props = withDefaults(
@@ -55,7 +57,17 @@
 
   const currentItems = computed(() => {
     const currentDir = currentPath.value[currentPath.value.length - 1];
-    return currentDir.children || [];
+    const items = currentDir.children || [];
+    // add in download progress class
+    return items.map((node: FileTreeNode) => {
+      const uniqueString = nodeUniqueString(node);
+      const downloadProgress = downloads.value[uniqueString];
+
+      return {
+        ...node,
+        class: downloadProgress !== undefined ? `progress-bg-${downloadProgress}` : '',
+      };
+    });
   });
 
   const filteredItems = computed(() => {
@@ -75,6 +87,10 @@
     { key: 'size', label: 'Size', sortable: true, sort: useSort().numberSortCompare },
     { key: 'actions', label: 'Actions' },
   ];
+
+  // key is the uniqueString of a file tree node
+  // value is the ref containing the progress of the download out of 100
+  const downloads = ref<Record<string, Ref<number>>>({});
 
   function transformS3Data(s3Contents: S3Response, s3Prefix: string) {
     const map: MapType = {};
@@ -141,25 +157,6 @@
     }
   };
 
-  const actionItems = (row: MapType) => {
-    const items: object[] = [
-      [
-        {
-          label: row?.type === 'file' ? 'Download' : 'Download as zip',
-          click: () =>
-            row.type === 'file'
-              ? handleS3Download(
-                  props.labId,
-                  row.name, // Filename
-                  s3ObjectPath.value, // s3://{S3 Bucket}/{S3 Prefix} Path
-                )
-              : downloadFolder(),
-        },
-      ],
-    ];
-    return items;
-  };
-
   const s3ObjectPath = computed(() => {
     if (breadcrumbs.value?.length <= 1) {
       return `s3://${s3Bucket}/${s3Prefix}`;
@@ -168,6 +165,30 @@
     const pathSegments = breadcrumbs.value.map((crumb) => crumb.name).filter((name) => name !== 'All Files');
     return `s3://${s3Bucket}/${s3Prefix}/${pathSegments.join('/')}`;
   });
+
+  function nodeUniqueString(node: FileTreeNode): string {
+    // this isn't an ideal unique string but it's pretty unlikely to match any other files so it's probably good enough
+    return `${node.type}${node.name}${node.size}${node.lastModified}${node.children?.length}`;
+  }
+
+  async function downloadFileTreeNode(node: FileTreeNode): Promise<void> {
+    const uniqueString = nodeUniqueString(node);
+    const progressRef: Ref<number> = ref(0);
+    downloads.value[uniqueString] = progressRef;
+
+    useToastStore().success('Your files have begun downloading');
+
+    if (node.type === 'file') {
+      await handleS3Download(
+        props.labId,
+        node.name!, // Filename
+        s3ObjectPath.value, // s3://{S3 Bucket}/{S3 Prefix} Path
+        progressRef, // progress value ref to be updated by the function
+      );
+    } else {
+      await downloadFolder();
+    }
+  }
 
   // Watchers to ensure data reactivity
   watch(currentPath, () => {});
@@ -231,7 +252,12 @@
       </template>
       <template #actions-data="{ row }">
         <div class="flex justify-end">
-          <EGActionButton :items="actionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+          <EGButton
+            variant="secondary"
+            :label="row?.type === 'file' ? 'Download' : 'Download as zip'"
+            :loading="downloads[nodeUniqueString(row)] !== undefined && downloads[nodeUniqueString(row)] < 100"
+            @click.stop="async () => await downloadFileTreeNode(row)"
+          />
         </div>
       </template>
     </EGTable>

@@ -42,11 +42,6 @@
     useToastStore().success('You have switched organizations');
   }
 
-  async function handleStarClick($event: any, orgId: string): Promise<void> {
-    $event.stopPropagation();
-    await setDefaultOrg(orgId);
-  }
-
   async function setDefaultOrg(orgId: string): Promise<void> {
     if (orgId === userStore.currentUserDetails.defaultOrgId || uiStore.isRequestPending('updateDefaultOrg')) {
       return;
@@ -177,7 +172,7 @@
                   class="h-6 w-6 rounded-full border bg-white"
                   :class="defaultOrgButtonDynamicClasses(userStore.currentOrgId)"
                   :disabled="uiStore.isRequestPending('updateDefaultOrg')"
-                  @click="async ($event) => await handleStarClick($event, userStore.currentOrgId)"
+                  @click.stop="async () => await setDefaultOrg(userStore.currentOrgId)"
                 />
 
                 <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
@@ -201,7 +196,7 @@
                     class="h-6 w-6 rounded-full border bg-white"
                     :class="defaultOrgButtonDynamicClasses(org.OrganizationId)"
                     :disabled="uiStore.isRequestPending('updateDefaultOrg')"
-                    @click="async ($event) => await handleStarClick($event, org.OrganizationId)"
+                    @click.stop="async () => await setDefaultOrg(org.OrganizationId)"
                   />
                 </div>
               </div>

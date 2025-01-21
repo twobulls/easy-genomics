@@ -210,12 +210,16 @@
 
                   <button
                     v-if="!userStore.isSuperuser && multipleOrgs"
-                    class="h-6 w-6 shrink-0 rounded-full border bg-white"
+                    class="ml-2 h-6 w-6 shrink-0 rounded-full border bg-white"
                     :class="defaultOrgButtonDynamicClasses(org.OrganizationId)"
                     :disabled="uiStore.isRequestPending('updateDefaultOrg')"
                     @click="async ($event) => await handleStarClick($event, org.OrganizationId)"
                   />
                 </div>
+              </div>
+
+              <div class="text-primary bg-primary-muted my-2 w-full rounded p-2 text-left text-xs">
+                Select the organisation that you would like to make your default organisation.
               </div>
             </template>
           </UDropdown>

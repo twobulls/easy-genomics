@@ -119,7 +119,10 @@
 
 <template>
   <header class="lh flex flex-row items-center justify-center px-4">
-    <div class="header-container" :class="{ 'flex w-full flex-row items-center justify-between': props.isAuthed }">
+    <div
+      class="header-container"
+      :class="{ 'mx-auto flex w-full flex-row items-center justify-between pl-0 pr-4 lg:pl-4': props.isAuthed }"
+    >
       <template v-if="props.isAuthed">
         <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
 
@@ -236,7 +239,7 @@
     height: 78px;
   }
   .header-container {
-    max-width: 1262px;
+    max-width: var(--max-page-container-width-px);
   }
 
   .ULink {

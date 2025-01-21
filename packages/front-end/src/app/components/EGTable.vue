@@ -8,6 +8,7 @@
     defineProps<{
       tableData: any[];
       columns: any[];
+      sort?: { column: string; direction: 'asc' | 'desc' };
       isLoading?: boolean;
       actionItems?: () => ActionItem[];
       showPagination?: boolean;
@@ -75,6 +76,7 @@
       class="rounded-2xl"
       :rows="rows"
       :columns="columns"
+      :sort="sort"
       :loading="isLoading"
       :loading-state="{ icon: '', label: '' }"
       v-model="selected"

@@ -34,6 +34,8 @@
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
   const labRunsStore = useLabRunsStore();
 
+  const { stringSortCompare } = useSort();
+
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
@@ -53,9 +55,16 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const combinedRuns = computed<LaboratoryRun[]>(() => labRunsStore.labRunsForLab(props.labId));
+  type LaboratoryRunTableItem = LaboratoryRun & { lastUpdated: string };
 
-  const filteredTableData = computed(() => {
+  const combinedRuns = computed<LaboratoryRunTableItem[]>(() =>
+    labRunsStore.labRunsForLab(props.labId).map((labRun) => ({
+      ...labRun,
+      lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
+    })),
+  );
+
+  const usersTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
 
     if (searchOutput.value.trim()) {
@@ -73,12 +82,12 @@
       if (userA.LabTechnician && !userB.LabTechnician) return -1;
       if (!userA.LabTechnician && userB.LabTechnician) return 1;
       // then sort by name
-      return useSort().stringSortCompare(userA.displayName, userB.displayName);
+      return stringSortCompare(userA.displayName, userB.displayName);
     });
   });
 
   const usersTableColumns = [
-    { key: 'displayName', label: 'Name', sortable: true, sort: useSort().stringSortCompare },
+    { key: 'displayName', label: 'Name', sortable: true, sort: stringSortCompare },
     { key: 'actions', label: 'Lab Access' },
   ];
 
@@ -95,10 +104,10 @@
   ];
 
   const runsTableColumns = [
-    { key: 'runName', label: 'Run Name' },
-    { key: 'lastUpdated', label: 'Last Updated' },
-    { key: 'status', label: 'Status' },
-    { key: 'owner', label: 'Owner' },
+    { key: 'RunName', label: 'Run Name', sortable: true, sort: stringSortCompare },
+    { key: 'lastUpdated', label: 'Last Updated', sortable: true, sort: stringSortCompare },
+    { key: 'Status', label: 'Status', sortable: true, sort: stringSortCompare },
+    { key: 'Owner', label: 'Owner', sortable: true, sort: stringSortCompare },
     { key: 'actions', label: 'Actions' },
   ];
 
@@ -615,10 +624,11 @@
           :row-click-action="viewRunDetails"
           :table-data="combinedRuns"
           :columns="runsTableColumns"
+          :sort="{ column: 'lastUpdated', direction: 'desc' }"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
         >
-          <template #runName-data="{ row: run }">
+          <template #RunName-data="{ row: run }">
             <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
             <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
           </template>
@@ -628,11 +638,11 @@
             <div class="text-muted">{{ getTime(run.ModifiedAt ?? run.CreatedAt) }}</div>
           </template>
 
-          <template #status-data="{ row: run }">
+          <template #Status-data="{ row: run }">
             <EGStatusChip :status="run.Status" />
           </template>
 
-          <template #owner-data="{ row: run }">
+          <template #Owner-data="{ row: run }">
             <div class="text-body text-sm font-medium">{{ run.Owner }}</div>
           </template>
 
@@ -670,7 +680,7 @@
         />
 
         <EGTable
-          :table-data="filteredTableData"
+          :table-data="usersTableData"
           :columns="usersTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"

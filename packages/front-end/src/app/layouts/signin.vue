@@ -4,7 +4,7 @@
   <div class="grid grid-cols-2">
     <div class="background-image h-screen bg-cover bg-center p-[80px]">
       <div class="flex flex-col">
-        <EGLogo class="mr-2 w-[140px]" :white-variant="true" />
+        <EGLogo class="mr-2 w-[200px]" :white-variant="true" />
         <div
           class="translate-[-50%, -43%] absolute left-[0px%] top-[43%] w-[314px] transform font-serif text-[32px] leading-10 text-white"
           style="font-weight: 200"

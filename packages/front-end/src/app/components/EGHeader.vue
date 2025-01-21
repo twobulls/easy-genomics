@@ -15,9 +15,11 @@
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
   const uiStore = useUiStore();
+  const labsStore = useLabsStore();
 
   const { signOutAndRedirect } = useAuth();
   const $router = useRouter();
+  const $route = useRoute();
   const labsPath = '/labs';
   const orgsPath = '/orgs';
 
@@ -115,6 +117,11 @@
       orgId === userStore.currentUserDetails.defaultOrgId && uiStore.isRequestPending('updateDefaultOrg'),
     'bg-background-grey': uiStore.isRequestPending('updateDefaultOrg'),
   });
+
+  const currentLabName = computed<string | null>(() => {
+    const currentLabId = $route.params.labId as string;
+    return labsStore.labs[currentLabId]?.Name ?? null;
+  });
 </script>
 
 <template>
@@ -123,8 +130,13 @@
       <template v-if="props.isAuthed">
         <img class="mr-2 min-w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
 
-        <div class="text-muted text-lg" v-if="!!orgsStore.orgs[userStore.currentOrgId]?.Name">
-          {{ orgsStore.orgs[userStore.currentOrgId].Name }}
+        <div class="flex flex-col items-center">
+          <div class="text-body text-lg" v-if="!!orgsStore.orgs[userStore.currentOrgId]?.Name">
+            {{ orgsStore.orgs[userStore.currentOrgId].Name }}
+          </div>
+          <div class="text-muted" v-if="currentLabName">
+            {{ currentLabName }}
+          </div>
         </div>
 
         <div class="flex items-center gap-4">

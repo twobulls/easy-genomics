@@ -1,11 +1,18 @@
 import { FileDownloadResponse } from '@/packages/shared-lib/src/app/types/nf-tower/file/request-file-download';
+import axios from 'axios';
 import { saveAs } from 'file-saver';
+import { Ref } from '.nuxt/imports';
 
 export default function useFileDownload() {
   const { $api } = useNuxtApp();
 
   // Downloads a file from S3 using a presigned URL and saves it locally
-  async function handleS3Download(labId: string, fileName: string, path: string) {
+  async function handleS3Download(
+    labId: string,
+    fileName: string,
+    path: string,
+    progressVar?: Ref<number> | undefined,
+  ) {
     const fileDownloadPath = `${path}/${fileName}`;
 
     try {
@@ -19,15 +26,22 @@ export default function useFileDownload() {
 
       const downloadUrl = fileDownloadResponse.DownloadUrl;
 
-      // Fetch the file from the presigned URL
-      const response = await fetch(downloadUrl);
+      // Download the file to memory
+      const response = await axios({
+        method: 'GET',
+        url: downloadUrl,
+        responseType: 'arraybuffer',
+        // handle progress events
+        onDownloadProgress: (progressEvent) => {
+          // set the value of the progress ref if it's been provided
+          if (progressVar !== undefined) {
+            progressVar.value = Math.round((progressEvent?.loaded / progressEvent?.total) * 100);
+          }
+        },
+      });
 
-      if (!response.ok) {
-        throw new Error(`Failed to download file: ${response.statusText}`);
-      }
-
-      // Convert the response to a blob
-      const blob = await response.blob();
+      // Convert ArrayBuffer response data to blob
+      const blob = new Blob([response.data]);
 
       // Use FileSaver to save the blob to a file
       saveAs(blob, fileName);
@@ -39,6 +53,7 @@ export default function useFileDownload() {
   // Placeholder for future functionality to download folders as zip files
   async function downloadFolder() {
     // TODO: Implement folder download as a zip file once the API is available
+    useToastStore().info('Downloading folders is not implemented yet');
   }
 
   // Checks if the file extension is supported for download

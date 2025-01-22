@@ -32,6 +32,7 @@
   const uiStore = useUiStore();
   const userStore = useUserStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
   const labRunsStore = useLabRunsStore();
 
   const { stringSortCompare } = useSort();
@@ -39,7 +40,7 @@
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
-  const omicsWorkflows = ref<OmicsWorkflow[]>([]);
+  const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
@@ -192,6 +193,7 @@
     }
   });
 
+  // TODO: replace these with a poll fetch laboratory runs
   async function pollFetchSeqeraRuns() {
     await getSeqeraRuns();
     intervalId = window.setTimeout(pollFetchSeqeraRuns, 2 * 60 * 1000);
@@ -346,14 +348,7 @@
   async function getOmicsWorkflows(): Promise<void> {
     useUiStore().setRequestPending('getOmicsWorkflows');
     try {
-      // TODO: convert to store cache
-      const res = await $api.omicsWorkflows.list(props.labId);
-
-      if (res.items === undefined) {
-        throw new Error('response did not contain omics workflows');
-      }
-
-      omicsWorkflows.value = res.items;
+      await omicsWorkflowsStore.loadWorkflowsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {

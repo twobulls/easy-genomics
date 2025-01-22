@@ -50,6 +50,7 @@
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   defineProps<{
+    // TODO: -> workflowId
     pipelineId: string;
   }>();
 

@@ -346,6 +346,7 @@
   async function getOmicsWorkflows(): Promise<void> {
     useUiStore().setRequestPending('getOmicsWorkflows');
     try {
+      // TODO: convert to store cache
       const res = await $api.omicsWorkflows.list(props.labId);
 
       if (res.items === undefined) {
@@ -401,9 +402,6 @@
   }
 
   function viewRunOmicsWorkflow(workflow: OmicsWorkflow) {
-    useToastStore().info('Running HealthOmics Workflows is not yet implemented');
-    return;
-
     $router.push({
       path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
       query: {

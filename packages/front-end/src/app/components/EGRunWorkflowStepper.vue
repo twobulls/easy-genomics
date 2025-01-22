@@ -1,18 +1,20 @@
 <script setup lang="ts">
   import { useRunStore } from '@FE/stores';
+  import { WorkflowParameter } from '@aws-sdk/client-omics';
 
   const props = defineProps<{
-    schema: object;
+    schema: Record<string, WorkflowParameter>;
     params: object;
-    pipelineId: string;
+    // TODO: -> workflowId
+    workflowId: string;
   }>();
 
   const $route = useRoute();
   const runStore = useRunStore();
 
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
+  const omicsRunTempId = $route.query.omicsRunTempId as string;
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId]);
 
   const labId = $route.params.labId as string;
 
@@ -179,7 +181,7 @@
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunWorkflowFormRunDetails
-              :pipeline-id="pipelineId"
+              :pipeline-id="workflowId"
               @next-step="() => nextStep('upload')"
               @step-validated="setStepEnabled('upload', $event)"
             />
@@ -188,7 +190,7 @@
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunWorkflowFormUploadData
-              :pipeline-id="pipelineId"
+              :pipeline-id="workflowId"
               @next-step="() => nextStep('parameters')"
               @previous-step="() => previousStep()"
               @step-validated="setStepEnabled('parameters', $event)"
@@ -199,7 +201,7 @@
             <EGRunWorkflowFormEditParameters
               :params="params"
               :schema="schema"
-              :pipeline-id="pipelineId"
+              :pipeline-id="workflowId"
               @next-step="() => nextStep('review')"
               @previous-step="() => previousStep()"
             />
@@ -210,8 +212,8 @@
             <EGRunWorkflowFormReviewPipeline
               :can-launch="true"
               :schema="props.schema"
-              :params="wipSeqeraRun?.params"
-              :pipeline-id="pipelineId"
+              :params="wipOmicsRun?.params"
+              :pipeline-id="workflowId"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"

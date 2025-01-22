@@ -3,6 +3,7 @@
   import { useRunStore } from '@FE/stores';
   import { WipOmicsRunData } from '@FE/stores/run';
   import { ButtonVariantEnum } from '@FE/types/buttons';
+  import { WorkflowParameter } from '@aws-sdk/client-omics';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -59,6 +60,8 @@
     delete runStore.wipOmicsRuns[omicsRunTempId];
     $router.push(nextRoute.value!);
   }
+
+  const schema = computed<Record<string, WorkflowParameter> | null>(() => workflow.value?.parameterTemplate ?? null);
 </script>
 
 <template>
@@ -75,6 +78,16 @@
 
   <div>workflow</div>
   <div>{{ JSON.stringify(workflow, null, 2) }}</div>
+
+  <!-- TODO: params, resetRunPipeline, resetStepperKey -->
+  <EGRunWorkflowStepper
+    @has-launched="hasLaunched = true"
+    :schema="schema"
+    :params="wipSeqeraRun?.params"
+    @reset-run-pipeline="resetRunPipeline()"
+    :key="resetStepperKey"
+    :workflow-id="workflowId"
+  />
 
   <EGDialog
     action-label="Cancel Workflow Run"

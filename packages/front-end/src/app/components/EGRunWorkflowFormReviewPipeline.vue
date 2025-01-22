@@ -9,6 +9,7 @@
     canLaunch?: boolean;
     schema: object;
     params: object;
+    // TODO: -> workflowId
     pipelineId: string;
   }>();
 

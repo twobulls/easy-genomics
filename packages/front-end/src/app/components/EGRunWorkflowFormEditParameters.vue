@@ -6,6 +6,7 @@
   const props = defineProps<{
     schema: object;
     params: object;
+    // TODO: -> workflowId
     pipelineId: string;
   }>();
 

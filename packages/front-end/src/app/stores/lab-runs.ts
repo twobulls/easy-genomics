@@ -1,6 +1,8 @@
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { defineStore } from 'pinia';
 
+// TODO: this should probably be refactored into the run store
+
 interface LabRunsStoreState {
   // indexed by lab run id
   labRuns: Record<string, LaboratoryRun>;

@@ -20,6 +20,7 @@ export class S3Construct extends Construct {
       objectOwnership: ObjectOwnership.BUCKET_OWNER_ENFORCED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
+      bucketKeyEnabled: true,
       autoDeleteObjects: true,
       removalPolicy: removalPolicy,
       lifecycleRules: [

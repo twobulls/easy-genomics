@@ -23,9 +23,9 @@ export class S3Construct extends Construct {
     this.props = props;
   }
 
-  public createBucket = (envBucketName: string, customBucketProps: BucketProps, devEnv?: boolean): Bucket => {
-    const autoDeleteObjects = devEnv ? true : false;
-    const removalPolicy = devEnv ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN;
+  public createBucket = (envBucketName: string, customBucketProps: BucketProps, envType?: string): Bucket => {
+    const autoDeleteObjects = envType !== 'prod' ? true : false; // Only for Non-Prod
+    const removalPolicy = envType !== 'prod' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN; // Only for Non-Prod
 
     const defaultBucketProps: BucketProps = {
       bucketName: envBucketName,

@@ -25,7 +25,7 @@ export class CognitoIdpConstruct extends Construct {
   constructor(scope: Construct, id: string, props: CognitoIDPConstructProps) {
     super(scope, id);
     this.props = props;
-    const removalPolicy = props.devEnv ? RemovalPolicy.DESTROY : undefined; // Only for Local, Sandbox, Dev
+    const removalPolicy = props.envType !== 'prod' ? RemovalPolicy.DESTROY : undefined; // Only for Non-Prod
 
     // The auth construct defines Cognito Resources for user authentication.
     this.userPool = new UserPool(this, 'user-pool', {

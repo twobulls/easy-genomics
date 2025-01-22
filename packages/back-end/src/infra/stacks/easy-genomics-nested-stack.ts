@@ -38,7 +38,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     this.sqs = new SqsConstruct(this, `${this.props.constructNamespace}-sqs`, {
       namePrefix: this.props.namePrefix,
-      devEnv: this.props.devEnv,
+      envType: this.props.envType,
       queues: <Queues>{
         ['organization-management-queue']: <QueueDetails>{
           fifo: true,
@@ -1182,7 +1182,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.envType,
     );
     this.dynamoDBTables.set(organizationTableName, organizationTable);
 
@@ -1209,7 +1209,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.envType,
     );
     this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
 
@@ -1232,7 +1232,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.envType,
     );
     this.dynamoDBTables.set(userTableName, userTable);
 
@@ -1259,7 +1259,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.envType,
     );
     this.dynamoDBTables.set(organizationUserTableName, organizationUserTable);
 
@@ -1292,7 +1292,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.envType,
     );
     this.dynamoDBTables.set(laboratoryUserTableName, laboratoryUserTable);
 
@@ -1331,7 +1331,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         lsi: baseLSIAttributes,
       },
-      this.props.devEnv,
+      this.props.envType,
     );
     this.dynamoDBTables.set(laboratoryRunTableName, laboratoryRunTable);
 
@@ -1349,7 +1349,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           type: AttributeType.STRING,
         },
       },
-      this.props.devEnv,
+      this.props.envType,
     );
     this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
   };

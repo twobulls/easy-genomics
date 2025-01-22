@@ -5,7 +5,7 @@ import { Construct } from 'constructs';
 
 export interface CognitoUserConstructProps {
   constructNamespace: string;
-  devEnv?: boolean;
+  envType: string;
   userPool: IUserPool;
 }
 
@@ -22,7 +22,7 @@ export class CognitoUserConstruct extends Construct {
   }
 
   public addUser(username: string, password: string, groupName?: string) {
-    const removalPolicy = this.props.devEnv ? RemovalPolicy.DESTROY : undefined;
+    const removalPolicy = this.props.envType !== 'prod' ? RemovalPolicy.DESTROY : undefined; // Only for Non-Prod
 
     const adminCreateUser = new AwsCustomResource(this, `AwsCustomResource-CreateUser-${username}`, {
       onCreate: {

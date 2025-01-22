@@ -40,10 +40,10 @@ export class DynamoConstruct extends Construct {
     this.props = props;
   }
 
-  public createTable = (envTableName: string, settings: DynamoDBTableDetails, devEnv?: boolean) => {
+  public createTable = (envTableName: string, settings: DynamoDBTableDetails, envType?: string) => {
     const partitionKey = { name: settings.partitionKey.name, type: settings.partitionKey.type };
     const sortKey = settings.sortKey ? { name: settings.sortKey.name, type: settings.sortKey.type } : undefined;
-    const removalPolicy = devEnv ? RemovalPolicy.DESTROY : undefined; // Only for Local, Sandbox, Dev
+    const removalPolicy = envType !== 'prod' ? RemovalPolicy.DESTROY : undefined; // Only for Non-Prod
 
     const table = new Table(this, envTableName, {
       tableName: envTableName,

@@ -136,7 +136,7 @@ export class AuthNestedStack extends NestedStack {
           type: AttributeType.NUMBER,
         },
       },
-      this.props.devEnv,
+      this.props.envType,
     );
     this.dynamoDBTables.set(authenticationLogTableName, authenticationLogTable);
   };

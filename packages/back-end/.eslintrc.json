@@ -226,7 +226,7 @@
     ],
     "no-new": "off",
     "no-empty": "error",
-    "prettier/prettier": "error",
+    "prettier/prettier": "off",
     "require-await": "off",
     "array-callback-return": "error"
   },

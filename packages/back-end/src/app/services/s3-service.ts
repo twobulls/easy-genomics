@@ -192,6 +192,7 @@ export class S3Service {
       );
       return response.$metadata.httpStatusCode === 200;
     } catch (error: any) {
+      console.error(error);
       return false;
     }
   };

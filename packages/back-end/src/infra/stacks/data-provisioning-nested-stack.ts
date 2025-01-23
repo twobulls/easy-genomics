@@ -39,12 +39,11 @@ export class DataProvisioningNestedStack extends NestedStack {
     // Setup Cognito User Construct
     this.cognitoUserConstruct = new CognitoUserConstruct(this, `${this.props.constructNamespace}-cognito-user`, {
       constructNamespace: this.props.constructNamespace,
-      devEnv: this.props.devEnv,
+      envType: this.props.envType,
       userPool: this.props.userPool,
     });
     // Setup S3 Construct
     this.s3Construct = new S3Construct(this, `${this.props.constructNamespace}-s3-bucket`, {});
-    Tags.of(this.s3Construct).add('easy-genomics:s3-bucket-type', 'data');
 
     if (this.props.sysAdminEmail && this.props.sysAdminPassword) {
       try {
@@ -59,7 +58,18 @@ export class DataProvisioningNestedStack extends NestedStack {
       }
     }
 
-    if (this.props.devEnv) {
+    // Only seed platform data and provision default S3 Bucket for Laboratory uploads for Non-Prod deployments
+    if (this.props.envType !== 'prod') {
+      // Only for Non-Prod
+      Tags.of(this.s3Construct).add('easy-genomics:s3-bucket-type', 'data');
+
+      // S3 Bucket Names must be globally unique and less than 63 in length
+      const s3BucketFullName = `${this.props.env.account!}-${this.props.namePrefix}-lab-bucket`;
+      if (s3BucketFullName.length > 63) {
+        throw new Error(`S3 Bucket Name: "${s3BucketFullName}" is too long`);
+      }
+      this.s3Construct.createBucket(s3BucketFullName, this.props.envType);
+
       // Add seed data to DynamoDB Tables
       this.addDynamoDBSeedData<Organization>(
         organization.OrganizationId,
@@ -71,11 +81,6 @@ export class DataProvisioningNestedStack extends NestedStack {
         Type: 'organization-name',
       });
 
-      // S3 Bucket Names must be globally unique and less than 63 in length
-      const s3BucketFullName = `${this.props.env.account!}-${this.props.namePrefix}-lab-bucket`;
-      if (s3BucketFullName.length > 63) {
-        throw new Error(`S3 Bucket Name: "${s3BucketFullName}" is too long`);
-      }
       this.addDynamoDBSeedData<Laboratory>(laboratory.LaboratoryId, `${this.props.namePrefix}-laboratory-table`, {
         ...laboratory,
         S3Bucket: s3BucketFullName, // Save the shared S3 Bucket's Full Name in Laboratory DynamoDB record
@@ -84,8 +89,6 @@ export class DataProvisioningNestedStack extends NestedStack {
         Value: laboratory.Name.toLowerCase(),
         Type: `organization-${laboratory.OrganizationId}-laboratory-name`,
       });
-      // Add shared S3 Bucket for seeded 'Test Laboratory'
-      this.s3Construct.createBucket(s3BucketFullName, this.props.devEnv);
 
       // Seed User accounts for development and testing
       const testUsers: TestUserDetails[] | undefined = this.props.testUsers;
@@ -113,13 +116,13 @@ export class DataProvisioningNestedStack extends NestedStack {
             Type: 'user-email',
           });
         });
-      }
 
-      // Bulk add unique references to UniqueReferences DynamoDB Table
-      this.bulkAddDynamoDBSeedData<UniqueReference>(
-        `${this.props.namePrefix}-unique-reference-table`,
-        this.uniqueReferences,
-      );
+        // Bulk add unique references to UniqueReferences DynamoDB Table
+        this.bulkAddDynamoDBSeedData<UniqueReference>(
+          `${this.props.namePrefix}-unique-reference-table`,
+          this.uniqueReferences,
+        );
+      }
     }
   }
 

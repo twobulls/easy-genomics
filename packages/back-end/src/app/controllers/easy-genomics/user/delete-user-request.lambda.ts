@@ -48,6 +48,7 @@ export const handler: Handler = async (
       // Remove Cognito User Account
       await cognitoIdpService.adminDeleteUser(user.UserId);
     } catch (err: any) {
+      console.error(err);
       throw new UserDeleteFailedError('could not remove user from cognito');
     }
 

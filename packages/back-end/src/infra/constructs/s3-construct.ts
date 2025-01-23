@@ -12,14 +12,15 @@ export class S3Construct extends Construct {
     this.props = props;
   }
 
-  public createBucket = (envBucketName: string, devEnv?: boolean): Bucket => {
-    const removalPolicy = devEnv ? RemovalPolicy.DESTROY : undefined; // Only for Local, Sandbox, Dev
+  public createBucket = (envBucketName: string, envType: string): Bucket => {
+    const removalPolicy = envType !== 'prod' ? RemovalPolicy.DESTROY : undefined; // Only for Non-Prod
 
     const bucket = new Bucket(this, envBucketName, {
       bucketName: envBucketName,
       objectOwnership: ObjectOwnership.BUCKET_OWNER_ENFORCED,
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       encryption: BucketEncryption.S3_MANAGED,
+      bucketKeyEnabled: true,
       autoDeleteObjects: true,
       removalPolicy: removalPolicy,
       lifecycleRules: [

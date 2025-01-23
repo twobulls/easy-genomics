@@ -1,5 +1,5 @@
 import { ACCESS_CONTROL_ALLOW_HEADERS } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { aws_apigateway, StackProps } from 'aws-cdk-lib';
+import { aws_apigateway, RemovalPolicy, StackProps } from 'aws-cdk-lib';
 import { EndpointType, Period, RestApi, UsagePlan } from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
 
@@ -29,6 +29,7 @@ export class ApiGatewayConstruct extends Construct {
         allowCredentials: true,
         allowHeaders: ACCESS_CONTROL_ALLOW_HEADERS,
       },
+      cloudWatchRoleRemovalPolicy: RemovalPolicy.DESTROY,
     });
     // const apiKey: IApiKey = this.restApi.addApiKey(`${id}-apikey`);
     const usagePlan: UsagePlan = this.restApi.addUsagePlan(`${id}-usageplan`, {

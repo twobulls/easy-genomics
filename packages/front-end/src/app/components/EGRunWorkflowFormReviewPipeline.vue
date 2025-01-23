@@ -5,12 +5,13 @@
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
+  // TODO: convert seqera -> omics
+
   const props = defineProps<{
     canLaunch?: boolean;
     schema: object;
     params: object;
-    // TODO: -> workflowId
-    pipelineId: string;
+    workflowId: string;
   }>();
 
   const { $api } = useNuxtApp();
@@ -29,7 +30,7 @@
   const areAccordionsOpen = ref(true);
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
-  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
+  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.workflowId]);
 
   const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
@@ -41,7 +42,7 @@
 
     try {
       isLaunchingRun.value = true;
-      const pipelineId = props.pipelineId;
+      const pipelineId = props.workflowId;
       if (pipelineId === undefined) {
         throw new Error('pipeline id not found in wip run config');
       }

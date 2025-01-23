@@ -3,11 +3,12 @@
   import { useRunStore } from '@FE/stores';
   import { WipSeqeraRunData } from '@FE/stores/run';
 
+  // TODO: convert seqera -> omics
+
   const props = defineProps<{
     schema: object;
     params: object;
-    // TODO: -> workflowId
-    pipelineId: string;
+    workflowId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);

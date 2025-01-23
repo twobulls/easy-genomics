@@ -17,6 +17,8 @@
   import usePipeline from '@FE/composables/usePipeline';
   import { WipSeqeraRunData } from '@FE/stores/run';
 
+  // TODO: convert seqera -> omics
+
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
   type FilePair = {
@@ -50,8 +52,7 @@
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   defineProps<{
-    // TODO: -> workflowId
-    pipelineId: string;
+    workflowId: string;
   }>();
 
   const labId = $route.params.labId as string;

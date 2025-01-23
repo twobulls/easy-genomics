@@ -6,10 +6,11 @@
   import { useRunStore, useSeqeraPipelinesStore } from '@FE/stores';
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
+  // TODO: convert seqera -> omics
+
   const emit = defineEmits(['next-step', 'step-validated']);
   const props = defineProps<{
-    // TODO: -> workflowId
-    pipelineId: string;
+    workflowId: string;
   }>();
 
   const $route = useRoute();
@@ -19,7 +20,7 @@
   const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
-  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
+  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.workflowId]);
 
   /**
    * Seqera API spec

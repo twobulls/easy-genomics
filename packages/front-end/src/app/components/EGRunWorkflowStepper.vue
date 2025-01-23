@@ -5,7 +5,6 @@
   const props = defineProps<{
     schema: Record<string, WorkflowParameter>;
     params: object;
-    // TODO: -> workflowId
     workflowId: string;
   }>();
 
@@ -181,7 +180,7 @@
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunWorkflowFormRunDetails
-              :pipeline-id="workflowId"
+              :workflow-id="workflowId"
               @next-step="() => nextStep('upload')"
               @step-validated="setStepEnabled('upload', $event)"
             />
@@ -190,7 +189,7 @@
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunWorkflowFormUploadData
-              :pipeline-id="workflowId"
+              :workflow-id="workflowId"
               @next-step="() => nextStep('parameters')"
               @previous-step="() => previousStep()"
               @step-validated="setStepEnabled('parameters', $event)"
@@ -201,7 +200,7 @@
             <EGRunWorkflowFormEditParameters
               :params="params"
               :schema="schema"
-              :pipeline-id="workflowId"
+              :workflow-id="workflowId"
               @next-step="() => nextStep('review')"
               @previous-step="() => previousStep()"
             />
@@ -213,7 +212,7 @@
               :can-launch="true"
               :schema="props.schema"
               :params="wipOmicsRun?.params"
-              :pipeline-id="workflowId"
+              :workflow-id="workflowId"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="() => previousStep()"

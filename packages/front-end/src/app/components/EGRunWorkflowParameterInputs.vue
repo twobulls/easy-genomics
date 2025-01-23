@@ -4,6 +4,8 @@
   import BooleanField from './EGParametersBooleanField.vue';
   import { useRunStore } from '@FE/stores';
 
+  // TODO: convert seqera -> omics
+
   const props = defineProps<{
     section: Record<string, any>;
     params: Record<string, any>;

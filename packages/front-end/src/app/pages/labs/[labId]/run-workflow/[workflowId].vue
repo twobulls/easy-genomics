@@ -11,13 +11,18 @@
   const $router = useRouter();
   const $route = useRoute();
   const runStore = useRunStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
 
-  const omicsRunTempId = $route.query.omicsRunTempId as string;
+  const omicsRunTempId = computed<string>(() => $route.query.omicsRunTempId as string);
 
-  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId]);
+  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId.value]);
 
   const labId = $route.params.labId as string;
   const workflowId = $route.params.workflowId as string;
+
+  const minimalWorkflow = computed<ReadWorkflow | null>(() => omicsWorkflowsStore.workflows[workflowId]);
+  // we can read some basic info about the workflow from the Omics Workflows store cache, but still need to make a read
+  // request to the API to get the full details, which we will store in this variable
   const workflow = ref<ReadWorkflow | null>(null);
 
   const hasLaunched = ref<boolean>(false);
@@ -38,6 +43,7 @@
   const loading = computed<boolean>(() => workflow.value === null);
 
   onBeforeMount(loadWorkflow);
+  onMounted(initializeWorkflowData);
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
@@ -65,11 +71,22 @@
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete runStore.wipOmicsRuns[omicsRunTempId];
+    delete runStore.wipOmicsRuns[omicsRunTempId.value];
     $router.push(nextRoute.value!);
   }
 
-  // TODO: initializePipelineData
+  /**
+   * Reads the workflow details, schema, and parameters from the API and initializes the pipeline run store
+   */
+  async function initializeWorkflowData() {
+    runStore.updateWipOmicsRun(omicsRunTempId.value, {
+      laboratoryId: labId!,
+      workflowId: workflowId!,
+      workflowName: minimalWorkflow.value?.name,
+      transactionId: omicsRunTempId.value,
+      params: {},
+    });
+  }
 
   /**
    * Resets the pipeline run:
@@ -80,10 +97,10 @@
   function resetRunPipeline() {
     $router.push({ query: { seqeraRunTempId: uuidv4() } });
 
-    // without this short delay, initializePipelineData sets wip data for the old seqeraRunTempId, because the route
+    // without this short delay, initializeWorkflowData sets wip data for the old seqeraRunTempId, because the route
     // change doesn't complete in time
     setTimeout(() => {
-      initializePipelineData();
+      initializeWorkflowData();
       resetStepperKey.value++;
     }, 100);
   }
@@ -108,6 +125,9 @@
 
     <div>workflow</div>
     <div>{{ JSON.stringify(workflow, null, 2) }}</div>
+
+    <div>schema</div>
+    <div>{{ JSON.stringify(schema, null, 2) }}</div>
 
     <EGRunWorkflowStepper
       @has-launched="hasLaunched = true"

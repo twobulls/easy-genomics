@@ -16,6 +16,7 @@
   import { useRunStore, useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
   import { WipSeqeraRunData } from '@FE/stores/run';
+  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -46,6 +47,7 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const runStore = useRunStore();
+  const seqeraPipelinesStore = useSeqeraPipelinesStore();
   const { downloadSampleSheet } = usePipeline($api);
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
@@ -57,6 +59,10 @@
   const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+
+  const pipeline = computed<SeqeraPipeline | null>(
+    () => seqeraPipelinesStore.pipelines[wipSeqeraRun.value?.pipelineId || ''] ?? null,
+  );
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -629,7 +635,9 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="downloadSampleSheet(seqeraRunTempId)"
+        @click="
+          downloadSampleSheet(labId, wipSeqeraRun.sampleSheetS3Url, pipeline.name, wipSeqeraRun.userPipelineRunName)
+        "
       />
       <EGButton
         @click="startUploadProcess"

@@ -15,9 +15,8 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useRunStore, useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
-  import { WipSeqeraRunData } from '@FE/stores/run';
-
-  // TODO: convert seqera -> omics
+  import { WipOmicsRunData } from '@FE/stores/run';
+  import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -48,6 +47,7 @@
   const { $api } = useNuxtApp();
   const $route = useRoute();
   const runStore = useRunStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
   const { downloadSampleSheet } = usePipeline($api);
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
@@ -56,9 +56,13 @@
   }>();
 
   const labId = $route.params.labId as string;
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
+  const omicsRunTempId = $route.query.omicsRunTempId as string;
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId]);
+
+  const workflow = computed<OmicsWorkflow | null>(
+    () => omicsWorkflowsStore.workflows[wipOmicsRun.value?.workflowId || ''] ?? null,
+  );
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -301,7 +305,7 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    useRunStore().updateWipSeqeraRun(seqeraRunTempId, {
+    useRunStore().updateWipOmicsRun(omicsRunTempId, {
       sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
       s3Path: sampleSheetResponse.SampleSheetInfo.Path,
@@ -349,7 +353,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: labId,
-      TransactionId: wipSeqeraRun.value?.transactionId || '',
+      TransactionId: wipOmicsRun.value?.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -369,7 +373,7 @@
 
     const request: FileUploadRequest = {
       LaboratoryId: labId,
-      TransactionId: wipSeqeraRun.value?.transactionId || '',
+      TransactionId: wipOmicsRun.value?.transactionId || '',
       Files: files,
     };
 
@@ -631,7 +635,7 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="downloadSampleSheet(seqeraRunTempId)"
+        @click="downloadSampleSheet(labId, wipOmicsRun.sampleSheetS3Url, workflow.name, wipOmicsRun.runName)"
       />
       <EGButton
         @click="startUploadProcess"

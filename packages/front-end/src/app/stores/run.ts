@@ -27,6 +27,9 @@ export interface WipOmicsRunData {
   transactionId?: string;
   runName?: string;
   params?: object;
+  sampleSheetS3Url?: string;
+  s3Bucket?: string;
+  s3Path?: string;
 }
 
 interface RunState {

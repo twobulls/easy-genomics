@@ -23,14 +23,14 @@ export interface ConfigurationSettings {
     // The System Admin account is required
     ['sys-admin-email']?: string;
     ['sys-admin-password']?: string; // Initial Cognito password
-    // The following user accounts are only seeded for env-type: 'dev'
+    // Optional: The following user accounts are only seeded for 'dev' and 'pre-prod' environments for testing purposes
     ['org-admin-email']: string;
-    ['org-admin-password']: string; // Initial Cognito password
+    ['org-admin-password']: string; // Admin Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
     ['lab-manager-email']?: string;
-    ['lab-manager-password']?: string; // Initial Cognito password
+    ['lab-manager-password']?: string; // Lab Admin Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
     ['lab-technician-email']?: string;
-    ['lab-technician-password']?: string; // Initial Cognito password
-    // The following test settings are only used for E2E integration testing
+    ['lab-technician-password']?: string; // Lab Technician Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+    // Optional: The following test settings are only used for E2E integration testing
     ['test-workspace-id']?: string;
     ['test-access-token']?: string;
     ['test-s3-url']?: string;

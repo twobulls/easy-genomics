@@ -28,8 +28,8 @@ export interface VpcPeering {
 export interface BackEndStackProps extends BaseStackProps {
   namePrefix: string;
   jwtSecretKey: string;
-  sysAdminEmail?: string;
-  sysAdminPassword?: string;
+  sysAdminEmail: string;
+  sysAdminPassword: string;
   testUsers?: TestUserDetails[];
   seqeraApiBaseUrl: string;
   vpcPeering?: VpcPeering;

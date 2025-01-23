@@ -40,6 +40,7 @@ if (process.env.CI_CD === 'true') {
   awsRegion = process.env.AWS_REGION;
   envName = process.env.ENV_NAME;
   envType = process.env.ENV_TYPE;
+  devEnv = envType === 'dev';
   appDomainName = process.env.APP_DOMAIN_NAME;
   awsHostedZoneId = process.env.AWS_HOSTED_ZONE_ID;
 
@@ -75,8 +76,6 @@ if (process.env.CI_CD === 'true') {
     };
   }
 
-  // AWS infrastructure resources can be destroyed only when devEnv is true
-  devEnv = envType === 'dev';
   if (!awsAccountId) {
     throw new Error('"AWS_ACCOUNT_ID" undefined, please check the CI/CD environment configuration');
   }
@@ -95,24 +94,30 @@ if (process.env.CI_CD === 'true') {
   if (!devEnv && !awsHostedZoneId) {
     throw new Error('"AWS_HOSTED_ZONE_ID" undefined, please check the CI/CD environment configuration');
   }
-  if (devEnv) {
-    if (!orgAdminEmail) {
-      throw new Error('"ORG_ADMIN_EMAIL" undefined, please check the CI/CD environment configuration');
-    }
-    if (!orgAdminPassword) {
-      throw new Error('"ORG_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
-    } else if (!cognitoPasswordRegex.test(orgAdminPassword)) {
+  if (!sysAdminEmail) {
+    throw new Error('"SYSTEM_ADMIN_EMAIL" undefined, please check the CI/CD environment configuration');
+  }
+  if (!sysAdminPassword) {
+    throw new Error('"SYSTEM_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
+  } else if (!cognitoPasswordRegex.test(sysAdminPassword)) {
+    throw new Error(
+      '"SYSTEM_ADMIN_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
+    );
+  }
+  if (envType !== 'prod') {
+    if (orgAdminEmail && orgAdminPassword && !cognitoPasswordRegex.test(orgAdminPassword)) {
       throw new Error(
         '"ORG_ADMIN_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
       );
     }
-  }
-  if (sysAdminEmail) {
-    if (!sysAdminPassword) {
-      throw new Error('"SYSTEM_ADMIN_PASSWORD" undefined, please check the CI/CD environment configuration');
-    } else if (!cognitoPasswordRegex.test(sysAdminPassword)) {
+    if (labManagerEmail && labManagerPassword && !cognitoPasswordRegex.test(labManagerPassword)) {
       throw new Error(
-        '"SYSTEM_ADMIN_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
+        '"LAB_MANAGER_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
+      );
+    }
+    if (labTechnicianEmail && labTechnicianPassword && !cognitoPasswordRegex.test(labTechnicianPassword)) {
+      throw new Error(
+        '"LAB_TECHNICIAN_PASSWORD" does not satisfy password requirements, please check the CI/CD environment configuration',
       );
     }
   }
@@ -144,6 +149,7 @@ if (process.env.CI_CD === 'true') {
   awsAccountId = configSettings['aws-account-id'].toString();
   awsRegion = configSettings['aws-region'];
   envType = configSettings['env-type']; // dev | pre-prod | prod
+  devEnv = envType === 'dev';
   appDomainName = configSettings['app-domain-name'];
   awsHostedZoneId = configSettings['aws-hosted-zone-id'];
 
@@ -181,8 +187,6 @@ if (process.env.CI_CD === 'true') {
     };
   }
 
-  // AWS infrastructure resources can be destroyed only when devEnv is true
-  devEnv = envType === 'dev';
   if (!awsAccountId) {
     throw new Error('"aws-account-id" undefined, please check the easy-genomics.yaml configuration');
   }
@@ -201,24 +205,30 @@ if (process.env.CI_CD === 'true') {
   if (!devEnv && !awsHostedZoneId) {
     throw new Error('"aws-hosted-zone-id" undefined, please check the easy-genomics.yaml configuration');
   }
-  if (devEnv) {
-    if (!orgAdminEmail) {
-      throw new Error('"org-admin-email" undefined, please check the easy-genomics.yaml configuration');
-    }
-    if (!orgAdminPassword) {
-      throw new Error('"org-admin-password" undefined, please check the easy-genomics.yaml configuration');
-    } else if (!cognitoPasswordRegex.test(orgAdminPassword)) {
+  if (!sysAdminEmail) {
+    throw new Error('"sys-admin-email" undefined, please check the easy-genomics.yaml configuration');
+  }
+  if (!sysAdminPassword) {
+    throw new Error('"sys-admin-password" undefined, please check the easy-genomics.yaml configuration');
+  } else if (!cognitoPasswordRegex.test(sysAdminPassword)) {
+    throw new Error(
+      '"sys-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
+    );
+  }
+  if (envType !== 'prod') {
+    if (orgAdminEmail && orgAdminPassword && !cognitoPasswordRegex.test(orgAdminPassword)) {
       throw new Error(
         '"org-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
       );
     }
-  }
-  if (sysAdminEmail) {
-    if (!sysAdminPassword) {
-      throw new Error('"sys-admin-password" undefined, please check the easy-genomics.yaml configuration');
-    } else if (!cognitoPasswordRegex.test(sysAdminPassword)) {
+    if (labManagerEmail && labManagerPassword && !cognitoPasswordRegex.test(labManagerPassword)) {
       throw new Error(
-        '"sys-admin-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
+        '"lab-manager-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
+      );
+    }
+    if (labTechnicianEmail && labTechnicianPassword && !cognitoPasswordRegex.test(labTechnicianPassword)) {
+      throw new Error(
+        '"lab-technician-password" does not satisfy password requirements, please check the easy-genomics.yaml configuration',
       );
     }
   }
@@ -231,29 +241,35 @@ const namePrefix: string = `${envType}-${envName}`;
 const constructNamespace: string = `${namePrefix}-easy-genomics`;
 
 // Define Test User Accounts to seed for development and testing
-const testUsers: TestUserDetails[] = devEnv ? <TestUserDetails[]>[
-      orgAdminEmail && orgAdminPassword
-        ? <TestUserDetails>{
-            UserEmail: orgAdminEmail,
-            UserPassword: orgAdminPassword,
-            Access: 'OrganizationAdmin',
-          }
-        : undefined,
-      labManagerEmail && labManagerPassword
-        ? <TestUserDetails>{
-            UserEmail: labManagerEmail,
-            UserPassword: labManagerPassword,
-            Access: 'LabManager',
-          }
-        : undefined,
-      labTechnicianEmail && labTechnicianPassword
-        ? <TestUserDetails>{
-            UserEmail: labTechnicianEmail,
-            UserPassword: labTechnicianPassword,
-            Access: 'LabTechnician',
-          }
-        : undefined,
-    ].filter((item: TestUserDetails | undefined) => item != undefined) : [];
+const testUsers: TestUserDetails[] = envType !== 'prod' ? <TestUserDetails[]>[
+        orgAdminEmail && orgAdminPassword
+          ? <TestUserDetails>{
+              UserEmail: orgAdminEmail,
+              UserPassword: orgAdminPassword,
+              Access: 'OrganizationAdmin',
+            }
+          : undefined,
+        labManagerEmail && labManagerPassword
+          ? <TestUserDetails>{
+              UserEmail: labManagerEmail,
+              UserPassword: labManagerPassword,
+              Access: 'LabManager',
+            }
+          : undefined,
+        labTechnicianEmail && labTechnicianPassword
+          ? <TestUserDetails>{
+              UserEmail: labTechnicianEmail,
+              UserPassword: labTechnicianPassword,
+              Access: 'LabTechnician',
+            }
+          : undefined,
+      ].filter((item: TestUserDetails | undefined) => item != undefined) : [];
+
+if (!sysAdminEmail || !sysAdminPassword) {
+  throw new Error(
+    'The System Admin User login and password is required, please check your easy-genomics.yaml configuration.',
+  );
+}
 
 // Setups Back-End Stack which initiates the nested stacks for Auth, Easy Genomics, AWS HealthOmics and NextFlow Tower
 new BackEndStack(app, `${namePrefix}-main-back-end-stack`, {

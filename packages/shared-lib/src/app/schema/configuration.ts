@@ -25,14 +25,14 @@ export const ConfigurationSettingsSchema = z
       // The System Admin account is required
       ['sys-admin-email']: z.string(),
       ['sys-admin-password']: z.string(), // Initial Cognito password
-      // The following user accounts are only seeded for env-type: 'dev'
+      // Optional: The following user accounts are only seeded for 'dev' and 'pre-prod' environments for testing purposes
       ['org-admin-email']: z.string().nullable().optional(),
-      ['org-admin-password']: z.string().nullable().optional(), // Initial Cognito password
+      ['org-admin-password']: z.string().nullable().optional(), // Admin Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
       ['lab-manager-email']: z.string().nullable().optional(),
-      ['lab-manager-password']: z.string().nullable().optional(), // Initial Cognito password
+      ['lab-manager-password']: z.string().nullable().optional(), // Lab Admin Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
       ['lab-technician-email']: z.string().nullable().optional(),
-      ['lab-technician-password']: z.string().nullable().optional(), // Initial Cognito password
-      // The following test settings are only used for E2E integration testing
+      ['lab-technician-password']: z.string().nullable().optional(), // Lab Technician Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+      // Optional: The following test settings are only used for E2E integration testing
       ['test-workspace-id']: z.string().nullable().optional(),
       ['test-access-token']: z.string().nullable().optional(),
       ['test-s3-url']: z.string().nullable().optional(),

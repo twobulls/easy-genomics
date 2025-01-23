@@ -214,8 +214,10 @@ export class WwwHostingConstruct extends Construct {
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
       webAclId: this.props.webAclId, // Optional AWS WAF web ACL
       geoRestriction: GeoRestriction.allowlist(...['AU', 'US']),
-      enableLogging: true,
-      logBucket: this.s3Buckets.get(`${this.props.env.account}-${appDomainName}-cfd-access-logs`),
+      enableLogging: !this.props.devEnv,
+      logBucket: !this.props.devEnv
+        ? this.s3Buckets.get(`${this.props.env.account}-${appDomainName}-cfd-access-logs`)
+        : undefined,
       defaultBehavior: {
         origin: s3Origin,
         cachePolicy: CachePolicy.CACHING_OPTIMIZED,

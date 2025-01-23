@@ -25,6 +25,7 @@ export interface WipOmicsRunData {
   workflowId?: string;
   workflowName?: string;
   transactionId?: string;
+  params?: object;
 }
 
 interface RunState {

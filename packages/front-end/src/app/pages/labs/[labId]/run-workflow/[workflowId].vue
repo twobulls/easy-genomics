@@ -4,6 +4,7 @@
   import { WipOmicsRunData } from '@FE/stores/run';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { WorkflowParameter } from '@aws-sdk/client-omics';
+  import { v4 as uuidv4 } from 'uuid';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -23,6 +24,10 @@
   const nextRoute = ref<string | null>(null);
 
   const labName = computed<string>(() => useLabsStore().labs[labId].Name);
+
+  const schema = computed<Record<string, WorkflowParameter> | null>(() => workflow.value?.parameterTemplate ?? null);
+
+  const resetStepperKey = ref(0);
 
   // check permissions to be on this page
   if (!useUserStore().canViewLab(labId)) {
@@ -61,7 +66,24 @@
     $router.push(nextRoute.value!);
   }
 
-  const schema = computed<Record<string, WorkflowParameter> | null>(() => workflow.value?.parameterTemplate ?? null);
+  // TODO: initializePipelineData
+
+  /**
+   * Resets the pipeline run:
+   * - clears some store values
+   * - re-initializes the schema + prefills params
+   * - re-mounts the stepper to reset it to initial state
+   */
+  function resetRunPipeline() {
+    $router.push({ query: { seqeraRunTempId: uuidv4() } });
+
+    // without this short delay, initializePipelineData sets wip data for the old seqeraRunTempId, because the route
+    // change doesn't complete in time
+    setTimeout(() => {
+      initializePipelineData();
+      resetStepperKey.value++;
+    }, 100);
+  }
 </script>
 
 <template>
@@ -79,11 +101,10 @@
   <div>workflow</div>
   <div>{{ JSON.stringify(workflow, null, 2) }}</div>
 
-  <!-- TODO: params, resetRunPipeline, resetStepperKey -->
   <EGRunWorkflowStepper
     @has-launched="hasLaunched = true"
     :schema="schema"
-    :params="wipSeqeraRun?.params"
+    :params="wipOmicsRun?.params"
     @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
     :workflow-id="workflowId"

@@ -5,6 +5,7 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { WorkflowParameter } from '@aws-sdk/client-omics';
   import { v4 as uuidv4 } from 'uuid';
+  import EGLoadingSpinner from '@FE/components/EGLoadingSpinner.vue';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -33,6 +34,8 @@
   if (!useUserStore().canViewLab(labId)) {
     $router.push('/labs');
   }
+
+  const loading = computed<boolean>(() => workflow.value === null);
 
   onBeforeMount(loadWorkflow);
 
@@ -95,28 +98,34 @@
     back-button-label="Exit Run"
   />
 
-  <div>wipOmicsRun</div>
-  <div>{{ JSON.stringify(wipOmicsRun, null, 2) }}</div>
+  <template v-if="loading">
+    <EGLoadingSpinner />
+  </template>
 
-  <div>workflow</div>
-  <div>{{ JSON.stringify(workflow, null, 2) }}</div>
+  <template v-else>
+    <div>wipOmicsRun</div>
+    <div>{{ JSON.stringify(wipOmicsRun, null, 2) }}</div>
 
-  <EGRunWorkflowStepper
-    @has-launched="hasLaunched = true"
-    :schema="schema"
-    :params="wipOmicsRun?.params"
-    @reset-run-pipeline="resetRunPipeline()"
-    :key="resetStepperKey"
-    :workflow-id="workflowId"
-  />
+    <div>workflow</div>
+    <div>{{ JSON.stringify(workflow, null, 2) }}</div>
 
-  <EGDialog
-    action-label="Cancel Workflow Run"
-    :action-variant="ButtonVariantEnum.enum.destructive"
-    @action-triggered="confirmCancel"
-    primary-message="Are you sure you would like to cancel?"
-    secondary-message="Any changes made or files uploaded will not be saved."
-    :model-value="!!nextRoute"
-    @update:modelValue="nextRoute = null"
-  />
+    <EGRunWorkflowStepper
+      @has-launched="hasLaunched = true"
+      :schema="schema"
+      :params="wipOmicsRun?.params"
+      @reset-run-pipeline="resetRunPipeline()"
+      :key="resetStepperKey"
+      :workflow-id="workflowId"
+    />
+
+    <EGDialog
+      action-label="Cancel Workflow Run"
+      :action-variant="ButtonVariantEnum.enum.destructive"
+      @action-triggered="confirmCancel"
+      primary-message="Are you sure you would like to cancel?"
+      secondary-message="Any changes made or files uploaded will not be saved."
+      :model-value="!!nextRoute"
+      @update:modelValue="nextRoute = null"
+    />
+  </template>
 </template>

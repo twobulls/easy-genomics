@@ -5,7 +5,6 @@ import { OrganizationRoles } from "@SharedLib/types/easy-genomics/roles";
 export interface BaseStackProps extends StackProps {
   env: Environment;
   constructNamespace: string;
-  devEnv: boolean;
   envName: string;
   envType: string;
   appDomainName: string;

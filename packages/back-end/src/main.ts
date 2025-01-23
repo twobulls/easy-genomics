@@ -30,8 +30,6 @@ let labTechnicianPassword: string | undefined;
 let seqeraApiBaseUrl: string;
 let vpcPeering: VpcPeering | undefined;
 
-let devEnv: boolean = true;
-
 if (process.env.CI_CD === 'true') {
   console.log('Loading Back-End environment settings for CI/CD Pipeline...');
 
@@ -40,7 +38,6 @@ if (process.env.CI_CD === 'true') {
   awsRegion = process.env.AWS_REGION;
   envName = process.env.ENV_NAME;
   envType = process.env.ENV_TYPE;
-  devEnv = envType === 'dev';
   appDomainName = process.env.APP_DOMAIN_NAME;
   awsHostedZoneId = process.env.AWS_HOSTED_ZONE_ID;
 
@@ -91,7 +88,7 @@ if (process.env.CI_CD === 'true') {
   if (!appDomainName) {
     throw new Error('"APP_DOMAIN_NAME" undefined, please check the CI/CD environment configuration');
   }
-  if (!devEnv && !awsHostedZoneId) {
+  if (envType === 'prod' && !awsHostedZoneId) {
     throw new Error('"AWS_HOSTED_ZONE_ID" undefined, please check the CI/CD environment configuration');
   }
   if (!sysAdminEmail) {
@@ -149,7 +146,6 @@ if (process.env.CI_CD === 'true') {
   awsAccountId = configSettings['aws-account-id'].toString();
   awsRegion = configSettings['aws-region'];
   envType = configSettings['env-type']; // dev | pre-prod | prod
-  devEnv = envType === 'dev';
   appDomainName = configSettings['app-domain-name'];
   awsHostedZoneId = configSettings['aws-hosted-zone-id'];
 
@@ -202,7 +198,7 @@ if (process.env.CI_CD === 'true') {
   if (!appDomainName) {
     throw new Error('"app-domain-name" undefined, please check the easy-genomics.yaml configuration');
   }
-  if (!devEnv && !awsHostedZoneId) {
+  if (envType === 'prod' && !awsHostedZoneId) {
     throw new Error('"aws-hosted-zone-id" undefined, please check the easy-genomics.yaml configuration');
   }
   if (!sysAdminEmail) {
@@ -278,7 +274,6 @@ new BackEndStack(app, `${namePrefix}-main-back-end-stack`, {
     region: awsRegion,
   },
   constructNamespace: constructNamespace,
-  devEnv: devEnv,
   envName: envName,
   envType: envType,
   appDomainName: appDomainName,

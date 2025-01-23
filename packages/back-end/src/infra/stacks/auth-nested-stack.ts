@@ -26,7 +26,7 @@ export class AuthNestedStack extends NestedStack {
     this.setupIamPolicies();
 
     this.dynamoDB = new DynamoConstruct(this, `${this.props.constructNamespace}-dynamodb`, {
-      devEnv: this.props.devEnv,
+      envType: this.props.envType,
     });
     this.setupDynamoDBTables();
 
@@ -61,7 +61,6 @@ export class AuthNestedStack extends NestedStack {
     this.cognito = new CognitoIdpConstruct(this, `${this.props.constructNamespace}-cognito-idp`, {
       ...this.props,
       constructNamespace: this.props.constructNamespace,
-      devEnv: this.props.devEnv,
       authLambdaFunctions: this.lambda.lambdaFunctions, // Pass Auth Lambda functions for registering with Cognito Event triggers
       customSenderKmsKey: this.props.cognitoIdpKmsKey,
     });
@@ -124,20 +123,16 @@ export class AuthNestedStack extends NestedStack {
     /** Update the definitions below to update / add additional DynamoDB tables **/
     // Authentication-Log Table
     const authenticationLogTableName = `${this.props.namePrefix}-authentication-log-table`;
-    const authenticationLogTable = this.dynamoDB.createTable(
-      authenticationLogTableName,
-      {
-        partitionKey: {
-          name: 'UserName',
-          type: AttributeType.STRING,
-        },
-        sortKey: {
-          name: 'DateTime',
-          type: AttributeType.NUMBER,
-        },
+    const authenticationLogTable = this.dynamoDB.createTable(authenticationLogTableName, {
+      partitionKey: {
+        name: 'UserName',
+        type: AttributeType.STRING,
       },
-      this.props.envType,
-    );
+      sortKey: {
+        name: 'DateTime',
+        type: AttributeType.NUMBER,
+      },
+    });
     this.dynamoDBTables.set(authenticationLogTableName, authenticationLogTable);
   };
 }

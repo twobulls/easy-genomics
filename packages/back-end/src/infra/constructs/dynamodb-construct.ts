@@ -29,7 +29,7 @@ export type DynamoDBTableDetails = {
 };
 
 export interface DynamoConstructProps {
-  devEnv?: boolean;
+  envType: string;
 }
 
 export class DynamoConstruct extends Construct {
@@ -40,10 +40,10 @@ export class DynamoConstruct extends Construct {
     this.props = props;
   }
 
-  public createTable = (envTableName: string, settings: DynamoDBTableDetails, envType?: string) => {
+  public createTable = (envTableName: string, settings: DynamoDBTableDetails) => {
     const partitionKey = { name: settings.partitionKey.name, type: settings.partitionKey.type };
     const sortKey = settings.sortKey ? { name: settings.sortKey.name, type: settings.sortKey.type } : undefined;
-    const removalPolicy = envType !== 'prod' ? RemovalPolicy.DESTROY : undefined; // Only for Non-Prod
+    const removalPolicy = this.props.envType !== 'prod' ? RemovalPolicy.DESTROY : undefined; // Only for Non-Prod
 
     const table = new Table(this, envTableName, {
       tableName: envTableName,

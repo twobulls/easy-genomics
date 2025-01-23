@@ -10,7 +10,9 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Construct } from 'constructs';
 
-export interface S3ConstructProps extends StackProps {}
+export interface S3ConstructProps extends StackProps {
+  envType: string;
+}
 
 /**
  * This S3 Construct to provision S3 buckets.
@@ -23,9 +25,9 @@ export class S3Construct extends Construct {
     this.props = props;
   }
 
-  public createBucket = (envBucketName: string, customBucketProps: BucketProps, envType?: string): Bucket => {
-    const autoDeleteObjects = envType !== 'prod' ? true : false; // Only for Non-Prod
-    const removalPolicy = envType !== 'prod' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN; // Only for Non-Prod
+  public createBucket = (envBucketName: string, customBucketProps: BucketProps): Bucket => {
+    const autoDeleteObjects = this.props.envType !== 'prod' ? true : false; // Only for Non-Prod
+    const removalPolicy = this.props.envType !== 'prod' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN; // Only for Non-Prod
 
     const defaultBucketProps: BucketProps = {
       bucketName: envBucketName,

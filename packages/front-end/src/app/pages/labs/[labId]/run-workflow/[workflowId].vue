@@ -12,6 +12,7 @@
   const $route = useRoute();
   const runStore = useRunStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
+  const uiStore = useUiStore();
 
   const omicsRunTempId = computed<string>(() => $route.query.omicsRunTempId as string);
 
@@ -20,10 +21,7 @@
   const labId = $route.params.labId as string;
   const workflowId = $route.params.workflowId as string;
 
-  const minimalWorkflow = computed<ReadWorkflow | null>(() => omicsWorkflowsStore.workflows[workflowId]);
-  // we can read some basic info about the workflow from the Omics Workflows store cache, but still need to make a read
-  // request to the API to get the full details, which we will store in this variable
-  const workflow = ref<ReadWorkflow | null>(null);
+  const workflow = computed<ReadWorkflow | null>(() => omicsWorkflowsStore.workflows[workflowId]);
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
@@ -40,7 +38,7 @@
     $router.push('/labs');
   }
 
-  const loading = computed<boolean>(() => workflow.value === null);
+  const loading = computed<boolean>(() => uiStore.isRequestPending('loadOmicsWorkflow'));
 
   onBeforeMount(loadWorkflow);
   onMounted(initializeWorkflowData);
@@ -66,7 +64,14 @@
   });
 
   async function loadWorkflow(): Promise<void> {
-    workflow.value = await $api.omicsWorkflows.get(labId, workflowId);
+    // the store will contain the minimal workflow objects (only some basic fields, not everything) from the list call
+    // this will overwrite the current workflow with the full workflow details for all the child components to use
+    uiStore.setRequestPending('loadOmicsWorkflow');
+    try {
+      omicsWorkflowsStore.workflows[workflowId] = await $api.omicsWorkflows.get(labId, workflowId);
+    } finally {
+      uiStore.setRequestComplete('loadOmicsWorkflow');
+    }
   }
 
   function confirmCancel() {
@@ -82,7 +87,7 @@
     runStore.updateWipOmicsRun(omicsRunTempId.value, {
       laboratoryId: labId!,
       workflowId: workflowId!,
-      workflowName: minimalWorkflow.value?.name,
+      workflowName: workflow.value?.name,
       transactionId: omicsRunTempId.value,
       params: {},
     });

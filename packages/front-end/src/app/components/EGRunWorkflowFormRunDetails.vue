@@ -3,10 +3,8 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useRunStore, useSeqeraPipelinesStore } from '@FE/stores';
-  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-
-  // TODO: convert seqera -> omics
+  import { useRunStore } from '@FE/stores';
+  import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
 
   const emit = defineEmits(['next-step', 'step-validated']);
   const props = defineProps<{
@@ -15,37 +13,20 @@
 
   const $route = useRoute();
   const runStore = useRunStore();
-  const seqeraPipelineStore = useSeqeraPipelinesStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
 
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
+  const omicsRunTempId = $route.query.omicsRunTempId as string;
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
-  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.workflowId]);
+  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId]);
+  const workflow = computed<OmicsWorkflow | undefined>(() => omicsWorkflowsStore.workflows[props.workflowId]);
 
-  /**
-   * Seqera API spec
-   * https://cloud.seqera.io/openapi/seqera-api-latest.yml
-   */
-
-  /**
-   * The user enters the runName to identify the pipeline run.
-   * Max run name length must be dynamic as it is combined with,
-   * + The pipeline name (variable length)
-   * + Date stamp (yyyymmdd - 8-characters)
-   * + A 15-character random hexadecimal string (15-characters)
-   * + Each part separated by an underscore (2-characters)
-   * With the final pipeline run name being a max of 80-characters
-   * e.g. User enters 'community-showcase' and the following name is generated,
-   * viralrecon-illumina_community-showcase_20240712_5686910e783b4b2
-   */
-  const MAX_TOTAL_LENGTH = 80;
   const MAX_RUN_NAME_LENGTH = 50;
 
   const runNameSchema = z
     .string()
     .trim()
-    .min(1, 'Pipeline run name must be at least 1 character')
-    .max(MAX_RUN_NAME_LENGTH, `Pipeline run name must be ${MAX_RUN_NAME_LENGTH} characters or less`);
+    .min(1, 'Workflow run name must be at least 1 character')
+    .max(MAX_RUN_NAME_LENGTH, `Workflow run name must be ${MAX_RUN_NAME_LENGTH} characters or less`);
 
   const formStateSchema = z.object({
     runName: runNameSchema,
@@ -70,7 +51,7 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = wipSeqeraRun.value?.userPipelineRunName || '';
+    formState.runName = wipOmicsRun.value?.runName || '';
     validate(formState);
   });
 
@@ -90,7 +71,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    useRunStore().updateWipSeqeraRun(seqeraRunTempId, { userPipelineRunName: safeRunName });
+    runStore.updateWipOmicsRun(omicsRunTempId, { runName: safeRunName });
     emit('next-step');
   }
 
@@ -133,8 +114,8 @@
       <EGText tag="small" class="mb-4">Step 01</EGText>
       <EGText tag="h4" class="mb-0">Run Details</EGText>
       <UDivider class="py-4" />
-      <EGFormGroup label="Pipeline" name="pipelineName">
-        <EGInput :model-value="pipeline?.name" :disabled="true" />
+      <EGFormGroup label="Workflow" name="workflowName">
+        <EGInput :model-value="workflow?.name" :disabled="true" />
       </EGFormGroup>
 
       <EGFormGroup
@@ -146,15 +127,15 @@
       >
         <EGInput
           v-model="formState.runName"
-          placeholder="Enter a name to identify this pipeline run"
+          placeholder="Enter a name to identify this workflow run"
           @input.prevent="handleRunNameInput"
           autofocus
         />
         <EGCharacterCounter :value="runNameCharCount" :max="MAX_RUN_NAME_LENGTH" />
       </EGFormGroup>
 
-      <EGFormGroup label="Description" name="pipelineDescription">
-        <EGTextArea :model-value="pipeline?.description" :disabled="true" />
+      <EGFormGroup label="Description" name="workflowDescription">
+        <EGTextArea :model-value="workflow?.description" :disabled="true" />
       </EGFormGroup>
     </EGCard>
     <div class="flex justify-end pt-4">

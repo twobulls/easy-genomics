@@ -40,9 +40,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-api-gateway": "^3.731.1",
-    "@aws-sdk/client-cognito-identity-provider": "^3.731.1",
+    "@aws-sdk/client-cognito-identity-provider": "^3.732.0",
     "@aws-sdk/client-omics": "^3.731.1",
-    "@aws-sdk/client-s3": "^3.731.1",
+    "@aws-sdk/client-s3": "^3.733.0",
     "@nestjs/config": "^3.3.0",
     "aws-cdk": "^2.176.0",
     "aws-cdk-lib": "^2.176.0",

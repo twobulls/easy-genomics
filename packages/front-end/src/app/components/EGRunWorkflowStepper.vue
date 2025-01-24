@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { useRunStore } from '@FE/stores';
   import { WorkflowParameter } from '@aws-sdk/client-omics';
+  import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
 
   const props = defineProps<{
     schema: Record<string, WorkflowParameter>;
@@ -10,10 +11,13 @@
 
   const $route = useRoute();
   const runStore = useRunStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
 
   const omicsRunTempId = $route.query.omicsRunTempId as string;
 
   const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId]);
+
+  const workflow = computed<OmicsWorkflow | undefined>(() => omicsWorkflowsStore.workflows[props.workflowId]);
 
   const labId = $route.params.labId as string;
 
@@ -179,8 +183,13 @@
         <div v-if="!hasLaunched">
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
-            <EGRunWorkflowFormRunDetails
-              :workflow-id="workflowId"
+            <EGRunFormRunDetails
+              pipeline-or-workflow="Workflow"
+              :pipeline-or-workflow-name="workflow?.name"
+              :initial-run-name="wipOmicsRun?.runName || ''"
+              :pipeline-or-workflow-description="workflow?.description || ''"
+              :wip-run-update-function="runStore.updateWipOmicsRun"
+              :wip-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('upload')"
               @step-validated="setStepEnabled('upload', $event)"
             />
@@ -188,8 +197,14 @@
 
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
-            <EGRunWorkflowFormUploadData
-              :workflow-id="workflowId"
+            <EGRunFormUploadData
+              :lab-id="labId"
+              :sample-sheet-s3-url="wipOmicsRun.sampleSheetS3Url"
+              :pipeline-or-workflow-name="workflow.name"
+              :run-name="wipOmicsRun.runName"
+              :transaction-id="wipOmicsRun.transactionId"
+              :wip-run-update-function="runStore.updateWipOmicsRun"
+              :wip-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('parameters')"
               @previous-step="() => previousStep()"
               @step-validated="setStepEnabled('parameters', $event)"

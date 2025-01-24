@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { useRunStore } from '@FE/stores';
+  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
     schema: object;
@@ -9,10 +10,13 @@
 
   const $route = useRoute();
   const runStore = useRunStore();
+  const seqeraPipelineStore = useSeqeraPipelinesStore();
 
   const seqeraRunTempId = $route.query.seqeraRunTempId as string;
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+
+  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
 
   const labId = $route.params.labId as string;
 
@@ -178,8 +182,13 @@
         <div v-if="!hasLaunched">
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
-            <EGRunPipelineFormRunDetails
-              :pipeline-id="pipelineId"
+            <EGRunFormRunDetails
+              pipeline-or-workflow="Pipeline"
+              :pipeline-or-workflow-name="pipeline?.name"
+              :initial-run-name="wipSeqeraRun?.runName || ''"
+              :pipeline-or-workflow-description="pipeline?.description"
+              :wip-run-update-function="runStore.updateWipSeqeraRun"
+              :wip-run-temp-id="seqeraRunTempId"
               @next-step="() => nextStep('upload')"
               @step-validated="setStepEnabled('upload', $event)"
             />
@@ -187,8 +196,14 @@
 
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
-            <EGRunPipelineFormUploadData
-              :pipeline-id="pipelineId"
+            <EGRunFormUploadData
+              :lab-id="labId"
+              :sample-sheet-s3-url="wipSeqeraRun.sampleSheetS3Url"
+              :pipeline-or-workflow-name="pipeline.name"
+              :run-name="wipSeqeraRun.runName"
+              :transaction-id="wipSeqeraRun.transactionId"
+              :wip-run-update-function="runStore.updateWipSeqeraRun"
+              :wip-run-temp-id="seqeraRunTempId"
               @next-step="() => nextStep('parameters')"
               @previous-step="() => previousStep()"
               @step-validated="setStepEnabled('parameters', $event)"

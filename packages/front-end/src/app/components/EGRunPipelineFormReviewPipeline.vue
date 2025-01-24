@@ -185,7 +185,7 @@
       :loading="isLaunchingRun"
       :size="ButtonSizeEnum.enum.sm"
       @click="launchRun"
-      label="Launch Workflow Run"
+      label="Launch Pipeline Run"
     />
   </div>
 </template>

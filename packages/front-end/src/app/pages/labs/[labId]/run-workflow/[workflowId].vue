@@ -125,15 +125,6 @@
   </template>
 
   <template v-else>
-    <div>wipOmicsRun</div>
-    <div>{{ JSON.stringify(wipOmicsRun, null, 2) }}</div>
-
-    <div>workflow</div>
-    <div>{{ JSON.stringify(workflow, null, 2) }}</div>
-
-    <div>schema</div>
-    <div>{{ JSON.stringify(schema, null, 2) }}</div>
-
     <EGRunWorkflowStepper
       @has-launched="hasLaunched = true"
       :schema="schema"

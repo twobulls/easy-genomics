@@ -462,12 +462,20 @@
     }
 
     if (lab.NextFlowTowerEnabled) {
-      if (!lab.HasNextFlowTowerAccessToken) {
+      if (lab.HasNextFlowTowerAccessToken == null) {
+        // Current lab doesn't have the correct details
+        if (uiStore.isRequestPending('loadLabData')) {
+          // In the process of loading the lab, which will trigger this code again when it completes
+        } else {
+          loadLabData(); // Refresh the lab
+        }
+      } else if (!lab.HasNextFlowTowerAccessToken) {
         // Seqera enabled but creds not present, show the modal
         missingPAT.value = true;
         showRedirectModal();
       } else {
         // fetch the Seqera stuff
+        missingPAT.value = false;
         promises.push(getSeqeraPipelines());
         promises.push(pollFetchSeqeraRuns());
       }

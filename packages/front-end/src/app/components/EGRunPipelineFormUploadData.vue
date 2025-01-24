@@ -24,7 +24,7 @@
     :lab-id="labId"
     :sample-sheet-s3-url="wipSeqeraRun.sampleSheetS3Url"
     :pipeline-or-workflow-name="pipeline.name"
-    :run-name="wipSeqeraRun.userPipelineRunName"
+    :run-name="wipSeqeraRun.runName"
     :transaction-id="wipSeqeraRun.transactionId"
     :wip-run-update-function="runStore.updateWipSeqeraRun"
     :wip-run-temp-id="seqeraRunTempId"

@@ -51,7 +51,7 @@
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
           computeEnvId: launchDetails.launch?.computeEnv?.id,
-          runName: wipSeqeraRun.value?.userPipelineRunName,
+          runName: wipSeqeraRun.value?.runName,
           pipeline: launchDetails.launch?.pipeline,
           revision: launchDetails.launch?.revision,
           configProfiles: launchDetails.launch?.configProfiles,
@@ -74,7 +74,7 @@
         const labRunRequest = {
           'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
           'RunId': wipSeqeraRun.value?.transactionId,
-          'RunName': wipSeqeraRun.value?.userPipelineRunName,
+          'RunName': wipSeqeraRun.value?.runName,
           'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
           'Status': 'SUBMITTED',
           'WorkflowName': pipeline.value?.name, // TODO: Extend to support AWS HealthOmics Workflow name
@@ -146,7 +146,7 @@
         </div>
         <div class="text-md flex px-4 py-4">
           <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ wipSeqeraRun?.userPipelineRunName }}</dd>
+          <dd class="text-muted text-left">{{ wipSeqeraRun?.runName }}</dd>
         </div>
       </dl>
     </section>

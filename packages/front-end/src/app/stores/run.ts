@@ -13,7 +13,7 @@ export interface WipSeqeraRunData {
   laboratoryId?: string;
   pipelineId?: string;
   transactionId?: string;
-  userPipelineRunName?: string;
+  runName?: string;
   params?: object;
   sampleSheetS3Url?: string;
   s3Bucket?: string;

@@ -82,6 +82,10 @@
       "type": "runtime"
     },
     {
+      "name": "@aws-sdk/client-s3",
+      "type": "runtime"
+    },
+    {
       "name": "@nestjs/config",
       "type": "runtime"
     },

@@ -7,6 +7,8 @@ const labNameUpdated = 'Automated Lab - Updated';
 const seqeraPipeline = 'quality-e2e-test-pipeline';
 const filePath1 = './tests/e2e/fixtures/NA1287820K_R1_001.fastq.gz';
 const filePath2 = './tests/e2e/fixtures/NA1287820K_R2_001.fastq.gz';
+const fileName1 = 'NA1287820K_R1_001.fastq.gz';
+const fileName2 = 'NA1287820K_R2_001.fastq.gz';
 const labTechnicianName = 'Lab Technician';
 let runNameVar: string;
 
@@ -286,5 +288,42 @@ test('09 - Check Run Details', async ({ page, baseURL }) => {
     // Check Run Name and other details
     await expect(page.getByText(runNameVar).nth(0)).toBeVisible();
     await expect(page.getByText('Submitted')).toBeVisible();
+  }
+});
+
+test('10 - Check File Manager if files exists', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.waitForLoadState('networkidle');
+
+    // Go to Run Details
+    await page.getByRole('row', { name: runNameVar }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
+    await page.getByRole('tab', { name: 'File Manager' }).click();
+    await page.waitForTimeout(5 * 2000);
+
+    // Check for few filenames
+    await page.getByRole('row', { name: fileName1 }).locator('button').click();
+    await page.waitForTimeout(2000);
+    await expect(page.getByText('Your files have begun downloading').nth(0)).toBeVisible();
+    await page.getByRole('row', { name: fileName2 }).locator('button').click();
+    await page.waitForTimeout(5000);
+    await page.getByRole('row', { name: 'sample-sheet.csv' }).locator('button').click();
+    await page.waitForTimeout(5000);
   }
 });

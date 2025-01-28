@@ -20,9 +20,9 @@ import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
 
 const defaultReleaseBranch = 'main';
-const cdkVersion = '2.160.0';
+const cdkVersion = '2.176.0';
 const nodeVersion = '20.15.0';
-const pnpmVersion = '9.11.0';
+const pnpmVersion = '9.15.0';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
@@ -73,7 +73,7 @@ const eslintGlobalRules = {
   'arrow-parens': ['error', 'always'],
   'no-new': 'off',
   'no-empty': 'error',
-  'prettier/prettier': 'error',
+  'prettier/prettier': 'off',
   'require-await': 'off',
   'array-callback-return': 'error',
   '@typescript-eslint/indent': 'off',
@@ -252,6 +252,7 @@ const sharedLib = new typescript.TypeScriptProject({
     '@aws-sdk/client-api-gateway',
     '@aws-sdk/client-cognito-identity-provider',
     '@aws-sdk/client-omics',
+    '@aws-sdk/client-s3',
     '@nestjs/config',
     'aws-cdk',
     'aws-cdk-lib',
@@ -406,6 +407,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/s3-request-presigner',
     '@aws-sdk/util-format-url',
     '@aws-sdk/client-omics',
+    '@aws-sdk/client-s3',
     '@easy-genomics/shared-lib@workspace:*',
     '@nuxt/ui@2.18.4', // Lock to version 2.18.4 due to input text bug
     '@pinia/nuxt',
@@ -500,6 +502,7 @@ new VscodeSettings(root);
 new Nx(root);
 new Husky(root);
 new GithubActionsCICDRelease(root, { environment: 'quality', pnpmVersion: pnpmVersion, e2e: true });
+new GithubActionsCICDRelease(root, { environment: 'quality-uat', pnpmVersion: pnpmVersion, e2e: true });
 new GithubActionsCICDRelease(root, {
   environment: 'sandbox',
   pnpmVersion: pnpmVersion,

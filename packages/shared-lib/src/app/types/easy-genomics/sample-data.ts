@@ -15,7 +15,7 @@ export const organization: Organization = {
   Name: 'Default Organization',
   Country: 'USA',
   AwsHealthOmicsEnabled: false,
-  NextFlowTowerEnabled: true,
+  NextFlowTowerEnabled: false,
   CreatedAt: new Date().toISOString(),
 };
 

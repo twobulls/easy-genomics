@@ -14,7 +14,7 @@ export interface Queues {
 
 export interface SqsConstructProps {
   namePrefix: string;
-  devEnv?: boolean;
+  envType: string;
   queues: Queues;
 }
 
@@ -32,7 +32,7 @@ export class SqsConstruct extends Construct {
   }
 
   private createQueue = (name: string, queueDetails: QueueDetails) => {
-    const removalPolicy = this.props.devEnv ? RemovalPolicy.DESTROY : undefined; // Only for Local, Sandbox, Dev
+    const removalPolicy = this.props.envType !== 'prod' ? RemovalPolicy.DESTROY : undefined; // Only for Non-Prod
 
     const queue = new Queue(this, `${this.props.namePrefix}-${name}`, {
       ...queueDetails,

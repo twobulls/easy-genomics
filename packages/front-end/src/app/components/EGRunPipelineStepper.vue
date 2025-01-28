@@ -205,7 +205,7 @@
               :wip-run-update-function="runStore.updateWipSeqeraRun"
               :wip-run-temp-id="seqeraRunTempId"
               @next-step="() => nextStep('parameters')"
-              @previous-step="() => previousStep()"
+              @previous-step="previousStep"
               @step-validated="setStepEnabled('parameters', $event)"
             />
           </template>
@@ -216,7 +216,7 @@
               :schema="schema"
               :pipeline-id="pipelineId"
               @next-step="() => nextStep('review')"
-              @previous-step="() => previousStep()"
+              @previous-step="previousStep"
             />
           </template>
 
@@ -228,7 +228,7 @@
               :pipeline-id="pipelineId"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
-              @previous-tab="() => previousStep()"
+              @previous-tab="previousStep"
             />
           </template>
         </div>

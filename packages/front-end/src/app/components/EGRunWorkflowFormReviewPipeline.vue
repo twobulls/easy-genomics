@@ -8,7 +8,6 @@
   // TODO: convert seqera -> omics
 
   const props = defineProps<{
-    canLaunch?: boolean;
     schema: object;
     params: object;
     workflowId: string;
@@ -182,13 +181,7 @@
 
   <div class="mt-6 flex justify-between">
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-tab')" />
-    <EGButton
-      :disabled="!canLaunch"
-      :loading="isLaunchingRun"
-      :size="ButtonSizeEnum.enum.sm"
-      @click="launchRun"
-      label="Launch Workflow Run"
-    />
+    <EGButton :loading="isLaunchingRun" :size="ButtonSizeEnum.enum.sm" @click="launchRun" label="Launch Workflow Run" />
   </div>
 </template>
 

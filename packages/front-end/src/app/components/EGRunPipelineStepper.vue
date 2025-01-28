@@ -223,7 +223,6 @@
           <!-- Review Pipeline -->
           <template v-if="items[selectedIndex].key === 'review'">
             <EGRunPipelineFormReviewPipeline
-              :can-launch="true"
               :schema="props.schema"
               :params="wipSeqeraRun?.params"
               :pipeline-id="pipelineId"

@@ -228,7 +228,6 @@
           <!-- Review Pipeline -->
           <template v-if="items[selectedIndex].key === 'review'">
             <EGRunWorkflowFormReviewPipeline
-              :can-launch="true"
               :schema="props.schema"
               :params="wipOmicsRun?.params"
               :workflow-id="workflowId"

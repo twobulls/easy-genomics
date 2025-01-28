@@ -96,9 +96,6 @@
     try {
       useUiStore().setRequestPending('fetchUserLabs');
       selectedUserLabsData.value = await $api.labs.listLabUsersByUserId(props.userId);
-      if (!orgLabsData.value.length) {
-        hasNoData.value = true;
-      }
     } catch (error) {
       console.error(error);
       throw error;

@@ -8,11 +8,12 @@
     sampleSheetS3Url: string;
     s3Bucket: string;
     s3Path: string;
-    wipRunUpdateFunction: Function;
-    wipRunTempId: string;
+    omicsRunTempId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
+
+  const runStore = useRunStore();
 
   type SchemaItem = {
     name: string;
@@ -58,7 +59,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        props.wipRunUpdateFunction(props.wipRunTempId, { params: val });
+        runStore.updateWipOmicsRun(props.omicsRunTempId, { params: val });
       }
     },
     { deep: true },

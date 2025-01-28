@@ -215,7 +215,11 @@
             <EGRunWorkflowFormEditParameters
               :params="params"
               :schema="schema"
-              :workflow-id="workflowId"
+              :sample-sheet-s3-url="wipOmicsRun.sampleSheetS3Url"
+              :s3-bucket="wipOmicsRun.s3Bucket"
+              :s3-path="wipOmicsRun.s3Path"
+              :wip-run-update-function="runStore.updateWipOmicsRun"
+              :wip-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('review')"
               @previous-step="() => previousStep()"
             />

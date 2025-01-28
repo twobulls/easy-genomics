@@ -14,12 +14,42 @@
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
+  type SchemaItem = {
+    name: string;
+    description: string;
+    optional: boolean;
+  };
+
+  const orderedSchema = computed<SchemaItem[]>(() =>
+    Object.keys(props.schema)
+      .map((fieldName) => ({
+        name: fieldName,
+        ...props.schema[fieldName],
+      }))
+      .sort((fieldA, fieldB) => {
+        // list mandatory fields first
+        if (fieldA.optional !== true && fieldB.optional === true) return -1;
+        if (fieldA.optional === true && fieldB.optional !== true) return 1;
+
+        return 0;
+      }),
+  );
+
+  // all schema fields with empty string as default
+  const paramDefaults: { [key: string]: '' } = Object.fromEntries(
+    Object.keys(props.schema).map((fieldName) => [fieldName, '']),
+  );
+
   const localProps = reactive({
     schema: props.schema,
     params: {
-      ...props.params,
+      // initialize all fields with empty string as default
+      ...paramDefaults,
+      // initialize input and output values with default values
       input: props.sampleSheetS3Url,
       outdir: `s3://${props.s3Bucket}/${props.s3Path}/results`,
+      // finally overwrite with any existing values
+      ...props.params,
     },
   });
 
@@ -46,8 +76,14 @@
     <div class="w-3/4">
       <EGCard>
         <!-- <EGInput name="input" v-model="runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url" /> -->
-        <div v-for="param in props.schema">
-          {{ param }}
+        <div v-for="schemaField in orderedSchema" class="mb-6">
+          <EGParametersStringField
+            :name="schemaField.name"
+            :details="{
+              description: schemaField.description,
+            }"
+            v-model="localProps.params[schemaField.name]"
+          />
         </div>
       </EGCard>
 

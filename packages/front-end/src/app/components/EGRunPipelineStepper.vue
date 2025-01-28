@@ -210,6 +210,7 @@
             />
           </template>
 
+          <!-- Edit Parameters -->
           <template v-if="items[selectedIndex].key === 'parameters'">
             <EGRunPipelineFormEditParameters
               :params="params"

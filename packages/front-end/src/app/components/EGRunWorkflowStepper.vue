@@ -211,6 +211,7 @@
             />
           </template>
 
+          <!-- Edit Parameters -->
           <template v-if="items[selectedIndex].key === 'parameters'">
             <EGRunWorkflowFormEditParameters
               :params="params"

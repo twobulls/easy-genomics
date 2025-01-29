@@ -12,6 +12,7 @@
     s3Path: string;
     runName: string;
     transactionId: string;
+    workflowId: string;
     workflowName: string;
   }>();
 
@@ -23,8 +24,19 @@
   const isLaunchingRun = ref(false);
   const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
 
-  // const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
+
+  function withoutEmptyFields(o: object): object {
+    const r = {};
+
+    for (const key in o) {
+      if (!!o[key]) {
+        r[key] = o[key];
+      }
+    }
+
+    return r;
+  }
 
   async function launchRun() {
     emit('submit-launch-request');
@@ -36,53 +48,41 @@
         throw new Error('pipeline id not found in wip run config');
       }
 
-      // TODO: omicsify
-      // const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(workflowId, props.labId);
+      const startOmicsRes = await $api.omicsRuns.createExecution(
+        props.labId,
+        props.workflowId,
+        props.runName,
+        withoutEmptyFields(props.params),
+      );
 
-      // const workDir: string = `s3://${props.s3Bucket}/${props.s3Path}/work`;
-      // const launchRequest: CreateWorkflowLaunchRequest = {
-      //   launch: {
-      //     computeEnvId: launchDetails.launch?.computeEnv?.id,
-      //     runName: props.runName,
-      //     pipeline: launchDetails.launch?.pipeline,
-      //     revision: launchDetails.launch?.revision,
-      //     configProfiles: launchDetails.launch?.configProfiles,
-      //     workDir: workDir,
-      //     paramsText: paramsText,
-      //   },
-      // };
+      if (!startOmicsRes) {
+        throw new Error('Failed to create workflow run. Response is empty.');
+      }
 
-      // const res = await $api.seqeraRuns.createPipelineRun(props.labId, launchRequest);
+      if (!startOmicsRes.id) {
+        throw new Error('Workflow Run ID is missing in the response');
+      }
 
-      // if (!res) {
-      //   throw new Error('Failed to create pipeline run. Response is empty.');
-      // }
+      try {
+        const labRunRequest = {
+          'LaboratoryId': props.labId,
+          'RunId': props.transactionId,
+          'RunName': props.runName,
+          'Platform': 'AWS HealthOmics',
+          'Status': 'SUBMITTED',
+          'WorkflowName': props.workflowName,
+          'ExternalRunId': startOmicsRes.id,
+          'InputS3Url': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
+          'OutputS3Url': props.params.outdir,
+          'SampleSheetS3Url': props.params.input,
+          'Settings': JSON.stringify(props.params),
+        };
+        await $api.labs.createLabRun(labRunRequest);
+      } catch (error) {
+        console.error('Error launching workflow:', error);
+        throw error;
+      }
 
-      // if (!res.workflowId) {
-      //   throw new Error('Workflow ID is missing in the response');
-      // }
-
-      // try {
-      //   const labRunRequest = {
-      //     'LaboratoryId': props.labId,
-      //     'RunId': props.transactionId,
-      //     'RunName': props.runName,
-      //     'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
-      //     'Status': 'SUBMITTED',
-      //     'WorkflowName': pipeline.value?.name, // TODO: Extend to support AWS HealthOmics Workflow name
-      //     'ExternalRunId': res.workflowId,
-      //     'InputS3Url': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
-      //     'OutputS3Url': props.params.outdir,
-      //     'SampleSheetS3Url': props.params.input,
-      //     'Settings': paramsText,
-      //   };
-      //   await $api.labs.createLabRun(labRunRequest);
-      // } catch (error) {
-      //   console.error('Error launching workflow:', error);
-      //   throw error;
-      // }
-
-      // delete runStore.wipSeqeraRuns[seqeraRunTempId];
       delete runStore.wipOmicsRuns[props.omicsRunTempId];
       emit('has-launched');
     } catch (error) {

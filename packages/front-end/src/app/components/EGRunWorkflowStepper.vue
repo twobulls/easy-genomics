@@ -236,6 +236,7 @@
               :s3-path="wipOmicsRun.s3Path"
               :run-name="wipOmicsRun.runName"
               :transaction-id="wipOmicsRun.transactionId"
+              :workflow-id="props.workflowId"
               :workflow-name="workflow.name"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"

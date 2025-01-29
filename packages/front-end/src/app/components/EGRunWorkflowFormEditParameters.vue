@@ -53,6 +53,10 @@
       ...props.params,
     },
   });
+  // save the updated parameters to the store too
+  runStore.updateWipOmicsRun(props.omicsRunTempId, {
+    params: localProps.params,
+  });
 
   watch(
     // watches for input changes in the local params object and updates the store with the new value

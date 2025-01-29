@@ -90,6 +90,13 @@
       workflowName: workflow.value?.name,
       transactionId: omicsRunTempId.value,
     });
+
+    // initialize params if they aren't present already
+    if (!runStore.wipOmicsRuns[omicsRunTempId.value].params) {
+      runStore.updateWipOmicsRun(omicsRunTempId.value, {
+        params: {},
+      });
+    }
   }
 
   /**

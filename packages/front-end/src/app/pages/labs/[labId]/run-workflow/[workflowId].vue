@@ -89,7 +89,6 @@
       workflowId: workflowId!,
       workflowName: workflow.value?.name,
       transactionId: omicsRunTempId.value,
-      params: {},
     });
   }
 

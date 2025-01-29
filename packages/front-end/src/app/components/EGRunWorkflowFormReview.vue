@@ -1,97 +1,89 @@
 <script setup lang="ts">
   import { useRunStore, useToastStore, useLabsStore } from '@FE/stores';
-  import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-  import EGAccordion from '@FE/components/EGAccordion.vue';
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-
-  // TODO: convert seqera -> omics
 
   const props = defineProps<{
     schema: object;
     params: object;
-    workflowId: string;
+
+    labId: string;
+    omicsRunTempId: string;
+    s3Bucket: string;
+    s3Path: string;
+    runName: string;
+    transactionId: string;
+    workflowName: string;
   }>();
 
   const { $api } = useNuxtApp();
-  const $route = useRoute();
 
   const runStore = useRunStore();
-  const seqeraPipelineStore = useSeqeraPipelinesStore();
 
-  const labId = $route.params.labId as string;
-  const labName = useLabsStore().labs[labId].Name;
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
+  const labName = useLabsStore().labs[props.labId].Name;
   const isLaunchingRun = ref(false);
   const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
 
-  const remountAccordionKey = ref(0);
-  const areAccordionsOpen = ref(true);
-
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
-  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.workflowId]);
-
-  const paramsText = JSON.stringify(props.params);
+  // const paramsText = JSON.stringify(props.params);
   const schema = JSON.parse(JSON.stringify(props.schema));
-
-  const schemaDefinitions = schema.$defs || schema.definitions;
 
   async function launchRun() {
     emit('submit-launch-request');
 
     try {
       isLaunchingRun.value = true;
-      const pipelineId = props.workflowId;
-      if (pipelineId === undefined) {
+      const workflowId = props.workflowId;
+      if (workflowId === undefined) {
         throw new Error('pipeline id not found in wip run config');
       }
 
-      const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(pipelineId, labId);
+      // TODO: omicsify
+      // const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(workflowId, props.labId);
 
-      const workDir: string = `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/work`;
-      const launchRequest: CreateWorkflowLaunchRequest = {
-        launch: {
-          computeEnvId: launchDetails.launch?.computeEnv?.id,
-          runName: wipSeqeraRun.value?.runName,
-          pipeline: launchDetails.launch?.pipeline,
-          revision: launchDetails.launch?.revision,
-          configProfiles: launchDetails.launch?.configProfiles,
-          workDir: workDir,
-          paramsText: paramsText,
-        },
-      };
+      // const workDir: string = `s3://${props.s3Bucket}/${props.s3Path}/work`;
+      // const launchRequest: CreateWorkflowLaunchRequest = {
+      //   launch: {
+      //     computeEnvId: launchDetails.launch?.computeEnv?.id,
+      //     runName: props.runName,
+      //     pipeline: launchDetails.launch?.pipeline,
+      //     revision: launchDetails.launch?.revision,
+      //     configProfiles: launchDetails.launch?.configProfiles,
+      //     workDir: workDir,
+      //     paramsText: paramsText,
+      //   },
+      // };
 
-      const res = await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+      // const res = await $api.seqeraRuns.createPipelineRun(props.labId, launchRequest);
 
-      if (!res) {
-        throw new Error('Failed to create pipeline run. Response is empty.');
-      }
+      // if (!res) {
+      //   throw new Error('Failed to create pipeline run. Response is empty.');
+      // }
 
-      if (!res.workflowId) {
-        throw new Error('Workflow ID is missing in the response');
-      }
+      // if (!res.workflowId) {
+      //   throw new Error('Workflow ID is missing in the response');
+      // }
 
-      try {
-        const labRunRequest = {
-          'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
-          'RunId': wipSeqeraRun.value?.transactionId,
-          'RunName': wipSeqeraRun.value?.runName,
-          'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
-          'Status': 'SUBMITTED',
-          'WorkflowName': pipeline.value?.name, // TODO: Extend to support AWS HealthOmics Workflow name
-          'ExternalRunId': res.workflowId,
-          'InputS3Url': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
-          'OutputS3Url': props.params.outdir,
-          'SampleSheetS3Url': props.params.input,
-          'Settings': paramsText,
-        };
-        await $api.labs.createLabRun(labRunRequest);
-      } catch (error) {
-        console.error('Error launching workflow:', error);
-        throw error;
-      }
+      // try {
+      //   const labRunRequest = {
+      //     'LaboratoryId': props.labId,
+      //     'RunId': props.transactionId,
+      //     'RunName': props.runName,
+      //     'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
+      //     'Status': 'SUBMITTED',
+      //     'WorkflowName': pipeline.value?.name, // TODO: Extend to support AWS HealthOmics Workflow name
+      //     'ExternalRunId': res.workflowId,
+      //     'InputS3Url': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
+      //     'OutputS3Url': props.params.outdir,
+      //     'SampleSheetS3Url': props.params.input,
+      //     'Settings': paramsText,
+      //   };
+      //   await $api.labs.createLabRun(labRunRequest);
+      // } catch (error) {
+      //   console.error('Error launching workflow:', error);
+      //   throw error;
+      // }
 
-      delete runStore.wipSeqeraRuns[seqeraRunTempId];
+      // delete runStore.wipSeqeraRuns[seqeraRunTempId];
+      delete runStore.wipOmicsRuns[props.omicsRunTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
@@ -99,34 +91,6 @@
     } finally {
       isLaunchingRun.value = false;
     }
-  }
-
-  const accordionItems = computed(() => {
-    return Object.keys(schemaDefinitions).map((sectionName) => {
-      const section = schemaDefinitions[sectionName];
-      return {
-        label: section.title,
-        defaultOpen: true,
-        content: {
-          section,
-          sectionName,
-          properties: section.properties,
-        },
-      };
-    });
-  });
-
-  // there's no apparent 'open/close' UAccordion method to tap into, so instead
-  // we toggle the open state of each accordion it and re-initialize the
-  // accordion component with this updated state
-  function toggleAccordions() {
-    areAccordionsOpen.value = !areAccordionsOpen.value;
-
-    accordionItems.value.forEach((item) => {
-      item.defaultOpen = areAccordionsOpen.value;
-    });
-
-    remountAccordionKey.value++;
   }
 </script>
 
@@ -138,8 +102,8 @@
     <section class="stroke-light flex flex-col bg-white">
       <dl>
         <div class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Pipeline</dt>
-          <dd class="text-muted text-left">{{ pipeline?.name }}</dd>
+          <dt class="w-48 text-black">Workflow</dt>
+          <dd class="text-muted text-left">{{ props.workflowName }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
           <dt class="w-48 text-black">Laboratory</dt>
@@ -147,36 +111,25 @@
         </div>
         <div class="text-md flex px-4 py-4">
           <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ wipSeqeraRun?.runName }}</dd>
+          <dd class="text-muted text-left">{{ props.runName }}</dd>
         </div>
       </dl>
     </section>
   </EGCard>
   <EGCard>
-    <div class="mb-4 flex items-center justify-between">
-      <EGText tag="h4" class="text-muted">Selected Workflow Parameters</EGText>
-      <EGButton
-        variant="secondary"
-        :label="areAccordionsOpen ? 'Collapse All' : 'Expand All'"
-        @click="toggleAccordions"
-      />
-    </div>
-    <EGAccordion :items="accordionItems" :key="remountAccordionKey">
-      <template #item="{ item, open }">
-        <section class="stroke-light flex flex-col bg-white text-left">
-          <dl>
-            <div
-              v-for="(property, propertyKey, index) in item.content.properties"
-              :key="`property-${propertyKey}`"
-              class="property-row grid grid-cols-[auto_1fr] gap-x-4 border-b bg-white px-4 py-4 last:border-0 dark:bg-gray-800"
-            >
-              <dt class="w-56 whitespace-pre-wrap break-words font-medium text-black">{{ propertyKey }}</dt>
-              <dd class="text-muted whitespace-pre-wrap break-words">{{ params[propertyKey] }}</dd>
-            </div>
-          </dl>
-        </section>
-      </template>
-    </EGAccordion>
+    <EGText tag="h4" class="text-muted">Selected Workflow Parameters</EGText>
+    <section class="stroke-light flex flex-col bg-white text-left">
+      <dl>
+        <div
+          v-for="(property, propertyKey, index) in schema"
+          :key="`property-${propertyKey}`"
+          class="property-row grid grid-cols-[auto_1fr] gap-x-4 border-b bg-white px-4 py-4 last:border-0 dark:bg-gray-800"
+        >
+          <dt class="w-56 whitespace-pre-wrap break-words font-medium text-black">{{ propertyKey }}</dt>
+          <dd class="text-muted whitespace-pre-wrap break-words">{{ params[propertyKey] }}</dd>
+        </div>
+      </dl>
+    </section>
   </EGCard>
 
   <div class="mt-6 flex justify-between">

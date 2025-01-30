@@ -33,7 +33,6 @@ export interface WipOmicsRunData {
 }
 
 interface RunState {
-  // TODO: eventually we shouldn't need to cache seqera runs or omics runs as we'll be caching our own Laboratory Runs instead
   // lookup object for Seqera runs
   seqeraRuns: Record<string, Record<string, SeqeraRun>>;
   // ordered lists for Seqera runs by lab

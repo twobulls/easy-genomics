@@ -80,7 +80,6 @@
     </div>
     <div class="w-3/4">
       <EGCard>
-        <!-- <EGInput name="input" v-model="runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url" /> -->
         <div v-for="schemaField in orderedSchema" class="mb-6">
           <EGParametersStringField
             :name="schemaField.name"

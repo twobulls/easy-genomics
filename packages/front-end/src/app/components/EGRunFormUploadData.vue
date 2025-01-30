@@ -13,10 +13,8 @@
     UploadedFileInfo,
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-  import { useRunStore, useToastStore } from '@FE/stores';
+  import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
-  // import { WipSeqeraRunData } from '@FE/stores/run';
-  // import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -49,8 +47,6 @@
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
-    // pipelineId: string;
-
     labId: string;
     sampleSheetS3Url: string;
     pipelineOrWorkflowName: string;
@@ -59,15 +55,6 @@
     wipRunUpdateFunction: Function;
     wipRunTempId: string;
   }>();
-
-  // const labId = $route.params.labId as string;
-  // const seqeraRunTempId = $route.query.seqeraRunTempId as string;
-
-  // const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
-
-  // const pipeline = computed<SeqeraPipeline | null>(
-  //   () => seqeraPipelinesStore.pipelines[wipSeqeraRun.value?.pipelineId || ''] ?? null,
-  // );
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -115,10 +102,6 @@
       uploadStatus.value === 'uploading' ||
       uploadStatus.value === 'success' ||
       canProceed.value,
-  );
-
-  const isRemoveButtonDisabled = computed(
-    () => uploadStatus.value !== 'uploading' && uploadStatus.value !== 'success' && !canProceed.value,
   );
 
   function chooseFiles() {
@@ -268,15 +251,6 @@
 
   function getSampleIdFromFileName(fileName: string): string {
     return fileName.substring(0, fileName.lastIndexOf('_R'));
-  }
-
-  function removeFilePair(sampleId: string) {
-    console.debug('Removing file pair; sampleId:', sampleId);
-    filesToUpload.value = filesToUpload.value.filter((file) => !file.name.startsWith(sampleId));
-    filePairs.value = filePairs.value.filter((filePair) => filePair.sampleId !== sampleId);
-    console.debug('Removed file pair; sampleId:', sampleId);
-
-    validateFilePairs();
   }
 
   function toggleDropzoneActive() {
@@ -492,17 +466,6 @@
         fileName: file.name,
       });
     }
-  }
-
-  function showLoadingSpinner(progress: number): boolean {
-    return uploadStatus.value === 'uploading' && progress < 100;
-  }
-
-  function formatProgress(progress: number): string {
-    if (progress === 0) {
-      return '0';
-    }
-    return progress.toString().padStart(2, '0');
   }
 
   watch(canProceed, (val) => {

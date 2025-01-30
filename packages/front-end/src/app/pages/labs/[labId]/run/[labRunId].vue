@@ -7,14 +7,13 @@
   const { $api } = useNuxtApp();
   const { handleS3Download } = useFileDownload();
 
-  const labRunsStore = useLabRunsStore();
+  const runStore = useRunStore();
   const uiStore = useUiStore();
-  const userStore = useUserStore();
 
   const labId = $route.params.labId as string;
   const labRunId = $route.params.labRunId as string;
 
-  const labRun = computed<LaboratoryRun | null>(() => labRunsStore.labRuns[labRunId] ?? null);
+  const labRun = computed<LaboratoryRun | null>(() => runStore.labRuns[labRunId] ?? null);
   // The LaboratoryRun's InputS3Url is the authoritative reference to obtain S3Bucket & S3Prefix for the File Manager
   const inputS3Url: string = labRun.value?.InputS3Url;
   const s3Bucket: string | null = inputS3Url
@@ -40,7 +39,7 @@
   async function fetchLabRuns() {
     uiStore.setRequestPending('loadLabRuns');
     try {
-      await labRunsStore.loadLabRunsForLab(labId);
+      await runStore.loadLabRunsForLab(labId);
     } finally {
       uiStore.setRequestComplete('loadLabRuns');
     }

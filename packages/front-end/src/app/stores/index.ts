@@ -1,4 +1,3 @@
-import useLabRunsStore from './lab-runs';
 import useLabsStore from './labs';
 import useOmicsWorkflowsStore from './omicsWorkflows';
 import useOrgsStore from './orgs';
@@ -16,7 +15,6 @@ function resetStores() {
   useOmicsWorkflowsStore().reset();
   useUiStore().reset();
   useUserStore().reset();
-  useLabRunsStore().reset();
 }
 export {
   resetStores,
@@ -28,5 +26,4 @@ export {
   useRunStore,
   useSeqeraPipelinesStore,
   useOmicsWorkflowsStore,
-  useLabRunsStore,
 };

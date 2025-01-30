@@ -33,7 +33,6 @@
   const userStore = useUserStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
-  const labRunsStore = useLabRunsStore();
 
   const { stringSortCompare } = useSort();
 
@@ -59,7 +58,7 @@
   type LaboratoryRunTableItem = LaboratoryRun & { lastUpdated: string };
 
   const combinedRuns = computed<LaboratoryRunTableItem[]>(() =>
-    labRunsStore.labRunsForLab(props.labId).map((labRun) => ({
+    runStore.labRunsForLab(props.labId).map((labRun) => ({
       ...labRun,
       lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
     })),
@@ -321,7 +320,7 @@
   async function fetchLaboratoryRuns(): Promise<void> {
     uiStore.setRequestPending('loadLabRuns');
     try {
-      await labRunsStore.loadLabRunsForLab(props.labId);
+      await runStore.loadLabRunsForLab(props.labId);
     } finally {
       uiStore.setRequestComplete('loadLabRuns');
     }

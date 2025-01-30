@@ -28,7 +28,7 @@ import * as fs from 'fs';
  * @param envType
  */
 export async function exportNuxtConfigurationSettings(awsRegion: string, envName: string, envType: string) {
-  const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
+  const namePrefix: string = `${envType}-${envName}`;
   const apiGatewayRestApiName: string = `${namePrefix}-easy-genomics-apigw`;
   const cognitoUserPoolName: string = `${namePrefix}-easy-genomics-auth-user-pool`;
   const cognitoUserPoolClientName: string = `${namePrefix}-easy-genomics-auth-user-pool-client`;

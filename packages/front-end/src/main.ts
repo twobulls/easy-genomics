@@ -14,7 +14,6 @@ let envType: string | undefined;
 let appDomainName: string | undefined;
 let awsHostedZoneId: string | undefined;
 let awsCertificateArn: string | undefined;
-let devEnv: boolean = true;
 
 if (process.env.CI_CD === 'true') {
   console.log('Loading Front-End environment settings for CI/CD Pipeline...');
@@ -28,8 +27,6 @@ if (process.env.CI_CD === 'true') {
   awsHostedZoneId = process.env.AWS_HOSTED_ZONE_ID;
   awsCertificateArn = process.env.AWS_CERTIFICATE_ARN;
 
-  // AWS infrastructure resources can be destroyed only when devEnv is true
-  devEnv = envType === 'dev';
   if (!awsAccountId) {
     throw new Error('"AWS_ACCOUNT_ID" undefined, please check the CI/CD environment configuration');
   }
@@ -45,10 +42,10 @@ if (process.env.CI_CD === 'true') {
   if (!appDomainName) {
     throw new Error('"APP_DOMAIN_NAME" undefined, please check the CI/CD environment configuration');
   }
-  if (!devEnv && !awsHostedZoneId) {
+  if (envType === 'prod' && !awsHostedZoneId) {
     throw new Error('AWS_HOSTED_ZONE_ID undefined, please check the CI/CD environment configuration');
   }
-  if (!devEnv && !awsCertificateArn) {
+  if (envType === 'prod' && !awsCertificateArn) {
     throw new Error('AWS_CERTIFICATE_ARN undefined, please check the CI/CD environment configuration');
   }
 } else {
@@ -83,8 +80,6 @@ if (process.env.CI_CD === 'true') {
   awsHostedZoneId = configSettings['aws-hosted-zone-id'];
   awsCertificateArn = configSettings['aws-certificate-arn'];
 
-  // AWS infrastructure resources can be destroyed only when devEnv is true
-  devEnv = envType === 'dev';
   if (!awsAccountId) {
     throw new Error('"aws-account-id" undefined, please check the easy-genomics.yaml configuration');
   }
@@ -97,10 +92,10 @@ if (process.env.CI_CD === 'true') {
   if (!appDomainName) {
     throw new Error('"app-domain-name" undefined, please check the easy-genomics.yaml configuration');
   }
-  if (!devEnv && !awsHostedZoneId) {
+  if (envType === 'prod' && !awsHostedZoneId) {
     throw new Error('"aws-hosted-zone-id" undefined, please check the easy-genomics.yaml configuration');
   }
-  if (!devEnv && !awsCertificateArn) {
+  if (envType === 'prod' && !awsCertificateArn) {
     throw new Error('"aws-certificate-arn" undefined, please check the easy-genomics.yaml configuration');
   }
 }
@@ -108,17 +103,16 @@ if (process.env.CI_CD === 'true') {
 // Ensure the AWS Region for the CDK calls to correctly query the correct region.
 process.env.AWS_REGION = awsRegion;
 
-const namePrefix: string = envType === 'prod' ? `${envType}` : `${envType}-${envName}`;
+const namePrefix: string = `${envType}-${envName}`;
 const constructNamespace: string = `${namePrefix}-easy-genomics`;
 
 // Setups Front-End Stack to support static web hosting for the UI
-new FrontEndStack(app, `${envName}-main-front-end-stack`, {
+new FrontEndStack(app, `${namePrefix}-main-front-end-stack`, {
   env: {
     account: awsAccountId,
     region: awsRegion,
   },
   constructNamespace,
-  devEnv,
   envName,
   envType,
   appDomainName,

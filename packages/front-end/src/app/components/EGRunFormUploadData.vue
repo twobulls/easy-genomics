@@ -84,45 +84,27 @@
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
 
-  const columns = [
-    {
-      key: 'uploadProgress',
-    },
-    {
-      key: 'sampleId',
-      label: 'Sample ID',
-    },
-    {
-      key: 'r1File',
-      label: 'R1 File',
-    },
-    {
-      key: 'r2File',
-      label: 'R2 File',
-    },
-    {
-      key: 'actions',
-      label: '',
-    },
-  ];
+  const filesForTable = computed(() => {
+    const files: { sampleId: string; fileName: string; progress: number }[] = [];
 
-  const uploadProgressStyles = computed(() => {
-    return {
-      'upload-status--idle': uploadStatus.value === 'idle',
-      'upload-status--uploading': uploadStatus.value === 'uploading',
-      'upload-status--success': uploadStatus.value === 'success',
-      'upload-status--failed': uploadStatus.value === 'failed',
-    };
-  });
-
-  const filePairsForTable = computed(() => {
-    if (filePairs.value.length === 0) return [];
-
-    return filePairs.value.map((filePair: FilePair) => {
-      const { sampleId, r1File, r2File } = filePair;
-      const uploadProgress = Math.max(r1File?.percentage ?? 0, r2File?.percentage ?? 0);
-      return { sampleId, r1File: r1File?.name, r2File: r2File?.name, uploadProgress };
+    filePairs.value.forEach((filePair: FilePair) => {
+      if (filePair.r1File) {
+        files.push({
+          sampleId: filePair.sampleId,
+          fileName: filePair.r1File.name,
+          progress: filePair.r1File.percentage || 0,
+        });
+      }
+      if (filePair.r2File) {
+        files.push({
+          sampleId: filePair.sampleId,
+          fileName: filePair.r2File.name,
+          progress: filePair.r2File.percentage || 0,
+        });
+      }
     });
+
+    return files;
   });
 
   const showDropzone = computed(() => !canProceed.value || uploadStatus.value === 'idle');
@@ -597,43 +579,37 @@
       </div>
     </div>
 
-    <UTable
-      v-if="filePairsForTable.length > 0"
-      :columns="columns"
-      :rows="filePairsForTable"
-      class="EGTable mt-1"
-      :class="uploadProgressStyles"
-    >
-      <template #uploadProgress-data="{ row }">
-        <div class="flex w-full items-center">
-          <EGLoadingSpinner v-if="showLoadingSpinner(row.uploadProgress)" />
-          <UIcon
-            v-else-if="uploadStatus === 'success'"
-            name="i-heroicons-check-20-solid"
-            class="bg-alert-success-text h-8 w-8"
-          />
-          <UIcon
-            v-else-if="uploadStatus === 'failed'"
-            name="i-heroicons-exclamation-triangle"
-            class="bg-alert-danger h-8 w-8"
-          />
-          <div class="flex w-full items-center justify-end">
-            <span class="font-medium" v-if="uploadStatus !== 'idle'">{{ formatProgress(row.uploadProgress) }}%</span>
+    <div class="files-list" v-if="filesForTable.length > 0">
+      <div class="files-list-header text-body mb-4 border-b border-[#d9d9d9]">
+        <div class="file-cell sample-id w-[30%]">Sample ID</div>
+        <div class="file-cell w-[60%]">Sample File</div>
+        <div class="file-cell w-[10%]"></div>
+      </div>
+      <div class="files-list-body">
+        <div
+          v-for="(row, index) in filesForTable"
+          :key="row.fileName"
+          class="file-row"
+          :style="{
+            background:
+              row.progress === 100
+                ? '#E2FBE8'
+                : row.progress > 0
+                  ? `linear-gradient(to right, #E2FBE8 ${row.progress}%, transparent ${Math.min(row.progress + 10, 100)}%), #f7f7f7`
+                  : '#f7f7f7',
+          }"
+        >
+          <div class="file-cell sample-id text-body w-[30%]">{{ row.sampleId }}</div>
+          <div class="file-cell w-[60%]" :style="{ color: row.progress === 100 ? '#306239' : 'inherit' }">
+            {{ row.fileName }}
           </div>
+          <div v-if="row.progress === 100" class="file-cell text-alert-success-text flex w-[10%] justify-end">
+            <UIcon size="20" name="i-heroicons-check" />
+          </div>
+          <div v-else class="file-cell w-[10%]"></div>
         </div>
-      </template>
-      <template #actions-data="{ row }">
-        <div class="flex items-center space-x-2">
-          <UIcon
-            v-if="isRemoveButtonDisabled"
-            name="i-heroicons-trash"
-            @click="removeFilePair(row.sampleId)"
-            class="h-6 w-6 cursor-pointer bg-black"
-          />
-          <UIcon v-else name="i-heroicons-trash" class="h-6 w-6 cursor-default bg-black bg-opacity-30" />
-        </div>
-      </template>
-    </UTable>
+      </div>
+    </div>
     <div class="flex justify-end pt-4">
       <EGButton
         v-if="uploadStatus === 'success'"
@@ -664,72 +640,38 @@
 </template>
 
 <style lang="scss">
-  .EGTable {
-    font-family: 'Inter', sans-serif;
-    width: 100%;
-    table-layout: fixed;
+  .files-list {
+    padding: 0;
 
-    thead tr th:first-child {
-      width: 70px;
-      max-width: 70px;
-      min-width: 70px;
-      padding-left: 0;
-      font-weight: 500;
-    }
+    &-header {
+      display: flex;
+      padding: 12px 16px;
+      font-size: 14px;
 
-    tbody tr td:nth-child(1) {
-      padding-left: 12px;
-      padding-right: 0;
-      width: 70px !important;
-    }
-
-    tbody tr td:nth-child(2) {
-      font-weight: 500;
-    }
-
-    tbody tr td:not(:first-child) {
-      font-size: 12px;
-    }
-
-    tbody tr td:last-child {
-      width: 50px;
-    }
-
-    tbody tr {
-      td {
-        padding-top: 22px;
-        padding-bottom: 22px;
-        color: #12181f;
-        height: 77px;
+      .header-cell {
+        flex: 1;
+        font-weight: 500;
       }
     }
-    &.upload-status--idle {
-      tbody tr {
-        td {
+
+    &-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .file-row {
+        display: flex;
+        padding: 14px 16px;
+        border-radius: 6px;
+        transition: background 0.3s ease-out;
+
+        .file-cell {
+          font-size: 14px;
+
+          &.sample-id {
+            font-weight: 500;
+          }
         }
-      }
-    }
-    &.upload-status--uploading {
-      tbody tr {
-        td {
-          background: #f7f7f7;
-        }
-      }
-    }
-
-    &.upload-status--failed {
-      tbody tr {
-        td {
-          background: #fdefec;
-        }
-      }
-    }
-  }
-  .upload-status--success {
-    tbody tr {
-      td {
-        background: #daf4e2;
-        color: #306239 !important;
       }
     }
   }

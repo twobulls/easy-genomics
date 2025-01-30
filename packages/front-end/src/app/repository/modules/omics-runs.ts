@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/named
 import { StartRunCommandOutput } from '@aws-sdk/client-omics';
-import { ListRuns } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
+import { ListRuns, ReadRun } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
 import HttpFactory from '@FE/repository/factory';
 
 class OmicsRunsModule extends HttpFactory {
@@ -9,6 +9,16 @@ class OmicsRunsModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Failed to retrieve omics runs details');
+    }
+
+    return res;
+  }
+
+  async get(labId: string, omicsRunId: string): Promise<ReadRun> {
+    const res = await this.callOmics<ReadRun>('GET', `/run/read-run/${omicsRunId}?laboratoryId=${labId}`);
+
+    if (!res) {
+      throw new Error('Failed to retrieve omics run details');
     }
 
     return res;

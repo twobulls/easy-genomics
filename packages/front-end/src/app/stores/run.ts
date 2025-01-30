@@ -133,6 +133,17 @@ const useRunStore = defineStore('runStore', {
       this.seqeraRuns[labId][run.id] = run;
     },
 
+    async loadSingleOmicsRun(labId: string, runId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+
+      const run: OmicsRun = await $api.omicsRuns.get(labId, runId);
+
+      if (!this.omicsRuns[labId]) {
+        this.omicsRuns[labId] = {};
+      }
+      this.omicsRuns[labId][runId] = run;
+    },
+
     updateWipSeqeraRun(tempId: string, updates: Partial<WipSeqeraRunData>): void {
       this.wipSeqeraRuns[tempId] = {
         ...(this.wipSeqeraRuns[tempId] || {}),

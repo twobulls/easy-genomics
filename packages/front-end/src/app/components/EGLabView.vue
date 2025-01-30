@@ -170,7 +170,7 @@
    */
   onBeforeMount(async () => {
     await loadLabData();
-    await fetchLaboratoryRuns();
+    await pollFetchLaboratoryRuns();
   });
 
   function setTabIndex() {
@@ -192,17 +192,6 @@
       clearTimeout(intervalId);
     }
   });
-
-  // TODO: replace these with a poll fetch laboratory runs
-  async function pollFetchSeqeraRuns() {
-    await getSeqeraRuns();
-    intervalId = window.setTimeout(pollFetchSeqeraRuns, 2 * 60 * 1000);
-  }
-
-  async function pollFetchOmicsRuns() {
-    await getOmicsRuns();
-    intervalId = window.setTimeout(pollFetchOmicsRuns, 2 * 60 * 1000);
-  }
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -324,7 +313,11 @@
     }
   }
 
-  // this anticipates these store values being needed on run click
+  async function pollFetchLaboratoryRuns() {
+    await fetchLaboratoryRuns();
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, 2 * 60 * 1000);
+  }
+
   async function fetchLaboratoryRuns(): Promise<void> {
     uiStore.setRequestPending('loadLabRuns');
     try {
@@ -356,6 +349,7 @@
     }
   }
 
+  // this anticipates these store values being needed on run click
   async function getSeqeraRuns(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraRuns');
     try {
@@ -367,6 +361,7 @@
     }
   }
 
+  // this anticipates these store values being needed on run click
   async function getOmicsRuns(): Promise<void> {
     useUiStore().setRequestPending('getOmicsRuns');
     try {
@@ -462,14 +457,14 @@
       } else {
         // fetch the Seqera stuff
         promises.push(getSeqeraPipelines());
-        promises.push(pollFetchSeqeraRuns());
+        promises.push(getSeqeraRuns());
       }
     }
 
     if (lab.AwsHealthOmicsEnabled) {
       // fetch the Omics stuff
       promises.push(getOmicsWorkflows());
-      promises.push(pollFetchOmicsRuns());
+      promises.push(getOmicsRuns());
     }
 
     await Promise.all(promises);

@@ -55,7 +55,7 @@
   }, 300);
 
   onBeforeMount(() => {
-    Promise.all([fetchS3Content(), loadRunReports(), fetchLaboratoryRuns()]);
+    Promise.all([fetchS3Content(), loadRunReports(), fetchLaboratoryRuns(), fetchSeqeraRun()]);
   });
 
   onMounted(() => {
@@ -121,6 +121,11 @@
 
   async function fetchLaboratoryRuns(): Promise<void> {
     await labRunsStore.loadLabRunsForLab(labId);
+  }
+
+  // load this particular run into the cache in case it wasn't already loaded by the lab page
+  async function fetchSeqeraRun(): Promise<void> {
+    await runStore.loadSingleSeqeraRun(labId, seqeraRunId);
   }
 
   function handleTabChange(newIndex: number) {

@@ -55,6 +55,9 @@
     tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
   });
 
+  // load this particular run into the cache in case it wasn't already loaded by the lab page
+  onBeforeMount(async () => await runStore.loadSingleOmicsRun(labId, omicsRunId));
+
   watch(tabIndex, (index) => {
     if (index === 1) useToastStore().info('Viewing HealthOmics Run results is not yet implemented');
   });

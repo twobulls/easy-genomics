@@ -8,7 +8,6 @@
   const $router = useRouter();
   const $route = useRoute();
   const runStore = useRunStore();
-  const labRunsStore = useLabRunsStore();
 
   const labId = $route.params.labId as string;
   const seqeraRunId = $route.params.seqeraRunId as string;
@@ -22,7 +21,7 @@
     $router.push('/labs');
   }
 
-  const labRunId = computed<string | null>(() => labRunsStore.labRunByExternalId(seqeraRunId)?.RunId ?? null);
+  const labRunId = computed<string | null>(() => runStore.labRunByExternalId(seqeraRunId)?.RunId ?? null);
   const tabItems = computed(() => [
     { key: 'runDetails', label: 'Run Details' },
     { key: 'fileManager', label: 'File Manager' },
@@ -55,7 +54,7 @@
   }, 300);
 
   onBeforeMount(() => {
-    Promise.all([fetchS3Content(), loadRunReports(), fetchLaboratoryRuns()]);
+    Promise.all([fetchS3Content(), loadRunReports(), fetchLaboratoryRuns(), fetchSeqeraRun()]);
   });
 
   onMounted(() => {
@@ -120,7 +119,12 @@
   }
 
   async function fetchLaboratoryRuns(): Promise<void> {
-    await labRunsStore.loadLabRunsForLab(labId);
+    await runStore.loadLabRunsForLab(labId);
+  }
+
+  // load this particular run into the cache in case it wasn't already loaded by the lab page
+  async function fetchSeqeraRun(): Promise<void> {
+    await runStore.loadSingleSeqeraRun(labId, seqeraRunId);
   }
 
   function handleTabChange(newIndex: number) {

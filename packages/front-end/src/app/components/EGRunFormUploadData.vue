@@ -555,28 +555,6 @@
     });
   };
 
-  // Temporary method to simulate upload failure
-  const simulateUploadFailure = () => {
-    if (filePairs.value.length > 0) {
-      // Set error on first file found
-      if (filePairs.value[0].r1File) {
-        const file = filePairs.value[0].r1File;
-        cancelUpload(file.name); // Cancel any ongoing upload
-        file.error = 'Simulated upload failure';
-        file.percentage = 0;
-        toastStore.error(`Failed to upload ${file.name}: Simulated upload failure`);
-      } else if (filePairs.value[0].r2File) {
-        const file = filePairs.value[0].r2File;
-        cancelUpload(file.name); // Cancel any ongoing upload
-        file.error = 'Simulated upload failure';
-        file.percentage = 0;
-        toastStore.error(`Failed to upload ${file.name}: Simulated upload failure`);
-      }
-      // Disable proceeding when there's a failure
-      canProceed.value = false;
-    }
-  };
-
   watch(canProceed, (val) => {
     emit('step-validated', val);
   });
@@ -715,14 +693,6 @@
       </div>
     </div>
     <div class="flex justify-end pt-4">
-      <!-- Temporary button for testing failures -->
-      <EGButton
-        v-if="filesForTable.length > 0"
-        variant="secondary"
-        class="mr-2"
-        label="Test Failure"
-        @click="simulateUploadFailure"
-      />
       <EGButton
         v-if="uploadStatus === 'success'"
         variant="secondary"

@@ -32,12 +32,14 @@
   const uiStore = useUiStore();
   const userStore = useUserStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
-  const labRunsStore = useLabRunsStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
+
+  const { stringSortCompare } = useSort();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
-  const omicsWorkflows = ref<OmicsWorkflow[]>([]);
+  const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
@@ -53,9 +55,16 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
-  const combinedRuns = computed<LaboratoryRun[]>(() => labRunsStore.labRunsForLab(props.labId));
+  type LaboratoryRunTableItem = LaboratoryRun & { lastUpdated: string };
 
-  const filteredTableData = computed(() => {
+  const combinedRuns = computed<LaboratoryRunTableItem[]>(() =>
+    runStore.labRunsForLab(props.labId).map((labRun) => ({
+      ...labRun,
+      lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
+    })),
+  );
+
+  const usersTableData = computed(() => {
     let filteredLabUsers = labUsers.value;
 
     if (searchOutput.value.trim()) {
@@ -73,12 +82,12 @@
       if (userA.LabTechnician && !userB.LabTechnician) return -1;
       if (!userA.LabTechnician && userB.LabTechnician) return 1;
       // then sort by name
-      return useSort().stringSortCompare(userA.displayName, userB.displayName);
+      return stringSortCompare(userA.displayName, userB.displayName);
     });
   });
 
   const usersTableColumns = [
-    { key: 'displayName', label: 'Name', sortable: true, sort: useSort().stringSortCompare },
+    { key: 'displayName', label: 'Name', sortable: true, sort: stringSortCompare },
     { key: 'actions', label: 'Lab Access' },
   ];
 
@@ -95,10 +104,10 @@
   ];
 
   const runsTableColumns = [
-    { key: 'runName', label: 'Run Name' },
-    { key: 'lastUpdated', label: 'Last Updated' },
-    { key: 'status', label: 'Status' },
-    { key: 'owner', label: 'Owner' },
+    { key: 'RunName', label: 'Run Name', sortable: true, sort: stringSortCompare },
+    { key: 'lastUpdated', label: 'Last Updated', sortable: true, sort: stringSortCompare },
+    { key: 'Status', label: 'Status', sortable: true, sort: stringSortCompare },
+    { key: 'Owner', label: 'Owner', sortable: true, sort: stringSortCompare },
     { key: 'actions', label: 'Actions' },
   ];
 
@@ -160,7 +169,7 @@
    */
   onBeforeMount(async () => {
     await loadLabData();
-    await fetchLaboratoryRuns();
+    await pollFetchLaboratoryRuns();
   });
 
   function setTabIndex() {
@@ -182,16 +191,6 @@
       clearTimeout(intervalId);
     }
   });
-
-  async function pollFetchSeqeraRuns() {
-    await getSeqeraRuns();
-    intervalId = window.setTimeout(pollFetchSeqeraRuns, 2 * 60 * 1000);
-  }
-
-  async function pollFetchOmicsRuns() {
-    await getOmicsRuns();
-    intervalId = window.setTimeout(pollFetchOmicsRuns, 2 * 60 * 1000);
-  }
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -313,11 +312,15 @@
     }
   }
 
-  // this anticipates these store values being needed on run click
+  async function pollFetchLaboratoryRuns() {
+    await fetchLaboratoryRuns();
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, 2 * 60 * 1000);
+  }
+
   async function fetchLaboratoryRuns(): Promise<void> {
     uiStore.setRequestPending('loadLabRuns');
     try {
-      await labRunsStore.loadLabRunsForLab(props.labId);
+      await runStore.loadLabRunsForLab(props.labId);
     } finally {
       uiStore.setRequestComplete('loadLabRuns');
     }
@@ -337,13 +340,7 @@
   async function getOmicsWorkflows(): Promise<void> {
     useUiStore().setRequestPending('getOmicsWorkflows');
     try {
-      const res = await $api.omicsWorkflows.list(props.labId);
-
-      if (res.items === undefined) {
-        throw new Error('response did not contain omics workflows');
-      }
-
-      omicsWorkflows.value = res.items;
+      await omicsWorkflowsStore.loadWorkflowsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {
@@ -351,6 +348,7 @@
     }
   }
 
+  // this anticipates these store values being needed on run click
   async function getSeqeraRuns(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraRuns');
     try {
@@ -362,6 +360,7 @@
     }
   }
 
+  // this anticipates these store values being needed on run click
   async function getOmicsRuns(): Promise<void> {
     useUiStore().setRequestPending('getOmicsRuns');
     try {
@@ -392,9 +391,6 @@
   }
 
   function viewRunOmicsWorkflow(workflow: OmicsWorkflow) {
-    useToastStore().info('Running HealthOmics Workflows is not yet implemented');
-    return;
-
     $router.push({
       path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
       query: {
@@ -453,21 +449,29 @@
     }
 
     if (lab.NextFlowTowerEnabled) {
-      if (!lab.HasNextFlowTowerAccessToken) {
+      if (lab.HasNextFlowTowerAccessToken == null) {
+        // Current lab doesn't have the correct details
+        if (uiStore.isRequestPending('loadLabData')) {
+          // In the process of loading the lab, which will trigger this code again when it completes
+        } else {
+          loadLabData(); // Refresh the lab
+        }
+      } else if (!lab.HasNextFlowTowerAccessToken) {
         // Seqera enabled but creds not present, show the modal
         missingPAT.value = true;
         showRedirectModal();
       } else {
         // fetch the Seqera stuff
+        missingPAT.value = false;
         promises.push(getSeqeraPipelines());
-        promises.push(pollFetchSeqeraRuns());
+        promises.push(getSeqeraRuns());
       }
     }
 
     if (lab.AwsHealthOmicsEnabled) {
       // fetch the Omics stuff
       promises.push(getOmicsWorkflows());
-      promises.push(pollFetchOmicsRuns());
+      promises.push(getOmicsRuns());
     }
 
     await Promise.all(promises);
@@ -615,10 +619,11 @@
           :row-click-action="viewRunDetails"
           :table-data="combinedRuns"
           :columns="runsTableColumns"
+          :sort="{ column: 'lastUpdated', direction: 'desc' }"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
         >
-          <template #runName-data="{ row: run }">
+          <template #RunName-data="{ row: run }">
             <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
             <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
           </template>
@@ -628,11 +633,11 @@
             <div class="text-muted">{{ getTime(run.ModifiedAt ?? run.CreatedAt) }}</div>
           </template>
 
-          <template #status-data="{ row: run }">
+          <template #Status-data="{ row: run }">
             <EGStatusChip :status="run.Status" />
           </template>
 
-          <template #owner-data="{ row: run }">
+          <template #Owner-data="{ row: run }">
             <div class="text-body text-sm font-medium">{{ run.Owner }}</div>
           </template>
 
@@ -670,7 +675,7 @@
         />
 
         <EGTable
-          :table-data="filteredTableData"
+          :table-data="usersTableData"
           :columns="usersTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"

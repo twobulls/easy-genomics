@@ -17,6 +17,7 @@ type PendingRequest =
   | 'cancelSeqeraRun'
   | 'getOmicsWorkflows'
   | 'getOmicsRuns'
+  | 'loadOmicsWorkflow'
   | 'loadOmicsRun'
   | 'cancelOmicsRun'
   | 'createOrg'

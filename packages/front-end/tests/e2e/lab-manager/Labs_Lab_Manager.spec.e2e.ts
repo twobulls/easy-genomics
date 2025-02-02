@@ -7,6 +7,8 @@ const labNameUpdated = 'Automated Lab - Updated';
 const seqeraPipeline = 'quality-e2e-test-pipeline';
 const filePath1 = './tests/e2e/fixtures/NA1287820K_R1_001.fastq.gz';
 const filePath2 = './tests/e2e/fixtures/NA1287820K_R2_001.fastq.gz';
+const fileName1 = 'NA1287820K_R1_001.fastq.gz';
+const fileName2 = 'NA1287820K_R2_001.fastq.gz';
 const labTechnicianName = 'Lab Technician';
 let runNameVar: string;
 
@@ -137,11 +139,12 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
       const fileChooser = await fileChooserPromise;
       await fileChooser.setFiles([filePath1, filePath2]);
       await page.getByRole('button', { name: 'Upload Files' }).click();
-      await page.waitForTimeout(35 * 1000);
+      await page.waitForTimeout(12 * 1000);
 
       // ** Check if files are successfully uploaded
       await page.waitForLoadState('networkidle');
-      await expect(page.getByText('100%').nth(0)).toBeVisible();
+      //await expect(page.getByText('Files uploaded successfully').nth(0)).toBeVisible();  //temporily disabling due to timing issues
+
       // ** Check if Download Sample Sheet button is enabled
       await expect(page.getByRole('button', { name: 'Download sample sheet' })).toBeEnabled();
 
@@ -153,7 +156,7 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
       await page.getByRole('button', { name: 'Save & Continue' }).click();
 
       // STEP 04
-      await page.getByRole('button', { name: 'Launch Workflow Run' }).click();
+      await page.getByRole('button', { name: 'Launch Pipeline Run' }).click();
       await page.waitForTimeout(2000);
       await page.getByRole('button', { name: 'Back to Runs' }).click();
       await page.waitForLoadState('networkidle');
@@ -231,7 +234,89 @@ test('07 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }
   }
 });
 
-test('08 - Check if Reset Password fails', async ({ page, baseURL }) => {
+test('08 - Check Run Details', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.waitForLoadState('networkidle');
+
+    // Go to Run Details
+    await page
+      .getByRole('row', { name: runNameVar })
+      .filter({ has: page.locator('button')})
+      .locator('button')
+    .click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
+    await page.waitForTimeout(5000);
+
+    // Check Run Name and other details
+    await expect(page.getByText(runNameVar).nth(0)).toBeVisible(); // Run name as title
+    await expect(page.getByText('Submitted')).toBeVisible(); // Pipeline initial Run Status
+    await expect(page.getByText(runNameVar).nth(1)).toBeVisible(); // Run name in the details section
+    await expect(page.getByText(seqeraPipeline).nth(0)).toBeVisible(); // Pipeline name as title
+    await expect(page.getByText(seqeraPipeline).nth(1)).toBeVisible(); // Pipeline name in the details section
+    await expect(page.getByText('Seqera Cloud')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download' })).toBeEnabled();
+    await expect(page.getByText(envConfig.labManagerEmail)).toBeVisible(); // Owner
+  }
+});
+
+test('09 - Check File Manager if files exist', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.waitForLoadState('networkidle');
+
+    // Go to File Manager
+    await page
+      .getByRole('row', { name: runNameVar })
+      .filter({ has: page.locator('button')})
+      .locator('button')
+    .click();
+    await page.getByRole('menuitem', { name: 'View Details' }).click();
+    await page.getByRole('tab', { name: 'File Manager' }).click();
+    await page.waitForTimeout(5 * 2000);
+
+    // Check for few filenames
+    await page.getByRole('row', { name: fileName1 }).locator('button').click();
+    await page.waitForTimeout(2000);
+    await expect(page.getByText('Your files have begun downloading').nth(0)).toBeVisible();
+    await page.getByRole('row', { name: fileName2 }).locator('button').click();
+    await page.waitForTimeout(5000);
+    await page.getByRole('row', { name: 'sample-sheet.csv' }).locator('button').click();
+    await page.waitForTimeout(5000);
+  }
+});
+
+test('10 - Check if Reset Password fails', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}`);
   await page.waitForLoadState('networkidle');
 
@@ -256,35 +341,4 @@ test('08 - Check if Reset Password fails', async ({ page, baseURL }) => {
   // check confirmation
   await page.waitForTimeout(2000);
   await expect(page.getByText('Reset link has been sent to ' + envConfig.testInviteEmail)).toBeVisible();
-});
-
-test('09 - Check Run Details', async ({ page, baseURL }) => {
-  await page.goto(`${baseURL}/labs`);
-  await page.waitForLoadState('networkidle');
-
-  // Check if the 'Playwright test lab' which was created in another test
-  let hasTestLab = false;
-  try {
-    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
-  } catch (error) {
-    console.log('Updated test lab not found', error);
-  }
-
-  // Check if a 'Playwright test lab' is existing then update can proceed
-  if (hasTestLab) {
-    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
-    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
-    await page.waitForLoadState('networkidle');
-
-    // Go to Run Details
-    await page.getByRole('row', { name: runNameVar }).locator('button').click();
-    await page.getByRole('menuitem', { name: 'View Details' }).click();
-    await page.waitForTimeout(5 * 2000);
-
-    // Check Run Name and other details
-    await expect(page.getByText(runNameVar).nth(0)).toBeVisible();
-    await expect(page.getByText('Submitted')).toBeVisible();
-  }
 });

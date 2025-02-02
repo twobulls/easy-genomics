@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/named
+import { StartRunCommandOutput } from '@aws-sdk/client-omics';
 import { ListRuns, ReadRun } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
 import HttpFactory from '@FE/repository/factory';
 
@@ -12,11 +14,35 @@ class OmicsRunsModule extends HttpFactory {
     return res;
   }
 
-  async get(labId: string, runId: string): Promise<ReadRun> {
-    const res = await this.callOmics<ReadRun>('GET', `/workflow/read-private-workflow/${runId}?laboratoryId=${labId}`);
+  async get(labId: string, omicsRunId: string): Promise<ReadRun> {
+    const res = await this.callOmics<ReadRun>('GET', `/run/read-run/${omicsRunId}?laboratoryId=${labId}`);
 
     if (!res) {
       throw new Error('Failed to retrieve omics run details');
+    }
+
+    return res;
+  }
+
+  async createExecution(
+    labId: string,
+    workflowId: string,
+    name: string,
+    params: object,
+  ): Promise<StartRunCommandOutput> {
+    const payload = {
+      workflowId,
+      name,
+      parameters: JSON.stringify(params),
+    };
+    const res = await this.callOmics<StartRunCommandOutput>(
+      'POST',
+      `/run/create-run-execution?laboratoryId=${labId}`,
+      payload,
+    );
+
+    if (!res) {
+      throw new Error('Failed to start omics run');
     }
 
     return res;

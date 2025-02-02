@@ -2,6 +2,7 @@
 // eslint-disable-next-line import/named
 import { RunListItem as OmicsRun } from '@aws-sdk/client-omics';
 import { Workflow as SeqeraRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
+import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { defineStore } from 'pinia';
 
 /*
@@ -13,7 +14,7 @@ export interface WipSeqeraRunData {
   laboratoryId?: string;
   pipelineId?: string;
   transactionId?: string;
-  userPipelineRunName?: string;
+  runName?: string;
   params?: object;
   sampleSheetS3Url?: string;
   s3Bucket?: string;
@@ -25,15 +26,26 @@ export interface WipOmicsRunData {
   workflowId?: string;
   workflowName?: string;
   transactionId?: string;
+  runName?: string;
+  params?: object;
+  sampleSheetS3Url?: string;
+  s3Bucket?: string;
+  s3Path?: string;
 }
 
 interface RunState {
+  // indexed by lab run id
+  labRuns: Record<string, LaboratoryRun>;
+  // ordered lists for lab runs by lab
+  labRunIdsByLab: Record<string, string[]>;
+
   // lookup object for Seqera runs
   seqeraRuns: Record<string, Record<string, SeqeraRun>>;
   // ordered lists for Seqera runs by lab
   seqeraRunIdsByLab: Record<string, string[]>;
   // configs of new Seqera runs yet to be launched
   wipSeqeraRuns: Record<string, WipSeqeraRunData>;
+
   // lookup object for Omics runs
   omicsRuns: Record<string, Record<string, OmicsRun>>;
   // ordered lists for Omics runs by lab
@@ -43,9 +55,13 @@ interface RunState {
 }
 
 const initialState = (): RunState => ({
+  labRuns: {},
+  labRunIdsByLab: {},
+
   seqeraRuns: {},
   seqeraRunIdsByLab: {},
   wipSeqeraRuns: {},
+
   omicsRuns: {},
   omicsRunIdsByLab: {},
   wipOmicsRuns: {},
@@ -55,10 +71,26 @@ const useRunStore = defineStore('runStore', {
   state: initialState,
 
   getters: {
+    // Laboratory Runs
+
+    labRunsForLab:
+      (state: RunState) =>
+      (labId: string): LaboratoryRun[] =>
+        state.labRunIdsByLab[labId]?.map((labRunId) => state.labRuns[labRunId]) || [],
+
+    labRunByExternalId:
+      (state: RunState) =>
+      (externalId: string): LaboratoryRun | null =>
+        Object.values(state.labRuns).find((labRun) => labRun.ExternalRunId === externalId) ?? null,
+
+    // Seqera Runs
+
     seqeraRunsForLab:
       (state: RunState) =>
       (labId: string): SeqeraRun[] =>
         state.seqeraRunIdsByLab[labId]?.map((runId) => state.seqeraRuns[labId][runId]) || [],
+
+    // Omics Runs
 
     omicsRunsForLab:
       (state: RunState) =>
@@ -70,6 +102,22 @@ const useRunStore = defineStore('runStore', {
     reset() {
       Object.assign(this, initialState());
     },
+
+    // Laboratory Runs
+
+    async loadLabRunsForLab(labId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+
+      this.labRunIdsByLab[labId] = [];
+
+      const labRuns = await $api.labs.listLabRuns(labId);
+      for (const labRun of labRuns) {
+        this.labRuns[labRun.RunId] = labRun;
+        this.labRunIdsByLab[labId].push(labRun.RunId);
+      }
+    },
+
+    // Seqera Runs
 
     async loadSeqeraRunsForLab(labId: string): Promise<void> {
       const { $api } = useNuxtApp();
@@ -92,6 +140,26 @@ const useRunStore = defineStore('runStore', {
       this.seqeraRuns[labId] = newRuns;
       this.seqeraRunIdsByLab[labId] = newRunIds;
     },
+
+    async loadSingleSeqeraRun(labId: string, runId: string): Promise<void> {
+      const { $api } = useNuxtApp();
+
+      const run: SeqeraRun = await $api.seqeraRuns.get(labId, runId);
+
+      if (!this.seqeraRuns[labId]) {
+        this.seqeraRuns[labId] = {};
+      }
+      this.seqeraRuns[labId][run.id] = run;
+    },
+
+    updateWipSeqeraRun(tempId: string, updates: Partial<WipSeqeraRunData>): void {
+      this.wipSeqeraRuns[tempId] = {
+        ...(this.wipSeqeraRuns[tempId] || {}),
+        ...updates,
+      };
+    },
+
+    // Omics Runs
 
     async loadOmicsRunsForLab(labId: string): Promise<void> {
       const { $api } = useNuxtApp();
@@ -116,22 +184,15 @@ const useRunStore = defineStore('runStore', {
       this.omicsRunIdsByLab[labId] = newRunIds;
     },
 
-    async loadSingleSeqeraRun(labId: string, runId: string): Promise<void> {
+    async loadSingleOmicsRun(labId: string, runId: string): Promise<void> {
       const { $api } = useNuxtApp();
 
-      const run: SeqeraRun = await $api.seqeraRuns.get(labId, runId);
+      const run: OmicsRun = await $api.omicsRuns.get(labId, runId);
 
-      if (!this.seqeraRuns[labId]) {
-        this.seqeraRuns[labId] = {};
+      if (!this.omicsRuns[labId]) {
+        this.omicsRuns[labId] = {};
       }
-      this.seqeraRuns[labId][run.id] = run;
-    },
-
-    updateWipSeqeraRun(tempId: string, updates: Partial<WipSeqeraRunData>): void {
-      this.wipSeqeraRuns[tempId] = {
-        ...(this.wipSeqeraRuns[tempId] || {}),
-        ...updates,
-      };
+      this.omicsRuns[labId][runId] = run;
     },
 
     updateWipOmicsRun(tempId: string, updates: Partial<WipOmicsRunData>): void {

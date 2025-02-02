@@ -103,6 +103,7 @@
 
   const isUploadButtonDisabled = computed(
     () =>
+      !isOnline.value ||
       !canUploadFiles.value ||
       uploadStatus.value === 'uploading' ||
       uploadStatus.value === 'success' ||
@@ -387,6 +388,8 @@
    * - For other failures, displays specific error messages for individual files or a summary for multiple failed files.
    */
   async function uploadFiles(): Promise<UploadError[]> {
+    uploadStatus.value = 'uploading'; // Start with uploading status
+
     try {
       const uploadPromises = Object.values(filesToUpload.value).map((fileDetails) =>
         uploadFile(fileDetails)
@@ -405,6 +408,7 @@
       // Show network error toast only once if any file failed due to network
       if (errors.some((error) => error.error === 'Network connection lost')) {
         toastStore.error('Upload aborted: Network connection lost');
+        uploadStatus.value = 'failed'; // Set failed status for network errors
       }
       // Show other error toasts as needed
       else if (errors.length > 0) {
@@ -413,11 +417,14 @@
         } else {
           toastStore.error(`Upload failed for ${errors.length} files`);
         }
+        uploadStatus.value = 'failed'; // Set failed status for other errors
+      } else {
+        uploadStatus.value = 'success'; // Set success status if no errors
       }
 
       return errors;
     } catch (error) {
-      console.error('Error in uploadFiles:', error);
+      uploadStatus.value = 'failed'; // Set failed status for unexpected errors
       return [];
     }
   }

@@ -1,22 +1,23 @@
 <script setup lang="ts">
   import { useRunStore } from '@FE/stores';
-  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import { WorkflowParameter } from '@aws-sdk/client-omics';
+  import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
 
   const props = defineProps<{
-    schema: object;
+    schema: Record<string, WorkflowParameter>;
     params: object;
-    pipelineId: string;
+    workflowId: string;
   }>();
 
   const $route = useRoute();
   const runStore = useRunStore();
-  const seqeraPipelineStore = useSeqeraPipelinesStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
 
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
+  const omicsRunTempId = $route.query.omicsRunTempId as string;
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId]);
 
-  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
+  const workflow = computed<OmicsWorkflow | undefined>(() => omicsWorkflowsStore.workflows[props.workflowId]);
 
   const labId = $route.params.labId as string;
 
@@ -183,12 +184,12 @@
           <!-- Run Details -->
           <template v-if="items[selectedIndex].key === 'details'">
             <EGRunFormRunDetails
-              pipeline-or-workflow="Pipeline"
-              :pipeline-or-workflow-name="pipeline?.name"
-              :initial-run-name="wipSeqeraRun?.runName || ''"
-              :pipeline-or-workflow-description="pipeline?.description"
-              :wip-run-update-function="runStore.updateWipSeqeraRun"
-              :wip-run-temp-id="seqeraRunTempId"
+              pipeline-or-workflow="Workflow"
+              :pipeline-or-workflow-name="workflow?.name"
+              :initial-run-name="wipOmicsRun?.runName || ''"
+              :pipeline-or-workflow-description="workflow?.description || ''"
+              :wip-run-update-function="runStore.updateWipOmicsRun"
+              :wip-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('upload')"
               @step-validated="setStepEnabled('upload', $event)"
             />
@@ -198,12 +199,12 @@
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunFormUploadData
               :lab-id="labId"
-              :sample-sheet-s3-url="wipSeqeraRun.sampleSheetS3Url"
-              :pipeline-or-workflow-name="pipeline.name"
-              :run-name="wipSeqeraRun.runName"
-              :transaction-id="wipSeqeraRun.transactionId"
-              :wip-run-update-function="runStore.updateWipSeqeraRun"
-              :wip-run-temp-id="seqeraRunTempId"
+              :sample-sheet-s3-url="wipOmicsRun.sampleSheetS3Url"
+              :pipeline-or-workflow-name="workflow.name"
+              :run-name="wipOmicsRun.runName"
+              :transaction-id="wipOmicsRun.transactionId"
+              :wip-run-update-function="runStore.updateWipOmicsRun"
+              :wip-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('parameters')"
               @previous-step="previousStep"
               @step-validated="setStepEnabled('parameters', $event)"
@@ -212,10 +213,13 @@
 
           <!-- Edit Parameters -->
           <template v-if="items[selectedIndex].key === 'parameters'">
-            <EGRunPipelineFormEditParameters
+            <EGRunWorkflowFormEditParameters
               :params="params"
               :schema="schema"
-              :pipeline-id="pipelineId"
+              :sample-sheet-s3-url="wipOmicsRun.sampleSheetS3Url"
+              :s3-bucket="wipOmicsRun.s3Bucket"
+              :s3-path="wipOmicsRun.s3Path"
+              :omics-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('review')"
               @previous-step="previousStep"
             />
@@ -223,10 +227,17 @@
 
           <!-- Review Pipeline -->
           <template v-if="items[selectedIndex].key === 'review'">
-            <EGRunPipelineFormReview
+            <EGRunWorkflowFormReview
               :schema="props.schema"
-              :params="wipSeqeraRun?.params"
-              :pipeline-id="pipelineId"
+              :params="wipOmicsRun?.params"
+              :lab-id="labId"
+              :omics-run-temp-id="omicsRunTempId"
+              :s3-bucket="wipOmicsRun.s3Bucket"
+              :s3-path="wipOmicsRun.s3Path"
+              :run-name="wipOmicsRun.runName"
+              :transaction-id="wipOmicsRun.transactionId"
+              :workflow-id="props.workflowId"
+              :workflow-name="workflow.name"
               @submit-launch-request="handleSubmitLaunchRequest()"
               @has-launched="handleLaunchSuccess()"
               @previous-tab="previousStep"

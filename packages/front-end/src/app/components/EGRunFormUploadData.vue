@@ -13,7 +13,7 @@
     UploadedFileInfo,
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
-  import { useRunStore, useToastStore } from '@FE/stores';
+  import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
   import { WipSeqeraRunData } from '@FE/stores/run';
   import { useNetwork } from '@vueuse/core';
@@ -45,20 +45,19 @@
   }
 
   const { $api } = useNuxtApp();
-  const $route = useRoute();
-  const runStore = useRunStore();
   const { downloadSampleSheet } = usePipeline($api);
   const toastStore = useToastStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
-  defineProps<{
-    pipelineId: string;
+  const props = defineProps<{
+    labId: string;
+    sampleSheetS3Url: string;
+    pipelineOrWorkflowName: string;
+    runName: string;
+    transactionId: string;
+    wipRunUpdateFunction: Function;
+    wipRunTempId: string;
   }>();
-
-  const labId = $route.params.labId as string;
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
-
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
@@ -277,15 +276,6 @@
     return fileName.substring(0, fileName.lastIndexOf('_R'));
   }
 
-  function removeFilePair(sampleId: string) {
-    console.debug('Removing file pair; sampleId:', sampleId);
-    filesToUpload.value = filesToUpload.value.filter((file) => !file.name.startsWith(sampleId));
-    filePairs.value = filePairs.value.filter((filePair) => filePair.sampleId !== sampleId);
-    console.debug('Removed file pair; sampleId:', sampleId);
-
-    validateFilePairs();
-  }
-
   function toggleDropzoneActive() {
     isDropzoneActive.value = !isDropzoneActive.value;
     console.debug('isDropzoneActive', toRaw(isDropzoneActive.value));
@@ -299,7 +289,7 @@
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    useRunStore().updateWipSeqeraRun(seqeraRunTempId, {
+    props.wipRunUpdateFunction(props.wipRunTempId, {
       sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
       s3Path: sampleSheetResponse.SampleSheetInfo.Path,
@@ -346,8 +336,8 @@
 
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
-      LaboratoryId: labId,
-      TransactionId: wipSeqeraRun.value?.transactionId || '',
+      LaboratoryId: props.labId,
+      TransactionId: props.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -366,8 +356,8 @@
     }
 
     const request: FileUploadRequest = {
-      LaboratoryId: labId,
-      TransactionId: wipSeqeraRun.value?.transactionId || '',
+      LaboratoryId: props.labId,
+      TransactionId: props.transactionId || '',
       Files: files,
     };
 
@@ -764,7 +754,7 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="downloadSampleSheet(seqeraRunTempId)"
+        @click="downloadSampleSheet(props.labId, props.sampleSheetS3Url, props.pipelineOrWorkflowName, props.runName)"
       />
       <EGButton
         @click="startUploadProcess"

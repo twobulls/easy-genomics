@@ -3,22 +3,16 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useRunStore, useSeqeraPipelinesStore } from '@FE/stores';
-  import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const emit = defineEmits(['next-step', 'step-validated']);
   const props = defineProps<{
-    pipelineId: string;
+    pipelineOrWorkflow: 'Pipeline' | 'Workflow';
+    pipelineOrWorkflowName: string;
+    initialRunName: string;
+    pipelineOrWorkflowDescription: string;
+    wipRunUpdateFunction: Function;
+    wipRunTempId: string;
   }>();
-
-  const $route = useRoute();
-  const runStore = useRunStore();
-  const seqeraPipelineStore = useSeqeraPipelinesStore();
-
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
-
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
-  const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
 
   /**
    * Seqera API spec
@@ -68,7 +62,7 @@
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
   onBeforeMount(async () => {
-    formState.runName = wipSeqeraRun.value?.userPipelineRunName || '';
+    formState.runName = props.initialRunName;
     validate(formState);
   });
 
@@ -88,7 +82,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    useRunStore().updateWipSeqeraRun(seqeraRunTempId, { userPipelineRunName: safeRunName });
+    props.wipRunUpdateFunction(props.wipRunTempId, { runName: safeRunName });
     emit('next-step');
   }
 
@@ -131,8 +125,8 @@
       <EGText tag="small" class="mb-4">Step 01</EGText>
       <EGText tag="h4" class="mb-0">Run Details</EGText>
       <UDivider class="py-4" />
-      <EGFormGroup label="Pipeline" name="pipelineName">
-        <EGInput :model-value="pipeline?.name" :disabled="true" />
+      <EGFormGroup :label="props.pipelineOrWorkflow" name="pipelineName">
+        <EGInput :model-value="props.pipelineOrWorkflowName" :disabled="true" />
       </EGFormGroup>
 
       <EGFormGroup
@@ -152,7 +146,7 @@
       </EGFormGroup>
 
       <EGFormGroup label="Description" name="pipelineDescription">
-        <EGTextArea :model-value="pipeline?.description" :disabled="true" />
+        <EGTextArea :model-value="props.pipelineOrWorkflowDescription" :disabled="true" />
       </EGFormGroup>
     </EGCard>
     <div class="flex justify-end pt-4">

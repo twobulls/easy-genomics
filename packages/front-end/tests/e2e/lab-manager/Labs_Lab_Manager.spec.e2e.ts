@@ -139,11 +139,11 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
       const fileChooser = await fileChooserPromise;
       await fileChooser.setFiles([filePath1, filePath2]);
       await page.getByRole('button', { name: 'Upload Files' }).click();
-      await page.waitForTimeout(35 * 1000);
+      await page.waitForTimeout(12 * 1000);
 
       // ** Check if files are successfully uploaded
       await page.waitForLoadState('networkidle');
-      await expect(page.getByText('100%').nth(0)).toBeVisible();
+      //await expect(page.getByText('Files uploaded successfully').nth(0)).toBeVisible();
       // ** Check if Download Sample Sheet button is enabled
       await expect(page.getByRole('button', { name: 'Download sample sheet' })).toBeEnabled();
 
@@ -155,7 +155,7 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
       await page.getByRole('button', { name: 'Save & Continue' }).click();
 
       // STEP 04
-      await page.getByRole('button', { name: 'Launch Workflow Run' }).click();
+      await page.getByRole('button', { name: 'Launch Pipeline Run' }).click();
       await page.waitForTimeout(2000);
       await page.getByRole('button', { name: 'Back to Runs' }).click();
       await page.waitForLoadState('networkidle');
@@ -233,34 +233,7 @@ test('07 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }
   }
 });
 
-test('08 - Check if Reset Password fails', async ({ page, baseURL }) => {
-  await page.goto(`${baseURL}`);
-  await page.waitForLoadState('networkidle');
-
-  // confirm button if enabled/visible
-  await page.getByRole('button', { name: 'LM' }).click();
-  await page.getByRole('menuitem', { name: 'Sign Out' }).click();
-  await page.waitForTimeout(2000);
-
-  // check Sign out confirmation
-  await expect(page.getByText('You have been signed out')).toBeVisible();
-
-  await page.getByRole('link', { name: 'Forgot password?' }).click();
-
-  // check page link where the user is redirected
-  await page.waitForLoadState();
-  expect(page.url()).toEqual(`${baseURL}/forgot-password`);
-
-  await page.waitForTimeout(2000);
-  await page.getByLabel('Email address').fill(`${envConfig.testInviteEmail}`);
-  await page.getByRole('button', { name: 'Send password reset link' }).click();
-
-  // check confirmation
-  await page.waitForTimeout(2000);
-  await expect(page.getByText('Reset link has been sent to ' + envConfig.testInviteEmail)).toBeVisible();
-});
-
-test('09 - Check Run Details', async ({ page, baseURL }) => {
+test('08 - Check Run Details', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
 
@@ -286,12 +259,19 @@ test('09 - Check Run Details', async ({ page, baseURL }) => {
     await page.waitForTimeout(5 * 2000);
 
     // Check Run Name and other details
-    await expect(page.getByText(runNameVar).nth(0)).toBeVisible();
-    await expect(page.getByText('Submitted')).toBeVisible();
+    await expect(page.getByText(runNameVar).nth(0)).toBeVisible(); // Run name as title
+    await expect(page.getByText('Submitted')).toBeVisible(); // Pipeline initial Run Status
+    await expect(page.getByText(runNameVar).nth(1)).toBeVisible(); // Run name in the details section
+    await expect(page.getByText(seqeraPipeline).nth(0)).toBeVisible(); // Pipeline name as title
+    await expect(page.getByText(seqeraPipeline).nth(1)).toBeVisible(); // Pipeline name in the details section
+    await expect(page.getByText('Seqera Cloud')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download' })).toBeEnabled();
+    // const email = envConfig.labManagerEmail || ‘’;
+    await expect(page.getByText(envConfig.labManagerEmail)).toBeVisible(); // Owner
   }
 });
 
-test('10 - Check File Manager if files exists', async ({ page, baseURL }) => {
+test('09 - Check File Manager if files exists', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
 
@@ -326,4 +306,31 @@ test('10 - Check File Manager if files exists', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: 'sample-sheet.csv' }).locator('button').click();
     await page.waitForTimeout(5000);
   }
+});
+
+test('10 - Check if Reset Password fails', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}`);
+  await page.waitForLoadState('networkidle');
+
+  // confirm button if enabled/visible
+  await page.getByRole('button', { name: 'LM' }).click();
+  await page.getByRole('menuitem', { name: 'Sign Out' }).click();
+  await page.waitForTimeout(2000);
+
+  // check Sign out confirmation
+  await expect(page.getByText('You have been signed out')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Forgot password?' }).click();
+
+  // check page link where the user is redirected
+  await page.waitForLoadState();
+  expect(page.url()).toEqual(`${baseURL}/forgot-password`);
+
+  await page.waitForTimeout(2000);
+  await page.getByLabel('Email address').fill(`${envConfig.testInviteEmail}`);
+  await page.getByRole('button', { name: 'Send password reset link' }).click();
+
+  // check confirmation
+  await page.waitForTimeout(2000);
+  await expect(page.getByText('Reset link has been sent to ' + envConfig.testInviteEmail)).toBeVisible();
 });

@@ -930,8 +930,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
-        actions: ['omics:GetWorkflow'],
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
+        actions: ['omics:GetRun'],
         effect: Effect.ALLOW,
       }),
     ]);

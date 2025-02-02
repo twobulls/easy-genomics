@@ -185,9 +185,6 @@
     let haveMatchingFilePairs = filePairs.value.length > 0;
 
     for (const filePair of filePairs.value) {
-      console.debug('Validating file pair:', filePair);
-      console.debug('R1 file:', filePair.r1File);
-      console.debug('R2 file:', filePair.r2File);
       if (!filePair.r1File || !filePair.r2File) {
         haveMatchingFilePairs = false;
         break;
@@ -195,13 +192,9 @@
     }
 
     canUploadFiles.value = haveMatchingFilePairs;
-
-    console.debug('Can upload files:', canUploadFiles.value);
   }
 
   function addFile(file: File) {
-    console.debug(`Adding file; name: ${file.name}; size: ${file.size} bytes`);
-
     if (file.size < MIN_FILE_SIZE) {
       const message = `File ${file.name} is too small: ${file.size} bytes`;
       useToastStore().error(message);
@@ -215,7 +208,6 @@
     }
 
     const isDuplicateFile = checkIsFileDuplicate(file);
-    console.debug(`Is ${file.name} duplicate: ${isDuplicateFile}`);
 
     if (isDuplicateFile) {
       const message = `File ${file.name} already exists`;
@@ -226,9 +218,6 @@
     const fileDetails = getFileDetails(file);
     filesToUpload.value.push(fileDetails);
     addFileToFilePairs(fileDetails);
-
-    console.debug('filesToUpload', toRaw(filesToUpload.value));
-    console.debug('filePairs', toRaw(filePairs.value));
   }
 
   function checkIsFileDuplicate(newFile: File): boolean {
@@ -278,7 +267,6 @@
 
   function toggleDropzoneActive() {
     isDropzoneActive.value = !isDropzoneActive.value;
-    console.debug('isDropzoneActive', toRaw(isDropzoneActive.value));
   }
 
   async function startUploadProcess() {
@@ -329,8 +317,6 @@
       }
     });
 
-    console.debug('uploadedFilePairs:', uploadedFilePairs);
-
     return uploadedFilePairs;
   }
 
@@ -341,8 +327,6 @@
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
-    console.debug('Get CSV sample sheet response:', response);
-
     return response;
   }
 
@@ -361,11 +345,7 @@
       Files: files,
     };
 
-    console.debug('Get file upload manifest request:', request);
-
     const response = await $api.uploads.getFileUploadManifest(request);
-
-    console.debug('Get file upload manifest response:', response);
 
     return response;
   }

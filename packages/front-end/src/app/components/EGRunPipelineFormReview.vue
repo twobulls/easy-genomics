@@ -6,7 +6,6 @@
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const props = defineProps<{
-    canLaunch?: boolean;
     schema: object;
     params: object;
     pipelineId: string;
@@ -51,7 +50,7 @@
       const launchRequest: CreateWorkflowLaunchRequest = {
         launch: {
           computeEnvId: launchDetails.launch?.computeEnv?.id,
-          runName: wipSeqeraRun.value?.userPipelineRunName,
+          runName: wipSeqeraRun.value?.runName,
           pipeline: launchDetails.launch?.pipeline,
           revision: launchDetails.launch?.revision,
           configProfiles: launchDetails.launch?.configProfiles,
@@ -74,10 +73,10 @@
         const labRunRequest = {
           'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
           'RunId': wipSeqeraRun.value?.transactionId,
-          'RunName': wipSeqeraRun.value?.userPipelineRunName,
-          'Platform': 'Seqera Cloud', // TODO: Extend to support 'AWS HealthOmics',
+          'RunName': wipSeqeraRun.value?.runName,
+          'Platform': 'Seqera Cloud',
           'Status': 'SUBMITTED',
-          'WorkflowName': pipeline.value?.name, // TODO: Extend to support AWS HealthOmics Workflow name
+          'WorkflowName': pipeline.value?.name,
           'ExternalRunId': res.workflowId,
           'InputS3Url': props.params.input.substring(0, props.params.input.lastIndexOf('/')),
           'OutputS3Url': props.params.outdir,
@@ -146,7 +145,7 @@
         </div>
         <div class="text-md flex px-4 py-4">
           <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ wipSeqeraRun?.userPipelineRunName }}</dd>
+          <dd class="text-muted text-left">{{ wipSeqeraRun?.runName }}</dd>
         </div>
       </dl>
     </section>
@@ -180,13 +179,7 @@
 
   <div class="mt-6 flex justify-between">
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-tab')" />
-    <EGButton
-      :disabled="!canLaunch"
-      :loading="isLaunchingRun"
-      :size="ButtonSizeEnum.enum.sm"
-      @click="launchRun"
-      label="Launch Workflow Run"
-    />
+    <EGButton :loading="isLaunchingRun" :size="ButtonSizeEnum.enum.sm" @click="launchRun" label="Launch Pipeline Run" />
   </div>
 </template>
 

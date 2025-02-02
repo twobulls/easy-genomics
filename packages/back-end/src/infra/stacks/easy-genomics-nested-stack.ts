@@ -38,7 +38,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     this.sqs = new SqsConstruct(this, `${this.props.constructNamespace}-sqs`, {
       namePrefix: this.props.namePrefix,
-      devEnv: this.props.devEnv,
+      envType: this.props.envType,
       queues: <Queues>{
         ['organization-management-queue']: <QueueDetails>{
           fifo: true,
@@ -74,7 +74,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.setupIamPolicies();
 
     this.dynamoDB = new DynamoConstruct(this, `${this.props.constructNamespace}-dynamodb`, {
-      devEnv: this.props.devEnv,
+      envType: this.props.envType,
     });
     this.setupDynamoDBTables();
 
@@ -930,8 +930,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
-        actions: ['omics:GetWorkflow'],
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
+        actions: ['omics:GetRun'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -1173,184 +1173,156 @@ export class EasyGenomicsNestedStack extends NestedStack {
     /** Update the definitions below to update / add additional DynamoDB tables **/
     // Organization table
     const organizationTableName = `${this.props.namePrefix}-organization-table`;
-    const organizationTable = this.dynamoDB.createTable(
-      organizationTableName,
-      {
-        partitionKey: {
-          name: 'OrganizationId',
-          type: AttributeType.STRING,
-        },
-        lsi: baseLSIAttributes,
+    const organizationTable = this.dynamoDB.createTable(organizationTableName, {
+      partitionKey: {
+        name: 'OrganizationId',
+        type: AttributeType.STRING,
       },
-      this.props.devEnv,
-    );
+      lsi: baseLSIAttributes,
+    });
     this.dynamoDBTables.set(organizationTableName, organizationTable);
 
     // Laboratory table
     const laboratoryTableName = `${this.props.namePrefix}-laboratory-table`;
-    const laboratoryTable = this.dynamoDB.createTable(
-      laboratoryTableName,
-      {
-        partitionKey: {
-          name: 'OrganizationId',
-          type: AttributeType.STRING,
-        },
-        sortKey: {
-          name: 'LaboratoryId',
-          type: AttributeType.STRING,
-        },
-        gsi: [
-          {
-            partitionKey: {
-              name: 'LaboratoryId', // Global Secondary Index to support REST API get / update / delete requests
-              type: AttributeType.STRING,
-            },
-          },
-        ],
-        lsi: baseLSIAttributes,
+    const laboratoryTable = this.dynamoDB.createTable(laboratoryTableName, {
+      partitionKey: {
+        name: 'OrganizationId',
+        type: AttributeType.STRING,
       },
-      this.props.devEnv,
-    );
+      sortKey: {
+        name: 'LaboratoryId',
+        type: AttributeType.STRING,
+      },
+      gsi: [
+        {
+          partitionKey: {
+            name: 'LaboratoryId', // Global Secondary Index to support REST API get / update / delete requests
+            type: AttributeType.STRING,
+          },
+        },
+      ],
+      lsi: baseLSIAttributes,
+    });
     this.dynamoDBTables.set(laboratoryTableName, laboratoryTable);
 
     // User table
     const userTableName = `${this.props.namePrefix}-user-table`;
-    const userTable = this.dynamoDB.createTable(
-      userTableName,
-      {
-        partitionKey: {
-          name: 'UserId',
-          type: AttributeType.STRING,
-        },
-        gsi: [
-          {
-            partitionKey: {
-              name: 'Email', // Global Secondary Index to support lookup by Email requests
-              type: AttributeType.STRING,
-            },
-          },
-        ],
-        lsi: baseLSIAttributes,
+    const userTable = this.dynamoDB.createTable(userTableName, {
+      partitionKey: {
+        name: 'UserId',
+        type: AttributeType.STRING,
       },
-      this.props.devEnv,
-    );
+      gsi: [
+        {
+          partitionKey: {
+            name: 'Email', // Global Secondary Index to support lookup by Email requests
+            type: AttributeType.STRING,
+          },
+        },
+      ],
+      lsi: baseLSIAttributes,
+    });
     this.dynamoDBTables.set(userTableName, userTable);
 
     // Organization User table
     const organizationUserTableName = `${this.props.namePrefix}-organization-user-table`;
-    const organizationUserTable = this.dynamoDB.createTable(
-      organizationUserTableName,
-      {
-        partitionKey: {
-          name: 'OrganizationId', // UUID
-          type: AttributeType.STRING,
-        },
-        sortKey: {
-          name: 'UserId', // UUID
-          type: AttributeType.STRING,
-        },
-        gsi: [
-          {
-            partitionKey: {
-              name: 'UserId', // Global Secondary Index to support Organization lookup by UserId requests
-              type: AttributeType.STRING,
-            },
-          },
-        ],
-        lsi: baseLSIAttributes,
+    const organizationUserTable = this.dynamoDB.createTable(organizationUserTableName, {
+      partitionKey: {
+        name: 'OrganizationId', // UUID
+        type: AttributeType.STRING,
       },
-      this.props.devEnv,
-    );
+      sortKey: {
+        name: 'UserId', // UUID
+        type: AttributeType.STRING,
+      },
+      gsi: [
+        {
+          partitionKey: {
+            name: 'UserId', // Global Secondary Index to support Organization lookup by UserId requests
+            type: AttributeType.STRING,
+          },
+        },
+      ],
+      lsi: baseLSIAttributes,
+    });
     this.dynamoDBTables.set(organizationUserTableName, organizationUserTable);
 
     // Laboratory User table
     const laboratoryUserTableName = `${this.props.namePrefix}-laboratory-user-table`;
-    const laboratoryUserTable = this.dynamoDB.createTable(
-      laboratoryUserTableName,
-      {
-        partitionKey: {
-          name: 'LaboratoryId',
-          type: AttributeType.STRING,
-        },
-        sortKey: {
-          name: 'UserId',
-          type: AttributeType.STRING,
-        },
-        gsi: [
-          {
-            partitionKey: {
-              name: 'UserId', // Global Secondary Index to support Laboratory lookup by UserId requests
-              type: AttributeType.STRING,
-            },
-          },
-          {
-            partitionKey: {
-              name: 'OrganizationId', // Global Secondary Index to support lookup by OrganizationId requests
-              type: AttributeType.STRING,
-            },
-          },
-        ],
-        lsi: baseLSIAttributes,
+    const laboratoryUserTable = this.dynamoDB.createTable(laboratoryUserTableName, {
+      partitionKey: {
+        name: 'LaboratoryId',
+        type: AttributeType.STRING,
       },
-      this.props.devEnv,
-    );
+      sortKey: {
+        name: 'UserId',
+        type: AttributeType.STRING,
+      },
+      gsi: [
+        {
+          partitionKey: {
+            name: 'UserId', // Global Secondary Index to support Laboratory lookup by UserId requests
+            type: AttributeType.STRING,
+          },
+        },
+        {
+          partitionKey: {
+            name: 'OrganizationId', // Global Secondary Index to support lookup by OrganizationId requests
+            type: AttributeType.STRING,
+          },
+        },
+      ],
+      lsi: baseLSIAttributes,
+    });
     this.dynamoDBTables.set(laboratoryUserTableName, laboratoryUserTable);
 
     // Laboratory Run table
     const laboratoryRunTableName = `${this.props.namePrefix}-laboratory-run-table`;
-    const laboratoryRunTable = this.dynamoDB.createTable(
-      laboratoryRunTableName,
-      {
-        partitionKey: {
-          name: 'LaboratoryId',
-          type: AttributeType.STRING,
-        },
-        sortKey: {
-          name: 'RunId',
-          type: AttributeType.STRING,
-        },
-        gsi: [
-          {
-            partitionKey: {
-              name: 'RunId', // Global Secondary Index to support Laboratory lookup by RunId requests
-              type: AttributeType.STRING,
-            },
-          },
-          {
-            partitionKey: {
-              name: 'UserId', // Global Secondary Index to support Laboratory lookup by UserId requests
-              type: AttributeType.STRING,
-            },
-          },
-          {
-            partitionKey: {
-              name: 'OrganizationId', // Global Secondary Index to support lookup by OrganizationId requests
-              type: AttributeType.STRING,
-            },
-          },
-        ],
-        lsi: baseLSIAttributes,
+    const laboratoryRunTable = this.dynamoDB.createTable(laboratoryRunTableName, {
+      partitionKey: {
+        name: 'LaboratoryId',
+        type: AttributeType.STRING,
       },
-      this.props.devEnv,
-    );
+      sortKey: {
+        name: 'RunId',
+        type: AttributeType.STRING,
+      },
+      gsi: [
+        {
+          partitionKey: {
+            name: 'RunId', // Global Secondary Index to support Laboratory lookup by RunId requests
+            type: AttributeType.STRING,
+          },
+        },
+        {
+          partitionKey: {
+            name: 'UserId', // Global Secondary Index to support Laboratory lookup by UserId requests
+            type: AttributeType.STRING,
+          },
+        },
+        {
+          partitionKey: {
+            name: 'OrganizationId', // Global Secondary Index to support lookup by OrganizationId requests
+            type: AttributeType.STRING,
+          },
+        },
+      ],
+      lsi: baseLSIAttributes,
+    });
     this.dynamoDBTables.set(laboratoryRunTableName, laboratoryRunTable);
 
     // Unique-Reference table
     const uniqueReferenceTableName = `${this.props.namePrefix}-unique-reference-table`;
-    const uniqueReferenceTable = this.dynamoDB.createTable(
-      uniqueReferenceTableName,
-      {
-        partitionKey: {
-          name: 'Value',
-          type: AttributeType.STRING,
-        },
-        sortKey: {
-          name: 'Type',
-          type: AttributeType.STRING,
-        },
+    const uniqueReferenceTable = this.dynamoDB.createTable(uniqueReferenceTableName, {
+      partitionKey: {
+        name: 'Value',
+        type: AttributeType.STRING,
       },
-      this.props.devEnv,
-    );
+      sortKey: {
+        name: 'Type',
+        type: AttributeType.STRING,
+      },
+    });
     this.dynamoDBTables.set(uniqueReferenceTableName, uniqueReferenceTable);
   };
 }

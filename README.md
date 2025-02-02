@@ -189,23 +189,30 @@ obtain the Easy Genomics project source code and install the project dependencie
 
    easy-genomics:
       configurations:
-         - demo: # Unique 'env-name' identifier for the following collection of configuration settings (e.g. dev, uat, demo, prod)
-            # Shared settings common to Back-End and Front-End sub-packages
+         - demo: ## Unique 'env-name' identifier for the following collection of configuration settings (e.g. dev, uat, demo, prod)
+            ## Shared settings common to Back-End and Front-End sub-packages
             aws-account-id: '123456789' # e.g. '123456789'
             aws-region: 'us-east-1' # e.g. 'us-east-1'
-            env-type: 'dev' # e.g. 'dev' | 'pre-prod' | 'prod'; only 'dev' env-type can have AWS CloudFormation resources destroyed
+            env-type: 'dev' # 'dev' | 'pre-prod' | 'prod'; only 'dev' and 'pre-prod' can have AWS CloudFormation resources destroyed
             app-domain-name: 'demo.easy-genomics.mycompany.com' # e.g. demo.easy-genomics.myinstitution.org
-            # The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
+            ## The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
             aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
             aws-certificate-arn: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
 
             # Back-End specific settings
             back-end:
+               jwt-secret-key: # Optional: If undefined, a random value will be generated on deployment for JWT Signature
+               seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+               ## The System Admin account is required
                sys-admin-email: 'sysadmin@easygenomics.org' # Replace with your institution's preferred System Admin account
                sys-admin-password: # System Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
-               org-admin-email: 'admin@easygenomics.org' # Replace with your institution's preferred Admin account
-               org-admin-password: # Admin Password - must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
-               seqera-api-base-url: # Optional: Update for self-hosted Seqera API Base URL; if unspecified this defaults to 'https://api.cloud.seqera.io'
+               ## Optional: The following user accounts are only seeded for 'dev' and 'pre-prod' environments for testing purposes
+               #org-admin-email: 'admin@easygenomics.org'
+               #org-admin-password: '' # Admin Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               #lab-manager-email: 'lab.manager@easygenomics.org'
+               #lab-manager-password: '' # Lab Admin Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
+               #lab-technician-email: 'lab.technician@easygenomics.org'
+               #lab-technician-password: '' # Lab Technician Password - if set, must be minimum 8 chars long and contain: 1 number, 1 special char, 1 uppercase letter, 1 lowercase letter
    ```
 
    - Please consult the

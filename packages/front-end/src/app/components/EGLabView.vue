@@ -32,14 +32,14 @@
   const uiStore = useUiStore();
   const userStore = useUserStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
-  const labRunsStore = useLabRunsStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
 
   const { stringSortCompare } = useSort();
 
   const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
-  const omicsWorkflows = ref<OmicsWorkflow[]>([]);
+  const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
@@ -58,7 +58,7 @@
   type LaboratoryRunTableItem = LaboratoryRun & { lastUpdated: string };
 
   const combinedRuns = computed<LaboratoryRunTableItem[]>(() =>
-    labRunsStore.labRunsForLab(props.labId).map((labRun) => ({
+    runStore.labRunsForLab(props.labId).map((labRun) => ({
       ...labRun,
       lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
     })),
@@ -169,7 +169,7 @@
    */
   onBeforeMount(async () => {
     await loadLabData();
-    await fetchLaboratoryRuns();
+    await pollFetchLaboratoryRuns();
   });
 
   function setTabIndex() {
@@ -191,16 +191,6 @@
       clearTimeout(intervalId);
     }
   });
-
-  async function pollFetchSeqeraRuns() {
-    await getSeqeraRuns();
-    intervalId = window.setTimeout(pollFetchSeqeraRuns, 2 * 60 * 1000);
-  }
-
-  async function pollFetchOmicsRuns() {
-    await getOmicsRuns();
-    intervalId = window.setTimeout(pollFetchOmicsRuns, 2 * 60 * 1000);
-  }
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -322,11 +312,15 @@
     }
   }
 
-  // this anticipates these store values being needed on run click
+  async function pollFetchLaboratoryRuns() {
+    await fetchLaboratoryRuns();
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, 2 * 60 * 1000);
+  }
+
   async function fetchLaboratoryRuns(): Promise<void> {
     uiStore.setRequestPending('loadLabRuns');
     try {
-      await labRunsStore.loadLabRunsForLab(props.labId);
+      await runStore.loadLabRunsForLab(props.labId);
     } finally {
       uiStore.setRequestComplete('loadLabRuns');
     }
@@ -346,13 +340,7 @@
   async function getOmicsWorkflows(): Promise<void> {
     useUiStore().setRequestPending('getOmicsWorkflows');
     try {
-      const res = await $api.omicsWorkflows.list(props.labId);
-
-      if (res.items === undefined) {
-        throw new Error('response did not contain omics workflows');
-      }
-
-      omicsWorkflows.value = res.items;
+      await omicsWorkflowsStore.loadWorkflowsForLab(props.labId);
     } catch (error) {
       console.error('Error retrieving pipelines', error);
     } finally {
@@ -360,6 +348,7 @@
     }
   }
 
+  // this anticipates these store values being needed on run click
   async function getSeqeraRuns(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraRuns');
     try {
@@ -371,6 +360,7 @@
     }
   }
 
+  // this anticipates these store values being needed on run click
   async function getOmicsRuns(): Promise<void> {
     useUiStore().setRequestPending('getOmicsRuns');
     try {
@@ -401,9 +391,6 @@
   }
 
   function viewRunOmicsWorkflow(workflow: OmicsWorkflow) {
-    useToastStore().info('Running HealthOmics Workflows is not yet implemented');
-    return;
-
     $router.push({
       path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
       query: {
@@ -477,14 +464,14 @@
         // fetch the Seqera stuff
         missingPAT.value = false;
         promises.push(getSeqeraPipelines());
-        promises.push(pollFetchSeqeraRuns());
+        promises.push(getSeqeraRuns());
       }
     }
 
     if (lab.AwsHealthOmicsEnabled) {
       // fetch the Omics stuff
       promises.push(getOmicsWorkflows());
-      promises.push(pollFetchOmicsRuns());
+      promises.push(getOmicsRuns());
     }
 
     await Promise.all(promises);

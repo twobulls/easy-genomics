@@ -143,7 +143,8 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
 
       // ** Check if files are successfully uploaded
       await page.waitForLoadState('networkidle');
-      //await expect(page.getByText('Files uploaded successfully').nth(0)).toBeVisible();
+      //await expect(page.getByText('Files uploaded successfully').nth(0)).toBeVisible();  //temporily disabling due to timing issues
+
       // ** Check if Download Sample Sheet button is enabled
       await expect(page.getByRole('button', { name: 'Download sample sheet' })).toBeEnabled();
 
@@ -254,9 +255,13 @@ test('08 - Check Run Details', async ({ page, baseURL }) => {
     await page.waitForLoadState('networkidle');
 
     // Go to Run Details
-    await page.getByRole('row', { name: runNameVar }).locator('button').click();
+    await page
+      .getByRole('row', { name: runNameVar })
+      .filter({ has: page.locator('button')})
+      .locator('button')
+    .click();
     await page.getByRole('menuitem', { name: 'View Details' }).click();
-    await page.waitForTimeout(5 * 2000);
+    await page.waitForTimeout(5000);
 
     // Check Run Name and other details
     await expect(page.getByText(runNameVar).nth(0)).toBeVisible(); // Run name as title
@@ -266,12 +271,11 @@ test('08 - Check Run Details', async ({ page, baseURL }) => {
     await expect(page.getByText(seqeraPipeline).nth(1)).toBeVisible(); // Pipeline name in the details section
     await expect(page.getByText('Seqera Cloud')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Download' })).toBeEnabled();
-    // const email = envConfig.labManagerEmail || ‘’;
     await expect(page.getByText(envConfig.labManagerEmail)).toBeVisible(); // Owner
   }
 });
 
-test('09 - Check File Manager if files exists', async ({ page, baseURL }) => {
+test('09 - Check File Manager if files exist', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
 
@@ -291,8 +295,12 @@ test('09 - Check File Manager if files exists', async ({ page, baseURL }) => {
     await page.getByRole('tab', { name: 'Lab Runs' }).click();
     await page.waitForLoadState('networkidle');
 
-    // Go to Run Details
-    await page.getByRole('row', { name: runNameVar }).locator('button').click();
+    // Go to File Manager
+    await page
+      .getByRole('row', { name: runNameVar })
+      .filter({ has: page.locator('button')})
+      .locator('button')
+    .click();
     await page.getByRole('menuitem', { name: 'View Details' }).click();
     await page.getByRole('tab', { name: 'File Manager' }).click();
     await page.waitForTimeout(5 * 2000);

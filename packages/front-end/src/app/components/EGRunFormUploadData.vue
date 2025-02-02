@@ -385,8 +385,8 @@
   const { isOnline } = useNetwork();
 
   // Network timeout in milliseconds (15 seconds)
-  const UPLOAD_TIMEOUT = 15000;
-  const UPLOAD_RETRY_DELAY = 1000; // 1 second delay before retry
+  const UPLOAD_TIMEOUT = 600000; // 10 mins
+  const UPLOAD_RETRY_DELAY = 3000; // 3 second delay helps prevent immediate retry spam and gives time for temporary network issues to resolve
 
   /**
    * Handles the process of uploading multiple files, tracks their progress, and manages upload results.
@@ -407,33 +407,38 @@
    * - For other failures, displays specific error messages for individual files or a summary for multiple failed files.
    */
   async function uploadFiles(): Promise<UploadError[]> {
-    uploadStatus.value = 'uploading';
-    const errors: UploadError[] = [];
-
     try {
-      const uploadPromises = filePairs.value.flatMap((pair) => {
-        const promises = [];
-        if (pair.r1File) promises.push(uploadFile(pair.r1File));
-        if (pair.r2File) promises.push(uploadFile(pair.r2File));
-        return promises;
-      });
+      const uploadPromises = Object.values(filesToUpload.value).map((fileDetails) =>
+        uploadFile(fileDetails)
+          .then(() => null)
+          .catch((error) => ({
+            fileName: fileDetails.fileName,
+            error: error.message,
+          })),
+      );
 
       const results = await Promise.allSettled(uploadPromises);
-      const failedUploads = results.filter((result) => result.status === 'rejected');
+      const errors = results
+        .map((result) => (result.status === 'rejected' ? result.reason : result.value))
+        .filter((error): error is UploadError => error !== null);
 
-      if (failedUploads.length > 0) {
-        uploadStatus.value = 'failed';
-        canProceed.value = false;
-      } else {
-        uploadStatus.value = 'success';
-        canProceed.value = areAllFilesUploaded.value;
+      // Show network error toast only once if any file failed due to network
+      if (errors.some((error) => error.error === 'Network connection lost')) {
+        toastStore.error('Upload aborted: Network connection lost');
+      }
+      // Show other error toasts as needed
+      else if (errors.length > 0) {
+        if (errors.length === 1) {
+          toastStore.error(`Upload failed for ${errors[0].fileName}`);
+        } else {
+          toastStore.error(`Upload failed for ${errors.length} files`);
+        }
       }
 
       return errors;
     } catch (error) {
-      uploadStatus.value = 'failed';
-      canProceed.value = false;
-      throw error;
+      console.error('Error in uploadFiles:', error);
+      return [];
     }
   }
 
@@ -450,74 +455,67 @@
    * - Handles network errors, rejecting with a detailed error message.
    * - Logs any upload errors to the console for debugging purposes.
    */
+
   async function uploadFile(fileDetails: FileDetails): Promise<void> {
     if (!fileDetails.url) {
       throw new Error('No upload URL provided');
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, UPLOAD_TIMEOUT);
+
     // Check network connection before starting upload
     if (!isOnline.value) {
-      fileDetails.error = 'No internet connection. Waiting for connection to resume...';
+      clearTimeout(timeoutId);
+      fileDetails.error = 'No internet connection available';
       throw new Error('No internet connection available');
     }
 
-    // Create new abort controller for this upload
-    const controller = new AbortController();
-    uploadControllers.value[fileDetails.name] = controller;
-
-    // Create a timeout to abort the upload if it takes too long
-    const timeoutId = setTimeout(() => {
-      if (fileDetails.percentage < 100) {
-        controller.abort();
-      }
-    }, UPLOAD_TIMEOUT);
+    // Watch for network drops
+    const unwatch = watch(
+      isOnline,
+      (online) => {
+        if (!online) {
+          // Immediately abort the upload and show error
+          fileDetails.error = 'Network connection lost. Upload aborted.';
+          controller.abort();
+          unwatch();
+        }
+      },
+      { flush: 'sync' },
+    );
 
     try {
       const response = await axios.put(fileDetails.url, fileDetails.file, {
         signal: controller.signal,
         onUploadProgress: (progressEvent) => {
           if (progressEvent.total) {
-            fileDetails.progress = progressEvent.loaded;
-            fileDetails.percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-
-            // Reset timeout if we're making progress
-            clearTimeout(timeoutId);
-            if (fileDetails.percentage < 100) {
-              setTimeout(() => controller.abort(), UPLOAD_TIMEOUT);
-            }
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            fileDetails.progress = progress;
+            fileDetails.percentage = progress;
           }
         },
-        timeout: UPLOAD_TIMEOUT,
       });
 
       clearTimeout(timeoutId);
-      delete uploadControllers.value[fileDetails.name];
+      unwatch();
       return response.data;
     } catch (error: any) {
       clearTimeout(timeoutId);
-      delete uploadControllers.value[fileDetails.name];
+      unwatch();
 
-      if (error.name === 'AbortError' || error.code === 'ECONNABORTED') {
-        fileDetails.error = 'Upload stalled. Please check your internet connection.';
-        throw new Error('Upload timeout - connection too slow or interrupted');
-      } else if (error.message === 'Network Error' || !isOnline.value) {
-        fileDetails.error = 'Connection lost. Will retry when network is available...';
-
-        // Wait for network to come back using VueUse's isOnline
-        await new Promise((resolve) => {
-          const unwatch = watch(isOnline, (online) => {
-            if (online) {
-              unwatch();
-              resolve(true);
-            }
-          });
-        });
-
+      if (error.name === 'AbortError' || error.message === 'Network Error' || !isOnline.value) {
+        fileDetails.error = 'Network connection lost. Upload aborted.';
+        // Remove toast from here
         throw new Error('Network connection lost');
       }
 
       fileDetails.error = 'Upload failed. Please try again.';
-      throw error;
+      // Keep this toast as it's specific to the file
+      toastStore.error('Upload failed. Please try again.');
+      throw new Error('Upload failed. Please try again.');
     }
   }
 
@@ -576,17 +574,6 @@
       return true;
     });
   };
-
-  function showLoadingSpinner(progress: number): boolean {
-    return uploadStatus.value === 'uploading' && progress < 100;
-  }
-
-  function formatProgress(progress: number): string {
-    if (progress === 0) {
-      return '0';
-    }
-    return progress.toString().padStart(2, '0');
-  }
 
   // Temporary method to simulate upload failure
   const simulateUploadFailure = () => {
@@ -720,9 +707,16 @@
           </div>
           <div class="file-cell flex w-[10%] items-center justify-end gap-2">
             <template v-if="row.error">
-              <button class="mr-2 text-gray-900 hover:text-gray-700" @click="retryUpload(row)">
+              <button
+                class="mr-2"
+                :class="[isOnline ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
+                @click="retryUpload(row)"
+                :disabled="!isOnline.value"
+                :title="isOnline.value ? 'Retry upload' : 'Cannot retry while offline'"
+              >
                 <UIcon name="i-heroicons-arrow-path" size="20" />
               </button>
+
               <button class="text-alert-danger hover:text-alert-danger/80" @click="removeFile(row)">
                 <UIcon name="i-heroicons-trash" size="20" />
               </button>

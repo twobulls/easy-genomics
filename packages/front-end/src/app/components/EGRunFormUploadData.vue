@@ -407,7 +407,7 @@
 
       // Show network error toast only once if any file failed due to network
       if (errors.some((error) => error.error === 'Network connection lost')) {
-        toastStore.error('Upload aborted: Network connection lost');
+        toastStore.error('Network error - please check your connection and try again');
         uploadStatus.value = 'failed'; // Set failed status for network errors
       }
       // Show other error toasts as needed

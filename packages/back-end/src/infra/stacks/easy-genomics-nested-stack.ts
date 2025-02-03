@@ -2,6 +2,7 @@ import { Duration, NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
@@ -209,6 +210,21 @@ export class EasyGenomicsNestedStack extends NestedStack {
       awsHostedZoneId: this.props.awsHostedZoneId,
       emailSender: `no.reply@${this.props.appDomainName}`,
     });
+
+    // Nag Suppressions
+    NagSuppressions.addResourceSuppressions(
+      this,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Need access to all organisation and laboratory nf token parameters',
+          appliesTo: [
+            `Resource::arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+          ], // optional
+        },
+      ],
+      true,
+    );
   }
 
   // Easy Genomics specific IAM policies

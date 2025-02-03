@@ -18,6 +18,7 @@
   const { $api } = useNuxtApp();
   const router = useRouter();
   const { resendInvite, labsCount } = useUser();
+  const userStore = useUserStore();
 
   const disabledButtons = ref<Record<number, boolean>>({});
   const buttonRequestPending = ref<Record<number, boolean>>({});
@@ -93,7 +94,7 @@
       ],
     ];
 
-    if (props.superuser) {
+    if (userStore.canRemoveOrgUsers()) {
       items.push([
         {
           label: 'Remove From Org',

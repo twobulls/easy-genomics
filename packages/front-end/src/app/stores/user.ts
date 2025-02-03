@@ -155,6 +155,9 @@ const useUserStore = defineStore('userStore', {
       (labId: string): boolean =>
         useUserStore().canAddLabUsersForOrg(state.currentOrg.OrganizationId, labId),
 
+    canRemoveOrgUsers: (state: UserStoreState) => (): boolean =>
+      state.currentUserPermissions.isSuperuser || useUserStore().isOrgAdminForOrg(state.currentOrg.OrganizationId),
+
     // user details
 
     currentUserDisplayName: (_state: UserStoreState): string => {

@@ -1,7 +1,6 @@
 import { FileDownloadResponse } from '@/packages/shared-lib/src/app/types/nf-tower/file/request-file-download';
 import axios from 'axios';
 import { saveAs } from 'file-saver';
-import { Ref } from '.nuxt/imports';
 
 export default function useFileDownload() {
   const { $api } = useNuxtApp();

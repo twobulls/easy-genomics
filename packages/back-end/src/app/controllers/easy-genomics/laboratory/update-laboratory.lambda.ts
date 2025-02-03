@@ -9,6 +9,7 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
 import {
   InvalidRequestError,
+  LaboratoryAccessTokenUnavailableError,
   LaboratoryNameTakenError,
   LaboratoryWorkspaceIdOrAccessTokenIncorrectError,
   RequiredIdNotFoundError,
@@ -49,6 +50,7 @@ export const handler: Handler = async (
     }
 
     if (
+      request.NextFlowTowerEnabled &&
       !(await validateExistingNextFlowIntegration(
         existing,
         request.NextFlowTowerWorkspaceId,
@@ -106,14 +108,18 @@ async function validateExistingNextFlowIntegration(
   accessToken?: string,
 ): Promise<boolean> {
   if (!accessToken || accessToken === '') {
-    const getNextFlowAccessToken: GetParameterCommandOutput = await ssmService.getParameter({
-      Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
-      WithDecryption: true,
-    });
-    if (!getNextFlowAccessToken.Parameter || !getNextFlowAccessToken.Parameter.Value) {
-      throw new InvalidRequestError();
+    try {
+      const getNextFlowAccessToken: GetParameterCommandOutput = await ssmService.getParameter({
+        Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
+        WithDecryption: true,
+      });
+      if (!getNextFlowAccessToken.Parameter || !getNextFlowAccessToken.Parameter.Value) {
+        throw new InvalidRequestError();
+      }
+      accessToken = getNextFlowAccessToken.Parameter.Value;
+    } catch (err: any) {
+      throw new LaboratoryAccessTokenUnavailableError('Could not find access token for lab');
     }
-    accessToken = getNextFlowAccessToken.Parameter.Value;
   }
 
   // Build Query Parameters for calling NextFlow Tower

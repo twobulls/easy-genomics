@@ -6,7 +6,6 @@ import { defineStore } from 'pinia';
 
 interface UserStoreState {
   currentOrg: {
-    // this is a temporary thing while there is no actual multi org handling
     OrganizationId: string | null;
   };
   currentUserPermissions: {
@@ -72,15 +71,18 @@ const useUserStore = defineStore('userStore', {
       (orgId: string, labId: string): boolean =>
         !!state.currentUserPermissions.orgPermissions?.[orgId]?.LaboratoryAccess?.[labId]?.LabManager,
 
-    // currently we don't have any granular org permission logic so this is it
-    // you can manage orgs if you're an admin of any org
-    canManageOrgsForOrg:
+    // the functions canManageAnyOrgs and canManageOrg are exceptions to the pattern of `canDoXyz(ForOrg)`
+
+    canManageAnyOrgs: (state: UserStoreState) => (): boolean =>
+      state.currentUserPermissions.isSuperuser ||
+      Object.values(state.currentUserPermissions.orgPermissions ?? {}).some(
+        (perms: OrganizationAccessDetails) => !!perms.OrganizationAdmin,
+      ),
+
+    canManageOrg:
       (state: UserStoreState) =>
-      (_orgId: string): boolean =>
-        state.currentUserPermissions.isSuperuser ||
-        Object.values(state.currentUserPermissions.orgPermissions ?? {}).some(
-          (perms: OrganizationAccessDetails) => !!perms.OrganizationAdmin,
-        ),
+      (orgId: string): boolean =>
+        state.currentUserPermissions.isSuperuser || useUserStore().isOrgAdminForOrg(orgId),
 
     canCreateLabForOrg:
       (_state: UserStoreState) =>
@@ -127,9 +129,6 @@ const useUserStore = defineStore('userStore', {
       (state: UserStoreState) =>
       (labId: string): boolean =>
         useUserStore().isLabManagerForOrg(state.currentOrg.OrganizationId, labId),
-
-    canManageOrgs: (state: UserStoreState) => (): boolean =>
-      useUserStore().canManageOrgsForOrg(state.currentOrg.OrganizationId),
 
     canCreateLab: (state: UserStoreState) => (): boolean =>
       useUserStore().canCreateLabForOrg(state.currentOrg.OrganizationId),

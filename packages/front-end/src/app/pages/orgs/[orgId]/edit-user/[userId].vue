@@ -2,13 +2,16 @@
   const $router = useRouter();
   const $route = useRoute();
 
-  if (!useUserStore().canManageOrgs()) {
+  const orgId = $route.params.orgId as string;
+  const userId = $route.params.userId as string;
+
+  if (!useUserStore().canManageOrg(orgId)) {
     $router.push({ path: '/' });
   }
 </script>
 
 <template>
-  <EGUserAccess :org-id="$route.params.orgId" :user-id="$route.params.userId" />
+  <EGUserAccess :org-id="orgId" :user-id="userId" />
 </template>
 
 <style scoped></style>

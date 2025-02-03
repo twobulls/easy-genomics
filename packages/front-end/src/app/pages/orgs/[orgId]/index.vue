@@ -2,13 +2,15 @@
   const $router = useRouter();
   const $route = useRoute();
 
-  if (!useUserStore().canManageOrgs()) {
+  const userStore = useUserStore();
+
+  const orgId = $route.params.orgId as string;
+
+  if (!userStore.canManageOrg(orgId)) {
     $router.push({ path: '/' });
   }
-
-  const orgId = $route.params.orgId;
 </script>
 
 <template>
-  <EGOrgView :org-id="orgId" />
+  <EGOrgView :org-id="orgId" :org-admin="userStore.isOrgAdminForOrg(orgId)" />
 </template>

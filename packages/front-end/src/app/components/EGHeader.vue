@@ -146,7 +146,7 @@
             Labs
           </ULink>
           <ULink
-            v-if="userStore.canManageOrgs()"
+            v-if="userStore.canManageAnyOrgs()"
             :to="orgsPath"
             inactive-class="text-body"
             active-class="text-primary-dark bg-primary-muted"

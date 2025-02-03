@@ -13,6 +13,7 @@
   const props = defineProps<{
     orgId: string;
     superuser?: boolean;
+    orgAdmin?: boolean;
   }>();
 
   const { $api } = useNuxtApp();
@@ -93,7 +94,7 @@
       ],
     ];
 
-    if (props.superuser) {
+    if (props.superuser || props.orgAdmin) {
       items.push([
         {
           label: 'Remove From Org',

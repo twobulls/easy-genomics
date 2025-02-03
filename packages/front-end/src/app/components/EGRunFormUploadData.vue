@@ -15,6 +15,8 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
+  import { WipSeqeraRunData } from '@FE/stores/run';
+  import { useNetwork } from '@vueuse/core';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -44,6 +46,7 @@
 
   const { $api } = useNuxtApp();
   const { downloadSampleSheet } = usePipeline($api);
+  const toastStore = useToastStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
@@ -66,13 +69,13 @@
   const isDropzoneActive = ref(false);
 
   // overall upload status for all files
-  const uploadStatus = ref('idle')<UploadStatus>;
+  const uploadStatus = ref<UploadStatus>('idle');
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
 
   const filesForTable = computed(() => {
-    const files: { sampleId: string; fileName: string; progress: number }[] = [];
+    const files: { sampleId: string; fileName: string; progress: number; error?: string }[] = [];
 
     filePairs.value.forEach((filePair: FilePair) => {
       if (filePair.r1File) {
@@ -80,6 +83,7 @@
           sampleId: filePair.sampleId,
           fileName: filePair.r1File.name,
           progress: filePair.r1File.percentage || 0,
+          error: filePair.r1File.error,
         });
       }
       if (filePair.r2File) {
@@ -87,6 +91,7 @@
           sampleId: filePair.sampleId,
           fileName: filePair.r2File.name,
           progress: filePair.r2File.percentage || 0,
+          error: filePair.r2File.error,
         });
       }
     });
@@ -98,11 +103,29 @@
 
   const isUploadButtonDisabled = computed(
     () =>
+      !isOnline.value ||
       !canUploadFiles.value ||
       uploadStatus.value === 'uploading' ||
       uploadStatus.value === 'success' ||
       canProceed.value,
   );
+
+  // Add a computed property to check if all files are successfully uploaded
+  const areAllFilesUploaded = computed(() => {
+    if (filePairs.value.length === 0) return false;
+
+    for (const pair of filePairs.value) {
+      // Check R1 file
+      if (!pair.r1File || pair.r1File.error || pair.r1File.percentage !== 100) {
+        return false;
+      }
+      // Check R2 file
+      if (!pair.r2File || pair.r2File.error || pair.r2File.percentage !== 100) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   function chooseFiles() {
     chooseFilesButton.value?.click();
@@ -126,12 +149,13 @@
       return;
     }
 
-    if (!e.target) {
+    const target = e.target as HTMLInputElement;
+    if (!target) {
       console.error('File input change event target not found');
       return;
     }
 
-    const files: FileList = e.target.files;
+    const files = target.files;
     if (!files) return;
 
     addFiles(files);
@@ -162,9 +186,6 @@
     let haveMatchingFilePairs = filePairs.value.length > 0;
 
     for (const filePair of filePairs.value) {
-      console.debug('Validating file pair:', filePair);
-      console.debug('R1 file:', filePair.r1File);
-      console.debug('R2 file:', filePair.r2File);
       if (!filePair.r1File || !filePair.r2File) {
         haveMatchingFilePairs = false;
         break;
@@ -172,13 +193,9 @@
     }
 
     canUploadFiles.value = haveMatchingFilePairs;
-
-    console.debug('Can upload files:', canUploadFiles.value);
   }
 
   function addFile(file: File) {
-    console.debug(`Adding file; name: ${file.name}; size: ${file.size} bytes`);
-
     if (file.size < MIN_FILE_SIZE) {
       const message = `File ${file.name} is too small: ${file.size} bytes`;
       useToastStore().error(message);
@@ -192,7 +209,6 @@
     }
 
     const isDuplicateFile = checkIsFileDuplicate(file);
-    console.debug(`Is ${file.name} duplicate: ${isDuplicateFile}`);
 
     if (isDuplicateFile) {
       const message = `File ${file.name} already exists`;
@@ -203,9 +219,6 @@
     const fileDetails = getFileDetails(file);
     filesToUpload.value.push(fileDetails);
     addFileToFilePairs(fileDetails);
-
-    console.debug('filesToUpload', toRaw(filesToUpload.value));
-    console.debug('filePairs', toRaw(filePairs.value));
   }
 
   function checkIsFileDuplicate(newFile: File): boolean {
@@ -255,7 +268,6 @@
 
   function toggleDropzoneActive() {
     isDropzoneActive.value = !isDropzoneActive.value;
-    console.debug('isDropzoneActive', toRaw(isDropzoneActive.value));
   }
 
   async function startUploadProcess() {
@@ -272,7 +284,7 @@
       s3Path: sampleSheetResponse.SampleSheetInfo.Path,
     });
 
-    canProceed.value = true;
+    canProceed.value = areAllFilesUploaded.value;
   }
 
   function getUploadedFilePairs(uploadManifest: FileUploadManifest): UploadedFilePairInfo[] {
@@ -306,8 +318,6 @@
       }
     });
 
-    console.debug('uploadedFilePairs:', uploadedFilePairs);
-
     return uploadedFilePairs;
   }
 
@@ -318,8 +328,6 @@
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
-    console.debug('Get CSV sample sheet response:', response);
-
     return response;
   }
 
@@ -338,11 +346,7 @@
       Files: files,
     };
 
-    console.debug('Get file upload manifest request:', request);
-
     const response = await $api.uploads.getFileUploadManifest(request);
-
-    console.debug('Get file upload manifest response:', response);
 
     return response;
   }
@@ -356,6 +360,15 @@
     });
   }
 
+  // Track ongoing upload requests
+  const uploadControllers = ref<{ [key: string]: AbortController }>({});
+
+  const { isOnline } = useNetwork();
+
+  // Network timeout in milliseconds (15 seconds)
+  const UPLOAD_TIMEOUT = 600000; // 10 mins
+  const UPLOAD_RETRY_DELAY = 3000; // 3 second delay helps prevent immediate retry spam and gives time for temporary network issues to resolve
+
   /**
    * Handles the process of uploading multiple files, tracks their progress, and manages upload results.
    *
@@ -367,48 +380,53 @@
    * - Collects detailed information about any failed uploads, including user-friendly error messages.
    * - Displays meaningful toast notifications for both successful and failed uploads:
    *   - Displays a success toast when all files are uploaded successfully.
-   *   - Displays specific error messages for network errors or generic messages for other failures.
+   *   - Displays specific error messages for network errors or generic messages for multiple failed files.
    * - Creates and submits a lab run request upon successful uploads.
    *
    * Toast Messaging:
    * - For network errors, displays a detailed user-friendly message.
    * - For other failures, displays specific error messages for individual files or a summary for multiple failed files.
    */
-  async function uploadFiles() {
-    const results = await Promise.allSettled(filesToUpload.value.map((fileDetails) => uploadFile(fileDetails)));
+  async function uploadFiles(): Promise<UploadError[]> {
+    uploadStatus.value = 'uploading'; // Start with uploading status
 
-    const failedUploads: UploadError[] = results
-      .map((result, index) => {
-        if (result.status === 'rejected') {
-          const fileDetails = filesToUpload.value[index];
-          return {
-            fileName: fileDetails.file.name,
-            error: result.reason.message,
-            code: result.reason.code,
-            userMessage: result.reason.userMessage, // Get the user message if it exists
-          };
+    try {
+      const uploadPromises = Object.values(filesToUpload.value).map((fileDetails) =>
+        uploadFile(fileDetails)
+          .then(() => null)
+          .catch((error) => ({
+            fileName: fileDetails.fileName,
+            error: error.message,
+          })),
+      );
+
+      const results = await Promise.allSettled(uploadPromises);
+      const errors = results
+        .map((result) => (result.status === 'rejected' ? result.reason : result.value))
+        .filter((error): error is UploadError => error !== null);
+
+      // Show network error toast only once if any file failed due to network
+      if (errors.some((error) => error.error === 'Network connection lost')) {
+        toastStore.error('Network error - please check your connection and try again');
+        uploadStatus.value = 'failed'; // Set failed status for network errors
+      }
+      // Show other error toasts as needed
+      else if (errors.length > 0) {
+        if (errors.length === 1) {
+          toastStore.error(`Upload failed for ${errors[0].fileName}`);
+        } else {
+          toastStore.error(`Upload failed for ${errors.length} files`);
         }
-        return null;
-      })
-      .filter((error): error is UploadError => error !== null);
+        uploadStatus.value = 'failed'; // Set failed status for other errors
+      } else {
+        uploadStatus.value = 'success'; // Set success status if no errors
+      }
 
-    if (failedUploads.length > 0) {
-      uploadStatus.value = 'failed';
-
-      // Check if there are any network errors and use their message
-      const networkError = failedUploads.find((f) => f.code === 'ERR_NETWORK');
-      const errorMessage = networkError
-        ? networkError.userMessage
-        : failedUploads.length === 1
-          ? `Failed to upload ${failedUploads[0].fileName}: ${failedUploads[0].error}`
-          : `Failed to upload ${failedUploads.length} files. Check console for details.`;
-
-      useToastStore().error(errorMessage);
-      return failedUploads;
+      return errors;
+    } catch (error) {
+      uploadStatus.value = 'failed'; // Set failed status for unexpected errors
+      return [];
     }
-
-    uploadStatus.value = 'success';
-    useToastStore().success('Files uploaded successfully');
   }
 
   /**
@@ -424,49 +442,125 @@
    * - Handles network errors, rejecting with a detailed error message.
    * - Logs any upload errors to the console for debugging purposes.
    */
-  async function uploadFile(fileDetails: FileDetails) {
-    const { file } = fileDetails;
+
+  async function uploadFile(fileDetails: FileDetails): Promise<void> {
+    if (!fileDetails.url) {
+      throw new Error('No upload URL provided');
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, UPLOAD_TIMEOUT);
+
+    // Check network connection before starting upload
+    if (!isOnline.value) {
+      clearTimeout(timeoutId);
+      fileDetails.error = 'No internet connection available';
+      throw new Error('No internet connection available');
+    }
+
+    // Watch for network drops
+    const unwatch = watch(
+      isOnline,
+      (online) => {
+        if (!online) {
+          // Immediately abort the upload and show error
+          fileDetails.error = 'Network connection lost. Upload aborted.';
+          controller.abort();
+          unwatch();
+        }
+      },
+      { flush: 'sync' },
+    );
 
     try {
-      const response = await axios.put(fileDetails.url!, file, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const response = await axios.put(fileDetails.url, fileDetails.file, {
+        signal: controller.signal,
         onUploadProgress: (progressEvent) => {
-          const progress = Math.round((progressEvent?.loaded / progressEvent?.total) * 100);
-          fileDetails.progress = progress;
-          fileDetails.percentage = progress;
+          if (progressEvent.total) {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            fileDetails.progress = progress;
+            fileDetails.percentage = progress;
+          }
         },
       });
 
-      return response;
+      clearTimeout(timeoutId);
+      unwatch();
+      return response.data;
     } catch (error: any) {
-      if (error.code === 'ERR_NETWORK') {
-        fileDetails.error = 'Network error';
-        return Promise.reject({
-          message: 'Network error',
-          code: 'ERR_NETWORK',
-          fileName: file.name,
-          userMessage: 'Network error - please check your connection and try again',
-        });
+      clearTimeout(timeoutId);
+      unwatch();
+
+      if (error.name === 'AbortError' || error.message === 'Network Error' || !isOnline.value) {
+        fileDetails.error = 'Network connection lost. Upload aborted.';
+        // Remove toast from here
+        throw new Error('Network connection lost');
       }
 
-      fileDetails.error = error.message || 'Failed to upload';
-      fileDetails.percentage = 0;
-
-      console.error('Error uploading file:', {
-        fileName: file.name,
-        error: error.message,
-        code: error.code,
-      });
-
-      return Promise.reject({
-        message: error.message || 'Failed to upload',
-        code: error.code,
-        fileName: file.name,
-      });
+      fileDetails.error = 'Upload failed. Please try again.';
+      // Keep this toast as it's specific to the file
+      toastStore.error('Upload failed. Please try again.');
+      throw new Error('Upload failed. Please try again.');
     }
   }
+
+  // Cancel upload for a specific file
+  const cancelUpload = (fileName: string) => {
+    const controller = uploadControllers.value[fileName];
+    if (controller) {
+      controller.abort();
+      delete uploadControllers.value[fileName];
+    }
+  };
+
+  const retryUpload = async (file: { sampleId: string; fileName: string }) => {
+    // Find the file in filePairs
+    let fileToRetry: FileDetails | undefined;
+
+    for (const pair of filePairs.value) {
+      if (pair.r1File?.name === file.fileName) {
+        pair.r1File.error = undefined;
+        pair.r1File.percentage = 0;
+        fileToRetry = pair.r1File;
+        break;
+      }
+      if (pair.r2File?.name === file.fileName) {
+        pair.r2File.error = undefined;
+        pair.r2File.percentage = 0;
+        fileToRetry = pair.r2File;
+        break;
+      }
+    }
+
+    if (fileToRetry) {
+      try {
+        // Get fresh upload URL
+        const manifest = await getUploadFilesManifest();
+        const fileInfo = manifest.Files.find((f) => f.Name === fileToRetry!.name);
+        if (fileInfo) {
+          fileToRetry.url = fileInfo.S3Url;
+          await uploadFile(fileToRetry);
+          // Update canProceed after successful retry
+          canProceed.value = areAllFilesUploaded.value;
+        }
+      } catch (error: any) {
+        toastStore.error(`Failed to retry upload`);
+        canProceed.value = false;
+      }
+    }
+  };
+
+  const removeFile = (file: { sampleId: string; fileName: string }) => {
+    // Remove the file from filePairs
+    filePairs.value = filePairs.value.filter((pair) => {
+      if (pair.r1File?.name === file.fileName || pair.r2File?.name === file.fileName) {
+        return false;
+      }
+      return true;
+    });
+  };
 
   watch(canProceed, (val) => {
     emit('step-validated', val);
@@ -554,22 +648,54 @@
           :key="row.fileName"
           class="file-row"
           :style="{
-            background:
-              row.progress === 100
+            background: row.error
+              ? '#FFF2F0'
+              : row.progress === 100
                 ? '#E2FBE8'
                 : row.progress > 0
                   ? `linear-gradient(to right, #E2FBE8 ${row.progress}%, transparent ${Math.min(row.progress + 10, 100)}%), #f7f7f7`
                   : '#f7f7f7',
           }"
         >
-          <div class="file-cell sample-id text-body w-[30%]">{{ row.sampleId }}</div>
-          <div class="file-cell w-[60%]" :style="{ color: row.progress === 100 ? '#306239' : 'inherit' }">
+          <div class="file-cell sample-id text-body w-[30%]">
+            <span v-if="!row.error">{{ row.sampleId }}</span>
+            <span v-else class="text-alert-danger-dark mr-1 font-medium">(Upload Failed)</span>
+          </div>
+          <div
+            class="file-cell flex w-[60%] items-center"
+            :style="{ color: row.progress === 100 ? '#306239' : 'inherit' }"
+          >
+            <template v-if="row.error">
+              <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
+            </template>
             {{ row.fileName }}
           </div>
-          <div v-if="row.progress === 100" class="file-cell text-alert-success-text flex w-[10%] justify-end">
-            <UIcon size="20" name="i-heroicons-check" />
+          <div class="file-cell flex w-[10%] items-center justify-end gap-2">
+            <template v-if="row.error">
+              <button
+                class="mr-2"
+                :class="[isOnline ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
+                @click="retryUpload(row)"
+                :disabled="!isOnline.value"
+                :title="isOnline.value ? 'Retry upload' : 'Cannot retry while offline'"
+              >
+                <UIcon name="i-heroicons-arrow-path" size="20" />
+              </button>
+
+              <button class="text-alert-danger hover:text-alert-danger/80" @click="removeFile(row)">
+                <UIcon name="i-heroicons-trash" size="20" />
+              </button>
+            </template>
+            <UIcon
+              v-else-if="row.progress === 100"
+              size="20"
+              name="i-heroicons-check"
+              class="text-alert-success-text"
+            />
+            <button v-else class="text-gray-500 hover:text-gray-700" @click="cancelUpload(row.fileName)">
+              <UIcon name="i-heroicons-x" size="20" />
+            </button>
           </div>
-          <div v-else class="file-cell w-[10%]"></div>
         </div>
       </div>
     </div>

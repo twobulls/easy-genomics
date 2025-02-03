@@ -142,10 +142,10 @@
     [{ label: 'Run', click: () => viewRunOmicsWorkflow(workflow) }],
   ];
 
-  function viewRunDetails(run: LaboratoryRun) {
+  function viewRunDetails(run: LaboratoryRun, tab: string = 'Run Details') {
     $router.push({
       path: `/labs/${props.labId}/run/${run.RunId}`,
-      query: { tab: 'Run Details' },
+      query: { tab },
     });
   }
 
@@ -155,7 +155,10 @@
   }
 
   function runsActionItems(run: LaboratoryRun): object[] {
-    const buttons: object[][] = [[{ label: 'View Details', click: () => viewRunDetails(run) }]];
+    const buttons: object[][] = [
+      [{ label: 'View Details', click: () => viewRunDetails(run) }],
+      [{ label: 'View Files', click: () => viewRunDetails(run, 'File Manager') }],
+    ];
 
     if (['SUBMITTED', 'RUNNING'].includes(run.Status)) {
       buttons.push([{ label: 'Cancel Run', click: () => initCancelRun(run), isHighlighted: true }]);

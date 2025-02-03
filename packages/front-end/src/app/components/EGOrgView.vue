@@ -28,9 +28,9 @@
   const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
 
   // Dynamic remove user dialog values
-  const isOpen = ref(false);
-  const primaryMessage = ref('');
-  const selectedUserId = ref('');
+  const isRemoveUserModalOpen = ref(false);
+  const removeUserModalPrimaryMessage = ref('');
+  const userToRemoveId = ref('');
   const isRemovingUser = ref(false);
 
   // Table-related refs and computed props
@@ -99,9 +99,9 @@
           label: 'Remove From Org',
           class: 'text-alert-danger-dark',
           click: () => {
-            selectedUserId.value = user.UserId;
-            primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${org.value.Name}?`;
-            isOpen.value = true;
+            userToRemoveId.value = user.UserId;
+            removeUserModalPrimaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${org.value.Name}?`;
+            isRemoveUserModalOpen.value = true;
           },
         },
       ]);
@@ -135,18 +135,18 @@
   });
 
   async function handleRemoveOrgUser() {
-    isOpen.value = false;
+    isRemoveUserModalOpen.value = false;
     isRemovingUser.value = true;
 
-    const userToRemove = orgUsersDetailsData.value.find((user) => user.UserId === selectedUserId.value);
+    const userToRemove = orgUsersDetailsData.value.find((user) => user.UserId === userToRemoveId.value);
     const displayName = userToRemove?.displayName;
 
     try {
-      if (!selectedUserId.value) {
-        throw new Error('No selectedUserId');
+      if (!userToRemoveId.value) {
+        throw new Error('No userToRemoveId');
       }
 
-      const res: DeletedResponse = await $api.orgs.removeUser(props.orgId, selectedUserId.value);
+      const res: DeletedResponse = await $api.orgs.removeUser(props.orgId, userToRemoveId.value);
 
       if (res?.Status === 'Success') {
         useToastStore().success(`${displayName} has been removed from ${org.value.Name}`);
@@ -158,8 +158,8 @@
       useToastStore().error(`Failed to remove ${displayName} from  ${org.value.Name}`);
       throw error;
     } finally {
-      selectedUserId.value = '';
-      isOpen.value = false;
+      userToRemoveId.value = '';
+      isRemoveUserModalOpen.value = false;
       isRemovingUser.value = false;
     }
   }
@@ -352,18 +352,8 @@
           cancelLabel="Cancel"
           :cancelVariant="ButtonVariantEnum.enum.secondary"
           @action-triggered="handleRemoveOrgUser"
-          :primaryMessage="primaryMessage"
-          v-model="isOpen"
-        />
-
-        <EGDialog
-          actionLabel="Remove User"
-          :actionVariant="ButtonVariantEnum.enum.destructive"
-          cancelLabel="Cancel"
-          :cancelVariant="ButtonVariantEnum.enum.secondary"
-          @action-triggered="handleRemoveOrgUser"
-          :primaryMessage="primaryMessage"
-          v-model="isOpen"
+          :primaryMessage="removeUserModalPrimaryMessage"
+          v-model="isRemoveUserModalOpen"
         />
 
         <EGTable

@@ -1,5 +1,6 @@
 import { NestedStack } from 'aws-cdk-lib';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
@@ -37,6 +38,20 @@ export class NFTowerNestedStack extends NestedStack {
         SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
       },
     });
+
+    NagSuppressions.addResourceSuppressions(
+      this,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Need access to all organisation and laboratory nf token parameters',
+          appliesTo: [
+            `Resource::arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/nf-access-token`,
+          ], // optional
+        },
+      ],
+      true,
+    );
   }
 
   // NF-Tower specific IAM policies

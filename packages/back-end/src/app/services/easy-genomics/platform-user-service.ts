@@ -242,7 +242,7 @@ export class PlatformUserService extends DynamoDBService {
             ExpressionAttributeNames: {
               '#UserId': 'UserId',
             },
-            Item: marshall(user),
+            Item: marshall(user, { removeUndefinedValues: true }),
           },
         },
         {

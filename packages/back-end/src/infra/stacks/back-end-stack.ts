@@ -1,6 +1,7 @@
 import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { CfnOutput, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Key, KeySpec } from 'aws-cdk-lib/aws-kms';
+import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { AuthNestedStack } from './auth-nested-stack';
 import { AwsHealthOmicsNestedStack } from './aws-healthomics-nested-stack';
@@ -66,6 +67,43 @@ export class BackEndStack extends Stack {
 
     // Initiate Nested Stacks for Auth, Easy Genomics, AWS HealthOmics, Nextflow Tower
     this.initiateNestedStacks();
+
+    // Nag Suppressions
+    // Note: these path based suppressions can only be applied after the path is created
+
+    // User signup and password recovery endpoints endpoints
+    NagSuppressions.addResourceSuppressionsByPath(
+      this,
+      [
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.namePrefix}-easy-genomics-apigw/${this.props.namePrefix}-easy-genomics-apigw/Default/easy-genomics/user/confirm-user-invitation-request/POST/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.namePrefix}-easy-genomics-apigw/${this.props.namePrefix}-easy-genomics-apigw/Default/easy-genomics/user/create-user-forgot-password-request/POST/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.namePrefix}-easy-genomics-apigw/${this.props.namePrefix}-easy-genomics-apigw/Default/easy-genomics/user/confirm-user-forgot-password-request/POST/Resource`,
+      ],
+      [
+        {
+          id: 'AwsSolutions-APIG4',
+          reason: 'These are used for user signup or password recovery and do not require an authorizer',
+        },
+      ],
+      true,
+    );
+
+    // User signup and password recovery endpoints endpoints
+    NagSuppressions.addResourceSuppressionsByPath(
+      this,
+      [
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.namePrefix}-easy-genomics-apigw/${this.props.namePrefix}-easy-genomics-apigw/Default/easy-genomics/user/confirm-user-invitation-request/POST/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.namePrefix}-easy-genomics-apigw/${this.props.namePrefix}-easy-genomics-apigw/Default/easy-genomics/user/create-user-forgot-password-request/POST/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.namePrefix}-easy-genomics-apigw/${this.props.namePrefix}-easy-genomics-apigw/Default/easy-genomics/user/confirm-user-forgot-password-request/POST/Resource`,
+      ],
+      [
+        {
+          id: 'AwsSolutions-COG4',
+          reason: 'These are used for user signup or password recovery and do not require an authorizer',
+        },
+      ],
+      true,
+    );
   }
 
   private initiateNestedStacks = () => {

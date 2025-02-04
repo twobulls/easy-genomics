@@ -68,7 +68,7 @@
   const getConfig = computed(() => {
     return {
       ...baseConfig,
-      variant: styleMap[props.status] || 'background-dark-grey text-body',
+      variant: styleMap[props.status] || { solid: 'bg-background-dark-grey text-body' },
     };
   });
 </script>

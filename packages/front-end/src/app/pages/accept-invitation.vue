@@ -110,7 +110,7 @@
       await signIn(email, password);
       handleSuccess();
     } catch (error: any) {
-      if (error.message === `Request error: ${ERROR_MESSAGES.invitationAlreadyActivated}`) {
+      if (error.message === `Request error: Unauthorized access: ${ERROR_MESSAGES.invitationAlreadyActivated}`) {
         await router.push({ path: `/signin`, query: { email: state.value.email } });
         useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
       } else {

@@ -16,6 +16,7 @@
   import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
   import { useNetwork } from '@vueuse/core';
+  import EGS3SampleSheetBar from './EGS3SampleSheetBar.vue';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -65,8 +66,9 @@
   const filePairs = ref<FilePair[]>([]);
 
   const canUploadFiles = ref(false);
-  const canProceed = ref(false);
   const isDropzoneActive = ref(false);
+
+  const canProceed = computed<boolean>(() => areAllFilesUploaded.value);
 
   // overall upload status for all files
   const uploadStatus = ref<UploadStatus>('idle');
@@ -123,7 +125,7 @@
 
   // Add a computed property to check if all files are successfully uploaded
   const areAllFilesUploaded = computed(() => {
-    if (filePairs.value.length === 0) return false;
+    if (filePairs.value.length === 0) return true;
 
     for (const pair of filePairs.value) {
       // Check R1 file
@@ -294,8 +296,6 @@
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
       s3Path: sampleSheetResponse.SampleSheetInfo.Path,
     });
-
-    canProceed.value = areAllFilesUploaded.value;
   }
 
   function getUploadedFilePairs(uploadManifest: FileUploadManifest): UploadedFilePairInfo[] {
@@ -553,12 +553,9 @@
         if (fileInfo) {
           fileToRetry.url = fileInfo.S3Url;
           await uploadFile(fileToRetry);
-          // Update canProceed after successful retry
-          canProceed.value = areAllFilesUploaded.value;
         }
       } catch (error: any) {
         toastStore.error(`Failed to retry upload`);
-        canProceed.value = false;
       }
     }
   };
@@ -649,7 +646,7 @@
       </div>
     </div>
 
-    <div class="files-list" v-if="filesForTable.length > 0">
+    <div class="files-list mb-6" v-if="filesForTable.length > 0">
       <div class="files-list-header text-body mb-4 border-b border-[#d9d9d9]">
         <div class="file-cell sample-id w-[30%]">Sample ID</div>
         <div class="file-cell w-[60%]">Sample File</div>
@@ -712,6 +709,9 @@
         </div>
       </div>
     </div>
+
+    <EGS3SampleSheetBar v-if="uploadStatus === 'success'" :url="props.sampleSheetS3Url" />
+
     <div class="flex justify-end pt-4">
       <EGButton
         v-if="uploadStatus === 'success'"
@@ -733,8 +733,8 @@
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-step')" />
     <EGButton
       :size="ButtonSizeEnum.enum.sm"
-      variant="secondary"
-      label="Next step"
+      variant="primary"
+      :label="filePairs.length ? 'Next step' : 'Skip'"
       @click="emit('next-step')"
       :disabled="!canProceed"
     />

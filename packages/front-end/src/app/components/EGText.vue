@@ -28,8 +28,8 @@
     :is="tag"
     :class="[
       `${colorClass}`,
-      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `font-serif ${colorClass}` : '',
-      ['a'].includes(<string>tag) ? `hover:underline ${colorClass}` : '',
+      ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(<string>tag) ? `text-heading font-serif` : '',
+      ['a'].includes(<string>tag) ? `hover:underline` : '',
     ]"
   >
     <slot />
@@ -40,10 +40,7 @@
   @use '@/styles/helpers';
 
   h1,
-  h2,
-  h3,
-  h4,
-  h5 {
+  h2 {
     font-weight: 600;
   }
   h1 {
@@ -71,11 +68,10 @@
     font-size: toRem(14px);
     line-height: toRem(20px);
   }
-  h2,
   h3,
   h4,
   h5 {
-    font-weight: 600; // 500?
+    font-weight: 500;
     letter-spacing: toRem(-0.14px);
 
     > p {

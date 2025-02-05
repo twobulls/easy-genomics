@@ -18,6 +18,7 @@
   const runStore = useRunStore();
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const sampleSheetS3Url = wipSeqeraRun.value?.sampleSheetS3Url;
 
   function generatedParamFields(): { input?: string; outdir?: string } {
     const r: any = {};
@@ -98,6 +99,8 @@
 </script>
 
 <template>
+  <EGS3SampleSheetBar :url="sampleSheetS3Url" />
+
   <div class="flex">
     <div class="mr-4 w-1/4">
       <EGCard>

@@ -16,6 +16,7 @@
   import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
   import { useNetwork } from '@vueuse/core';
+  import EGS3SampleSheetBar from './EGS3SampleSheetBar.vue';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -631,7 +632,7 @@
       </div>
     </div>
 
-    <div class="files-list" v-if="filesForTable.length > 0">
+    <div class="files-list mb-6" v-if="filesForTable.length > 0">
       <div class="files-list-header text-body mb-4 border-b border-[#d9d9d9]">
         <div class="file-cell sample-id w-[30%]">Sample ID</div>
         <div class="file-cell w-[60%]">Sample File</div>
@@ -694,6 +695,9 @@
         </div>
       </div>
     </div>
+
+    <EGS3SampleSheetBar v-if="uploadStatus === 'success'" :url="props.sampleSheetS3Url" />
+
     <div class="flex justify-end pt-4">
       <EGButton
         v-if="uploadStatus === 'success'"

@@ -1,19 +1,20 @@
 <script setup lang="ts">
-  interface Props {
-    url: string;
-    labId: string;
-    pipelineOrWorkflowName: string;
-    runName: string;
-    labName: string;
-  }
-
-  const props = withDefaults(defineProps<Props>(), {
-    url: '',
-    labId: '',
-    pipelineOrWorkflowName: '',
-    runName: '',
-    labName: '',
-  });
+  const props = withDefaults(
+    defineProps<{
+      url: string;
+      labId: string;
+      pipelineOrWorkflowName: string;
+      runName: string;
+      labName: string;
+    }>(),
+    {
+      url: '',
+      labId: '',
+      pipelineOrWorkflowName: '',
+      runName: '',
+      labName: '',
+    },
+  );
 
   const router = useRouter();
   const isCopied = ref(false);
@@ -30,7 +31,7 @@
     }
   };
 
-  const openCsvInNewWindow = () => {
+  const openSampleSheet = () => {
     const baseUrl = window.location.origin;
     const url = router.resolve({
       path: `/labs/${props.labId}/run-pipeline/sample-sheet`,
@@ -62,7 +63,7 @@
     </div>
 
     <div class="flex items-center gap-4" role="group" aria-label="URL Actions">
-      <button @click="openCsvInNewWindow" class="cursor-pointer" aria-label="Open in new tab">
+      <button @click="openSampleSheet" class="cursor-pointer" aria-label="Open in new tab">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
           <path
             d="M20.2916 12.5C19.9004 12.5 19.5833 12.8171 19.5833 13.2084V19.5833H5.41674V5.41674H11.7916C12.1829 5.41674 12.5 5.09959 12.5 4.70837C12.5 4.31715 12.1829 4 11.7916 4H5.41674C4.63771 4 4 4.6375 4 5.41674V19.5835C4 20.3623 4.63771 21 5.41674 21H19.5833C20.3623 21 21 20.3623 21 19.5833V13.2084C21 12.8171 20.6829 12.5 20.2916 12.5Z"

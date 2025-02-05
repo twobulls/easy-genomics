@@ -26,8 +26,6 @@ export default function useFileDownload() {
 
       const downloadUrl = fileDownloadResponse.DownloadUrl;
 
-      // TODO: refactor axios -> fetch
-
       // Download the file to memory
       const response = await axios({
         method: 'GET',

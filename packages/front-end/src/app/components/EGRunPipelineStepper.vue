@@ -6,6 +6,7 @@
     schema: object;
     params: object;
     pipelineId: string;
+    labName: string;
   }>();
 
   const $route = useRoute();
@@ -197,8 +198,9 @@
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunFormUploadData
-              :lab-id="labId"
               :sample-sheet-s3-url="wipSeqeraRun.sampleSheetS3Url"
+              :lab-id="labId"
+              :lab-name="labName"
               :pipeline-or-workflow-name="pipeline.name"
               :run-name="wipSeqeraRun.runName"
               :transaction-id="wipSeqeraRun.transactionId"
@@ -213,6 +215,10 @@
           <!-- Edit Parameters -->
           <template v-if="items[selectedIndex].key === 'parameters'">
             <EGRunPipelineFormEditParameters
+              :lab-id="labId"
+              :lab-name="labName"
+              :pipeline-or-workflow-name="pipeline.name"
+              :run-name="wipSeqeraRun.runName"
               :params="params"
               :schema="schema"
               :pipeline-id="pipelineId"

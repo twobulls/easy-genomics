@@ -130,12 +130,13 @@
     back-button-label="Exit Run"
   />
   <EGRunPipelineStepper
-    @has-launched="hasLaunched = true"
     :schema="schema"
     :params="wipSeqeraRun?.params"
-    @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
     :pipeline-id="pipelineId"
+    :lab-name="labName"
+    @has-launched="hasLaunched = true"
+    @reset-run-pipeline="resetRunPipeline()"
   />
   <EGDialog
     action-label="Cancel Pipeline Run"

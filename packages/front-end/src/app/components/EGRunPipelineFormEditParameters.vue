@@ -7,6 +7,10 @@
     schema: object;
     params: object;
     pipelineId: string;
+    labId: string;
+    labName: string;
+    pipelineOrWorkflowName: string;
+    runName: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
@@ -91,7 +95,13 @@
 </script>
 
 <template>
-  <EGS3SampleSheetBar :url="sampleSheetS3Url" />
+  <EGS3SampleSheetBar
+    :url="sampleSheetS3Url"
+    :lab-id="props.labId"
+    :lab-name="props.labName"
+    :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
+    :run-name="props.runName"
+  />
 
   <div class="flex">
     <div class="mr-4 w-1/4">

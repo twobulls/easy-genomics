@@ -15,7 +15,6 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
-  import { WipSeqeraRunData } from '@FE/stores/run';
   import { useNetwork } from '@vueuse/core';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
@@ -65,8 +64,9 @@
   const filePairs = ref<FilePair[]>([]);
 
   const canUploadFiles = ref(false);
-  const canProceed = ref(false);
   const isDropzoneActive = ref(false);
+
+  const canProceed = computed<boolean>(() => areAllFilesUploaded.value);
 
   // overall upload status for all files
   const uploadStatus = ref<UploadStatus>('idle');
@@ -112,7 +112,7 @@
 
   // Add a computed property to check if all files are successfully uploaded
   const areAllFilesUploaded = computed(() => {
-    if (filePairs.value.length === 0) return false;
+    if (filePairs.value.length === 0) return true;
 
     for (const pair of filePairs.value) {
       // Check R1 file
@@ -283,8 +283,6 @@
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
       s3Path: sampleSheetResponse.SampleSheetInfo.Path,
     });
-
-    canProceed.value = areAllFilesUploaded.value;
   }
 
   function getUploadedFilePairs(uploadManifest: FileUploadManifest): UploadedFilePairInfo[] {
@@ -542,12 +540,9 @@
         if (fileInfo) {
           fileToRetry.url = fileInfo.S3Url;
           await uploadFile(fileToRetry);
-          // Update canProceed after successful retry
-          canProceed.value = areAllFilesUploaded.value;
         }
       } catch (error: any) {
         toastStore.error(`Failed to retry upload`);
-        canProceed.value = false;
       }
     }
   };
@@ -720,8 +715,8 @@
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-step')" />
     <EGButton
       :size="ButtonSizeEnum.enum.sm"
-      variant="secondary"
-      label="Next step"
+      variant="primary"
+      :label="filePairs.length ? 'Next step' : 'Skip'"
       @click="emit('next-step')"
       :disabled="!canProceed"
     />

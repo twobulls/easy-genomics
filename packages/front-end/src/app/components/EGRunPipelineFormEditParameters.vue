@@ -18,12 +18,13 @@
   const runStore = useRunStore();
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const sampleSheetS3Url = wipSeqeraRun.value?.sampleSheetS3Url;
 
   const localProps = reactive({
     schema: props.schema,
     params: {
       ...props.params,
-      input: wipSeqeraRun.value?.sampleSheetS3Url,
+      input: sampleSheetS3Url,
       outdir: `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/results`,
     },
   });
@@ -90,6 +91,8 @@
 </script>
 
 <template>
+  <EGS3SampleSheetBar :url="sampleSheetS3Url" />
+
   <div class="flex">
     <div class="mr-4 w-1/4">
       <EGCard>

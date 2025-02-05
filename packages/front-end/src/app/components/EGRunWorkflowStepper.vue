@@ -205,6 +205,7 @@
               :transaction-id="wipOmicsRun.transactionId"
               :wip-run-update-function="runStore.updateWipOmicsRun"
               :wip-run-temp-id="omicsRunTempId"
+              :existing-uploaded-files="wipOmicsRun.uploadedFiles || []"
               @next-step="() => nextStep('parameters')"
               @previous-step="previousStep"
               @step-validated="setStepEnabled('parameters', $event)"

@@ -204,6 +204,7 @@
               :transaction-id="wipSeqeraRun.transactionId"
               :wip-run-update-function="runStore.updateWipSeqeraRun"
               :wip-run-temp-id="seqeraRunTempId"
+              :existing-uploaded-files="wipSeqeraRun.uploadedFiles || []"
               @next-step="() => nextStep('parameters')"
               @previous-step="previousStep"
               @step-validated="setStepEnabled('parameters', $event)"

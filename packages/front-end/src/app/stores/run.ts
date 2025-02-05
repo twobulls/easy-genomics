@@ -4,6 +4,7 @@ import { RunListItem as OmicsRun } from '@aws-sdk/client-omics';
 import { Workflow as SeqeraRun } from '@easy-genomics/shared-lib/lib/app/types/nf-tower/nextflow-tower-api';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { defineStore } from 'pinia';
+import { FilePair } from '@FE/components/EGRunFormUploadData.vue';
 
 /*
 The WIP run is a construct for storing all of the data for a pipeline run that's being configured but hasn't been
@@ -19,6 +20,7 @@ export interface WipSeqeraRunData {
   sampleSheetS3Url?: string;
   s3Bucket?: string;
   s3Path?: string;
+  uploadedFiles?: FilePair[];
 }
 
 export interface WipOmicsRunData {
@@ -31,6 +33,7 @@ export interface WipOmicsRunData {
   sampleSheetS3Url?: string;
   s3Bucket?: string;
   s3Path?: string;
+  uploadedFiles?: FilePair[];
 }
 
 interface RunState {
@@ -153,6 +156,7 @@ const useRunStore = defineStore('runStore', {
     },
 
     updateWipSeqeraRun(tempId: string, updates: Partial<WipSeqeraRunData>): void {
+      console.log('updateWipSeqeraRun', tempId /*, JSON.stringify(updates, null, 2) */);
       this.wipSeqeraRuns[tempId] = {
         ...(this.wipSeqeraRuns[tempId] || {}),
         ...updates,
@@ -196,6 +200,7 @@ const useRunStore = defineStore('runStore', {
     },
 
     updateWipOmicsRun(tempId: string, updates: Partial<WipOmicsRunData>): void {
+      console.log('updateWipOmicsRun', tempId /*, JSON.stringify(updates, null, 2) */);
       this.wipOmicsRuns[tempId] = {
         ...(this.wipOmicsRuns[tempId] || {}),
         ...updates,

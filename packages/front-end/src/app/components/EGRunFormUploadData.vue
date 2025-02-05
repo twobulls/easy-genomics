@@ -15,12 +15,11 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
-  import { WipSeqeraRunData } from '@FE/stores/run';
   import { useNetwork } from '@vueuse/core';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
-  type FilePair = {
+  export type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
     r1File?: FileDetails;
     r2File?: FileDetails;
@@ -57,6 +56,7 @@
     transactionId: string;
     wipRunUpdateFunction: Function;
     wipRunTempId: string;
+    existingUploadedFiles: FilePair[];
   }>();
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
@@ -73,6 +73,17 @@
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
+
+  watch(filePairs, (val) => {
+    console.log('watch filePairs', JSON.stringify(val, null, 2));
+    props.wipRunUpdateFunction(props.wipRunTempId, { uploadedFiles: val });
+  });
+
+  // load file uploads from wip run
+  onBeforeMount(() => {
+    console.log('load filePairs to', props.existingUploadedFiles);
+    filePairs.value = unref(props.existingUploadedFiles);
+  });
 
   const filesForTable = computed(() => {
     const files: { sampleId: string; fileName: string; progress: number; error?: string }[] = [];
@@ -560,6 +571,8 @@
       }
       return true;
     });
+
+    // canProceed.value = areAllFilesUploaded.value;
   };
 
   watch(canProceed, (val) => {

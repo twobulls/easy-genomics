@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { WipOmicsRunData } from '@FE/stores/run';
 
   const props = defineProps<{
     schema: object;
@@ -14,6 +15,8 @@
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const runStore = useRunStore();
+
+  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[props.omicsRunTempId]);
 
   type SchemaItem = {
     name: string;
@@ -41,14 +44,22 @@
     Object.keys(props.schema).map((fieldName) => [fieldName, '']),
   );
 
+  function generatedParamFields(): { input?: string; outdir?: string } {
+    const r: any = {};
+    if (!!wipOmicsRun.value?.sampleSheetS3Url) r.input = wipOmicsRun.value?.sampleSheetS3Url;
+    if (!!wipOmicsRun.value?.s3Bucket && !!wipOmicsRun.value?.s3Path)
+      r.outdir = `s3://${wipOmicsRun.value?.s3Bucket}/${wipOmicsRun.value?.s3Path}/results`;
+
+    return r;
+  }
+
   const localProps = reactive({
     schema: props.schema,
     params: {
       // initialize all fields with empty string as default
       ...paramDefaults,
       // initialize input and output values with default values
-      input: props.sampleSheetS3Url,
-      outdir: `s3://${props.s3Bucket}/${props.s3Path}/results`,
+      ...generatedParamFields(),
       // finally overwrite with any existing values
       ...props.params,
     },

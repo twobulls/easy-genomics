@@ -50,8 +50,9 @@
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
-    labId: string;
     sampleSheetS3Url: string;
+    labId: string;
+    labName: string;
     pipelineOrWorkflowName: string;
     runName: string;
     transactionId: string;
@@ -696,7 +697,14 @@
       </div>
     </div>
 
-    <EGS3SampleSheetBar v-if="uploadStatus === 'success'" :url="props.sampleSheetS3Url" />
+    <EGS3SampleSheetBar
+      v-if="uploadStatus === 'success'"
+      :url="props.sampleSheetS3Url"
+      :lab-id="props.labId"
+      :lab-name="props.labName"
+      :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
+      :run-name="props.runName"
+    />
 
     <div class="flex justify-end pt-4">
       <EGButton

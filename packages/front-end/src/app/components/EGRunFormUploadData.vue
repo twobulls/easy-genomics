@@ -573,8 +573,6 @@
       }
       return true;
     });
-
-    // canProceed.value = areAllFilesUploaded.value;
   };
 
   watch(canProceed, (val) => {

@@ -72,7 +72,6 @@ export default function useFileDownload() {
   return {
     handleS3Download,
     downloadFolder,
-    getSignedCsvContent,
     isSupportedFileType,
   };
 }

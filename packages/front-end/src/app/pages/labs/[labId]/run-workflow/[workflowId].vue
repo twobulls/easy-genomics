@@ -38,6 +38,11 @@
     $router.push('/labs');
   }
 
+  // set a new omicsRunTempId if not provided
+  if (!$route.query.omicsRunTempId) {
+    $router.push({ query: { omicsRunTempId: uuidv4() } });
+  }
+
   const loading = computed<boolean>(() => uiStore.isRequestPending('loadOmicsWorkflow'));
 
   onBeforeMount(loadWorkflow);

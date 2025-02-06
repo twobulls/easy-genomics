@@ -87,7 +87,7 @@
 </script>
 
 <template>
-  <EGS3SampleSheetBar :url="sampleSheetS3Url" />
+  <EGS3SampleSheetBar v-if="sampleSheetS3Url" :url="sampleSheetS3Url" />
 
   <div class="flex">
     <div class="mr-4 w-1/4">

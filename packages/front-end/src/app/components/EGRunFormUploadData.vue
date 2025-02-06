@@ -71,7 +71,7 @@
     filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
   );
 
-  const canProceed = computed<boolean>(() => areAllFilesUploaded.value);
+  const canProceedToNextStep = computed<boolean>(() => areAllFilesUploaded.value);
 
   // overall upload status for all files
   const uploadStatus = ref<UploadStatus>('idle');
@@ -104,7 +104,7 @@
     return files;
   });
 
-  const showDropzone = computed(() => !canProceed.value || uploadStatus.value === 'idle');
+  const showDropzone = computed(() => !canProceedToNextStep.value || uploadStatus.value === 'idle');
 
   const isUploadButtonDisabled = computed(
     () =>
@@ -113,13 +113,11 @@
       haveUnmatchedFiles.value ||
       uploadStatus.value === 'uploading' ||
       uploadStatus.value === 'success' ||
-      canProceed.value,
+      canProceedToNextStep.value,
   );
 
-  // Add a computed property to check if all files are successfully uploaded
+  // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
   const areAllFilesUploaded = computed(() => {
-    if (filePairs.value.length === 0) return true;
-
     for (const pair of filePairs.value) {
       // Check R1 file
       if (!pair.r1File || pair.r1File.error || pair.r1File.percentage !== 100) {
@@ -545,12 +543,14 @@
     });
   };
 
-  watch(canProceed, (val) => {
+  watch(canProceedToNextStep, (val) => {
     emit('step-validated', val);
   });
 </script>
 
 <template>
+  <pre><code>{{ JSON.stringify(filePairs, null, 2) }}</code></pre>
+
   <EGCard>
     <EGText tag="small" class="mb-4">Step 02</EGText>
     <EGText tag="h4" class="mb-4">Upload Data</EGText>
@@ -721,7 +721,7 @@
       variant="primary"
       :label="filePairs.length ? 'Next step' : 'Skip'"
       @click="emit('next-step')"
-      :disabled="!canProceed"
+      :disabled="!canProceedToNextStep"
     />
   </div>
 </template>

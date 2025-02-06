@@ -678,7 +678,13 @@
               >
                 <UIcon name="i-heroicons-arrow-path" size="20" />
               </button>
-              <button class="text-alert-danger hover:text-alert-danger/80" @click="removeFile(row)">
+              <button
+                :disabled="!isOnline"
+                :class="[
+                  isOnline ? 'text-alert-danger hover:text-alert-danger-dark' : 'cursor-not-allowed text-gray-400',
+                ]"
+                @click="removeFile(row)"
+              >
                 <UIcon name="i-heroicons-trash" size="20" />
               </button>
             </template>

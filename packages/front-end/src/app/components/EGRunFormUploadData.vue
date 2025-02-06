@@ -65,8 +65,11 @@
   const filesToUpload = ref<FileDetails[]>([]);
   const filePairs = ref<FilePair[]>([]);
 
-  const canUploadFiles = ref(false);
   const isDropzoneActive = ref(false);
+
+  const haveUnmatchedFiles = computed<boolean>(() =>
+    filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
+  );
 
   const canProceed = computed<boolean>(() => areAllFilesUploaded.value);
 
@@ -106,7 +109,8 @@
   const isUploadButtonDisabled = computed(
     () =>
       !isOnline.value ||
-      !canUploadFiles.value ||
+      filePairs.value.length === 0 ||
+      haveUnmatchedFiles.value ||
       uploadStatus.value === 'uploading' ||
       uploadStatus.value === 'success' ||
       canProceed.value,
@@ -173,28 +177,10 @@
     });
 
     validFiles.forEach((file) => addFile(file));
-
-    validateFilePairs();
   }
 
   function isValidGzFile(file: File): boolean {
     return file.name.endsWith('.gz');
-  }
-
-  /**
-   * Validate that each file pair has an R1 and R2 file
-   */
-  function validateFilePairs() {
-    let haveMatchingFilePairs = filePairs.value.length > 0;
-
-    for (const filePair of filePairs.value) {
-      if (!filePair.r1File || !filePair.r2File) {
-        haveMatchingFilePairs = false;
-        break;
-      }
-    }
-
-    canUploadFiles.value = haveMatchingFilePairs;
   }
 
   function addFile(file: File) {

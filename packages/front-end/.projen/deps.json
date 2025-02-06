@@ -124,6 +124,18 @@
       "type": "runtime"
     },
     {
+      "name": "@iconify-json/heroicons",
+      "type": "runtime"
+    },
+    {
+      "name": "@iconify/json",
+      "type": "runtime"
+    },
+    {
+      "name": "@iconify/vue",
+      "type": "runtime"
+    },
+    {
       "name": "@nuxt/ui",
       "version": "2.18.4",
       "type": "runtime"

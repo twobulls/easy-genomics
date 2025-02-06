@@ -47,6 +47,20 @@ export default defineNuxtConfig({
     storage: 'localStorage',
   },
 
+  ui: {
+    icons: {
+      dynamic: false, // Disable dynamic loading
+      loadingIcon: false, // Disable loading icon
+      aliases: {},
+      sets: {
+        heroicons: {
+          prefix: 'i-heroicons-',
+          load: true,
+        },
+      },
+    },
+  },
+
   vite: {
     define: {
       'window.global': {}, // required by Amplify
@@ -59,15 +73,24 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: '@use "@/styles/helpers" as *;', // Update this to match your @use import
+          additionalData: '@use "@/styles/helpers" as *;',
         },
       },
     },
     plugins: [
       Components({
-        resolvers: [IconsResolver({ prefix: 'Icon' })],
+        resolvers: [
+          IconsResolver({
+            prefix: 'Icon',
+            enabledCollections: ['heroicons'], // Specify the icon collections you want to use
+          }),
+        ],
       }),
       Icons({
+        autoInstall: false, // Disable auto-installation
+        compiler: 'vue3',
+        defaultClass: 'inline-block',
+        defaultStyle: 'vertical-align: middle;',
         scale: 1.2,
       }),
     ],

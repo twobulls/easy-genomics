@@ -673,8 +673,8 @@
                 class="mr-2"
                 :class="[isOnline ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
                 @click="retryUpload(row)"
-                :disabled="!isOnline.value"
-                :title="isOnline.value ? 'Retry upload' : 'Cannot retry while offline'"
+                :disabled="!isOnline"
+                :title="isOnline ? 'Retry upload' : 'Cannot retry while offline'"
               >
                 <UIcon name="i-heroicons-arrow-path" size="20" />
               </button>

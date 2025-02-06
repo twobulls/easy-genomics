@@ -198,7 +198,7 @@
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunFormUploadData
               :lab-id="labId"
-              :sample-sheet-s3-url="wipSeqeraRun.sampleSheetS3Url"
+              :sample-sheet-s3-url="wipSeqeraRun?.sampleSheetS3Url"
               :pipeline-or-workflow-name="pipeline.name"
               :run-name="wipSeqeraRun.runName"
               :transaction-id="wipSeqeraRun.transactionId"

@@ -678,7 +678,6 @@
               >
                 <UIcon name="i-heroicons-arrow-path" size="20" />
               </button>
-
               <button class="text-alert-danger hover:text-alert-danger/80" @click="removeFile(row)">
                 <UIcon name="i-heroicons-trash" size="20" />
               </button>

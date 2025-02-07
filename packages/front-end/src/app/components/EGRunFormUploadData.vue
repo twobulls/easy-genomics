@@ -330,13 +330,9 @@
   }
 
   function addUploadUrls(uploadManifest: FileUploadManifest) {
-    for (const filePair of filePairs.value) {
-      if (filePair.r1File) {
-        filePair.r1File.url = uploadManifest.Files.find((file) => file.Name === filePair.r1File!.name)?.S3Url;
-      }
-      if (filePair.r2File) {
-        filePair.r2File.url = uploadManifest.Files.find((file) => file.Name === filePair.r2File!.name)?.S3Url;
-      }
+    for (const file of files.value) {
+      const url = uploadManifest.Files.find((manifestFile) => manifestFile.Name === file.name)?.S3Url;
+      if (url) file.url = url;
     }
   }
 
@@ -518,7 +514,7 @@
   };
 
   const removeFile = (file: { sampleId: string; fileName: string }) => {
-    // Remove the file from filePairs
+    // Remove the filePair containing the file
     filePairs.value = filePairs.value.filter((pair) => {
       if (pair.r1File?.name === file.fileName || pair.r2File?.name === file.fileName) {
         return false;

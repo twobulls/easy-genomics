@@ -153,10 +153,19 @@ const useRunStore = defineStore('runStore', {
     },
 
     updateWipSeqeraRun(tempId: string, updates: Partial<WipSeqeraRunData>): void {
+            const existingWipRun = this.wipSeqeraRuns[tempId] || {};
+      const existingParams = existingWipRun.params || {};
       this.wipSeqeraRuns[tempId] = {
-        ...(this.wipSeqeraRuns[tempId] || {}),
+        ...existingWipRun,
         ...updates,
       };
+      // need to merge params separately because they're nested
+      if (updates.params) {
+        this.wipSeqeraRuns[tempId].params = {
+          ...existingParams,
+          ...updates.params,
+        };
+      }
     },
 
     // Omics Runs
@@ -196,10 +205,19 @@ const useRunStore = defineStore('runStore', {
     },
 
     updateWipOmicsRun(tempId: string, updates: Partial<WipOmicsRunData>): void {
+      const existingWipRun = this.wipOmicsRuns[tempId] || {};
+      const existingParams = existingWipRun.params || {};
       this.wipOmicsRuns[tempId] = {
-        ...(this.wipOmicsRuns[tempId] || {}),
+        ...existingWipRun,
         ...updates,
       };
+      // need to merge params separately because they're nested
+      if (updates.params) {
+        this.wipOmicsRuns[tempId].params = {
+          ...existingParams,
+          ...updates.params,
+        };
+      }
     },
   },
 

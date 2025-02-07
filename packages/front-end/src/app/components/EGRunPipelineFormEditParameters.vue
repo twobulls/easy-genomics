@@ -22,7 +22,6 @@
   const runStore = useRunStore();
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
-  const sampleSheetS3Url = wipSeqeraRun.value?.sampleSheetS3Url;
 
   function generatedParamFields(): { input?: string; outdir?: string } {
     const r: any = {};
@@ -104,7 +103,8 @@
 
 <template>
   <EGS3SampleSheetBar
-    :url="sampleSheetS3Url"
+    v-if="wipSeqeraRun?.sampleSheetS3Url"
+    :url="wipSeqeraRun?.sampleSheetS3Url"
     :lab-id="props.labId"
     :lab-name="props.labName"
     :pipeline-or-workflow-name="props.pipelineOrWorkflowName"

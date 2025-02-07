@@ -128,7 +128,10 @@
   const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
 
   function clearErrorsFromFiles(files: FileDetails[]) {
-    files.forEach((file) => (file.error = undefined));
+    files.forEach((file) => {
+      file.error = undefined;
+      file.percentage = 0;
+    });
   }
 
   function chooseFiles() {

@@ -548,8 +548,6 @@
 </script>
 
 <template>
-  <pre><code>{{ JSON.stringify(filePairs, null, 2) }}</code></pre>
-
   <EGCard>
     <EGText tag="small" class="mb-4">Step 02</EGText>
     <EGText tag="h4" class="mb-4">Upload Data</EGText>

@@ -2,7 +2,6 @@
   import axios from 'axios';
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import {
-    FileInfo,
     FileUploadInfo,
     FileUploadManifest,
     FileUploadRequest,
@@ -276,7 +275,7 @@
 
     clearErrorsFromFilesToUpload();
 
-    const uploadManifest = await getUploadFilesManifest();
+    const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
     addUploadUrls(uploadManifest);
     await uploadFiles();
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
@@ -332,19 +331,11 @@
     return response;
   }
 
-  async function getUploadFilesManifest(): Promise<FileUploadManifest> {
-    const files: FileInfo[] = [];
-    for (const fileDetails of filesNotUploaded.value) {
-      files.push({
-        Name: fileDetails.name,
-        Size: fileDetails.size,
-      });
-    }
-
+  async function getUploadFilesManifest(files: FileDetails[]): Promise<FileUploadManifest> {
     const request: FileUploadRequest = {
       LaboratoryId: props.labId,
       TransactionId: props.transactionId || '',
-      Files: files,
+      Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 
     const response = await $api.uploads.getFileUploadManifest(request);
@@ -540,7 +531,7 @@
     if (fileToRetry) {
       try {
         // Get fresh upload URL
-        const manifest = await getUploadFilesManifest();
+        const manifest = await getUploadFilesManifest([fileToRetry]);
         const fileInfo = manifest.Files.find((f) => f.Name === fileToRetry!.name);
         if (fileInfo) {
           fileToRetry.url = fileInfo.S3Url;

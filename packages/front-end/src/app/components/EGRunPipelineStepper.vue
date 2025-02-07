@@ -198,7 +198,7 @@
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunFormUploadData
-              :sample-sheet-s3-url="wipSeqeraRun.sampleSheetS3Url"
+              :sample-sheet-s3-url="wipSeqeraRun?.sampleSheetS3Url"
               :lab-id="labId"
               :lab-name="labName"
               :pipeline-or-workflow-name="pipeline.name"

@@ -44,23 +44,12 @@
     Object.keys(props.schema).map((fieldName) => [fieldName, '']),
   );
 
-  function generatedParamFields(): { input?: string; outdir?: string } {
-    const r: any = {};
-    if (!!wipOmicsRun.value?.sampleSheetS3Url) r.input = wipOmicsRun.value?.sampleSheetS3Url;
-    if (!!wipOmicsRun.value?.s3Bucket && !!wipOmicsRun.value?.s3Path)
-      r.outdir = `s3://${wipOmicsRun.value?.s3Bucket}/${wipOmicsRun.value?.s3Path}/results`;
-
-    return r;
-  }
-
   const localProps = reactive({
     schema: props.schema,
     params: {
       // initialize all fields with empty string as default
       ...paramDefaults,
-      // initialize input and output values with default values
-      ...generatedParamFields(),
-      // finally overwrite with any existing values
+      // overwrite with any existing values
       ...props.params,
     },
   });

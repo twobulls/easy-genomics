@@ -23,21 +23,9 @@
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
 
-  function generatedParamFields(): { input?: string; outdir?: string } {
-    const r: any = {};
-    if (!!wipSeqeraRun.value?.sampleSheetS3Url) r.input = wipSeqeraRun.value?.sampleSheetS3Url;
-    if (!!wipSeqeraRun.value?.s3Bucket && !!wipSeqeraRun.value?.s3Path)
-      r.outdir = `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/results`;
-
-    return r;
-  }
-
   const localProps = reactive({
     schema: props.schema,
-    params: {
-      ...props.params,
-      ...generatedParamFields(),
-    },
+    params: props.params,
   });
 
   const schemaDefinitions = computed(() => props.schema.$defs || props.schema.definitions);

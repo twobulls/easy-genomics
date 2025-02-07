@@ -281,10 +281,15 @@
     // get sample sheet info
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     // save to wip run
+    const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
     props.wipRunUpdateFunction(props.wipRunTempId, {
-      sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
-      s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
-      s3Path: sampleSheetResponse.SampleSheetInfo.Path,
+      sampleSheetS3Url: S3Url,
+      s3Bucket: Bucket,
+      s3Path: Path,
+      params: {
+        input: S3Url,
+        outdir: `s3://${Bucket}/${Path}/results`,
+      },
     });
   }
 

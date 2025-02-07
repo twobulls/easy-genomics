@@ -113,7 +113,7 @@
     return files;
   });
 
-  const showDropzone = computed(() => !canProceedToNextStep.value || uploadStatus.value === 'idle');
+  const showDropzone = computed(() => uploadStatus.value !== 'uploading');
 
   const isUploadButtonDisabled = computed(
     // reasons why uploading might be disabled

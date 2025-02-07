@@ -116,29 +116,16 @@
   const showDropzone = computed(() => !canProceedToNextStep.value || uploadStatus.value === 'idle');
 
   const isUploadButtonDisabled = computed(
+    // reasons why uploading might be disabled
     () =>
-      !isOnline.value ||
-      filePairs.value.length === 0 ||
-      haveUnmatchedFiles.value ||
-      uploadStatus.value === 'uploading' ||
-      uploadStatus.value === 'success' ||
-      canProceedToNextStep.value,
+      !isOnline.value || // no internet connection
+      filesNotUploaded.value.length === 0 || // nothing to upload
+      haveUnmatchedFiles.value || // there's an unmatched file
+      uploadStatus.value === 'uploading', // uploading is currently going
   );
 
   // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
-  const areAllFilesUploaded = computed(() => {
-    for (const pair of filePairs.value) {
-      // Check R1 file
-      if (!pair.r1File || pair.r1File.error || pair.r1File.percentage !== 100) {
-        return false;
-      }
-      // Check R2 file
-      if (!pair.r2File || pair.r2File.error || pair.r2File.percentage !== 100) {
-        return false;
-      }
-    }
-    return true;
-  });
+  const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
 
   function clearErrorsFromFilesToUpload() {
     for (const file of filesNotUploaded.value) {

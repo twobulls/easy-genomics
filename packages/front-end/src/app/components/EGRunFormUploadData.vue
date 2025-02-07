@@ -141,6 +141,12 @@
     return true;
   });
 
+  function clearErrorsFromFilesToUpload() {
+    for (const file of filesNotUploaded.value) {
+      file.error = undefined;
+    }
+  }
+
   function chooseFiles() {
     chooseFilesButton.value?.click();
   }
@@ -267,6 +273,8 @@
 
   async function startUploadProcess() {
     uploadStatus.value = 'uploading';
+
+    clearErrorsFromFilesToUpload();
 
     const uploadManifest = await getUploadFilesManifest();
     addUploadUrls(uploadManifest);

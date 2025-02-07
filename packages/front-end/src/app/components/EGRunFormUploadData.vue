@@ -28,7 +28,6 @@
   type FileDetails = {
     file: File;
     progress: number;
-    percentage: number;
     name: string;
     size: number;
     location?: string;
@@ -71,7 +70,7 @@
     return files;
   });
   const filesNotUploaded = computed<FileDetails[]>(() =>
-    files.value.filter((file) => file.error || file.percentage !== 100),
+    files.value.filter((file) => file.error || file.progress !== 100),
   );
 
   const isDropzoneActive = ref(false);
@@ -96,7 +95,7 @@
         files.push({
           sampleId: filePair.sampleId,
           fileName: filePair.r1File.name,
-          progress: filePair.r1File.percentage || 0,
+          progress: filePair.r1File.progress || 0,
           error: filePair.r1File.error,
         });
       }
@@ -104,7 +103,7 @@
         files.push({
           sampleId: filePair.sampleId,
           fileName: filePair.r2File.name,
-          progress: filePair.r2File.percentage || 0,
+          progress: filePair.r2File.progress || 0,
           error: filePair.r2File.error,
         });
       }
@@ -130,7 +129,7 @@
   function clearErrorsFromFiles(files: FileDetails[]) {
     files.forEach((file) => {
       file.error = undefined;
-      file.percentage = 0;
+      file.progress = 0;
     });
   }
 
@@ -218,7 +217,6 @@
       file,
       size: file.size,
       progress: 0,
-      percentage: 0,
       name: file.name,
     };
   }
@@ -420,7 +418,7 @@
    *                      Rejects with an error object containing the error message, code, and file details if the upload fails.
    *
    * Purpose:
-   * - Tracks the progress of the file upload and updates progress/percentage in `fileDetails`.
+   * - Tracks the progress of the file upload and updates progress in `fileDetails`.
    * - Handles network errors, rejecting with a detailed error message.
    * - Logs any upload errors to the console for debugging purposes.
    */
@@ -463,7 +461,6 @@
           if (progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             fileDetails.progress = progress;
-            fileDetails.percentage = progress;
           }
         },
       });

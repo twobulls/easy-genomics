@@ -62,8 +62,18 @@
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
-  const filesToUpload = ref<FileDetails[]>([]);
   const filePairs = ref<FilePair[]>([]);
+  const files = computed<FileDetails[]>(() => {
+    const files = [];
+    for (const filePair of filePairs.value) {
+      if (filePair.r1File) files.push(filePair.r1File);
+      if (filePair.r2File) files.push(filePair.r2File);
+    }
+    return files;
+  });
+  const filesNotUploaded = computed<FileDetails[]>(() =>
+    files.value.filter((file) => file.error || file.percentage !== 100),
+  );
 
   const isDropzoneActive = ref(false);
 
@@ -203,12 +213,11 @@
     }
 
     const fileDetails = getFileDetails(file);
-    filesToUpload.value.push(fileDetails);
     addFileToFilePairs(fileDetails);
   }
 
   function checkIsFileDuplicate(newFile: File): boolean {
-    return filesToUpload.value.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
+    return files.value.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
   }
 
   function getFileDetails(file: File): FileDetails {
@@ -317,7 +326,7 @@
 
   async function getUploadFilesManifest(): Promise<FileUploadManifest> {
     const files: FileInfo[] = [];
-    for (const fileDetails of filesToUpload.value) {
+    for (const fileDetails of filesNotUploaded.value) {
       files.push({
         Name: fileDetails.name,
         Size: fileDetails.size,
@@ -336,12 +345,14 @@
   }
 
   function addUploadUrls(uploadManifest: FileUploadManifest) {
-    filesToUpload.value.forEach((fileDetails) => {
-      const fileUploadInfo = uploadManifest.Files.find((file) => file.Name === fileDetails.name);
-      if (fileUploadInfo) {
-        fileDetails.url = fileUploadInfo.S3Url;
+    for (const filePair of filePairs.value) {
+      if (filePair.r1File) {
+        filePair.r1File.url = uploadManifest.Files.find((file) => file.Name === filePair.r1File!.name)?.S3Url;
       }
-    });
+      if (filePair.r2File) {
+        filePair.r2File.url = uploadManifest.Files.find((file) => file.Name === filePair.r2File!.name)?.S3Url;
+      }
+    }
   }
 
   // Track ongoing upload requests
@@ -359,7 +370,7 @@
    * @returns {Promise<UploadError[]>} - Resolves with an array of failed uploads (if any), containing error details.
    *
    * Purpose:
-   * - Initiates the upload of all files in `filesToUpload` using `uploadFile`.
+   * - Initiates the upload of all files in `filesNotUploaded` using `uploadFile`.
    * - Ensures that all file uploads are completed, regardless of individual successes or failures, using `Promise.allSettled`.
    * - Collects detailed information about any failed uploads, including user-friendly error messages.
    * - Displays meaningful toast notifications for both successful and failed uploads:
@@ -375,7 +386,7 @@
     uploadStatus.value = 'uploading'; // Start with uploading status
 
     try {
-      const uploadPromises = Object.values(filesToUpload.value).map((fileDetails) =>
+      const uploadPromises = Object.values(filesNotUploaded.value).map((fileDetails) =>
         uploadFile(fileDetails)
           .then(() => null)
           .catch((error) => ({

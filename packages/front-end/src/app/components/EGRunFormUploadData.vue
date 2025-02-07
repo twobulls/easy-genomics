@@ -15,7 +15,6 @@
   import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
   import { useNetwork } from '@vueuse/core';
-  import EGS3SampleSheetBar from './EGS3SampleSheetBar.vue';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -264,8 +263,24 @@
     const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
     addUploadUrls(uploadManifest);
     await uploadFiles();
+
+    await postUploadHook();
+  }
+
+  async function postUploadHook() {
+    if (filesNotUploaded.value.length === 0) {
+      await saveSampleSheetInfo();
+    }
+  }
+
+  async function saveSampleSheetInfo() {
+    // get manifest of all files
+    const uploadManifest = await getUploadFilesManifest(files.value);
+
     const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
+    // get sample sheet info
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
+    // save to wip run
     props.wipRunUpdateFunction(props.wipRunTempId, {
       sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
       s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
@@ -504,10 +519,14 @@
       // Get fresh upload URL
       const manifest = await getUploadFilesManifest([fileToRetry]);
       const fileInfo = manifest.Files.find((f) => f.Name === fileToRetry!.name);
-      if (fileInfo) {
-        fileToRetry.url = fileInfo.S3Url;
-        await uploadFile(fileToRetry);
+      if (!fileInfo) {
+        throw new Error('file not found in manifest');
       }
+
+      fileToRetry.url = fileInfo.S3Url;
+      await uploadFile(fileToRetry);
+
+      await postUploadHook();
     } catch (error: any) {
       toastStore.error(`Failed to retry upload`);
     }
@@ -669,7 +688,7 @@
     </div>
 
     <EGS3SampleSheetBar
-      v-if="uploadStatus === 'success'"
+      v-if="props.sampleSheetS3Url"
       :url="props.sampleSheetS3Url"
       :lab-id="props.labId"
       :lab-name="props.labName"

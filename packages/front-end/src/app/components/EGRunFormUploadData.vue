@@ -127,10 +127,8 @@
   // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
   const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
 
-  function clearErrorsFromFilesToUpload() {
-    for (const file of filesNotUploaded.value) {
-      file.error = undefined;
-    }
+  function clearErrorsFromFiles(files: FileDetails[]) {
+    files.forEach((file) => (file.error = undefined));
   }
 
   function chooseFiles() {
@@ -260,7 +258,7 @@
   async function startUploadProcess() {
     uploadStatus.value = 'uploading';
 
-    clearErrorsFromFilesToUpload();
+    clearErrorsFromFiles(filesNotUploaded.value);
 
     const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
     addUploadUrls(uploadManifest);
@@ -496,37 +494,26 @@
     }
   };
 
-  const retryUpload = async (file: { sampleId: string; fileName: string }) => {
-    // Find the file in filePairs
-    let fileToRetry: FileDetails | undefined;
+  const retryUpload = async (fileSelector: { sampleId: string; fileName: string }) => {
+    // find file by filename
+    let fileToRetry: FileDetails | undefined = files.value.find((file) => file.name === fileSelector.fileName);
 
-    for (const pair of filePairs.value) {
-      if (pair.r1File?.name === file.fileName) {
-        pair.r1File.error = undefined;
-        pair.r1File.percentage = 0;
-        fileToRetry = pair.r1File;
-        break;
-      }
-      if (pair.r2File?.name === file.fileName) {
-        pair.r2File.error = undefined;
-        pair.r2File.percentage = 0;
-        fileToRetry = pair.r2File;
-        break;
-      }
+    if (!fileToRetry) {
+      throw new Error(`no fileToRetry found with name '${fileSelector.fileName}'`);
     }
 
-    if (fileToRetry) {
-      try {
-        // Get fresh upload URL
-        const manifest = await getUploadFilesManifest([fileToRetry]);
-        const fileInfo = manifest.Files.find((f) => f.Name === fileToRetry!.name);
-        if (fileInfo) {
-          fileToRetry.url = fileInfo.S3Url;
-          await uploadFile(fileToRetry);
-        }
-      } catch (error: any) {
-        toastStore.error(`Failed to retry upload`);
+    clearErrorsFromFiles([fileToRetry]);
+
+    try {
+      // Get fresh upload URL
+      const manifest = await getUploadFilesManifest([fileToRetry]);
+      const fileInfo = manifest.Files.find((f) => f.Name === fileToRetry!.name);
+      if (fileInfo) {
+        fileToRetry.url = fileInfo.S3Url;
+        await uploadFile(fileToRetry);
       }
+    } catch (error: any) {
+      toastStore.error(`Failed to retry upload`);
     }
   };
 

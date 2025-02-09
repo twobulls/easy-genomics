@@ -47,12 +47,10 @@
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
-    sampleSheetS3Url: string;
     labId: string;
     labName: string;
     pipelineOrWorkflowName: string;
-    runName: string;
-    transactionId: string;
+    wipRun: WipSeqeraRunData & WipOmicsRunData; // will be one of these types, and officially can have any common fields
     wipRunUpdateFunction: Function;
     wipRunTempId: string;
   }>();
@@ -330,7 +328,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: props.labId,
-      TransactionId: props.transactionId || '',
+      TransactionId: props.wipRun.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -340,7 +338,7 @@
   async function getUploadFilesManifest(files: FileDetails[]): Promise<FileUploadManifest> {
     const request: FileUploadRequest = {
       LaboratoryId: props.labId,
-      TransactionId: props.transactionId || '',
+      TransactionId: props.wipRun.transactionId || '',
       Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 
@@ -691,12 +689,12 @@
     </div>
 
     <EGS3SampleSheetBar
-      v-if="props.sampleSheetS3Url"
-      :url="props.sampleSheetS3Url"
+      v-if="props.wipRun.sampleSheetS3Url"
+      :url="props.wipRun.sampleSheetS3Url"
       :lab-id="props.labId"
       :lab-name="props.labName"
       :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
-      :run-name="props.runName"
+      :run-name="props.wipRun.runName"
     />
 
     <div class="flex justify-end pt-4">
@@ -705,7 +703,14 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="downloadSampleSheet(props.labId, props.sampleSheetS3Url, props.pipelineOrWorkflowName, props.runName)"
+        @click="
+          downloadSampleSheet(
+            props.labId,
+            props.wipRun.sampleSheetS3Url,
+            props.pipelineOrWorkflowName,
+            props.wipRun.runName,
+          )
+        "
       />
       <EGButton
         @click="startUploadProcess"

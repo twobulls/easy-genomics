@@ -199,10 +199,8 @@
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunFormUploadData
               :lab-id="labId"
-              :sample-sheet-s3-url="wipOmicsRun.sampleSheetS3Url"
               :pipeline-or-workflow-name="workflow.name"
-              :run-name="wipOmicsRun.runName"
-              :transaction-id="wipOmicsRun.transactionId"
+              :wip-run="wipOmicsRun"
               :wip-run-update-function="runStore.updateWipOmicsRun"
               :wip-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('parameters')"

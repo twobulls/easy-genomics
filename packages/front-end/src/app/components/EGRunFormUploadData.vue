@@ -26,9 +26,10 @@
 
   type FileDetails = {
     file: File;
-    progress: number;
     name: string;
     size: number;
+    // progress not present means upload hasn't started yet - this is important for the uploadStatus computed
+    progress?: number;
     location?: string;
     url?: string;
     error?: string;
@@ -87,7 +88,17 @@
   const canProceedToNextStep = computed<boolean>(() => areAllFilesUploaded.value);
 
   // overall upload status for all files
-  const uploadStatus = ref<UploadStatus>('idle');
+  const uploadStatus = computed<UploadStatus>(() => {
+    // if any file has a progress below 100 and doesn't have an error, upload is in progress
+    if (files.value.some((file) => file.progress !== undefined && file.progress < 100 && !file.error))
+      return 'uploading';
+    // else if any file has an error, upload failed
+    if (files.value.some((file) => !!file.error)) return 'failed';
+    // else if there are files and they all have progress 100, upload succeeded
+    if (files.value.length > 0 && files.value.every((file) => !file.error && file.progress === 100)) return 'success';
+    // else must be idle
+    return 'idle';
+  });
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
@@ -134,6 +145,12 @@
   function clearErrorsFromFiles(files: FileDetails[]) {
     files.forEach((file) => {
       file.error = undefined;
+      file.progress = undefined;
+    });
+  }
+
+  function initializeProgressForFiles(files: FileDetails[]) {
+    files.forEach((file) => {
       file.progress = 0;
     });
   }
@@ -221,7 +238,6 @@
     return {
       file,
       size: file.size,
-      progress: 0,
       name: file.name,
     };
   }
@@ -262,9 +278,10 @@
   }
 
   async function startUploadProcess() {
-    uploadStatus.value = 'uploading';
-
+    // reset files error states
     clearErrorsFromFiles(filesNotUploaded.value);
+    // set progress to 0 - this makes the computed uploadStatus get set to 'uploading'
+    initializeProgressForFiles(filesNotUploaded.value);
 
     const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
     addUploadUrls(uploadManifest);
@@ -390,8 +407,6 @@
    * - For other failures, displays specific error messages for individual files or a summary for multiple failed files.
    */
   async function uploadFiles(): Promise<UploadError[]> {
-    uploadStatus.value = 'uploading'; // Start with uploading status
-
     try {
       const uploadPromises = Object.values(filesNotUploaded.value).map((fileDetails) =>
         uploadFile(fileDetails)
@@ -410,7 +425,6 @@
       // Show network error toast only once if any file failed due to network
       if (errors.some((error) => error.error === 'Network connection lost')) {
         toastStore.error('Network error - please check your connection and try again');
-        uploadStatus.value = 'failed'; // Set failed status for network errors
       }
       // Show other error toasts as needed
       else if (errors.length > 0) {
@@ -419,14 +433,10 @@
         } else {
           toastStore.error(`Upload failed for ${errors.length} files`);
         }
-        uploadStatus.value = 'failed'; // Set failed status for other errors
-      } else {
-        uploadStatus.value = 'success'; // Set success status if no errors
       }
 
       return errors;
     } catch (error) {
-      uploadStatus.value = 'failed'; // Set failed status for unexpected errors
       return [];
     }
   }
@@ -524,7 +534,10 @@
       throw new Error(`no fileToRetry found with name '${fileSelector.fileName}'`);
     }
 
+    // reset files error states
     clearErrorsFromFiles([fileToRetry]);
+    // set progress to 0 - this makes the computed uploadStatus get set to 'uploading'
+    initializeProgressForFiles([fileToRetry]);
 
     try {
       // Get fresh upload URL
@@ -643,7 +656,7 @@
               ? '#FFF2F0'
               : row.progress === 100
                 ? '#E2FBE8'
-                : row.progress > 0
+                : row.progress !== undefined && row.progress > 0
                   ? `linear-gradient(to right, #E2FBE8 ${row.progress}%, transparent ${Math.min(row.progress + 10, 100)}%), #f7f7f7`
                   : '#f7f7f7',
           }"

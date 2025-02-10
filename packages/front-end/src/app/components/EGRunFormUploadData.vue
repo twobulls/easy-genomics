@@ -157,6 +157,13 @@
     });
   }
 
+  // gives error message to all files - used for when an error occurs above the individual file level
+  function applyErrorToFiles(files: FileDetails[], errorMessage: string) {
+    files.forEach((file) => {
+      file.error = errorMessage;
+    });
+  }
+
   function chooseFiles() {
     chooseFilesButton.value?.click();
   }
@@ -283,8 +290,15 @@
     clearErrorsFromFiles(filesNotUploaded.value);
     initializeProgressForFiles(filesNotUploaded.value);
 
-    const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
-    addUploadUrls(uploadManifest);
+    // pre-upload work - catch and handle errors in this step with applyErrorToFiles
+    try {
+      const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
+      addUploadUrls(uploadManifest);
+    } catch (error: any) {
+      applyErrorToFiles(filesNotUploaded.value, error.message);
+      return;
+    }
+
     await uploadFiles();
 
     await postUploadHook();
@@ -538,14 +552,21 @@
     initializeProgressForFiles([fileToRetry]);
 
     try {
-      // Get fresh upload URL
-      const manifest = await getUploadFilesManifest([fileToRetry]);
-      const fileInfo = manifest.Files.find((f) => f.Name === fileToRetry!.name);
-      if (!fileInfo) {
-        throw new Error('file not found in manifest');
+      // pre-upload work - catch and handle errors in this step with applyErrorToFiles
+      try {
+        // Get fresh upload URL
+        const manifest = await getUploadFilesManifest([fileToRetry]);
+        const fileInfo = manifest.Files.find((f) => f.Name === fileToRetry!.name);
+        if (!fileInfo) {
+          throw new Error('file not found in manifest');
+        }
+
+        fileToRetry.url = fileInfo.S3Url;
+      } catch (error: any) {
+        applyErrorToFiles([fileToRetry], error.message);
+        throw error;
       }
 
-      fileToRetry.url = fileInfo.S3Url;
       await uploadFile(fileToRetry);
 
       await postUploadHook();
@@ -665,7 +686,7 @@
           </div>
           <div
             class="file-cell flex w-[60%] items-center"
-            :style="{ color: row.progress === 100 ? '#306239' : 'inherit' }"
+            :style="{ color: row.progress === 100 && !row.error ? '#306239' : 'inherit' }"
           >
             <template v-if="row.error">
               <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />

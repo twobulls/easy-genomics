@@ -6,6 +6,7 @@
       pipelineOrWorkflowName: string;
       runName: string;
       labName: string;
+      disabled?: boolean;
     }>(),
     {
       url: '',
@@ -13,6 +14,7 @@
       pipelineOrWorkflowName: '',
       runName: '',
       labName: '',
+      disabled: false,
     },
   );
 
@@ -50,7 +52,10 @@
 
 <template>
   <EGText tag="h5" class="mb-2">Sample Sheet:</EGText>
-  <div class="border-r-1 bg-primary-muted mb-4 flex items-center justify-between rounded p-4">
+  <div
+    :class="[{ 'pointer-events-none opacity-50': disabled }]"
+    class="border-r-1 bg-primary-muted mb-4 flex items-center justify-between rounded p-4"
+  >
     <div
       class="text-primary hover:text-primary-900 relative cursor-pointer text-xs"
       @click="copyToClipboard"
@@ -59,7 +64,10 @@
       :aria-label="`Copy URL: ${url}`"
     >
       {{ url }}
-      <span :class="{ copied: true, show: isCopied }" role="status" aria-live="polite">Copied</span>
+      <div :class="{ copied: true, show: isCopied }" role="status" aria-live="polite" class="flex items-center gap-1">
+        Copied
+        <UIcon name="i-heroicons-check-20-solid" class="h-4 w-4 text-white" />
+      </div>
     </div>
 
     <div class="flex items-center gap-4" role="group" aria-label="URL Actions">

@@ -142,6 +142,7 @@
   // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
   const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
 
+  // reset files error states
   function clearErrorsFromFiles(files: FileDetails[]) {
     files.forEach((file) => {
       file.error = undefined;
@@ -149,6 +150,7 @@
     });
   }
 
+  // set progress to 0 - this makes the computed uploadStatus get set to 'uploading'
   function initializeProgressForFiles(files: FileDetails[]) {
     files.forEach((file) => {
       file.progress = 0;
@@ -278,9 +280,7 @@
   }
 
   async function startUploadProcess() {
-    // reset files error states
     clearErrorsFromFiles(filesNotUploaded.value);
-    // set progress to 0 - this makes the computed uploadStatus get set to 'uploading'
     initializeProgressForFiles(filesNotUploaded.value);
 
     const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
@@ -534,9 +534,7 @@
       throw new Error(`no fileToRetry found with name '${fileSelector.fileName}'`);
     }
 
-    // reset files error states
     clearErrorsFromFiles([fileToRetry]);
-    // set progress to 0 - this makes the computed uploadStatus get set to 'uploading'
     initializeProgressForFiles([fileToRetry]);
 
     try {

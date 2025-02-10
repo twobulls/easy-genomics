@@ -198,12 +198,10 @@
           <!-- Upload Data -->
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunFormUploadData
-              :sample-sheet-s3-url="wipSeqeraRun.sampleSheetS3Url"
               :lab-id="labId"
               :lab-name="labName"
               :pipeline-or-workflow-name="pipeline.name"
-              :run-name="wipSeqeraRun.runName"
-              :transaction-id="wipSeqeraRun.transactionId"
+              :wip-run="wipSeqeraRun"
               :wip-run-update-function="runStore.updateWipSeqeraRun"
               :wip-run-temp-id="seqeraRunTempId"
               @next-step="() => nextStep('parameters')"
@@ -215,13 +213,9 @@
           <!-- Edit Parameters -->
           <template v-if="items[selectedIndex].key === 'parameters'">
             <EGRunPipelineFormEditParameters
-              :lab-id="labId"
-              :lab-name="labName"
-              :pipeline-or-workflow-name="pipeline.name"
-              :run-name="wipSeqeraRun.runName"
               :params="params"
               :schema="schema"
-              :pipeline-id="pipelineId"
+              :seqera-run-temp-id="seqeraRunTempId"
               @next-step="() => nextStep('review')"
               @previous-step="previousStep"
             />

@@ -5,18 +5,21 @@
   const props = defineProps<{
     schema: object;
     params: object;
-
-    sampleSheetS3Url: string;
-    s3Bucket: string;
-    s3Path: string;
     omicsRunTempId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const runStore = useRunStore();
+  const labsStore = useLabsStore();
+  const omicsWorklowsStore = useOmicsWorkflowsStore();
 
   const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[props.omicsRunTempId]);
+
+  const labName = computed<string | null>(() => labsStore.labs[wipOmicsRun.value?.laboratoryId || '']?.Name || null);
+  const workflowName = computed<string | null>(
+    () => omicsWorklowsStore.workflows[wipOmicsRun.value?.workflowId || '']?.name || null,
+  );
 
   type SchemaItem = {
     name: string;
@@ -44,23 +47,12 @@
     Object.keys(props.schema).map((fieldName) => [fieldName, '']),
   );
 
-  function generatedParamFields(): { input?: string; outdir?: string } {
-    const r: any = {};
-    if (!!wipOmicsRun.value?.sampleSheetS3Url) r.input = wipOmicsRun.value?.sampleSheetS3Url;
-    if (!!wipOmicsRun.value?.s3Bucket && !!wipOmicsRun.value?.s3Path)
-      r.outdir = `s3://${wipOmicsRun.value?.s3Bucket}/${wipOmicsRun.value?.s3Path}/results`;
-
-    return r;
-  }
-
   const localProps = reactive({
     schema: props.schema,
     params: {
       // initialize all fields with empty string as default
       ...paramDefaults,
-      // initialize input and output values with default values
-      ...generatedParamFields(),
-      // finally overwrite with any existing values
+      // overwrite with any existing values
       ...props.params,
     },
   });
@@ -82,6 +74,15 @@
 </script>
 
 <template>
+  <EGS3SampleSheetBar
+    v-if="wipOmicsRun?.sampleSheetS3Url"
+    :url="wipOmicsRun.sampleSheetS3Url"
+    :lab-id="wipOmicsRun.laboratoryId"
+    :lab-name="labName"
+    :pipeline-or-workflow-name="workflowName"
+    :run-name="wipOmicsRun.runName"
+  />
+
   <div class="flex">
     <div class="mr-4 w-1/4">
       <EGCard>

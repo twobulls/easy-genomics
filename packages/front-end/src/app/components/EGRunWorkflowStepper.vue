@@ -7,6 +7,7 @@
     schema: Record<string, WorkflowParameter>;
     params: object;
     workflowId: string;
+    labName: string;
   }>();
 
   const $route = useRoute();
@@ -199,10 +200,9 @@
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunFormUploadData
               :lab-id="labId"
-              :sample-sheet-s3-url="wipOmicsRun.sampleSheetS3Url"
+              :lab-name="labName"
               :pipeline-or-workflow-name="workflow.name"
-              :run-name="wipOmicsRun.runName"
-              :transaction-id="wipOmicsRun.transactionId"
+              :wip-run="wipOmicsRun"
               :wip-run-update-function="runStore.updateWipOmicsRun"
               :wip-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('parameters')"
@@ -216,9 +216,6 @@
             <EGRunWorkflowFormEditParameters
               :params="params"
               :schema="schema"
-              :sample-sheet-s3-url="wipOmicsRun.sampleSheetS3Url"
-              :s3-bucket="wipOmicsRun.s3Bucket"
-              :s3-path="wipOmicsRun.s3Path"
               :omics-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('review')"
               @previous-step="previousStep"
@@ -232,10 +229,10 @@
               :params="wipOmicsRun?.params"
               :lab-id="labId"
               :omics-run-temp-id="omicsRunTempId"
-              :s3-bucket="wipOmicsRun.s3Bucket"
-              :s3-path="wipOmicsRun.s3Path"
-              :run-name="wipOmicsRun.runName"
-              :transaction-id="wipOmicsRun.transactionId"
+              :s3-bucket="wipOmicsRun?.s3Bucket"
+              :s3-path="wipOmicsRun?.s3Path"
+              :run-name="wipOmicsRun?.runName"
+              :transaction-id="wipOmicsRun?.transactionId"
               :workflow-id="props.workflowId"
               :workflow-name="workflow.name"
               @submit-launch-request="handleSubmitLaunchRequest()"

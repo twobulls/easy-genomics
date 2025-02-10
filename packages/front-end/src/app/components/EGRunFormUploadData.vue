@@ -18,7 +18,7 @@
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
-  type FilePair = {
+  export type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
     r1File?: FileDetails;
     r2File?: FileDetails;
@@ -26,9 +26,10 @@
 
   type FileDetails = {
     file: File;
-    progress: number;
     name: string;
     size: number;
+    // progress not present means upload hasn't started yet - this is important for the uploadStatus computed
+    progress?: number;
     location?: string;
     url?: string;
     error?: string;
@@ -47,19 +48,25 @@
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
-    sampleSheetS3Url: string;
     labId: string;
     labName: string;
     pipelineOrWorkflowName: string;
-    runName: string;
-    transactionId: string;
+    wipRun: WipSeqeraRunData & WipOmicsRunData; // will be one of these types, and officially can have any common fields
     wipRunUpdateFunction: Function;
     wipRunTempId: string;
   }>();
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
-  const filePairs = ref<FilePair[]>([]);
+  const filePairs = computed<FilePair[]>(() => {
+    // initialize files if not present
+    if (props.wipRun.files === undefined) {
+      props.wipRun.files = [];
+    }
+
+    return props.wipRun.files;
+  });
+
   const files = computed<FileDetails[]>(() => {
     const files = [];
     for (const filePair of filePairs.value) {
@@ -81,7 +88,17 @@
   const canProceedToNextStep = computed<boolean>(() => areAllFilesUploaded.value);
 
   // overall upload status for all files
-  const uploadStatus = ref<UploadStatus>('idle');
+  const uploadStatus = computed<UploadStatus>(() => {
+    // if any file has a progress below 100 and doesn't have an error, upload is in progress
+    if (files.value.some((file) => file.progress !== undefined && file.progress < 100 && !file.error))
+      return 'uploading';
+    // else if any file has an error, upload failed
+    if (files.value.some((file) => !!file.error)) return 'failed';
+    // else if there are files and they all have progress 100, upload succeeded
+    if (files.value.length > 0 && files.value.every((file) => !file.error && file.progress === 100)) return 'success';
+    // else must be idle
+    return 'idle';
+  });
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
@@ -125,9 +142,17 @@
   // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
   const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
 
+  // reset files error states
   function clearErrorsFromFiles(files: FileDetails[]) {
     files.forEach((file) => {
       file.error = undefined;
+      file.progress = undefined;
+    });
+  }
+
+  // set progress to 0 - this makes the computed uploadStatus get set to 'uploading'
+  function initializeProgressForFiles(files: FileDetails[]) {
+    files.forEach((file) => {
       file.progress = 0;
     });
   }
@@ -215,7 +240,6 @@
     return {
       file,
       size: file.size,
-      progress: 0,
       name: file.name,
     };
   }
@@ -256,9 +280,8 @@
   }
 
   async function startUploadProcess() {
-    uploadStatus.value = 'uploading';
-
     clearErrorsFromFiles(filesNotUploaded.value);
+    initializeProgressForFiles(filesNotUploaded.value);
 
     const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
     addUploadUrls(uploadManifest);
@@ -281,10 +304,15 @@
     // get sample sheet info
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     // save to wip run
+    const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
     props.wipRunUpdateFunction(props.wipRunTempId, {
-      sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
-      s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
-      s3Path: sampleSheetResponse.SampleSheetInfo.Path,
+      sampleSheetS3Url: S3Url,
+      s3Bucket: Bucket,
+      s3Path: Path,
+      params: {
+        input: S3Url,
+        outdir: `s3://${Bucket}/${Path}/results`,
+      },
     });
   }
 
@@ -325,7 +353,7 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
       LaboratoryId: props.labId,
-      TransactionId: props.transactionId || '',
+      TransactionId: props.wipRun.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -335,7 +363,7 @@
   async function getUploadFilesManifest(files: FileDetails[]): Promise<FileUploadManifest> {
     const request: FileUploadRequest = {
       LaboratoryId: props.labId,
-      TransactionId: props.transactionId || '',
+      TransactionId: props.wipRun.transactionId || '',
       Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 
@@ -379,8 +407,6 @@
    * - For other failures, displays specific error messages for individual files or a summary for multiple failed files.
    */
   async function uploadFiles(): Promise<UploadError[]> {
-    uploadStatus.value = 'uploading'; // Start with uploading status
-
     try {
       const uploadPromises = Object.values(filesNotUploaded.value).map((fileDetails) =>
         uploadFile(fileDetails)
@@ -399,7 +425,6 @@
       // Show network error toast only once if any file failed due to network
       if (errors.some((error) => error.error === 'Network connection lost')) {
         toastStore.error('Network error - please check your connection and try again');
-        uploadStatus.value = 'failed'; // Set failed status for network errors
       }
       // Show other error toasts as needed
       else if (errors.length > 0) {
@@ -408,14 +433,10 @@
         } else {
           toastStore.error(`Upload failed for ${errors.length} files`);
         }
-        uploadStatus.value = 'failed'; // Set failed status for other errors
-      } else {
-        uploadStatus.value = 'success'; // Set success status if no errors
       }
 
       return errors;
     } catch (error) {
-      uploadStatus.value = 'failed'; // Set failed status for unexpected errors
       return [];
     }
   }
@@ -514,6 +535,7 @@
     }
 
     clearErrorsFromFiles([fileToRetry]);
+    initializeProgressForFiles([fileToRetry]);
 
     try {
       // Get fresh upload URL
@@ -534,7 +556,7 @@
 
   const removeFile = (file: { sampleId: string; fileName: string }) => {
     // Remove the filePair containing the file
-    filePairs.value = filePairs.value.filter((pair) => {
+    props.wipRun.files = filePairs.value.filter((pair) => {
       if (pair.r1File?.name === file.fileName || pair.r2File?.name === file.fileName) {
         return false;
       }
@@ -632,7 +654,7 @@
               ? '#FFF2F0'
               : row.progress === 100
                 ? '#E2FBE8'
-                : row.progress > 0
+                : row.progress !== undefined && row.progress > 0
                   ? `linear-gradient(to right, #E2FBE8 ${row.progress}%, transparent ${Math.min(row.progress + 10, 100)}%), #f7f7f7`
                   : '#f7f7f7',
           }"
@@ -686,12 +708,12 @@
     </div>
 
     <EGS3SampleSheetBar
-      v-if="props.sampleSheetS3Url"
-      :url="props.sampleSheetS3Url"
+      v-if="props.wipRun.sampleSheetS3Url"
+      :url="props.wipRun.sampleSheetS3Url"
       :lab-id="props.labId"
       :lab-name="props.labName"
       :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
-      :run-name="props.runName"
+      :run-name="props.wipRun.runName"
     />
 
     <div class="flex justify-end pt-4">
@@ -700,7 +722,14 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="downloadSampleSheet(props.labId, props.sampleSheetS3Url, props.pipelineOrWorkflowName, props.runName)"
+        @click="
+          downloadSampleSheet(
+            props.labId,
+            props.wipRun.sampleSheetS3Url,
+            props.pipelineOrWorkflowName,
+            props.wipRun.runName,
+          )
+        "
       />
       <EGButton
         @click="startUploadProcess"

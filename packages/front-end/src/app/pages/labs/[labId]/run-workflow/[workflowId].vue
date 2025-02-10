@@ -144,6 +144,7 @@
       @reset-run-pipeline="resetRunPipeline()"
       :key="resetStepperKey"
       :workflow-id="workflowId"
+      :lab-name="labName"
     />
 
     <EGDialog

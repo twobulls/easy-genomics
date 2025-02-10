@@ -6,22 +6,21 @@
   const props = defineProps<{
     schema: object;
     params: object;
-    pipelineId: string;
-    labId: string;
-    labName: string;
-    pipelineOrWorkflowName: string;
-    runName: string;
+    seqeraRunTempId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
-  const $route = useRoute();
-
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
-
   const activeSection = ref<string | null>(null);
   const runStore = useRunStore();
+  const labsStore = useLabsStore();
+  const seqeraPipelinesStore = useSeqeraPipelinesStore();
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
+
+  const labName = computed<string | null>(() => labsStore.labs[wipSeqeraRun.value?.laboratoryId || '']?.Name || null);
+  const pipelineName = computed<string | null>(
+    () => seqeraPipelinesStore.pipelines[wipSeqeraRun.value?.pipelineId || '']?.name || null,
+  );
 
   const localProps = reactive({
     schema: props.schema,
@@ -82,7 +81,7 @@
     () => localProps.params,
     (val) => {
       if (val) {
-        runStore.updateWipSeqeraRun(seqeraRunTempId, { params: val });
+        runStore.updateWipSeqeraRun(props.seqeraRunTempId, { params: val });
       }
     },
     { deep: true },
@@ -92,11 +91,11 @@
 <template>
   <EGS3SampleSheetBar
     v-if="wipSeqeraRun?.sampleSheetS3Url"
-    :url="wipSeqeraRun?.sampleSheetS3Url"
-    :lab-id="props.labId"
-    :lab-name="props.labName"
-    :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
-    :run-name="props.runName"
+    :url="wipSeqeraRun.sampleSheetS3Url"
+    :lab-id="wipSeqeraRun.laboratoryId"
+    :lab-name="labName"
+    :pipeline-or-workflow-name="pipelineName"
+    :run-name="wipSeqeraRun.runName"
   />
 
   <div class="flex">

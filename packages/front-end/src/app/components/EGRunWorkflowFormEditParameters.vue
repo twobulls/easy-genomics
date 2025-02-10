@@ -5,18 +5,21 @@
   const props = defineProps<{
     schema: object;
     params: object;
-
-    sampleSheetS3Url: string;
-    s3Bucket: string;
-    s3Path: string;
     omicsRunTempId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const runStore = useRunStore();
+  const labsStore = useLabsStore();
+  const omicsWorklowsStore = useOmicsWorkflowsStore();
 
   const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[props.omicsRunTempId]);
+
+  const labName = computed<string | null>(() => labsStore.labs[wipOmicsRun.value?.laboratoryId || '']?.Name || null);
+  const workflowName = computed<string | null>(
+    () => omicsWorklowsStore.workflows[wipOmicsRun.value?.workflowId || '']?.name || null,
+  );
 
   type SchemaItem = {
     name: string;

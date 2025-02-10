@@ -213,13 +213,9 @@
           <!-- Edit Parameters -->
           <template v-if="items[selectedIndex].key === 'parameters'">
             <EGRunPipelineFormEditParameters
-              :lab-id="labId"
-              :lab-name="labName"
-              :pipeline-or-workflow-name="pipeline.name"
-              :run-name="wipSeqeraRun.runName"
               :params="params"
               :schema="schema"
-              :pipeline-id="pipelineId"
+              :seqera-run-temp-id="seqeraRunTempId"
               @next-step="() => nextStep('review')"
               @previous-step="previousStep"
             />

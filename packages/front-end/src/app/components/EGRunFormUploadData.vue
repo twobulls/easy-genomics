@@ -18,7 +18,7 @@
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
-  type FilePair = {
+  export type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
     r1File?: FileDetails;
     r2File?: FileDetails;
@@ -57,7 +57,15 @@
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
 
-  const filePairs = ref<FilePair[]>([]);
+  const filePairs = computed<FilePair[]>(() => {
+    // initialize files if not present
+    if (props.wipRun.files === undefined) {
+      props.wipRun.files = [];
+    }
+
+    return props.wipRun.files;
+  });
+
   const files = computed<FileDetails[]>(() => {
     const files = [];
     for (const filePair of filePairs.value) {
@@ -537,7 +545,7 @@
 
   const removeFile = (file: { sampleId: string; fileName: string }) => {
     // Remove the filePair containing the file
-    filePairs.value = filePairs.value.filter((pair) => {
+    props.wipRun.files = filePairs.value.filter((pair) => {
       if (pair.r1File?.name === file.fileName || pair.r2File?.name === file.fileName) {
         return false;
       }

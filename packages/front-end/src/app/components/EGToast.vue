@@ -7,6 +7,7 @@
       title: string;
       timeout?: number; // milliseconds
       variant?: ToastVariant;
+      callback?: Function;
     }>(),
     {
       timeout: 3000,
@@ -103,7 +104,21 @@
 </script>
 
 <template>
-  <UNotification :timeout="timeout" :id="id" :ui="variantUi" :title="title" :icon="variantUi.icon" />
+  <!-- invisible full screen overlay to pick up clicks and dismiss the green toast -->
+  <div
+    v-if="variant === 'success'"
+    class="z-99999 fixed bottom-px left-px right-px top-px"
+    @click.stop="callback"
+  ></div>
+
+  <UNotification
+    :timeout="timeout"
+    :id="id"
+    :ui="variantUi"
+    :title="title"
+    :icon="variantUi.icon"
+    :callback="callback"
+  />
 </template>
 
 <style scoped lang="scss">

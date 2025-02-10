@@ -74,6 +74,15 @@
 </script>
 
 <template>
+  <EGS3SampleSheetBar
+    v-if="wipOmicsRun?.sampleSheetS3Url"
+    :url="wipOmicsRun.sampleSheetS3Url"
+    :lab-id="wipOmicsRun.laboratoryId"
+    :lab-name="labName"
+    :pipeline-or-workflow-name="workflowName"
+    :run-name="wipOmicsRun.runName"
+  />
+
   <div class="flex">
     <div class="mr-4 w-1/4">
       <EGCard>

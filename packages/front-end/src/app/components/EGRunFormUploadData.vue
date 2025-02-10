@@ -136,13 +136,6 @@
     const hasUnmatched = haveUnmatchedFiles.value;
     const isUploading = uploadStatus.value === 'uploading';
 
-    console.log('Upload button disabled because:', {
-      noInternet,
-      noFiles,
-      hasUnmatched,
-      isUploading,
-    });
-
     return noInternet || noFiles || hasUnmatched || isUploading;
   });
 

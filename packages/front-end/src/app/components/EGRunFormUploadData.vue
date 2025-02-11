@@ -44,6 +44,7 @@
 
   const { $api } = useNuxtApp();
   const { downloadSampleSheet } = usePipeline($api);
+  const { isOnline } = useNetwork();
   const toastStore = useToastStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
@@ -56,7 +57,16 @@
     wipRunTempId: string;
   }>();
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
+  const MIN_FILE_SIZE = 1; // 1byte
+  const UPLOAD_TIMEOUT = 600000; // 10 mins
+  const UPLOAD_RETRY_DELAY = 3000; // 3 second delay helps prevent immediate retry spam and gives time for temporary network issues to resolve
+
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
+  const isDropzoneActive = ref(false);
+
+  // Track ongoing upload requests
+  const uploadControllers = ref<{ [key: string]: AbortController }>({});
 
   const filePairs = computed<FilePair[]>(() => {
     // initialize files if not present
@@ -75,17 +85,27 @@
     }
     return files;
   });
+
   const filesNotUploaded = computed<FileDetails[]>(() =>
     files.value.filter((file) => file.error || file.progress !== 100),
   );
 
-  const isDropzoneActive = ref(false);
+  const hasSampleSheetUrl = computed(() => props.wipRun.sampleSheetS3Url);
 
   const haveUnmatchedFiles = computed<boolean>(() =>
     filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
   );
 
-  const canProceedToNextStep = computed<boolean>(() => areAllFilesUploaded.value);
+  const canProceedToNextStep = computed<boolean>(() => {
+    // Check both conditions:
+    // 1. All existing files are uploaded successfully
+    // 2. All pairs are complete (have both R1 and R2)
+    return areAllFilesUploaded.value && areAllPairsComplete.value;
+  });
+
+  const areAllPairsComplete = computed<boolean>(() => {
+    return filePairs.value.every((pair) => pair.r1File && pair.r2File);
+  });
 
   // overall upload status for all files
   const uploadStatus = computed<UploadStatus>(() => {
@@ -99,9 +119,6 @@
     // else must be idle
     return 'idle';
   });
-
-  const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
-  const MIN_FILE_SIZE = 1; // 1byte
 
   const filesForTable = computed(() => {
     const files: { sampleId: string; fileName: string; progress: number; error?: string }[] = [];
@@ -239,17 +256,8 @@
     addFileToFilePairs(fileDetails);
   }
 
-  /**
-   * Check if a file is already in the file pairs
-   * @param newFile
-   */
   function checkIsFileDuplicate(newFile: File): boolean {
-    // Only check files from complete pairs (where both R1 and R2 exist)
-    const filesInCompletePairs = filePairs.value
-      .filter((pair) => pair.r1File && pair.r2File)
-      .flatMap((pair) => [pair.r1File!, pair.r2File!]);
-
-    return filesInCompletePairs.some((fileDetails) => fileDetails.name === newFile.name);
+    return files.value.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
   }
 
   function getFileDetails(file: File): FileDetails {
@@ -257,6 +265,9 @@
       file,
       size: file.size,
       name: file.name,
+      progress: undefined, // Reset progress
+      error: undefined, // Reset error state
+      url: undefined, // Reset upload URL
     };
   }
 
@@ -291,8 +302,8 @@
     return fileName.substring(0, fileName.lastIndexOf('_R'));
   }
 
-  function toggleDropzoneActive() {
-    isDropzoneActive.value = !isDropzoneActive.value;
+  function setDropzoneActive(val: boolean) {
+    isDropzoneActive.value = val;
   }
 
   async function startUploadProcess() {
@@ -401,15 +412,6 @@
       if (url) file.url = url;
     }
   }
-
-  // Track ongoing upload requests
-  const uploadControllers = ref<{ [key: string]: AbortController }>({});
-
-  const { isOnline } = useNetwork();
-
-  // Network timeout in milliseconds (15 seconds)
-  const UPLOAD_TIMEOUT = 600000; // 10 mins
-  const UPLOAD_RETRY_DELAY = 3000; // 3 second delay helps prevent immediate retry spam and gives time for temporary network issues to resolve
 
   /**
    * Handles the process of uploading multiple files, tracks their progress, and manages upload results.
@@ -665,10 +667,10 @@
     >
       <div
         id="dropzone"
-        @dragenter.prevent="toggleDropzoneActive"
-        @dragleave.prevent="toggleDropzoneActive"
+        @dragenter.prevent="setDropzoneActive(true)"
+        @dragleave.prevent="setDropzoneActive(false)"
         @dragover.prevent
-        @drop.prevent="toggleDropzoneActive"
+        @drop.prevent="setDropzoneActive(false)"
       >
         <div
           :class="
@@ -783,7 +785,7 @@
     </div>
 
     <EGS3SampleSheetBar
-      v-if="props.wipRun.sampleSheetS3Url"
+      v-if="hasSampleSheetUrl"
       :disabled="uploadStatus === 'uploading'"
       :url="props.wipRun.sampleSheetS3Url"
       :lab-id="props.labId"
@@ -794,7 +796,7 @@
 
     <div class="flex justify-end pt-4">
       <EGButton
-        v-if="uploadStatus === 'success'"
+        v-if="hasSampleSheetUrl"
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"

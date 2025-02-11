@@ -440,7 +440,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'sass',
     'tailwind-merge',
     'tailwindcss',
-    'unplugin-icons',
     'unplugin-vue-components',
     'uuid',
     'zod',

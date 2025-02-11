@@ -128,10 +128,6 @@
       "type": "runtime"
     },
     {
-      "name": "@nuxt/icon",
-      "type": "runtime"
-    },
-    {
       "name": "@nuxt/ui",
       "version": "2.18.4",
       "type": "runtime"

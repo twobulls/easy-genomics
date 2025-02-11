@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   experimental: {
     watcher: 'parcel', // 'chokidar' or 'parcel' are also options
   },
-  modules: ['@nuxt/ui', '@pinia/nuxt', '@pinia/nuxt', 'pinia-plugin-persistedstate/nuxt', '@vueuse/nuxt', '@nuxt/icon'],
+  modules: ['@nuxt/ui', '@pinia/nuxt', '@pinia/nuxt', 'pinia-plugin-persistedstate/nuxt', '@vueuse/nuxt'],
   srcDir: 'src/app/',
   css: ['@/styles/main.scss'],
   ssr: false,

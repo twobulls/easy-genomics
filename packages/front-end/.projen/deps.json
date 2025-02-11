@@ -128,14 +128,6 @@
       "type": "runtime"
     },
     {
-      "name": "@iconify/json",
-      "type": "runtime"
-    },
-    {
-      "name": "@iconify/vue",
-      "type": "runtime"
-    },
-    {
       "name": "@nuxt/ui",
       "version": "2.18.4",
       "type": "runtime"
@@ -261,10 +253,6 @@
     },
     {
       "name": "tailwindcss",
-      "type": "runtime"
-    },
-    {
-      "name": "unplugin-icons",
       "type": "runtime"
     },
     {

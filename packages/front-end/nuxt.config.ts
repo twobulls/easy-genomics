@@ -1,7 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import path from 'path';
-import IconsResolver from 'unplugin-icons/resolver';
-import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 import { loadNuxtSettings } from './env.nuxt.config';
 
@@ -32,6 +30,15 @@ export default defineNuxtConfig({
     },
   },
 
+  // Nuxt Icon options
+  icon: {
+    resolver: 'local',
+    clientBundle: {
+      scan: true,
+      collections: ['heroicons'],
+    },
+  },
+
   runtimeConfig: {
     public: {
       AWS_REGION: process.env.AWS_REGION,
@@ -45,20 +52,6 @@ export default defineNuxtConfig({
 
   piniaPluginPersistedstate: {
     storage: 'localStorage',
-  },
-
-  ui: {
-    icons: {
-      dynamic: false, // Disable dynamic loading
-      loadingIcon: false, // Disable loading icon
-      aliases: {},
-      sets: {
-        heroicons: {
-          prefix: 'i-heroicons-',
-          load: true,
-        },
-      },
-    },
   },
 
   vite: {
@@ -77,32 +70,7 @@ export default defineNuxtConfig({
         },
       },
     },
-    plugins: [
-      Components({
-        resolvers: [
-          IconsResolver({
-            prefix: 'Icon',
-            enabledCollections: ['heroicons'], // Specify the icon collections you want to use
-          }),
-        ],
-      }),
-      Icons({
-        autoInstall: false, // Disable auto-installation
-        compiler: 'vue3',
-        defaultClass: 'inline-block',
-        defaultStyle: 'vertical-align: middle;',
-        scale: 1.2,
-      }),
-    ],
-  },
-
-  // autoimport Iconfiy icon packages as custom components
-  vue: {
-    template: {
-      compilerOptions: {
-        isCustomElement: (tag: string) => tag.startsWith('Icon-'),
-      },
-    },
+    plugins: [],
   },
 
   compatibilityDate: '2024-07-26',

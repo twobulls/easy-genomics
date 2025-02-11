@@ -745,18 +745,6 @@
               <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
             </template>
             {{ row.fileName }}
-            <button
-              v-if="uploadStatus !== 'success'"
-              :disabled="!isOnline || uploadStatus === 'uploading'"
-              :class="[
-                isOnline && uploadStatus !== 'uploading'
-                  ? 'text-alert-danger hover:text-alert-danger-dark'
-                  : 'cursor-not-allowed text-gray-400',
-              ]"
-              @click="removeFile(row)"
-            >
-              <UIcon name="i-heroicons-trash" size="20" />
-            </button>
           </div>
           <div class="file-cell flex w-[10%] items-center justify-end gap-2">
             <template v-if="row.error">

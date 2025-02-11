@@ -216,7 +216,12 @@
           :class="{ 'text-black': index === breadcrumbs.length - 1, 'text-gray-500': index !== breadcrumbs.length - 1 }"
         >
           {{ crumb.name }}
-          <Icon v-if="index < breadcrumbs.length - 1" size="large" name="i-heroicons-chevron-right" class="separator" />
+          <UIcon
+            v-if="index < breadcrumbs.length - 1"
+            size="large"
+            name="i-heroicons-chevron-right"
+            class="separator"
+          />
         </span>
       </template>
     </div>

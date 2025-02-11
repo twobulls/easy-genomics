@@ -67,7 +67,7 @@
         {{ url }}
         <div :class="{ copied: true, show: isCopied }" role="status" aria-live="polite" class="flex items-center gap-1">
           Copied
-          <Icon name="i-heroicons-check-20-solid" class="h-4 w-4 text-white" />
+          <UIcon name="i-heroicons-check-20-solid" class="h-4 w-4 text-white" />
         </div>
       </div>
 

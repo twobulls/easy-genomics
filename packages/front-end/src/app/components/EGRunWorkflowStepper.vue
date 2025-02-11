@@ -170,7 +170,7 @@
     <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" class="UTabs">
       <template #default="{ item, index, selected }">
         <div class="relative flex items-center gap-2 truncate">
-          <Icon
+          <UIcon
             v-if="selectedIndex > index || hasLaunched"
             name="i-heroicons-check-20-solid"
             class="text-primary h-4 w-4 flex-shrink-0"

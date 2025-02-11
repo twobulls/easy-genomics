@@ -797,7 +797,7 @@
 
     <div class="flex justify-end pt-4">
       <EGButton
-        v-if="uploadStatus === 'success'"
+        v-if="props.wipRun.sampleSheetS3Url"
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"

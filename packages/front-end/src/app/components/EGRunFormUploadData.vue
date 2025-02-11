@@ -128,16 +128,16 @@
     return files;
   });
 
-  const showDropzone = computed(() => uploadStatus.value !== 'uploading');
+  const isDropzoneEnabled = computed(() => uploadStatus.value !== 'uploading');
 
-  const isUploadButtonDisabled = computed(
-    // reasons why uploading might be disabled
-    () =>
-      !isOnline.value || // no internet connection
-      filesNotUploaded.value.length === 0 || // nothing to upload
-      haveUnmatchedFiles.value || // there's an unmatched file
-      uploadStatus.value === 'uploading', // uploading is currently going
-  );
+  const isUploadButtonDisabled = computed(() => {
+    const noInternet = !isOnline.value;
+    const noFiles = filesNotUploaded.value.length === 0;
+    const hasUnmatched = haveUnmatchedFiles.value;
+    const isUploading = uploadStatus.value === 'uploading';
+
+    return noInternet || noFiles || hasUnmatched || isUploading;
+  });
 
   // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
   const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
@@ -239,8 +239,17 @@
     addFileToFilePairs(fileDetails);
   }
 
+  /**
+   * Check if a file is already in the file pairs
+   * @param newFile
+   */
   function checkIsFileDuplicate(newFile: File): boolean {
-    return files.value.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
+    // Only check files from complete pairs (where both R1 and R2 exist)
+    const filesInCompletePairs = filePairs.value
+      .filter((pair) => pair.r1File && pair.r2File)
+      .flatMap((pair) => [pair.r1File!, pair.r2File!]);
+
+    return filesInCompletePairs.some((fileDetails) => fileDetails.name === newFile.name);
   }
 
   function getFileDetails(file: File): FileDetails {
@@ -475,6 +484,9 @@
     }
 
     const controller = new AbortController();
+    // Store the controller
+    uploadControllers.value[fileDetails.name] = controller;
+
     const timeoutId = setTimeout(() => {
       controller.abort();
     }, UPLOAD_TIMEOUT);
@@ -513,10 +525,14 @@
 
       clearTimeout(timeoutId);
       unwatch();
+      // Remove the controller after successful upload
+      delete uploadControllers.value[fileDetails.name];
       return response.data;
     } catch (error: any) {
       clearTimeout(timeoutId);
       unwatch();
+      // Remove the controller after failed upload
+      delete uploadControllers.value[fileDetails.name];
 
       if (error.name === 'AbortError' || error.message === 'Network Error' || !isOnline.value) {
         fileDetails.error = 'Network connection lost. Upload aborted.';
@@ -576,13 +592,42 @@
   };
 
   const removeFile = (file: { sampleId: string; fileName: string }) => {
-    // Remove the filePair containing the file
-    props.wipRun.files = filePairs.value.filter((pair) => {
-      if (pair.r1File?.name === file.fileName || pair.r2File?.name === file.fileName) {
-        return false;
+    // Find the file pair containing the file
+    const filePair = filePairs.value.find((pair) => pair.sampleId === file.sampleId);
+
+    if (filePair) {
+      // Remove only the specific file (r1 or r2) that matches the filename
+      if (filePair.r1File?.name === file.fileName) {
+        filePair.r1File = undefined;
+      } else if (filePair.r2File?.name === file.fileName) {
+        filePair.r2File = undefined;
       }
-      return true;
+
+      // If both files are now undefined, remove the entire pair
+      if (!filePair.r1File && !filePair.r2File) {
+        props.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
+      }
+    }
+  };
+
+  const canRetryUpload = (row: { sampleId: string; fileName: string; progress: number; error?: string }) => {
+    // If the file isn't in error state, can't retry
+    if (!row.error) return false;
+
+    // Find the matching pair for this file
+    const isPairedFile = filePairs.value.some((pair) => {
+      const isR1 = pair.r1File?.name === row.fileName;
+      const isR2 = pair.r2File?.name === row.fileName;
+
+      // If this is R1, check if R2 exists
+      if (isR1) return !!pair.r2File;
+      // If this is R2, check if R1 exists
+      if (isR2) return !!pair.r1File;
+
+      return false;
     });
+
+    return isPairedFile && isOnline.value;
   };
 
   watch(canProceedToNextStep, (val) => {
@@ -613,7 +658,11 @@
       <li>5GB max size per individual file</li>
     </ul>
     <UDivider class="py-4" />
-    <div class="py-4" @drop.prevent="handleDroppedFiles" v-if="showDropzone">
+    <div
+      class="py-4"
+      @drop.prevent="handleDroppedFiles"
+      :class="{ 'pointer-events-none opacity-50': !isDropzoneEnabled }"
+    >
       <div
         id="dropzone"
         @dragenter.prevent="toggleDropzoneActive"
@@ -649,6 +698,7 @@
               multiple
             />
             <EGButton
+              :disabled="!isDropzoneEnabled"
               :class="cn('visible ml-4', { 'invisible': isDropzoneActive })"
               @click="chooseFiles"
               label="Choose Files"
@@ -697,17 +747,21 @@
             <template v-if="row.error">
               <button
                 class="mr-2"
-                :class="[isOnline ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
+                :class="[
+                  canRetryUpload(row) ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400',
+                ]"
                 @click="retryUpload(row)"
-                :disabled="!isOnline"
-                :title="isOnline ? 'Retry upload' : 'Cannot retry while offline'"
+                :disabled="!isOnline || !canRetryUpload(row)"
               >
                 <UIcon name="i-heroicons-arrow-path" size="20" />
               </button>
+
               <button
-                :disabled="!isOnline"
+                :disabled="!isOnline || uploadStatus === 'uploading'"
                 :class="[
-                  isOnline ? 'text-alert-danger hover:text-alert-danger-dark' : 'cursor-not-allowed text-gray-400',
+                  isOnline && uploadStatus !== 'uploading'
+                    ? 'text-alert-danger hover:text-alert-danger-dark'
+                    : 'cursor-not-allowed text-gray-400',
                 ]"
                 @click="removeFile(row)"
               >
@@ -730,6 +784,7 @@
 
     <EGS3SampleSheetBar
       v-if="props.wipRun.sampleSheetS3Url"
+      :disabled="uploadStatus === 'uploading'"
       :url="props.wipRun.sampleSheetS3Url"
       :lab-id="props.labId"
       :lab-name="props.labName"

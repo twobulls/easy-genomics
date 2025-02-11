@@ -239,17 +239,8 @@
     addFileToFilePairs(fileDetails);
   }
 
-  /**
-   * Check if a file is already in the file pairs
-   * @param newFile
-   */
   function checkIsFileDuplicate(newFile: File): boolean {
-    // Only check files from complete pairs (where both R1 and R2 exist)
-    const filesInCompletePairs = filePairs.value
-      .filter((pair) => pair.r1File && pair.r2File)
-      .flatMap((pair) => [pair.r1File!, pair.r2File!]);
-
-    return filesInCompletePairs.some((fileDetails) => fileDetails.name === newFile.name);
+    return files.value.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
   }
 
   function getFileDetails(file: File): FileDetails {
@@ -257,6 +248,9 @@
       file,
       size: file.size,
       name: file.name,
+      progress: undefined, // Reset progress
+      error: undefined, // Reset error state
+      url: undefined, // Reset upload URL
     };
   }
 

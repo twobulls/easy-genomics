@@ -32,7 +32,11 @@ export default defineNuxtConfig({
 
   // Nuxt Icon Options
   icon: {
-    serverBundle: 'local', // Use local icons bundle to avoid loading from CDN and make available offline
+    resolver: 'local',
+    clientBundle: {
+      scan: true,
+      collections: ['heroicons'], // Changed from object to array
+    },
   },
 
   runtimeConfig: {

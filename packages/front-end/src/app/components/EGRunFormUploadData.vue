@@ -128,7 +128,7 @@
     return files;
   });
 
-  const showDropzone = computed(() => uploadStatus.value !== 'uploading');
+  const isDropzoneEnabled = computed(() => uploadStatus.value !== 'uploading');
 
   const isUploadButtonDisabled = computed(() => {
     const noInternet = !isOnline.value;
@@ -658,7 +658,11 @@
       <li>5GB max size per individual file</li>
     </ul>
     <UDivider class="py-4" />
-    <div class="py-4" @drop.prevent="handleDroppedFiles" v-if="showDropzone">
+    <div
+      class="py-4"
+      @drop.prevent="handleDroppedFiles"
+      :class="{ 'pointer-events-none opacity-50': !isDropzoneEnabled }"
+    >
       <div
         id="dropzone"
         @dragenter.prevent="toggleDropzoneActive"
@@ -694,6 +698,7 @@
               multiple
             />
             <EGButton
+              :disabled="!isDropzoneEnabled"
               :class="cn('visible ml-4', { 'invisible': isDropzoneActive })"
               @click="chooseFiles"
               label="Choose Files"
@@ -785,7 +790,6 @@
       :lab-name="props.labName"
       :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
       :run-name="props.wipRun.runName"
-      :class="{ 'pointer-events-none opacity-50': uploadStatus === 'uploading' }"
     />
 
     <div class="flex justify-end pt-4">

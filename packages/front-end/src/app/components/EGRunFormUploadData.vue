@@ -741,7 +741,7 @@
             :style="{ color: row.progress === 100 && !row.error ? '#306239' : 'inherit' }"
           >
             <template v-if="row.error">
-              <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
+              <Icon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
             </template>
             {{ row.fileName }}
           </div>
@@ -755,7 +755,7 @@
                 @click="retryUpload(row)"
                 :disabled="!isOnline || !canRetryUpload(row)"
               >
-                <UIcon name="i-heroicons-arrow-path" size="20" />
+                <Icon name="i-heroicons-arrow-path" size="20" />
               </button>
 
               <button
@@ -767,17 +767,12 @@
                 ]"
                 @click="removeFile(row)"
               >
-                <UIcon name="i-heroicons-trash" size="20" />
+                <Icon name="i-heroicons-trash" size="20" />
               </button>
             </template>
-            <UIcon
-              v-else-if="row.progress === 100"
-              size="20"
-              name="i-heroicons-check"
-              class="text-alert-success-text"
-            />
+            <Icon v-else-if="row.progress === 100" size="20" name="i-heroicons-check" class="text-alert-success-text" />
             <button v-else class="text-gray-500 hover:text-gray-700" @click="cancelUpload(row.fileName)">
-              <UIcon name="i-heroicons-x" size="20" />
+              <Icon name="i-heroicons-x" size="20" />
             </button>
           </div>
         </div>

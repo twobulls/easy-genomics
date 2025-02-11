@@ -187,7 +187,7 @@
                   @click.stop="async () => await setDefaultOrg(userStore.currentOrgId)"
                 />
 
-                <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
+                <Icon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
               </div>
             </template>
 

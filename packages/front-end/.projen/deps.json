@@ -128,11 +128,7 @@
       "type": "runtime"
     },
     {
-      "name": "@iconify/json",
-      "type": "runtime"
-    },
-    {
-      "name": "@iconify/vue",
+      "name": "@nuxt/icon",
       "type": "runtime"
     },
     {

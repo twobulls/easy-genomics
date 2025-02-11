@@ -1,7 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import path from 'path';
-import IconsResolver from 'unplugin-icons/resolver';
-import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 import { loadNuxtSettings } from './env.nuxt.config';
 
@@ -18,7 +16,7 @@ export default defineNuxtConfig({
   experimental: {
     watcher: 'parcel', // 'chokidar' or 'parcel' are also options
   },
-  modules: ['@nuxt/ui', '@pinia/nuxt', '@pinia/nuxt', 'pinia-plugin-persistedstate/nuxt', '@vueuse/nuxt'],
+  modules: ['@nuxt/ui', '@pinia/nuxt', '@pinia/nuxt', 'pinia-plugin-persistedstate/nuxt', '@vueuse/nuxt', '@nuxt/icon'],
   srcDir: 'src/app/',
   css: ['@/styles/main.scss'],
   ssr: false,
@@ -30,6 +28,11 @@ export default defineNuxtConfig({
         additionalData: '@use "@/styles/helpers" as *;', // Update this to match your @use import
       },
     },
+  },
+
+  // Nuxt Icon Options
+  icon: {
+    serverBundle: 'local', // Use local icons bundle to avoid loading from CDN and make available offline
   },
 
   runtimeConfig: {
@@ -45,20 +48,6 @@ export default defineNuxtConfig({
 
   piniaPluginPersistedstate: {
     storage: 'localStorage',
-  },
-
-  ui: {
-    icons: {
-      dynamic: false, // Disable dynamic loading
-      loadingIcon: false, // Disable loading icon
-      aliases: {},
-      sets: {
-        heroicons: {
-          prefix: 'i-heroicons-',
-          load: true,
-        },
-      },
-    },
   },
 
   vite: {
@@ -77,32 +66,7 @@ export default defineNuxtConfig({
         },
       },
     },
-    plugins: [
-      Components({
-        resolvers: [
-          IconsResolver({
-            prefix: 'Icon',
-            enabledCollections: ['heroicons'], // Specify the icon collections you want to use
-          }),
-        ],
-      }),
-      Icons({
-        autoInstall: false, // Disable auto-installation
-        compiler: 'vue3',
-        defaultClass: 'inline-block',
-        defaultStyle: 'vertical-align: middle;',
-        scale: 1.2,
-      }),
-    ],
-  },
-
-  // autoimport Iconfiy icon packages as custom components
-  vue: {
-    template: {
-      compilerOptions: {
-        isCustomElement: (tag: string) => tag.startsWith('Icon-'),
-      },
-    },
+    plugins: [],
   },
 
   compatibilityDate: '2024-07-26',

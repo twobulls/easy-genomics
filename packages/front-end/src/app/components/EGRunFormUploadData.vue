@@ -85,7 +85,16 @@
     filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
   );
 
-  const canProceedToNextStep = computed<boolean>(() => areAllFilesUploaded.value);
+  const canProceedToNextStep = computed<boolean>(() => {
+    // Check both conditions:
+    // 1. All existing files are uploaded successfully
+    // 2. All pairs are complete (have both R1 and R2)
+    return areAllFilesUploaded.value && areAllPairsComplete.value;
+  });
+
+  const areAllPairsComplete = computed<boolean>(() => {
+    return filePairs.value.every((pair) => pair.r1File && pair.r2File);
+  });
 
   // overall upload status for all files
   const uploadStatus = computed<UploadStatus>(() => {
@@ -736,6 +745,18 @@
               <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
             </template>
             {{ row.fileName }}
+            <button
+              v-if="uploadStatus !== 'success'"
+              :disabled="!isOnline || uploadStatus === 'uploading'"
+              :class="[
+                isOnline && uploadStatus !== 'uploading'
+                  ? 'text-alert-danger hover:text-alert-danger-dark'
+                  : 'cursor-not-allowed text-gray-400',
+              ]"
+              @click="removeFile(row)"
+            >
+              <UIcon name="i-heroicons-trash" size="20" />
+            </button>
           </div>
           <div class="file-cell flex w-[10%] items-center justify-end gap-2">
             <template v-if="row.error">

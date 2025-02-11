@@ -244,15 +244,12 @@
    * @param newFile
    */
   function checkIsFileDuplicate(newFile: File): boolean {
-    // Only check files that are currently in file pairs
-    const existingFiles = filePairs.value.flatMap((pair) => {
-      const files = [];
-      if (pair.r1File) files.push(pair.r1File);
-      if (pair.r2File) files.push(pair.r2File);
-      return files;
-    });
+    // Only check files from complete pairs (where both R1 and R2 exist)
+    const filesInCompletePairs = filePairs.value
+      .filter((pair) => pair.r1File && pair.r2File)
+      .flatMap((pair) => [pair.r1File!, pair.r2File!]);
 
-    return existingFiles.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
+    return filesInCompletePairs.some((fileDetails) => fileDetails.name === newFile.name);
   }
 
   function getFileDetails(file: File): FileDetails {

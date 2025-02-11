@@ -302,8 +302,8 @@
     return fileName.substring(0, fileName.lastIndexOf('_R'));
   }
 
-  function toggleDropzoneActive() {
-    isDropzoneActive.value = !isDropzoneActive.value;
+  function setDropzoneActive(val: boolean) {
+    isDropzoneActive.value = val;
   }
 
   async function startUploadProcess() {
@@ -667,10 +667,10 @@
     >
       <div
         id="dropzone"
-        @dragenter.prevent="toggleDropzoneActive"
-        @dragleave.prevent="toggleDropzoneActive"
+        @dragenter.prevent="setDropzoneActive(true)"
+        @dragleave.prevent="setDropzoneActive(false)"
         @dragover.prevent
-        @drop.prevent="toggleDropzoneActive"
+        @drop.prevent="setDropzoneActive(false)"
       >
         <div
           :class="

@@ -30,12 +30,12 @@ export default defineNuxtConfig({
     },
   },
 
-  // Nuxt Icon Options
+  // Nuxt Icon options
   icon: {
     resolver: 'local',
     clientBundle: {
       scan: true,
-      collections: ['heroicons'], // Changed from object to array
+      collections: ['heroicons'],
     },
   },
 

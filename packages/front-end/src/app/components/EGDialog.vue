@@ -21,6 +21,8 @@
 
   const delaying = ref<boolean>(false);
 
+  const canCancel = computed(() => props.cancelLabel);
+
   function handleClick() {
     delaying.value = true;
 
@@ -32,7 +34,17 @@
 </script>
 
 <template>
-  <UModal :modelValue="modelValue" @update:modelValue="(value) => emit('update:modelValue', value)" prevent-close>
+  <UModal
+    :ui="{
+      overlay: {
+        base: 'fixed inset-0 transition-opacity backdrop-blur-[5px]',
+        background: 'bg-gray-800/30',
+      },
+    }"
+    :modelValue="modelValue"
+    @update:modelValue="(value) => emit('update:modelValue', value)"
+    prevent-close
+  >
     <UCard>
       <template #header>
         <div class="flex flex-col">
@@ -40,6 +52,7 @@
             <EGText tag="h3" class="mb-6">{{ primaryMessage }}</EGText>
             <div>
               <UButton
+                v-if="canCancel"
                 @click="handleCancel"
                 icon="i-heroicons-x-mark"
                 class="hover:bg-background-dark-grey ml-2"

@@ -10,7 +10,6 @@
     {
       title: '',
       message: '',
-      canDismiss: true,
       preventClose: false,
     },
   );
@@ -21,7 +20,15 @@
 </script>
 
 <template>
-  <UModal prevent-close>
+  <UModal
+    prevent-close
+    :ui="{
+      overlay: {
+        base: 'fixed inset-0 transition-opacity backdrop-blur-[5px]',
+        background: 'bg-gray-800/30',
+      },
+    }"
+  >
     <UCard>
       <div class="space-y-2">
         <EGText tag="h3" v-if="title" class="mb-8">{{ title }}</EGText>

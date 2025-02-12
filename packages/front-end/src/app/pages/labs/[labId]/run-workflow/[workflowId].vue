@@ -5,7 +5,6 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { WorkflowParameter } from '@aws-sdk/client-omics';
   import { v4 as uuidv4 } from 'uuid';
-  import EGLoadingSpinner from '@FE/components/EGLoadingSpinner.vue';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();

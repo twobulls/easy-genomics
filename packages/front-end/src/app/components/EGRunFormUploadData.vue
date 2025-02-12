@@ -447,12 +447,8 @@
         .map((result) => (result.status === 'rejected' ? result.reason : result.value))
         .filter((error): error is UploadError => error !== null);
 
-      // Show network error toast only once if any file failed due to network
-      if (errors.some((error) => error.error === 'Network connection lost')) {
-        toastStore.error('Network error - please check your connection and try again');
-      }
       // Show other error toasts as needed
-      else if (errors.length > 0) {
+      if (errors.length > 0) {
         if (errors.length === 1) {
           toastStore.error(`Upload failed for ${errors[0].fileName}`);
         } else {

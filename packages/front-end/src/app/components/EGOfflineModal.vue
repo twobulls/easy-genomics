@@ -19,23 +19,9 @@
     <UCard>
       <template #header>
         <div class="flex flex-col">
-          <div>
-            <div class="mb-6 flex items-center justify-between">
-              <EGText tag="h3">Network connection lost</EGText>
-              <EGLoadingSpinner class="flex-end flex" />
-            </div>
-            <div>
-              <UButton
-                v-if="canCancel"
-                @click="handleCancel"
-                icon="i-heroicons-x-mark"
-                class="hover:bg-background-dark-grey ml-2"
-                color="black"
-                variant="ghost"
-                :ui="{ rounded: 'rounded-full' }"
-                :disabled="buttonsDisabled || delaying"
-              />
-            </div>
+          <div class="mb-6 flex items-center justify-between">
+            <EGText tag="h3">Network connection lost</EGText>
+            <EGLoadingSpinner class="flex-end flex" />
           </div>
           <EGText tag="p" class="mb-6">
             Waiting for connection to be re-established. Please hold until you are back online.

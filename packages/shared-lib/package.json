@@ -28,7 +28,7 @@
     "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^7",
     "@typescript-eslint/parser": "^7",
-    "aws-cdk-lib": "^2.176.0",
+    "aws-cdk-lib": "^2.178.2",
     "eslint": "^8",
     "eslint-import-resolver-typescript": "^3.7.0",
     "eslint-plugin-import": "^2.31.0",
@@ -39,17 +39,17 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@aws-sdk/client-api-gateway": "^3.731.1",
-    "@aws-sdk/client-cognito-identity-provider": "^3.732.0",
-    "@aws-sdk/client-omics": "^3.731.1",
-    "@aws-sdk/client-s3": "^3.733.0",
+    "@aws-sdk/client-api-gateway": "^3.744.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.744.0",
+    "@aws-sdk/client-omics": "^3.744.0",
+    "@aws-sdk/client-s3": "^3.744.0",
     "@nestjs/config": "^3.3.0",
-    "aws-cdk": "^2.176.0",
-    "aws-cdk-lib": "^2.176.0",
+    "aws-cdk": "^2.178.2",
+    "aws-cdk-lib": "^2.178.2",
     "aws-lambda": "^1.0.7",
     "js-yaml": "^4.1.0",
     "uuid": "^8.3.2",
-    "zod": "^3.24.1"
+    "zod": "^3.24.2"
   },
   "engines": {
     "node": ">= 20.15.0"

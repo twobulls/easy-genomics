@@ -118,6 +118,7 @@ async function validateExistingNextFlowIntegration(
       }
       accessToken = getNextFlowAccessToken.Parameter.Value;
     } catch (err: any) {
+      console.error(err);
       throw new LaboratoryAccessTokenUnavailableError('Could not find access token for lab');
     }
   }
@@ -130,7 +131,8 @@ async function validateExistingNextFlowIntegration(
     `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiParameters.toString()}`,
     REST_API_METHOD.GET,
     { Authorization: `Bearer ${accessToken}` },
-  ).catch(() => {
+  ).catch((err: any) => {
+    console.error(err);
     throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
   });
   return !!nfResponse;

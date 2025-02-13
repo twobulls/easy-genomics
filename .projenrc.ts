@@ -20,9 +20,9 @@ import { PnpmWorkspace } from './projenrc/pnpm';
 import { VscodeSettings } from './projenrc/vscode';
 
 const defaultReleaseBranch = 'main';
-const cdkVersion = '2.176.0';
+const cdkVersion = '2.178.2';
 const nodeVersion = '20.15.0';
-const pnpmVersion = '9.15.0';
+const pnpmVersion = '10.3.0';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;

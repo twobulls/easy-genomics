@@ -22,7 +22,7 @@ import { VscodeSettings } from './projenrc/vscode';
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.178.2';
 const nodeVersion = '20.15.0';
-const pnpmVersion = '10.3.0';
+const pnpmVersion = '10.4.1';
 const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
@@ -438,7 +438,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'prettier-plugin-tailwindcss',
     'sass',
     'tailwind-merge',
-    'tailwindcss',
+    'tailwindcss@4.0.6',
     'unplugin-vue-components',
     'uuid',
     'zod',
@@ -453,6 +453,7 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'eslint-plugin-prettier',
     'eslint-plugin-vue',
     'kill-port',
+    'koa@2.15.4',
     'typed-openapi',
     'vue-eslint-parser',
   ],

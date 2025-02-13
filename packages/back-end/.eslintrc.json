@@ -8,6 +8,7 @@
   "plugins": [
     "@typescript-eslint",
     "import",
+    "@stylistic",
     "prettier"
   ],
   "parser": "@typescript-eslint/parser",
@@ -45,7 +46,10 @@
     "indent": [
       "off"
     ],
-    "@typescript-eslint/indent": "off",
+    "@stylistic/indent": [
+      "error",
+      2
+    ],
     "quotes": [
       "error",
       "single",
@@ -113,7 +117,7 @@
       "multi-line",
       "consistent"
     ],
-    "@typescript-eslint/member-delimiter-style": [
+    "@stylistic/member-delimiter-style": [
       "error"
     ],
     "semi": [
@@ -228,7 +232,8 @@
     "no-empty": "error",
     "prettier/prettier": "off",
     "require-await": "off",
-    "array-callback-return": "error"
+    "array-callback-return": "error",
+    "@typescript-eslint/indent": "off"
   },
   "overrides": []
 }

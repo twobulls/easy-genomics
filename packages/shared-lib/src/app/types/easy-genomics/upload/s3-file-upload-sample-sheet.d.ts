@@ -35,4 +35,5 @@ export type SampleSheetInfo = {
   Key: string;
   Region: string;
   S3Url: string;
+  SampleSheetType: string;
 };

@@ -93,6 +93,7 @@ export const handler: Handler = async (
           Path: s3Path,
           Region: s3Region,
           S3Url: s3Url,
+          SampleSheetType: sampleSheetType,
         },
       };
       return buildResponse(200, JSON.stringify(response), event);

@@ -1,7 +1,8 @@
 import { Duration, NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Effect, PolicyStatement, StarPrincipal } from 'aws-cdk-lib/aws-iam';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import { Topic } from 'aws-cdk-lib/aws-sns';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
@@ -27,6 +28,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
     super(scope, id);
     this.props = props;
 
+    // The enforceSSL option for sns topics is currently broken, that may get fixed in the
+    // future. In the meantime we will apply a policy enforcing ssl in the policies section.
     this.sns = new SnsConstruct(this, `${this.props.constructNamespace}-sns`, {
       namePrefix: this.props.namePrefix,
       topics: <Topics>{
@@ -233,6 +236,24 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
   // Easy Genomics specific IAM policies
   private setupIamPolicies = () => {
+    // Currently the enforceSSL option for SNS topics is broken
+    // We have to apply the policy ourselves.
+    this.sns.snsTopics.forEach((snsTopic: Topic) => {
+      snsTopic.addToResourcePolicy(
+        new PolicyStatement({
+          resources: [`${snsTopic.topicArn}`],
+          actions: ['sns:Publish'],
+          conditions: {
+            StringEquals: {
+              'aws:SecureTransport': false,
+            },
+          },
+          effect: Effect.DENY,
+          principals: [new StarPrincipal()],
+        }),
+      );
+    });
+
     // /easy-genomics/organization/create-organization
     this.iam.addPolicyStatements('/easy-genomics/organization/create-organization', [
       new PolicyStatement({

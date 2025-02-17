@@ -154,6 +154,12 @@
     });
   }
 
+  function enableAllSteps() {
+    items.value.forEach((item) => {
+      item.disabled = false;
+    });
+  }
+
   function handleLaunchSuccess() {
     hasLaunched.value = true;
     emit('has-launched');
@@ -161,6 +167,10 @@
 
   function handleSubmitLaunchRequest() {
     disableAllSteps();
+  }
+
+  function handleSubmitLaunchRequestError() {
+    enableAllSteps();
   }
 </script>
 
@@ -227,8 +237,9 @@
               :schema="props.schema"
               :params="wipSeqeraRun?.params"
               :pipeline-id="pipelineId"
-              @submit-launch-request="handleSubmitLaunchRequest()"
-              @has-launched="handleLaunchSuccess()"
+              @submit-launch-request="handleSubmitLaunchRequest"
+              @submit-launch-request-error="handleSubmitLaunchRequestError"
+              @has-launched="handleLaunchSuccess"
               @previous-tab="previousStep"
             />
           </template>

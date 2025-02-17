@@ -21,7 +21,7 @@
   const labName = useLabsStore().labs[labId].Name;
   const seqeraRunTempId = $route.query.seqeraRunTempId as string;
   const isLaunchingRun = ref(false);
-  const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
+  const emit = defineEmits(['submit-launch-request', 'submit-launch-request-error', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
@@ -92,8 +92,9 @@
       delete runStore.wipSeqeraRuns[seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
-      useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
+      useToastStore().error('Error launching run: ' + error);
       console.error('Error launching workflow:', error);
+      emit('submit-launch-request-error');
     } finally {
       isLaunchingRun.value = false;
     }

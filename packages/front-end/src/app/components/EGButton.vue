@@ -30,7 +30,8 @@
       variants: {
         variant: {
           primary: [
-            'bg-primary-500',
+            // all of these negatives are required because bg-button-gradient sets background-image and all the other background classes set background-color and therefore don't override it
+            '[&:not(:active)]:[&:not(:disabled)]:[&:not(:hover)]:bg-button-gradient',
             'text-white',
             'active:outline-none',
             'active:bg-[#29007F]',

@@ -54,6 +54,9 @@ export default <Partial<Config>>{
         'alert-danger-dark': '#CC2525',
         'alert-danger-muted': '#FDEFEC',
       },
+      backgroundImage: {
+        'button-gradient': 'linear-gradient(to right, #9266F5, #5524E0)',
+      },
     },
   },
 };

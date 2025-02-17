@@ -30,10 +30,10 @@ export class EasyGenomicsNestedStack extends NestedStack {
     this.sns = new SnsConstruct(this, `${this.props.constructNamespace}-sns`, {
       namePrefix: this.props.namePrefix,
       topics: <Topics>{
-        ['organization-deletion-topic']: <TopicDetails>{ fifo: true },
-        ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true },
-        ['user-deletion-topic']: <TopicDetails>{ fifo: true },
-        ['laboratory-run-update-topic']: <TopicDetails>{ fifo: true },
+        ['organization-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
+        ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
+        ['user-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
+        ['laboratory-run-update-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
       },
     });
 
@@ -46,18 +46,21 @@ export class EasyGenomicsNestedStack extends NestedStack {
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('organization-deletion-topic')],
+          enforceSSL: true,
         },
         ['laboratory-management-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('laboratory-deletion-topic')],
+          enforceSSL: true,
         },
         ['user-management-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('user-deletion-topic')],
+          enforceSSL: true,
         },
         ['laboratory-run-update-queue']: <QueueDetails>{
           fifo: true,
@@ -65,6 +68,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
           visibilityTimeout: Duration.minutes(15),
           deliveryDelay: Duration.minutes(5),
           snsTopics: [this.sns.snsTopics.get('laboratory-run-update-topic')],
+          enforceSSL: true,
         },
       },
     });

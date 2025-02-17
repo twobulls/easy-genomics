@@ -92,7 +92,7 @@
       delete runStore.wipSeqeraRuns[seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
-      useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
+      useToastStore().error('Error launching run: ' + error);
       console.error('Error launching workflow:', error);
       emit('submit-launch-request-error');
     } finally {

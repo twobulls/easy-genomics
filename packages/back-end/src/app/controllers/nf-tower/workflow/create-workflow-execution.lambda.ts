@@ -75,7 +75,7 @@ export const handler: Handler = async (
     console.log('createWorkflowLaunchRequest:', createWorkflowLaunchRequest);
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-    const getParameterResponse: GetParameterCommandOutput = await ssmService
+    const getParameterResponse: GetParameterCommandOutput | void = await ssmService
       .getParameter({
         Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
         WithDecryption: true,
@@ -88,7 +88,7 @@ export const handler: Handler = async (
         }
       });
 
-    const accessToken: string | undefined = getParameterResponse.Parameter?.Value;
+    const accessToken: string | undefined = getParameterResponse ? getParameterResponse.Parameter?.Value : undefined;
     if (!accessToken) {
       throw new LaboratoryAccessTokenUnavailableError();
     }

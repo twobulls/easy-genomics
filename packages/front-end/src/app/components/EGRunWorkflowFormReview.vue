@@ -22,7 +22,7 @@
 
   const labName = useLabsStore().labs[props.labId].Name;
   const isLaunchingRun = ref(false);
-  const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
+  const emit = defineEmits(['submit-launch-request', 'submit-launch-request-error', 'has-launched', 'previous-tab']);
 
   const schema = JSON.parse(JSON.stringify(props.schema));
 
@@ -88,6 +88,7 @@
     } catch (error) {
       useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
       console.error('Error launching workflow:', error);
+      emit('submit-launch-request-error');
     } finally {
       isLaunchingRun.value = false;
     }

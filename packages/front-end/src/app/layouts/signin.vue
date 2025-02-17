@@ -26,7 +26,7 @@
 
 <style scoped lang="scss">
   .background-image {
-    background-image: url('/images/bg-login.jpg');
+    background-image: url('/images/bg-login.svg');
     background-size: cover;
   }
 </style>

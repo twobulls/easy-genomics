@@ -34,7 +34,7 @@
     // Sanity check to ensure key-value parameters
     .filter((param: string[]) => param.length == 2)
     // Filtering out properties where the value contains variable '${...}' references
-    .filter((param: string[]) => !(typeof param[1] === 'string' && param[1].match(/\${(.*?)*\}/)))
+    .filter((param: string[]) => !(typeof param[1] === 'string' && param[1].match(/\${([^}]*)\}/)))
     // Remove null entries
     .filter((el) => el != null)
     // Convert array to JSON Object that respects the value type

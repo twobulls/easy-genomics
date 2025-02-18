@@ -10,7 +10,7 @@
       <div class="flex h-full flex-col">
         <EGLogo class="mr-2 w-[200px] pb-[140px]" :white-variant="true" />
 
-        <div class="leading-64 font-schibsted schibsted max-w-[400px] text-[46px] font-medium text-white">
+        <div class="leading-64 font-schibsted max-w-[400px] text-[46px] font-medium text-white">
           Genomic Insights Made Effortless
         </div>
 

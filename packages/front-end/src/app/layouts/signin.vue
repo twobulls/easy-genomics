@@ -10,13 +10,13 @@
       <div class="flex h-full flex-col">
         <EGLogo class="mr-2 w-[200px] pb-[140px]" :white-variant="true" />
 
-        <div class="leading-64 max-w-[400px] font-serif text-[46px] font-medium text-white">
+        <div class="leading-64 font-schibsted schibsted max-w-[400px] text-[46px] font-medium text-white">
           Genomic Insights Made Effortless
         </div>
 
         <div class="grow"></div>
 
-        <div class="flex flex-row flex-wrap gap-3">
+        <div class="font-schibsted flex flex-row flex-wrap gap-3">
           <div v-for="chip of chips" class="rounded-full bg-[#ffffff33] px-5 py-2 text-2xl font-medium text-white">
             {{ chip }}
           </div>

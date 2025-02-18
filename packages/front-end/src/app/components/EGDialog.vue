@@ -61,7 +61,6 @@
             <EGText tag="h3" class="mb-6">{{ primaryMessage }}</EGText>
             <div>
               <UButton
-                v-if="canCancel"
                 @click="handleCancel"
                 icon="i-heroicons-x-mark"
                 class="hover:bg-background-dark-grey ml-2"

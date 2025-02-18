@@ -49,7 +49,7 @@ export class SesConstruct extends Construct {
         subjectPart: 'You’ve been invited to Easy Genomics',
         htmlPart: `
          <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html style="margin: 0px; padding: 0px; height: 100%;" xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
    <head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
       <title></title>
@@ -392,9 +392,19 @@ export class SesConstruct extends Construct {
                                           </div>
                                           <div style="Margin-left: 20px;Margin-right: 20px;">
                                              <div class="btn btn--flat btn--large" style="Margin-bottom: 20px;text-align: center;">
-                                                <!--[if !mso]><!--><a style="border-radius: 4px;display: inline-block;font-size: 14px;font-weight: bold;line-height: 24px;padding: 12px 24px;text-align: center;text-decoration: none !important;transition: opacity 0.1s ease-in;color: #ffffff !important;background-color: #5524e0;font-family: sans-serif;" href="https://{{DOMAIN_NAME}}/accept-invitation?invite={{INVITATION_JWT}}" target="_blank">Accept Invite</a><!--<![endif]-->
+                                                <!-- Regular button for modern clients -->
+                                                <!--[if !mso]><!-->
+                                                <a style="border-radius: 4px;display: inline-block;font-size: 14px;font-weight: bold;line-height: 24px;padding: 12px 24px;text-align: center;text-decoration: none;color: #ffffff;background-color: #5524e0;font-family: sans-serif;" href="https://quality.uat.easygenomics.org/accept-invitation?invite=...">Accept Invite</a>
+                                                <!--<![endif]-->
+
+                                                <!-- Outlook-specific button -->
                                                 <!--[if mso]>
-                                                <p style="line-height:0;margin:0;">&nbsp;</p>
+                                                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://quality.uat.easygenomics.org/accept-invitation?invite=..." style="height:48px;v-text-anchor:middle;width:200px;" arcsize="10%" strokecolor="#5524e0" fillcolor="#5524e0">
+                                                <w:anchorlock/>
+                                                <center style="color:#ffffff;font-family:sans-serif;font-size:14px;font-weight:bold;">
+                                                   Accept Invite
+                                                </center>
+                                                </v:roundrect>
                                                 <![endif]-->
                                              </div>
                                           </div>

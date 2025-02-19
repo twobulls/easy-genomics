@@ -95,7 +95,71 @@ test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
   }
 });
 
-test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
+test('05 - Remove user from a Laboratory Successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  let hasUpdatedTestLab = true;
+  try {
+    hasUpdatedTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Test lab not found', error);
+  }
+
+  if (hasUpdatedTestLab) {
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.getByRole('tab', { name: 'Lab Users' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.waitForLoadState('networkidle');
+
+    let userVisible = false;
+    try {
+      userVisible = await page.getByRole('row', { name: labTechnicianName }).isVisible();
+    } catch (error) {
+      console.log('User is not added yet to Automation Lab!', error);
+    }
+
+    if (userVisible == true) {
+      await page.getByRole('row', { name: labTechnicianName }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Remove From Lab' }).click();
+      await page.getByRole('button', { name: 'Remove User' }).click();
+      await page.waitForTimeout(2000);
+      //await page.getByRole('status').locator('div').nth(1).click();
+      await expect(
+        page.getByText('Successfully removed ' + labTechnicianName + ' from ' + labNameUpdated).nth(0),
+      ).toBeVisible();
+    }
+  }
+});
+
+test('06 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }) => {
+  // Check if the user has been added already to a Lab
+  await page.goto(`${baseURL}/labs`);
+  await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+  await page.waitForLoadState('networkidle');
+  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+  await page.getByRole('tab', { name: 'Lab Users' }).click();
+
+  let userHidden = false;
+  try {
+    userHidden = await page.getByRole('row', { name: labTechnicianName }).isHidden();
+  } catch (error) {
+    console.log('User is not added yet to Automation Lab!', error);
+  }
+
+  if (userHidden == true) {
+    await page.getByRole('button', { name: 'Add Lab Users' }).click();
+    await page.getByText('Select User').click();
+    await page.getByPlaceholder('Search all users...').click();
+    await page.keyboard.type(envConfig.labTechnicianEmail);
+    await page.getByRole('option', { name: labTechnicianName }).click();
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.getByText('Successfully added ' + labTechnicianName + ' to ' + labNameUpdated)).toBeVisible();
+  }
+});
+
+test('07 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
 
@@ -164,75 +228,11 @@ test('05 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
       await page.waitForLoadState('networkidle');
 
       // ** Check if the run name appears in the Run List
-      await expect(page.getByRole('row', { name: runName })).toBeVisible();
+      await expect(page.getByRole('row', { name: seqRunName })).toBeVisible();
 
       //set runNameVar to be used by other steps
       seqRunNameVar = seqRunName;
     }
-  }
-});
-
-test('06 - Remove user from a Laboratory Successfully', async ({ page, baseURL }) => {
-  await page.goto(`${baseURL}/labs`);
-  await page.waitForLoadState('networkidle');
-
-  let hasUpdatedTestLab = true;
-  try {
-    hasUpdatedTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
-  } catch (error) {
-    console.log('Test lab not found', error);
-  }
-
-  if (hasUpdatedTestLab) {
-    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
-    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Lab Users' }).click();
-    await page.waitForTimeout(5 * 1000);
-    await page.waitForLoadState('networkidle');
-
-    let userVisible = false;
-    try {
-      userVisible = await page.getByRole('row', { name: labTechnicianName }).isVisible();
-    } catch (error) {
-      console.log('User is not added yet to Automation Lab!', error);
-    }
-
-    if (userVisible == true) {
-      await page.getByRole('row', { name: labTechnicianName }).locator('button').click();
-      await page.getByRole('menuitem', { name: 'Remove From Lab' }).click();
-      await page.getByRole('button', { name: 'Remove User' }).click();
-      await page.waitForTimeout(2000);
-      //await page.getByRole('status').locator('div').nth(1).click();
-      await expect(
-        page.getByText('Successfully removed ' + labTechnicianName + ' from ' + labNameUpdated).nth(0),
-      ).toBeVisible();
-    }
-  }
-});
-
-test('07 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }) => {
-  // Check if the user has been added already to a Lab
-  await page.goto(`${baseURL}/labs`);
-  await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
-  await page.waitForLoadState('networkidle');
-  await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-  await page.getByRole('tab', { name: 'Lab Users' }).click();
-
-  let userHidden = false;
-  try {
-    userHidden = await page.getByRole('row', { name: labTechnicianName }).isHidden();
-  } catch (error) {
-    console.log('User is not added yet to Automation Lab!', error);
-  }
-
-  if (userHidden == true) {
-    await page.getByRole('button', { name: 'Add Lab Users' }).click();
-    await page.getByText('Select User').click();
-    await page.getByPlaceholder('Search all users...').click();
-    await page.keyboard.type(envConfig.labTechnicianEmail);
-    await page.getByRole('option', { name: labTechnicianName }).click();
-    await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText('Successfully added ' + labTechnicianName + ' to ' + labNameUpdated)).toBeVisible();
   }
 });
 
@@ -259,9 +259,9 @@ test('08 - Check Seqera Run Details', async ({ page, baseURL }) => {
     // Go to Run Details
     await page
       .getByRole('row', { name: seqRunNameVar })
-      .filter({ has: page.locator('button')})
+      .filter({ has: page.locator('button') })
       .locator('button')
-    .click();
+      .click();
     await page.getByRole('menuitem', { name: 'View Details' }).click();
     await page.waitForTimeout(5000);
 
@@ -300,9 +300,9 @@ test('09 - Check Seqera Run File Manager if files exist', async ({ page, baseURL
     // Go to File Manager
     await page
       .getByRole('row', { name: seqRunNameVar })
-      .filter({ has: page.locator('button')})
+      .filter({ has: page.locator('button') })
       .locator('button')
-    .click();
+      .click();
     await page.getByRole('menuitem', { name: 'View Details' }).click();
     await page.getByRole('tab', { name: 'File Manager' }).click();
     await page.waitForTimeout(5 * 2000);
@@ -444,9 +444,9 @@ test('12 - Check HealthOmics Run Details', async ({ page, baseURL }) => {
     // Go to Run Details
     await page
       .getByRole('row', { name: omicsRunNameVar })
-      .filter({ has: page.locator('button')})
+      .filter({ has: page.locator('button') })
       .locator('button')
-    .click();
+      .click();
     await page.getByRole('menuitem', { name: 'View Details' }).click();
     await page.waitForTimeout(5000);
 
@@ -485,9 +485,9 @@ test('13 - Check HealthOmics Run File Manager if files exist', async ({ page, ba
     // Go to File Manager
     await page
       .getByRole('row', { name: omicsRunNameVar })
-      .filter({ has: page.locator('button')})
+      .filter({ has: page.locator('button') })
       .locator('button')
-    .click();
+      .click();
     await page.getByRole('menuitem', { name: 'View Details' }).click();
     await page.getByRole('tab', { name: 'File Manager' }).click();
     await page.waitForTimeout(5 * 2000);

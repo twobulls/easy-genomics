@@ -51,7 +51,7 @@
           :trailing-icon="items.length > 0 ? 'i-heroicons-chevron-up-down' : undefined"
           color="black"
         >
-          {{ currentOrg.Name }}
+          {{ currentOrg?.Name }}
         </UButton>
       </div>
       <template #item="{ item }">

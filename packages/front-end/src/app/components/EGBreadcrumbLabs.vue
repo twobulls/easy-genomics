@@ -43,7 +43,7 @@
           :trailing-icon="items.length > 0 ? 'i-heroicons-chevron-up-down' : undefined"
           color="black"
         >
-          {{ currentLab.Name }}
+          {{ currentLab?.Name }}
         </UButton>
       </div>
       <template #item="{ item }">

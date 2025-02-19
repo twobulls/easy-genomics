@@ -30,10 +30,10 @@
 <template>
   <div class="mb-6 flex flex-col justify-between">
     <div class="min-h-[40px]">
-      <div class="flex flex-row gap-6">
+      <div class="mb-4 flex flex-row items-center gap-6">
         <EGBack v-if="showBack" :label="backButtonLabel" :back-action="backAction" />
 
-        <div class="font-schibsted text-muted flex flex-row gap-4 text-sm">
+        <div class="font-schibsted text-muted flex flex-row items-center gap-4 text-sm">
           <EGBreadcrumbOrgs v-if="showOrgBreadcrumb" />
 
           <template v-if="showLabBreadcrumb">

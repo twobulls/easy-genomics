@@ -25,6 +25,8 @@
 
   const skeletonTitleLines = computed(() => props.skeletonConfig?.titleLines ?? 1);
   const skeletonDescriptionLines = computed(() => props.skeletonConfig?.descriptionLines ?? 1);
+
+  const breadcrumbs = computed<string[]>(() => props.breadcrumbs?.filter((crumb: string) => !!crumb) || []);
 </script>
 
 <template>

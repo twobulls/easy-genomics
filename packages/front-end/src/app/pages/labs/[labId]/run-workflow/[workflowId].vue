@@ -131,7 +131,7 @@
     back-button-label="Exit Run"
     show-org-breadcrumb
     show-lab-breadcrumb
-    :breadcrumbs="workflow.name ? [workflow.name] : undefined"
+    :breadcrumbs="[workflow?.name]"
   />
 
   <template v-if="loading">

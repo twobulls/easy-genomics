@@ -157,7 +157,7 @@
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
     show-org-breadcrumb
     show-lab-breadcrumb
-    :breadcrumbs="labRun.RunName ? [labRun.RunName] : undefined"
+    :breadcrumbs="[labRun?.RunName]"
   />
 
   <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="handleTabChange">

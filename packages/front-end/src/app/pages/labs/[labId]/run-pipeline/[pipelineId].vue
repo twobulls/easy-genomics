@@ -136,7 +136,7 @@
     back-button-label="Exit Run"
     show-org-breadcrumb
     show-lab-breadcrumb
-    :breadcrumbs="pipeline.name ? [pipeline.name] : undefined"
+    :breadcrumbs="[pipeline?.name]"
   />
   <EGRunPipelineStepper
     :schema="schema"

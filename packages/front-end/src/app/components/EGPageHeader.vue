@@ -11,6 +11,9 @@
         titleLines?: number;
         descriptionLines?: number;
       };
+      showOrgBreadcrumb?: boolean;
+      showLabBreadcrumb?: boolean;
+      breadcrumbs?: string[];
     }>(),
     {
       backButtonLabel: 'Back',
@@ -30,12 +33,18 @@
       <div class="flex flex-row gap-6">
         <EGBack v-if="showBack" :label="backButtonLabel" :back-action="backAction" />
 
-        <div class="font-schibsted text-muted flex flex-row gap-4">
-          <EGBreadcrumbOrgs />
-          <div>/</div>
-          <div>lab</div>
-          <div>/</div>
-          <div>run</div>
+        <div class="font-schibsted text-muted flex flex-row gap-4 text-sm">
+          <EGBreadcrumbOrgs v-if="showOrgBreadcrumb" />
+
+          <template v-if="showLabBreadcrumb">
+            <div>/</div>
+            <EGBreadcrumbLabs />
+          </template>
+
+          <template v-if="breadcrumbs" v-for="crumb in breadcrumbs">
+            <div>/</div>
+            <div>{{ crumb }}</div>
+          </template>
         </div>
       </div>
 

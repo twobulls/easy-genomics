@@ -129,6 +129,9 @@
     :show-back="!hasLaunched"
     :back-action="() => (nextRoute = `/labs/${labId}?tab=HealthOmics+Workflows`)"
     back-button-label="Exit Run"
+    show-org-breadcrumb
+    show-lab-breadcrumb
+    :breadcrumbs="workflow.name ? [workflow.name] : undefined"
   />
 
   <template v-if="loading">

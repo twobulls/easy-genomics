@@ -155,6 +155,9 @@
     :back-action="() => $router.push(`/labs/${labId}?tab=Lab Runs`)"
     :is-loading="isLoading"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
+    show-org-breadcrumb
+    show-lab-breadcrumb
+    :breadcrumbs="labRun.RunName ? [labRun.RunName] : undefined"
   />
 
   <UTabs :ui="EGTabsStyles" v-model="tabIndex" :items="tabItems" @update:model-value="handleTabChange">

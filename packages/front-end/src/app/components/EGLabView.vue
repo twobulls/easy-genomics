@@ -513,6 +513,8 @@
     description="View your Lab users, details and pipelines/workflows"
     :back-action="() => (superuser ? $router.push(`/orgs/${orgId}`) : $router.push('/labs'))"
     :show-back="true"
+    show-org-breadcrumb
+    show-lab-breadcrumb
   >
     <EGButton
       label="Add Lab Users"

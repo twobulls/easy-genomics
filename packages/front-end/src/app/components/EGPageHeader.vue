@@ -20,8 +20,6 @@
     },
   );
 
-  const router = useRouter();
-
   const skeletonTitleLines = computed(() => props.skeletonConfig?.titleLines ?? 1);
   const skeletonDescriptionLines = computed(() => props.skeletonConfig?.descriptionLines ?? 1);
 </script>
@@ -29,7 +27,18 @@
 <template>
   <div class="mb-6 flex flex-col justify-between">
     <div class="min-h-[40px]">
-      <EGBack v-if="showBack" :label="backButtonLabel" :back-action="backAction" />
+      <div class="flex flex-row gap-6">
+        <EGBack v-if="showBack" :label="backButtonLabel" :back-action="backAction" />
+
+        <div class="font-schibsted text-muted flex flex-row gap-4">
+          <EGBreadcrumbOrgs />
+          <div>/</div>
+          <div>lab</div>
+          <div>/</div>
+          <div>run</div>
+        </div>
+      </div>
+
       <EGAdminAlert v-if="useUserStore().isSuperuser" class="mb-4" />
     </div>
     <div class="flex min-h-[52px] items-start justify-between">

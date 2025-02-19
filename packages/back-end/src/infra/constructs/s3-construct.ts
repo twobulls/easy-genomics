@@ -23,6 +23,7 @@ export class S3Construct extends Construct {
       bucketKeyEnabled: true,
       autoDeleteObjects: true,
       removalPolicy: removalPolicy,
+      enforceSSL: true,
       lifecycleRules: [
         {
           prefix: 'uploads',

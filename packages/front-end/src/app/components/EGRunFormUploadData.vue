@@ -57,10 +57,11 @@
     wipRunTempId: string;
   }>();
 
+  const localProps = reactive(props);
+
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
   const UPLOAD_TIMEOUT = 600000; // 10 mins
-  const UPLOAD_RETRY_DELAY = 3000; // 3 second delay helps prevent immediate retry spam and gives time for temporary network issues to resolve
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
   const isDropzoneActive = ref(false);
@@ -70,11 +71,11 @@
 
   const filePairs = computed<FilePair[]>(() => {
     // initialize files if not present
-    if (props.wipRun.files === undefined) {
-      props.wipRun.files = [];
+    if (localProps.wipRun?.files === undefined) {
+      localProps.wipRun.files = [];
     }
 
-    return props.wipRun.files;
+    return localProps.wipRun.files;
   });
 
   const files = computed<FileDetails[]>(() => {
@@ -90,7 +91,7 @@
     files.value.filter((file) => file.error || file.progress !== 100),
   );
 
-  const hasSampleSheetUrl = computed(() => props.wipRun.sampleSheetS3Url);
+  const hasSampleSheetUrl = computed(() => localProps.wipRun.sampleSheetS3Url);
 
   const haveUnmatchedFiles = computed<boolean>(() =>
     filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
@@ -381,7 +382,7 @@
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     // save to wip run
     const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
-    props.wipRunUpdateFunction(props.wipRunTempId, {
+    localProps.wipRunUpdateFunction(localProps.wipRunTempId, {
       sampleSheetS3Url: S3Url,
       s3Bucket: Bucket,
       s3Path: Path,
@@ -454,8 +455,8 @@
 
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
-      LaboratoryId: props.labId,
-      TransactionId: props.wipRun.transactionId || '',
+      LaboratoryId: localProps.labId,
+      TransactionId: localProps.wipRun.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -464,8 +465,8 @@
 
   async function getUploadFilesManifest(files: FileDetails[]): Promise<FileUploadManifest> {
     const request: FileUploadRequest = {
-      LaboratoryId: props.labId,
-      TransactionId: props.wipRun.transactionId || '',
+      LaboratoryId: localProps.labId,
+      TransactionId: localProps.wipRun.transactionId || '',
       Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 
@@ -671,7 +672,7 @@
 
       // If both files are now undefined, remove the entire pair
       if (!filePair.r1File && !filePair.r2File) {
-        props.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
+        localProps.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
       } else {
         // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
         filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
@@ -855,11 +856,11 @@
     <EGS3SampleSheetBar
       v-if="hasSampleSheetUrl"
       :disabled="uploadStatus === 'uploading'"
-      :url="props.wipRun.sampleSheetS3Url"
-      :lab-id="props.labId"
-      :lab-name="props.labName"
-      :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
-      :run-name="props.wipRun.runName"
+      :url="localProps.wipRun.sampleSheetS3Url"
+      :lab-id="localProps.labId"
+      :lab-name="localProps.labName"
+      :pipeline-or-workflow-name="localProps.pipelineOrWorkflowName"
+      :run-name="localProps.wipRun.runName"
     />
 
     <div class="flex justify-end pt-4">
@@ -870,10 +871,10 @@
         label="Download sample sheet"
         @click="
           downloadSampleSheet(
-            props.labId,
-            props.wipRun.sampleSheetS3Url,
-            props.pipelineOrWorkflowName,
-            props.wipRun.runName,
+            localProps.labId,
+            localProps.wipRun.sampleSheetS3Url,
+            localProps.pipelineOrWorkflowName,
+            localProps.wipRun.runName,
           )
         "
       />

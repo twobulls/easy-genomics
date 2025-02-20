@@ -21,7 +21,7 @@
   const labName = useLabsStore().labs[labId].Name;
   const seqeraRunTempId = $route.query.seqeraRunTempId as string;
   const isLaunchingRun = ref(false);
-  const emit = defineEmits(['submit-launch-request', 'has-launched', 'previous-tab']);
+  const emit = defineEmits(['submit-launch-request', 'submit-launch-request-error', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
@@ -29,7 +29,17 @@
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
   const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
 
-  const paramsText = JSON.stringify(props.params);
+  // Explicitly remove Seqera pipeline paramsText properties that contain variable references
+  const paramsFiltered = Object.entries(props.params)
+    // Sanity check to ensure key-value parameters
+    .filter((param: string[]) => param.length == 2)
+    // Filtering out properties where the value contains variable '${...}' references
+    .filter((param: string[]) => !(typeof param[1] === 'string' && param[1].match(/\${([^}]*)\}/)))
+    // Remove null entries
+    .filter((el) => el != null)
+    // Convert array to JSON Object that respects the value type
+    .reduce((o, [key, value]) => ({ ...o, [key]: value }), {});
+  const paramsText = JSON.stringify(paramsFiltered);
   const schema = JSON.parse(JSON.stringify(props.schema));
 
   const schemaDefinitions = schema.$defs || schema.definitions;
@@ -92,8 +102,9 @@
       delete runStore.wipSeqeraRuns[seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
-      useToastStore().error('We weren’t able to complete this step. Please check your connection and try again later');
+      useToastStore().error('Error launching run: ' + error);
       console.error('Error launching workflow:', error);
+      emit('submit-launch-request-error');
     } finally {
       isLaunchingRun.value = false;
     }

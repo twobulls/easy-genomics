@@ -443,3 +443,14 @@ export class OmicsWorkflowNotFoundError extends HttpError {
     super(`Workflow '${workflowId}' could not be found`, 404, 'EG-503', messageOpt);
   }
 }
+
+// Seqera Cloud errors
+
+/**
+ * Seqera Cloud API error
+ */
+export class SeqeraApiError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Seqera Cloud API error', 400, 'EG-600', messageOpt);
+  }
+}

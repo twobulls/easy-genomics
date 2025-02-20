@@ -57,10 +57,11 @@
     wipRunTempId: string;
   }>();
 
+  const localProps = reactive(props);
+
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
   const UPLOAD_TIMEOUT = 600000; // 10 mins
-  const UPLOAD_RETRY_DELAY = 3000; // 3 second delay helps prevent immediate retry spam and gives time for temporary network issues to resolve
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
   const isDropzoneActive = ref(false);
@@ -70,11 +71,11 @@
 
   const filePairs = computed<FilePair[]>(() => {
     // initialize files if not present
-    if (props.wipRun.files === undefined) {
-      props.wipRun.files = [];
+    if (localProps.wipRun?.files === undefined) {
+      localProps.wipRun.files = [];
     }
 
-    return props.wipRun.files;
+    return localProps.wipRun.files;
   });
 
   const files = computed<FileDetails[]>(() => {
@@ -90,10 +91,13 @@
     files.value.filter((file) => file.error || file.progress !== 100),
   );
 
-  const hasSampleSheetUrl = computed(() => props.wipRun.sampleSheetS3Url);
+  const hasSampleSheetUrl = computed(() => localProps.wipRun.sampleSheetS3Url);
 
   const haveUnmatchedFiles = computed<boolean>(() =>
     filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
+  );
+  const haveMatchedFiles = computed<boolean>(() =>
+    filePairs.value.some((filePair) => filePair.r1File && filePair.r2File),
   );
 
   const canProceedToNextStep = computed<boolean>(() => {
@@ -104,7 +108,7 @@
   });
 
   const areAllPairsComplete = computed<boolean>(() => {
-    return filePairs.value.every((pair) => pair.r1File && pair.r2File);
+    return filePairs.value.every((pair) => pair.r1File);
   });
 
   // overall upload status for all files
@@ -150,10 +154,11 @@
   const isUploadButtonDisabled = computed(() => {
     const noInternet = !isOnline.value;
     const noFiles = filesNotUploaded.value.length === 0;
-    const hasUnmatched = haveUnmatchedFiles.value;
+    const hasIncompletePairs = !areAllPairsComplete.value;
+    const hasBothSinglesAndPairs = haveMatchedFiles.value && haveUnmatchedFiles.value;
     const isUploading = uploadStatus.value === 'uploading';
 
-    return noInternet || noFiles || hasUnmatched || isUploading;
+    return noInternet || noFiles || hasIncompletePairs || hasBothSinglesAndPairs || isUploading;
   });
 
   // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
@@ -272,9 +277,28 @@
   }
 
   function addFileToFilePairs(fileDetails: FileDetails) {
-    const sampleId = getSampleIdFromFileName(fileDetails.name);
-    const existingFilePair = filePairs.value.find((filePair) => filePair.sampleId === sampleId);
-    const filePair: FilePair = existingFilePair || { sampleId };
+    const sampleId = getSampleIdFromRFileName(fileDetails.name);
+    const fileName = getFileNameWithoutExt(fileDetails.name);
+
+    // handle files without R values
+    if (!sampleId) {
+      // file does not have an R_ value, so it must be a single file, and cannot be paired
+      // make a new pair with just this file as R1
+      filePairs.value.push({
+        sampleId: fileName, // individual files use the fileName as sampleId
+        r1File: fileDetails,
+      });
+      return;
+    }
+
+    // handle files with R values:
+
+    // find (if it exists) the file pair whose (potential) shared sample id matches this file
+    const existingFilePair = filePairs.value.find(
+      (filePair) => getSharedSampleIdFromPair(filePair.r1File?.name, filePair.r2File?.name) === sampleId,
+    );
+    // use that one if it exists, or otherwise make a new one
+    const filePair: FilePair = existingFilePair || { sampleId: fileName };
 
     try {
       addToFilePair(fileDetails, filePair);
@@ -283,6 +307,15 @@
       }
     } catch (error: any) {
       console.warn('Error adding file to file pair:', error);
+    }
+
+    // update sampleId
+    if (!filePair.r1File || !filePair.r2File) {
+      // individual files should use the fileName, so that _R1_s can be used as single files
+      filePair.sampleId = fileName;
+    } else {
+      // paired files should use the shared sampleId
+      filePair.sampleId = sampleId;
     }
   }
 
@@ -298,8 +331,18 @@
     }
   }
 
-  function getSampleIdFromFileName(fileName: string): string {
-    return fileName.substring(0, fileName.lastIndexOf('_R'));
+  function getSampleIdFromRFileName(fileName: string): string | null {
+    return fileName.substring(0, fileName.lastIndexOf('_R')) || null;
+  }
+
+  function getFileNameWithoutExt(fileName: string): string {
+    return fileName.replace(/\.f(ast)?q.*$/i, '');
+  }
+
+  function getSharedSampleIdFromPair(r1Name?: string, r2Name?: string): string | null {
+    const r1SampleId = getSampleIdFromRFileName(r1Name || '');
+    const r2SampleId = getSampleIdFromRFileName(r2Name || '');
+    return r1SampleId || r2SampleId;
   }
 
   function setDropzoneActive(val: boolean) {
@@ -339,7 +382,7 @@
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     // save to wip run
     const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
-    props.wipRunUpdateFunction(props.wipRunTempId, {
+    localProps.wipRunUpdateFunction(localProps.wipRunTempId, {
       sampleSheetS3Url: S3Url,
       s3Bucket: Bucket,
       s3Path: Path,
@@ -363,17 +406,43 @@
         Region,
         S3Url: s3Uri,
       };
-      const sampleId = getSampleIdFromFileName(Name);
-      const existingFilePair = uploadedFilePairs.find((filePair) => filePair.SampleId === sampleId);
+
+      const sampleId = getSampleIdFromRFileName(Name);
+      const fileName = getFileNameWithoutExt(Name);
+
+      // handle files without R values
+      if (!sampleId) {
+        // file does not have an R_ value, so it must be a single file, and cannot be paired
+        // make a new pair with just this file as R1
+        uploadedFilePairs.push({
+          SampleId: fileName,
+          R1: uploadFileInfo,
+        });
+        return;
+      }
+
+      const existingFilePair = uploadedFilePairs.find(
+        (filePair) =>
+          getSharedSampleIdFromPair(filePair.R1?.Key?.split('/').at(-1), filePair.R2?.Key?.split('/').at(-1)) ===
+          sampleId,
+      );
       if (existingFilePair) {
-        if (file.Name.includes('_R1_')) {
+        if (Name.includes('_R1_')) {
           existingFilePair.R1 = uploadFileInfo;
-        } else if (file.Name.includes('_R2_')) {
+        } else if (Name.includes('_R2_')) {
           existingFilePair.R2 = uploadFileInfo;
+        }
+
+        if (!existingFilePair.R1 || !existingFilePair.R2) {
+          // individual files should use the fileName, so that _R1_s can be used as single files
+          existingFilePair.SampleId = fileName;
+        } else {
+          // paired files should use the shared sampleId
+          existingFilePair.SampleId = sampleId;
         }
       } else {
         const newFilePair: UploadedFilePairInfo = {
-          SampleId: sampleId,
+          SampleId: fileName, // as above, individual files should use the fileName
           R1: Name.includes('_R1_') ? uploadFileInfo : undefined,
           R2: Name.includes('_R2_') ? uploadFileInfo : undefined,
         };
@@ -386,8 +455,8 @@
 
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
-      LaboratoryId: props.labId,
-      TransactionId: props.wipRun.transactionId || '',
+      LaboratoryId: localProps.labId,
+      TransactionId: localProps.wipRun.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -396,8 +465,8 @@
 
   async function getUploadFilesManifest(files: FileDetails[]): Promise<FileUploadManifest> {
     const request: FileUploadRequest = {
-      LaboratoryId: props.labId,
-      TransactionId: props.wipRun.transactionId || '',
+      LaboratoryId: localProps.labId,
+      TransactionId: localProps.wipRun.transactionId || '',
       Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 
@@ -603,7 +672,10 @@
 
       // If both files are now undefined, remove the entire pair
       if (!filePair.r1File && !filePair.r2File) {
-        props.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
+        localProps.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
+      } else {
+        // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
+        filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
       }
     }
   };
@@ -742,32 +814,33 @@
             {{ row.fileName }}
           </div>
           <div class="file-cell flex w-[10%] items-center justify-end gap-2">
-            <template v-if="row.error">
-              <button
-                class="mr-2"
-                :class="[
-                  canRetryUpload(row) ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400',
-                ]"
-                @click="retryUpload(row)"
-                :disabled="!isOnline || !canRetryUpload(row)"
-              >
-                <UIcon name="i-heroicons-arrow-path" size="20" />
-              </button>
+            <!-- retry button -->
+            <button
+              v-if="row.error"
+              class="mr-2"
+              :class="[canRetryUpload(row) ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
+              @click="retryUpload(row)"
+              :disabled="!isOnline || !canRetryUpload(row)"
+            >
+              <UIcon name="i-heroicons-arrow-path" size="20" />
+            </button>
 
-              <button
-                :disabled="!isOnline || uploadStatus === 'uploading'"
-                :class="[
-                  isOnline && uploadStatus !== 'uploading'
-                    ? 'text-alert-danger hover:text-alert-danger-dark'
-                    : 'cursor-not-allowed text-gray-400',
-                ]"
-                @click="removeFile(row)"
-              >
-                <UIcon name="i-heroicons-trash" size="20" />
-              </button>
-            </template>
+            <!-- delete button -->
+            <button
+              :disabled="!isOnline || uploadStatus === 'uploading'"
+              :class="[
+                isOnline && uploadStatus !== 'uploading'
+                  ? 'text-alert-danger hover:text-alert-danger-dark'
+                  : 'cursor-not-allowed text-gray-400',
+              ]"
+              @click="removeFile(row)"
+            >
+              <UIcon name="i-heroicons-trash" size="20" />
+            </button>
+
+            <!-- complete check -->
             <UIcon
-              v-else-if="row.progress === 100"
+              v-if="!row.error && row.progress === 100"
               size="20"
               name="i-heroicons-check"
               class="text-alert-success-text"
@@ -783,11 +856,11 @@
     <EGS3SampleSheetBar
       v-if="hasSampleSheetUrl"
       :disabled="uploadStatus === 'uploading'"
-      :url="props.wipRun.sampleSheetS3Url"
-      :lab-id="props.labId"
-      :lab-name="props.labName"
-      :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
-      :run-name="props.wipRun.runName"
+      :url="localProps.wipRun.sampleSheetS3Url"
+      :lab-id="localProps.labId"
+      :lab-name="localProps.labName"
+      :pipeline-or-workflow-name="localProps.pipelineOrWorkflowName"
+      :run-name="localProps.wipRun.runName"
     />
 
     <div class="flex justify-end pt-4">
@@ -798,10 +871,10 @@
         label="Download sample sheet"
         @click="
           downloadSampleSheet(
-            props.labId,
-            props.wipRun.sampleSheetS3Url,
-            props.pipelineOrWorkflowName,
-            props.wipRun.runName,
+            localProps.labId,
+            localProps.wipRun.sampleSheetS3Url,
+            localProps.pipelineOrWorkflowName,
+            localProps.wipRun.runName,
           )
         "
       />

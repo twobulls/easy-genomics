@@ -10,6 +10,7 @@ import {
   LaboratoryNotFoundError,
   MissingNextFlowTowerAccessError,
   RequiredIdNotFoundError,
+  SeqeraApiError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
@@ -75,7 +76,7 @@ export const handler: Handler = async (
     console.log('createWorkflowLaunchRequest:', createWorkflowLaunchRequest);
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-    const getParameterResponse: GetParameterCommandOutput = await ssmService
+    const getParameterResponse: GetParameterCommandOutput | void = await ssmService
       .getParameter({
         Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
         WithDecryption: true,
@@ -88,7 +89,7 @@ export const handler: Handler = async (
         }
       });
 
-    const accessToken: string | undefined = getParameterResponse.Parameter?.Value;
+    const accessToken: string | undefined = getParameterResponse ? getParameterResponse.Parameter?.Value : undefined;
     if (!accessToken) {
       throw new LaboratoryAccessTokenUnavailableError();
     }
@@ -100,7 +101,9 @@ export const handler: Handler = async (
       REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },
       createWorkflowLaunchRequest, // Delegate request body validation to Seqera Cloud / NextFlow Tower
-    );
+    ).catch((error: any) => {
+      throw new SeqeraApiError(error.message);
+    });
 
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

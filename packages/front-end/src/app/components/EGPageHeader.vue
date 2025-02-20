@@ -11,6 +11,9 @@
         titleLines?: number;
         descriptionLines?: number;
       };
+      showOrgBreadcrumb?: boolean;
+      showLabBreadcrumb?: boolean;
+      breadcrumbs?: string[];
     }>(),
     {
       backButtonLabel: 'Back',
@@ -20,16 +23,33 @@
     },
   );
 
-  const router = useRouter();
-
   const skeletonTitleLines = computed(() => props.skeletonConfig?.titleLines ?? 1);
   const skeletonDescriptionLines = computed(() => props.skeletonConfig?.descriptionLines ?? 1);
+
+  const breadcrumbs = computed<string[]>(() => props.breadcrumbs?.filter((crumb: string) => !!crumb) || []);
 </script>
 
 <template>
   <div class="mb-6 flex flex-col justify-between">
     <div class="min-h-[40px]">
-      <EGBack v-if="showBack" :label="backButtonLabel" :back-action="backAction" />
+      <div class="mb-4 flex flex-row items-center gap-6">
+        <EGBack v-if="showBack" :label="backButtonLabel" :back-action="backAction" />
+
+        <div class="font-schibsted text-muted flex flex-row items-center gap-4 text-sm">
+          <EGBreadcrumbOrgs v-if="showOrgBreadcrumb" />
+
+          <template v-if="showLabBreadcrumb">
+            <div>/</div>
+            <EGBreadcrumbLabs />
+          </template>
+
+          <template v-if="breadcrumbs" v-for="crumb in breadcrumbs">
+            <div>/</div>
+            <div>{{ crumb }}</div>
+          </template>
+        </div>
+      </div>
+
       <EGAdminAlert v-if="useUserStore().isSuperuser" class="mb-4" />
     </div>
     <div class="flex min-h-[52px] items-start justify-between">

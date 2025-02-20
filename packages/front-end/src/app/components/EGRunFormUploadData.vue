@@ -815,16 +815,33 @@
             </template>
             {{ row.fileName }}
           </div>
-          <div class="file-cell flex w-[10%] items-center justify-end gap-2">
+
+          <div class="file-cell flex w-[10%] items-center justify-end gap-4">
             <!-- retry button -->
             <button
               v-if="row.error"
-              class="mr-2"
               :class="[canRetryUpload(row) ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
               @click="retryUpload(row)"
               :disabled="!isOnline || !canRetryUpload(row)"
             >
               <UIcon name="i-heroicons-arrow-path" size="20" />
+            </button>
+
+            <!-- complete check -->
+            <UIcon
+              v-if="!row.error && row.progress === 100"
+              size="20"
+              name="i-heroicons-check"
+              class="text-alert-success-text"
+            />
+
+            <!-- cancel upload button -->
+            <button
+              v-if="!row.error && row.progress && row.progress < 100"
+              class="text-gray-500 hover:text-gray-700"
+              @click="cancelUpload(row.fileName)"
+            >
+              <UIcon name="i-heroicons-x-mark" size="20" />
             </button>
 
             <!-- delete button -->
@@ -838,17 +855,6 @@
               @click="removeFile(row)"
             >
               <UIcon name="i-heroicons-trash" size="20" />
-            </button>
-
-            <!-- complete check -->
-            <UIcon
-              v-if="!row.error && row.progress === 100"
-              size="20"
-              name="i-heroicons-check"
-              class="text-alert-success-text"
-            />
-            <button v-else class="text-gray-500 hover:text-gray-700" @click="cancelUpload(row.fileName)">
-              <UIcon name="i-heroicons-x" size="20" />
             </button>
           </div>
         </div>

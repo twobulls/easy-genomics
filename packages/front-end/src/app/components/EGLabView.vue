@@ -487,22 +487,21 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-6 mt-0',
+      base: '!flex rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {
-        wrapper: 'duration-200 ease-out absolute bottom-0 ',
-        base: 'absolute bottom-0 rounded-none h-0.5',
-        background: 'bg-primary',
-        shadow: 'shadow-none',
+        background: '',
+        shadow: '',
       },
       tab: {
-        base: 'font-serif w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out mr-16',
-        active: 'text-primary h-14',
-        inactive: 'font-serif',
-        height: 'h-14',
-        padding: 'p-0',
-        size: 'text-lg',
+        base: 'font-serif w-auto mr-3 rounded-xl border border-solid',
+        background: '',
+        active: 'text-white bg-primary border-primary',
+        inactive: 'font-serif text-text-body border-background-dark-grey',
+        height: '',
+        padding: 'px-5 py-2',
+        size: 'text-sm',
       },
     },
   };
@@ -514,6 +513,8 @@
     description="View your Lab users, details and pipelines/workflows"
     :back-action="() => (superuser ? $router.push(`/orgs/${orgId}`) : $router.push('/labs'))"
     :show-back="true"
+    show-org-breadcrumb
+    show-lab-breadcrumb
   >
     <EGButton
       label="Add Lab Users"
@@ -547,7 +548,7 @@
   >
     <template #item="{ item }">
       <!-- Seqera Pipelines tab -->
-      <div v-if="item.key === 'seqeraPipelines'" class="space-y-3">
+      <div v-if="item.key === 'seqeraPipelines'">
         <EGTable
           :row-click-action="viewRunSeqeraPipeline"
           :table-data="seqeraPipelines"
@@ -580,7 +581,7 @@
       </div>
 
       <!-- HealthOmics Pipelines tab -->
-      <div v-if="item.key === 'omicsWorkflows'" class="space-y-3">
+      <div v-if="item.key === 'omicsWorkflows'">
         <EGTable
           :row-click-action="viewRunOmicsWorkflow"
           :table-data="omicsWorkflows"
@@ -617,7 +618,7 @@
       </div>
 
       <!-- Runs tab -->
-      <div v-else-if="item.key === 'runs'" class="space-y-3">
+      <div v-else-if="item.key === 'runs'">
         <EGTable
           :row-click-action="viewRunDetails"
           :table-data="combinedRuns"
@@ -659,7 +660,7 @@
       </div>
 
       <!-- Lab Users tab -->
-      <div v-else-if="item.key === 'users'" class="space-y-3">
+      <div v-else-if="item.key === 'users'">
         <EGSearchInput
           @input-event="updateSearchOutput"
           placeholder="Search user"
@@ -713,7 +714,7 @@
           </template>
         </EGTable>
       </div>
-      <div v-else-if="item.key === 'details'" class="space-y-3">
+      <div v-else-if="item.key === 'details'">
         <EGFormLabDetails @updated="handleDetailsUpdated" />
       </div>
     </template>

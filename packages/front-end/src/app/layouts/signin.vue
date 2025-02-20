@@ -1,15 +1,25 @@
+<script setup lang="ts">
+  const chips = ['Simple to use', 'Start small, scale fast', 'Seamless experience', 'Secure data storage'];
+</script>
+
 <template>
   <EGToasts />
 
   <div class="grid grid-cols-2">
     <div class="background-image h-screen bg-cover bg-center p-[80px]">
-      <div class="flex flex-col">
-        <EGLogo class="mr-2 w-[200px]" :white-variant="true" />
-        <div
-          class="translate-[-50%, -43%] absolute left-[0px%] top-[43%] w-[314px] transform font-serif text-[32px] leading-10 text-white"
-          style="font-weight: 200"
-        >
+      <div class="flex h-full flex-col">
+        <EGLogo class="mr-2 w-[200px] pb-[140px]" :white-variant="true" />
+
+        <div class="leading-64 font-schibsted max-w-[400px] text-[46px] font-medium text-white">
           Genomic Insights Made Effortless
+        </div>
+
+        <div class="grow"></div>
+
+        <div class="font-schibsted flex flex-row flex-wrap gap-3">
+          <div v-for="chip of chips" class="rounded-full bg-[#ffffff33] px-5 py-2 text-2xl font-medium text-white">
+            {{ chip }}
+          </div>
         </div>
       </div>
     </div>
@@ -26,8 +36,6 @@
 
 <style scoped lang="scss">
   .background-image {
-    background-image: url('/images/bg-login.jpg');
-    background-size: cover;
+    background-image: url('/images/bg-login.svg');
   }
 </style>
-<script setup lang="ts"></script>

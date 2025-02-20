@@ -30,7 +30,7 @@
       variants: {
         variant: {
           primary: [
-            'bg-primary-500',
+            'button-gradient',
             'text-white',
             'active:outline-none',
             'active:bg-[#29007F]',
@@ -117,3 +117,18 @@
     :loading="loading"
   />
 </template>
+
+<style scoped lang="scss">
+  .button-gradient:not([disabled]) {
+    background-image: linear-gradient(to right, #9266f5, #5524e0);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: 0px 0px;
+
+    transition: background-position 300ms ease-in-out;
+  }
+
+  .button-gradient:not([disabled]):hover {
+    background-position: -250px 0px; /* Note: this will not look right if a button ever gets wider than 250px */
+  }
+</style>

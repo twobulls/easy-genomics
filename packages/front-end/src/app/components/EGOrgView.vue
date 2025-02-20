@@ -295,7 +295,7 @@
         shadow: '',
       },
       tab: {
-        base: 'font-serif font-schibsted w-auto mr-3 rounded-xl border border-solid',
+        base: 'font-serif w-auto mr-3 rounded-xl border border-solid',
         background: '',
         active: 'text-white bg-primary border-primary',
         inactive: 'font-serif text-text-body border-background-dark-grey',

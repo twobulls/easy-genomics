@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useRunStore } from '@FE/stores';
+  import { useRunStore, useToastStore } from '@FE/stores';
   import { WipSeqeraRunData } from '@FE/stores/run';
 
   const props = defineProps<{
@@ -74,6 +74,17 @@
     );
 
     return filteredProperties.every((property: any) => property.hidden);
+  }
+
+  function onSubmit() {
+    const paramsRequired: string[] = wipSeqeraRun.value?.paramsRequired || [];
+    const missingParams = paramsRequired.filter((paramName: string) => !wipSeqeraRun.value?.params[paramName]);
+
+    if (missingParams.length > 0) {
+      useToastStore().error(`The '${missingParams.shift()}' field is required. Please try again.`);
+    } else {
+      emit('next-step');
+    }
   }
 
   watch(
@@ -168,7 +179,7 @@
           label="Previous step"
           @click="emit('previous-step')"
         />
-        <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="emit('next-step')" />
+        <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="onSubmit" />
       </div>
     </div>
   </div>

@@ -94,12 +94,20 @@
       .filter((_) => _)
       .reduce((acc, cur) => ({ ...acc, [Object.keys(cur)[0]]: Object.values(cur)[0] }), {});
 
+    // Identify Seqera pipeline schema required parameters
+    const paramsRequired: string[] = definitions.input_output_options.required
+      ? definitions.input_output_options.required
+      : [];
+
     schema.value = {
       ...originalSchema,
       $defs: filteredDefinitions,
     };
     if (pipelineSchemaResponse.params) {
-      runStore.updateWipSeqeraRun(seqeraRunTempId.value, { params: JSON.parse(pipelineSchemaResponse.params) });
+      runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
+        params: JSON.parse(pipelineSchemaResponse.params),
+        paramsRequired: paramsRequired,
+      });
     }
   }
 

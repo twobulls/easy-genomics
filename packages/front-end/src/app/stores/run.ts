@@ -21,6 +21,7 @@ export interface WipSeqeraRunData {
   s3Bucket?: string;
   s3Path?: string;
   files?: FilePair[];
+  paramsRequired: string[];
 }
 
 export interface WipOmicsRunData {
@@ -34,6 +35,7 @@ export interface WipOmicsRunData {
   s3Bucket?: string;
   s3Path?: string;
   files?: FilePair[];
+  paramsRequired: string[];
 }
 
 interface RunState {

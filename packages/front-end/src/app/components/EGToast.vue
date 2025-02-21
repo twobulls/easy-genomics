@@ -107,7 +107,7 @@
   <!-- invisible full screen overlay to pick up clicks and dismiss the green toast -->
   <div
     v-if="variant === 'success'"
-    class="z-99999 fixed bottom-px left-px right-px top-px"
+    class="z-99999 pointer-events-auto fixed bottom-px left-px right-px top-px"
     @click.stop="callback"
   ></div>
 

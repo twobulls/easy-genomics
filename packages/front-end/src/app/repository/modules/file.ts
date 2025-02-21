@@ -45,11 +45,11 @@ class FileModule extends HttpFactory {
   }
 
   /**
-   * Get signed URL for downloading a file from S3 Bucket
+   * Get signed URL for downloading a file from an S3 Bucket
    * @param labId
    * @param contentUri
    */
-  async downloadS3file(labId: string, contentUri: string): Promise<FileDownloadResponse> {
+  async fetchPresignedS3Url(labId: string, contentUri: string): Promise<FileDownloadResponse> {
     const res: FileDownloadResponse | undefined = await this.call<FileDownloadResponse>(
       'POST',
       '/file/request-file-download-url',

@@ -11,12 +11,12 @@ export const UploadedFileInfoSchema = z
   })
   .strict();
 
-// DNA Sequenced R1 & R2 file pair of UploadedFileInfoSchema type
+// DNA Sequenced single read or paired R1 & R2 reads for UploadedFileInfoSchema type
 export const UploadedFilePairInfoSchema = z
   .object({
     SampleId: z.string(),
-    R1: UploadedFileInfoSchema,
-    R2: UploadedFileInfoSchema,
+    R1: UploadedFileInfoSchema.optional().nullable(),
+    R2: UploadedFileInfoSchema.optional().nullable(),
   })
   .strict();
 

@@ -2,12 +2,16 @@
   import { useRunStore } from '@FE/stores';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { v4 as uuidv4 } from 'uuid';
-  import { DescribePipelineSchemaResponse } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import {
+    DescribePipelineSchemaResponse,
+    Pipeline as SeqeraPipeline,
+  } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
   const runStore = useRunStore();
+  const seqeraPipelinesStore = useSeqeraPipelinesStore();
 
   // set a new seqeraRunTempId if not provided
   if (!$route.query.seqeraRunTempId) {
@@ -20,6 +24,8 @@
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
+
+  const pipeline = computed<SeqeraPipeline | null>(() => seqeraPipelinesStore.pipelines[pipelineId] || null);
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
@@ -128,14 +134,18 @@
     :show-back="!hasLaunched"
     :back-action="() => (nextRoute = `/labs/${labId}?tab=Seqera+Pipelines`)"
     back-button-label="Exit Run"
+    show-org-breadcrumb
+    show-lab-breadcrumb
+    :breadcrumbs="[pipeline?.name]"
   />
   <EGRunPipelineStepper
-    @has-launched="hasLaunched = true"
     :schema="schema"
     :params="wipSeqeraRun?.params"
-    @reset-run-pipeline="resetRunPipeline()"
     :key="resetStepperKey"
     :pipeline-id="pipelineId"
+    :lab-name="labName"
+    @has-launched="hasLaunched = true"
+    @reset-run-pipeline="resetRunPipeline()"
   />
   <EGDialog
     action-label="Cancel Pipeline Run"

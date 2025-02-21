@@ -1,12 +1,15 @@
 <script setup lang="ts">
   import tailwindConfig from '../../tailwind.config.js';
+  import { useNetwork } from '@vueuse/core';
 
   const primaryColHex = tailwindConfig.theme.extend.colors.primary;
   const { ENV_TYPE } = useRuntimeConfig().public;
+  const { isOnline } = useNetwork();
 </script>
 
 <template>
   <NuxtLoadingIndicator :color="primaryColHex" />
+  <EGOfflineModal :model-value="!isOnline" />
   <NuxtLayout :key="useUiStore().remountAppKey">
     <NuxtPage />
     <EGBuildInfo v-if="ENV_TYPE !== 'prod'" />
@@ -17,6 +20,7 @@
 <style lang="scss">
   body {
     background-color: #f5f5f5;
+    @apply text-body;
   }
 
   .page-enter-active,

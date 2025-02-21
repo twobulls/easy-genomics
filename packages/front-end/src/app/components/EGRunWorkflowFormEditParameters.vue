@@ -1,19 +1,25 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { WipOmicsRunData } from '@FE/stores/run';
 
   const props = defineProps<{
     schema: object;
     params: object;
-
-    sampleSheetS3Url: string;
-    s3Bucket: string;
-    s3Path: string;
     omicsRunTempId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
 
   const runStore = useRunStore();
+  const labsStore = useLabsStore();
+  const omicsWorklowsStore = useOmicsWorkflowsStore();
+
+  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[props.omicsRunTempId]);
+
+  const labName = computed<string | null>(() => labsStore.labs[wipOmicsRun.value?.laboratoryId || '']?.Name || null);
+  const workflowName = computed<string | null>(
+    () => omicsWorklowsStore.workflows[wipOmicsRun.value?.workflowId || '']?.name || null,
+  );
 
   type SchemaItem = {
     name: string;
@@ -46,10 +52,7 @@
     params: {
       // initialize all fields with empty string as default
       ...paramDefaults,
-      // initialize input and output values with default values
-      input: props.sampleSheetS3Url,
-      outdir: `s3://${props.s3Bucket}/${props.s3Path}/results`,
-      // finally overwrite with any existing values
+      // overwrite with any existing values
       ...props.params,
     },
   });
@@ -71,6 +74,15 @@
 </script>
 
 <template>
+  <EGS3SampleSheetBar
+    v-if="wipOmicsRun?.sampleSheetS3Url"
+    :url="wipOmicsRun.sampleSheetS3Url"
+    :lab-id="wipOmicsRun.laboratoryId"
+    :lab-name="labName"
+    :pipeline-or-workflow-name="workflowName"
+    :run-name="wipOmicsRun.runName"
+  />
+
   <div class="flex">
     <div class="mr-4 w-1/4">
       <EGCard>

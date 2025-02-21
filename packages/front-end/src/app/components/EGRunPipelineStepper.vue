@@ -6,6 +6,7 @@
     schema: object;
     params: object;
     pipelineId: string;
+    labName: string;
   }>();
 
   const $route = useRoute();
@@ -49,27 +50,28 @@
     },
   ]);
 
-  const EGStepperTabsStyles = {
+  // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
+  //  Tailwind won't pick up and include the classes used and styles will be missing.
+  // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
+  //  UTabs that use an "EGTabsStyles" as input to the :ui attribute.
+  const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: 'rounded-none mb-4 mt-0',
+      base: '!flex rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {
-        wrapper: 'focus:outline-none',
-        base: 'absolute top-[0px] h-[4px]  rounded-none z-10',
-        background: 'bg-primary',
-        shadow: 'shadow-none',
-      },
-      size: {
-        sm: 'text-lg',
+        background: '',
+        shadow: '',
       },
       tab: {
-        base: '!text-base border-t-4 border-primary-muted rounded-none w-auto mr-4 inline-flex font-heading justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:text-opacity-50 ',
-        active: 'text-primary h-14',
-        inactive: 'text-heading',
-        height: 'h-14',
-        padding: 'p-0',
+        base: 'font-serif w-auto mr-3 rounded-xl border border-solid',
+        background: '',
+        active: 'text-white bg-primary border-primary',
+        inactive: 'font-serif text-text-body border-background-dark-grey',
+        height: '',
+        padding: 'px-5 py-2',
+        size: 'text-sm',
       },
     },
   };
@@ -153,6 +155,12 @@
     });
   }
 
+  function enableAllSteps() {
+    items.value.forEach((item) => {
+      item.disabled = false;
+    });
+  }
+
   function handleLaunchSuccess() {
     hasLaunched.value = true;
     emit('has-launched');
@@ -161,11 +169,15 @@
   function handleSubmitLaunchRequest() {
     disableAllSteps();
   }
+
+  function handleSubmitLaunchRequestError() {
+    enableAllSteps();
+  }
 </script>
 
 <template>
   <div :key="resetKey">
-    <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" class="UTabs">
+    <UTabs v-model="selected" :items="items" :ui="EGTabsStyles" class="UTabs">
       <template #default="{ item, index, selected }">
         <div class="relative flex items-center gap-2 truncate">
           <UIcon
@@ -198,10 +210,9 @@
           <template v-if="items[selectedIndex].key === 'upload'">
             <EGRunFormUploadData
               :lab-id="labId"
-              :sample-sheet-s3-url="wipSeqeraRun.sampleSheetS3Url"
+              :lab-name="labName"
               :pipeline-or-workflow-name="pipeline.name"
-              :run-name="wipSeqeraRun.runName"
-              :transaction-id="wipSeqeraRun.transactionId"
+              :wip-run="wipSeqeraRun"
               :wip-run-update-function="runStore.updateWipSeqeraRun"
               :wip-run-temp-id="seqeraRunTempId"
               @next-step="() => nextStep('parameters')"
@@ -215,7 +226,7 @@
             <EGRunPipelineFormEditParameters
               :params="params"
               :schema="schema"
-              :pipeline-id="pipelineId"
+              :seqera-run-temp-id="seqeraRunTempId"
               @next-step="() => nextStep('review')"
               @previous-step="previousStep"
             />
@@ -227,8 +238,9 @@
               :schema="props.schema"
               :params="wipSeqeraRun?.params"
               :pipeline-id="pipelineId"
-              @submit-launch-request="handleSubmitLaunchRequest()"
-              @has-launched="handleLaunchSuccess()"
+              @submit-launch-request="handleSubmitLaunchRequest"
+              @submit-launch-request-error="handleSubmitLaunchRequestError"
+              @has-launched="handleLaunchSuccess"
               @previous-tab="previousStep"
             />
           </template>

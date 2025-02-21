@@ -5,7 +5,6 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { WorkflowParameter } from '@aws-sdk/client-omics';
   import { v4 as uuidv4 } from 'uuid';
-  import EGLoadingSpinner from '@FE/components/EGLoadingSpinner.vue';
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
@@ -14,11 +13,22 @@
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
   const uiStore = useUiStore();
 
+  const labId = $route.params.labId as string;
+
+  // check permissions to be on this page
+  if (!useUserStore().canViewLab(labId)) {
+    $router.push('/labs');
+  }
+
+  // set a new omicsRunTempId if not provided
+  if (!$route.query.omicsRunTempId) {
+    $router.push({ query: { omicsRunTempId: uuidv4() } });
+  }
+
   const omicsRunTempId = computed<string>(() => $route.query.omicsRunTempId as string);
 
   const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId.value]);
 
-  const labId = $route.params.labId as string;
   const workflowId = $route.params.workflowId as string;
 
   const workflow = computed<ReadWorkflow | null>(() => omicsWorkflowsStore.workflows[workflowId]);
@@ -32,11 +42,6 @@
   const schema = computed<Record<string, WorkflowParameter> | null>(() => workflow.value?.parameterTemplate ?? null);
 
   const resetStepperKey = ref(0);
-
-  // check permissions to be on this page
-  if (!useUserStore().canViewLab(labId)) {
-    $router.push('/labs');
-  }
 
   const loading = computed<boolean>(() => uiStore.isRequestPending('loadOmicsWorkflow'));
 
@@ -124,6 +129,9 @@
     :show-back="!hasLaunched"
     :back-action="() => (nextRoute = `/labs/${labId}?tab=HealthOmics+Workflows`)"
     back-button-label="Exit Run"
+    show-org-breadcrumb
+    show-lab-breadcrumb
+    :breadcrumbs="[workflow?.name]"
   />
 
   <template v-if="loading">
@@ -138,6 +146,7 @@
       @reset-run-pipeline="resetRunPipeline()"
       :key="resetStepperKey"
       :workflow-id="workflowId"
+      :lab-name="labName"
     />
 
     <EGDialog

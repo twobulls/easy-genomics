@@ -29,7 +29,7 @@
     try {
       await $api.orgs.editOrgUser(props.orgId, UserId, OrganizationUserStatus, toggleVal.value);
       emit('update-user');
-      useToastStore().success(`${displayName}’s Lab Access has been successfully updated`);
+      useToastStore().success(`${displayName}’s Access has been successfully updated`);
     } catch (error) {
       useToastStore().error(VALIDATION_MESSAGES.network);
       toggleVal.value = !toggleVal.value;

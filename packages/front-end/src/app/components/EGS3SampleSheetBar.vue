@@ -52,7 +52,7 @@
 
 <template>
   <div class="sample-sheet-bar">
-    <EGText v-if="hasSampleSheetUrl" tag="h5" class="mb-2">Sample Sheet:</EGText>
+    <EGText v-if="url" tag="h5" class="mb-2">Sample Sheet:</EGText>
     <EGText v-else tag="h5" class="mb-2">Sample Sheet now generating, please wait...</EGText>
     <div
       :class="[{ 'pointer-events-none opacity-50': disabled }]"
@@ -66,7 +66,7 @@
         :aria-label="`Copy URL: ${url}`"
       >
         <div v-if="url">{{ url }}</div>
-        <div v-else class="flex">
+        <div v-else class="flex flex-col">
           <USkeleton class="mb-2 h-2 w-[500px] rounded" />
           <USkeleton class="h-2 w-[400px] rounded" />
         </div>
@@ -78,9 +78,9 @@
 
       <div class="flex items-center gap-4" role="group" aria-label="URL Actions">
         <button
-          @click="hasSampleSheetUrl ? openSampleSheet : null"
+          @click="url ? openSampleSheet : null"
           class="cursor-pointer"
-          :class="{ 'opacity-50': !hasSampleSheetUrl }"
+          :class="{ 'opacity-50': !url }"
           aria-label="Open in new tab"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
@@ -95,9 +95,9 @@
           </svg>
         </button>
         <button
-          @click="hasSampleSheetUrl ? copyToClipboard : null"
+          @click="url ? copyToClipboard : null"
           class="cursor-pointer"
-          :class="{ 'opacity-50': !hasSampleSheetUrl }"
+          :class="{ 'opacity-50': !url }"
           aria-label="Copy to clipboard"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">

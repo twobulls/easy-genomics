@@ -46,6 +46,13 @@
    * Intercept any navigation away from the page (including the browser back button) and present the modal
    */
   onBeforeRouteLeave((to, from, next) => {
+    const noConfirmRoutes = ['/signin'];
+
+    if (noConfirmRoutes.some((route) => to.path.startsWith(route))) {
+      next(true);
+      return;
+    }
+
     if (hasLaunched.value) {
       // if the pipeline has launched no need to confirm cancel
       next(true);

@@ -251,7 +251,13 @@
 </script>
 
 <template>
-  <EGPageHeader title="Edit User Access" :show-back="true" :back-action="() => $router.push(`/orgs/${props.orgId}`)" />
+  <EGPageHeader
+    title="Edit User Access"
+    :show-back="true"
+    :back-action="() => $router.push(`/orgs/${props.orgId}`)"
+    show-org-breadcrumb
+    :breadcrumbs="[getSelectedUserDisplayName]"
+  />
 
   <!-- org admin toggle -->
   <div class="mb-4">

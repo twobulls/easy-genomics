@@ -315,6 +315,7 @@
     :show-back="true"
     :is-loading="isLoading"
     :skeleton-config="{ titleLines: 1, descriptionLines: 1 }"
+    show-org-breadcrumb
   >
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">

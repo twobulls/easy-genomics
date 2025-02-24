@@ -256,7 +256,7 @@
     :show-back="true"
     :back-action="() => $router.push(`/orgs/${props.orgId}`)"
     show-org-breadcrumb
-    :breadcrumbs="[getSelectedUserDisplayName]"
+    :breadcrumbs="[getSelectedUserDisplayName !== '???' ? getSelectedUserDisplayName : null]"
   />
 
   <!-- org admin toggle -->

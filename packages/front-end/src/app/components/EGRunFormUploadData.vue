@@ -100,15 +100,17 @@
     filePairs.value.some((filePair) => filePair.r1File && filePair.r2File),
   );
 
+  const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
+
+  const areAllPairsComplete = computed<boolean>(() => {
+    return filePairs.value.every((pair) => pair.r1File);
+  });
+
   const canProceedToNextStep = computed<boolean>(() => {
     // Check both conditions:
     // 1. All existing files are uploaded successfully
     // 2. All pairs are complete (have both R1 and R2)
-    return areAllFilesUploaded.value && areAllPairsComplete.value;
-  });
-
-  const areAllPairsComplete = computed<boolean>(() => {
-    return filePairs.value.every((pair) => pair.r1File);
+    return areAllFilesUploaded.value && areAllPairsComplete.value && hasSampleSheetUrl.value;
   });
 
   // overall upload status for all files
@@ -160,9 +162,6 @@
 
     return noInternet || noFiles || hasIncompletePairs || hasBothSinglesAndPairs || isUploading;
   });
-
-  // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
-  const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
 
   // reset files error states
   function clearErrorsFromFiles(files: FileDetails[]) {
@@ -862,7 +861,7 @@
     </div>
 
     <EGS3SampleSheetBar
-      v-if="hasSampleSheetUrl"
+      v-if="uploadStatus === 'success'"
       :disabled="uploadStatus === 'uploading'"
       :url="localProps.wipRun.sampleSheetS3Url"
       :lab-id="localProps.labId"

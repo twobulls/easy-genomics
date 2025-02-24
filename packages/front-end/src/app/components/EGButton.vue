@@ -129,6 +129,7 @@
   }
 
   .button-gradient:not([disabled]):hover {
+    background-color: #5524e0;
     background-position: -250px 0px; /* Note: this will not look right if a button ever gets wider than 250px */
   }
 </style>

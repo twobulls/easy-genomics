@@ -22,6 +22,8 @@
   const isCopied = ref(false);
 
   const copyToClipboard = async () => {
+    if (!props.url) return;
+
     try {
       await navigator.clipboard.writeText(props.url);
       isCopied.value = true;
@@ -34,6 +36,8 @@
   };
 
   const openSampleSheet = () => {
+    if (!props.url) return;
+
     const baseUrl = window.location.origin;
     const url = router.resolve({
       path: `/labs/${props.labId}/run-pipeline/sample-sheet`,
@@ -78,7 +82,7 @@
 
       <div class="flex items-center gap-4" role="group" aria-label="URL Actions">
         <button
-          @click="url ? openSampleSheet : null"
+          @click="openSampleSheet"
           class="cursor-pointer"
           :class="{ 'opacity-50': !url }"
           aria-label="Open in new tab"
@@ -95,7 +99,7 @@
           </svg>
         </button>
         <button
-          @click="url ? copyToClipboard : null"
+          @click="copyToClipboard"
           class="cursor-pointer"
           :class="{ 'opacity-50': !url }"
           aria-label="Copy to clipboard"

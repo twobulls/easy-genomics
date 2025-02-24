@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
-  import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const router = useRouter();
   const route = useRoute();
@@ -14,11 +13,13 @@
 
   const currentLab = computed<Laboratory | null>(() => labsStore.labs[labId] || null);
 
-  const otherLabs = computed<Laboratory[]>(() =>
-    Object.values(labsStore.labsForOrg(userStore.currentOrgId || ''))
+  const otherLabs = computed<Laboratory[]>(() => {
+    // for superuser, use the org in the url; for normal user, currentOrgId
+    const currentOrgId = userStore.isSuperuser ? (route.params.orgId as string) : userStore.currentOrgId;
+    return Object.values(labsStore.labsForOrg(currentOrgId || ''))
       .filter((lab) => lab.LaboratoryId !== labId)
-      .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
-  );
+      .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name));
+  });
 
   const items = computed<Laboratory[][]>(() =>
     otherLabs.value.map((lab) => [
@@ -30,7 +31,11 @@
   );
 
   function doSwitchLab(labId: string): void {
-    router.push(`/labs/${labId}`);
+    // this is flexible enough to work in most different contexts; eg.
+    // - normal user: /labs/[labId]
+    // - superuser: /orgs/[orgId]/labs/[labId]
+    const newRoute = route.fullPath.replace(/\/labs\/[^\/]+/, `/labs/${labId}`);
+    router.push(newRoute);
   }
 </script>
 

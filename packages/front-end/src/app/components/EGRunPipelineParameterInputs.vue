@@ -42,7 +42,15 @@
         propValues[propName] = false; // Initialize boolean fields to false if not defined
       }
     } else {
-      propValues[propName] = props.params[propName];
+      if (propName === 'input') {
+        // Set initial input with generated param value, then use existing value to maintain any user modifications
+        propValues[propName] = !propValues[propName] ? props.params[propName] : propValues[propName];
+      } else if (propName === 'outdir') {
+        // Set initial outdir with generated param value, then use existing value to maintain any user modifications
+        propValues[propName] = !propValues[propName] ? props.params[propName] : propValues[propName];
+      } else {
+        propValues[propName] = props.params[propName];
+      }
     }
   });
 
@@ -51,14 +59,6 @@
       runStore.wipSeqeraRuns[seqeraRunTempId].params[key] = propValues[key];
     }
   });
-
-  watch(
-    () => runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url,
-    () => {
-      runStore.wipSeqeraRuns[seqeraRunTempId].params['input'] =
-        runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url;
-    },
-  );
 </script>
 
 <template>
@@ -66,12 +66,17 @@
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
       <!-- ignore Seqera "file upload" input types -->
       <template v-if="!propertyDetail?.hidden && !usePipeline().isParamsFormatFilePath(propertyDetail.format)">
-        <component
-          :is="components[propertyType(propertyDetail)]"
-          :name="propertyName"
-          :details="propertyDetail"
-          v-model="propValues[propertyName]"
-        />
+        <EGFormGroup
+          :label="propertyName"
+          :required="runStore.wipSeqeraRuns[seqeraRunTempId].paramsRequired.includes(propertyName)"
+        >
+          <component
+            :is="components[propertyType(propertyDetail)]"
+            :name="''"
+            :details="propertyDetail"
+            v-model="propValues[propertyName]"
+          />
+        </EGFormGroup>
       </template>
 
       <!-- Special exception for Seqera "file upload" input type at this point in the schema, used as an S3 bucket
@@ -83,7 +88,13 @@
           propertyName === 'input'
         "
       >
-        <EGInput name="input" v-model="runStore.wipSeqeraRuns[seqeraRunTempId].sampleSheetS3Url" />
+        <EGFormGroup
+          label="input"
+          name="input"
+          :required="runStore.wipSeqeraRuns[seqeraRunTempId].paramsRequired.includes('input')"
+        >
+          <EGInput name="input" v-model="propValues['input']" />
+        </EGFormGroup>
       </template>
     </div>
   </div>

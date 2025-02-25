@@ -802,8 +802,8 @@
           }"
         >
           <div class="file-cell sample-id text-body w-[30%]">
-            <span v-if="!row.error">{{ row.sampleId }}</span>
-            <span v-else class="text-alert-danger-dark mr-1 font-medium">(Upload Failed)</span>
+            <div v-if="!row.error" class="truncate">{{ row.sampleId }}</div>
+            <div v-else class="text-alert-danger-dark mr-1 truncate font-medium">(Upload Failed)</div>
           </div>
           <div
             class="file-cell flex w-[60%] items-center"
@@ -812,7 +812,7 @@
             <template v-if="row.error">
               <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
             </template>
-            {{ row.fileName }}
+            <div class="truncate">{{ row.fileName }}</div>
           </div>
 
           <div class="file-cell flex w-[10%] items-center justify-end gap-4">

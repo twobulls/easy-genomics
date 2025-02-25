@@ -62,7 +62,7 @@
   }
 
   function handleExpiredToken() {
-    useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
+    useToastStore().error('Your password reset link has been used or expired');
     navigateTo('/signin');
   }
 

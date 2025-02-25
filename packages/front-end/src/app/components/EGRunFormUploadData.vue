@@ -897,12 +897,14 @@
   <div class="mt-6 flex justify-between">
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-step')" />
     <EGButton
+      v-if="filePairs.length"
       :size="ButtonSizeEnum.enum.sm"
       variant="primary"
-      :label="filePairs.length ? 'Next step' : 'Skip'"
+      label="Next step"
       @click="emit('next-step')"
       :disabled="!canProceedToNextStep"
     />
+    <EGButton v-else :size="ButtonSizeEnum.enum.sm" variant="primary" label="Skip" @click="emit('next-step')" />
   </div>
 </template>
 

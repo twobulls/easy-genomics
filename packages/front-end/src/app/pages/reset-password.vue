@@ -62,7 +62,7 @@
   }
 
   function handleExpiredToken() {
-    useToastStore().error(VALIDATION_MESSAGES.inviteAcceptedOrExpired);
+    useToastStore().error(VALIDATION_MESSAGES.passwordResetAcceptedOrExpired);
     navigateTo('/signin');
   }
 

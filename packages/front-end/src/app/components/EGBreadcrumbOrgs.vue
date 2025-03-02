@@ -3,19 +3,27 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
 
   const router = useRouter();
+  const route = useRoute();
 
   const orgsStore = useOrgsStore();
   const userStore = useUserStore();
 
   const isOpen = ref<boolean>(false);
 
-  const currentOrg = computed<Organization | null>(() => orgsStore.orgs[userStore.currentOrgId || ''] || null);
+  const currentOrg = computed<Organization | null>(() => {
+    // for superuser, use the org in the url; for normal user, currentOrgId
+    const currentOrgId = userStore.isSuperuser ? (route.params.orgId as string) : userStore.currentOrgId;
+    return orgsStore.orgs[currentOrgId || ''] || null;
+  });
 
-  const otherOrgs = computed<Organization[]>(() =>
-    Object.values(orgsStore.orgs)
+  const otherOrgs = computed<Organization[]>(() => {
+    // the superuser can't "switch" orgs so don't offer any
+    if (userStore.isSuperuser) return [];
+
+    return Object.values(orgsStore.orgs)
       .filter((org) => org.OrganizationId !== userStore.currentOrgId)
-      .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
-  );
+      .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name));
+  });
 
   const items = computed<Organization[][]>(() =>
     otherOrgs.value.map((org) => [

@@ -174,14 +174,16 @@
       <template #item="{ item, open }">
         <section class="stroke-light flex flex-col bg-white text-left">
           <dl>
-            <div
-              v-for="(property, propertyKey, index) in item.content.properties"
-              :key="`property-${propertyKey}`"
-              class="property-row grid grid-cols-[auto_1fr] gap-x-4 border-b bg-white px-4 py-4 last:border-0 dark:bg-gray-800"
-            >
-              <dt class="w-56 whitespace-pre-wrap break-words font-medium text-black">{{ propertyKey }}</dt>
-              <dd class="text-muted whitespace-pre-wrap break-words">{{ params[propertyKey] }}</dd>
-            </div>
+            <template v-for="(property, propertyKey, index) in item.content.properties">
+              <div
+                v-if="!property.hidden"
+                :key="`property-${propertyKey}`"
+                class="property-row grid grid-cols-[auto_1fr] gap-x-4 border-b bg-white px-4 py-4 last:border-0 dark:bg-gray-800"
+              >
+                <dt class="w-56 whitespace-pre-wrap break-words font-medium text-black">{{ propertyKey }}</dt>
+                <dd class="text-muted whitespace-pre-wrap break-words">{{ params[propertyKey] }}</dd>
+              </div>
+            </template>
           </dl>
         </section>
       </template>

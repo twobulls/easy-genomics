@@ -1,4 +1,5 @@
 import { marshall } from '@aws-sdk/util-dynamodb';
+import { OrgUserStatus } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
 import { OrganizationUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user';
 import {
@@ -45,6 +46,7 @@ export class PlatformUserService extends DynamoDBService {
         [organizationUser.OrganizationId]: {
           Status: organizationUser.Status,
           LaboratoryAccess: {},
+          OrganizationAdmin: false,
         },
       },
     };
@@ -336,6 +338,106 @@ export class PlatformUserService extends DynamoDBService {
     } else {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
     }
+  }
+
+  /**
+   * This function creates a DynamoDB transaction to:
+   *  - update the existing User to update multiple OrganizationAccess meta-data Status to 'Active' or 'Inactive'
+   *  - update the multiple Organization-User access mapping records Status to 'Active' or 'Inactive'
+   *
+   * This function is dependent on the caller to supply the User's details updated OrganizationAccess details for
+   * writing the User record.
+   *
+   * If any part of the transaction fails, the whole transaction will be rejected in order to avoid
+   * data inconsistency.
+   *
+   * @param existingUser
+   * @param organizationUsers
+   */
+  async editExistingUserAccessToOrganizations(
+    existingUser: User,
+    organizationUsers: OrganizationUser[],
+  ): Promise<Boolean> {
+    const logRequestMessage = `Edit Existing User To Organization UserId=${existingUser.UserId} Organizations=[${organizationUsers.map((_: OrganizationUser) => _.OrganizationId).join(', ')}] request`;
+    console.info(logRequestMessage);
+
+    // Retrieve the User's OrganizationAccess metadata to update
+    const existingUserOrganizationAccess: OrganizationAccess | undefined = existingUser.OrganizationAccess;
+    const updatedUserOrganizationAccess: OrganizationAccess = existingUserOrganizationAccess
+      ? this.updateUserOrganizationAccess(existingUserOrganizationAccess, organizationUsers)
+      : {};
+
+    const user: User = {
+      ...existingUser,
+      OrganizationAccess: {
+        ...existingUserOrganizationAccess,
+        ...updatedUserOrganizationAccess,
+      },
+    };
+
+    const response = await this.transactWriteItems({
+      TransactItems: [
+        {
+          // Using PutItem request to update the existing User record for marshalling convenience instead of UpdateItem
+          Put: {
+            TableName: this.USER_TABLE_NAME,
+            ConditionExpression: 'attribute_exists(#UserId)',
+            ExpressionAttributeNames: {
+              '#UserId': 'UserId',
+            },
+            Item: marshall(user),
+          },
+        },
+        // Perform all OrganizationUser updates in one transaction
+        ...organizationUsers.map((orgUser: OrganizationUser) => {
+          return {
+            // Using PutItem request to update the existing OrganizationUser record for marshalling convenience instead of UpdateItem
+            Put: {
+              TableName: this.ORGANIZATION_USER_TABLE_NAME,
+              ConditionExpression: 'attribute_exists(#OrganizationId) AND attribute_exists(#UserId)',
+              ExpressionAttributeNames: {
+                '#OrganizationId': 'OrganizationId',
+                '#UserId': 'UserId',
+              },
+              Item: marshall(orgUser),
+            },
+          };
+        }),
+      ],
+    });
+
+    if (response.$metadata.httpStatusCode === 200) {
+      return true;
+    } else {
+      throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  }
+
+  /**
+   * Private function to help generate updated User OrganizationAccess metadata for multiple Organization activations/deactivations.
+   * @param existingUserOrganizationAccess
+   * @param organizationUsers
+   * @private
+   */
+  private updateUserOrganizationAccess(
+    existingUserOrganizationAccess: OrganizationAccess,
+    organizationUsers: OrganizationUser[],
+  ): OrganizationAccess {
+    // Identify list of OrganizationIds matching OrganizationUsers array to approve for updating
+    const organizationIds: string[] = organizationUsers.map((ou: OrganizationUser) => ou.OrganizationId);
+
+    // Return updated User OrganizationAccess metadata with approved OrganizationAccess activations/deactivations
+    return <OrganizationAccess>Object.entries(existingUserOrganizationAccess)
+      .filter((x: [string, OrganizationAccessDetails]) => organizationIds.includes(x[0]))
+      .reduce((obj: OrganizationAccess, item: [string, OrganizationAccessDetails]) => {
+        const orgId: string = item[0];
+        const orgAccessDetails: OrganizationAccessDetails = item[1];
+
+        const status: OrgUserStatus =
+          organizationUsers.find((_: OrganizationUser) => _.OrganizationId === orgId)?.Status ||
+          orgAccessDetails.Status;
+        return (obj[orgId] = { ...orgAccessDetails, Status: status }), obj;
+      }, {});
   }
 
   /**

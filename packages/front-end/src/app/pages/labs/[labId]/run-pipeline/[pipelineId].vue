@@ -10,35 +10,40 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
+
   const runStore = useRunStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
+  const labsStore = useLabsStore();
+  const userStore = useUserStore();
+
+  const labId = $route.params.labId as string;
+  const pipelineId = $route.params.pipelineId as string;
+
+  // check permissions to be on this page
+  if (!userStore.canViewLab(labId)) {
+    $router.push('/labs');
+  }
 
   // set a new seqeraRunTempId if not provided
   if (!$route.query.seqeraRunTempId) {
     $router.push({ query: { seqeraRunTempId: uuidv4() } });
   }
 
+  const labName = computed<string>(() => labsStore.labs[labId].Name);
+
   const seqeraRunTempId = computed<string>(() => $route.query.seqeraRunTempId as string);
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId.value]);
-
-  const labId = $route.params.labId as string;
-  const pipelineId = $route.params.pipelineId as string;
 
   const pipeline = computed<SeqeraPipeline | null>(() => seqeraPipelinesStore.pipelines[pipelineId] || null);
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
   const nextRoute = ref<string | null>(null);
+
   const schema = ref({});
+
   const resetStepperKey = ref(0);
-
-  const labName = computed<string>(() => useLabsStore().labs[labId].Name);
-
-  // check permissions to be on this page
-  if (!useUserStore().canViewLab(labId)) {
-    $router.push('/labs');
-  }
 
   onBeforeMount(initializePipelineData);
 

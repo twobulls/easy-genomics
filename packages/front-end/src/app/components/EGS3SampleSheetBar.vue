@@ -80,7 +80,7 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-4" role="group" aria-label="URL Actions">
+      <div class="ml-2 flex items-center gap-4" role="group" aria-label="URL Actions">
         <button
           @click="openSampleSheet"
           class="cursor-pointer"

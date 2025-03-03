@@ -251,7 +251,13 @@
 </script>
 
 <template>
-  <EGPageHeader title="Edit User Access" :show-back="true" :back-action="() => $router.push(`/orgs/${props.orgId}`)" />
+  <EGPageHeader
+    title="Edit User Access"
+    :show-back="true"
+    :back-action="() => $router.push(`/orgs/${props.orgId}`)"
+    show-org-breadcrumb
+    :breadcrumbs="[getSelectedUserDisplayName !== '???' ? getSelectedUserDisplayName : null]"
+  />
 
   <!-- org admin toggle -->
   <div class="mb-4">
@@ -284,7 +290,7 @@
         <UToggle
           class="ml-2"
           :model-value="!!selectedUserOrgAdmin"
-          :disabled="selectedUserOrgAdmin === null || useUiStore().anyRequestPending(['updateUser', 'toggleOrgAdmin'])"
+          :disabled="useUiStore().anyRequestPending(['updateUser', 'toggleOrgAdmin'])"
           :ui="{
             base: 'test-org-admin-toggle',
           }"

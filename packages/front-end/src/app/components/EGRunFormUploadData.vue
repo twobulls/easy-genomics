@@ -802,8 +802,8 @@
           }"
         >
           <div class="file-cell sample-id text-body flex w-[30%] min-w-[240px] items-center">
-            <span v-if="!row.error">{{ row.sampleId }}</span>
-            <span v-else class="text-alert-danger-dark mr-1 font-medium">(Upload Failed)</span>
+            <div v-if="!row.error" class="truncate">{{ row.sampleId }}</div>
+            <div v-else class="text-alert-danger-dark mr-1 truncate font-medium">(Upload Failed)</div>
           </div>
           <div
             class="file-cell flex w-[60%] min-w-[320px] items-center"
@@ -812,7 +812,7 @@
             <template v-if="row.error">
               <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
             </template>
-            {{ row.fileName }}
+            <div class="truncate">{{ row.fileName }}</div>
           </div>
 
           <div class="file-cell flex w-[10%] min-w-[70px] items-center justify-end gap-4">
@@ -899,12 +899,14 @@
   <div class="mt-6 flex justify-between">
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-step')" />
     <EGButton
+      v-if="filePairs.length"
       :size="ButtonSizeEnum.enum.sm"
       variant="primary"
-      :label="filePairs.length ? 'Next step' : 'Skip'"
+      label="Next step"
       @click="emit('next-step')"
       :disabled="!canProceedToNextStep"
     />
+    <EGButton v-else :size="ButtonSizeEnum.enum.sm" variant="primary" label="Skip" @click="emit('next-step')" />
   </div>
 </template>
 

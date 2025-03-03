@@ -782,7 +782,7 @@
 
     <div class="files-list mb-6" v-if="filesForTable.length > 0">
       <div class="files-list-header text-body mb-4 border-b border-[#d9d9d9]">
-        <div class="file-cell sample-id flex w-[30%] min-w-[260px]">Sample ID</div>
+        <div class="file-cell sample-id flex w-[30%] min-w-[240px]">Sample ID</div>
         <div class="file-cell flex w-[60%] min-w-[320px]">Sample File</div>
         <div class="file-cell flex w-[10%] min-w-[70px]"></div>
       </div>
@@ -801,7 +801,7 @@
                   : '#f7f7f7',
           }"
         >
-          <div class="file-cell sample-id text-body flex w-[30%] min-w-[260px] items-center">
+          <div class="file-cell sample-id text-body flex w-[30%] min-w-[240px] items-center">
             <span v-if="!row.error">{{ row.sampleId }}</span>
             <span v-else class="text-alert-danger-dark mr-1 font-medium">(Upload Failed)</span>
           </div>

@@ -45,6 +45,7 @@ export class PlatformUserService extends DynamoDBService {
         [organizationUser.OrganizationId]: {
           Status: organizationUser.Status,
           LaboratoryAccess: {},
+          OrganizationAdmin: false,
         },
       },
     };

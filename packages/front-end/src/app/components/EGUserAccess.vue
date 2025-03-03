@@ -290,7 +290,7 @@
         <UToggle
           class="ml-2"
           :model-value="!!selectedUserOrgAdmin"
-          :disabled="selectedUserOrgAdmin === null || useUiStore().anyRequestPending(['updateUser', 'toggleOrgAdmin'])"
+          :disabled="useUiStore().anyRequestPending(['updateUser', 'toggleOrgAdmin'])"
           :ui="{
             base: 'test-org-admin-toggle',
           }"

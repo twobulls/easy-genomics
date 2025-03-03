@@ -133,11 +133,25 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
             request.Password,
           )
           .then(async () => {
+            // Identify the User's existing OrganizationUser records with 'Invited' Status to update to 'Active'
+            const orgUserRecordsToActivate: OrganizationUser[] = (
+              await organizationUserService.queryByUserId(user.UserId)
+            )
+              .filter((orgUser: OrganizationUser) => orgUser.Status === 'Invited')
+              .map((orgUser: OrganizationUser) => {
+                return {
+                  ...orgUser,
+                  Status: 'Active',
+                  ModifiedAt: new Date().toISOString(),
+                  ModifiedBy: user.UserId,
+                };
+              });
+
             await Promise.all([
               // Update Cognito User's email to verified
               cognitoIdpService.adminUpdateUserEmailVerified(user.UserId, true),
-              // Update User's Status to 'Active' and set the supplied names
-              platformUserService.editExistingUserAccessToOrganization(
+              // Update User's Status to 'Active', set the supplied names, and activate list of OrganizationUser records
+              platformUserService.editExistingUserAccessToOrganizations(
                 {
                   ...user,
                   FirstName: request.FirstName,
@@ -146,12 +160,7 @@ export const handler: Handler = async (event: APIGatewayProxyEvent): Promise<API
                   ModifiedAt: new Date().toISOString(),
                   ModifiedBy: user.UserId,
                 },
-                {
-                  ...organizationUser,
-                  Status: 'Active',
-                  ModifiedAt: new Date().toISOString(),
-                  ModifiedBy: user.UserId,
-                },
+                orgUserRecordsToActivate,
               ),
             ]);
           })

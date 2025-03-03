@@ -9,14 +9,18 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const $route = useRoute();
+
   const runStore = useRunStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
   const uiStore = useUiStore();
+  const userStore = useUserStore();
+  const labsStore = useLabsStore();
 
   const labId = $route.params.labId as string;
+  const workflowId = $route.params.workflowId as string;
 
   // check permissions to be on this page
-  if (!useUserStore().canViewLab(labId)) {
+  if (!userStore.canViewLab(labId)) {
     $router.push('/labs');
   }
 
@@ -25,25 +29,21 @@
     $router.push({ query: { omicsRunTempId: uuidv4() } });
   }
 
+  const labName = computed<string>(() => labsStore.labs[labId].Name);
+
   const omicsRunTempId = computed<string>(() => $route.query.omicsRunTempId as string);
 
-  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[omicsRunTempId.value]);
+  const wipOmicsRun = computed<WipOmicsRunData | null>(() => runStore.wipOmicsRuns[omicsRunTempId.value] || null);
 
-  const workflowId = $route.params.workflowId as string;
-
-  const workflow = computed<ReadWorkflow | null>(() => omicsWorkflowsStore.workflows[workflowId]);
+  const workflow = computed<ReadWorkflow | null>(() => omicsWorkflowsStore.workflows[workflowId] || null);
 
   const hasLaunched = ref<boolean>(false);
   const exitConfirmed = ref<boolean>(false);
   const nextRoute = ref<string | null>(null);
 
-  const labName = computed<string>(() => useLabsStore().labs[labId].Name);
-
   const schema = computed<Record<string, WorkflowParameter> | null>(() => workflow.value?.parameterTemplate ?? null);
 
   const resetStepperKey = ref(0);
-
-  const loading = computed<boolean>(() => uiStore.isRequestPending('loadOmicsWorkflow'));
 
   onBeforeMount(initializeWorkflowData);
 
@@ -145,7 +145,7 @@
     :breadcrumbs="[workflow?.name]"
   />
 
-  <template v-if="loading">
+  <template v-if="uiStore.isRequestPending('loadOmicsWorkflow')">
     <EGLoadingSpinner />
   </template>
 

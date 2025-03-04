@@ -3,16 +3,17 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { RunType } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 
   const emit = defineEmits(['next-step', 'step-validated']);
   const props = defineProps<{
-    platform: 'Seqera Cloud' | 'AWS HealthOmics';
+    platform: RunType;
     wipRunTempId: string;
     pipelineOrWorkflowName: string;
     pipelineOrWorkflowDescription: string;
   }>();
 
-  const runStore = useRunStore();
+  const { platformToPipelineOrWorkflow, platformToWipRunUpdateFunction, getWipRunForPlatform } = useMultiplatform();
 
   /**
    * Seqera API spec
@@ -53,39 +54,13 @@
 
   const runNameCharCount = computed(() => formState.runName.length);
 
-  const pipelineOrWorkflow = computed<string>(() => {
-    switch (props.platform) {
-      case 'Seqera Cloud':
-        return 'Pipeline';
-      case 'AWS HealthOmics':
-        return 'Workflow';
-      default:
-        throw new Error(`${props.platform} is not a valid platform`);
-    }
-  })
+  const pipelineOrWorkflow = computed<string>(() => platformToPipelineOrWorkflow(props.platform));
 
-  const wipRunUpdateFunction = computed<Function>(() => {
-    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(props.platform)) {
-      throw new Error(`${props.platform} is not a valid platform`);
-    }
+  const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
 
-    return props.platform === 'Seqera Cloud' ? runStore.updateWipSeqeraRun : runStore.updateWipOmicsRun;
-  });
-
-  const wipRun = computed<WipSeqeraRunData & WipOmicsRunData>(() => {
-    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(props.platform)) {
-      throw new Error(`${props.platform} is not a valid platform`);
-    }
-
-    const wipRunsCollection = props.platform === 'Seqera Cloud' ? runStore.wipSeqeraRuns : runStore.wipOmicsRuns;
-    const wipRun = wipRunsCollection[props.wipRunTempId];
-
-    if (!wipRun) {
-      throw new Error(`no WIP ${props.platform} run for id ${props.wipRunTempId}`);
-    }
-
-    return wipRun;
-  });
+  const wipRun = computed<WipSeqeraRunData & WipOmicsRunData>(() =>
+    getWipRunForPlatform(props.platform, props.wipRunTempId),
+  );
 
   // Trims white space, replaces spaces between words with hyphens, and enforces a max of one hyphen in a row
   // e.g. 'some custom name' -> 'some-custom-name'
@@ -189,6 +164,7 @@
         <EGTextArea :model-value="props.pipelineOrWorkflowDescription" :disabled="true" />
       </EGFormGroup>
     </EGCard>
+
     <div class="flex justify-end pt-4">
       <EGButton
         :disabled="!canProceed"

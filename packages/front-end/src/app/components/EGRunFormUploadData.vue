@@ -15,6 +15,7 @@
   import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
   import { useNetwork } from '@vueuse/core';
+  import { RunType } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
@@ -45,16 +46,16 @@
   const { $api } = useNuxtApp();
   const { downloadSampleSheet } = usePipeline($api);
   const { isOnline } = useNetwork();
+  const { platformToWipRunUpdateFunction, getWipRunForPlatform } = useMultiplatform();
 
   const toastStore = useToastStore();
   const labsStore = useLabsStore();
-  const runStore = useRunStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
     labId: string;
     pipelineOrWorkflowName: string;
-    platform: 'Seqera Cloud' | 'AWS HealthOmics';
+    platform: RunType;
     wipRunTempId: string;
   }>();
 
@@ -70,28 +71,11 @@
 
   const labName = computed<string | null>(() => labsStore.labs[props.labId]?.Name || null);
 
-  const wipRun = computed<WipSeqeraRunData & WipOmicsRunData>(() => {
-    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(props.platform)) {
-      throw new Error(`${props.platform} is not a valid platform`);
-    }
+  const wipRun = computed<WipSeqeraRunData & WipOmicsRunData>(() =>
+    getWipRunForPlatform(props.platform, props.wipRunTempId),
+  );
 
-    const wipRunsCollection = props.platform === 'Seqera Cloud' ? runStore.wipSeqeraRuns : runStore.wipOmicsRuns;
-    const wipRun = wipRunsCollection[props.wipRunTempId];
-
-    if (!wipRun) {
-      throw new Error(`no WIP ${props.platform} run for id ${props.wipRunTempId}`);
-    }
-
-    return wipRun;
-  });
-
-  const wipRunUpdateFunction = computed<Function>(() => {
-    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(props.platform)) {
-      throw new Error(`${props.platform} is not a valid platform`);
-    }
-
-    return props.platform === 'Seqera Cloud' ? runStore.updateWipSeqeraRun : runStore.updateWipOmicsRun;
-  });
+  const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
 
   // file handling stuff
 
@@ -105,7 +89,7 @@
       setFiles([]);
     }
 
-    return wipRun.value.files;
+    return wipRun.value.files!;
   });
 
   const files = computed<FileDetails[]>(() => {

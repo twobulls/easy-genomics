@@ -312,10 +312,8 @@
         <template v-if="steps[selectedStepIndex].key === 'upload'">
           <EGRunFormUploadData
             :lab-id="labId"
-            :lab-name="labName"
             :pipeline-or-workflow-name="pipeline.name"
-            :wip-run="wipSeqeraRun"
-            :wip-run-update-function="runStore.updateWipSeqeraRun"
+            platform="Seqera Cloud"
             :wip-run-temp-id="seqeraRunTempId"
             @next-step="() => nextStep('parameters')"
             @previous-step="() => previousStep()"

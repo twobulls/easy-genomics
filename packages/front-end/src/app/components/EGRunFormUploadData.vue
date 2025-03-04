@@ -45,19 +45,18 @@
   const { $api } = useNuxtApp();
   const { downloadSampleSheet } = usePipeline($api);
   const { isOnline } = useNetwork();
+
   const toastStore = useToastStore();
+  const labsStore = useLabsStore();
+  const runStore = useRunStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
     labId: string;
-    labName: string;
     pipelineOrWorkflowName: string;
-    wipRun: WipSeqeraRunData & WipOmicsRunData; // will be one of these types, and officially can have any common fields
-    wipRunUpdateFunction: Function;
+    platform: 'Seqera Cloud' | 'AWS HealthOmics';
     wipRunTempId: string;
   }>();
-
-  const localProps = reactive(props);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
@@ -69,13 +68,44 @@
   // Track ongoing upload requests
   const uploadControllers = ref<{ [key: string]: AbortController }>({});
 
-  const filePairs = computed<FilePair[]>(() => {
-    // initialize files if not present
-    if (localProps.wipRun?.files === undefined) {
-      localProps.wipRun.files = [];
+  const labName = computed<string | null>(() => labsStore.labs[props.labId]?.Name || null);
+
+  const wipRun = computed<WipSeqeraRunData & WipOmicsRunData>(() => {
+    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(props.platform)) {
+      throw new Error(`${props.platform} is not a valid platform`);
     }
 
-    return localProps.wipRun.files;
+    const wipRunsCollection = props.platform === 'Seqera Cloud' ? runStore.wipSeqeraRuns : runStore.wipOmicsRuns;
+    const wipRun = wipRunsCollection[props.wipRunTempId];
+
+    if (!wipRun) {
+      throw new Error(`no WIP ${props.platform} run for id ${props.wipRunTempId}`);
+    }
+
+    return wipRun;
+  });
+
+  const wipRunUpdateFunction = computed<Function>(() => {
+    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(props.platform)) {
+      throw new Error(`${props.platform} is not a valid platform`);
+    }
+
+    return props.platform === 'Seqera Cloud' ? runStore.updateWipSeqeraRun : runStore.updateWipOmicsRun;
+  });
+
+  // file handling stuff
+
+  function setFiles(files: FilePair[]) {
+    wipRunUpdateFunction.value(props.wipRunTempId, { files });
+  }
+
+  const filePairs = computed<FilePair[]>(() => {
+    // initialize files if not present
+    if (wipRun.value.files === undefined) {
+      setFiles([]);
+    }
+
+    return wipRun.value.files;
   });
 
   const files = computed<FileDetails[]>(() => {
@@ -91,7 +121,7 @@
     files.value.filter((file) => file.error || file.progress !== 100),
   );
 
-  const hasSampleSheetUrl = computed(() => localProps.wipRun.sampleSheetS3Url);
+  const hasSampleSheetUrl = computed<boolean>(() => !!wipRun.value.sampleSheetS3Url);
 
   const haveUnmatchedFiles = computed<boolean>(() =>
     filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
@@ -383,7 +413,8 @@
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     // save to wip run
     const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
-    localProps.wipRunUpdateFunction(localProps.wipRunTempId, {
+
+    wipRunUpdateFunction.value(props.wipRunTempId, {
       sampleSheetS3Url: S3Url,
       s3Bucket: Bucket,
       s3Path: Path,
@@ -455,25 +486,27 @@
   }
 
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
+    if (!wipRun.value.transactionId) throw new Error('no transaction id on wip run');
+
     const request: SampleSheetRequest = {
-      LaboratoryId: localProps.labId,
-      TransactionId: localProps.wipRun.transactionId || '',
+      LaboratoryId: props.labId,
+      TransactionId: wipRun.value.transactionId,
       UploadedFilePairs: uploadedFilePairs,
     };
-    const response = await $api.uploads.getSampleSheetCsv(request);
-    return response;
+
+    return await $api.uploads.getSampleSheetCsv(request);
   }
 
   async function getUploadFilesManifest(files: FileDetails[]): Promise<FileUploadManifest> {
+    if (!wipRun.value.transactionId) throw new Error('no transaction id on wip run');
+
     const request: FileUploadRequest = {
-      LaboratoryId: localProps.labId,
-      TransactionId: localProps.wipRun.transactionId || '',
+      LaboratoryId: props.labId,
+      TransactionId: wipRun.value.transactionId,
       Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 
-    const response = await $api.uploads.getFileUploadManifest(request);
-
-    return response;
+    return await $api.uploads.getFileUploadManifest(request);
   }
 
   function addUploadUrls(uploadManifest: FileUploadManifest) {
@@ -673,7 +706,7 @@
 
       // If both files are now undefined, remove the entire pair
       if (!filePair.r1File && !filePair.r2File) {
-        localProps.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
+        setFiles(filePairs.value.filter((pair) => pair.sampleId !== file.sampleId));
       } else {
         // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
         filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
@@ -863,11 +896,11 @@
     <EGS3SampleSheetBar
       v-if="uploadStatus === 'success'"
       :disabled="uploadStatus === 'uploading'"
-      :url="localProps.wipRun.sampleSheetS3Url"
-      :lab-id="localProps.labId"
-      :lab-name="localProps.labName"
-      :pipeline-or-workflow-name="localProps.pipelineOrWorkflowName"
-      :run-name="localProps.wipRun.runName"
+      :url="wipRun.sampleSheetS3Url"
+      :lab-id="props.labId"
+      :lab-name="labName"
+      :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
+      :run-name="wipRun.runName"
     />
 
     <div class="flex justify-end pt-4">
@@ -876,14 +909,7 @@
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="
-          downloadSampleSheet(
-            localProps.labId,
-            localProps.wipRun.sampleSheetS3Url,
-            localProps.pipelineOrWorkflowName,
-            localProps.wipRun.runName,
-          )
-        "
+        @click="downloadSampleSheet(props.labId, wipRun.sampleSheetS3Url, props.pipelineOrWorkflowName, wipRun.runName)"
       />
       <EGButton
         @click="startUploadProcess"

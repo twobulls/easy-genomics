@@ -303,10 +303,8 @@
           <template v-if="steps[selectedStepIndex].key === 'upload'">
             <EGRunFormUploadData
               :lab-id="labId"
-              :lab-name="labName"
               :pipeline-or-workflow-name="workflow.name"
-              :wip-run="wipOmicsRun"
-              :wip-run-update-function="runStore.updateWipOmicsRun"
+              platform="AWS HealthOmics"
               :wip-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('parameters')"
               @previous-step="() => previousStep()"

@@ -128,7 +128,6 @@
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete runStore.wipSeqeraRuns[seqeraRunTempId.value];
     $router.push(nextRoute.value!);
   }
 

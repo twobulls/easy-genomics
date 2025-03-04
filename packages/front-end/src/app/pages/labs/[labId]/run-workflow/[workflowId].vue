@@ -76,7 +76,6 @@
 
   function confirmCancel() {
     exitConfirmed.value = true;
-    delete runStore.wipOmicsRuns[omicsRunTempId.value];
     $router.push(nextRoute.value!);
   }
 

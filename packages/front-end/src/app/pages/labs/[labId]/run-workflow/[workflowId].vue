@@ -89,7 +89,6 @@
     runStore.updateWipOmicsRun(omicsRunTempId.value, {
       laboratoryId: labId!,
       workflowId: workflowId!,
-      workflowName: workflow.value?.name,
       transactionId: omicsRunTempId.value,
     });
 

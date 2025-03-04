@@ -27,7 +27,6 @@ export interface WipSeqeraRunData {
 export interface WipOmicsRunData {
   laboratoryId?: string;
   workflowId?: string;
-  workflowName?: string;
   transactionId?: string;
   runName?: string;
   params?: object;

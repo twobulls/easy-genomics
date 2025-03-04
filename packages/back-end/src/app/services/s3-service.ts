@@ -211,17 +211,10 @@ export class S3Service {
     suppressError?: boolean,
   ): Promise<ResponseType> => {
     try {
-      console.log(
-        `[s3-service : s3Request] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
-      );
-
       return await this.s3Client.send(this.getS3Command(command, data));
     } catch (error: any) {
       if (!(suppressError ? suppressError : false)) {
-        console.error(
-          `[s3-service : s3Request] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
-          error,
-        );
+        console.error(`[s3-service : s3Request] command: ${command} exception encountered:`, error);
         throw this.handleError(error);
       }
     }

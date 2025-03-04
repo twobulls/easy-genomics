@@ -2,7 +2,6 @@
   import axios from 'axios';
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import {
-    FileInfo,
     FileUploadInfo,
     FileUploadManifest,
     FileUploadRequest,
@@ -15,12 +14,11 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useToastStore } from '@FE/stores';
   import usePipeline from '@FE/composables/usePipeline';
-  import { WipSeqeraRunData } from '@FE/stores/run';
   import { useNetwork } from '@vueuse/core';
 
   type UploadStatus = 'idle' | 'uploading' | 'success' | 'failed';
 
-  type FilePair = {
+  export type FilePair = {
     sampleId: string; // Common start of the file name for each of the file pair e.g. GOL2051A67473_S133_L002 when uploading the pair of files GOL2051A67473_S133_L002_R1_001.fastq.gz and GOL2051A67473_S133_L002_R2_001.fastq.gz
     r1File?: FileDetails;
     r2File?: FileDetails;
@@ -28,10 +26,10 @@
 
   type FileDetails = {
     file: File;
-    progress: number;
-    percentage: number;
     name: string;
     size: number;
+    // progress not present means upload hasn't started yet - this is important for the uploadStatus computed
+    progress?: number;
     location?: string;
     url?: string;
     error?: string;
@@ -46,33 +44,87 @@
 
   const { $api } = useNuxtApp();
   const { downloadSampleSheet } = usePipeline($api);
+  const { isOnline } = useNetwork();
   const toastStore = useToastStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
     labId: string;
-    sampleSheetS3Url: string;
+    labName: string;
     pipelineOrWorkflowName: string;
-    runName: string;
-    transactionId: string;
+    wipRun: WipSeqeraRunData & WipOmicsRunData; // will be one of these types, and officially can have any common fields
     wipRunUpdateFunction: Function;
     wipRunTempId: string;
   }>();
 
-  const chooseFilesButton = ref<HTMLButtonElement | null>(null);
-
-  const filesToUpload = ref<FileDetails[]>([]);
-  const filePairs = ref<FilePair[]>([]);
-
-  const canUploadFiles = ref(false);
-  const canProceed = ref(false);
-  const isDropzoneActive = ref(false);
-
-  // overall upload status for all files
-  const uploadStatus = ref<UploadStatus>('idle');
+  const localProps = reactive(props);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
+  const UPLOAD_TIMEOUT = 600000; // 10 mins
+
+  const chooseFilesButton = ref<HTMLButtonElement | null>(null);
+  const isDropzoneActive = ref(false);
+
+  // Track ongoing upload requests
+  const uploadControllers = ref<{ [key: string]: AbortController }>({});
+
+  const filePairs = computed<FilePair[]>(() => {
+    // initialize files if not present
+    if (localProps.wipRun?.files === undefined) {
+      localProps.wipRun.files = [];
+    }
+
+    return localProps.wipRun.files;
+  });
+
+  const files = computed<FileDetails[]>(() => {
+    const files = [];
+    for (const filePair of filePairs.value) {
+      if (filePair.r1File) files.push(filePair.r1File);
+      if (filePair.r2File) files.push(filePair.r2File);
+    }
+    return files;
+  });
+
+  const filesNotUploaded = computed<FileDetails[]>(() =>
+    files.value.filter((file) => file.error || file.progress !== 100),
+  );
+
+  const hasSampleSheetUrl = computed(() => localProps.wipRun.sampleSheetS3Url);
+
+  const haveUnmatchedFiles = computed<boolean>(() =>
+    filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
+  );
+  const haveMatchedFiles = computed<boolean>(() =>
+    filePairs.value.some((filePair) => filePair.r1File && filePair.r2File),
+  );
+
+  const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
+
+  const areAllPairsComplete = computed<boolean>(() => {
+    return filePairs.value.every((pair) => pair.r1File);
+  });
+
+  const canProceedToNextStep = computed<boolean>(() => {
+    // Check both conditions:
+    // 1. All existing files are uploaded successfully
+    // 2. All pairs are complete (have both R1 and R2)
+    return areAllFilesUploaded.value && areAllPairsComplete.value && hasSampleSheetUrl.value;
+  });
+
+  // overall upload status for all files
+  const uploadStatus = computed<UploadStatus>(() => {
+    // if any file has a progress below 100 and doesn't have an error, upload is in progress
+    if (files.value.some((file) => file.progress !== undefined && file.progress < 100 && !file.error))
+      return 'uploading';
+    // else if any file has an error, upload failed
+    if (files.value.some((file) => !!file.error)) return 'failed';
+    // else if there are files and they all have progress 100, upload succeeded
+    if (files.value.length > 0 && files.value.every((file) => !file.error && file.progress === 100)) return 'success';
+    // else must be idle
+    return 'idle';
+  });
 
   const filesForTable = computed(() => {
     const files: { sampleId: string; fileName: string; progress: number; error?: string }[] = [];
@@ -82,7 +134,7 @@
         files.push({
           sampleId: filePair.sampleId,
           fileName: filePair.r1File.name,
-          progress: filePair.r1File.percentage || 0,
+          progress: filePair.r1File.progress || 0,
           error: filePair.r1File.error,
         });
       }
@@ -90,7 +142,7 @@
         files.push({
           sampleId: filePair.sampleId,
           fileName: filePair.r2File.name,
-          progress: filePair.r2File.percentage || 0,
+          progress: filePair.r2File.progress || 0,
           error: filePair.r2File.error,
         });
       }
@@ -99,33 +151,39 @@
     return files;
   });
 
-  const showDropzone = computed(() => !canProceed.value || uploadStatus.value === 'idle');
+  const isDropzoneEnabled = computed(() => uploadStatus.value !== 'uploading');
 
-  const isUploadButtonDisabled = computed(
-    () =>
-      !isOnline.value ||
-      !canUploadFiles.value ||
-      uploadStatus.value === 'uploading' ||
-      uploadStatus.value === 'success' ||
-      canProceed.value,
-  );
+  const isUploadButtonDisabled = computed(() => {
+    const noInternet = !isOnline.value;
+    const noFiles = filesNotUploaded.value.length === 0;
+    const hasIncompletePairs = !areAllPairsComplete.value;
+    const hasBothSinglesAndPairs = haveMatchedFiles.value && haveUnmatchedFiles.value;
+    const isUploading = uploadStatus.value === 'uploading';
 
-  // Add a computed property to check if all files are successfully uploaded
-  const areAllFilesUploaded = computed(() => {
-    if (filePairs.value.length === 0) return false;
-
-    for (const pair of filePairs.value) {
-      // Check R1 file
-      if (!pair.r1File || pair.r1File.error || pair.r1File.percentage !== 100) {
-        return false;
-      }
-      // Check R2 file
-      if (!pair.r2File || pair.r2File.error || pair.r2File.percentage !== 100) {
-        return false;
-      }
-    }
-    return true;
+    return noInternet || noFiles || hasIncompletePairs || hasBothSinglesAndPairs || isUploading;
   });
+
+  // reset files error states
+  function clearErrorsFromFiles(files: FileDetails[]) {
+    files.forEach((file) => {
+      file.error = undefined;
+      file.progress = undefined;
+    });
+  }
+
+  // set progress to 0 - this makes the computed uploadStatus get set to 'uploading'
+  function initializeProgressForFiles(files: FileDetails[]) {
+    files.forEach((file) => {
+      file.progress = 0;
+    });
+  }
+
+  // gives error message to all files - used for when an error occurs above the individual file level
+  function applyErrorToFiles(files: FileDetails[], errorMessage: string) {
+    files.forEach((file) => {
+      file.error = errorMessage;
+    });
+  }
 
   function chooseFiles() {
     chooseFilesButton.value?.click();
@@ -171,28 +229,10 @@
     });
 
     validFiles.forEach((file) => addFile(file));
-
-    validateFilePairs();
   }
 
   function isValidGzFile(file: File): boolean {
     return file.name.endsWith('.gz');
-  }
-
-  /**
-   * Validate that each file pair has an R1 and R2 file
-   */
-  function validateFilePairs() {
-    let haveMatchingFilePairs = filePairs.value.length > 0;
-
-    for (const filePair of filePairs.value) {
-      if (!filePair.r1File || !filePair.r2File) {
-        haveMatchingFilePairs = false;
-        break;
-      }
-    }
-
-    canUploadFiles.value = haveMatchingFilePairs;
   }
 
   function addFile(file: File) {
@@ -217,28 +257,47 @@
     }
 
     const fileDetails = getFileDetails(file);
-    filesToUpload.value.push(fileDetails);
     addFileToFilePairs(fileDetails);
   }
 
   function checkIsFileDuplicate(newFile: File): boolean {
-    return filesToUpload.value.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
+    return files.value.some((fileDetails: FileDetails) => fileDetails.name === newFile.name);
   }
 
   function getFileDetails(file: File): FileDetails {
     return {
       file,
       size: file.size,
-      progress: 0,
-      percentage: 0,
       name: file.name,
+      progress: undefined, // Reset progress
+      error: undefined, // Reset error state
+      url: undefined, // Reset upload URL
     };
   }
 
   function addFileToFilePairs(fileDetails: FileDetails) {
-    const sampleId = getSampleIdFromFileName(fileDetails.name);
-    const existingFilePair = filePairs.value.find((filePair) => filePair.sampleId === sampleId);
-    const filePair: FilePair = existingFilePair || { sampleId };
+    const sampleId = getSampleIdFromRFileName(fileDetails.name);
+    const fileName = getFileNameWithoutExt(fileDetails.name);
+
+    // handle files without R values
+    if (!sampleId) {
+      // file does not have an R_ value, so it must be a single file, and cannot be paired
+      // make a new pair with just this file as R1
+      filePairs.value.push({
+        sampleId: fileName, // individual files use the fileName as sampleId
+        r1File: fileDetails,
+      });
+      return;
+    }
+
+    // handle files with R values:
+
+    // find (if it exists) the file pair whose (potential) shared sample id matches this file
+    const existingFilePair = filePairs.value.find(
+      (filePair) => getSharedSampleIdFromPair(filePair.r1File?.name, filePair.r2File?.name) === sampleId,
+    );
+    // use that one if it exists, or otherwise make a new one
+    const filePair: FilePair = existingFilePair || { sampleId: fileName };
 
     try {
       addToFilePair(fileDetails, filePair);
@@ -247,6 +306,15 @@
       }
     } catch (error: any) {
       console.warn('Error adding file to file pair:', error);
+    }
+
+    // update sampleId
+    if (!filePair.r1File || !filePair.r2File) {
+      // individual files should use the fileName, so that _R1_s can be used as single files
+      filePair.sampleId = fileName;
+    } else {
+      // paired files should use the shared sampleId
+      filePair.sampleId = sampleId;
     }
   }
 
@@ -262,29 +330,68 @@
     }
   }
 
-  function getSampleIdFromFileName(fileName: string): string {
-    return fileName.substring(0, fileName.lastIndexOf('_R'));
+  function getSampleIdFromRFileName(fileName: string): string | null {
+    return fileName.substring(0, fileName.lastIndexOf('_R')) || null;
   }
 
-  function toggleDropzoneActive() {
-    isDropzoneActive.value = !isDropzoneActive.value;
+  function getFileNameWithoutExt(fileName: string): string {
+    return fileName.replace(/\.f(ast)?q.*$/i, '');
+  }
+
+  function getSharedSampleIdFromPair(r1Name?: string, r2Name?: string): string | null {
+    const r1SampleId = getSampleIdFromRFileName(r1Name || '');
+    const r2SampleId = getSampleIdFromRFileName(r2Name || '');
+    return r1SampleId || r2SampleId;
+  }
+
+  function setDropzoneActive(val: boolean) {
+    isDropzoneActive.value = val;
   }
 
   async function startUploadProcess() {
-    uploadStatus.value = 'uploading';
+    clearErrorsFromFiles(filesNotUploaded.value);
+    initializeProgressForFiles(filesNotUploaded.value);
 
-    const uploadManifest = await getUploadFilesManifest();
-    addUploadUrls(uploadManifest);
+    // pre-upload work - catch and handle errors in this step with applyErrorToFiles
+    try {
+      const uploadManifest = await getUploadFilesManifest(filesNotUploaded.value);
+      addUploadUrls(uploadManifest);
+    } catch (error: any) {
+      applyErrorToFiles(filesNotUploaded.value, error.message);
+      return;
+    }
+
+    toastStore.success('Your files have begun uploading');
+
     await uploadFiles();
-    const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
-    const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    props.wipRunUpdateFunction(props.wipRunTempId, {
-      sampleSheetS3Url: sampleSheetResponse.SampleSheetInfo.S3Url,
-      s3Bucket: sampleSheetResponse.SampleSheetInfo.Bucket,
-      s3Path: sampleSheetResponse.SampleSheetInfo.Path,
-    });
 
-    canProceed.value = areAllFilesUploaded.value;
+    await postUploadHook();
+  }
+
+  async function postUploadHook() {
+    if (filesNotUploaded.value.length === 0) {
+      await saveSampleSheetInfo();
+    }
+  }
+
+  async function saveSampleSheetInfo() {
+    // get manifest of all files
+    const uploadManifest = await getUploadFilesManifest(files.value);
+
+    const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
+    // get sample sheet info
+    const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
+    // save to wip run
+    const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
+    localProps.wipRunUpdateFunction(localProps.wipRunTempId, {
+      sampleSheetS3Url: S3Url,
+      s3Bucket: Bucket,
+      s3Path: Path,
+      params: {
+        input: S3Url,
+        outdir: `s3://${Bucket}/${Path}/results`,
+      },
+    });
   }
 
   function getUploadedFilePairs(uploadManifest: FileUploadManifest): UploadedFilePairInfo[] {
@@ -300,17 +407,43 @@
         Region,
         S3Url: s3Uri,
       };
-      const sampleId = getSampleIdFromFileName(Name);
-      const existingFilePair = uploadedFilePairs.find((filePair) => filePair.SampleId === sampleId);
+
+      const sampleId = getSampleIdFromRFileName(Name);
+      const fileName = getFileNameWithoutExt(Name);
+
+      // handle files without R values
+      if (!sampleId) {
+        // file does not have an R_ value, so it must be a single file, and cannot be paired
+        // make a new pair with just this file as R1
+        uploadedFilePairs.push({
+          SampleId: fileName,
+          R1: uploadFileInfo,
+        });
+        return;
+      }
+
+      const existingFilePair = uploadedFilePairs.find(
+        (filePair) =>
+          getSharedSampleIdFromPair(filePair.R1?.Key?.split('/').at(-1), filePair.R2?.Key?.split('/').at(-1)) ===
+          sampleId,
+      );
       if (existingFilePair) {
-        if (file.Name.includes('_R1_')) {
+        if (Name.includes('_R1_')) {
           existingFilePair.R1 = uploadFileInfo;
-        } else if (file.Name.includes('_R2_')) {
+        } else if (Name.includes('_R2_')) {
           existingFilePair.R2 = uploadFileInfo;
+        }
+
+        if (!existingFilePair.R1 || !existingFilePair.R2) {
+          // individual files should use the fileName, so that _R1_s can be used as single files
+          existingFilePair.SampleId = fileName;
+        } else {
+          // paired files should use the shared sampleId
+          existingFilePair.SampleId = sampleId;
         }
       } else {
         const newFilePair: UploadedFilePairInfo = {
-          SampleId: sampleId,
+          SampleId: fileName, // as above, individual files should use the fileName
           R1: Name.includes('_R1_') ? uploadFileInfo : undefined,
           R2: Name.includes('_R2_') ? uploadFileInfo : undefined,
         };
@@ -323,27 +456,19 @@
 
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
-      LaboratoryId: props.labId,
-      TransactionId: props.transactionId || '',
+      LaboratoryId: localProps.labId,
+      TransactionId: localProps.wipRun.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
     return response;
   }
 
-  async function getUploadFilesManifest(): Promise<FileUploadManifest> {
-    const files: FileInfo[] = [];
-    for (const fileDetails of filesToUpload.value) {
-      files.push({
-        Name: fileDetails.name,
-        Size: fileDetails.size,
-      });
-    }
-
+  async function getUploadFilesManifest(files: FileDetails[]): Promise<FileUploadManifest> {
     const request: FileUploadRequest = {
-      LaboratoryId: props.labId,
-      TransactionId: props.transactionId || '',
-      Files: files,
+      LaboratoryId: localProps.labId,
+      TransactionId: localProps.wipRun.transactionId || '',
+      Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 
     const response = await $api.uploads.getFileUploadManifest(request);
@@ -352,22 +477,11 @@
   }
 
   function addUploadUrls(uploadManifest: FileUploadManifest) {
-    filesToUpload.value.forEach((fileDetails) => {
-      const fileUploadInfo = uploadManifest.Files.find((file) => file.Name === fileDetails.name);
-      if (fileUploadInfo) {
-        fileDetails.url = fileUploadInfo.S3Url;
-      }
-    });
+    for (const file of files.value) {
+      const url = uploadManifest.Files.find((manifestFile) => manifestFile.Name === file.name)?.S3Url;
+      if (url) file.url = url;
+    }
   }
-
-  // Track ongoing upload requests
-  const uploadControllers = ref<{ [key: string]: AbortController }>({});
-
-  const { isOnline } = useNetwork();
-
-  // Network timeout in milliseconds (15 seconds)
-  const UPLOAD_TIMEOUT = 600000; // 10 mins
-  const UPLOAD_RETRY_DELAY = 3000; // 3 second delay helps prevent immediate retry spam and gives time for temporary network issues to resolve
 
   /**
    * Handles the process of uploading multiple files, tracks their progress, and manages upload results.
@@ -375,7 +489,7 @@
    * @returns {Promise<UploadError[]>} - Resolves with an array of failed uploads (if any), containing error details.
    *
    * Purpose:
-   * - Initiates the upload of all files in `filesToUpload` using `uploadFile`.
+   * - Initiates the upload of all files in `filesNotUploaded` using `uploadFile`.
    * - Ensures that all file uploads are completed, regardless of individual successes or failures, using `Promise.allSettled`.
    * - Collects detailed information about any failed uploads, including user-friendly error messages.
    * - Displays meaningful toast notifications for both successful and failed uploads:
@@ -388,10 +502,8 @@
    * - For other failures, displays specific error messages for individual files or a summary for multiple failed files.
    */
   async function uploadFiles(): Promise<UploadError[]> {
-    uploadStatus.value = 'uploading'; // Start with uploading status
-
     try {
-      const uploadPromises = Object.values(filesToUpload.value).map((fileDetails) =>
+      const uploadPromises = Object.values(filesNotUploaded.value).map((fileDetails) =>
         uploadFile(fileDetails)
           .then(() => null)
           .catch((error) => ({
@@ -405,26 +517,17 @@
         .map((result) => (result.status === 'rejected' ? result.reason : result.value))
         .filter((error): error is UploadError => error !== null);
 
-      // Show network error toast only once if any file failed due to network
-      if (errors.some((error) => error.error === 'Network connection lost')) {
-        toastStore.error('Network error - please check your connection and try again');
-        uploadStatus.value = 'failed'; // Set failed status for network errors
-      }
       // Show other error toasts as needed
-      else if (errors.length > 0) {
+      if (errors.length > 0) {
         if (errors.length === 1) {
           toastStore.error(`Upload failed for ${errors[0].fileName}`);
         } else {
           toastStore.error(`Upload failed for ${errors.length} files`);
         }
-        uploadStatus.value = 'failed'; // Set failed status for other errors
-      } else {
-        uploadStatus.value = 'success'; // Set success status if no errors
       }
 
       return errors;
     } catch (error) {
-      uploadStatus.value = 'failed'; // Set failed status for unexpected errors
       return [];
     }
   }
@@ -438,7 +541,7 @@
    *                      Rejects with an error object containing the error message, code, and file details if the upload fails.
    *
    * Purpose:
-   * - Tracks the progress of the file upload and updates progress/percentage in `fileDetails`.
+   * - Tracks the progress of the file upload and updates progress in `fileDetails`.
    * - Handles network errors, rejecting with a detailed error message.
    * - Logs any upload errors to the console for debugging purposes.
    */
@@ -449,6 +552,9 @@
     }
 
     const controller = new AbortController();
+    // Store the controller
+    uploadControllers.value[fileDetails.name] = controller;
+
     const timeoutId = setTimeout(() => {
       controller.abort();
     }, UPLOAD_TIMEOUT);
@@ -481,17 +587,20 @@
           if (progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             fileDetails.progress = progress;
-            fileDetails.percentage = progress;
           }
         },
       });
 
       clearTimeout(timeoutId);
       unwatch();
+      // Remove the controller after successful upload
+      delete uploadControllers.value[fileDetails.name];
       return response.data;
     } catch (error: any) {
       clearTimeout(timeoutId);
       unwatch();
+      // Remove the controller after failed upload
+      delete uploadControllers.value[fileDetails.name];
 
       if (error.name === 'AbortError' || error.message === 'Network Error' || !isOnline.value) {
         fileDetails.error = 'Network connection lost. Upload aborted.';
@@ -515,54 +624,84 @@
     }
   };
 
-  const retryUpload = async (file: { sampleId: string; fileName: string }) => {
-    // Find the file in filePairs
-    let fileToRetry: FileDetails | undefined;
+  const retryUpload = async (fileSelector: { sampleId: string; fileName: string }) => {
+    // find file by filename
+    let fileToRetry: FileDetails | undefined = files.value.find((file) => file.name === fileSelector.fileName);
 
-    for (const pair of filePairs.value) {
-      if (pair.r1File?.name === file.fileName) {
-        pair.r1File.error = undefined;
-        pair.r1File.percentage = 0;
-        fileToRetry = pair.r1File;
-        break;
-      }
-      if (pair.r2File?.name === file.fileName) {
-        pair.r2File.error = undefined;
-        pair.r2File.percentage = 0;
-        fileToRetry = pair.r2File;
-        break;
-      }
+    if (!fileToRetry) {
+      throw new Error(`no fileToRetry found with name '${fileSelector.fileName}'`);
     }
 
-    if (fileToRetry) {
+    clearErrorsFromFiles([fileToRetry]);
+    initializeProgressForFiles([fileToRetry]);
+
+    try {
+      // pre-upload work - catch and handle errors in this step with applyErrorToFiles
       try {
         // Get fresh upload URL
-        const manifest = await getUploadFilesManifest();
+        const manifest = await getUploadFilesManifest([fileToRetry]);
         const fileInfo = manifest.Files.find((f) => f.Name === fileToRetry!.name);
-        if (fileInfo) {
-          fileToRetry.url = fileInfo.S3Url;
-          await uploadFile(fileToRetry);
-          // Update canProceed after successful retry
-          canProceed.value = areAllFilesUploaded.value;
+        if (!fileInfo) {
+          throw new Error('file not found in manifest');
         }
+
+        fileToRetry.url = fileInfo.S3Url;
       } catch (error: any) {
-        toastStore.error(`Failed to retry upload`);
-        canProceed.value = false;
+        applyErrorToFiles([fileToRetry], error.message);
+        throw error;
       }
+
+      await uploadFile(fileToRetry);
+
+      await postUploadHook();
+    } catch (error: any) {
+      toastStore.error(`Failed to retry upload`);
     }
   };
 
   const removeFile = (file: { sampleId: string; fileName: string }) => {
-    // Remove the file from filePairs
-    filePairs.value = filePairs.value.filter((pair) => {
-      if (pair.r1File?.name === file.fileName || pair.r2File?.name === file.fileName) {
-        return false;
+    // Find the file pair containing the file
+    const filePair = filePairs.value.find((pair) => pair.sampleId === file.sampleId);
+
+    if (filePair) {
+      // Remove only the specific file (r1 or r2) that matches the filename
+      if (filePair.r1File?.name === file.fileName) {
+        filePair.r1File = undefined;
+      } else if (filePair.r2File?.name === file.fileName) {
+        filePair.r2File = undefined;
       }
-      return true;
-    });
+
+      // If both files are now undefined, remove the entire pair
+      if (!filePair.r1File && !filePair.r2File) {
+        localProps.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
+      } else {
+        // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
+        filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
+      }
+    }
   };
 
-  watch(canProceed, (val) => {
+  const canRetryUpload = (row: { sampleId: string; fileName: string; progress: number; error?: string }) => {
+    // If the file isn't in error state, can't retry
+    if (!row.error) return false;
+
+    // Find the matching pair for this file
+    const isPairedFile = filePairs.value.some((pair) => {
+      const isR1 = pair.r1File?.name === row.fileName;
+      const isR2 = pair.r2File?.name === row.fileName;
+
+      // If this is R1, check if R2 exists
+      if (isR1) return !!pair.r2File;
+      // If this is R2, check if R1 exists
+      if (isR2) return !!pair.r1File;
+
+      return false;
+    });
+
+    return isPairedFile && isOnline.value;
+  };
+
+  watch(canProceedToNextStep, (val) => {
     emit('step-validated', val);
   });
 </script>
@@ -590,13 +729,17 @@
       <li>5GB max size per individual file</li>
     </ul>
     <UDivider class="py-4" />
-    <div class="py-4" @drop.prevent="handleDroppedFiles" v-if="showDropzone">
+    <div
+      class="py-4"
+      @drop.prevent="handleDroppedFiles"
+      :class="{ 'pointer-events-none opacity-50': !isDropzoneEnabled }"
+    >
       <div
         id="dropzone"
-        @dragenter.prevent="toggleDropzoneActive"
-        @dragleave.prevent="toggleDropzoneActive"
+        @dragenter.prevent="setDropzoneActive(true)"
+        @dragleave.prevent="setDropzoneActive(false)"
         @dragover.prevent
-        @drop.prevent="toggleDropzoneActive"
+        @drop.prevent="setDropzoneActive(false)"
       >
         <div
           :class="
@@ -626,6 +769,7 @@
               multiple
             />
             <EGButton
+              :disabled="!isDropzoneEnabled"
               :class="cn('visible ml-4', { 'invisible': isDropzoneActive })"
               @click="chooseFiles"
               label="Choose Files"
@@ -636,11 +780,11 @@
       </div>
     </div>
 
-    <div class="files-list" v-if="filesForTable.length > 0">
+    <div class="files-list mb-6" v-if="filesForTable.length > 0">
       <div class="files-list-header text-body mb-4 border-b border-[#d9d9d9]">
-        <div class="file-cell sample-id w-[30%]">Sample ID</div>
-        <div class="file-cell w-[60%]">Sample File</div>
-        <div class="file-cell w-[10%]"></div>
+        <div class="file-cell sample-id flex w-[30%] min-w-[240px]">Sample ID</div>
+        <div class="file-cell flex w-[60%] min-w-[320px]">Sample File</div>
+        <div class="file-cell flex w-[10%] min-w-[70px]"></div>
       </div>
       <div class="files-list-body">
         <div
@@ -652,60 +796,96 @@
               ? '#FFF2F0'
               : row.progress === 100
                 ? '#E2FBE8'
-                : row.progress > 0
+                : row.progress !== undefined && row.progress > 0
                   ? `linear-gradient(to right, #E2FBE8 ${row.progress}%, transparent ${Math.min(row.progress + 10, 100)}%), #f7f7f7`
                   : '#f7f7f7',
           }"
         >
-          <div class="file-cell sample-id text-body w-[30%]">
-            <span v-if="!row.error">{{ row.sampleId }}</span>
-            <span v-else class="text-alert-danger-dark mr-1 font-medium">(Upload Failed)</span>
+          <div class="file-cell sample-id text-body flex w-[30%] min-w-[240px] items-center">
+            <div v-if="!row.error" class="truncate">{{ row.sampleId }}</div>
+            <div v-else class="text-alert-danger-dark mr-1 truncate font-medium">(Upload Failed)</div>
           </div>
           <div
-            class="file-cell flex w-[60%] items-center"
-            :style="{ color: row.progress === 100 ? '#306239' : 'inherit' }"
+            class="file-cell flex w-[60%] min-w-[320px] items-center"
+            :style="{ color: row.progress === 100 && !row.error ? '#306239' : 'inherit' }"
           >
             <template v-if="row.error">
               <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
             </template>
-            {{ row.fileName }}
+            <div class="truncate">{{ row.fileName }}</div>
           </div>
-          <div class="file-cell flex w-[10%] items-center justify-end gap-2">
-            <template v-if="row.error">
-              <button
-                class="mr-2"
-                :class="[isOnline ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
-                @click="retryUpload(row)"
-                :disabled="!isOnline.value"
-                :title="isOnline.value ? 'Retry upload' : 'Cannot retry while offline'"
-              >
-                <UIcon name="i-heroicons-arrow-path" size="20" />
-              </button>
 
-              <button class="text-alert-danger hover:text-alert-danger/80" @click="removeFile(row)">
-                <UIcon name="i-heroicons-trash" size="20" />
-              </button>
-            </template>
+          <div class="file-cell flex w-[10%] min-w-[70px] items-center justify-end gap-4">
+            <!-- retry button -->
+            <button
+              v-if="row.error"
+              class="flex items-center"
+              :class="[canRetryUpload(row) ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
+              @click="retryUpload(row)"
+              :disabled="!isOnline || !canRetryUpload(row)"
+            >
+              <UIcon name="i-heroicons-arrow-path" size="20" />
+            </button>
+
+            <!-- complete check -->
             <UIcon
-              v-else-if="row.progress === 100"
+              v-if="!row.error && row.progress === 100"
               size="20"
               name="i-heroicons-check"
               class="text-alert-success-text"
             />
-            <button v-else class="text-gray-500 hover:text-gray-700" @click="cancelUpload(row.fileName)">
-              <UIcon name="i-heroicons-x" size="20" />
+
+            <!-- cancel upload button -->
+            <button
+              v-if="!row.error && row.progress && row.progress < 100"
+              class="flex items-center text-gray-500 hover:text-gray-700"
+              @click="cancelUpload(row.fileName)"
+            >
+              <UIcon name="i-heroicons-x-mark" size="20" />
+            </button>
+
+            <!-- delete button -->
+            <button
+              class="flex items-center"
+              :disabled="!isOnline || uploadStatus === 'uploading'"
+              :class="[
+                isOnline && uploadStatus !== 'uploading'
+                  ? 'text-alert-danger hover:text-alert-danger-dark'
+                  : 'cursor-not-allowed text-gray-400',
+              ]"
+              @click="removeFile(row)"
+            >
+              <UIcon name="i-heroicons-trash" size="20" />
             </button>
           </div>
         </div>
       </div>
     </div>
+
+    <EGS3SampleSheetBar
+      v-if="uploadStatus === 'success'"
+      :disabled="uploadStatus === 'uploading'"
+      :url="localProps.wipRun.sampleSheetS3Url"
+      :lab-id="localProps.labId"
+      :lab-name="localProps.labName"
+      :pipeline-or-workflow-name="localProps.pipelineOrWorkflowName"
+      :run-name="localProps.wipRun.runName"
+    />
+
     <div class="flex justify-end pt-4">
       <EGButton
-        v-if="uploadStatus === 'success'"
+        v-if="hasSampleSheetUrl"
         variant="secondary"
         class="mr-2"
         label="Download sample sheet"
-        @click="downloadSampleSheet(props.labId, props.sampleSheetS3Url, props.pipelineOrWorkflowName, props.runName)"
+        @click="
+          downloadSampleSheet(
+            localProps.labId,
+            localProps.wipRun.sampleSheetS3Url,
+            localProps.pipelineOrWorkflowName,
+            localProps.wipRun.runName,
+          )
+        "
       />
       <EGButton
         @click="startUploadProcess"
@@ -719,12 +899,14 @@
   <div class="mt-6 flex justify-between">
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-step')" />
     <EGButton
+      v-if="filePairs.length"
       :size="ButtonSizeEnum.enum.sm"
-      variant="secondary"
+      variant="primary"
       label="Next step"
       @click="emit('next-step')"
-      :disabled="!canProceed"
+      :disabled="!canProceedToNextStep"
     />
+    <EGButton v-else :size="ButtonSizeEnum.enum.sm" variant="primary" label="Skip" @click="emit('next-step')" />
   </div>
 </template>
 

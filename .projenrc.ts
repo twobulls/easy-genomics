@@ -404,11 +404,12 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
   },
   deps: [
     '@aws-amplify/ui-vue@3.1.30',
-    '@aws-sdk/s3-request-presigner',
-    '@aws-sdk/util-format-url',
     '@aws-sdk/client-omics',
     '@aws-sdk/client-s3',
+    '@aws-sdk/s3-request-presigner',
+    '@aws-sdk/util-format-url',
     '@easy-genomics/shared-lib@workspace:*',
+    '@iconify-json/heroicons',
     '@nuxt/ui@2.18.4', // Lock to version 2.18.4 due to input text bug
     '@pinia/nuxt',
     '@playwright/test',
@@ -438,7 +439,6 @@ const frontEndApp = new awscdk.AwsCdkTypeScriptApp({
     'sass',
     'tailwind-merge',
     'tailwindcss',
-    'unplugin-icons',
     'unplugin-vue-components',
     'uuid',
     'zod',

@@ -1,31 +1,30 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useRunStore } from '@FE/stores';
+  import { useRunStore, useToastStore } from '@FE/stores';
   import { WipSeqeraRunData } from '@FE/stores/run';
 
   const props = defineProps<{
     schema: object;
     params: object;
-    pipelineId: string;
+    seqeraRunTempId: string;
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
-  const $route = useRoute();
-
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
-
   const activeSection = ref<string | null>(null);
   const runStore = useRunStore();
+  const labsStore = useLabsStore();
+  const seqeraPipelinesStore = useSeqeraPipelinesStore();
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
+
+  const labName = computed<string | null>(() => labsStore.labs[wipSeqeraRun.value?.laboratoryId || '']?.Name || null);
+  const pipelineName = computed<string | null>(
+    () => seqeraPipelinesStore.pipelines[wipSeqeraRun.value?.pipelineId || '']?.name || null,
+  );
 
   const localProps = reactive({
     schema: props.schema,
-    params: {
-      ...props.params,
-      input: wipSeqeraRun.value?.sampleSheetS3Url,
-      outdir: `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/results`,
-    },
+    params: props.params,
   });
 
   const schemaDefinitions = computed(() => props.schema.$defs || props.schema.definitions);
@@ -77,12 +76,23 @@
     return filteredProperties.every((property: any) => property.hidden);
   }
 
+  function onSubmit() {
+    const paramsRequired: string[] = wipSeqeraRun.value?.paramsRequired || [];
+    const missingParams = paramsRequired.filter((paramName: string) => !wipSeqeraRun.value?.params[paramName]);
+
+    if (missingParams.length > 0) {
+      useToastStore().error(`The '${missingParams.shift()}' field is required. Please try again.`);
+    } else {
+      emit('next-step');
+    }
+  }
+
   watch(
     // watches for input changes in the local params object and updates the store with the new value
     () => localProps.params,
     (val) => {
       if (val) {
-        runStore.updateWipSeqeraRun(seqeraRunTempId, { params: val });
+        runStore.updateWipSeqeraRun(props.seqeraRunTempId, { params: val });
       }
     },
     { deep: true },
@@ -90,6 +100,15 @@
 </script>
 
 <template>
+  <EGS3SampleSheetBar
+    v-if="wipSeqeraRun?.sampleSheetS3Url"
+    :url="wipSeqeraRun.sampleSheetS3Url"
+    :lab-id="wipSeqeraRun.laboratoryId"
+    :lab-name="labName"
+    :pipeline-or-workflow-name="pipelineName"
+    :run-name="wipSeqeraRun.runName"
+  />
+
   <div class="flex">
     <div class="mr-4 w-1/4">
       <EGCard>
@@ -160,7 +179,7 @@
           label="Previous step"
           @click="emit('previous-step')"
         />
-        <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="emit('next-step')" />
+        <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="onSubmit" />
       </div>
     </div>
   </div>

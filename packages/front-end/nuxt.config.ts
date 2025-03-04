@@ -1,7 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import path from 'path';
-import IconsResolver from 'unplugin-icons/resolver';
-import Icons from 'unplugin-icons/vite';
 import Components from 'unplugin-vue-components/vite';
 import { loadNuxtSettings } from './env.nuxt.config';
 
@@ -32,6 +30,15 @@ export default defineNuxtConfig({
     },
   },
 
+  // Nuxt Icon options
+  icon: {
+    resolver: 'local',
+    clientBundle: {
+      scan: true,
+      collections: ['heroicons'],
+    },
+  },
+
   runtimeConfig: {
     public: {
       AWS_REGION: process.env.AWS_REGION,
@@ -59,27 +66,11 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: '@use "@/styles/helpers" as *;', // Update this to match your @use import
+          additionalData: '@use "@/styles/helpers" as *;',
         },
       },
     },
-    plugins: [
-      Components({
-        resolvers: [IconsResolver({ prefix: 'Icon' })],
-      }),
-      Icons({
-        scale: 1.2,
-      }),
-    ],
-  },
-
-  // autoimport Iconfiy icon packages as custom components
-  vue: {
-    template: {
-      compilerOptions: {
-        isCustomElement: (tag: string) => tag.startsWith('Icon-'),
-      },
-    },
+    plugins: [],
   },
 
   compatibilityDate: '2024-07-26',

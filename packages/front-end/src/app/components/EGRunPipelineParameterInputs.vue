@@ -65,35 +65,18 @@
   <div>
     <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
       <!-- ignore Seqera "file upload" input types -->
-      <template v-if="!propertyDetail?.hidden && !usePipeline().isParamsFormatFilePath(propertyDetail.format)">
+      <template v-if="!propertyDetail?.hidden">
         <EGFormGroup
           :label="propertyName"
+          :name="propertyName"
           :required="runStore.wipSeqeraRuns[seqeraRunTempId].paramsRequired.includes(propertyName)"
         >
           <component
             :is="components[propertyType(propertyDetail)]"
-            :name="''"
+            :name="propertyName"
             :details="propertyDetail"
             v-model="propValues[propertyName]"
           />
-        </EGFormGroup>
-      </template>
-
-      <!-- Special exception for Seqera "file upload" input type at this point in the schema, used as an S3 bucket
-      directory input field -->
-      <template
-        v-if="
-          !propertyDetail?.hidden &&
-          usePipeline().isParamsFormatFilePath(propertyDetail.format) &&
-          propertyName === 'input'
-        "
-      >
-        <EGFormGroup
-          label="input"
-          name="input"
-          :required="runStore.wipSeqeraRuns[seqeraRunTempId].paramsRequired.includes('input')"
-        >
-          <EGInput name="input" v-model="propValues['input']" />
         </EGFormGroup>
       </template>
     </div>

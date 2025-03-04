@@ -117,7 +117,10 @@
     };
     if (pipelineSchemaResponse.params) {
       runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
-        params: JSON.parse(pipelineSchemaResponse.params),
+        params: {
+          ...JSON.parse(pipelineSchemaResponse.params),
+          input: undefined, // clear the default sample sheet github link that comes from the pipeline itself
+        },
         paramsRequired: paramsRequired,
       });
     }
@@ -145,6 +148,121 @@
       resetStepperKey.value++;
     }, 100);
   }
+
+  // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
+  //  Tailwind won't pick up and include the classes used and styles will be missing.
+  // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
+  //  UTabs that use an "EGTabsStyles" as input to the :ui attribute.
+  const EGTabsStyles = {
+    base: 'focus:outline-none',
+    list: {
+      base: '!flex rounded-none mb-6 mt-0',
+      padding: 'p-0',
+      height: 'h-14',
+      marker: {
+        background: '',
+        shadow: '',
+      },
+      tab: {
+        base: 'font-serif w-auto mr-3 rounded-xl border border-solid',
+        background: '',
+        active: 'text-white bg-primary border-primary',
+        inactive: 'font-serif text-text-body border-background-dark-grey',
+        height: '',
+        padding: 'px-5 py-2',
+        size: 'text-sm',
+      },
+    },
+  };
+
+  // stepper data handling
+
+  const selectedStepIndex = ref(0);
+
+  const steps = ref([
+    {
+      disabled: false,
+      key: 'details',
+      label: 'Run Details',
+    },
+    {
+      disabled: true,
+      key: 'upload',
+      label: 'Upload Data',
+    },
+    {
+      disabled: true,
+      key: 'parameters',
+      label: 'Edit Parameters',
+    },
+    {
+      disabled: true,
+      key: 'review',
+      label: 'Review Pipeline',
+    },
+  ]);
+
+  /**
+   * Set the enabled state of a step in the stepper
+   * @param step
+   * @param isEnabled
+   */
+  function setStepEnabled(stepKey: string, isEnabled: boolean) {
+    const stepIndex = steps.value.findIndex((step) => step.key === stepKey);
+
+    if (stepIndex === -1) throw new Error(`no step found with key "${stepKey}"`);
+
+    if (isEnabled) {
+      steps.value[stepIndex].disabled = false;
+    } else {
+      // If the step is disabled, disable all subsequent steps
+      disableStepsFrom(stepIndex);
+    }
+  }
+
+  /**
+   * Disable all steps from the given index
+   * @param index
+   */
+  function disableStepsFrom(index: number) {
+    for (let i = index; i < steps.value.length; i++) {
+      steps.value[i].disabled = true;
+    }
+  }
+
+  function nextStep(val: string) {
+    setStepEnabled(val, true);
+    selectedStepIndex.value = clampIndex(selectedStepIndex.value + 1);
+  }
+
+  function clampIndex(index: number) {
+    return Math.min(steps.value.length - 1, Math.max(0, index));
+  }
+
+  function previousStep() {
+    selectedStepIndex.value = clampIndex(selectedStepIndex.value - 1);
+  }
+
+  function disableAllSteps() {
+    steps.value.forEach((step) => (step.disabled = true));
+  }
+
+  function enableAllSteps() {
+    steps.value.forEach((step) => (step.disabled = false));
+  }
+
+  function handleSubmitLaunchRequest() {
+    disableAllSteps();
+  }
+
+  function handleSubmitLaunchRequestError() {
+    enableAllSteps();
+  }
+
+  function handleLaunchSuccess() {
+    hasLaunched.value = true;
+    selectedStepIndex.value = -1;
+  }
 </script>
 
 <template>
@@ -158,15 +276,92 @@
     show-lab-breadcrumb
     :breadcrumbs="[pipeline?.name]"
   />
-  <EGRunPipelineStepper
-    :schema="schema"
-    :params="wipSeqeraRun?.params"
-    :key="resetStepperKey"
-    :pipeline-id="pipelineId"
-    :lab-name="labName"
-    @has-launched="hasLaunched = true"
-    @reset-run-pipeline="resetRunPipeline()"
-  />
+
+  <UTabs :items="steps" :ui="EGTabsStyles" v-model="selectedStepIndex" :key="selectedStepIndex">
+    <!-- tab rendering -->
+    <template #default="{ item, index, selected }">
+      <div class="relative flex items-center gap-2 truncate">
+        <UIcon
+          v-if="selectedStepIndex > index || hasLaunched"
+          name="i-heroicons-check-20-solid"
+          class="text-primary h-4 w-4 flex-shrink-0"
+        />
+        <span :class="selectedStepIndex > index || hasLaunched ? 'text-primary' : ''">{{ item.label }}</span>
+        <span v-if="selected" class="bg-primary-500 dark:bg-primary-400 absolute -right-4 h-2 w-2 rounded-full" />
+      </div>
+    </template>
+
+    <!-- step rendering -->
+    <template #item="{ item, index }">
+      <div v-if="!hasLaunched">
+        <!-- Run Details -->
+        <template v-if="steps[selectedStepIndex].key === 'details'">
+          <EGRunFormRunDetails
+            pipeline-or-workflow="Pipeline"
+            :pipeline-or-workflow-name="pipeline?.name"
+            :initial-run-name="wipSeqeraRun?.runName || ''"
+            :pipeline-or-workflow-description="pipeline?.description || ''"
+            :wip-run-update-function="runStore.updateWipSeqeraRun"
+            :wip-run-temp-id="seqeraRunTempId"
+            @next-step="() => nextStep('upload')"
+            @step-validated="($event) => setStepEnabled('upload', $event)"
+          />
+        </template>
+
+        <!-- Upload Data -->
+        <template v-if="steps[selectedStepIndex].key === 'upload'">
+          <EGRunFormUploadData
+            :lab-id="labId"
+            :lab-name="labName"
+            :pipeline-or-workflow-name="pipeline.name"
+            :wip-run="wipSeqeraRun"
+            :wip-run-update-function="runStore.updateWipSeqeraRun"
+            :wip-run-temp-id="seqeraRunTempId"
+            @next-step="() => nextStep('parameters')"
+            @previous-step="() => previousStep()"
+            @step-validated="($event) => setStepEnabled('parameters', $event)"
+          />
+        </template>
+
+        <!-- Edit Parameters -->
+        <template v-if="steps[selectedStepIndex].key === 'parameters'">
+          <EGRunPipelineFormEditParameters
+            :params="wipSeqeraRun?.params"
+            :schema="schema"
+            :seqera-run-temp-id="seqeraRunTempId"
+            @next-step="() => nextStep('review')"
+            @previous-step="() => previousStep()"
+          />
+        </template>
+
+        <!-- Review Pipeline -->
+        <template v-if="steps[selectedStepIndex].key === 'review'">
+          <EGRunPipelineFormReview
+            :schema="schema"
+            :params="wipSeqeraRun?.params"
+            :pipeline-id="pipelineId"
+            @submit-launch-request="() => handleSubmitLaunchRequest()"
+            @submit-launch-request-error="() => handleSubmitLaunchRequestError()"
+            @has-launched="() => handleLaunchSuccess()"
+            @previous-tab="() => previousStep()"
+          />
+        </template>
+      </div>
+    </template>
+  </UTabs>
+
+  <!-- post-launch rendering -->
+  <template v-if="hasLaunched">
+    <EGEmptyDataCTA
+      message="Your Workflow Run has Launched! Check on your progress via Runs."
+      :primary-button-action="() => $router.push(`/labs/${labId}?tab=Lab+Runs`)"
+      primary-button-label="Back to Runs"
+      :secondary-button-action="() => resetRunPipeline()"
+      secondary-button-label="Launch Another Workflow Run"
+      img-src="/images/empty-state-launched.jpg"
+    />
+  </template>
+
   <EGDialog
     action-label="Cancel Pipeline Run"
     :action-variant="ButtonVariantEnum.enum.destructive"

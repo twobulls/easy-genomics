@@ -288,12 +288,10 @@
           <!-- Run Details -->
           <template v-if="steps[selectedStepIndex].key === 'details'">
             <EGRunFormRunDetails
-              pipeline-or-workflow="Workflow"
-              :pipeline-or-workflow-name="workflow?.name"
-              :initial-run-name="wipOmicsRun?.runName || ''"
-              :pipeline-or-workflow-description="workflow?.description || ''"
-              :wip-run-update-function="runStore.updateWipOmicsRun"
+              platform="AWS HealthOmics"
               :wip-run-temp-id="omicsRunTempId"
+              :pipeline-or-workflow-name="workflow?.name"
+              :pipeline-or-workflow-description="workflow?.description || ''"
               @next-step="() => nextStep('upload')"
               @step-validated="($event) => setStepEnabled('upload', $event)"
             />

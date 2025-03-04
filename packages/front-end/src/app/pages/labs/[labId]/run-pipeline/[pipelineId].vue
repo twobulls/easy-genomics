@@ -297,12 +297,10 @@
         <!-- Run Details -->
         <template v-if="steps[selectedStepIndex].key === 'details'">
           <EGRunFormRunDetails
-            pipeline-or-workflow="Pipeline"
-            :pipeline-or-workflow-name="pipeline?.name"
-            :initial-run-name="wipSeqeraRun?.runName || ''"
-            :pipeline-or-workflow-description="pipeline?.description || ''"
-            :wip-run-update-function="runStore.updateWipSeqeraRun"
+            platform="Seqera Cloud"
             :wip-run-temp-id="seqeraRunTempId"
+            :pipeline-or-workflow-name="pipeline?.name"
+            :pipeline-or-workflow-description="pipeline?.description || ''"
             @next-step="() => nextStep('upload')"
             @step-validated="($event) => setStepEnabled('upload', $event)"
           />

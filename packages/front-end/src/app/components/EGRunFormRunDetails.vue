@@ -6,13 +6,13 @@
 
   const emit = defineEmits(['next-step', 'step-validated']);
   const props = defineProps<{
-    pipelineOrWorkflow: 'Pipeline' | 'Workflow';
-    pipelineOrWorkflowName: string;
-    initialRunName: string;
-    pipelineOrWorkflowDescription: string;
-    wipRunUpdateFunction: Function;
+    platform: 'Seqera Cloud' | 'AWS HealthOmics';
     wipRunTempId: string;
+    pipelineOrWorkflowName: string;
+    pipelineOrWorkflowDescription: string;
   }>();
+
+  const runStore = useRunStore();
 
   /**
    * Seqera API spec
@@ -50,7 +50,42 @@
 
   const canProceed = ref(false);
   const isSubmittingFormData = ref(false);
+
   const runNameCharCount = computed(() => formState.runName.length);
+
+  const pipelineOrWorkflow = computed<string>(() => {
+    switch (props.platform) {
+      case 'Seqera Cloud':
+        return 'Pipeline';
+      case 'AWS HealthOmics':
+        return 'Workflow';
+      default:
+        throw new Error(`${props.platform} is not a valid platform`);
+    }
+  })
+
+  const wipRunUpdateFunction = computed<Function>(() => {
+    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(props.platform)) {
+      throw new Error(`${props.platform} is not a valid platform`);
+    }
+
+    return props.platform === 'Seqera Cloud' ? runStore.updateWipSeqeraRun : runStore.updateWipOmicsRun;
+  });
+
+  const wipRun = computed<WipSeqeraRunData & WipOmicsRunData>(() => {
+    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(props.platform)) {
+      throw new Error(`${props.platform} is not a valid platform`);
+    }
+
+    const wipRunsCollection = props.platform === 'Seqera Cloud' ? runStore.wipSeqeraRuns : runStore.wipOmicsRuns;
+    const wipRun = wipRunsCollection[props.wipRunTempId];
+
+    if (!wipRun) {
+      throw new Error(`no WIP ${props.platform} run for id ${props.wipRunTempId}`);
+    }
+
+    return wipRun;
+  });
 
   // Trims white space, replaces spaces between words with hyphens, and enforces a max of one hyphen in a row
   // e.g. 'some custom name' -> 'some-custom-name'
@@ -61,10 +96,14 @@
   /**
    * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
    */
-  onBeforeMount(async () => {
-    formState.runName = props.initialRunName;
-    validate(formState);
-  });
+  watch(
+    wipRun,
+    (val) => {
+      if (val.runName) formState.runName = val.runName;
+      validate(formState);
+    },
+    { immediate: true },
+  );
 
   function validate(currentState: FormState): FormError[] {
     const errors: FormError[] = [];
@@ -82,7 +121,7 @@
 
   function onSubmit() {
     const safeRunName = getSafeRunName(formState.runName);
-    props.wipRunUpdateFunction(props.wipRunTempId, { runName: safeRunName });
+    wipRunUpdateFunction.value(props.wipRunTempId, { runName: safeRunName });
     emit('next-step');
   }
 
@@ -112,6 +151,7 @@
     const supportedName = getSupportedRunName(inputName);
     target.value = supportedName;
     formState.runName = supportedName;
+    wipRunUpdateFunction.value(props.wipRunTempId, { runName: supportedName });
   }
 
   watch(canProceed, (val) => {
@@ -125,7 +165,7 @@
       <EGText tag="small" class="mb-4">Step 01</EGText>
       <EGText tag="h4" class="mb-0">Run Details</EGText>
       <UDivider class="py-4" />
-      <EGFormGroup :label="props.pipelineOrWorkflow" name="pipelineName">
+      <EGFormGroup :label="pipelineOrWorkflow" name="pipelineName">
         <EGInput :model-value="props.pipelineOrWorkflowName" :disabled="true" />
       </EGFormGroup>
 

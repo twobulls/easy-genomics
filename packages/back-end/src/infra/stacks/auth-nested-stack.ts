@@ -48,6 +48,7 @@ export class AuthNestedStack extends NestedStack {
           },
         },
       },
+      deadLetterQueue: this.props.deadLetterQueues?.sqsQueues.get('lambda-alert-queue'),
       environment: {
         // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,

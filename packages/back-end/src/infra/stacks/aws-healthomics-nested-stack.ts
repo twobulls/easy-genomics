@@ -30,6 +30,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       lambdaFunctionsDir: 'src/app/controllers/aws-healthomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
       lambdaFunctionsResources: {}, // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
+      deadLetterQueue: this.props.deadLetterQueues?.sqsQueues.get('lambda-alert-queue'),
       environment: {
         // Defines the common environment settings for all lambda functions
         ACCOUNT_ID: this.props.env.account!,

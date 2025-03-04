@@ -8,6 +8,7 @@ import { MethodOptions } from 'aws-cdk-lib/aws-apigateway/lib/method';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { IEventSource, IFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
+import { IQueue } from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
@@ -19,6 +20,7 @@ export interface LambdaConstructProps extends EasyGenomicsNestedStackProps {
   lambdaFunctionsResources: {
     [key: string]: LambdaFunctionsResources;
   };
+  deadLetterQueue?: IQueue;
   environment?: {
     // Common process.env settings
     [key: string]: string;
@@ -129,6 +131,8 @@ export class LambdaConstruct extends Construct {
         // Attempt to avoid LogRetention creation failure due to throttling
         maxRetries: 10, // AWS default is 3
       },
+      deadLetterQueue: this.props.deadLetterQueue,
+      deadLetterQueueEnabled: this.props.deadLetterQueue ? true : false,
       environment: {
         ...commonProcessEnv, // Common process.env settings
         ...lambdaProcessEnv, // Specific process.env settings

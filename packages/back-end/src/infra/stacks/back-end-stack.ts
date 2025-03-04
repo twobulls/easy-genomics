@@ -1,5 +1,5 @@
 import { BackEndStackProps } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
-import { CfnOutput, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Key, KeySpec } from 'aws-cdk-lib/aws-kms';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
@@ -9,6 +9,7 @@ import { DataProvisioningNestedStack } from './data-provisioning-nested-stack';
 import { EasyGenomicsNestedStack } from './easy-genomics-nested-stack';
 import { NFTowerNestedStack } from './nf-tower-nested-stack';
 import { ApiGatewayConstruct } from '../constructs/api-gateway-construct';
+import { QueueDetails, Queues, SqsConstruct } from '../constructs/sqs-construct';
 import { VpcConstruct, VpcConstructProps } from '../constructs/vpc-construct';
 import {
   AuthNestedStackProps,
@@ -39,6 +40,7 @@ export class BackEndStack extends Stack {
   readonly props: BackEndStackProps;
   protected apiGateway!: ApiGatewayConstruct;
   protected vpcConstruct: VpcConstruct;
+  protected sqsDeadLetterQueues: SqsConstruct;
 
   constructor(scope: Construct, id: string, props: BackEndStackProps) {
     super(scope, id);
@@ -63,6 +65,20 @@ export class BackEndStack extends Stack {
     // API Gateway for REST APIs
     this.apiGateway = new ApiGatewayConstruct(this, `${this.props.constructNamespace}-apigw`, {
       description: 'Easy Genomics API Gateway',
+    });
+
+    // SQS Dead Letter Queue
+    this.sqsDeadLetterQueues = new SqsConstruct(this, `${this.props.constructNamespace}-sqs`, {
+      namePrefix: this.props.namePrefix,
+      envType: this.props.envType,
+      queues: <Queues>{
+        ['lambda-alert-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          snsTopics: [],
+        },
+      },
     });
 
     // Initiate Nested Stacks for Auth, Easy Genomics, AWS HealthOmics, Nextflow Tower
@@ -111,6 +127,7 @@ export class BackEndStack extends Stack {
       ...this.props,
       constructNamespace: `${this.props.constructNamespace}-auth`, // Overriding value
       cognitoIdpKmsKey: this.kmsKeys.get('cognito-idp-kms-key'),
+      deadLetterQueues: this.sqsDeadLetterQueues,
     };
     const authNestedStack = new AuthNestedStack(this, `${this.props.envName}-auth-nested-stack`, authNestedStackProps);
 
@@ -122,6 +139,7 @@ export class BackEndStack extends Stack {
       userPoolClient: authNestedStack.cognito.userPoolClient,
       cognitoIdpKmsKey: this.kmsKeys.get('cognito-idp-kms-key'),
       vpc: this.vpcConstruct.vpc,
+      deadLetterQueues: this.sqsDeadLetterQueues,
     };
     const easyGenomicsNestedStack = new EasyGenomicsNestedStack(
       this,

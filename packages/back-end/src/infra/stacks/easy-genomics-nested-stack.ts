@@ -84,6 +84,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       iamPolicyStatements: this.iam.policyStatements, // Pass declared Easy Genomics IAM policies for attaching to respective Lambda function
       lambdaFunctionsDir: 'src/app/controllers/easy-genomics',
       lambdaFunctionsNamespace: `${this.props.constructNamespace}`,
+      deadLetterQueue: this.props.deadLetterQueues?.sqsQueues.get('lambda-alert-queue'),
       lambdaFunctionsResources: {
         // Used for setting specific resources for a given Lambda function (e.g. environment settings, trigger events)
         '/easy-genomics/user/create-user-invitation-request': {

@@ -6,10 +6,12 @@ import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Table } from "aws-cdk-lib/aws-dynamodb";
 import { Key } from "aws-cdk-lib/aws-kms";
 import { IVpc } from "aws-cdk-lib/aws-ec2";
+import { SqsConstruct } from "../constructs/sqs-construct";
 
 // Defined the Auth specific props
 export interface AuthNestedStackProps extends BackEndStackProps, NestedStackProps {
     cognitoIdpKmsKey?: Key,
+    deadLetterQueues?: SqsConstruct,
 }
 
 // Defines the Easy Genomics specific props
@@ -19,6 +21,7 @@ export interface EasyGenomicsNestedStackProps extends BackEndStackProps, NestedS
     userPoolClient?: UserPoolClient,
     iamPolicyStatements?: Map<string, PolicyStatement[]>,
     cognitoIdpKmsKey?: Key,
+    deadLetterQueues?: SqsConstruct,
     vpc?: IVpc,
 }
 

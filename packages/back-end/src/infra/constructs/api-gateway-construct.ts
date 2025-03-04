@@ -1,6 +1,7 @@
 import { ACCESS_CONTROL_ALLOW_HEADERS } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { aws_apigateway, RemovalPolicy, StackProps } from 'aws-cdk-lib';
 import { EndpointType, Period, RestApi, UsagePlan } from 'aws-cdk-lib/aws-apigateway';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 
 export interface ApiGatewayConstructProps extends StackProps {
@@ -17,6 +18,9 @@ export class ApiGatewayConstruct extends Construct {
   constructor(scope: Construct, id: string, props: ApiGatewayConstructProps) {
     super(scope, id);
 
+    // Create log group for API Gateway
+    const logGroup = new logs.LogGroup(this, `${id}-access-log`);
+
     // Create API Gateway and register Lambda Functions & REST API request type
     this.restApi = new aws_apigateway.RestApi(this, id, {
       description: props.description,
@@ -30,6 +34,20 @@ export class ApiGatewayConstruct extends Construct {
         allowHeaders: ACCESS_CONTROL_ALLOW_HEADERS,
       },
       cloudWatchRoleRemovalPolicy: RemovalPolicy.DESTROY,
+      deployOptions: {
+        accessLogDestination: new aws_apigateway.LogGroupLogDestination(logGroup),
+        accessLogFormat: aws_apigateway.AccessLogFormat.jsonWithStandardFields({
+          caller: false,
+          httpMethod: true,
+          ip: true,
+          protocol: true,
+          requestTime: true,
+          resourcePath: true,
+          responseLength: true,
+          status: true,
+          user: true,
+        }),
+      },
     });
     // const apiKey: IApiKey = this.restApi.addApiKey(`${id}-apikey`);
     const usagePlan: UsagePlan = this.restApi.addUsagePlan(`${id}-usageplan`, {

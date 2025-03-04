@@ -1,5 +1,6 @@
 import { NestedStack } from 'aws-cdk-lib';
 import { Effect, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
@@ -38,6 +39,21 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         NAME_PREFIX: this.props.namePrefix,
       },
     });
+
+    NagSuppressions.addResourceSuppressions(
+      this,
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Need access to all omics runs and workflows',
+          appliesTo: [
+            `Resource::arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`,
+            `Resource::arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
+          ],
+        },
+      ],
+      true,
+    );
   }
 
   // AWS HealthOmics specific IAM policies

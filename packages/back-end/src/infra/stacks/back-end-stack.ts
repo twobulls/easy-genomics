@@ -104,6 +104,22 @@ export class BackEndStack extends Stack {
       ],
       true,
     );
+
+    // Lab Runs processor needs access to read omics runs
+    NagSuppressions.addResourceSuppressionsByPath(
+      this,
+      [
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.envName}-easy-genomics-nested-stack/${this.props.namePrefix}-easy-genomics/${this.props.namePrefix}-easy-genomics-process-update-laboratory-run/ServiceRole/DefaultPolicy/Resource`,
+      ],
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Needs access to all omics runs to fetch their current status',
+          appliesTo: [`Resource::arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
+        },
+      ],
+      true,
+    );
   }
 
   private initiateNestedStacks = () => {

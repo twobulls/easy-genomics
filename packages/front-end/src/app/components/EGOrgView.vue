@@ -287,22 +287,21 @@
   const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-6 mt-0',
+      base: '!flex rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {
-        wrapper: 'duration-200 ease-out absolute bottom-0 ',
-        base: 'absolute bottom-0 rounded-none h-0.5',
-        background: 'bg-primary',
-        shadow: 'shadow-none',
+        background: '',
+        shadow: '',
       },
       tab: {
-        base: 'font-serif w-auto inline-flex justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:opacity-75 duration-200 ease-out mr-16',
-        active: 'text-primary h-14',
-        inactive: 'font-serif',
-        height: 'h-14',
-        padding: 'p-0',
-        size: 'text-lg',
+        base: 'font-serif w-auto mr-3 rounded-xl border border-solid',
+        background: '',
+        active: 'text-white bg-primary border-primary',
+        inactive: 'font-serif text-text-body border-background-dark-grey',
+        height: '',
+        padding: 'px-5 py-2',
+        size: 'text-sm',
       },
     },
   };
@@ -316,6 +315,7 @@
     :show-back="true"
     :is-loading="isLoading"
     :skeleton-config="{ titleLines: 1, descriptionLines: 1 }"
+    show-org-breadcrumb
   >
     <EGButton label="Invite users" @click="() => (showInviteModule = !showInviteModule)" />
     <div class="mt-2 w-[500px]" v-if="showInviteModule">

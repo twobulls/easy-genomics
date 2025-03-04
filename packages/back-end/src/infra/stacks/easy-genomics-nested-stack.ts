@@ -1058,8 +1058,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table/index/*`,
         ],
-        actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
+        actions: ['dynamodb:Query', 'dynamodb:GetItem', 'dynamodb:PutItem'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({

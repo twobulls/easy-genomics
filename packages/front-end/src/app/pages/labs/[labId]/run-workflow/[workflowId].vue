@@ -45,13 +45,19 @@
 
   const loading = computed<boolean>(() => uiStore.isRequestPending('loadOmicsWorkflow'));
 
-  onBeforeMount(loadWorkflow);
-  onMounted(initializeWorkflowData);
+  onBeforeMount(initializeWorkflowData);
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
    */
   onBeforeRouteLeave((to, from, next) => {
+    const noConfirmRoutes = ['/signin'];
+
+    if (noConfirmRoutes.some((route) => to.path.startsWith(route))) {
+      next(true);
+      return;
+    }
+
     if (hasLaunched.value) {
       // if the pipeline has launched no need to confirm cancel
       next(true);
@@ -67,17 +73,6 @@
       next(true);
     }
   });
-
-  async function loadWorkflow(): Promise<void> {
-    // the store will contain the minimal workflow objects (only some basic fields, not everything) from the list call
-    // this will overwrite the current workflow with the full workflow details for all the child components to use
-    uiStore.setRequestPending('loadOmicsWorkflow');
-    try {
-      omicsWorkflowsStore.workflows[workflowId] = await $api.omicsWorkflows.get(labId, workflowId);
-    } finally {
-      uiStore.setRequestComplete('loadOmicsWorkflow');
-    }
-  }
 
   function confirmCancel() {
     exitConfirmed.value = true;
@@ -96,10 +91,26 @@
       transactionId: omicsRunTempId.value,
     });
 
+    const omicsWorkflow: ReadWorkflow = await $api.omicsWorkflows.get(labId, workflowId);
+    omicsWorkflowsStore.workflows[workflowId] = omicsWorkflow;
+
+    // Identify AWS HealthOmics workflow schema required parameters
+    const paramsRequired: string[] = Object.entries(omicsWorkflow.parameterTemplate)
+      .map((param: [string, object]) => {
+        const paramName: string = param[0];
+        const paramDetails: object = param[1];
+
+        if (paramDetails.optional === false) {
+          return paramName;
+        }
+      })
+      .filter((_) => _ != undefined);
+
     // initialize params if they aren't present already
     if (!runStore.wipOmicsRuns[omicsRunTempId.value].params) {
       runStore.updateWipOmicsRun(omicsRunTempId.value, {
         params: {},
+        paramsRequired: paramsRequired,
       });
     }
   }
@@ -129,6 +140,9 @@
     :show-back="!hasLaunched"
     :back-action="() => (nextRoute = `/labs/${labId}?tab=HealthOmics+Workflows`)"
     back-button-label="Exit Run"
+    show-org-breadcrumb
+    show-lab-breadcrumb
+    :breadcrumbs="[workflow?.name]"
   />
 
   <template v-if="loading">

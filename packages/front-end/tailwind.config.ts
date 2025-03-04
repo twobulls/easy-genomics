@@ -5,6 +5,7 @@ export default <Partial<Config>>{
     fontFamily: {
       serif: ['PlusJakartaSans', 'serif'], // heading font; translates to Tailwind class 'font-sans'
       sans: ['Inter', 'sans-serif'], // body font; translates to Tailwind class 'font-serif'
+      schibsted: ['SchibstedGrotesk', 'sans-serif'], // used in a couple places including sign in page
     },
     extend: {
       colors: {

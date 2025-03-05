@@ -55,9 +55,7 @@
 
   const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
 
-  const wipRun = computed<WipSeqeraRunData & WipOmicsRunData>(() =>
-    getWipRunForPlatform(props.platform, props.wipRunTempId),
-  );
+  const wipRun = computed<WipRun>(() => getWipRunForPlatform(props.platform, props.wipRunTempId));
 
   // when the wipRun is loaded and has a runName value, fill it into the box
   watch(

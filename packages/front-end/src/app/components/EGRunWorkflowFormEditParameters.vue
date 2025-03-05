@@ -1,6 +1,5 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { WipOmicsRunData } from '@FE/stores/run';
   import { useToastStore } from '@FE/stores';
 
   const props = defineProps<{
@@ -17,7 +16,7 @@
   const labsStore = useLabsStore();
   const omicsWorklowsStore = useOmicsWorkflowsStore();
 
-  const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[props.omicsRunTempId]);
+  const wipOmicsRun = computed<WipRun | undefined>(() => runStore.wipOmicsRuns[props.omicsRunTempId]);
 
   const labName = computed<string | null>(() => labsStore.labs[props.labId]?.Name || null);
   const workflowName = computed<string | null>(() => omicsWorklowsStore.workflows[props.workflowId]?.name || null);

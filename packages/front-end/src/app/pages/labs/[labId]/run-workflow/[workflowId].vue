@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { ReadWorkflow } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
   import { useRunStore } from '@FE/stores';
-  import { WipOmicsRunData } from '@FE/stores/run';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { WorkflowParameter } from '@aws-sdk/client-omics';
   import { v4 as uuidv4 } from 'uuid';
@@ -33,7 +32,7 @@
 
   const omicsRunTempId = computed<string>(() => $route.query.omicsRunTempId as string);
 
-  const wipOmicsRun = computed<WipOmicsRunData | null>(() => runStore.wipOmicsRuns[omicsRunTempId.value] || null);
+  const wipOmicsRun = computed<WipRun | null>(() => runStore.wipOmicsRuns[omicsRunTempId.value] || null);
 
   const workflow = computed<ReadWorkflow | null>(() => omicsWorkflowsStore.workflows[workflowId] || null);
 

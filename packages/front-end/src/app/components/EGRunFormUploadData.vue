@@ -71,9 +71,7 @@
 
   const labName = computed<string | null>(() => labsStore.labs[props.labId]?.Name || null);
 
-  const wipRun = computed<WipSeqeraRunData & WipOmicsRunData>(() =>
-    getWipRunForPlatform(props.platform, props.wipRunTempId),
-  );
+  const wipRun = computed<WipRun>(() => getWipRunForPlatform(props.platform, props.wipRunTempId));
 
   const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
 

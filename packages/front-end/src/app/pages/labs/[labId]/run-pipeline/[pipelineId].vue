@@ -33,7 +33,7 @@
 
   const seqeraRunTempId = computed<string>(() => $route.query.seqeraRunTempId as string);
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId.value]);
+  const wipSeqeraRun = computed<WipRun | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId.value]);
 
   const pipeline = computed<SeqeraPipeline | null>(() => seqeraPipelinesStore.pipelines[pipelineId] || null);
 

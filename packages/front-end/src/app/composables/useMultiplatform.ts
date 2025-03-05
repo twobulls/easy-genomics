@@ -22,7 +22,7 @@ export function useMultiplatform() {
     return platform === 'Seqera Cloud' ? runStore.updateWipSeqeraRun : runStore.updateWipOmicsRun;
   }
 
-  function getWipRunForPlatform(platform: RunType, wipRunTempId: string): WipSeqeraRunData & WipOmicsRunData {
+  function getWipRunForPlatform(platform: RunType, wipRunTempId: string): WipRun {
     if (!['Seqera Cloud', 'AWS HealthOmics'].includes(platform)) {
       throw new Error(`${platform} is not a valid platform`);
     }

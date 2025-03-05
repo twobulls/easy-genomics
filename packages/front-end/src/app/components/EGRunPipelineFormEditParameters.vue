@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useRunStore, useToastStore } from '@FE/stores';
-  import { WipSeqeraRunData } from '@FE/stores/run';
   import StringField from './EGParametersStringField.vue';
   import NumberField from './EGParametersNumberField.vue';
   import BooleanField from './EGParametersBooleanField.vue';
@@ -20,7 +19,7 @@
   const labsStore = useLabsStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
+  const wipSeqeraRun = computed<WipRun | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
 
   const labName = computed<string | null>(() => labsStore.labs[props.labId]?.Name || null);
   const pipelineName = computed<string | null>(() => seqeraPipelinesStore.pipelines[props.pipelineId]?.name || null);

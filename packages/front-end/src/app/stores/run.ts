@@ -11,18 +11,7 @@ The WIP run is a construct for storing all of the data for a pipeline run that's
 launched yet. They're addressed by a temp id, which is generated on pipeline click and stored as a query parameter. This
 allows multiple runs to be configured simultaneously without overwriting each other.
 */
-export interface WipSeqeraRunData {
-  transactionId?: string;
-  runName?: string;
-  params?: object;
-  sampleSheetS3Url?: string;
-  s3Bucket?: string;
-  s3Path?: string;
-  files?: FilePair[];
-  paramsRequired: string[];
-}
-
-export interface WipOmicsRunData {
+export interface WipRun {
   transactionId?: string;
   runName?: string;
   params?: object;
@@ -44,14 +33,14 @@ interface RunState {
   // ordered lists for Seqera runs by lab
   seqeraRunIdsByLab: Record<string, string[]>;
   // configs of new Seqera runs yet to be launched
-  wipSeqeraRuns: Record<string, WipSeqeraRunData>;
+  wipSeqeraRuns: Record<string, WipRun>;
 
   // lookup object for Omics runs
   omicsRuns: Record<string, Record<string, OmicsRun>>;
   // ordered lists for Omics runs by lab
   omicsRunIdsByLab: Record<string, string[]>;
   // configs of new Omics runs yet to be launched
-  wipOmicsRuns: Record<string, WipOmicsRunData>;
+  wipOmicsRuns: Record<string, WipRun>;
 }
 
 const initialState = (): RunState => ({
@@ -152,7 +141,7 @@ const useRunStore = defineStore('runStore', {
       this.seqeraRuns[labId][run.id] = run;
     },
 
-    updateWipSeqeraRun(tempId: string, updates: Partial<WipSeqeraRunData>): void {
+    updateWipSeqeraRun(tempId: string, updates: Partial<WipRun>): void {
       const existingWipRun = this.wipSeqeraRuns[tempId] || {};
       const existingParams = existingWipRun.params || {};
       this.wipSeqeraRuns[tempId] = {
@@ -204,7 +193,7 @@ const useRunStore = defineStore('runStore', {
       this.omicsRuns[labId][runId] = run;
     },
 
-    updateWipOmicsRun(tempId: string, updates: Partial<WipOmicsRunData>): void {
+    updateWipOmicsRun(tempId: string, updates: Partial<WipRun>): void {
       const existingWipRun = this.wipOmicsRuns[tempId] || {};
       const existingParams = existingWipRun.params || {};
       this.wipOmicsRuns[tempId] = {

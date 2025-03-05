@@ -25,7 +25,7 @@
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
+  const wipSeqeraRun = computed<WipRun | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
   const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
 
   // Explicitly remove Seqera pipeline paramsText properties that contain variable references

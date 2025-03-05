@@ -110,10 +110,7 @@
             :required="wipOmicsRun.paramsRequired.includes(schemaField.name)"
           >
             <EGParametersStringField
-              :name="''"
-              :details="{
-                description: schemaField.description,
-              }"
+              :description="schemaField.description"
               v-model="localProps.params[schemaField.name]"
             />
           </EGFormGroup>

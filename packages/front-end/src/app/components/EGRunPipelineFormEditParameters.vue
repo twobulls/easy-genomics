@@ -168,8 +168,8 @@
               >
                 <component
                   :is="componentForType(propertyDetail)"
-                  :name="propertyName"
-                  :details="propertyDetail"
+                  :description="propertyDetail.description"
+                  :helpText="propertyDetail.help_text"
                   v-model="runStore.wipSeqeraRuns[props.seqeraRunTempId].params[propertyName]"
                 />
               </EGFormGroup>

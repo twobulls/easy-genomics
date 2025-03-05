@@ -18,7 +18,6 @@ export type UploadedFileInfo = {
   Bucket: string;
   Key: string;
   Region: string;
-  S3Url: string;
 };
 
 export type SampleSheetResponse = {

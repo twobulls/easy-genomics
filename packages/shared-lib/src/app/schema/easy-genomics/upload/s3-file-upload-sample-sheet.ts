@@ -7,7 +7,6 @@ export const UploadedFileInfoSchema = z
     Bucket: z.string(),
     Key: z.string(),
     Region: z.string(),
-    S3Url: z.string(),
   })
   .strict();
 

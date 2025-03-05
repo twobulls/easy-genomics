@@ -399,13 +399,11 @@
 
     uploadManifest.Files.forEach((file: FileUploadInfo) => {
       const { Bucket, Key, Name, Region } = file;
-      const s3Uri = `s3://${Bucket}/${Key}`;
 
       const uploadFileInfo: UploadedFileInfo = {
         Bucket,
         Key,
         Region,
-        S3Url: s3Uri,
       };
 
       const sampleId = getSampleIdFromRFileName(Name);

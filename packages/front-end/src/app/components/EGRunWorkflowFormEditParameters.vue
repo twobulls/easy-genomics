@@ -6,6 +6,8 @@
   const props = defineProps<{
     schema: object;
     params: object;
+    labId: string;
+    workflowId: string;
     omicsRunTempId: string;
   }>();
 
@@ -17,10 +19,8 @@
 
   const wipOmicsRun = computed<WipOmicsRunData | undefined>(() => runStore.wipOmicsRuns[props.omicsRunTempId]);
 
-  const labName = computed<string | null>(() => labsStore.labs[wipOmicsRun.value?.laboratoryId || '']?.Name || null);
-  const workflowName = computed<string | null>(
-    () => omicsWorklowsStore.workflows[wipOmicsRun.value?.workflowId || '']?.name || null,
-  );
+  const labName = computed<string | null>(() => labsStore.labs[props.labId]?.Name || null);
+  const workflowName = computed<string | null>(() => omicsWorklowsStore.workflows[props.workflowId]?.name || null);
 
   type SchemaItem = {
     name: string;
@@ -89,7 +89,7 @@
   <EGS3SampleSheetBar
     v-if="wipOmicsRun?.sampleSheetS3Url"
     :url="wipOmicsRun.sampleSheetS3Url"
-    :lab-id="wipOmicsRun.laboratoryId"
+    :lab-id="props.labId"
     :lab-name="labName"
     :pipeline-or-workflow-name="workflowName"
     :run-name="wipOmicsRun.runName"

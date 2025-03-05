@@ -79,13 +79,11 @@
    */
   async function initializePipelineData() {
     runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
-      laboratoryId: labId,
-      pipelineId: pipelineId,
       transactionId: seqeraRunTempId.value,
     });
 
     const pipelineSchemaResponse: DescribePipelineSchemaResponse = await $api.seqeraPipelines.readPipelineSchema(
-      pipelineId,
+      parseInt(pipelineId),
       labId,
     );
     const originalSchema = JSON.parse(pipelineSchemaResponse.schema);
@@ -345,6 +343,8 @@
           <EGRunPipelineFormEditParameters
             :params="wipSeqeraRun?.params"
             :schema="schema"
+            :lab-id="labId"
+            :pipeline-id="pipelineId"
             :seqera-run-temp-id="seqeraRunTempId"
             @next-step="() => nextStep('review')"
             @previous-step="() => previousStep()"

@@ -9,6 +9,8 @@
   const props = defineProps<{
     schema: object;
     params: object;
+    labId: string;
+    pipelineId: string;
     seqeraRunTempId: string;
   }>();
 
@@ -20,10 +22,8 @@
 
   const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
 
-  const labName = computed<string | null>(() => labsStore.labs[wipSeqeraRun.value?.laboratoryId || '']?.Name || null);
-  const pipelineName = computed<string | null>(
-    () => seqeraPipelinesStore.pipelines[wipSeqeraRun.value?.pipelineId || '']?.name || null,
-  );
+  const labName = computed<string | null>(() => labsStore.labs[props.labId]?.Name || null);
+  const pipelineName = computed<string | null>(() => seqeraPipelinesStore.pipelines[props.pipelineId]?.name || null);
 
   const localProps = reactive({
     schema: props.schema,
@@ -118,7 +118,7 @@
   <EGS3SampleSheetBar
     v-if="wipSeqeraRun?.sampleSheetS3Url"
     :url="wipSeqeraRun.sampleSheetS3Url"
-    :lab-id="wipSeqeraRun.laboratoryId"
+    :lab-id="props.labId"
     :lab-name="labName"
     :pipeline-or-workflow-name="pipelineName"
     :run-name="wipSeqeraRun.runName"
@@ -160,11 +160,7 @@
           :key="`section-${sectionIndex}`"
           v-show="activeSection === section.title"
         >
-          <div
-            v-for="(propertyDetail, propertyName) in section.properties"
-            :key="propertyName"
-            class="mb-6"
-          >
+          <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
             <template v-if="!propertyDetail?.hidden">
               <EGFormGroup
                 :label="propertyName"

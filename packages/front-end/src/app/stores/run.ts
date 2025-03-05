@@ -12,8 +12,6 @@ launched yet. They're addressed by a temp id, which is generated on pipeline cli
 allows multiple runs to be configured simultaneously without overwriting each other.
 */
 export interface WipSeqeraRunData {
-  laboratoryId?: string;
-  pipelineId?: string;
   transactionId?: string;
   runName?: string;
   params?: object;
@@ -25,8 +23,6 @@ export interface WipSeqeraRunData {
 }
 
 export interface WipOmicsRunData {
-  laboratoryId?: string;
-  workflowId?: string;
   transactionId?: string;
   runName?: string;
   params?: object;

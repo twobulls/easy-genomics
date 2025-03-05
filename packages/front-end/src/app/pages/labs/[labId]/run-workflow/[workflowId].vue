@@ -86,8 +86,6 @@
     uiStore.setRequestPending('loadOmicsWorkflow');
 
     runStore.updateWipOmicsRun(omicsRunTempId.value, {
-      laboratoryId: labId!,
-      workflowId: workflowId!,
       transactionId: omicsRunTempId.value,
     });
 
@@ -314,6 +312,8 @@
             <EGRunWorkflowFormEditParameters
               :params="wipOmicsRun?.params"
               :schema="schema"
+              :lab-id="labId"
+              :workflow-id="workflowId"
               :omics-run-temp-id="omicsRunTempId"
               @next-step="() => nextStep('review')"
               @previous-step="() => previousStep()"

@@ -79,7 +79,7 @@
 
       try {
         const labRunRequest = {
-          'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
+          'LaboratoryId': props.labId,
           'RunId': wipSeqeraRun.value?.transactionId,
           'RunName': wipSeqeraRun.value?.runName,
           'Platform': 'Seqera Cloud',

@@ -100,8 +100,8 @@
     { deep: true },
   );
 
-  function componentForType(property: { type: 'string' | 'integer' | 'number' | 'boolean' }) {
-    switch (property.type) {
+  function componentForType(propertyType: 'string' | 'integer' | 'number' | 'boolean') {
+    switch (propertyType) {
       case 'string':
         return StringField;
       case 'integer':
@@ -167,9 +167,9 @@
                 :required="runStore.wipSeqeraRuns[props.seqeraRunTempId].paramsRequired.includes(propertyName)"
               >
                 <component
-                  :is="componentForType(propertyDetail)"
-                  :name="propertyName"
-                  :details="propertyDetail"
+                  :is="componentForType(propertyDetail.type)"
+                  :description="propertyDetail.description"
+                  :helpText="propertyDetail.help_text"
                   v-model="runStore.wipSeqeraRuns[props.seqeraRunTempId].params[propertyName]"
                 />
               </EGFormGroup>

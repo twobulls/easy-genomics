@@ -412,13 +412,11 @@
 
     uploadManifest.Files.forEach((file: FileUploadInfo) => {
       const { Bucket, Key, Name, Region } = file;
-      const s3Uri = `s3://${Bucket}/${Key}`;
 
       const uploadFileInfo: UploadedFileInfo = {
         Bucket,
         Key,
         Region,
-        S3Url: s3Uri,
       };
 
       const sampleId = getSampleIdFromRFileName(Name);
@@ -797,9 +795,9 @@
 
     <div class="files-list mb-6" v-if="filesForTable.length > 0">
       <div class="files-list-header text-body mb-4 border-b border-[#d9d9d9]">
-        <div class="file-cell sample-id w-[30%]">Sample ID</div>
-        <div class="file-cell w-[60%]">Sample File</div>
-        <div class="file-cell w-[10%]"></div>
+        <div class="file-cell sample-id flex w-[30%] min-w-[240px]">Sample ID</div>
+        <div class="file-cell flex w-[60%] min-w-[320px]">Sample File</div>
+        <div class="file-cell flex w-[10%] min-w-[70px]"></div>
       </div>
       <div class="files-list-body">
         <div
@@ -816,12 +814,12 @@
                   : '#f7f7f7',
           }"
         >
-          <div class="file-cell sample-id text-body w-[30%]">
+          <div class="file-cell sample-id text-body flex w-[30%] min-w-[240px] items-center">
             <div v-if="!row.error" class="truncate">{{ row.sampleId }}</div>
             <div v-else class="text-alert-danger-dark mr-1 truncate font-medium">(Upload Failed)</div>
           </div>
           <div
-            class="file-cell flex w-[60%] items-center"
+            class="file-cell flex w-[60%] min-w-[320px] items-center"
             :style="{ color: row.progress === 100 && !row.error ? '#306239' : 'inherit' }"
           >
             <template v-if="row.error">
@@ -830,10 +828,11 @@
             <div class="truncate">{{ row.fileName }}</div>
           </div>
 
-          <div class="file-cell flex w-[10%] items-center justify-end gap-4">
+          <div class="file-cell flex w-[10%] min-w-[70px] items-center justify-end gap-4">
             <!-- retry button -->
             <button
               v-if="row.error"
+              class="flex items-center"
               :class="[canRetryUpload(row) ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
               @click="retryUpload(row)"
               :disabled="!isOnline || !canRetryUpload(row)"
@@ -852,7 +851,7 @@
             <!-- cancel upload button -->
             <button
               v-if="!row.error && row.progress && row.progress < 100"
-              class="text-gray-500 hover:text-gray-700"
+              class="flex items-center text-gray-500 hover:text-gray-700"
               @click="cancelUpload(row.fileName)"
             >
               <UIcon name="i-heroicons-x-mark" size="20" />
@@ -860,6 +859,7 @@
 
             <!-- delete button -->
             <button
+              class="flex items-center"
               :disabled="!isOnline || uploadStatus === 'uploading'"
               :class="[
                 isOnline && uploadStatus !== 'uploading'

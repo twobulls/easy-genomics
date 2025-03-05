@@ -2,6 +2,9 @@
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useRunStore, useToastStore } from '@FE/stores';
   import { WipSeqeraRunData } from '@FE/stores/run';
+  import StringField from './EGParametersStringField.vue';
+  import NumberField from './EGParametersNumberField.vue';
+  import BooleanField from './EGParametersBooleanField.vue';
 
   const props = defineProps<{
     schema: object;
@@ -97,6 +100,18 @@
     },
     { deep: true },
   );
+
+  function componentForType(property: { type: 'string' | 'integer' | 'number' | 'boolean' }) {
+    switch (property.type) {
+      case 'string':
+        return StringField;
+      case 'integer':
+      case 'number':
+        return NumberField;
+      case 'boolean':
+        return BooleanField;
+    }
+  }
 </script>
 
 <template>
@@ -140,19 +155,32 @@
       >
         <EGText tag="h4" class="mb-4">{{ section.title }}</EGText>
 
-        <EGRunPipelineParameterInputs
+        <div
           v-for="(section, sectionIndex) in Object.values(schemaDefinitions)"
           :key="`section-${sectionIndex}`"
           v-show="activeSection === section.title"
-          :section="<Object>section"
-          :params="localProps.params"
-          :seqera-run-temp-id="props.seqeraRunTempId"
-          @update:params="
-            (val) => {
-              localProps.params = { ...val }; // Ensure reactivity on update
-            }
-          "
-        />
+        >
+          <div
+            v-for="(propertyDetail, propertyName) in section.properties"
+            :key="propertyName"
+            class="mb-6"
+          >
+            <template v-if="!propertyDetail?.hidden">
+              <EGFormGroup
+                :label="propertyName"
+                :name="propertyName"
+                :required="runStore.wipSeqeraRuns[props.seqeraRunTempId].paramsRequired.includes(propertyName)"
+              >
+                <component
+                  :is="componentForType(propertyDetail)"
+                  :name="propertyName"
+                  :details="propertyDetail"
+                  v-model="runStore.wipSeqeraRuns[props.seqeraRunTempId].params[propertyName]"
+                />
+              </EGFormGroup>
+            </template>
+          </div>
+        </div>
 
         <div class="mt-12 flex justify-end">
           <EGButton

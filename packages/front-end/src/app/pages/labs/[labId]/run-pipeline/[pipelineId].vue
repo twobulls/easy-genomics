@@ -356,7 +356,9 @@
           <EGRunPipelineFormReview
             :schema="schema"
             :params="wipSeqeraRun?.params"
+            :lab-id="labId"
             :pipeline-id="pipelineId"
+            :seqera-run-temp-id="seqeraRunTempId"
             @submit-launch-request="() => handleSubmitLaunchRequest()"
             @submit-launch-request-error="() => handleSubmitLaunchRequestError()"
             @has-launched="() => handleLaunchSuccess()"

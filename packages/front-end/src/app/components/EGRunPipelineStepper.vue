@@ -50,46 +50,36 @@
     },
   ]);
 
-  const EGStepperTabsStyles = {
+  // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
+  //  Tailwind won't pick up and include the classes used and styles will be missing.
+  // To keep the tab styling consistent throughout the app, any changes made here need to be duplicated to all other
+  //  UTabs that use an "EGTabsStyles" as input to the :ui attribute.
+  const EGTabsStyles = {
     base: 'focus:outline-none',
     list: {
-      base: 'rounded-none mb-4 mt-0',
+      base: '!flex rounded-none mb-6 mt-0',
       padding: 'p-0',
       height: 'h-14',
       marker: {
-        wrapper: 'focus:outline-none',
-        base: 'absolute top-[0px] h-[4px]  rounded-none z-10',
-        background: 'bg-primary',
-        shadow: 'shadow-none',
-      },
-      size: {
-        sm: 'text-lg',
+        background: '',
+        shadow: '',
       },
       tab: {
-        base: '!text-base border-t-4 border-primary-muted rounded-none w-auto mr-4 inline-flex font-heading justify-start ui-focus-visible:outline-0 ui-focus-visible:ring-2 ui-focus-visible:ring-primary-500 ui-not-focus-visible:outline-none focus:outline-none disabled:cursor-not-allowed disabled:text-opacity-50 ',
-        active: 'text-primary h-14',
-        inactive: 'text-heading',
-        height: 'h-14',
-        padding: 'p-0',
+        base: 'font-serif w-auto mr-3 rounded-xl border border-solid',
+        background: '',
+
+        // TODO: this is a hotfix for what seems to be a bug with UTabs where it reports the wrong tab as selected
+        // we have to handle the styling manually ourselves
+        // active: 'text-white bg-primary border-primary',
+        active: '',
+
+        inactive: 'font-serif text-text-body border-background-dark-grey',
+        height: '',
+        padding: 'px-5 py-2',
+        size: 'text-sm',
       },
     },
   };
-
-  const selected = computed({
-    get() {
-      return clampIndex(selectedIndex.value);
-    },
-    set(index) {
-      if (!isStepValid(items.value[index].key)) {
-        for (let i = index; i < items.value.length; i++) {
-          setStepEnabled(items.value[i].key, false);
-        }
-      } else {
-        enableSelectedItem(index);
-        selectedIndex.value = index;
-      }
-    },
-  });
 
   /**
    * Set the enabled state of a step in the stepper
@@ -118,26 +108,9 @@
     }
   }
 
-  function enableSelectedItem(index: number) {
-    const selectedItem = items.value.find((_, i) => i === index);
-    if (selectedItem?.disabled) {
-      selectedItem.disabled = false;
-    }
-  }
-
-  function isStepValid(step: string) {
-    const stepItem = items.value.find((item) => item.key === step);
-
-    if (!stepItem) {
-      return false;
-    }
-
-    return !stepItem.disabled;
-  }
-
   function nextStep(val: string) {
     setStepEnabled(val, true);
-    selected.value = Math.min(items.value.length - 1, selectedIndex.value + 1);
+    selectedIndex.value = clampIndex(selectedIndex.value + 1);
   }
 
   function clampIndex(index: number) {
@@ -145,7 +118,7 @@
   }
 
   function previousStep() {
-    selected.value = clampIndex(selected.value - 1);
+    selectedIndex.value = clampIndex(selectedIndex.value - 1);
   }
 
   function disableAllSteps() {
@@ -176,9 +149,12 @@
 
 <template>
   <div :key="resetKey">
-    <UTabs v-model="selected" :items="items" :ui="EGStepperTabsStyles" class="UTabs">
+    <UTabs :items="items" :ui="EGTabsStyles" class="UTabs" v-model="selectedIndex">
       <template #default="{ item, index, selected }">
-        <div class="relative flex items-center gap-2 truncate">
+        <div
+          class="relative flex items-center gap-2 truncate"
+          :class="selectedIndex === index && !hasLaunched ? 'active-tab' : ''"
+        >
           <UIcon
             v-if="selectedIndex > index || hasLaunched"
             name="i-heroicons-check-20-solid"
@@ -259,3 +235,12 @@
     </template>
   </div>
 </template>
+
+<style scoped lang="scss">
+  // this styling should be handled by the UTabs :ui, but isn't working correctly - see the EGTabsStyles for info
+  :deep(button:has(> .active-tab)) {
+    color: white;
+    background: #5524e0;
+    border: solid 1px #5524e0;
+  }
+</style>

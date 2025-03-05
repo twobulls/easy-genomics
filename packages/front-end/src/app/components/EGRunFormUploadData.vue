@@ -57,10 +57,11 @@
     wipRunTempId: string;
   }>();
 
+  const localProps = reactive(props);
+
   const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
   const MIN_FILE_SIZE = 1; // 1byte
   const UPLOAD_TIMEOUT = 600000; // 10 mins
-  const UPLOAD_RETRY_DELAY = 3000; // 3 second delay helps prevent immediate retry spam and gives time for temporary network issues to resolve
 
   const chooseFilesButton = ref<HTMLButtonElement | null>(null);
   const isDropzoneActive = ref(false);
@@ -70,11 +71,11 @@
 
   const filePairs = computed<FilePair[]>(() => {
     // initialize files if not present
-    if (props.wipRun.files === undefined) {
-      props.wipRun.files = [];
+    if (localProps.wipRun?.files === undefined) {
+      localProps.wipRun.files = [];
     }
 
-    return props.wipRun.files;
+    return localProps.wipRun.files;
   });
 
   const files = computed<FileDetails[]>(() => {
@@ -90,7 +91,7 @@
     files.value.filter((file) => file.error || file.progress !== 100),
   );
 
-  const hasSampleSheetUrl = computed(() => props.wipRun.sampleSheetS3Url);
+  const hasSampleSheetUrl = computed(() => localProps.wipRun.sampleSheetS3Url);
 
   const haveUnmatchedFiles = computed<boolean>(() =>
     filePairs.value.some((filePair) => !filePair.r1File || !filePair.r2File),
@@ -99,15 +100,17 @@
     filePairs.value.some((filePair) => filePair.r1File && filePair.r2File),
   );
 
+  const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
+
+  const areAllPairsComplete = computed<boolean>(() => {
+    return filePairs.value.every((pair) => pair.r1File);
+  });
+
   const canProceedToNextStep = computed<boolean>(() => {
     // Check both conditions:
     // 1. All existing files are uploaded successfully
     // 2. All pairs are complete (have both R1 and R2)
-    return areAllFilesUploaded.value && areAllPairsComplete.value;
-  });
-
-  const areAllPairsComplete = computed<boolean>(() => {
-    return filePairs.value.every((pair) => pair.r1File);
+    return areAllFilesUploaded.value && areAllPairsComplete.value && hasSampleSheetUrl.value;
   });
 
   // overall upload status for all files
@@ -159,9 +162,6 @@
 
     return noInternet || noFiles || hasIncompletePairs || hasBothSinglesAndPairs || isUploading;
   });
-
-  // Add a computed property to check if all file pairs are complete and all files are successfully uploaded
-  const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
 
   // reset files error states
   function clearErrorsFromFiles(files: FileDetails[]) {
@@ -361,6 +361,8 @@
       return;
     }
 
+    toastStore.success('Your files have begun uploading');
+
     await uploadFiles();
 
     await postUploadHook();
@@ -381,7 +383,7 @@
     const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
     // save to wip run
     const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
-    props.wipRunUpdateFunction(props.wipRunTempId, {
+    localProps.wipRunUpdateFunction(localProps.wipRunTempId, {
       sampleSheetS3Url: S3Url,
       s3Bucket: Bucket,
       s3Path: Path,
@@ -397,13 +399,11 @@
 
     uploadManifest.Files.forEach((file: FileUploadInfo) => {
       const { Bucket, Key, Name, Region } = file;
-      const s3Uri = `s3://${Bucket}/${Key}`;
 
       const uploadFileInfo: UploadedFileInfo = {
         Bucket,
         Key,
         Region,
-        S3Url: s3Uri,
       };
 
       const sampleId = getSampleIdFromRFileName(Name);
@@ -454,8 +454,8 @@
 
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     const request: SampleSheetRequest = {
-      LaboratoryId: props.labId,
-      TransactionId: props.wipRun.transactionId || '',
+      LaboratoryId: localProps.labId,
+      TransactionId: localProps.wipRun.transactionId || '',
       UploadedFilePairs: uploadedFilePairs,
     };
     const response = await $api.uploads.getSampleSheetCsv(request);
@@ -464,8 +464,8 @@
 
   async function getUploadFilesManifest(files: FileDetails[]): Promise<FileUploadManifest> {
     const request: FileUploadRequest = {
-      LaboratoryId: props.labId,
-      TransactionId: props.wipRun.transactionId || '',
+      LaboratoryId: localProps.labId,
+      TransactionId: localProps.wipRun.transactionId || '',
       Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 
@@ -671,7 +671,7 @@
 
       // If both files are now undefined, remove the entire pair
       if (!filePair.r1File && !filePair.r2File) {
-        props.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
+        localProps.wipRun.files = filePairs.value.filter((pair) => pair.sampleId !== file.sampleId);
       } else {
         // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
         filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
@@ -780,9 +780,9 @@
 
     <div class="files-list mb-6" v-if="filesForTable.length > 0">
       <div class="files-list-header text-body mb-4 border-b border-[#d9d9d9]">
-        <div class="file-cell sample-id w-[30%]">Sample ID</div>
-        <div class="file-cell w-[60%]">Sample File</div>
-        <div class="file-cell w-[10%]"></div>
+        <div class="file-cell sample-id flex w-[30%] min-w-[240px]">Sample ID</div>
+        <div class="file-cell flex w-[60%] min-w-[320px]">Sample File</div>
+        <div class="file-cell flex w-[10%] min-w-[70px]"></div>
       </div>
       <div class="files-list-body">
         <div
@@ -799,24 +799,25 @@
                   : '#f7f7f7',
           }"
         >
-          <div class="file-cell sample-id text-body w-[30%]">
-            <span v-if="!row.error">{{ row.sampleId }}</span>
-            <span v-else class="text-alert-danger-dark mr-1 font-medium">(Upload Failed)</span>
+          <div class="file-cell sample-id text-body flex w-[30%] min-w-[240px] items-center">
+            <div v-if="!row.error" class="truncate">{{ row.sampleId }}</div>
+            <div v-else class="text-alert-danger-dark mr-1 truncate font-medium">(Upload Failed)</div>
           </div>
           <div
-            class="file-cell flex w-[60%] items-center"
+            class="file-cell flex w-[60%] min-w-[320px] items-center"
             :style="{ color: row.progress === 100 && !row.error ? '#306239' : 'inherit' }"
           >
             <template v-if="row.error">
               <UIcon name="i-heroicons-exclamation-triangle" class="text-alert-danger-dark mr-2" size="20" />
             </template>
-            {{ row.fileName }}
+            <div class="truncate">{{ row.fileName }}</div>
           </div>
-          <div class="file-cell flex w-[10%] items-center justify-end gap-2">
+
+          <div class="file-cell flex w-[10%] min-w-[70px] items-center justify-end gap-4">
             <!-- retry button -->
             <button
               v-if="row.error"
-              class="mr-2"
+              class="flex items-center"
               :class="[canRetryUpload(row) ? 'text-gray-900 hover:text-gray-700' : 'cursor-not-allowed text-gray-400']"
               @click="retryUpload(row)"
               :disabled="!isOnline || !canRetryUpload(row)"
@@ -824,8 +825,26 @@
               <UIcon name="i-heroicons-arrow-path" size="20" />
             </button>
 
+            <!-- complete check -->
+            <UIcon
+              v-if="!row.error && row.progress === 100"
+              size="20"
+              name="i-heroicons-check"
+              class="text-alert-success-text"
+            />
+
+            <!-- cancel upload button -->
+            <button
+              v-if="!row.error && row.progress && row.progress < 100"
+              class="flex items-center text-gray-500 hover:text-gray-700"
+              @click="cancelUpload(row.fileName)"
+            >
+              <UIcon name="i-heroicons-x-mark" size="20" />
+            </button>
+
             <!-- delete button -->
             <button
+              class="flex items-center"
               :disabled="!isOnline || uploadStatus === 'uploading'"
               :class="[
                 isOnline && uploadStatus !== 'uploading'
@@ -836,30 +855,19 @@
             >
               <UIcon name="i-heroicons-trash" size="20" />
             </button>
-
-            <!-- complete check -->
-            <UIcon
-              v-if="!row.error && row.progress === 100"
-              size="20"
-              name="i-heroicons-check"
-              class="text-alert-success-text"
-            />
-            <button v-else class="text-gray-500 hover:text-gray-700" @click="cancelUpload(row.fileName)">
-              <UIcon name="i-heroicons-x" size="20" />
-            </button>
           </div>
         </div>
       </div>
     </div>
 
     <EGS3SampleSheetBar
-      v-if="hasSampleSheetUrl"
+      v-if="uploadStatus === 'success'"
       :disabled="uploadStatus === 'uploading'"
-      :url="props.wipRun.sampleSheetS3Url"
-      :lab-id="props.labId"
-      :lab-name="props.labName"
-      :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
-      :run-name="props.wipRun.runName"
+      :url="localProps.wipRun.sampleSheetS3Url"
+      :lab-id="localProps.labId"
+      :lab-name="localProps.labName"
+      :pipeline-or-workflow-name="localProps.pipelineOrWorkflowName"
+      :run-name="localProps.wipRun.runName"
     />
 
     <div class="flex justify-end pt-4">
@@ -870,10 +878,10 @@
         label="Download sample sheet"
         @click="
           downloadSampleSheet(
-            props.labId,
-            props.wipRun.sampleSheetS3Url,
-            props.pipelineOrWorkflowName,
-            props.wipRun.runName,
+            localProps.labId,
+            localProps.wipRun.sampleSheetS3Url,
+            localProps.pipelineOrWorkflowName,
+            localProps.wipRun.runName,
           )
         "
       />
@@ -889,12 +897,14 @@
   <div class="mt-6 flex justify-between">
     <EGButton :size="ButtonSizeEnum.enum.sm" variant="secondary" label="Previous step" @click="emit('previous-step')" />
     <EGButton
+      v-if="filePairs.length"
       :size="ButtonSizeEnum.enum.sm"
       variant="primary"
-      :label="filePairs.length ? 'Next step' : 'Skip'"
+      label="Next step"
       @click="emit('next-step')"
       :disabled="!canProceedToNextStep"
     />
+    <EGButton v-else :size="ButtonSizeEnum.enum.sm" variant="primary" label="Skip" @click="emit('next-step')" />
   </div>
 </template>
 

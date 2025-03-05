@@ -40,19 +40,27 @@
         base: 'fixed inset-0 transition-opacity backdrop-blur-[5px]',
         background: 'bg-gray-800/30',
       },
+      rounded: 'rounded-3xl',
     }"
     :modelValue="modelValue"
     @update:modelValue="(value) => emit('update:modelValue', value)"
     prevent-close
   >
-    <UCard>
+    <UCard
+      :ui="{
+        base: 'p-10',
+        rounded: 'rounded-3xl',
+        header: {
+          padding: '',
+        },
+      }"
+    >
       <template #header>
         <div class="flex flex-col">
           <div class="flex">
             <EGText tag="h3" class="mb-6">{{ primaryMessage }}</EGText>
             <div>
               <UButton
-                v-if="canCancel"
                 @click="handleCancel"
                 icon="i-heroicons-x-mark"
                 class="hover:bg-background-dark-grey ml-2"

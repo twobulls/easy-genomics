@@ -1,7 +1,6 @@
 <script setup lang="ts">
   const props = defineProps<{
     modelValue: number;
-    name?: string;
     description?: string;
     helpText?: string;
   }>();
@@ -9,7 +8,6 @@
 
 <template>
   <div>
-    <EGText v-if="name" tag="p">{{ name }}</EGText>
     <EGText v-if="description" tag="small">{{ description }}</EGText>
     <EGInput
       type="number"

@@ -115,11 +115,33 @@
       ...originalSchema,
       $defs: filteredDefinitions,
     };
+
+    // create an object with all non-hidden fields' default values
+    function defaultVal(type: 'string' | 'number' | 'boolean'): '' | 0 | false {
+      switch (type) {
+        case 'string':
+          return '';
+        case 'number':
+          return 0;
+        case 'boolean':
+          return false;
+      }
+    }
+    const schemaDefaults: any = {};
+    for (const sectionKey of Object.keys(filteredDefinitions)) {
+      const section: any = filteredDefinitions[sectionKey];
+      for (const propertyKey of Object.keys(section.properties)) {
+        const property: any = section.properties[propertyKey];
+        schemaDefaults[propertyKey] = defaultVal(property.type);
+      }
+    }
+
     if (pipelineSchemaResponse.params) {
       runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
         params: {
-          ...JSON.parse(pipelineSchemaResponse.params),
-          input: undefined, // clear the default sample sheet github link that comes from the pipeline itself
+          ...schemaDefaults, // default values for all non-hidden fields
+          ...JSON.parse(pipelineSchemaResponse.params), // overwrite with values from the pipeline schema
+          input: '', // clear the default sample sheet github link that comes from the pipeline itself
         },
         paramsRequired: paramsRequired,
       });

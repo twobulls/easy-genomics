@@ -146,6 +146,7 @@
           v-show="activeSection === section.title"
           :section="<Object>section"
           :params="localProps.params"
+          :seqera-run-temp-id="props.seqeraRunTempId"
           @update:params="
             (val) => {
               localProps.params = { ...val }; // Ensure reactivity on update

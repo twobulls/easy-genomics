@@ -43,6 +43,21 @@
   onBeforeMount(initializePipelineData);
 
   /**
+   * Watch for changes to files in wipSeqeraRun. When all files are removed,
+   * reinitialize the pipeline data to reset the state.
+   */
+  watch(
+    () => wipSeqeraRun.value?.files,
+    (newFiles, oldFiles) => {
+      if (oldFiles?.length && (!newFiles || newFiles.length === 0)) {
+        delete runStore.wipSeqeraRuns[seqeraRunTempId.value];
+        initializePipelineData();
+      }
+    },
+    { deep: true },
+  );
+
+  /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
    */
   onBeforeRouteLeave((to, from, next) => {

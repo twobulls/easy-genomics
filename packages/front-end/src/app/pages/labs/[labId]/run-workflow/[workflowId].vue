@@ -28,6 +28,19 @@
     $router.push({ query: { omicsRunTempId: uuidv4() } });
   }
 
+  const hasLaunched = ref<boolean>(false);
+  const exitConfirmed = ref<boolean>(false);
+  const nextRoute = ref<string | null>(null);
+
+  const selectedStepIndex = ref(0);
+
+  const steps = ref([
+    { disabled: false, key: 'details', label: 'Run Details' },
+    { disabled: true, key: 'upload', label: 'Upload Data' },
+    { disabled: true, key: 'parameters', label: 'Edit Parameters' },
+    { disabled: true, key: 'review', label: 'Review Pipeline' },
+  ]);
+
   const labName = computed<string>(() => labsStore.labs[labId].Name);
 
   const omicsRunTempId = computed<string>(() => $route.query.omicsRunTempId as string);
@@ -36,15 +49,15 @@
 
   const workflow = computed<ReadWorkflow | null>(() => omicsWorkflowsStore.workflows[workflowId] || null);
 
-  const hasLaunched = ref<boolean>(false);
-  const exitConfirmed = ref<boolean>(false);
-  const nextRoute = ref<string | null>(null);
-
   const schema = computed<Record<string, WorkflowParameter> | null>(() => workflow.value?.parameterTemplate ?? null);
 
-  const resetStepperKey = ref(0);
-
-  onBeforeMount(initializeWorkflowData);
+  watch(
+    omicsRunTempId,
+    async (tempId) => {
+      if (tempId) await initialize();
+    },
+    { immediate: true },
+  );
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
@@ -81,13 +94,17 @@
   /**
    * Reads the workflow details, schema, and parameters from the API and initializes the pipeline run store
    */
-  async function initializeWorkflowData() {
+  async function initialize() {
     uiStore.setRequestPending('loadOmicsWorkflow');
 
-    runStore.updateWipOmicsRun(omicsRunTempId.value, {
-      transactionId: omicsRunTempId.value,
-    });
+    // reset state refs
+    hasLaunched.value = false;
+    selectedStepIndex.value = 0;
 
+    steps.value.forEach((step) => (step.disabled = true));
+    steps.value[0].disabled = false;
+
+    // get full workflow details from API and save them in the store
     const omicsWorkflow: ReadWorkflow = await $api.omicsWorkflows.get(labId, workflowId);
     omicsWorkflowsStore.workflows[workflowId] = omicsWorkflow;
 
@@ -103,11 +120,16 @@
       })
       .filter((_) => _ != undefined);
 
+    // initialize wip run in store
+    runStore.updateWipOmicsRun(omicsRunTempId.value, {
+      transactionId: omicsRunTempId.value,
+      paramsRequired: paramsRequired,
+    });
+
     // initialize params if they aren't present already
     if (!runStore.wipOmicsRuns[omicsRunTempId.value].params) {
       runStore.updateWipOmicsRun(omicsRunTempId.value, {
         params: {},
-        paramsRequired: paramsRequired,
       });
     }
 
@@ -121,14 +143,7 @@
    * - re-mounts the stepper to reset it to initial state
    */
   function resetRunPipeline() {
-    $router.push({ query: { seqeraRunTempId: uuidv4() } });
-
-    // without this short delay, initializeWorkflowData sets wip data for the old seqeraRunTempId, because the route
-    // change doesn't complete in time
-    setTimeout(() => {
-      initializeWorkflowData();
-      resetStepperKey.value++;
-    }, 100);
+    $router.push({ query: { omicsRunTempId: uuidv4() } });
   }
 
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
@@ -156,33 +171,6 @@
       },
     },
   };
-
-  // stepper data handling
-
-  const selectedStepIndex = ref(0);
-
-  const steps = ref([
-    {
-      disabled: false,
-      key: 'details',
-      label: 'Run Details',
-    },
-    {
-      disabled: true,
-      key: 'upload',
-      label: 'Upload Data',
-    },
-    {
-      disabled: true,
-      key: 'parameters',
-      label: 'Edit Parameters',
-    },
-    {
-      disabled: true,
-      key: 'review',
-      label: 'Review Pipeline',
-    },
-  ]);
 
   /**
    * Set the enabled state of a step in the stepper
@@ -259,7 +247,7 @@
     :breadcrumbs="[workflow?.name]"
   />
 
-  <template v-if="uiStore.isRequestPending('loadOmicsWorkflow')">
+  <template v-if="uiStore.isRequestPending('loadOmicsWorkflow') || !omicsRunTempId">
     <EGLoadingSpinner />
   </template>
 

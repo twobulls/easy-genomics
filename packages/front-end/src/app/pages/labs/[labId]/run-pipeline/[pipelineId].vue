@@ -15,6 +15,7 @@
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
   const labsStore = useLabsStore();
   const userStore = useUserStore();
+  const uiStore = useUiStore();
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -43,9 +44,21 @@
 
   const schema = ref({});
 
-  const resetStepperKey = ref(0);
+  const selectedStepIndex = ref(0);
+  const steps = ref([
+    { disabled: false, key: 'details', label: 'Run Details' },
+    { disabled: true, key: 'upload', label: 'Upload Data' },
+    { disabled: true, key: 'parameters', label: 'Edit Parameters' },
+    { disabled: true, key: 'review', label: 'Review Pipeline' },
+  ]);
 
-  onBeforeMount(initializePipelineData);
+  watch(
+    seqeraRunTempId,
+    async (tempId) => {
+      if (tempId) await initialize();
+    },
+    { immediate: true },
+  );
 
   /**
    * Intercept any navigation away from the page (including the browser back button) and present the modal
@@ -77,11 +90,19 @@
   /**
    * Reads the pipeline details, schema, and parameters from the API and initializes the pipeline run store
    */
-  async function initializePipelineData() {
-    runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
-      transactionId: seqeraRunTempId.value,
-    });
+  async function initialize() {
+    uiStore.setRequestPending('loadSeqeraPipeline');
 
+    // reset state refs
+    hasLaunched.value = false;
+    selectedStepIndex.value = 0;
+
+    schema.value = {};
+
+    steps.value.forEach((step) => (step.disabled = true));
+    steps.value[0].disabled = false;
+
+    // get pipeline schema from API
     const pipelineSchemaResponse: DescribePipelineSchemaResponse = await $api.seqeraPipelines.readPipelineSchema(
       parseInt(pipelineId),
       labId,
@@ -134,16 +155,22 @@
       }
     }
 
-    if (pipelineSchemaResponse.params) {
-      runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
-        params: {
-          ...schemaDefaults, // default values for all non-hidden fields
-          ...JSON.parse(pipelineSchemaResponse.params), // overwrite with values from the pipeline schema
-          input: '', // clear the default sample sheet github link that comes from the pipeline itself
-        },
-        paramsRequired: paramsRequired,
-      });
-    }
+    // initialize wip run with values
+    runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
+      transactionId: seqeraRunTempId.value,
+      paramsRequired: paramsRequired,
+    });
+
+    // initialize params if the schema has them
+    runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
+      params: {
+        ...schemaDefaults, // default values for all non-hidden fields
+        ...JSON.parse(pipelineSchemaResponse.params!), // overwrite with values from the pipeline schema
+        input: '', // clear the default sample sheet github link that comes from the pipeline itself
+      },
+    });
+
+    uiStore.setRequestComplete('loadSeqeraPipeline');
   }
 
   function confirmCancel() {
@@ -159,13 +186,6 @@
    */
   function resetRunPipeline() {
     $router.push({ query: { seqeraRunTempId: uuidv4() } });
-
-    // without this short delay, initializePipelineData sets wip data for the old seqeraRunTempId, because the route
-    // change doesn't complete in time
-    setTimeout(() => {
-      initializePipelineData();
-      resetStepperKey.value++;
-    }, 100);
   }
 
   // Note: the UTabs :ui attribute has to be defined locally in this file - if it is imported from another file,
@@ -193,33 +213,6 @@
       },
     },
   };
-
-  // stepper data handling
-
-  const selectedStepIndex = ref(0);
-
-  const steps = ref([
-    {
-      disabled: false,
-      key: 'details',
-      label: 'Run Details',
-    },
-    {
-      disabled: true,
-      key: 'upload',
-      label: 'Upload Data',
-    },
-    {
-      disabled: true,
-      key: 'parameters',
-      label: 'Edit Parameters',
-    },
-    {
-      disabled: true,
-      key: 'review',
-      label: 'Review Pipeline',
-    },
-  ]);
 
   /**
    * Set the enabled state of a step in the stepper
@@ -296,78 +289,84 @@
     :breadcrumbs="[pipeline?.name]"
   />
 
-  <UTabs :items="steps" :ui="EGTabsStyles" v-model="selectedStepIndex" :key="selectedStepIndex">
-    <!-- tab rendering -->
-    <template #default="{ item, index, selected }">
-      <div class="relative flex items-center gap-2 truncate">
-        <UIcon
-          v-if="selectedStepIndex > index || hasLaunched"
-          name="i-heroicons-check-20-solid"
-          class="text-primary h-4 w-4 flex-shrink-0"
-        />
-        <span :class="selectedStepIndex > index || hasLaunched ? 'text-primary' : ''">{{ item.label }}</span>
-        <span v-if="selected" class="bg-primary-500 dark:bg-primary-400 absolute -right-4 h-2 w-2 rounded-full" />
-      </div>
-    </template>
+  <template v-if="uiStore.isRequestPending('loadSeqeraPipeline') || !seqeraRunTempId">
+    <EGLoadingSpinner />
+  </template>
 
-    <!-- step rendering -->
-    <template #item="{ item, index }">
-      <div v-if="!hasLaunched">
-        <!-- Run Details -->
-        <template v-if="steps[selectedStepIndex].key === 'details'">
-          <EGRunFormRunDetails
-            platform="Seqera Cloud"
-            :wip-run-temp-id="seqeraRunTempId"
-            :pipeline-or-workflow-name="pipeline?.name"
-            :pipeline-or-workflow-description="pipeline?.description || ''"
-            @next-step="() => nextStep('upload')"
-            @step-validated="($event) => setStepEnabled('upload', $event)"
+  <template v-else>
+    <UTabs :items="steps" :ui="EGTabsStyles" v-model="selectedStepIndex" :key="selectedStepIndex">
+      <!-- tab rendering -->
+      <template #default="{ item, index, selected }">
+        <div class="relative flex items-center gap-2 truncate">
+          <UIcon
+            v-if="selectedStepIndex > index || hasLaunched"
+            name="i-heroicons-check-20-solid"
+            class="text-primary h-4 w-4 flex-shrink-0"
           />
-        </template>
+          <span :class="selectedStepIndex > index || hasLaunched ? 'text-primary' : ''">{{ item.label }}</span>
+          <span v-if="selected" class="bg-primary-500 dark:bg-primary-400 absolute -right-4 h-2 w-2 rounded-full" />
+        </div>
+      </template>
 
-        <!-- Upload Data -->
-        <template v-if="steps[selectedStepIndex].key === 'upload'">
-          <EGRunFormUploadData
-            :lab-id="labId"
-            :pipeline-or-workflow-name="pipeline.name"
-            platform="Seqera Cloud"
-            :wip-run-temp-id="seqeraRunTempId"
-            @next-step="() => nextStep('parameters')"
-            @previous-step="() => previousStep()"
-            @step-validated="($event) => setStepEnabled('parameters', $event)"
-          />
-        </template>
+      <!-- step rendering -->
+      <template #item="{ item, index }">
+        <div v-if="!hasLaunched">
+          <!-- Run Details -->
+          <template v-if="steps[selectedStepIndex].key === 'details'">
+            <EGRunFormRunDetails
+              platform="Seqera Cloud"
+              :wip-run-temp-id="seqeraRunTempId"
+              :pipeline-or-workflow-name="pipeline?.name"
+              :pipeline-or-workflow-description="pipeline?.description || ''"
+              @next-step="() => nextStep('upload')"
+              @step-validated="($event) => setStepEnabled('upload', $event)"
+            />
+          </template>
 
-        <!-- Edit Parameters -->
-        <template v-if="steps[selectedStepIndex].key === 'parameters'">
-          <EGRunPipelineFormEditParameters
-            :params="wipSeqeraRun?.params"
-            :schema="schema"
-            :lab-id="labId"
-            :pipeline-id="pipelineId"
-            :seqera-run-temp-id="seqeraRunTempId"
-            @next-step="() => nextStep('review')"
-            @previous-step="() => previousStep()"
-          />
-        </template>
+          <!-- Upload Data -->
+          <template v-if="steps[selectedStepIndex].key === 'upload'">
+            <EGRunFormUploadData
+              :lab-id="labId"
+              :pipeline-or-workflow-name="pipeline.name"
+              platform="Seqera Cloud"
+              :wip-run-temp-id="seqeraRunTempId"
+              @next-step="() => nextStep('parameters')"
+              @previous-step="() => previousStep()"
+              @step-validated="($event) => setStepEnabled('parameters', $event)"
+            />
+          </template>
 
-        <!-- Review Pipeline -->
-        <template v-if="steps[selectedStepIndex].key === 'review'">
-          <EGRunPipelineFormReview
-            :schema="schema"
-            :params="wipSeqeraRun?.params"
-            :lab-id="labId"
-            :pipeline-id="pipelineId"
-            :seqera-run-temp-id="seqeraRunTempId"
-            @submit-launch-request="() => handleSubmitLaunchRequest()"
-            @submit-launch-request-error="() => handleSubmitLaunchRequestError()"
-            @has-launched="() => handleLaunchSuccess()"
-            @previous-tab="() => previousStep()"
-          />
-        </template>
-      </div>
-    </template>
-  </UTabs>
+          <!-- Edit Parameters -->
+          <template v-if="steps[selectedStepIndex].key === 'parameters'">
+            <EGRunPipelineFormEditParameters
+              :params="wipSeqeraRun?.params"
+              :schema="schema"
+              :lab-id="labId"
+              :pipeline-id="pipelineId"
+              :seqera-run-temp-id="seqeraRunTempId"
+              @next-step="() => nextStep('review')"
+              @previous-step="() => previousStep()"
+            />
+          </template>
+
+          <!-- Review Pipeline -->
+          <template v-if="steps[selectedStepIndex].key === 'review'">
+            <EGRunPipelineFormReview
+              :schema="schema"
+              :params="wipSeqeraRun?.params"
+              :lab-id="labId"
+              :pipeline-id="pipelineId"
+              :seqera-run-temp-id="seqeraRunTempId"
+              @submit-launch-request="() => handleSubmitLaunchRequest()"
+              @submit-launch-request-error="() => handleSubmitLaunchRequestError()"
+              @has-launched="() => handleLaunchSuccess()"
+              @previous-tab="() => previousStep()"
+            />
+          </template>
+        </div>
+      </template>
+    </UTabs>
+  </template>
 
   <!-- post-launch rendering -->
   <template v-if="hasLaunched">

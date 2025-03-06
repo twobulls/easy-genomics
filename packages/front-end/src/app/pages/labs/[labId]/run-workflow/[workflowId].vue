@@ -33,7 +33,6 @@
   const nextRoute = ref<string | null>(null);
 
   const selectedStepIndex = ref(0);
-
   const steps = ref([
     { disabled: false, key: 'details', label: 'Run Details' },
     { disabled: true, key: 'upload', label: 'Upload Data' },
@@ -57,6 +56,16 @@
       if (tempId) await initialize();
     },
     { immediate: true },
+  );
+
+  watch(
+    () => wipOmicsRun.value?.files,
+    (newFiles, oldFiles) => {
+      if (!!oldFiles?.length && newFiles?.length === 0) {
+        resetParams();
+      }
+    },
+    { deep: true },
   );
 
   /**
@@ -112,7 +121,7 @@
     const paramsRequired: string[] = Object.entries(omicsWorkflow.parameterTemplate)
       .map((param: [string, object]) => {
         const paramName: string = param[0];
-        const paramDetails: object = param[1];
+        const paramDetails: any = param[1];
 
         if (paramDetails.optional === false) {
           return paramName;
@@ -124,16 +133,14 @@
     runStore.updateWipOmicsRun(omicsRunTempId.value, {
       transactionId: omicsRunTempId.value,
       paramsRequired: paramsRequired,
+      params: {}, // unlike seqera runs, omics runs don't have default values for parameters
     });
 
-    // initialize params if they aren't present already
-    if (!runStore.wipOmicsRuns[omicsRunTempId.value].params) {
-      runStore.updateWipOmicsRun(omicsRunTempId.value, {
-        params: {},
-      });
-    }
-
     uiStore.setRequestComplete('loadOmicsWorkflow');
+  }
+
+  function resetParams() {
+    runStore.wipOmicsRuns[omicsRunTempId.value].params = {};
   }
 
   /**

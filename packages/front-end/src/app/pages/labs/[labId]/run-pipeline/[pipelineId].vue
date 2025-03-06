@@ -43,6 +43,7 @@
   const nextRoute = ref<string | null>(null);
 
   const schema = ref({});
+  const initialParams = ref({});
 
   const selectedStepIndex = ref(0);
   const steps = ref([
@@ -58,6 +59,16 @@
       if (tempId) await initialize();
     },
     { immediate: true },
+  );
+
+  watch(
+    () => wipSeqeraRun.value?.files,
+    (newFiles, oldFiles) => {
+      if (!!oldFiles?.length && newFiles?.length === 0) {
+        resetParams();
+      }
+    },
+    { deep: true },
   );
 
   /**
@@ -98,6 +109,7 @@
     selectedStepIndex.value = 0;
 
     schema.value = {};
+    initialParams.value = {};
 
     steps.value.forEach((step) => (step.disabled = true));
     steps.value[0].disabled = false;
@@ -161,16 +173,23 @@
       paramsRequired: paramsRequired,
     });
 
-    // initialize params if the schema has them
+    // initialize params and save so that they can be easily reset
+    initialParams.value = {
+      ...schemaDefaults, // default values for all non-hidden fields
+      ...JSON.parse(pipelineSchemaResponse.params!), // overwrite with values from the pipeline schema
+      input: '', // clear the default sample sheet github link that comes from the pipeline itself
+    };
+
     runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
-      params: {
-        ...schemaDefaults, // default values for all non-hidden fields
-        ...JSON.parse(pipelineSchemaResponse.params!), // overwrite with values from the pipeline schema
-        input: '', // clear the default sample sheet github link that comes from the pipeline itself
-      },
+      // make a copy of initialParams to ensure the original doesn't get changed
+      params: JSON.parse(JSON.stringify(initialParams.value)),
     });
 
     uiStore.setRequestComplete('loadSeqeraPipeline');
+  }
+
+  function resetParams() {
+    runStore.wipSeqeraRuns[seqeraRunTempId.value].params = JSON.parse(JSON.stringify(initialParams.value));
   }
 
   function confirmCancel() {

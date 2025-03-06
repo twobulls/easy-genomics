@@ -23,6 +23,7 @@ export const SampleSheetRequestSchema = z
   .object({
     LaboratoryId: z.string().uuid(),
     TransactionId: z.string().uuid(),
+    Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     UploadedFilePairs: z.array(UploadedFilePairInfoSchema),
   })
   .strict();

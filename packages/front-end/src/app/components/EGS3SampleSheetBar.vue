@@ -40,11 +40,9 @@
 
     const baseUrl = window.location.origin;
     const url = router.resolve({
-      path: `/labs/${props.labId}/run-pipeline/sample-sheet`,
+      path: `/labs/${props.labId}/sample-sheet`,
       query: {
-        labId: props.labId,
         url: props.url,
-        labName: props.labName,
         pipelineOrWorkflowName: props.pipelineOrWorkflowName,
         runName: props.runName,
       },

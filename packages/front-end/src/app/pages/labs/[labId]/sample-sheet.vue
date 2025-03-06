@@ -13,11 +13,23 @@
 
   const { $api } = useNuxtApp();
   const route = useRoute();
+
+  const labsStore = useLabsStore();
+
+  const labId = route.params.labId as string;
+  const labName = computed<string>(() => {
+    const lab = labsStore.labs[labId];
+
+    if (!lab) throw new Error(`no lab found for id ${labId}`);
+
+    return lab.Name;
+  });
+
   const tableData = ref<TableData | null>(null);
 
   onMounted(async () => {
     try {
-      const { labId, url, labName, pipelineOrWorkflowName, runName } = route.query;
+      const { url, pipelineOrWorkflowName, runName } = route.query;
 
       if (!labId || !url) {
         throw new Error('Missing required parameters');
@@ -25,7 +37,7 @@
 
       const fileDownloadUrlResponse = await $api.file.requestFileDownloadUrl({
         LaboratoryId: labId,
-        S3Uri: url,
+        S3Uri: url as string,
       });
       const content = await (await fetch(fileDownloadUrlResponse.DownloadUrl)).text();
 
@@ -44,7 +56,7 @@
         headers,
         data,
         metadata: {
-          labName: labName as string,
+          labName: labName.value,
           pipelineOrWorkflowName: pipelineOrWorkflowName as string,
           runName: runName as string,
         },

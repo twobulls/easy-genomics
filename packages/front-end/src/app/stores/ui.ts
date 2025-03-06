@@ -13,6 +13,7 @@ type PendingRequest =
   | 'updateUser'
   | 'getSeqeraPipelines'
   | 'getSeqeraRuns'
+  | 'loadSeqeraPipeline'
   | 'loadSeqeraRun'
   | 'cancelSeqeraRun'
   | 'getOmicsWorkflows'

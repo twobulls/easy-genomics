@@ -6,6 +6,7 @@
   const $router = useRouter();
   const { $api } = useNuxtApp();
   const { handleS3Download } = useFileDownload();
+  const { platformToPipelineOrWorkflow } = useMultiplatform();
 
   const runStore = useRunStore();
   const uiStore = useUiStore();
@@ -87,16 +88,9 @@
     updateQueryParams({ tab: tabItems.value[newIndex]?.label });
   }
 
-  const pipelineOrWorkflow = computed<string | null>(() => {
-    switch (labRun.value?.Platform) {
-      case 'Seqera Cloud':
-        return 'Pipeline';
-      case 'AWS HealthOmics':
-        return 'Workflow';
-      default:
-        return null;
-    }
-  });
+  const pipelineOrWorkflow = computed<string | null>(() =>
+    !labRun.value?.Platform ? null : platformToPipelineOrWorkflow(labRun.value.Platform),
+  );
 
   async function downloadSampleSheet(): Promise<void> {
     const sampleSheetUrl = labRun.value?.SampleSheetS3Url;

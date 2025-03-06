@@ -471,6 +471,7 @@
     const request: SampleSheetRequest = {
       LaboratoryId: props.labId,
       TransactionId: wipRun.value.transactionId,
+      Platform: props.platform,
       UploadedFilePairs: uploadedFilePairs,
     };
 
@@ -483,6 +484,7 @@
     const request: FileUploadRequest = {
       LaboratoryId: props.labId,
       TransactionId: wipRun.value.transactionId,
+      Platform: props.platform,
       Files: files.map((file) => ({ Name: file.name, Size: file.size })),
     };
 

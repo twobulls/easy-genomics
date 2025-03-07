@@ -34,7 +34,7 @@
     // this is flexible enough to work in most different contexts; eg.
     // - normal user: /labs/[labId]
     // - superuser: /orgs/[orgId]/labs/[labId]
-    const newRoute = route.fullPath.replace(/\/labs\/[^\/]+/, `/labs/${labId}`);
+    const newRoute = route.fullPath.replace(/\/labs\/.+/, `/labs/${labId}`);
     router.push(newRoute);
   }
 </script>

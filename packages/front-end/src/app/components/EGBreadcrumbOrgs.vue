@@ -63,7 +63,7 @@
         </UButton>
       </div>
       <template #item="{ item }">
-        {{ item.Name }}
+        <span class="w-full text-left">{{ item.Name }}</span>
       </template>
     </UDropdown>
   </div>

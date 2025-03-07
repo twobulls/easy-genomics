@@ -1,8 +1,11 @@
 // create-file-upload-sample-sheet API SampleSheetRequest & SampleSheetResponse type definitions
 
+import { RunType } from "@SharedLib/types/base-entity";
+
 export type SampleSheetRequest = {
   LaboratoryId: string;
   TransactionId: string;
+  Platform: RunType,
   UploadedFilePairs: UploadedFilePairInfo[];
 };
 

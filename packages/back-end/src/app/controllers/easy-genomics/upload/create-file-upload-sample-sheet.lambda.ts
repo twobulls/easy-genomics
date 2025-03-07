@@ -56,7 +56,8 @@ export const handler: Handler = async (
       throw new InvalidRequestError(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
     }
 
-    const s3Path: string = `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/next-flow/${transactionId}`;
+    const platform: string = request.Platform === 'AWS HealthOmics' ? 'aws-healthomics' : 'seqera-platform';
+    const s3Path: string = `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/${platform}/${transactionId}`;
     const s3Key: string = `${s3Path}/sample-sheet.csv`;
     const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
     const bucketLocation = (await s3Service.getBucketLocation({ Bucket: s3Bucket })).LocationConstraint;

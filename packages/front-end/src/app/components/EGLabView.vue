@@ -112,9 +112,9 @@
   ];
 
   const tabItems = computed<{ key: string; label: string }[]>(() => {
+    const runsTab = { key: 'runs', label: 'Pipeline Runs' };
     const seqeraPipelinesTab = { key: 'seqeraPipelines', label: 'Seqera Pipelines' };
     const omicsWorkflowsTab = { key: 'omicsWorkflows', label: 'HealthOmics Workflows' };
-    const runsTab = { key: 'runs', label: 'Lab Runs' };
     const usersTab = { key: 'users', label: 'Lab Users' };
     const detailsTab = { key: 'details', label: 'Details' };
 
@@ -124,9 +124,9 @@
     const items = [];
 
     if (!props.superuser) {
+      if (seqeraAvailable || omicsAvailable) items.push(runsTab);
       if (seqeraAvailable) items.push(seqeraPipelinesTab);
       if (omicsAvailable) items.push(omicsWorkflowsTab);
-      if (seqeraAvailable || omicsAvailable) items.push(runsTab);
     }
     items.push(usersTab);
     items.push(detailsTab);
@@ -547,6 +547,48 @@
     "
   >
     <template #item="{ item }">
+      <!-- Runs tab -->
+      <div v-if="item.key === 'runs'">
+        <EGTable
+          :row-click-action="viewRunDetails"
+          :table-data="combinedRuns"
+          :columns="runsTableColumns"
+          :sort="{ column: 'lastUpdated', direction: 'desc' }"
+          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
+          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
+        >
+          <template #RunName-data="{ row: run }">
+            <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
+            <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
+          </template>
+
+          <template #lastUpdated-data="{ row: run }">
+            <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt ?? run.CreatedAt) }}</div>
+            <div class="text-muted">{{ getTime(run.ModifiedAt ?? run.CreatedAt) }}</div>
+          </template>
+
+          <template #Status-data="{ row: run }">
+            <EGStatusChip :status="run.Status" />
+          </template>
+
+          <template #Owner-data="{ row: run }">
+            <div class="text-body text-sm font-medium">{{ run.Owner }}</div>
+          </template>
+
+          <template #actions-data="{ row }">
+            <div class="flex justify-end">
+              <EGActionButton :items="runsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
+            </div>
+          </template>
+
+          <template #empty-state>
+            <div class="text-muted flex h-24 items-center justify-center font-normal">
+              There are no Runs in your Lab
+            </div>
+          </template>
+        </EGTable>
+      </div>
+
       <!-- Seqera Pipelines tab -->
       <div v-if="item.key === 'seqeraPipelines'">
         <EGTable
@@ -617,50 +659,8 @@
         </EGTable>
       </div>
 
-      <!-- Runs tab -->
-      <div v-else-if="item.key === 'runs'">
-        <EGTable
-          :row-click-action="viewRunDetails"
-          :table-data="combinedRuns"
-          :columns="runsTableColumns"
-          :sort="{ column: 'lastUpdated', direction: 'desc' }"
-          :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
-          :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
-        >
-          <template #RunName-data="{ row: run }">
-            <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
-            <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
-          </template>
-
-          <template #lastUpdated-data="{ row: run }">
-            <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt ?? run.CreatedAt) }}</div>
-            <div class="text-muted">{{ getTime(run.ModifiedAt ?? run.CreatedAt) }}</div>
-          </template>
-
-          <template #Status-data="{ row: run }">
-            <EGStatusChip :status="run.Status" />
-          </template>
-
-          <template #Owner-data="{ row: run }">
-            <div class="text-body text-sm font-medium">{{ run.Owner }}</div>
-          </template>
-
-          <template #actions-data="{ row }">
-            <div class="flex justify-end">
-              <EGActionButton :items="runsActionItems(row)" class="ml-2" @click="$event.stopPropagation()" />
-            </div>
-          </template>
-
-          <template #empty-state>
-            <div class="text-muted flex h-24 items-center justify-center font-normal">
-              There are no Runs in your Lab
-            </div>
-          </template>
-        </EGTable>
-      </div>
-
       <!-- Lab Users tab -->
-      <div v-else-if="item.key === 'users'">
+      <div v-if="item.key === 'users'">
         <EGSearchInput
           @input-event="updateSearchOutput"
           placeholder="Search user"
@@ -714,7 +714,9 @@
           </template>
         </EGTable>
       </div>
-      <div v-else-if="item.key === 'details'">
+
+      <!-- Lab Details -->
+      <div v-if="item.key === 'details'">
         <EGFormLabDetails @updated="handleDetailsUpdated" />
       </div>
     </template>

@@ -66,6 +66,12 @@ export const handler: Handler = async (
     const s3Region: string = bucketLocation ? bucketLocation : 'us-east-1';
     const sampleSheetType: string = getSampleSheetType(request);
 
+    // Validate SampleSheet request to check for any duplicate SampleIds
+    const sampleIds: string[] = request.UploadedFilePairs.map((_: UploadedFilePairInfo) => _.SampleId);
+    if (sampleIds.length !== [...new Set(sampleIds)].length) {
+      throw new InvalidRequestError('Invalid sample sheet request: duplicate Sample Id(s) found');
+    }
+
     const sampleSheetCsv: string =
       sampleSheetType === 'paired-read'
         ? await generatePairedReadsSampleSheetCsv(request.UploadedFilePairs, validateS3FilesExist)

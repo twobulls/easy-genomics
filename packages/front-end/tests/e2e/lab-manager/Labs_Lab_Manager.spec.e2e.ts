@@ -253,7 +253,7 @@ test('08 - Check Seqera Run Details', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.getByRole('tab', { name: 'Pipeline Runs' }).click();
     await page.waitForLoadState('networkidle');
 
     // Go to Run Details
@@ -294,7 +294,7 @@ test('09 - Check Seqera Run File Manager if files exist', async ({ page, baseURL
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.getByRole('tab', { name: 'Pipeline Runs' }).click();
     await page.waitForLoadState('networkidle');
 
     // Go to File Manager
@@ -438,7 +438,7 @@ test('12 - Check HealthOmics Run Details', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.getByRole('tab', { name: 'Pipeline Runs' }).click();
     await page.waitForLoadState('networkidle');
 
     // Go to Run Details
@@ -479,7 +479,7 @@ test('13 - Check HealthOmics Run File Manager if files exist', async ({ page, ba
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.getByRole('tab', { name: 'Pipeline Runs' }).click();
     await page.waitForLoadState('networkidle');
 
     // Go to File Manager

@@ -214,11 +214,6 @@
   }
 
   function handleFileInputChange(e: Event) {
-    if (!e.isTrusted) {
-      console.error('File input change event not trusted');
-      return;
-    }
-
     const target = e.target as HTMLInputElement;
     if (!target) {
       console.error('File input change event target not found');

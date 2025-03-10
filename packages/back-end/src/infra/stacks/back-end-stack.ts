@@ -105,6 +105,27 @@ export class BackEndStack extends Stack {
       true,
     );
 
+    // User signup and password recovery endpoints endpoints
+    NagSuppressions.addResourceSuppressionsByPath(
+      this,
+      [
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.envName}-easy-genomics-nested-stack/${this.props.namePrefix}-easy-genomics/${this.props.namePrefix}-easy-genomics-request-file-download-url/ServiceRole/DefaultPolicy/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.envName}-easy-genomics-nested-stack/${this.props.namePrefix}-easy-genomics/${this.props.namePrefix}-easy-genomics-request-list-bucket-objects/ServiceRole/DefaultPolicy/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.envName}-easy-genomics-nested-stack/${this.props.namePrefix}-easy-genomics/${this.props.namePrefix}-easy-genomics-update-laboratory/ServiceRole/DefaultPolicy/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.envName}-easy-genomics-nested-stack/${this.props.namePrefix}-easy-genomics/${this.props.namePrefix}-easy-genomics-list-buckets/ServiceRole/DefaultPolicy/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.envName}-easy-genomics-nested-stack/${this.props.namePrefix}-easy-genomics/${this.props.namePrefix}-easy-genomics-create-file-upload-request/ServiceRole/DefaultPolicy/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.envName}-easy-genomics-nested-stack/${this.props.namePrefix}-easy-genomics/${this.props.namePrefix}-easy-genomics-create-file-upload-sample-sheet/ServiceRole/DefaultPolicy/Resource`,
+        `/${this.props.namePrefix}-main-back-end-stack/${this.props.envName}-aws-healthomics-nested-stack/${this.props.namePrefix}-easy-genomics-healthomics-workflow-run-role/Resource`,
+      ],
+      [
+        {
+          id: 'AwsSolutions-IAM5',
+          reason: 'Require access to S3',
+        },
+      ],
+      true,
+    );
+
     // Lab Runs processor needs access to read omics runs
     NagSuppressions.addResourceSuppressionsByPath(
       this,

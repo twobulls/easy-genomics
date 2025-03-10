@@ -7,6 +7,13 @@ export const CreateUserInvitationRequestSchema = z
   })
   .strict();
 
+export const CreateBulkUserInvitationRequestSchema = z
+  .object({
+    OrganizationId: z.string().uuid(),
+    Emails: z.array(z.string()),
+  })
+  .strict();
+
 export const ConfirmUpdateUserInvitationRequestSchema = z
   .object({
     Token: z.string(),

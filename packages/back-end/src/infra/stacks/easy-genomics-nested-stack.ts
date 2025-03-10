@@ -37,6 +37,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
         ['user-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
         ['laboratory-run-update-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
+        ['user-invite-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
       },
     });
 
@@ -73,6 +74,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           snsTopics: [this.sns.snsTopics.get('laboratory-run-update-topic')],
           enforceSSL: true,
         },
+        ['user-invite-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          snsTopics: [this.sns.snsTopics.get('user-invite-topic')],
+          enforceSSL: true,
+        },
       },
     });
 
@@ -98,6 +106,20 @@ export class EasyGenomicsNestedStack extends NestedStack {
             COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
             JWT_SECRET_KEY: this.props.jwtSecretKey,
+          },
+        },
+        '/easy-genomics/user/create-bulk-user-invitation-requests': {
+          environment: {
+            SNS_USER_INVITE_TOPIC: this.sns.snsTopics.get('user-invite-topic')?.topicArn || '',
+          },
+        },
+        '/easy-genomics/user/process-create-user-invites': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('user-invite-queue')!, { batchSize: 10 })],
+          environment: {
+            COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
+            COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
+            JWT_SECRET_KEY: this.props.jwtSecretKey,
+            SNS_USER_INVITE_TOPIC: this.sns.snsTopics.get('user-invite-topic')?.topicArn || '',
           },
         },
         '/easy-genomics/user/confirm-user-invitation-request': {
@@ -991,6 +1013,71 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     // /easy-genomics/user/create-user-invitation-request
     this.iam.addPolicyStatements('/easy-genomics/user/create-user-invitation-request', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+        ],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+        ],
+        actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:cognito-idp:${this.props.env.region!}:${this.props.env.account!}:userpool/${this.props.userPool?.userPoolId}`,
+        ],
+        actions: ['cognito-idp:AdminCreateUser', 'cognito-idp:AdminUpdateUserAttributes'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.appDomainName}`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@*`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
+        ],
+        actions: ['ses:SendTemplatedEmail'],
+        effect: Effect.ALLOW,
+        conditions: {
+          StringEquals: {
+            'ses:FromAddress': `no.reply@${this.props.appDomainName}`,
+          },
+        },
+      }),
+    ]);
+    // /easy-genomics/user/create-bulk-user-invitation-requests
+    this.iam.addPolicyStatements('/easy-genomics/user/create-bulk-user-invitation-requests', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+        ],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sns.snsTopics.get('user-invite-topic')?.topicArn || ''}`],
+        actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/user/process-create-user-invites
+    this.iam.addPolicyStatements('/easy-genomics/user/process-create-user-invites', [
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,

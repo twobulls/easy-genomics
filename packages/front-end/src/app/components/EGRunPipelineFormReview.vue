@@ -1,5 +1,4 @@
 <script setup lang="ts">
-  import { useRunStore, useToastStore, useLabsStore } from '@FE/stores';
   import { CreateWorkflowLaunchRequest } from '@/packages/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import EGAccordion from '@FE/components/EGAccordion.vue';
   import { ButtonSizeEnum } from '@FE/types/buttons';
@@ -8,25 +7,25 @@
   const props = defineProps<{
     schema: object;
     params: object;
+    labId: string;
     pipelineId: string;
+    seqeraRunTempId: string;
   }>();
 
   const { $api } = useNuxtApp();
-  const $route = useRoute();
 
   const runStore = useRunStore();
   const seqeraPipelineStore = useSeqeraPipelinesStore();
+  const labsStore = useLabsStore();
 
-  const labId = $route.params.labId as string;
-  const labName = useLabsStore().labs[labId].Name;
-  const seqeraRunTempId = $route.query.seqeraRunTempId as string;
+  const labName = labsStore.labs[props.labId].Name;
   const isLaunchingRun = ref(false);
   const emit = defineEmits(['submit-launch-request', 'submit-launch-request-error', 'has-launched', 'previous-tab']);
 
   const remountAccordionKey = ref(0);
   const areAccordionsOpen = ref(true);
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[seqeraRunTempId]);
+  const wipSeqeraRun = computed<WipRun | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
   const pipeline = computed<SeqeraPipeline | undefined>(() => seqeraPipelineStore.pipelines[props.pipelineId]);
 
   // Explicitly remove Seqera pipeline paramsText properties that contain variable references
@@ -49,12 +48,11 @@
 
     try {
       isLaunchingRun.value = true;
-      const pipelineId = props.pipelineId;
-      if (pipelineId === undefined) {
+      if (props.pipelineId === undefined) {
         throw new Error('pipeline id not found in wip run config');
       }
 
-      const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(pipelineId, labId);
+      const launchDetails = await $api.seqeraPipelines.readPipelineLaunchDetails(props.pipelineId, props.labId);
 
       const workDir: string = `s3://${wipSeqeraRun.value?.s3Bucket}/${wipSeqeraRun.value?.s3Path}/work`;
       const launchRequest: CreateWorkflowLaunchRequest = {
@@ -69,7 +67,7 @@
         },
       };
 
-      const res = await $api.seqeraRuns.createPipelineRun(labId, launchRequest);
+      const res = await $api.seqeraRuns.createPipelineRun(props.labId, launchRequest);
 
       if (!res) {
         throw new Error('Failed to create pipeline run. Response is empty.');
@@ -81,7 +79,7 @@
 
       try {
         const labRunRequest = {
-          'LaboratoryId': wipSeqeraRun.value?.laboratoryId,
+          'LaboratoryId': props.labId,
           'RunId': wipSeqeraRun.value?.transactionId,
           'RunName': wipSeqeraRun.value?.runName,
           'Platform': 'Seqera Cloud',
@@ -99,7 +97,7 @@
         throw error;
       }
 
-      delete runStore.wipSeqeraRuns[seqeraRunTempId];
+      delete runStore.wipSeqeraRuns[props.seqeraRunTempId];
       emit('has-launched');
     } catch (error) {
       useToastStore().error('Error launching run: ' + error);
@@ -174,14 +172,16 @@
       <template #item="{ item, open }">
         <section class="stroke-light flex flex-col bg-white text-left">
           <dl>
-            <div
-              v-for="(property, propertyKey, index) in item.content.properties"
-              :key="`property-${propertyKey}`"
-              class="property-row grid grid-cols-[auto_1fr] gap-x-4 border-b bg-white px-4 py-4 last:border-0 dark:bg-gray-800"
-            >
-              <dt class="w-56 whitespace-pre-wrap break-words font-medium text-black">{{ propertyKey }}</dt>
-              <dd class="text-muted whitespace-pre-wrap break-words">{{ params[propertyKey] }}</dd>
-            </div>
+            <template v-for="(property, propertyKey, index) in item.content.properties">
+              <div
+                v-if="!property.hidden"
+                :key="`property-${propertyKey}`"
+                class="property-row grid grid-cols-[auto_1fr] gap-x-4 border-b bg-white px-4 py-4 last:border-0 dark:bg-gray-800"
+              >
+                <dt class="w-56 whitespace-pre-wrap break-words font-medium text-black">{{ propertyKey }}</dt>
+                <dd class="text-muted whitespace-pre-wrap break-words">{{ params[propertyKey] }}</dd>
+              </div>
+            </template>
           </dl>
         </section>
       </template>

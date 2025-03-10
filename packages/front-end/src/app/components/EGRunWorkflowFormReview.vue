@@ -43,8 +43,7 @@
 
     try {
       isLaunchingRun.value = true;
-      const workflowId = props.workflowId;
-      if (workflowId === undefined) {
+      if (props.workflowId === undefined) {
         throw new Error('pipeline id not found in wip run config');
       }
 

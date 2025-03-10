@@ -1,8 +1,11 @@
 // create-file-upload-sample-sheet API SampleSheetRequest & SampleSheetResponse type definitions
 
+import { RunType } from "@SharedLib/types/base-entity";
+
 export type SampleSheetRequest = {
   LaboratoryId: string;
   TransactionId: string;
+  Platform: RunType,
   UploadedFilePairs: UploadedFilePairInfo[];
 };
 
@@ -18,7 +21,6 @@ export type UploadedFileInfo = {
   Bucket: string;
   Key: string;
   Region: string;
-  S3Url: string;
 };
 
 export type SampleSheetResponse = {

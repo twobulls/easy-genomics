@@ -1,7 +1,8 @@
 import { Duration, NestedStack } from 'aws-cdk-lib';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Effect, PolicyStatement, StarPrincipal } from 'aws-cdk-lib/aws-iam';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import { Topic } from 'aws-cdk-lib/aws-sns';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
@@ -27,13 +28,15 @@ export class EasyGenomicsNestedStack extends NestedStack {
     super(scope, id);
     this.props = props;
 
+    // The enforceSSL option for sns topics is currently broken, that may get fixed in the
+    // future. In the meantime we will apply a policy enforcing ssl in the policies section.
     this.sns = new SnsConstruct(this, `${this.props.constructNamespace}-sns`, {
       namePrefix: this.props.namePrefix,
       topics: <Topics>{
-        ['organization-deletion-topic']: <TopicDetails>{ fifo: true },
-        ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true },
-        ['user-deletion-topic']: <TopicDetails>{ fifo: true },
-        ['laboratory-run-update-topic']: <TopicDetails>{ fifo: true },
+        ['organization-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
+        ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
+        ['user-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
+        ['laboratory-run-update-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
         ['user-invite-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
       },
     });
@@ -47,18 +50,21 @@ export class EasyGenomicsNestedStack extends NestedStack {
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('organization-deletion-topic')],
+          enforceSSL: true,
         },
         ['laboratory-management-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('laboratory-deletion-topic')],
+          enforceSSL: true,
         },
         ['user-management-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('user-deletion-topic')],
+          enforceSSL: true,
         },
         ['laboratory-run-update-queue']: <QueueDetails>{
           fifo: true,
@@ -66,12 +72,14 @@ export class EasyGenomicsNestedStack extends NestedStack {
           visibilityTimeout: Duration.minutes(15),
           deliveryDelay: Duration.minutes(5),
           snsTopics: [this.sns.snsTopics.get('laboratory-run-update-topic')],
+          enforceSSL: true,
         },
         ['user-invite-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
           snsTopics: [this.sns.snsTopics.get('user-invite-topic')],
+          enforceSSL: true,
         },
       },
     });
@@ -250,6 +258,24 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
   // Easy Genomics specific IAM policies
   private setupIamPolicies = () => {
+    // Currently the enforceSSL option for SNS topics is broken
+    // We have to apply the policy ourselves.
+    this.sns.snsTopics.forEach((snsTopic: Topic) => {
+      snsTopic.addToResourcePolicy(
+        new PolicyStatement({
+          resources: [`${snsTopic.topicArn}`],
+          actions: ['sns:Publish'],
+          conditions: {
+            StringEquals: {
+              'aws:SecureTransport': false,
+            },
+          },
+          effect: Effect.DENY,
+          principals: [new StarPrincipal()],
+        }),
+      );
+    });
+
     // /easy-genomics/organization/create-organization
     this.iam.addPolicyStatements('/easy-genomics/organization/create-organization', [
       new PolicyStatement({
@@ -1119,8 +1145,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-user-table/index/*`,
         ],
-        actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
+        actions: ['dynamodb:Query', 'dynamodb:GetItem', 'dynamodb:PutItem'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({

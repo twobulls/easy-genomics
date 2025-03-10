@@ -3,16 +3,17 @@
   import { z } from 'zod';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { ButtonSizeEnum } from '@FE/types/buttons';
+  import { RunType } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 
   const emit = defineEmits(['next-step', 'step-validated']);
   const props = defineProps<{
-    pipelineOrWorkflow: 'Pipeline' | 'Workflow';
-    pipelineOrWorkflowName: string;
-    initialRunName: string;
-    pipelineOrWorkflowDescription: string;
-    wipRunUpdateFunction: Function;
+    platform: RunType;
     wipRunTempId: string;
+    pipelineOrWorkflowName: string;
+    pipelineOrWorkflowDescription: string;
   }>();
+
+  const { platformToPipelineOrWorkflow, platformToWipRunUpdateFunction, getWipRunForPlatform } = useMultiplatform();
 
   /**
    * Seqera API spec
@@ -30,9 +31,7 @@
    * e.g. User enters 'community-showcase' and the following name is generated,
    * viralrecon-illumina_community-showcase_20240712_5686910e783b4b2
    */
-  const MAX_TOTAL_LENGTH = 80;
   const MAX_RUN_NAME_LENGTH = 50;
-
   const runNameSchema = z
     .string()
     .trim()
@@ -49,41 +48,33 @@
   });
 
   const canProceed = ref(false);
-  const isSubmittingFormData = ref(false);
+
   const runNameCharCount = computed(() => formState.runName.length);
 
-  // Trims white space, replaces spaces between words with hyphens, and enforces a max of one hyphen in a row
-  // e.g. 'some custom name' -> 'some-custom-name'
-  function getSafeRunName(runName: string): string {
-    return runName.trim().replace(/\s+/g, '-').replace(/-+/g, '-');
-  }
+  const pipelineOrWorkflow = computed<string>(() => platformToPipelineOrWorkflow(props.platform));
 
-  /**
-   * Initialization to pre-fill the run name with the user's pipeline run name if previously set and validate
-   */
-  onBeforeMount(async () => {
-    formState.runName = props.initialRunName;
-    validate(formState);
-  });
+  const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
+
+  const wipRun = computed<WipRun>(() => getWipRunForPlatform(props.platform, props.wipRunTempId));
+
+  // when the wipRun is loaded and has a runName value, fill it into the box
+  watch(
+    wipRun,
+    (val) => {
+      if (val.runName) formState.runName = val.runName;
+      validate(formState);
+    },
+    { immediate: true },
+  );
 
   function validate(currentState: FormState): FormError[] {
     const errors: FormError[] = [];
 
-    try {
-      maybeAddFieldValidationErrors(errors, runNameSchema, 'runName', currentState.runName);
-    } catch (error) {
-      console.error('Error validating run details form:', error);
-    }
+    maybeAddFieldValidationErrors(errors, runNameSchema, 'runName', currentState.runName);
 
     canProceed.value = errors.length === 0;
 
     return errors;
-  }
-
-  function onSubmit() {
-    const safeRunName = getSafeRunName(formState.runName);
-    props.wipRunUpdateFunction(props.wipRunTempId, { runName: safeRunName });
-    emit('next-step');
   }
 
   /**
@@ -106,12 +97,15 @@
       .replace(/^[^a-zA-Z]+/, '');
   }
 
-  function handleRunNameInput(event: InputEvent) {
-    const target = event.target as HTMLInputElement;
-    const inputName = target.value;
-    const supportedName = getSupportedRunName(inputName);
-    target.value = supportedName;
-    formState.runName = supportedName;
+  function onRunNameInput(_event: InputEvent) {
+    // satinize name in-place in the text box
+    formState.runName = getSupportedRunName(formState.runName);
+    // write to wipRun
+    wipRunUpdateFunction.value(props.wipRunTempId, { runName: formState.runName });
+  }
+
+  function onSubmit() {
+    emit('next-step');
   }
 
   watch(canProceed, (val) => {
@@ -125,7 +119,7 @@
       <EGText tag="small" class="mb-4">Step 01</EGText>
       <EGText tag="h4" class="mb-0">Run Details</EGText>
       <UDivider class="py-4" />
-      <EGFormGroup :label="props.pipelineOrWorkflow" name="pipelineName">
+      <EGFormGroup :label="pipelineOrWorkflow" name="pipelineName">
         <EGInput :model-value="props.pipelineOrWorkflowName" :disabled="true" />
       </EGFormGroup>
 
@@ -139,7 +133,7 @@
         <EGInput
           v-model="formState.runName"
           placeholder="Enter a name to identify this pipeline run"
-          @input.prevent="handleRunNameInput"
+          @input.prevent="onRunNameInput"
           autofocus
         />
         <EGCharacterCounter :value="runNameCharCount" :max="MAX_RUN_NAME_LENGTH" />
@@ -149,14 +143,9 @@
         <EGTextArea :model-value="props.pipelineOrWorkflowDescription" :disabled="true" />
       </EGFormGroup>
     </EGCard>
+
     <div class="flex justify-end pt-4">
-      <EGButton
-        :disabled="!canProceed"
-        :loading="isSubmittingFormData"
-        :size="ButtonSizeEnum.enum.sm"
-        type="submit"
-        label="Save & Continue"
-      />
+      <EGButton :disabled="!canProceed" :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" />
     </div>
   </UForm>
 </template>

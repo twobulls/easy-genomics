@@ -10,6 +10,7 @@ export const FileUploadRequestSchema = z
   .object({
     LaboratoryId: z.string().uuid(),
     TransactionId: z.string().uuid(),
+    Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     Files: z.array(FileInfoSchema),
   })
   .strict();

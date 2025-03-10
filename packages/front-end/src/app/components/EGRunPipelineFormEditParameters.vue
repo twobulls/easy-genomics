@@ -1,11 +1,15 @@
 <script setup lang="ts">
   import { ButtonSizeEnum } from '@FE/types/buttons';
-  import { useRunStore } from '@FE/stores';
-  import { WipSeqeraRunData } from '@FE/stores/run';
+  import { useRunStore, useToastStore } from '@FE/stores';
+  import StringField from './EGParametersStringField.vue';
+  import NumberField from './EGParametersNumberField.vue';
+  import BooleanField from './EGParametersBooleanField.vue';
 
   const props = defineProps<{
     schema: object;
     params: object;
+    labId: string;
+    pipelineId: string;
     seqeraRunTempId: string;
   }>();
 
@@ -15,12 +19,10 @@
   const labsStore = useLabsStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
 
-  const wipSeqeraRun = computed<WipSeqeraRunData | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
+  const wipSeqeraRun = computed<WipRun | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
 
-  const labName = computed<string | null>(() => labsStore.labs[wipSeqeraRun.value?.laboratoryId || '']?.Name || null);
-  const pipelineName = computed<string | null>(
-    () => seqeraPipelinesStore.pipelines[wipSeqeraRun.value?.pipelineId || '']?.name || null,
-  );
+  const labName = computed<string | null>(() => labsStore.labs[props.labId]?.Name || null);
+  const pipelineName = computed<string | null>(() => seqeraPipelinesStore.pipelines[props.pipelineId]?.name || null);
 
   const localProps = reactive({
     schema: props.schema,
@@ -76,6 +78,17 @@
     return filteredProperties.every((property: any) => property.hidden);
   }
 
+  function onSubmit() {
+    const paramsRequired: string[] = wipSeqeraRun.value?.paramsRequired || [];
+    const missingParams = paramsRequired.filter((paramName: string) => !wipSeqeraRun.value?.params[paramName]);
+
+    if (missingParams.length > 0) {
+      useToastStore().error(`The '${missingParams.shift()}' field is required. Please try again.`);
+    } else {
+      emit('next-step');
+    }
+  }
+
   watch(
     // watches for input changes in the local params object and updates the store with the new value
     () => localProps.params,
@@ -86,13 +99,25 @@
     },
     { deep: true },
   );
+
+  function componentForType(propertyType: 'string' | 'integer' | 'number' | 'boolean') {
+    switch (propertyType) {
+      case 'string':
+        return StringField;
+      case 'integer':
+      case 'number':
+        return NumberField;
+      case 'boolean':
+        return BooleanField;
+    }
+  }
 </script>
 
 <template>
   <EGS3SampleSheetBar
     v-if="wipSeqeraRun?.sampleSheetS3Url"
     :url="wipSeqeraRun.sampleSheetS3Url"
-    :lab-id="wipSeqeraRun.laboratoryId"
+    :lab-id="props.labId"
     :lab-name="labName"
     :pipeline-or-workflow-name="pipelineName"
     :run-name="wipSeqeraRun.runName"
@@ -129,18 +154,28 @@
       >
         <EGText tag="h4" class="mb-4">{{ section.title }}</EGText>
 
-        <EGRunPipelineParameterInputs
+        <div
           v-for="(section, sectionIndex) in Object.values(schemaDefinitions)"
           :key="`section-${sectionIndex}`"
           v-show="activeSection === section.title"
-          :section="<Object>section"
-          :params="localProps.params"
-          @update:params="
-            (val) => {
-              localProps.params = { ...val }; // Ensure reactivity on update
-            }
-          "
-        />
+        >
+          <div v-for="(propertyDetail, propertyName) in section.properties" :key="propertyName" class="mb-6">
+            <template v-if="!propertyDetail?.hidden">
+              <EGFormGroup
+                :label="propertyName"
+                :name="propertyName"
+                :required="runStore.wipSeqeraRuns[props.seqeraRunTempId].paramsRequired.includes(propertyName)"
+              >
+                <component
+                  :is="componentForType(propertyDetail.type)"
+                  :description="propertyDetail.description"
+                  :helpText="propertyDetail.help_text"
+                  v-model="runStore.wipSeqeraRuns[props.seqeraRunTempId].params[propertyName]"
+                />
+              </EGFormGroup>
+            </template>
+          </div>
+        </div>
 
         <div class="mt-12 flex justify-end">
           <EGButton
@@ -168,7 +203,7 @@
           label="Previous step"
           @click="emit('previous-step')"
         />
-        <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="emit('next-step')" />
+        <EGButton :size="ButtonSizeEnum.enum.sm" type="submit" label="Save & Continue" @click="onSubmit" />
       </div>
     </div>
   </div>

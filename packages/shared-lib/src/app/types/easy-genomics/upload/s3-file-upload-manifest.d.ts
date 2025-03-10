@@ -1,7 +1,10 @@
 // create-file-upload-request API FileUploadRequest & FileUploadManifest type definitions
+import { RunType } from "@SharedLib/types/base-entity";
+
 export type FileUploadRequest = {
   LaboratoryId: string,
   TransactionId: string,
+  Platform: RunType,
   Files: FileInfo[]
 };
 

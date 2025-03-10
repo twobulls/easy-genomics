@@ -37,6 +37,9 @@ export const handler: Handler = async (
   try {
     // Post Request Body
     const request: SampleSheetRequest = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);
+    // Optional Query Parameter
+    const validateS3FilesExist: boolean = event.queryStringParameters?.validate === 'true';
+
     // Data validation safety check
     const requestParseResult = SampleSheetRequestSchema.safeParse(request);
     if (!requestParseResult.success) {
@@ -53,7 +56,8 @@ export const handler: Handler = async (
       throw new InvalidRequestError(`Laboratory ${laboratoryId} S3 Bucket needs to be configured`);
     }
 
-    const s3Path: string = `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/next-flow/${transactionId}`;
+    const platform: string = request.Platform === 'AWS HealthOmics' ? 'aws-healthomics' : 'seqera-platform';
+    const s3Path: string = `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/${platform}/${transactionId}`;
     const s3Key: string = `${s3Path}/sample-sheet.csv`;
     const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
     const bucketLocation = (await s3Service.getBucketLocation({ Bucket: s3Bucket })).LocationConstraint;
@@ -62,10 +66,16 @@ export const handler: Handler = async (
     const s3Region: string = bucketLocation ? bucketLocation : 'us-east-1';
     const sampleSheetType: string = getSampleSheetType(request);
 
+    // Validate SampleSheet request to check for any duplicate SampleIds
+    const sampleIds: string[] = request.UploadedFilePairs.map((_: UploadedFilePairInfo) => _.SampleId);
+    if (sampleIds.length !== [...new Set(sampleIds)].length) {
+      throw new InvalidRequestError('Invalid sample sheet request: duplicate Sample Id(s) found');
+    }
+
     const sampleSheetCsv: string =
       sampleSheetType === 'paired-read'
-        ? await generatePairedReadsSampleSheetCsv(request.UploadedFilePairs)
-        : await generateSingleReadSampleSheetCsv(request.UploadedFilePairs);
+        ? await generatePairedReadsSampleSheetCsv(request.UploadedFilePairs, validateS3FilesExist)
+        : await generateSingleReadSampleSheetCsv(request.UploadedFilePairs, validateS3FilesExist);
     const sampleSheetCsvChecksum: string = createHash('sha256').update(sampleSheetCsv).digest('hex');
 
     const result: PutObjectCommandOutput = await s3Service.putObject({
@@ -120,16 +130,18 @@ function getSampleSheetType(request: SampleSheetRequest) {
   const r1InfoDefined = r1Info.includes(true);
   const r2InfoDefined = r2Info.includes(true);
 
-  const r1InfoAllValid = r1Info.every((r1Defined: boolean) => r1Defined === true);
-  const r2InfoAllValid = r2Info.every((r2Defined: boolean) => r2Defined === true);
-
   if (r1InfoDefined && !r2InfoDefined) {
+    const r1InfoAllValid = r1Info.every((r1Defined: boolean) => r1Defined === true);
+
     if (!r1InfoAllValid) {
       throw new InvalidRequestError('Invalid single-read sample files supplied');
     }
 
     return 'single-read';
   } else if (r1InfoDefined && r2InfoDefined) {
+    const r1InfoAllValid = r1Info.every((r1Defined: boolean) => r1Defined === true);
+    const r2InfoAllValid = r2Info.every((r2Defined: boolean) => r2Defined === true);
+
     if (!r1InfoAllValid) {
       throw new InvalidRequestError('Invalid paired-read R1 sample files supplied');
     }
@@ -149,7 +161,10 @@ function getSampleSheetType(request: SampleSheetRequest) {
  *
  * @param uploadedFilePairs
  */
-async function generateSingleReadSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<string> {
+async function generateSingleReadSampleSheetCsv(
+  uploadedFilePairs: UploadedFilePairInfo[],
+  validateS3FilesExist: boolean,
+): Promise<string> {
   /**
    * Iterate over the supplied list of UploadedFiles to check the single R1 file exist, and generate CSV sample-sheet row record.
    */
@@ -164,19 +179,23 @@ async function generateSingleReadSampleSheetCsv(uploadedFilePairs: UploadedFileP
         }
 
         // Check the single-read R1 file starts with the supplied SampleId
-        const r1FileName: string = r1.Key.split('/').pop();
-        if (!r1FileName.startsWith(uploadedFilePair.SampleId)) {
+        const r1FileName: string | undefined = r1.Key.split('/').pop();
+        if (!r1FileName || !r1FileName.startsWith(uploadedFilePair.SampleId)) {
           throw new InvalidRequestError(
             `Sample Id '${uploadedFilePair.SampleId}' does not match single-read sample file: ${r1.Key}`,
           );
         }
 
-        // Check the single-read R1 file exists in the S3 Bucket / Key location
-        const singleReadFileExists: boolean = await s3Service.doesObjectExist({ Bucket: r1.Bucket, Key: r1.Key });
-        if (singleReadFileExists === false) {
-          throw new InvalidRequestError(`Single read sample file not found: ${r1.Key}`);
+        if (validateS3FilesExist) {
+          // Check the single-read R1 file exists in the S3 Bucket / Key location
+          const singleReadFileExists: boolean = await s3Service.doesObjectExist({ Bucket: r1.Bucket, Key: r1.Key });
+          if (!singleReadFileExists) {
+            throw new InvalidRequestError(`Single read sample file not found: ${r1.Key}`);
+          }
+
+          return `${uploadedFilePair.SampleId}, s3://${r1.Bucket}/${r1.Key}, `; // CSV Sample-Sheet row
         } else {
-          return `${uploadedFilePair.SampleId}, ${r1.S3Url}, `; // CSV Sample-Sheet row
+          return `${uploadedFilePair.SampleId}, s3://${r1.Bucket}/${r1.Key}, `; // CSV Sample-Sheet row
         }
       }),
     )
@@ -194,7 +213,10 @@ async function generateSingleReadSampleSheetCsv(uploadedFilePairs: UploadedFileP
  *
  * @param uploadedFilePairs
  */
-async function generatePairedReadsSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<string> {
+async function generatePairedReadsSampleSheetCsv(
+  uploadedFilePairs: UploadedFilePairInfo[],
+  validateS3FilesExist: boolean,
+): Promise<string> {
   /**
    * Iterate over the supplied list of UploadedFiles to check the paired R1 & R2 files exist, and generate CSV sample-sheet row record.
    */
@@ -210,30 +232,42 @@ async function generatePairedReadsSampleSheetCsv(uploadedFilePairs: UploadedFile
         }
 
         // Check the paired-read R1 & R2 files starts with the supplied SampleId
-        const r1FileName: string = r1.Key.split('/').pop();
-        const r2FileName: string = r2.Key.split('/').pop();
-        if (!r1FileName.startsWith(uploadedFilePair.SampleId)) {
+        const r1FileName: string | undefined = r1.Key.split('/').pop();
+        const r2FileName: string | undefined = r2.Key.split('/').pop();
+        if (!r1FileName || !r1FileName.startsWith(uploadedFilePair.SampleId)) {
           throw new InvalidRequestError(
             `Sample Id '${uploadedFilePair.SampleId}' does not match paired-read R1 sample file: ${r1.Key}`,
           );
         }
-        if (!r2FileName.startsWith(uploadedFilePair.SampleId)) {
+        if (!r2FileName || !r2FileName.startsWith(uploadedFilePair.SampleId)) {
           throw new InvalidRequestError(
             `Sample Id '${uploadedFilePair.SampleId}' does not match paired-read R2 sample file: ${r2.Key}`,
           );
         }
 
-        // Check the paired-read R1 & R2 files exist in the S3 Bucket / Key location
-        const pairedReadFilesExist: boolean[] = await Promise.all([
-          s3Service.doesObjectExist({ Bucket: r1.Bucket, Key: r1.Key }),
-          s3Service.doesObjectExist({ Bucket: r2.Bucket, Key: r2.Key }),
-        ]);
-        if (pairedReadFilesExist[0] === false) {
-          throw new InvalidRequestError(`Paired read R1 sample file not found: ${r1.Key}`);
-        } else if (pairedReadFilesExist[1] === false) {
-          throw new InvalidRequestError(`Paired read R2 sample file not found: ${r2.Key}`);
+        if (r1FileName == r2FileName) {
+          throw new InvalidRequestError(
+            `Sample Id '${uploadedFilePair.SampleId}' R1 and R2 paired-read sample files have the same name: ${r1FileName}`,
+          );
+        }
+
+        // Only check if Sample files exists on S3 if validateS3FilesExist query parameter is supplied
+        if (validateS3FilesExist) {
+          // Check the paired-read R1 & R2 files exist in the S3 Bucket / Key location
+          const pairedReadFilesExist: boolean[] = await Promise.all([
+            s3Service.doesObjectExist({ Bucket: r1.Bucket, Key: r1.Key }),
+            s3Service.doesObjectExist({ Bucket: r2.Bucket, Key: r2.Key }),
+          ]);
+          if (!pairedReadFilesExist[0]) {
+            throw new InvalidRequestError(`Paired read R1 sample file not found: ${r1.Key}`);
+          }
+          if (!pairedReadFilesExist[1]) {
+            throw new InvalidRequestError(`Paired read R2 sample file not found: ${r2.Key}`);
+          }
+
+          return `${uploadedFilePair.SampleId}, s3://${r1.Bucket}/${r1.Key}, s3://${r2.Bucket}/${r2.Key}`; // CSV Sample-Sheet row
         } else {
-          return `${uploadedFilePair.SampleId}, ${r1.S3Url}, ${r2.S3Url}`; // CSV Sample-Sheet row
+          return `${uploadedFilePair.SampleId}, s3://${r1.Bucket}/${r1.Key}, s3://${r2.Bucket}/${r2.Key}`; // CSV Sample-Sheet row
         }
       }),
     )

@@ -5,6 +5,7 @@
     metadata: {
       labName: string;
       pipelineOrWorkflowName: string;
+      platform: string;
       runName: string;
     };
   }
@@ -29,7 +30,7 @@
 
   onMounted(async () => {
     try {
-      const { url, pipelineOrWorkflowName, runName } = route.query;
+      const { url, pipelineOrWorkflowName, platform, runName } = route.query;
 
       if (!labId || !url) {
         throw new Error('Missing required parameters');
@@ -58,6 +59,7 @@
         metadata: {
           labName: labName.value,
           pipelineOrWorkflowName: pipelineOrWorkflowName as string,
+          platform: platform as string,
           runName: runName as string,
         },
       };
@@ -73,16 +75,20 @@
       <EGText tag="h3" class="mb-4">Sample Sheet</EGText>
       <div class="mb-8 space-y-1">
         <EGText tag="p">
-          <strong>Run name:</strong>
-          {{ tableData.metadata.runName }}
+          <strong>Laboratory:</strong>
+          {{ tableData.metadata.labName }}
+        </EGText>
+        <EGText tag="p">
+          <strong>Platform:</strong>
+          {{ tableData.metadata.platform }}
         </EGText>
         <EGText tag="p">
           <strong>Pipeline:</strong>
           {{ tableData.metadata.pipelineOrWorkflowName }}
         </EGText>
         <EGText tag="p">
-          <strong>Laboratory:</strong>
-          {{ tableData.metadata.labName }}
+          <strong>Run name:</strong>
+          {{ tableData.metadata.runName }}
         </EGText>
       </div>
       <table>

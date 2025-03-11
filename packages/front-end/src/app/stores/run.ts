@@ -179,30 +179,45 @@ const useRunStore = defineStore('runStore', {
 
     // Temp Runs
 
-    updateWipRun(type: 'seqera' | 'omics', tempId: string, updates: Partial<WipRun>): void {
+    updateWipRun(type: 'seqera' | 'omics', tempId: string, updates: Partial<Omit<WipRun, 'params'>>): void {
       const store = type === 'seqera' ? this.wipSeqeraRuns : this.wipOmicsRuns;
 
       const existingWipRun = store[tempId] || {};
-      const existingParams = existingWipRun.params || {};
+
       store[tempId] = {
         ...existingWipRun,
         ...updates,
       };
-      // need to merge params separately because they're nested
-      if (updates.params) {
-        store[tempId].params = {
-          ...existingParams,
-          ...updates.params,
-        };
-      }
     },
 
-    updateWipSeqeraRun(tempId: string, updates: Partial<WipRun>): void {
+    updateWipRunParams(type: 'seqera' | 'omics', tempId: string, updates: object): void {
+      const store = type === 'seqera' ? this.wipSeqeraRuns : this.wipOmicsRuns;
+
+      const wipRun = store[tempId] || {};
+      const existingParams = wipRun.params || {};
+
+      wipRun.params = {
+        ...existingParams,
+        ...updates,
+      };
+
+      store[tempId] = wipRun;
+    },
+
+    updateWipSeqeraRun(tempId: string, updates: Partial<Omit<WipRun, 'params'>>): void {
       this.updateWipRun('seqera', tempId, updates);
     },
 
-    updateWipOmicsRun(tempId: string, updates: Partial<WipRun>): void {
+    updateWipOmicsRun(tempId: string, updates: Partial<Omit<WipRun, 'params'>>): void {
       this.updateWipRun('omics', tempId, updates);
+    },
+
+    updateWipSeqeraRunParams(tempId: string, updates: object): void {
+      this.updateWipRunParams('seqera', tempId, updates);
+    },
+
+    updateWipOmicsRunParams(tempId: string, updates: object): void {
+      this.updateWipRunParams('omics', tempId, updates);
     },
   },
 

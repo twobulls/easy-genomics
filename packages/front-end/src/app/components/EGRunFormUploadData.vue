@@ -46,7 +46,8 @@
   const { $api } = useNuxtApp();
   const { downloadSampleSheet } = usePipeline($api);
   const { isOnline } = useNetwork();
-  const { platformToWipRunUpdateFunction, getWipRunForPlatform } = useMultiplatform();
+  const { platformToWipRunUpdateFunction, platformToWipRunUpdateParamsFunction, getWipRunForPlatform } =
+    useMultiplatform();
 
   const toastStore = useToastStore();
   const labsStore = useLabsStore();
@@ -74,6 +75,7 @@
   const wipRun = computed<WipRun>(() => getWipRunForPlatform(props.platform, props.wipRunTempId));
 
   const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
+  const wipRunUpdateParamsFunction = computed<Function>(() => platformToWipRunUpdateParamsFunction(props.platform));
 
   // file handling stuff
 
@@ -406,10 +408,10 @@
       sampleSheetS3Url: S3Url,
       s3Bucket: Bucket,
       s3Path: Path,
-      params: {
-        input: S3Url,
-        outdir: `s3://${Bucket}/${Path}/results`,
-      },
+    });
+    wipRunUpdateParamsFunction.value(props.wipRunTempId, {
+      input: S3Url,
+      outdir: `s3://${Bucket}/${Path}/results`,
     });
   }
 
@@ -683,23 +685,25 @@
   const removeFile = (file: { sampleId: string; fileName: string }) => {
     // Find the file pair containing the file
     const filePair = filePairs.value.find((pair) => pair.sampleId === file.sampleId);
+    if (!filePair) return;
 
-    if (filePair) {
-      // Remove only the specific file (r1 or r2) that matches the filename
-      if (filePair.r1File?.name === file.fileName) {
-        filePair.r1File = undefined;
-      } else if (filePair.r2File?.name === file.fileName) {
-        filePair.r2File = undefined;
-      }
-
-      // If both files are now undefined, remove the entire pair
-      if (!filePair.r1File && !filePair.r2File) {
-        setFiles(filePairs.value.filter((pair) => pair.sampleId !== file.sampleId));
-      } else {
-        // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
-        filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
-      }
+    // Remove only the specific file (r1 or r2) that matches the filename
+    if (filePair.r1File?.name === file.fileName) {
+      filePair.r1File = undefined;
+    } else if (filePair.r2File?.name === file.fileName) {
+      filePair.r2File = undefined;
     }
+
+    // If both files are now undefined, remove the entire pair
+    if (!filePair.r1File && !filePair.r2File) {
+      setFiles(filePairs.value.filter((pair) => pair.sampleId !== file.sampleId));
+    } else {
+      // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
+      filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
+    }
+
+    // delete the sample sheet url because it's now outdated
+    wipRunUpdateFunction.value(props.wipRunTempId, {});
   };
 
   const canRetryUpload = (row: { sampleId: string; fileName: string; progress: number; error?: string }) => {

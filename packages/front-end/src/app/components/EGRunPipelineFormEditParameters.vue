@@ -93,9 +93,7 @@
     // watches for input changes in the local params object and updates the store with the new value
     () => localProps.params,
     (val) => {
-      if (val) {
-        runStore.updateWipSeqeraRun(props.seqeraRunTempId, { params: val });
-      }
+      if (val) runStore.updateWipSeqeraRunParams(props.seqeraRunTempId, val);
     },
     { deep: true },
   );

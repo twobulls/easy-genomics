@@ -57,9 +57,7 @@
     },
   });
   // save the updated parameters to the store too
-  runStore.updateWipOmicsRun(props.omicsRunTempId, {
-    params: localProps.params,
-  });
+  runStore.updateWipOmicsRunParams(props.omicsRunTempId, localProps.params);
 
   function onSubmit() {
     const paramsRequired = wipOmicsRun.value?.paramsRequired || [];
@@ -76,9 +74,7 @@
     // watches for input changes in the local params object and updates the store with the new value
     () => localProps.params,
     (val) => {
-      if (val) {
-        runStore.updateWipOmicsRun(props.omicsRunTempId, { params: val });
-      }
+      if (val) runStore.updateWipOmicsRunParams(props.omicsRunTempId, val);
     },
     { deep: true },
   );

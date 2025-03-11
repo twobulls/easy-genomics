@@ -111,7 +111,13 @@
       </div>
 
       <div class="ml-2 flex items-center gap-4" role="group" aria-label="URL Actions">
-        <button @click="open" class="cursor-pointer" :class="{ 'opacity-50': !url }" aria-label="Open in new tab">
+        <button
+          @click="open"
+          class="cursor-pointer"
+          :class="{ 'opacity-50': !url }"
+          aria-label="Open in new tab"
+          :disabled="isClicked"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
             <path
               d="M20.2916 12.5C19.9004 12.5 19.5833 12.8171 19.5833 13.2084V19.5833H5.41674V5.41674H11.7916C12.1829 5.41674 12.5 5.09959 12.5 4.70837C12.5 4.31715 12.1829 4 11.7916 4H5.41674C4.63771 4 4 4.6375 4 5.41674V19.5835C4 20.3623 4.63771 21 5.41674 21H19.5833C20.3623 21 21 20.3623 21 19.5833V13.2084C21 12.8171 20.6829 12.5 20.2916 12.5Z"
@@ -124,7 +130,13 @@
           </svg>
         </button>
 
-        <button @click="copy" class="cursor-pointer" :class="{ 'opacity-50': !url }" aria-label="Copy to clipboard">
+        <button
+          @click="copy"
+          class="cursor-pointer"
+          :class="{ 'opacity-50': !url }"
+          aria-label="Copy to clipboard"
+          :disabled="isClicked"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
             <path
               fill-rule="evenodd"
@@ -140,6 +152,7 @@
           class="cursor-pointer"
           :class="{ 'opacity-50': !url }"
           aria-label="Download sample sheet"
+          :disabled="isClicked"
         >
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="24" height="24" />

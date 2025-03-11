@@ -165,6 +165,17 @@
 
   const isDropzoneEnabled = computed(() => uploadStatus.value !== 'uploading');
 
+  const uploadButtonDisabledReason = computed<string | null>(() => {
+    // don't need internet connection message because the modal takes care of it
+    // don't need no files uploaded message because there will visibly be nothing there which should be self explanatory
+    if (!areAllPairsComplete.value) return 'There is an R2 file with no matching R1 file.';
+    if (haveMatchedFiles.value && haveUnmatchedFiles.value)
+      return 'There is a mix of single files and pair files. Files must be all single files or all pair files.';
+    // don't need uploading message because there's already a visual indicator of activity in progress
+
+    return null;
+  });
+
   const isUploadButtonDisabled = computed(() => {
     const noInternet = !isOnline.value;
     const noFiles = filesNotUploaded.value.length === 0;
@@ -870,6 +881,14 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <div
+      v-if="uploadButtonDisabledReason"
+      class="bg-alert-danger-muted text-alert-danger my-10 flex items-center gap-2 rounded-lg p-6"
+    >
+      <UIcon class="text-2xl" name="i-heroicons-exclamation-triangle" />
+      <div>{{ uploadButtonDisabledReason }}</div>
     </div>
 
     <EGS3SampleSheetBar

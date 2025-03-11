@@ -141,22 +141,6 @@ const useRunStore = defineStore('runStore', {
       this.seqeraRuns[labId][run.id] = run;
     },
 
-    updateWipSeqeraRun(tempId: string, updates: Partial<WipRun>): void {
-      const existingWipRun = this.wipSeqeraRuns[tempId] || {};
-      const existingParams = existingWipRun.params || {};
-      this.wipSeqeraRuns[tempId] = {
-        ...existingWipRun,
-        ...updates,
-      };
-      // need to merge params separately because they're nested
-      if (updates.params) {
-        this.wipSeqeraRuns[tempId].params = {
-          ...existingParams,
-          ...updates.params,
-        };
-      }
-    },
-
     // Omics Runs
 
     async loadOmicsRunsForLab(labId: string): Promise<void> {
@@ -193,20 +177,32 @@ const useRunStore = defineStore('runStore', {
       this.omicsRuns[labId][runId] = run;
     },
 
-    updateWipOmicsRun(tempId: string, updates: Partial<WipRun>): void {
-      const existingWipRun = this.wipOmicsRuns[tempId] || {};
+    // Temp Runs
+
+    updateWipRun(type: 'seqera' | 'omics', tempId: string, updates: Partial<WipRun>): void {
+      const store = type === 'seqera' ? this.wipSeqeraRuns : this.wipOmicsRuns;
+
+      const existingWipRun = store[tempId] || {};
       const existingParams = existingWipRun.params || {};
-      this.wipOmicsRuns[tempId] = {
+      store[tempId] = {
         ...existingWipRun,
         ...updates,
       };
       // need to merge params separately because they're nested
       if (updates.params) {
-        this.wipOmicsRuns[tempId].params = {
+        store[tempId].params = {
           ...existingParams,
           ...updates.params,
         };
       }
+    },
+
+    updateWipSeqeraRun(tempId: string, updates: Partial<WipRun>): void {
+      this.updateWipRun('seqera', tempId, updates);
+    },
+
+    updateWipOmicsRun(tempId: string, updates: Partial<WipRun>): void {
+      this.updateWipRun('omics', tempId, updates);
     },
   },
 

@@ -37,6 +37,28 @@
   const s3Bucket = props.s3Bucket;
   const s3Prefix = props.s3Prefix;
 
+  const hasOpenedResults = ref(false);
+
+  // open file browser to `/results` dir (if present)
+  watch(
+    () => currentPath.value[0].children,
+    (rootDirChildren) => {
+      if (hasOpenedResults.value) return; // only do this once
+
+      // if not at root dir somehow, don't touch it
+      if (currentPath.value.length > 1) {
+        hasOpenedResults.value = true;
+        return;
+      }
+
+      const resultsChild = rootDirChildren.find((node) => node.name === 'results');
+      if (!resultsChild) return;
+
+      openDirectory(resultsChild);
+      hasOpenedResults.value = true;
+    },
+  );
+
   const updatedS3Contents = computed(() => {
     if (props.s3Contents) {
       const transformedData = transformS3Data(props.s3Contents, s3Prefix);

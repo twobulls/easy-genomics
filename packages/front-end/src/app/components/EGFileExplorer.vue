@@ -51,7 +51,7 @@
         return;
       }
 
-      const resultsChild = rootDirChildren.find((node) => node.name === 'results');
+      const resultsChild = rootDirChildren.find((node) => node.type === 'directory' && node.name === 'results');
       if (!resultsChild) return;
 
       openDirectory(resultsChild);

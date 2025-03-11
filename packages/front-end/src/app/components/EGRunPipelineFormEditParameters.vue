@@ -121,6 +121,7 @@
     :lab-name="labName"
     :pipeline-or-workflow-name="pipelineName"
     :run-name="wipSeqeraRun.runName"
+    :display-label="true"
   />
 
   <div class="flex">

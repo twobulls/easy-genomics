@@ -213,6 +213,7 @@
                   :pipeline-or-workflow-name="labRun.WorkflowName"
                   :platform="labRun.Platform"
                   :run-name="labRun.RunName"
+                  :display-label="false"
                 />
               </dd>
             </div>

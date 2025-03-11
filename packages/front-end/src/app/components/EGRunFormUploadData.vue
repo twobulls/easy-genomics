@@ -13,7 +13,6 @@
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useToastStore } from '@FE/stores';
-  import usePipeline from '@FE/composables/usePipeline';
   import { useNetwork } from '@vueuse/core';
   import { RunType } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 
@@ -44,7 +43,6 @@
   }
 
   const { $api } = useNuxtApp();
-  const { downloadSampleSheet } = usePipeline($api);
   const { isOnline } = useNetwork();
   const { platformToWipRunUpdateFunction, getWipRunForPlatform } = useMultiplatform();
 
@@ -879,17 +877,12 @@
       :lab-id="props.labId"
       :lab-name="labName"
       :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
+      :platform="platform"
       :run-name="wipRun.runName"
+      :display-label="true"
     />
 
     <div class="flex justify-end pt-4">
-      <EGButton
-        v-if="hasSampleSheetUrl"
-        variant="secondary"
-        class="mr-2"
-        label="Download sample sheet"
-        @click="downloadSampleSheet(props.labId, wipRun.sampleSheetS3Url, props.pipelineOrWorkflowName, wipRun.runName)"
-      />
       <EGButton
         @click="startUploadProcess"
         :disabled="isUploadButtonDisabled"

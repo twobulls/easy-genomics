@@ -16,6 +16,7 @@ export interface WipRun {
   runName?: string;
   params?: object;
   sampleSheetS3Url?: string;
+  sampleSheetFiles?: string[];
   s3Bucket?: string;
   s3Path?: string;
   files?: FilePair[];

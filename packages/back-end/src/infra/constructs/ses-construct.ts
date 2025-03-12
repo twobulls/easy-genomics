@@ -46,7 +46,7 @@ export class SesConstruct extends Construct {
     const newUserInvitationEmailTemplate: CfnTemplate = new CfnTemplate(this, 'NewUserInvitationEmailTemplate', {
       template: {
         templateName: 'NewUserInvitationEmailTemplate',
-        subjectPart: 'You’ve been invited to Easy Genomics',
+        subjectPart: "You've been invited to Easy Genomics",
         htmlPart: `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -135,6 +135,17 @@ export class SesConstruct extends Construct {
                 </td>
             </tr>
 
+            <!-- Divider -->
+            <tr>
+                <td style="background-color: #fafafa; padding: 20px 40px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse: collapse;">
+                        <tr>
+                            <td height="1" style="background-color: #e5e5e5; font-size: 1px; line-height: 1px;">&nbsp;</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
             <!-- Footer -->
             <tr>
                 <td style="background-color: #fafafa; padding: 20px 40px 40px;">
@@ -168,7 +179,7 @@ export class SesConstruct extends Construct {
     const invitationEmailTemplate: CfnTemplate = new CfnTemplate(this, 'ExistingUserCourtesyEmailTemplate', {
       template: {
         templateName: 'ExistingUserCourtesyEmailTemplate',
-        subjectPart: 'You’ve been added to an Easy Genomics Organization',
+        subjectPart: "You've been added to an Easy Genomics Organization",
         htmlPart: `
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -238,12 +249,10 @@ export class SesConstruct extends Construct {
 
             <!-- Divider -->
             <tr>
-                <td style="background-color: #fafafa;">
-                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <td style="background-color: #fafafa; padding: 20px 40px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse: collapse;">
                         <tr>
-                            <td style="padding: 0 40px;">
-                                <div style="height: 1px; line-height: 1px; background-color: #e5e5e5; margin: 20px 0;">&nbsp;</div>
-                            </td>
+                            <td height="1" style="background-color: #e5e5e5; font-size: 1px; line-height: 1px;">&nbsp;</td>
                         </tr>
                     </table>
                 </td>

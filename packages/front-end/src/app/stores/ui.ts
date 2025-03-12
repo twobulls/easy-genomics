@@ -38,6 +38,7 @@ type PendingRequest =
   | 'toggleOrgAdmin'
   | 'loadLabRuns'
   | 'updateDefaultOrg'
+  | 'generateSampleSheet'
   | 'downloadSampleSheet';
 
 interface UiStoreState {

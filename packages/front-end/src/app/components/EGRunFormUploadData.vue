@@ -139,6 +139,13 @@
     return 'idle';
   });
 
+  const showGenerateSampleSheetButton = computed<boolean>(
+    () =>
+      uploadStatus.value === 'success' && // everything uploaded
+      filesProblemAlertMessage.value === null && // no file problems
+      !wipRun.value.sampleSheetS3Url, // no sample sheet yet
+  );
+
   const filesForTable = computed(() => {
     const files: { sampleId: string; fileName: string; progress: number; error?: string }[] = [];
 
@@ -925,7 +932,7 @@
 
     <div class="flex justify-end gap-4 pt-4">
       <EGButton
-        v-if="filesNotUploaded.length === 0 && !wipRun.sampleSheetS3Url"
+        v-if="showGenerateSampleSheetButton"
         @click="saveSampleSheetInfo"
         :loading="uiStore.isRequestPending('generateSampleSheet')"
         label="Generate Sample Sheet"

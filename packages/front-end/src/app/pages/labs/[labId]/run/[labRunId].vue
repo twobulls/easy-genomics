@@ -1,6 +1,8 @@
 <script setup lang="ts">
   import { S3Response } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
   import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+  import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+  import { useLabsStore, useRunStore, useUiStore } from '@FE/stores';
 
   const $route = useRoute();
   const $router = useRouter();
@@ -8,12 +10,14 @@
   const { handleS3Download } = useFileDownload();
   const { platformToPipelineOrWorkflow } = useMultiplatform();
 
+  const labsStore = useLabsStore();
   const runStore = useRunStore();
   const uiStore = useUiStore();
 
   const labId = $route.params.labId as string;
   const labRunId = $route.params.labRunId as string;
 
+  const lab = computed<Laboratory | null>(() => labsStore.labs[labId] ?? null);
   const labRun = computed<LaboratoryRun | null>(() => runStore.labRuns[labRunId] ?? null);
   // The LaboratoryRun's InputS3Url is the authoritative reference to obtain S3Bucket & S3Prefix for the File Manager
   const inputS3Url: string = labRun.value?.InputS3Url;
@@ -201,12 +205,15 @@
 
             <div :class="rowStyle">
               <dt :class="rowLabelStyle">Sample Sheet</dt>
-              <dd :class="rowContentStyle">
-                <EGButton
-                  label="Download"
-                  variant="secondary"
-                  @click="downloadSampleSheet"
-                  :loading="uiStore.isRequestPending('downloadSampleSheet')"
+              <dd :class="rowContentStyle" style="width: 90%">
+                <EGS3SampleSheetBar
+                  :url="labRun.SampleSheetS3Url"
+                  :lab-id="labId"
+                  :lab-name="lab.labName"
+                  :pipeline-or-workflow-name="labRun.WorkflowName"
+                  :platform="labRun.Platform"
+                  :run-name="labRun.RunName"
+                  :display-label="false"
                 />
               </dd>
             </div>

@@ -88,6 +88,7 @@
     :lab-name="labName"
     :pipeline-or-workflow-name="workflowName"
     :run-name="wipOmicsRun.runName"
+    :display-label="true"
   />
 
   <div class="flex">

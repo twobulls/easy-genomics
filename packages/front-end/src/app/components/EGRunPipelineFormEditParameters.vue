@@ -14,10 +14,13 @@
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
+
   const activeSection = ref<string | null>(null);
+
   const runStore = useRunStore();
   const labsStore = useLabsStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
+  const uiStore = useUiStore();
 
   const wipSeqeraRun = computed<WipRun | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
 

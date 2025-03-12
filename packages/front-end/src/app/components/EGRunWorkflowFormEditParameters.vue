@@ -15,6 +15,7 @@
   const runStore = useRunStore();
   const labsStore = useLabsStore();
   const omicsWorklowsStore = useOmicsWorkflowsStore();
+  const uiStore = useUiStore();
 
   const wipOmicsRun = computed<WipRun | undefined>(() => runStore.wipOmicsRuns[props.omicsRunTempId]);
 

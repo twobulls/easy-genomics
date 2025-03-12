@@ -703,7 +703,7 @@
     }
 
     // delete the sample sheet url because it's now outdated
-    wipRunUpdateFunction.value(props.wipRunTempId, {});
+    wipRunUpdateFunction.value(props.wipRunTempId, {}, ['sampleSheetS3Url']);
   };
 
   const canRetryUpload = (row: { sampleId: string; fileName: string; progress: number; error?: string }) => {
@@ -896,7 +896,7 @@
     </div>
 
     <EGS3SampleSheetBar
-      v-if="uploadStatus === 'success'"
+      v-if="wipRun?.sampleSheetS3Url"
       :disabled="uploadStatus === 'uploading'"
       :url="wipRun.sampleSheetS3Url"
       :lab-id="props.labId"

@@ -179,45 +179,58 @@ const useRunStore = defineStore('runStore', {
 
     // Temp Runs
 
-    updateWipRun(type: 'seqera' | 'omics', tempId: string, updates: Partial<Omit<WipRun, 'params'>>): void {
+    _updateWipRun(type: 'seqera' | 'omics', tempId: string, updates: Partial<WipRun>, unsets: (keyof WipRun)[]): void {
       const store = type === 'seqera' ? this.wipSeqeraRuns : this.wipOmicsRuns;
 
-      const existingWipRun = store[tempId] || {};
+      const existingWipRun: WipRun = store[tempId] || {};
 
+      // remove unsets
+      for (const unset of unsets) {
+        delete existingWipRun[unset];
+      }
+
+      // apply updates and save
       store[tempId] = {
         ...existingWipRun,
         ...updates,
       };
     },
 
-    updateWipRunParams(type: 'seqera' | 'omics', tempId: string, updates: object): void {
+    _updateWipRunParams(type: 'seqera' | 'omics', tempId: string, updates: object, unsets: string[]): void {
       const store = type === 'seqera' ? this.wipSeqeraRuns : this.wipOmicsRuns;
 
       const wipRun = store[tempId] || {};
-      const existingParams = wipRun.params || {};
+      const existingParams: any = wipRun.params || {};
 
+      // remove unsets
+      for (const unset of unsets) {
+        delete existingParams[unset];
+      }
+
+      // apply updates
       wipRun.params = {
         ...existingParams,
         ...updates,
       };
 
+      // save
       store[tempId] = wipRun;
     },
 
-    updateWipSeqeraRun(tempId: string, updates: Partial<Omit<WipRun, 'params'>>): void {
-      this.updateWipRun('seqera', tempId, updates);
+    updateWipSeqeraRun(tempId: string, updates: Partial<WipRun>, unsets: (keyof WipRun)[] = []): void {
+      this._updateWipRun('seqera', tempId, updates, unsets);
     },
 
-    updateWipOmicsRun(tempId: string, updates: Partial<Omit<WipRun, 'params'>>): void {
-      this.updateWipRun('omics', tempId, updates);
+    updateWipOmicsRun(tempId: string, updates: Partial<WipRun>, unsets: (keyof WipRun)[] = []): void {
+      this._updateWipRun('omics', tempId, updates, unsets);
     },
 
-    updateWipSeqeraRunParams(tempId: string, updates: object): void {
-      this.updateWipRunParams('seqera', tempId, updates);
+    updateWipSeqeraRunParams(tempId: string, updates: object, unsets: string[] = []): void {
+      this._updateWipRunParams('seqera', tempId, updates, unsets);
     },
 
-    updateWipOmicsRunParams(tempId: string, updates: object): void {
-      this.updateWipRunParams('omics', tempId, updates);
+    updateWipOmicsRunParams(tempId: string, updates: object, unsets: string[] = []): void {
+      this._updateWipRunParams('omics', tempId, updates, unsets);
     },
   },
 

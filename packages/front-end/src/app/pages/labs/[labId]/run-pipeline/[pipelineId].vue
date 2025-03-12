@@ -190,7 +190,7 @@
   }
 
   function resetParams() {
-    runStore.wipSeqeraRuns[seqeraRunTempId.value].params = JSON.parse(JSON.stringify(initialParams.value));
+    runStore.updateWipSeqeraRun(seqeraRunTempId.value, { params: JSON.parse(JSON.stringify(initialParams.value)) });
   }
 
   function confirmCancel() {

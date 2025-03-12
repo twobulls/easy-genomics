@@ -141,7 +141,7 @@
   }
 
   function resetParams() {
-    runStore.wipOmicsRuns[omicsRunTempId.value].params = {};
+    runStore.updateWipOmicsRun(omicsRunTempId.value, { params: {} });
   }
 
   /**

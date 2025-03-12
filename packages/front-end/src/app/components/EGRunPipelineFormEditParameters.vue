@@ -113,11 +113,12 @@
 
 <template>
   <EGS3SampleSheetBar
-    v-if="wipSeqeraRun?.sampleSheetS3Url"
+    v-if="wipSeqeraRun?.sampleSheetS3Url || uiStore.isRequestPending('generateSampleSheet')"
     :url="wipSeqeraRun.sampleSheetS3Url"
     :lab-id="props.labId"
     :lab-name="labName"
     :pipeline-or-workflow-name="pipelineName"
+    platform="Seqera Cloud"
     :run-name="wipSeqeraRun.runName"
     :display-label="true"
   />

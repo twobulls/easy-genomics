@@ -82,11 +82,12 @@
 
 <template>
   <EGS3SampleSheetBar
-    v-if="wipOmicsRun?.sampleSheetS3Url"
+    v-if="wipOmicsRun?.sampleSheetS3Url || uiStore.isRequestPending('generateSampleSheet')"
     :url="wipOmicsRun.sampleSheetS3Url"
     :lab-id="props.labId"
     :lab-name="labName"
     :pipeline-or-workflow-name="workflowName"
+    platform="AWS HealthOmics"
     :run-name="wipOmicsRun.runName"
     :display-label="true"
   />

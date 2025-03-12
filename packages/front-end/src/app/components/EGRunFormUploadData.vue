@@ -123,12 +123,7 @@
     // Check both conditions:
     // 1. All existing files are uploaded successfully
     // 2. All pairs are complete (have both R1 and R2)
-    return (
-      areAllFilesUploaded.value &&
-      areAllPairsComplete.value &&
-      hasSampleSheetUrl.value &&
-      sampleSheetUpToDate.value === true
-    );
+    return areAllFilesUploaded.value && areAllPairsComplete.value && hasSampleSheetUrl.value;
   });
 
   // overall upload status for all files
@@ -142,29 +137,6 @@
     if (files.value.length > 0 && files.value.every((file) => !file.error && file.progress === 100)) return 'success';
     // else must be idle
     return 'idle';
-  });
-
-  const sampleSheetUpToDate = computed<boolean | null>(() => {
-    // null if no sample sheet
-    if (!wipRun.value.sampleSheetS3Url || !wipRun.value.sampleSheetFiles) return null;
-    // false if there are unuploaded files
-    if (filesNotUploaded.value.length > 0) return false;
-
-    const currentFiles = files.value.map((file) => file.name).sort();
-    const sampleSheetFiles = wipRun.value.sampleSheetFiles?.sort();
-
-    return JSON.stringify(currentFiles) === JSON.stringify(sampleSheetFiles);
-  });
-
-  const showGenerateSampleSheetButton = computed<boolean>(() => {
-    // must be at success state
-    if (uploadStatus.value !== 'success') return false;
-
-    // must not have problems with files
-    if (filesProblemAlertMessage.value !== null) return false;
-
-    // show if sample sheet is present and not up to date
-    return sampleSheetUpToDate.value === false;
   });
 
   const filesForTable = computed(() => {
@@ -231,7 +203,7 @@
   }
 
   function removeStoredSampleSheetInfo() {
-    wipRunUpdateFunction.value(props.wipRunTempId, {}, ['sampleSheetS3Url', 'sampleSheetFiles']);
+    wipRunUpdateFunction.value(props.wipRunTempId, {}, ['sampleSheetS3Url']);
   }
 
   // gives error message to all files - used for when an error occurs above the individual file level
@@ -306,6 +278,9 @@
       useToastStore().error(message);
       return;
     }
+
+    // remove the sample sheet because it's outdated now
+    removeStoredSampleSheetInfo();
 
     const fileDetails = getFileDetails(file);
     addFileToFilePairs(fileDetails);
@@ -430,9 +405,6 @@
     uiStore.setRequestPending('generateSampleSheet');
 
     try {
-      // clear existing data
-      removeStoredSampleSheetInfo();
-
       // get manifest of all files
       const uploadManifest = await getUploadFilesManifest(files.value);
 
@@ -440,15 +412,11 @@
       // get sample sheet info
       const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
 
-      // store file names to check later if sample sheet is outdated
-      const fileNames = files.value.map((file) => file.name).sort();
-
       // save to wip run
       const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
 
       wipRunUpdateFunction.value(props.wipRunTempId, {
         sampleSheetS3Url: S3Url,
-        sampleSheetFiles: fileNames,
         s3Bucket: Bucket,
         s3Path: Path,
       });
@@ -748,6 +716,9 @@
       // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
       filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
     }
+
+    // remove the sample sheet because it's outdated now
+    removeStoredSampleSheetInfo();
   };
 
   const canRetryUpload = (row: { sampleId: string; fileName: string; progress: number; error?: string }) => {
@@ -941,7 +912,7 @@
     </div>
 
     <EGS3SampleSheetBar
-      v-if="sampleSheetUpToDate === true || uiStore.isRequestPending('generateSampleSheet')"
+      v-if="wipRun.sampleSheetS3Url || uiStore.isRequestPending('generateSampleSheet')"
       :disabled="uploadStatus === 'uploading'"
       :url="wipRun.sampleSheetS3Url"
       :lab-id="props.labId"
@@ -954,7 +925,7 @@
 
     <div class="flex justify-end gap-4 pt-4">
       <EGButton
-        v-if="showGenerateSampleSheetButton"
+        v-if="filesNotUploaded.length === 0 && !wipRun.sampleSheetS3Url"
         @click="saveSampleSheetInfo"
         :loading="uiStore.isRequestPending('generateSampleSheet')"
         label="Generate Sample Sheet"

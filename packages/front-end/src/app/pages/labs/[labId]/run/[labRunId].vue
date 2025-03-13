@@ -33,10 +33,15 @@
     let i = 0;
     while (inputS3Url.value[i] === outputS3Url[i]) i++;
 
-    const outputRelativeLocation = outputS3Url.slice(i);
+    let outputRelativeLocation = outputS3Url.slice(i);
     if (!outputRelativeLocation.match(/^(\/[^\/]+)+$/)) return null;
 
-    return outputRelativeLocation.split('/').slice(1);
+    // omics generates an additional sub-folder with the omics run id which we also want to descend into
+    if (labRun.value?.Platform === 'AWS HealthOmics' && !!labRun.value?.ExternalRunId) {
+      outputRelativeLocation += '/' + labRun.value.ExternalRunId;
+    }
+
+    return outputRelativeLocation.split('/').filter((step) => !!step); // filter out blank steps ie ''
   });
 
   const isLoading = computed<boolean>(() => uiStore.isRequestPending('loadLabRuns'));

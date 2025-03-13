@@ -44,7 +44,7 @@
     },
     {
       slot: 'details',
-      label: 'Details',
+      label: 'Settings',
     },
   ];
 

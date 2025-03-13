@@ -121,16 +121,9 @@ export class DynamoDBService {
     data?: RequestType,
   ): Promise<ResponseType> => {
     try {
-      console.log(
-        `[dynamodb-service : dynamoDBRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
-      );
-
       return (await this.dynamoDBDocClient.send(this.getDynamoDBCommand(command, data))) as ResponseType;
     } catch (error: any) {
-      console.error(
-        `[dynamodb-service : dynamoDBRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
-        error,
-      );
+      console.error(`[dynamodb-service : dynamoDBRequest] command: ${command} exception encountered:`, error);
       throw this.handleError(error);
     }
   };

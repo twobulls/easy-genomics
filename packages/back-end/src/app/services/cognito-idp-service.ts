@@ -351,16 +351,9 @@ export class CognitoIdpService {
     data?: RequestType,
   ): Promise<ResponseType> => {
     try {
-      console.log(
-        `[cognito-idp-service : cognitoIdpRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
-      );
-
       return await this.cognitoIdpClient.send(this.getCognitoIdpCommand(command, data));
     } catch (error: any) {
-      console.error(
-        `[cognitoIdp-service : cognitoIdpRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
-        error,
-      );
+      console.error(`[cognitoIdp-service : cognitoIdpRequest] command: ${command} exception encountered:`, error);
       throw this.handleError(error);
     }
   };

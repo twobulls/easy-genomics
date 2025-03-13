@@ -732,21 +732,10 @@
     // If the file isn't in error state, can't retry
     if (!row.error) return false;
 
-    // TODO: this logic hasn't been updated with the single file feature
-    // Find the matching pair for this file
-    const isPairedFile = filePairs.value.some((pair) => {
-      const isR1 = pair.r1File?.name === row.fileName;
-      const isR2 = pair.r2File?.name === row.fileName;
+    // if there's a problem with the selected files, that needs to be addressed before uploading
+    if (filesProblemAlertMessage.value !== null) return false;
 
-      // If this is R1, check if R2 exists
-      if (isR1) return !!pair.r2File;
-      // If this is R2, check if R1 exists
-      if (isR2) return !!pair.r1File;
-
-      return false;
-    });
-
-    return isPairedFile && isOnline.value;
+    return true;
   };
 
   watch(canProceedToNextStep, (val) => {

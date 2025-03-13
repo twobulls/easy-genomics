@@ -26,6 +26,7 @@
       s3Prefix: string;
       s3Contents: S3Response | null;
       isLoading?: boolean;
+      startPath?: string[];
     }>(),
     { isLoading: true },
   );
@@ -37,25 +38,31 @@
   const s3Bucket = props.s3Bucket;
   const s3Prefix = props.s3Prefix;
 
-  const hasOpenedResults = ref(false);
+  const hasOpenedStartPath = ref(false);
 
-  // open file browser to `/results` dir (if present)
+  // open file browser to start path (if present)
   watch(
     () => currentPath.value[0].children,
     (rootDirChildren) => {
-      if (hasOpenedResults.value) return; // only do this once
+      if (hasOpenedStartPath.value) return; // only do this once
+      if (!props.startPath) return;
 
-      // if not at root dir somehow, don't touch it
+      // if not at root dir, don't touch it
       if (currentPath.value.length > 1) {
-        hasOpenedResults.value = true;
+        hasOpenedStartPath.value = true;
         return;
       }
 
-      const resultsChild = rootDirChildren.find((node) => node.type === 'directory' && node.name === 'results');
-      if (!resultsChild) return;
+      let currentChildren = rootDirChildren;
+      for (const step of props.startPath) {
+        const resultsChild = currentChildren.find((node) => node.type === 'directory' && node.name === step);
+        if (!resultsChild) break;
 
-      openDirectory(resultsChild);
-      hasOpenedResults.value = true;
+        openDirectory(resultsChild);
+        currentChildren = resultsChild.children;
+      }
+
+      hasOpenedStartPath.value = true;
     },
   );
 

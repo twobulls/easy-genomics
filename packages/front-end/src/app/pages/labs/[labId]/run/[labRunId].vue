@@ -16,12 +16,28 @@
 
   const labRun = computed<LaboratoryRun | null>(() => runStore.labRuns[labRunId] ?? null);
   // The LaboratoryRun's InputS3Url is the authoritative reference to obtain S3Bucket & S3Prefix for the File Manager
-  const inputS3Url: string = labRun.value?.InputS3Url;
-  const s3Bucket: string | null = inputS3Url
-    .match(/(?<=^s3:\/\/)([a-z0-9][a-z0-9-]{1,61}[a-z0-9])(?=\/*)/g)
-    ?.toString();
-  const s3Prefix: string | null = inputS3Url.match(/(?<=^s3:\/\/[a-z0-9][a-z0-9-]{1,61}[a-z0-9]\/)(.*)/g)?.toString();
+  const inputS3Url = computed<string | null>(() => labRun.value?.InputS3Url ?? null);
+  const s3Bucket = computed<string | null>(
+    () => inputS3Url.value?.match(/(?<=^s3:\/\/)([a-z0-9][a-z0-9-]{1,61}[a-z0-9])(?=\/*)/g)?.toString() ?? null,
+  );
+  const s3Prefix = computed<string | null>(
+    () => inputS3Url.value?.match(/(?<=^s3:\/\/[a-z0-9][a-z0-9-]{1,61}[a-z0-9]\/)(.*)/g)?.toString() ?? null,
+  );
   const s3Contents = ref<S3Response | null>(null);
+
+  const outputPath = computed<string[] | null>(() => {
+    const outputS3Url = labRun.value?.OutputS3Url ?? null;
+    if (inputS3Url.value === null || outputS3Url === null) return null;
+
+    // get length of shared prefix
+    let i = 0;
+    while (inputS3Url.value[i] === outputS3Url[i]) i++;
+
+    const outputRelativeLocation = outputS3Url.slice(i);
+    if (!outputRelativeLocation.match(/^(\/[^\/]+)+$/)) return null;
+
+    return outputRelativeLocation.split('/').slice(1);
+  });
 
   const isLoading = computed<boolean>(() => uiStore.isRequestPending('loadLabRuns'));
 
@@ -48,12 +64,12 @@
 
   async function fetchS3Content() {
     useUiStore().setRequestPending('fetchS3Content');
-    if (s3Bucket && s3Prefix) {
+    if (s3Bucket.value && s3Prefix.value) {
       try {
         const res = await $api.file.requestListBucketObjects({
           LaboratoryId: labId,
-          S3Bucket: `${s3Bucket}`,
-          S3Prefix: `${s3Prefix}`,
+          S3Bucket: `${s3Bucket.value}`,
+          S3Prefix: `${s3Prefix.value}`,
         });
         s3Contents.value = res || null;
       } catch (error) {
@@ -233,6 +249,7 @@
           :s3-bucket="s3Bucket"
           :s3-prefix="s3Prefix"
           :s3-contents="s3Contents"
+          :start-path="outputPath"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>

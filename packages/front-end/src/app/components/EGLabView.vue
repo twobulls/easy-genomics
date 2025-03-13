@@ -116,8 +116,8 @@
     const runsTab = { key: 'runs', label: 'Pipeline Runs' };
     const seqeraPipelinesTab = { key: 'seqeraPipelines', label: 'Seqera Pipelines' };
     const omicsWorkflowsTab = { key: 'omicsWorkflows', label: 'HealthOmics Workflows' };
-    const usersTab = { key: 'users', label: 'Lab Users' };
-    const detailsTab = { key: 'details', label: 'Details' };
+    const usersTab = { key: 'users', label: 'Users' };
+    const detailsTab = { key: 'details', label: 'Settings' };
 
     const seqeraAvailable = lab.value?.NextFlowTowerEnabled && !missingPAT.value;
     const omicsAvailable = lab.value?.AwsHealthOmicsEnabled;

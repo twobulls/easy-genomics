@@ -26,9 +26,11 @@
 
 <template>
   <div class="w-full">
-    <EGBack :back-action="() => $router.push({ path: '/admin/orgs' })" />
-    <EGText tag="h1" class="mb-6">Create a new Organization</EGText>
-    <EGText tag="h4" class="mb-4">Organization details</EGText>
+    <EGPageHeader
+      title="Create a new Organization"
+      :back-action="() => $router.push({ path: '/admin/orgs' })"
+      show-back
+    />
     <EGFormOrgDetails @submit-form-org-details="onSubmit($event)" />
   </div>
 </template>

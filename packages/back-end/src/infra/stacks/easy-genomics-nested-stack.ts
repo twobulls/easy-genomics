@@ -834,6 +834,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+    // /easy-genomics/user/update-user-last-accessed-info
+    this.iam.addPolicyStatements('/easy-genomics/user/update-user-last-accessed-info', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table/index/*`,
+        ],
+        actions: ['dynamodb:GetItem', 'dynamodb:Query', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /easy-genomics/user/delete-user-request
     this.iam.addPolicyStatements('/easy-genomics/user/delete-user-request', [
       new PolicyStatement({

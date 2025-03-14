@@ -8,6 +8,9 @@ interface UserStoreState {
   currentOrg: {
     OrganizationId: string | null;
   };
+  currentLab: {
+    LaboratoryId: string | null;
+  };
   currentUserPermissions: {
     isSuperuser: boolean | null;
     orgPermissions: OrganizationAccess | null;
@@ -25,6 +28,9 @@ interface UserStoreState {
 const initialState = (): UserStoreState => ({
   currentOrg: {
     OrganizationId: null,
+  },
+  currentLab: {
+    LaboratoryId: null,
   },
   currentUserPermissions: {
     isSuperuser: null,
@@ -47,7 +53,8 @@ const useUserStore = defineStore('userStore', {
   state: initialState,
 
   getters: {
-    currentOrgId: (state) => state.currentOrg.OrganizationId,
+    currentOrgId: (state: UserStoreState) => state.currentOrg.OrganizationId,
+    currentLabId: (state: UserStoreState) => state.currentLab.LaboratoryId,
 
     // permissions
 
@@ -91,8 +98,16 @@ const useUserStore = defineStore('userStore', {
 
     canViewLabForOrg:
       (_state: UserStoreState) =>
-      (orgId: string, labId: string): boolean =>
-        useUserStore().isOrgAdminForOrg(orgId) || useUserStore().isLabMemberForOrg(orgId, labId),
+      (orgId: string, labId: string): boolean => {
+        const canViewLabForOrg =
+          useUserStore().isOrgAdminForOrg(orgId) || useUserStore().isLabMemberForOrg(orgId, labId);
+
+        if (canViewLabForOrg && useUserStore().currentLab.LaboratoryId !== labId) {
+          useUserStore().currentLab.LaboratoryId = labId;
+        }
+
+        return canViewLabForOrg;
+      },
 
     canEditLabUsersForOrg:
       (_state: UserStoreState) =>

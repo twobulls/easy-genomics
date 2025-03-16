@@ -8,9 +8,18 @@ const seqeraPipeline = 'quality-e2e-test-pipeline';
 const omicsWorkflow = 'k-florek/workshop-main';
 const filePath1 = './tests/e2e/fixtures/NA1287820K_R1_001.fastq.gz';
 const filePath2 = './tests/e2e/fixtures/NA1287820K_R2_001.fastq.gz';
+const filePath3 = './tests/e2e/fixtures/EasyG_File.fastq.gz';
 const fileName1 = 'NA1287820K_R1_001.fastq.gz';
 const fileName2 = 'NA1287820K_R2_001.fastq.gz';
 const labTechnicianName = 'Lab Technician';
+const omicsRunInput =
+  's3://' +
+  envConfig.testS3Url +
+  '/61c86013-74f2-4d30-916a-70b03a97ba14/3be753b1-bb5d-4771-a065-e171f39af2eb/aws-healthomics/79836b16-d702-46bd-bd6b-4017e0c58c7b/sample-sheet.csv';
+const omicsRunOutdir =
+  's3://' +
+  envConfig.testS3Url +
+  '/61c86013-74f2-4d30-916a-70b03a97ba14/3be753b1-bb5d-4771-a065-e171f39af2eb/aws-healthomics/79836b16-d702-46bd-bd6b-4017e0c58c7b/results';
 let seqRunNameVar: string;
 let omicsRunNameVar: string;
 
@@ -500,5 +509,147 @@ test('13 - Check HealthOmics Run File Manager if files exist', async ({ page, ba
     await page.waitForTimeout(5000);
     await page.getByRole('row', { name: 'sample-sheet.csv' }).locator('button').click();
     await page.waitForTimeout(5000);
+  }
+});
+
+test('14 - Launch HealthOmics Run without a file successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    // update Laboratory
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'HealthOmics Workflows' }).click();
+    await page.waitForLoadState('networkidle');
+
+    let hasSeqPipeline = false;
+    try {
+      hasSeqPipeline = await page.getByRole('row', { name: omicsWorkflow }).isVisible();
+    } catch (error) {
+      console.log('Pipeline not found', error);
+    }
+
+    if (hasSeqPipeline) {
+      const uuid = randomUUID();
+      const omicsRunName2 = `EG_OMICS_Run-${uuid}`;
+      await page.getByRole('row', { name: omicsWorkflow }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Run' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // STEP 01
+      await page.getByRole('textbox', { name: 'Run Name*' }).click();
+      await page.getByRole('textbox', { name: 'Run Name*' }).fill(omicsRunName2);
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 02
+      // ** Skip uploading files
+      await page.getByRole('button', { name: 'Skip' }).click();
+      await page.waitForTimeout(12 * 1000);
+
+      // STEP 03
+      await page.getByRole('textbox', { name: 'outdir' }).fill(omicsRunOutdir);
+      await page.getByRole('textbox', { name: 'Input' }).fill(omicsRunInput);
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 04
+      await page.getByRole('button', { name: 'Launch Workflow Run' }).click();
+      await page.waitForTimeout(4000);
+      await page.getByRole('button', { name: 'Back to Runs' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // ** Check if the run name appears in the Run List
+      await expect(page.getByRole('row', { name: omicsRunName2 })).toBeVisible();
+
+      //set runNameVar to be used by other steps
+      omicsRunNameVar = omicsRunName2;
+    }
+  }
+});
+
+test('15 - Launch Seqera Run with a single file successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    // update Laboratory
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'Seqera Pipelines' }).click();
+    await page.waitForLoadState('networkidle');
+
+    let hasSeqPipeline = false;
+    try {
+      hasSeqPipeline = await page.getByRole('row', { name: seqeraPipeline }).isVisible();
+    } catch (error) {
+      console.log('Pipeline not found', error);
+    }
+
+    if (hasSeqPipeline) {
+      const uuid = randomUUID();
+      const seqRunName = `EasyG_SEQ_Run-${uuid}`;
+      await page.getByRole('row', { name: seqeraPipeline }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Run' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // STEP 01
+      await page.getByRole('textbox', { name: 'Run Name*' }).click();
+      await page.getByRole('textbox', { name: 'Run Name*' }).fill(seqRunName);
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 02
+      const fileChooserPromise = page.waitForEvent('filechooser');
+      await page.getByRole('button', { name: 'Choose Files' }).click();
+      const fileChooser = await fileChooserPromise;
+      await fileChooser.setFiles(filePath3);
+      await page.getByRole('button', { name: 'Upload Files' }).click();
+      await page.waitForTimeout(12 * 1000);
+
+      // ** Check if files are successfully uploaded
+      await page.waitForLoadState('networkidle');
+      //await expect(page.getByText('Files uploaded successfully').nth(0)).toBeVisible();  //temporily disabling due to timing issues
+
+      // ** Check if Download Sample Sheet button is enabled
+      await expect(page.getByRole('button', { name: 'Download sample sheet' })).toBeEnabled();
+
+      await page.getByRole('button', { name: 'Next step' }).click();
+
+      // STEP 03
+      await expect(page.getByRole('textbox', { name: 'Input/output options' })).not.toBeNull();
+      await expect(page.getByRole('textbox', { name: 'outdir' })).not.toBeNull();
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 04
+      await page.getByRole('button', { name: 'Launch Pipeline Run' }).click();
+      await page.waitForTimeout(4000);
+      await page.getByRole('button', { name: 'Back to Runs' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // ** Check if the run name appears in the Run List
+      await expect(page.getByRole('row', { name: seqRunName })).toBeVisible();
+
+      //set runNameVar to be used by other steps
+      seqRunNameVar = seqRunName;
+    }
   }
 });

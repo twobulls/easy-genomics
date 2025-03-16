@@ -134,12 +134,16 @@
 
         th:first-child {
           padding-left: 40px;
-          width: 320px;
         }
 
+        th:last-child {
+          padding-right: 40px;
+        }
+
+        // this is for the Actions column
+        // so far the Actions column is universal so it's not a problem to have it baked in (yet)
         th:not(:only-child):last-child {
           text-align: right;
-          padding-right: 40px;
         }
       }
     }
@@ -149,25 +153,20 @@
         padding-top: 22px;
         padding-bottom: 22px;
       }
-    }
 
-    tbody tr td:nth-child(1) {
-      color: black;
-      font-weight: 500;
-      padding-left: 40px;
-      white-space: normal;
-    }
+      td:first-child {
+        padding-left: 40px;
+      }
 
-    tbody tr td:not(:first-child) {
-      font-size: 12px;
-      color: #818181;
-      white-space: normal;
-    }
+      td:last-child {
+        padding-right: 40px;
+      }
 
-    tbody tr td:not(:only-child):last-child {
-      width: 50px;
-      padding-right: 40px;
-      text-align: right;
+      // also for the Actions column
+      td:not(:only-child):last-child {
+        width: 50px;
+        text-align: right;
+      }
     }
   }
 </style>

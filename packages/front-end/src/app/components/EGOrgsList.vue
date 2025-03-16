@@ -126,7 +126,11 @@
     :is-loading="isLoading"
     :action-items="actionItems"
     :show-pagination="!isLoading"
-  />
+  >
+    <template #Name-data="{ row }">
+      <span class="font-medium text-black">{{ row.Name }}</span>
+    </template>
+  </EGTable>
 
   <EGDialog
     actionLabel="Remove Organization"

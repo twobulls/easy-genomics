@@ -32,7 +32,7 @@
     </div>
 
     <div class="flex grow flex-col items-start gap-1">
-      <div v-if="name" class="text-left font-medium">{{ name }}</div>
+      <div v-if="name" class="text-left font-medium text-black">{{ name }}</div>
       <div v-if="organization" class="text-muted text-left">{{ organization }}</div>
       <div v-if="email" class="text-muted text-xs font-normal">{{ email }}</div>
     </div>

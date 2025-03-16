@@ -320,6 +320,9 @@
     :show-pagination="!isLoading"
     :is-loading="isLoading"
   >
+    <template #Name-data="{ row }">
+      <span class="font-medium text-black">{{ row.Name }}</span>
+    </template>
     <template #actions-data="{ row }">
       <div class="flex items-center" v-if="row.labAccessOptionsEnabled">
         <EGUserRoleDropdown

@@ -143,14 +143,18 @@
   />
 
   <EGTable
-    :row-click-action="onRowClicked"
     v-else
+    :row-click-action="onRowClicked"
     :table-data="labsDisplayList"
     :columns="tableColumns"
     :is-loading="useUiStore().anyRequestPending(['getLabs', 'deleteLab'])"
     :action-items="actionItems"
     :show-pagination="!useUiStore().anyRequestPending(['getLabs', 'deleteLab']) && !hasNoData"
-  />
+  >
+    <template #Name-data="{ row }">
+      <span class="font-medium text-black">{{ row.Name }}</span>
+    </template>
+  </EGTable>
 
   <EGDialog
     actionLabel="Remove Lab"

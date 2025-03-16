@@ -605,7 +605,7 @@
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
         >
           <template #Name-data="{ row: pipeline }">
-            <div class="flex items-center">
+            <div class="flex items-center font-medium text-black">
               {{ pipeline?.name }}
             </div>
           </template>
@@ -638,7 +638,7 @@
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
         >
           <template #Name-data="{ row: workflow }">
-            <div class="flex items-center">
+            <div class="flex items-center font-medium text-black">
               {{ workflow?.name }}
             </div>
           </template>

@@ -34,6 +34,27 @@
   const userToRemoveId = ref('');
   const isRemovingUser = ref(false);
 
+  // Select multiple users things
+  const selectedUsers = ref<Set<string> | null>(null); // null if not selecting else set of user ids
+
+  function setUserSelected(userId: string, selected: boolean) {
+    if (selected) {
+      selectedUsers.value?.add(userId);
+    } else {
+      selectedUsers.value?.delete(userId);
+    }
+  }
+
+  const multiActions = [
+    [
+      {
+        label: 'Cancel',
+        class: 'text-alert-danger-dark',
+        click: () => (selectedUsers.value = null),
+      },
+    ],
+  ];
+
   // Table-related refs and computed props
   const searchOutput = ref('');
 
@@ -55,26 +76,41 @@
     });
   }
 
-  const tableColumns = [
-    {
-      key: 'displayName',
-      label: 'Name',
-      sortable: true,
-      sort: useSort().stringSortCompare,
-    },
-    {
-      key: 'status',
-      label: 'Status',
-    },
-    {
-      key: 'labs',
-      label: 'Labs',
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-    },
-  ];
+  const tableColumns = computed<any[]>(() => {
+    let cols: any[] = [];
+
+    if (selectedUsers.value !== null) {
+      cols.push({
+        key: 'selectCheckBox',
+        accessorKey: 'selectCheckBox',
+        label: '',
+        class: 'w-0', // without this the column is way too wide
+      });
+    }
+
+    cols = cols.concat([
+      {
+        key: 'displayName',
+        label: 'Name',
+        sortable: true,
+        sort: useSort().stringSortCompare,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+      },
+      {
+        key: 'labs',
+        label: 'Labs',
+      },
+      {
+        key: 'actions',
+        label: 'Actions',
+      },
+    ]);
+
+    return cols;
+  });
 
   function editUser(userId: string) {
     router.push({ path: `/orgs/${props.orgId}/edit-user/${userId}` });
@@ -95,6 +131,16 @@
     ];
 
     if (props.superuser || props.orgAdmin) {
+      // select multiple
+      items.push([
+        {
+          label: 'Select Multiple Users',
+          click: () => {
+            selectedUsers.value = new Set();
+          },
+        },
+      ]);
+      // remove from org
       items.push([
         {
           label: 'Remove From Org',
@@ -340,12 +386,24 @@
       />
 
       <template v-if="!hasNoData">
-        <EGSearchInput
-          @input-event="updateSearchOutput"
-          placeholder="Search user"
-          class="my-6 w-[408px]"
-          :disabled="isLoading"
-        />
+        <div class="flex flex-row items-center justify-between">
+          <EGSearchInput
+            @input-event="updateSearchOutput"
+            placeholder="Search user"
+            class="my-6 w-[408px]"
+            :disabled="isLoading"
+          />
+
+          <UDropdown v-if="selectedUsers !== null" :items="multiActions">
+            <EGButton
+              class="h-min"
+              size="sm"
+              variant="secondary"
+              label="Multi-Actions"
+              icon="i-heroicons-chevron-down"
+            />
+          </UDropdown>
+        </div>
 
         <EGDialog
           actionLabel="Remove User"
@@ -365,6 +423,31 @@
           :show-pagination="!isLoading"
           :row-click-action="onRowClicked"
         >
+          <!-- selected check box -->
+          <template #selectCheckBox-data="{ row }">
+            <UCheckbox
+              :ui="{
+                base: 'size-[24px]',
+              }"
+              :model-value="selectedUsers?.has(row.UserId)"
+              @update:model-value="($event) => setUserSelected(row.UserId, $event)"
+              @click.stop=""
+            />
+          </template>
+
+          <template #selectCheckBox-header="{ row }">
+            <UCheckbox
+              :ui="{
+                base: 'size-[24px]',
+              }"
+              :model-value="filteredTableData.every((user) => selectedUsers?.has(user.UserId))"
+              @update:model-value="
+                ($event) => filteredTableData.forEach((user) => setUserSelected(user.UserId, $event))
+              "
+              @click.stop=""
+            />
+          </template>
+          <!-- user name -->
           <template #displayName-data="{ row }">
             <div class="flex items-center">
               <EGUserDisplay
@@ -375,12 +458,15 @@
               />
             </div>
           </template>
+          <!-- user status -->
           <template #status-data="{ row }">
             <span class="text-muted">{{ (row as OrgUser).OrganizationUserStatus }}</span>
           </template>
+          <!-- user lab membership count -->
           <template #labs-data="{ row }">
             <span class="text-muted">{{ labsCount(row) }}</span>
           </template>
+          <!-- user actions dropdown -->
           <template #actions-data="{ row, index }">
             <div class="flex items-center justify-end">
               <EGButton

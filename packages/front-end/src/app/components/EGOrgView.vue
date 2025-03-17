@@ -45,7 +45,21 @@
     }
   }
 
-  const multiActions = [
+  const multiActions = computed<any[]>(() => [
+    [
+      {
+        label: 'Edit Selected Users Access',
+        click: () => (showBulkEditLabAccess.value = true),
+        disabled: !selectedUsers.value?.size,
+      },
+    ],
+    [
+      {
+        label: 'Edit Selected Users Roles',
+        click: () => (showBulkEditRoles.value = true),
+        disabled: !selectedUsers.value?.size,
+      },
+    ],
     [
       {
         label: 'Cancel',
@@ -53,7 +67,10 @@
         click: () => (selectedUsers.value = null),
       },
     ],
-  ];
+  ]);
+
+  const showBulkEditLabAccess = ref(false);
+  const showBulkEditRoles = ref(false);
 
   // Table-related refs and computed props
   const searchOutput = ref('');
@@ -394,7 +411,13 @@
             :disabled="isLoading"
           />
 
-          <UDropdown v-if="selectedUsers !== null" :items="multiActions">
+          <UDropdown
+            v-if="selectedUsers !== null"
+            :items="multiActions"
+            :ui="{
+              width: 'w-999',
+            }"
+          >
             <EGButton
               class="h-min"
               size="sm"
@@ -414,6 +437,51 @@
           :primaryMessage="removeUserModalPrimaryMessage"
           v-model="isRemoveUserModalOpen"
         />
+
+        <EGDialog
+          v-model="showBulkEditLabAccess"
+          action-label="Update Access"
+          action-variant="primary"
+          primary-message="Adjust access for selected users?"
+        >
+          <template #contents>
+            <p class="text-body mb-6 text-sm">
+              Select which labs the selected users should have access to. Their permissions will update immediately.
+            </p>
+
+            <div class="mb-6">
+              <h4 class="text-body mb-3 text-lg font-semibold">All Labs</h4>
+
+              <hr class="mb-3" />
+
+              <div class="mb-3">LAB with CHECKBOX</div>
+
+              <hr class="mb-3" />
+
+              <div class="mb-3">LAB with CHECKBOX</div>
+
+              <hr class="mb-3" />
+
+              <div class="mb-3">LAB with CHECKBOX</div>
+            </div>
+          </template>
+        </EGDialog>
+
+        <EGDialog
+          v-model="showBulkEditRoles"
+          action-label="Update Roles"
+          action-variant="primary"
+          primary-message="Adjust roles for selected users?"
+        >
+          <template #contents>
+            <p class="text-body mb-6 text-sm">
+              Select a new role to assign to the selected users. This will update their permissions and access within
+              the organization.
+            </p>
+
+            <div class="mb-6">DROPDOWN</div>
+          </template>
+        </EGDialog>
 
         <EGTable
           :table-data="filteredTableData"

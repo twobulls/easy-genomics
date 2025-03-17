@@ -21,8 +21,6 @@
 
   const delaying = ref<boolean>(false);
 
-  const canCancel = computed(() => props.cancelLabel);
-
   function handleClick() {
     delaying.value = true;
 
@@ -58,7 +56,7 @@
       <template #header>
         <div class="flex flex-col">
           <div class="flex">
-            <EGText tag="h3" class="mb-6">{{ primaryMessage }}</EGText>
+            <EGText tag="h3" class="mb-6 grow">{{ primaryMessage }}</EGText>
             <div>
               <UButton
                 @click="handleCancel"
@@ -71,9 +69,11 @@
               />
             </div>
           </div>
-          <div v-if="secondaryMessage">
-            <EGText tag="p" class="mb-6">{{ secondaryMessage }}</EGText>
-          </div>
+          <slot name="contents">
+            <div v-if="secondaryMessage">
+              <EGText tag="p" class="mb-6">{{ secondaryMessage }}</EGText>
+            </div>
+          </slot>
           <div class="flex justify-end gap-4">
             <div v-if="cancelLabel">
               <EGButton

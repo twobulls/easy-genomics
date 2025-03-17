@@ -36,7 +36,7 @@
 
   const { stringSortCompare } = useSort();
 
-  const orgId = labStore.labs[props.labId].OrganizationId;
+  const orgId = userStore.currentOrg.OrganizationId || labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
   const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
@@ -185,6 +185,14 @@
     // set tabIndex according to initialTab prop
     setTabIndex();
 
+    const userId: string | undefined = userStore.currentUserDetails.id;
+    if (userId) {
+      $api.users.updateUserLastAccessInfo(
+        userId,
+        userStore.currentOrg.OrganizationId,
+        userStore.currentLab.LaboratoryId,
+      );
+    }
     if (intervalId) {
       clearTimeout(intervalId);
     }

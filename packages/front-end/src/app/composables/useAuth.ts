@@ -24,7 +24,10 @@ export default function useAuth() {
         if (useUserStore().isSuperuser) {
           await navigateTo('/orgs');
         } else {
-          await navigateTo('/labs');
+          const labsUri: string = useUserStore().currentLab.LaboratoryId
+            ? `/labs/${useUserStore().currentLab.LaboratoryId}`
+            : '/labs';
+          await navigateTo(labsUri);
         }
       }
     } catch (error: any) {

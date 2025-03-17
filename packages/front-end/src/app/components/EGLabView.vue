@@ -11,7 +11,7 @@
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-  import EGModal from '@FE/components/EGModal';
+  import EGDialog from '@FE/components/EGDialog';
   import { v4 as uuidv4 } from 'uuid';
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
@@ -197,7 +197,7 @@
   });
 
   function showRedirectModal() {
-    modal.open(EGModal, {
+    modal.open(EGDialog, {
       title: `No Personal Access Token found`,
       message:
         "A Personal Access Token is required to run a pipeline. Please click 'Edit' in the next screen to set it.",

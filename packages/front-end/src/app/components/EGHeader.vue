@@ -37,6 +37,13 @@
 
   function doSwitchOrg(): void {
     userStore.currentOrg.OrganizationId = switchToOrgId.value!;
+    userStore.currentLab.LaboratoryId = ''; // Reset
+
+    const userId: string | undefined = userStore.currentUserDetails.id;
+    if (userId) {
+      $api.users.updateUserLastAccessInfo(userId, userStore.currentOrg.OrganizationId, '');
+    }
+
     $router.push('/');
     useUiStore().incrementRemountAppKey();
     useToastStore().success('You have switched organizations');

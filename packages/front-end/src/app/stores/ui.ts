@@ -10,6 +10,7 @@ type PendingRequest =
   | 'assignLabRole'
   | 'getLabUsers'
   | 'addUserToLab'
+  | 'addUsersToLab'
   | 'updateUser'
   | 'getSeqeraPipelines'
   | 'getSeqeraRuns'

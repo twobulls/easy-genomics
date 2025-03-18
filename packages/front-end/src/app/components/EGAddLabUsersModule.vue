@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import { LabUser, OrgUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-  import { EditUserResponse } from '@FE/types/api';
   import { UserStatusSchema } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/status';
 
   const props = defineProps<{
@@ -16,6 +15,7 @@
   const { $api } = useNuxtApp();
 
   const uiStore = useUiStore();
+  const toastStore = useToastStore();
 
   const otherOrgUsers = ref<OrgUser[]>([]);
   const inviteSelectedUserIds = ref<string[]>([]);
@@ -29,26 +29,22 @@
   onMounted(async () => await getOrgUsersWithoutLabAccess());
 
   async function handleAddSelectedUserToLab() {
-    uiStore.setRequestPending('addUserToLab');
+    uiStore.setRequestPending('addUsersToLab');
 
     try {
-      // const res = (await $api.labs.addLabUser(props.labId, selectedUserId.value)) as EditUserResponse;
-      // if (!res) {
-      //   throw new Error('User not added to Lab');
-      // }
+      await Promise.all(inviteSelectedUserIds.value!.map((userId) => $api.labs.addLabUser(props.labId, userId)));
 
-      // const users = `${inviteSelectedUserIds.value.length} user${inviteSelectedUserIds.value.length === 1 ? '' : 's'}`;
-      // useToastStore().success(`Successfully added ${users} to ${props.labName}`);
-
-      await new Promise((r) => setTimeout(r, 2000));
-
-      useToastStore().info('Bulk invite users not implemented yet');
+      const users = `${inviteSelectedUserIds.value.length} user${inviteSelectedUserIds.value.length === 1 ? '' : 's'}`;
+      useToastStore().success(`Successfully added ${users} to ${props.labName}`);
 
       inviteSelectedUserIds.value = [];
       emit('added-user-to-lab');
       await getOrgUsersWithoutLabAccess();
+    } catch (e) {
+      toastStore.error('An error occurred while adding users to the lab. Some users may not have been added.');
+      throw e;
     } finally {
-      uiStore.setRequestComplete('addUserToLab');
+      uiStore.setRequestComplete('addUsersToLab');
     }
   }
 
@@ -93,7 +89,7 @@
         :options="otherOrgUsers"
         option-attribute="displayName"
         value-attribute="UserId"
-        :disabled="uiStore.anyRequestPending(['getLabUsers', 'addUserToLab'])"
+        :disabled="uiStore.anyRequestPending(['getLabUsers', 'addUsersToLab'])"
         :loading="uiStore.isRequestPending('getLabUsers')"
         placeholder="Select User"
         searchable
@@ -129,8 +125,8 @@
       </USelectMenu>
       <EGButton
         label="Add"
-        :disabled="inviteSelectedUserIds.length < 1 || uiStore.anyRequestPending(['getLabUsers', 'addUserToLab'])"
-        :loading="uiStore.isRequestPending('addUserToLab')"
+        :disabled="inviteSelectedUserIds.length < 1 || uiStore.anyRequestPending(['getLabUsers', 'addUsersToLab'])"
+        :loading="uiStore.isRequestPending('addUsersToLab')"
         icon="i-heroicons-plus"
         @click="handleAddSelectedUserToLab"
       />

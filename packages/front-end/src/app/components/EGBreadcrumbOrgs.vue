@@ -43,13 +43,15 @@
     switchOrgDialogOpen.value = true;
   }
 
-  function doSwitchOrg(): void {
+  async function doSwitchOrg(): Promise<void> {
     userStore.currentOrg.OrganizationId = switchToOrgId.value!;
     userStore.currentLab.LaboratoryId = ''; // Reset
 
     const userId: string | undefined = userStore.currentUserDetails.id;
     if (userId) {
-      $api.users.updateUserLastAccessInfo(userId, userStore.currentOrg.OrganizationId, '');
+      await $api.users.updateUserLastAccessInfo(userId, userStore.currentOrg.OrganizationId, '');
+      await useAuth().getRefreshedToken();
+      await useUser().setCurrentUserDataFromToken();
     }
 
     router.push('/');

@@ -35,35 +35,20 @@
     switchOrgDialogOpen.value = true;
   }
 
-  function doSwitchOrg(): void {
+  async function doSwitchOrg(): Promise<void> {
     userStore.currentOrg.OrganizationId = switchToOrgId.value!;
     userStore.currentLab.LaboratoryId = ''; // Reset
 
     const userId: string | undefined = userStore.currentUserDetails.id;
     if (userId) {
-      $api.users.updateUserLastAccessInfo(userId, userStore.currentOrg.OrganizationId, '');
+      await $api.users.updateUserLastAccessInfo(userId, userStore.currentOrg.OrganizationId, '');
+      await useAuth().getRefreshedToken();
+      await useUser().setCurrentUserDataFromToken();
     }
 
     $router.push('/');
     useUiStore().incrementRemountAppKey();
     useToastStore().success('You have switched organizations');
-  }
-
-  async function setDefaultOrg(orgId: string): Promise<void> {
-    if (orgId === userStore.currentUserDetails.defaultOrgId || uiStore.isRequestPending('updateDefaultOrg')) {
-      return;
-    }
-
-    uiStore.setRequestPending('updateDefaultOrg');
-    try {
-      await $api.users.updateUserDefaultOrg(userStore.currentUserDetails.id!, orgId);
-
-      // refresh auth session to get updated default org from token
-      await useAuth().getRefreshedToken();
-      await useUser().setCurrentUserDataFromToken();
-    } finally {
-      uiStore.setRequestComplete('updateDefaultOrg');
-    }
   }
 
   const dropdownItems = computed<object[][]>(() => {
@@ -102,21 +87,6 @@
       .filter((org) => org.OrganizationId !== userStore.currentOrgId)
       .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name)),
   );
-
-  const multipleOrgs = computed<boolean>(
-    () => Object.keys(userStore.currentUserPermissions.orgPermissions || {}).length > 1,
-  );
-
-  const defaultOrgButtonDynamicClasses = (orgId: string) => ({
-    // active style
-    'border-6': orgId === userStore.currentUserDetails.defaultOrgId,
-    'border-primary':
-      orgId === userStore.currentUserDetails.defaultOrgId && !uiStore.isRequestPending('updateDefaultOrg'),
-    // changing style
-    'border-primary-muted':
-      orgId === userStore.currentUserDetails.defaultOrgId && uiStore.isRequestPending('updateDefaultOrg'),
-    'bg-background-grey': uiStore.isRequestPending('updateDefaultOrg'),
-  });
 </script>
 
 <template>
@@ -170,14 +140,6 @@
                   :organization="orgsStore.orgs[userStore.currentOrgId]?.Name ?? null"
                 />
 
-                <button
-                  v-if="!userStore.isSuperuser && multipleOrgs"
-                  class="h-6 w-6 shrink-0 rounded-full border bg-white"
-                  :class="defaultOrgButtonDynamicClasses(userStore.currentOrgId)"
-                  :disabled="uiStore.isRequestPending('updateDefaultOrg')"
-                  @click.stop="async () => await setDefaultOrg(userStore.currentOrgId)"
-                />
-
                 <UIcon v-if="!userStore.isSuperuser" name="i-heroicons-chevron-right" class="h-6 w-6" />
               </div>
             </template>
@@ -193,19 +155,7 @@
                   class="flex w-full items-center justify-between py-3 text-left"
                 >
                   <div class="truncate-text font-medium">{{ org.Name }}</div>
-
-                  <button
-                    v-if="!userStore.isSuperuser && multipleOrgs"
-                    class="ml-2 h-6 w-6 shrink-0 rounded-full border bg-white"
-                    :class="defaultOrgButtonDynamicClasses(org.OrganizationId)"
-                    :disabled="uiStore.isRequestPending('updateDefaultOrg')"
-                    @click.stop="async () => await setDefaultOrg(org.OrganizationId)"
-                  />
                 </div>
-              </div>
-
-              <div class="text-primary bg-primary-muted my-2 w-full rounded p-2 text-left text-xs">
-                Select the organisation that you would like to make your default organisation.
               </div>
             </template>
           </UDropdown>

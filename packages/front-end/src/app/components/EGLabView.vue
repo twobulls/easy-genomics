@@ -316,7 +316,7 @@
   async function loadLabData(): Promise<void> {
     useUiStore().setRequestPending('loadLabData');
     try {
-      await labStore.loadLab(props.labId);
+      await labStore.loadLabsForOrg(orgId);
     } catch (error) {
       console.error('Error retrieving Lab data', error);
     } finally {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
   import { S3Response } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/file/request-list-bucket-objects';
   import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+  import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+  import { useLabsStore, useRunStore, useUiStore } from '@FE/stores';
 
   const $route = useRoute();
   const $router = useRouter();
@@ -8,20 +10,43 @@
   const { handleS3Download } = useFileDownload();
   const { platformToPipelineOrWorkflow } = useMultiplatform();
 
+  const labsStore = useLabsStore();
   const runStore = useRunStore();
   const uiStore = useUiStore();
 
   const labId = $route.params.labId as string;
   const labRunId = $route.params.labRunId as string;
 
+  const lab = computed<Laboratory | null>(() => labsStore.labs[labId] ?? null);
   const labRun = computed<LaboratoryRun | null>(() => runStore.labRuns[labRunId] ?? null);
   // The LaboratoryRun's InputS3Url is the authoritative reference to obtain S3Bucket & S3Prefix for the File Manager
-  const inputS3Url: string = labRun.value?.InputS3Url;
-  const s3Bucket: string | null = inputS3Url
-    .match(/(?<=^s3:\/\/)([a-z0-9][a-z0-9-]{1,61}[a-z0-9])(?=\/*)/g)
-    ?.toString();
-  const s3Prefix: string | null = inputS3Url.match(/(?<=^s3:\/\/[a-z0-9][a-z0-9-]{1,61}[a-z0-9]\/)(.*)/g)?.toString();
+  const inputS3Url = computed<string | null>(() => labRun.value?.InputS3Url ?? null);
+  const s3Bucket = computed<string | null>(
+    () => inputS3Url.value?.match(/(?<=^s3:\/\/)([a-z0-9][a-z0-9-]{1,61}[a-z0-9])(?=\/*)/g)?.toString() ?? null,
+  );
+  const s3Prefix = computed<string | null>(
+    () => inputS3Url.value?.match(/(?<=^s3:\/\/[a-z0-9][a-z0-9-]{1,61}[a-z0-9]\/)(.*)/g)?.toString() ?? null,
+  );
   const s3Contents = ref<S3Response | null>(null);
+
+  const outputPath = computed<string[] | null>(() => {
+    const outputS3Url = labRun.value?.OutputS3Url ?? null;
+    if (inputS3Url.value === null || outputS3Url === null) return null;
+
+    // get length of shared prefix
+    let i = 0;
+    while (inputS3Url.value[i] === outputS3Url[i]) i++;
+
+    let outputRelativeLocation = outputS3Url.slice(i);
+    if (!outputRelativeLocation.match(/^(\/[^\/]+)+$/)) return null;
+
+    // omics generates an additional sub-folder with the omics run id which we also want to descend into
+    if (labRun.value?.Platform === 'AWS HealthOmics' && !!labRun.value?.ExternalRunId) {
+      outputRelativeLocation += '/' + labRun.value.ExternalRunId;
+    }
+
+    return outputRelativeLocation.split('/').filter((step) => !!step); // filter out blank steps ie ''
+  });
 
   const isLoading = computed<boolean>(() => uiStore.isRequestPending('loadLabRuns'));
 
@@ -48,12 +73,12 @@
 
   async function fetchS3Content() {
     useUiStore().setRequestPending('fetchS3Content');
-    if (s3Bucket && s3Prefix) {
+    if (s3Bucket.value && s3Prefix.value) {
       try {
         const res = await $api.file.requestListBucketObjects({
           LaboratoryId: labId,
-          S3Bucket: `${s3Bucket}`,
-          S3Prefix: `${s3Prefix}`,
+          S3Bucket: `${s3Bucket.value}`,
+          S3Prefix: `${s3Prefix.value}`,
         });
         s3Contents.value = res || null;
       } catch (error) {
@@ -201,12 +226,15 @@
 
             <div :class="rowStyle">
               <dt :class="rowLabelStyle">Sample Sheet</dt>
-              <dd :class="rowContentStyle">
-                <EGButton
-                  label="Download"
-                  variant="secondary"
-                  @click="downloadSampleSheet"
-                  :loading="uiStore.isRequestPending('downloadSampleSheet')"
+              <dd :class="rowContentStyle" style="width: 90%">
+                <EGS3SampleSheetBar
+                  :url="labRun.SampleSheetS3Url"
+                  :lab-id="labId"
+                  :lab-name="lab.labName"
+                  :pipeline-or-workflow-name="labRun.WorkflowName"
+                  :platform="labRun.Platform"
+                  :run-name="labRun.RunName"
+                  :display-label="false"
                 />
               </dd>
             </div>
@@ -233,6 +261,7 @@
           :s3-bucket="s3Bucket"
           :s3-prefix="s3Prefix"
           :s3-contents="s3Contents"
+          :start-path="outputPath"
           :is-loading="useUiStore().isRequestPending('fetchS3Content')"
         />
       </div>

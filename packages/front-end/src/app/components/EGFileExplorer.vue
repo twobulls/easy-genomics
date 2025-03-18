@@ -26,16 +26,46 @@
       s3Prefix: string;
       s3Contents: S3Response | null;
       isLoading?: boolean;
+      startPath?: string[];
     }>(),
     { isLoading: true },
   );
 
   const { handleS3Download, downloadFolder } = useFileDownload();
+  const { $api } = useNuxtApp();
 
   const currentPath = ref([{ name: 'All Files', children: [] }]);
   const searchQuery = ref('');
   const s3Bucket = props.s3Bucket;
   const s3Prefix = props.s3Prefix;
+
+  const hasOpenedStartPath = ref(false);
+
+  // open file browser to start path (if present)
+  watch(
+    () => currentPath.value[0].children,
+    (rootDirChildren) => {
+      if (hasOpenedStartPath.value) return; // only do this once
+      if (!props.startPath) return;
+
+      // if not at root dir, don't touch it
+      if (currentPath.value.length > 1) {
+        hasOpenedStartPath.value = true;
+        return;
+      }
+
+      let currentChildren = rootDirChildren;
+      for (const step of props.startPath) {
+        const resultsChild = currentChildren.find((node) => node.type === 'directory' && node.name === step);
+        if (!resultsChild) break;
+
+        openDirectory(resultsChild);
+        currentChildren = resultsChild.children;
+      }
+
+      hasOpenedStartPath.value = true;
+    },
+  );
 
   const updatedS3Contents = computed(() => {
     if (props.s3Contents) {
@@ -142,6 +172,8 @@
   const onRowClicked = useDebounceFn((item: MapType) => {
     if (item.type === 'directory' && item.children?.length) {
       openDirectory(item);
+    } else if (isHtmlFile(item)) {
+      openHtmlInNewTab(item);
     }
   }, 300);
 
@@ -169,6 +201,39 @@
   function nodeUniqueString(node: FileTreeNode): string {
     // this isn't an ideal unique string but it's pretty unlikely to match any other files so it's probably good enough
     return `${node.type}${node.name}${node.size}${node.lastModified}${node.children?.length}`;
+  }
+
+  function isHtmlFile(node: FileTreeNode): boolean {
+    return node.type === 'file' && node.name ? node.name.toLowerCase().endsWith('.html') : false;
+  }
+
+  async function openHtmlInNewTab(node: FileTreeNode): Promise<void> {
+    try {
+      const fileDownloadPath = `${s3ObjectPath.value}/${node.name}`;
+      const fileDownloadResponse = await $api.file.requestFileDownloadUrl({
+        LaboratoryId: props.labId,
+        S3Uri: fileDownloadPath,
+      });
+
+      if (!fileDownloadResponse || !fileDownloadResponse.DownloadUrl) {
+        console.error('Download URL is undefined or empty');
+        return;
+      }
+
+      // Fetch the HTML content
+      const response = await fetch(fileDownloadResponse.DownloadUrl);
+      const htmlContent = await response.text();
+
+      // Create a new blob with the HTML content and proper MIME type
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Open the blob URL in a new tab
+      window.open(blobUrl, '_blank');
+    } catch (error) {
+      console.error('Error opening HTML file:', error);
+      useToastStore().error('Failed to open HTML file');
+    }
   }
 
   async function downloadFileTreeNode(node: FileTreeNode): Promise<void> {

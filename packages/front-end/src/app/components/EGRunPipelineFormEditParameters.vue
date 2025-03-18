@@ -14,10 +14,13 @@
   }>();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
+
   const activeSection = ref<string | null>(null);
+
   const runStore = useRunStore();
   const labsStore = useLabsStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
+  const uiStore = useUiStore();
 
   const wipSeqeraRun = computed<WipRun | undefined>(() => runStore.wipSeqeraRuns[props.seqeraRunTempId]);
 
@@ -93,9 +96,7 @@
     // watches for input changes in the local params object and updates the store with the new value
     () => localProps.params,
     (val) => {
-      if (val) {
-        runStore.updateWipSeqeraRun(props.seqeraRunTempId, { params: val });
-      }
+      if (val) runStore.updateWipSeqeraRunParams(props.seqeraRunTempId, val);
     },
     { deep: true },
   );
@@ -115,12 +116,14 @@
 
 <template>
   <EGS3SampleSheetBar
-    v-if="wipSeqeraRun?.sampleSheetS3Url"
+    v-if="wipSeqeraRun?.sampleSheetS3Url || uiStore.isRequestPending('generateSampleSheet')"
     :url="wipSeqeraRun.sampleSheetS3Url"
     :lab-id="props.labId"
     :lab-name="labName"
     :pipeline-or-workflow-name="pipelineName"
+    platform="Seqera Cloud"
     :run-name="wipSeqeraRun.runName"
+    :display-label="true"
   />
 
   <div class="flex">

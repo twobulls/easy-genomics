@@ -13,7 +13,6 @@
     UploadedFilePairInfo,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/upload/s3-file-upload-sample-sheet';
   import { useToastStore } from '@FE/stores';
-  import usePipeline from '@FE/composables/usePipeline';
   import { useNetwork } from '@vueuse/core';
   import { RunType } from '@easy-genomics/shared-lib/src/app/types/base-entity';
 
@@ -44,12 +43,13 @@
   }
 
   const { $api } = useNuxtApp();
-  const { downloadSampleSheet } = usePipeline($api);
   const { isOnline } = useNetwork();
-  const { platformToWipRunUpdateFunction, getWipRunForPlatform } = useMultiplatform();
+  const { platformToWipRunUpdateFunction, platformToWipRunUpdateParamsFunction, getWipRunForPlatform } =
+    useMultiplatform();
 
   const toastStore = useToastStore();
   const labsStore = useLabsStore();
+  const uiStore = useUiStore();
 
   const emit = defineEmits(['next-step', 'previous-step', 'step-validated']);
   const props = defineProps<{
@@ -74,6 +74,7 @@
   const wipRun = computed<WipRun>(() => getWipRunForPlatform(props.platform, props.wipRunTempId));
 
   const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
+  const wipRunUpdateParamsFunction = computed<Function>(() => platformToWipRunUpdateParamsFunction(props.platform));
 
   // file handling stuff
 
@@ -138,6 +139,13 @@
     return 'idle';
   });
 
+  const showGenerateSampleSheetButton = computed<boolean>(
+    () =>
+      uploadStatus.value === 'success' && // everything uploaded
+      filesProblemAlertMessage.value === null && // no file problems
+      !wipRun.value.sampleSheetS3Url, // no sample sheet yet
+  );
+
   const filesForTable = computed(() => {
     const files: { sampleId: string; fileName: string; progress: number; error?: string }[] = [];
 
@@ -165,6 +173,17 @@
 
   const isDropzoneEnabled = computed(() => uploadStatus.value !== 'uploading');
 
+  const filesProblemAlertMessage = computed<string | null>(() => {
+    // don't need internet connection message because the modal takes care of it
+    // don't need no files uploaded message because there will visibly be nothing there which should be self explanatory
+    if (!areAllPairsComplete.value) return 'There is an R2 file with no matching R1 file.';
+    if (haveMatchedFiles.value && haveUnmatchedFiles.value)
+      return 'There is a mix of single files and pair files. Files must be all single files or all pair files.';
+    // don't need uploading message because there's already a visual indicator of activity in progress
+
+    return null;
+  });
+
   const isUploadButtonDisabled = computed(() => {
     const noInternet = !isOnline.value;
     const noFiles = filesNotUploaded.value.length === 0;
@@ -188,6 +207,10 @@
     files.forEach((file) => {
       file.progress = 0;
     });
+  }
+
+  function removeStoredSampleSheetInfo() {
+    wipRunUpdateFunction.value(props.wipRunTempId, {}, ['sampleSheetS3Url']);
   }
 
   // gives error message to all files - used for when an error occurs above the individual file level
@@ -214,11 +237,6 @@
   }
 
   function handleFileInputChange(e: Event) {
-    if (!e.isTrusted) {
-      console.error('File input change event not trusted');
-      return;
-    }
-
     const target = e.target as HTMLInputElement;
     if (!target) {
       console.error('File input change event target not found');
@@ -267,6 +285,9 @@
       useToastStore().error(message);
       return;
     }
+
+    // remove the sample sheet because it's outdated now
+    removeStoredSampleSheetInfo();
 
     const fileDetails = getFileDetails(file);
     addFileToFilePairs(fileDetails);
@@ -363,6 +384,7 @@
   async function startUploadProcess() {
     clearErrorsFromFiles(filesNotUploaded.value);
     initializeProgressForFiles(filesNotUploaded.value);
+    removeStoredSampleSheetInfo();
 
     // pre-upload work - catch and handle errors in this step with applyErrorToFiles
     try {
@@ -387,24 +409,31 @@
   }
 
   async function saveSampleSheetInfo() {
-    // get manifest of all files
-    const uploadManifest = await getUploadFilesManifest(files.value);
+    uiStore.setRequestPending('generateSampleSheet');
 
-    const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
-    // get sample sheet info
-    const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
-    // save to wip run
-    const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
+    try {
+      // get manifest of all files
+      const uploadManifest = await getUploadFilesManifest(files.value);
 
-    wipRunUpdateFunction.value(props.wipRunTempId, {
-      sampleSheetS3Url: S3Url,
-      s3Bucket: Bucket,
-      s3Path: Path,
-      params: {
+      const uploadedFilePairs: UploadedFilePairInfo[] = getUploadedFilePairs(uploadManifest);
+      // get sample sheet info
+      const sampleSheetResponse: SampleSheetResponse = await getSampleSheetCsv(uploadedFilePairs);
+
+      // save to wip run
+      const { S3Url, Bucket, Path } = sampleSheetResponse.SampleSheetInfo;
+
+      wipRunUpdateFunction.value(props.wipRunTempId, {
+        sampleSheetS3Url: S3Url,
+        s3Bucket: Bucket,
+        s3Path: Path,
+      });
+      wipRunUpdateParamsFunction.value(props.wipRunTempId, {
         input: S3Url,
         outdir: `s3://${Bucket}/${Path}/results`,
-      },
-    });
+      });
+    } finally {
+      uiStore.setRequestComplete('generateSampleSheet');
+    }
   }
 
   function getUploadedFilePairs(uploadManifest: FileUploadManifest): UploadedFilePairInfo[] {
@@ -649,6 +678,7 @@
 
     clearErrorsFromFiles([fileToRetry]);
     initializeProgressForFiles([fileToRetry]);
+    removeStoredSampleSheetInfo();
 
     try {
       // pre-upload work - catch and handle errors in this step with applyErrorToFiles
@@ -677,43 +707,35 @@
   const removeFile = (file: { sampleId: string; fileName: string }) => {
     // Find the file pair containing the file
     const filePair = filePairs.value.find((pair) => pair.sampleId === file.sampleId);
+    if (!filePair) return;
 
-    if (filePair) {
-      // Remove only the specific file (r1 or r2) that matches the filename
-      if (filePair.r1File?.name === file.fileName) {
-        filePair.r1File = undefined;
-      } else if (filePair.r2File?.name === file.fileName) {
-        filePair.r2File = undefined;
-      }
-
-      // If both files are now undefined, remove the entire pair
-      if (!filePair.r1File && !filePair.r2File) {
-        setFiles(filePairs.value.filter((pair) => pair.sampleId !== file.sampleId));
-      } else {
-        // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
-        filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
-      }
+    // Remove only the specific file (r1 or r2) that matches the filename
+    if (filePair.r1File?.name === file.fileName) {
+      filePair.r1File = undefined;
+    } else if (filePair.r2File?.name === file.fileName) {
+      filePair.r2File = undefined;
     }
+
+    // If both files are now undefined, remove the entire pair
+    if (!filePair.r1File && !filePair.r2File) {
+      setFiles(filePairs.value.filter((pair) => pair.sampleId !== file.sampleId));
+    } else {
+      // if there is still a file left in the pair, revert its sampleId to the fileName of the remaining file
+      filePair.sampleId = getFileNameWithoutExt((filePair.r1File || filePair.r2File)!.name);
+    }
+
+    // remove the sample sheet because it's outdated now
+    removeStoredSampleSheetInfo();
   };
 
   const canRetryUpload = (row: { sampleId: string; fileName: string; progress: number; error?: string }) => {
     // If the file isn't in error state, can't retry
     if (!row.error) return false;
 
-    // Find the matching pair for this file
-    const isPairedFile = filePairs.value.some((pair) => {
-      const isR1 = pair.r1File?.name === row.fileName;
-      const isR2 = pair.r2File?.name === row.fileName;
+    // if there's a problem with the selected files, that needs to be addressed before uploading
+    if (filesProblemAlertMessage.value !== null) return false;
 
-      // If this is R1, check if R2 exists
-      if (isR1) return !!pair.r2File;
-      // If this is R2, check if R1 exists
-      if (isR2) return !!pair.r1File;
-
-      return false;
-    });
-
-    return isPairedFile && isOnline.value;
+    return true;
   };
 
   watch(canProceedToNextStep, (val) => {
@@ -877,24 +899,35 @@
       </div>
     </div>
 
+    <div
+      v-if="filesProblemAlertMessage"
+      class="bg-alert-danger-muted text-alert-danger my-10 flex items-center gap-2 rounded-lg p-6"
+    >
+      <UIcon class="text-2xl" name="i-heroicons-exclamation-triangle" />
+      <div>{{ filesProblemAlertMessage }}</div>
+    </div>
+
     <EGS3SampleSheetBar
-      v-if="uploadStatus === 'success'"
+      v-if="wipRun.sampleSheetS3Url || uiStore.isRequestPending('generateSampleSheet')"
       :disabled="uploadStatus === 'uploading'"
       :url="wipRun.sampleSheetS3Url"
       :lab-id="props.labId"
       :lab-name="labName"
       :pipeline-or-workflow-name="props.pipelineOrWorkflowName"
+      :platform="platform"
       :run-name="wipRun.runName"
+      :display-label="true"
     />
 
-    <div class="flex justify-end pt-4">
+    <div class="flex justify-end gap-4 pt-4">
       <EGButton
-        v-if="hasSampleSheetUrl"
+        v-if="showGenerateSampleSheetButton"
+        @click="saveSampleSheetInfo"
+        :loading="uiStore.isRequestPending('generateSampleSheet')"
+        label="Generate Sample Sheet"
         variant="secondary"
-        class="mr-2"
-        label="Download sample sheet"
-        @click="downloadSampleSheet(props.labId, wipRun.sampleSheetS3Url, props.pipelineOrWorkflowName, wipRun.runName)"
       />
+
       <EGButton
         @click="startUploadProcess"
         :disabled="isUploadButtonDisabled"

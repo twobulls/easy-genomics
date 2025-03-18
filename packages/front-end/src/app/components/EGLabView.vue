@@ -105,6 +105,7 @@
 
   const runsTableColumns = [
     { key: 'RunName', label: 'Run Name', sortable: true, sort: stringSortCompare },
+    { key: 'CreatedAt', label: 'Created At', sortable: true, sort: stringSortCompare },
     { key: 'lastUpdated', label: 'Last Updated', sortable: true, sort: stringSortCompare },
     { key: 'Status', label: 'Status', sortable: true, sort: stringSortCompare },
     { key: 'Owner', label: 'Owner', sortable: true, sort: stringSortCompare },
@@ -553,7 +554,7 @@
           :row-click-action="viewRunDetails"
           :table-data="combinedRuns"
           :columns="runsTableColumns"
-          :sort="{ column: 'lastUpdated', direction: 'desc' }"
+          :sort="{ column: 'CreatedAt', direction: 'desc' }"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
         >
@@ -562,9 +563,14 @@
             <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
           </template>
 
+          <template #CreatedAt-data="{ row: run }">
+            <div class="text-body text-sm font-medium">{{ getDate(run.CreatedAt) }}</div>
+            <div class="text-muted">{{ getTime(run.CreatedAt) }}</div>
+          </template>
+
           <template #lastUpdated-data="{ row: run }">
-            <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt ?? run.CreatedAt) }}</div>
-            <div class="text-muted">{{ getTime(run.ModifiedAt ?? run.CreatedAt) }}</div>
+            <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
+            <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
           </template>
 
           <template #Status-data="{ row: run }">

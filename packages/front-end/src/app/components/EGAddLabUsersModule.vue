@@ -18,7 +18,7 @@
   const uiStore = useUiStore();
 
   const otherOrgUsers = ref<OrgUser[]>([]);
-  const selectedUserId = ref<string | undefined>(undefined);
+  const inviteSelectedUserIds = ref<string[]>([]);
 
   // refresh org users without lab access if labUsers changes
   watch(
@@ -32,22 +32,19 @@
     uiStore.setRequestPending('addUserToLab');
 
     try {
-      const selectedUser = otherOrgUsers.value.find((user: OrgUser) => user.UserId === selectedUserId.value);
+      // const res = (await $api.labs.addLabUser(props.labId, selectedUserId.value)) as EditUserResponse;
+      // if (!res) {
+      //   throw new Error('User not added to Lab');
+      // }
 
-      if (!selectedUser) {
-        throw new Error('Selected user not found');
-      }
+      // const users = `${inviteSelectedUserIds.value.length} user${inviteSelectedUserIds.value.length === 1 ? '' : 's'}`;
+      // useToastStore().success(`Successfully added ${users} to ${props.labName}`);
 
-      const { displayName, UserId } = selectedUser;
+      await new Promise((r) => setTimeout(r, 2000));
 
-      const res = (await $api.labs.addLabUser(props.labId, UserId)) as EditUserResponse;
+      useToastStore().info('Bulk invite users not implemented yet');
 
-      if (!res) {
-        throw new Error('User not added to Lab');
-      }
-
-      useToastStore().success(`Successfully added ${displayName} to ${props.labName}`);
-      selectedUserId.value = undefined;
+      inviteSelectedUserIds.value = [];
       emit('added-user-to-lab');
       await getOrgUsersWithoutLabAccess();
     } finally {
@@ -91,7 +88,8 @@
   <EGCard :padding="4">
     <div class="flex space-x-4">
       <USelectMenu
-        v-model="selectedUserId"
+        multiple
+        v-model="inviteSelectedUserIds"
         :options="otherOrgUsers"
         option-attribute="displayName"
         value-attribute="UserId"
@@ -131,7 +129,7 @@
       </USelectMenu>
       <EGButton
         label="Add"
-        :disabled="selectedUserId === undefined || uiStore.anyRequestPending(['getLabUsers', 'addUserToLab'])"
+        :disabled="inviteSelectedUserIds.length < 1 || uiStore.anyRequestPending(['getLabUsers', 'addUserToLab'])"
         :loading="uiStore.isRequestPending('addUserToLab')"
         icon="i-heroicons-plus"
         @click="handleAddSelectedUserToLab"

@@ -128,17 +128,11 @@ export default function useUser() {
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
 
       userStore.currentUserPermissions.orgPermissions = parsedOrgAccess as OrganizationAccess;
-      userStore.currentUserDetails.defaultOrgId = decodedToken.DefaultOrganization || null;
 
-      // if no current org, use default
-      if (userStore.currentOrg.OrganizationId === null) {
-        userStore.currentOrg.OrganizationId = userStore.currentUserDetails.defaultOrgId;
-
-        // if no default org either, use first org
-        if (userStore.currentOrg.OrganizationId === null) {
-          userStore.currentOrg.OrganizationId = Object.keys(parsedOrgAccess)[0];
-        }
-      }
+      userStore.currentOrg.OrganizationId = decodedToken.DefaultOrganization
+        ? decodedToken.DefaultOrganization
+        : Object.keys(parsedOrgAccess)[0];
+      userStore.currentLab.LaboratoryId = decodedToken.DefaultLaboratory ? decodedToken.DefaultLaboratory : '';
 
       // retrieve and set personal details
       userStore.currentUserDetails.firstName = decodedToken.FirstName;

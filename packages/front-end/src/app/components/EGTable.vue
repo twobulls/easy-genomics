@@ -23,9 +23,22 @@
     },
   );
 
-  const localProps = reactive({
-    tableData: props.tableData,
-  });
+  const { stringSortCompare } = useSort();
+
+  // local copy of sort that the table can mutate with a two-way binding
+  const localSort = ref(props.sort);
+
+  // local compute of the table data that can be sorted by the values in localSort
+  const localTableData = computed<any[]>(() =>
+    Array.from(props.tableData) // without this Array.from the whole thing gets messed up by reactivity somehow
+      .sort((a: any, b: any) =>
+        localSort.value === undefined
+          ? // don't change order if there's no sort value
+            0
+          : // otherwise string sort the selected column by the selected direction
+            stringSortCompare(a[localSort.value.column], b[localSort.value.column], localSort.value.direction),
+      ),
+  );
 
   const page = ref(1);
   const rowsPerPage = ref(10);
@@ -33,7 +46,7 @@
 
   const end = computed(() => Math.min(start.value + rowsPerPage.value, totalRows.value));
   const rows = computed(() => {
-    if (totalRows.value > 0) return localProps.tableData.slice(start.value, end.value);
+    if (totalRows.value > 0) return localTableData.value.slice(start.value, end.value);
     return [];
   });
   const showingResultsMsg = computed(() => {
@@ -43,7 +56,7 @@
     return '';
   });
   const start = computed(() => (page.value - 1) * rowsPerPage.value);
-  const totalRows = computed(() => localProps.tableData.length || 0);
+  const totalRows = computed(() => localTableData.value.length || 0);
 
   watch(
     page,
@@ -56,8 +69,8 @@
 
   watch(
     () => props.tableData,
-    (newTableData: any) => {
-      localProps.tableData = newTableData;
+    (_newTableData: any) => {
+      // when table data changes, reset to page 1
       page.value = 1;
     },
     { immediate: true },
@@ -76,7 +89,7 @@
       class="rounded-2xl"
       :rows="rows"
       :columns="columns"
-      :sort="sort"
+      v-model:sort="localSort"
       :loading="isLoading"
       :loading-state="{ icon: '', label: '' }"
       v-model="selected"

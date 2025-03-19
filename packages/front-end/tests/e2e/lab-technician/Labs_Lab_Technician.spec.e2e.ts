@@ -54,7 +54,7 @@ test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
   if (hasTestLab == true) {
     await page.getByRole('row', { name: labName }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Details' }).click();
+    await page.getByRole('tab', { name: 'Settings' }).click();
 
     // check if Edit is disabled
     await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
@@ -73,7 +73,7 @@ test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
   if (hasUpdatedTestLab == true) {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Details' }).click();
+    await page.getByRole('tab', { name: 'Settings' }).click();
 
     // check if Edit is disabled
     await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();

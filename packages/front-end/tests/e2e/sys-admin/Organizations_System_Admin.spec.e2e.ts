@@ -175,7 +175,7 @@ test('06 - Update an Org Successfully', async ({ page, baseURL }) => {
     const uuid = randomUUID();
     await page.getByRole('row', { name: orgName }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Details' }).click();
+    await page.getByRole('tab', { name: 'Settings' }).click();
     await page.getByText('Organization name*').isVisible();
     await page.getByLabel('Organization name*').fill(orgNameUpdated);
     await page.getByPlaceholder('Describe your organization').fill(`This is an ORG created by Playwright ${uuid}`);

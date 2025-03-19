@@ -37,7 +37,7 @@
 
   const { stringSortCompare } = useSort();
 
-  const orgId = userStore.currentOrg.OrganizationId || labStore.labs[props.labId].OrganizationId;
+  const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
   const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));

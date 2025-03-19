@@ -39,12 +39,16 @@
     userStore.currentOrg.OrganizationId = switchToOrgId.value!;
     userStore.mostRecentLab.LaboratoryId = null; // Reset
 
-    const userId: string | undefined = userStore.currentUserDetails.id;
-    if (userId) {
-      await $api.users.updateUserLastAccessInfo(userId, userStore.currentOrg.OrganizationId, '');
-      await useAuth().getRefreshedToken();
-      await useUser().setCurrentUserDataFromToken();
-    }
+    // update default org/lab in api
+    await $api.users.updateUserLastAccessInfo(
+      userStore.currentUserDetails.id!,
+      userStore.currentOrg.OrganizationId,
+      undefined,
+    );
+
+    // refresh values from api
+    await useAuth().getRefreshedToken();
+    await useUser().setCurrentUserDataFromToken();
 
     $router.push('/');
     useUiStore().incrementRemountAppKey();

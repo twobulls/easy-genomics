@@ -190,7 +190,7 @@
       $api.users.updateUserLastAccessInfo(
         userId,
         userStore.currentOrg.OrganizationId,
-        userStore.currentLab.LaboratoryId,
+        userStore.mostRecentLab.LaboratoryId,
       );
     }
     if (intervalId) {

@@ -24,8 +24,8 @@ export default function useAuth() {
         if (useUserStore().isSuperuser) {
           await navigateTo('/orgs');
         } else {
-          const labsUri: string = useUserStore().currentLab.LaboratoryId
-            ? `/labs/${useUserStore().currentLab.LaboratoryId}`
+          const labsUri: string = useUserStore().mostRecentLab.LaboratoryId
+            ? `/labs/${useUserStore().mostRecentLab.LaboratoryId}`
             : '/labs';
           await navigateTo(labsUri);
         }

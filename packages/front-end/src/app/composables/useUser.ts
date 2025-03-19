@@ -132,7 +132,7 @@ export default function useUser() {
       userStore.currentOrg.OrganizationId = decodedToken.DefaultOrganization
         ? decodedToken.DefaultOrganization
         : Object.keys(parsedOrgAccess)[0];
-      userStore.currentLab.LaboratoryId = decodedToken.DefaultLaboratory ? decodedToken.DefaultLaboratory : '';
+      userStore.mostRecentLab.LaboratoryId = decodedToken.DefaultLaboratory ? decodedToken.DefaultLaboratory : '';
 
       // retrieve and set personal details
       userStore.currentUserDetails.firstName = decodedToken.FirstName;

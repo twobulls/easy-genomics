@@ -26,6 +26,7 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const modal = useModal();
+  const { updateDefaultLab } = useUser();
 
   const runStore = useRunStore();
   const labStore = useLabsStore();
@@ -181,21 +182,17 @@
     tabIndex.value = tabMatchIndex !== -1 ? tabMatchIndex : 0;
   }
 
-  onMounted(() => {
+  onMounted(async () => {
     // set tabIndex according to initialTab prop
     setTabIndex();
 
-    const userId: string | undefined = userStore.currentUserDetails.id;
-    if (userId) {
-      $api.users.updateUserLastAccessInfo(
-        userId,
-        userStore.currentOrg.OrganizationId,
-        userStore.mostRecentLab.LaboratoryId,
-      );
-    }
+    // clean up timeout
     if (intervalId) {
       clearTimeout(intervalId);
     }
+
+    // update most recent lab
+    await updateDefaultLab(props.labId);
   });
 
   onBeforeRouteLeave(() => {

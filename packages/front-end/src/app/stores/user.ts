@@ -96,16 +96,8 @@ const useUserStore = defineStore('userStore', {
 
     canViewLabForOrg:
       (_state: UserStoreState) =>
-      (orgId: string, labId: string): boolean => {
-        const canViewLabForOrg =
-          useUserStore().isOrgAdminForOrg(orgId) || useUserStore().isLabMemberForOrg(orgId, labId);
-
-        if (canViewLabForOrg && useUserStore().mostRecentLab.LaboratoryId !== labId) {
-          useUserStore().mostRecentLab.LaboratoryId = labId;
-        }
-
-        return canViewLabForOrg;
-      },
+      (orgId: string, labId: string): boolean =>
+        useUserStore().isOrgAdminForOrg(orgId) || useUserStore().isLabMemberForOrg(orgId, labId),
 
     canEditLabUsersForOrg:
       (_state: UserStoreState) =>

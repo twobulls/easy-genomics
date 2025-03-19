@@ -2,7 +2,7 @@ export default function usePipeline($api: any) {
   /**
    * Downloads the sample sheet as a CSV file.
    */
-  async function downloadSampleSheet(labId: string, sampleSheetS3Url: string, pipelineName: string, runName: string) {
+  async function downloadSampleSheet(labId: string, sampleSheetS3Url: string) {
     const fileDownloadUrlResponse = await $api.file.requestFileDownloadUrl({
       LaboratoryId: labId,
       S3Uri: sampleSheetS3Url,
@@ -10,7 +10,6 @@ export default function usePipeline($api: any) {
     const sampleSheetCsvData = await (await fetch(fileDownloadUrlResponse.DownloadUrl)).text();
     const link = document.createElement('a');
     link.href = `data:text/csv;charset=utf-8,${sampleSheetCsvData}`;
-    link.download = `samplesheet-${pipelineName}--${runName}.csv`;
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();

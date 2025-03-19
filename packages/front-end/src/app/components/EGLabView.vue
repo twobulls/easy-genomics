@@ -56,16 +56,116 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
+  /**
+   * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
+   */
+  onBeforeMount(async () => {
+    await loadLabData();
+    await pollFetchLaboratoryRuns();
+  });
+
+  onMounted(async () => {
+    // set tabIndex according to initialTab prop
+    setTabIndex();
+
+    // clean up timeout
+    if (intervalId) {
+      clearTimeout(intervalId);
+    }
+
+    // update most recent lab
+    await updateDefaultLab(props.labId);
+  });
+
+  onBeforeRouteLeave(() => {
+    if (intervalId) {
+      clearTimeout(intervalId);
+    }
+  });
+
+  // Page Tabs
+
+  const tabItems = computed<{ key: string; label: string }[]>(() => {
+    const runsTab = { key: 'runs', label: 'Pipeline Runs' };
+    const seqeraPipelinesTab = { key: 'seqeraPipelines', label: 'Seqera Pipelines' };
+    const omicsWorkflowsTab = { key: 'omicsWorkflows', label: 'HealthOmics Workflows' };
+    const usersTab = { key: 'users', label: 'Users' };
+    const detailsTab = { key: 'details', label: 'Settings' };
+
+    const seqeraAvailable = lab.value?.NextFlowTowerEnabled && !missingPAT.value;
+    const omicsAvailable = lab.value?.AwsHealthOmicsEnabled;
+
+    const items = [];
+
+    if (!props.superuser) {
+      if (seqeraAvailable || omicsAvailable) items.push(runsTab);
+      if (seqeraAvailable) items.push(seqeraPipelinesTab);
+      if (omicsAvailable) items.push(omicsWorkflowsTab);
+    }
+    items.push(usersTab);
+    items.push(detailsTab);
+
+    return items;
+  });
+
+  function setTabIndex() {
+    const tabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
+    tabIndex.value = tabMatchIndex !== -1 ? tabMatchIndex : 0;
+  }
+
+  // Lab Runs Tab
+
   type LaboratoryRunTableItem = LaboratoryRun & { lastUpdated: string };
 
-  const combinedRuns = computed<LaboratoryRunTableItem[]>(() =>
+  const runsTableColumns = [
+    { key: 'RunName', label: 'Run Name', sortable: true },
+    { key: 'CreatedAt', label: 'Created At', sortable: true },
+    { key: 'lastUpdated', label: 'Last Updated', sortable: true },
+    { key: 'Status', label: 'Status', sortable: true },
+    { key: 'Owner', label: 'Owner', sortable: true },
+    { key: 'actions', label: 'Actions' },
+  ];
+
+  const runsTableItems = computed<LaboratoryRunTableItem[]>(() =>
     runStore.labRunsForLab(props.labId).map((labRun) => ({
       ...labRun,
       lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
     })),
   );
 
-  const usersTableData = computed(() => {
+  function runsActionItems(run: LaboratoryRun): object[] {
+    const buttons: object[][] = [
+      [{ label: 'View Details', click: () => viewRunDetails(run) }],
+      [{ label: 'View Files', click: () => viewRunDetails(run, 'File Manager') }],
+    ];
+
+    if (['SUBMITTED', 'RUNNING'].includes(run.Status)) {
+      buttons.push([{ label: 'Cancel Run', click: () => initCancelRun(run), isHighlighted: true }]);
+    }
+
+    return buttons;
+  }
+
+  function viewRunDetails(run: LaboratoryRun, tab: string = 'Run Details') {
+    $router.push({
+      path: `/labs/${props.labId}/run/${run.RunId}`,
+      query: { tab },
+    });
+  }
+
+  function initCancelRun(run: LaboratoryRun) {
+    runToCancel.value = run;
+    isCancelDialogOpen.value = true;
+  }
+
+  // Users Tab
+
+  const usersTableColumns = [
+    { key: 'displayName', label: 'Name', sortable: true, sort: stringSortCompare },
+    { key: 'actions', label: 'Lab Access' },
+  ];
+
+  const usersTableItems = computed(() => {
     let filteredLabUsers = labUsers.value;
 
     if (searchOutput.value.trim()) {
@@ -87,10 +187,13 @@
     });
   });
 
-  const usersTableColumns = [
-    { key: 'displayName', label: 'Name', sortable: true, sort: stringSortCompare },
-    { key: 'actions', label: 'Lab Access' },
-  ];
+  function showRemoveUserDialog(user: LabUser) {
+    userToRemove.value = user;
+    primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName.value}?`;
+    isOpen.value = true;
+  }
+
+  // Seqera Pipelines Tab
 
   const seqeraPipelinesTableColumns = [
     { key: 'Name', label: 'Name' },
@@ -98,108 +201,41 @@
     { key: 'actions', label: 'Actions' },
   ];
 
+  const seqeraPipelinesActionItems = (pipeline: any) => [
+    [{ label: 'Run', click: () => viewRunSeqeraPipeline(pipeline) }],
+  ];
+
+  function viewRunSeqeraPipeline(pipeline: SeqeraPipeline) {
+    $router.push({
+      path: `/labs/${props.labId}/run-pipeline/${pipeline.pipelineId}`,
+      query: {
+        seqeraRunTempId: uuidv4(),
+      },
+    });
+  }
+
+  // Omics Workflows Tab
+
   const omicsWorkflowsTableColumns = [
     { key: 'Name', label: 'Name' },
     { key: 'description', label: 'Description' },
     { key: 'actions', label: 'Actions' },
   ];
 
-  const runsTableColumns = [
-    { key: 'RunName', label: 'Run Name', sortable: true, sort: stringSortCompare },
-    { key: 'CreatedAt', label: 'Created At', sortable: true, sort: stringSortCompare },
-    { key: 'lastUpdated', label: 'Last Updated', sortable: true, sort: stringSortCompare },
-    { key: 'Status', label: 'Status', sortable: true, sort: stringSortCompare },
-    { key: 'Owner', label: 'Owner', sortable: true, sort: stringSortCompare },
-    { key: 'actions', label: 'Actions' },
-  ];
-
-  const tabItems = computed<{ key: string; label: string }[]>(() => {
-    const runsTab = { key: 'runs', label: 'Pipeline Runs' };
-    const seqeraPipelinesTab = { key: 'seqeraPipelines', label: 'Seqera Pipelines' };
-    const omicsWorkflowsTab = { key: 'omicsWorkflows', label: 'HealthOmics Workflows' };
-    const usersTab = { key: 'users', label: 'Lab Users' };
-    const detailsTab = { key: 'details', label: 'Details' };
-
-    const seqeraAvailable = lab.value?.NextFlowTowerEnabled && !missingPAT.value;
-    const omicsAvailable = lab.value?.AwsHealthOmicsEnabled;
-
-    const items = [];
-
-    if (!props.superuser) {
-      if (seqeraAvailable || omicsAvailable) items.push(runsTab);
-      if (seqeraAvailable) items.push(seqeraPipelinesTab);
-      if (omicsAvailable) items.push(omicsWorkflowsTab);
-    }
-    items.push(usersTab);
-    items.push(detailsTab);
-
-    return items;
-  });
-
-  const seqeraPipelinesActionItems = (pipeline: any) => [
-    [{ label: 'Run', click: () => viewRunSeqeraPipeline(pipeline) }],
-  ];
-
   const omicsWorkflowsActionItems = (workflow: any) => [
     [{ label: 'Run', click: () => viewRunOmicsWorkflow(workflow) }],
   ];
 
-  function viewRunDetails(run: LaboratoryRun, tab: string = 'Run Details') {
+  function viewRunOmicsWorkflow(workflow: OmicsWorkflow) {
     $router.push({
-      path: `/labs/${props.labId}/run/${run.RunId}`,
-      query: { tab },
+      path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
+      query: {
+        omicsRunTempId: uuidv4(),
+      },
     });
   }
 
-  function initCancelRun(run: LaboratoryRun) {
-    runToCancel.value = run;
-    isCancelDialogOpen.value = true;
-  }
-
-  function runsActionItems(run: LaboratoryRun): object[] {
-    const buttons: object[][] = [
-      [{ label: 'View Details', click: () => viewRunDetails(run) }],
-      [{ label: 'View Files', click: () => viewRunDetails(run, 'File Manager') }],
-    ];
-
-    if (['SUBMITTED', 'RUNNING'].includes(run.Status)) {
-      buttons.push([{ label: 'Cancel Run', click: () => initCancelRun(run), isHighlighted: true }]);
-    }
-
-    return buttons;
-  }
-
-  /**
-   * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
-   */
-  onBeforeMount(async () => {
-    await loadLabData();
-    await pollFetchLaboratoryRuns();
-  });
-
-  function setTabIndex() {
-    const tabMatchIndex = tabItems.value.findIndex((tab) => tab.label === props.initialTab);
-    tabIndex.value = tabMatchIndex !== -1 ? tabMatchIndex : 0;
-  }
-
-  onMounted(async () => {
-    // set tabIndex according to initialTab prop
-    setTabIndex();
-
-    // clean up timeout
-    if (intervalId) {
-      clearTimeout(intervalId);
-    }
-
-    // update most recent lab
-    await updateDefaultLab(props.labId);
-  });
-
-  onBeforeRouteLeave(() => {
-    if (intervalId) {
-      clearTimeout(intervalId);
-    }
-  });
+  // the rest
 
   function showRedirectModal() {
     modal.open(EGModal, {
@@ -213,12 +249,6 @@
         modal.close();
       },
     });
-  }
-
-  function showRemoveUserDialog(user: LabUser) {
-    userToRemove.value = user;
-    primaryMessage.value = `Are you sure you want to remove ${user.displayName} from ${labName.value}?`;
-    isOpen.value = true;
   }
 
   async function handleRemoveUserFromLab() {
@@ -394,24 +424,6 @@
     await getLabUsers();
   }
 
-  function viewRunSeqeraPipeline(pipeline: SeqeraPipeline) {
-    $router.push({
-      path: `/labs/${props.labId}/run-pipeline/${pipeline.pipelineId}`,
-      query: {
-        seqeraRunTempId: uuidv4(),
-      },
-    });
-  }
-
-  function viewRunOmicsWorkflow(workflow: OmicsWorkflow) {
-    $router.push({
-      path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
-      query: {
-        omicsRunTempId: uuidv4(),
-      },
-    });
-  }
-
   async function handleCancelDialogAction() {
     const runId = runToCancel.value?.RunId;
     const runName = runToCancel.value?.RunName;
@@ -561,7 +573,7 @@
       <div v-if="item.key === 'runs'">
         <EGTable
           :row-click-action="viewRunDetails"
-          :table-data="combinedRuns"
+          :table-data="runsTableItems"
           :columns="runsTableColumns"
           :sort="{ column: 'CreatedAt', direction: 'desc' }"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
@@ -694,7 +706,7 @@
         />
 
         <EGTable
-          :table-data="usersTableData"
+          :table-data="usersTableItems"
           :columns="usersTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'assignLabRole'])"

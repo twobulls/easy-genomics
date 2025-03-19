@@ -1,8 +1,6 @@
 <script setup lang="ts">
   import { LabUser, OrgUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
-  import { useToastStore, useUiStore } from '@FE/stores';
-  import { EditUserResponse } from '@FE/types/api';
   import { UserStatusSchema } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/status';
 
   const props = defineProps<{
@@ -16,80 +14,50 @@
 
   const { $api } = useNuxtApp();
 
-  const labUsers = ref<LabUser[]>(props.labUsers); // Ensure lab users are reactive
+  const uiStore = useUiStore();
+  const toastStore = useToastStore();
+
   const otherOrgUsers = ref<OrgUser[]>([]);
-  const selectedUserId = ref<string | undefined>(undefined);
+  const inviteSelectedUserIds = ref<string[]>([]);
 
-  const pendingApiRequest = ref(true); // Whether this module is loading all org users, or adding a user to a lab
-  const loadingOrgUsers = ref(true); // Whether this module is loading all org users
-  const canAddUser = ref(false); // Control the disabled state of the add button
-  const isAddingUser = ref(false); // Control the loading state of the add button
-
-  // Watch for changes in the labUsers prop
+  // refresh org users without lab access if labUsers changes
   watch(
     () => props.labUsers,
-    (newLabUsers) => {
-      labUsers.value = newLabUsers;
-      refreshOrgUsersWithoutLabAccess();
-    },
+    async (_newLabUsers) => await getOrgUsersWithoutLabAccess(),
   );
 
-  // Watch selectedUserId.value to enable/disable the add button
-  watch(
-    () => selectedUserId.value,
-    (newSelectedUserId) => {
-      canAddUser.value = !!newSelectedUserId;
-    },
-  );
+  onMounted(async () => await getOrgUsersWithoutLabAccess());
 
   async function handleAddSelectedUserToLab() {
-    // Update the UI to reflect the pending request
-    useUiStore().setRequestPending('addUserToLab');
-    pendingApiRequest.value = true;
-    isAddingUser.value = true;
-
-    let maybeDisplayName = 'user';
+    uiStore.setRequestPending('addUsersToLab');
 
     try {
-      const selectedUser = otherOrgUsers.value.find((user: OrgUser) => user.UserId === selectedUserId.value);
+      await Promise.all(inviteSelectedUserIds.value!.map((userId) => $api.labs.addLabUser(props.labId, userId)));
 
-      if (!selectedUser) {
-        throw new Error('Selected user not found');
-      }
+      const users = `${inviteSelectedUserIds.value.length} user${inviteSelectedUserIds.value.length === 1 ? '' : 's'}`;
+      useToastStore().success(`Successfully added ${users} to ${props.labName}`);
 
-      const { displayName, UserId } = selectedUser;
-      maybeDisplayName = displayName; // Substute the word 'user' in the error toast message with the users display name
-
-      const res = (await $api.labs.addLabUser(props.labId, UserId)) as EditUserResponse;
-
-      if (!res) {
-        throw new Error('User not added to Lab');
-      }
-
-      useToastStore().success(`Successfully added ${displayName} to ${props.labName}`);
-      selectedUserId.value = undefined;
+      inviteSelectedUserIds.value = [];
       emit('added-user-to-lab');
-      refreshOrgUsersWithoutLabAccess();
-    } catch (error) {
-      useToastStore().error(`Failed to add ${maybeDisplayName} to ${props.labName}`);
-      console.error(error);
+      await getOrgUsersWithoutLabAccess();
+    } catch (e) {
+      toastStore.error('An error occurred while adding users to the lab. Some users may not have been added.');
+      throw e;
     } finally {
-      resetUiLoadingState();
+      uiStore.setRequestComplete('addUsersToLab');
     }
   }
 
-  function hasLabAccess(user: OrganizationUserDetails, labUsers: LabUser[] = []) {
-    return labUsers.some((labUser: LabUser) => labUser.UserId === user.UserId);
+  function hasLabAccessAlready(user: OrganizationUserDetails) {
+    return props.labUsers.some((labUser: LabUser) => labUser.UserId === user.UserId);
   }
 
   async function getOrgUsersWithoutLabAccess() {
-    try {
-      // Update the UI to reflect the pending request
-      pendingApiRequest.value = true;
-      loadingOrgUsers.value = true;
+    uiStore.setRequestPending('getLabUsers');
 
+    try {
       const orgUsers = (await $api.orgs.usersDetailsByOrgId(props.orgId)) as OrganizationUserDetails[];
-      const _otherOrgUsers = orgUsers.filter((user: OrganizationUserDetails) => !hasLabAccess(user, labUsers.value));
+      const _otherOrgUsers = orgUsers.filter((user: OrganizationUserDetails) => !hasLabAccessAlready(user));
       otherOrgUsers.value = _otherOrgUsers.map((user: OrganizationUserDetails) => {
         const nameData = {
           preferredName: user.PreferredName || null,
@@ -106,44 +74,23 @@
           initials,
         };
       });
-    } catch (error) {
-      console.error(error);
     } finally {
-      resetUiLoadingState();
+      uiStore.setRequestComplete('getLabUsers');
     }
   }
-
-  // Reset the UI request pending and loading states
-  function resetUiLoadingState() {
-    useUiStore().setRequestComplete('getLabUsers');
-    useUiStore().setRequestComplete('addUserToLab');
-    pendingApiRequest.value = false;
-    loadingOrgUsers.value = false;
-    isAddingUser.value = false;
-  }
-
-  async function refreshOrgUsersWithoutLabAccess() {
-    // Enable components in the parent page to reflect the pending request
-    useUiStore().setRequestPending('getLabUsers');
-    pendingApiRequest.value = true;
-    await getOrgUsersWithoutLabAccess();
-  }
-
-  onMounted(async () => {
-    await getOrgUsersWithoutLabAccess();
-  });
 </script>
 
 <template>
   <EGCard :padding="4">
     <div class="flex space-x-4">
       <USelectMenu
-        v-model="selectedUserId"
+        multiple
+        v-model="inviteSelectedUserIds"
         :options="otherOrgUsers"
         option-attribute="displayName"
         value-attribute="UserId"
-        :disabled="pendingApiRequest"
-        :loading="loadingOrgUsers"
+        :disabled="uiStore.anyRequestPending(['getLabUsers', 'addUsersToLab'])"
+        :loading="uiStore.isRequestPending('getLabUsers')"
         placeholder="Select User"
         searchable
         searchable-placeholder="Search all users..."
@@ -170,16 +117,16 @@
         </template>
 
         <template #empty>
-          <div v-if="labUsers.length === 0 && otherOrgUsers.length === 0">The organization has no users</div>
-          <div v-if="labUsers.length > 0 && otherOrgUsers.length === 0">
+          <div v-if="props.labUsers.length === 0 && otherOrgUsers.length === 0">The organization has no users</div>
+          <div v-if="props.labUsers.length > 0 && otherOrgUsers.length === 0">
             All organization users already have access to this lab
           </div>
         </template>
       </USelectMenu>
       <EGButton
         label="Add"
-        :disabled="!canAddUser || pendingApiRequest"
-        :loading="isAddingUser"
+        :disabled="inviteSelectedUserIds.length < 1 || uiStore.anyRequestPending(['getLabUsers', 'addUsersToLab'])"
+        :loading="uiStore.isRequestPending('addUsersToLab')"
         icon="i-heroicons-plus"
         @click="handleAddSelectedUserToLab"
       />

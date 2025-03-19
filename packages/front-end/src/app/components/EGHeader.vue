@@ -37,7 +37,7 @@
 
   async function doSwitchOrg(): Promise<void> {
     userStore.currentOrg.OrganizationId = switchToOrgId.value!;
-    userStore.mostRecentLab.LaboratoryId = ''; // Reset
+    userStore.mostRecentLab.LaboratoryId = null; // Reset
 
     const userId: string | undefined = userStore.currentUserDetails.id;
     if (userId) {

@@ -6,11 +6,12 @@ import {
   QueuedUserInvitationRequest,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-invitation';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/src/app/utils/common';
-import { OrganizationNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { UnauthorizedAccessError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
 import { SnsService } from '@BE/services/sns-service';
+import { validateOrganizationAdminAccess, validateSystemAdminAccess } from '@BE/utils/auth-utils';
 
 const organizationService = new OrganizationService();
 const snsService = new SnsService();
@@ -29,12 +30,13 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!CreateBulkUserInvitationRequestSchema.safeParse(request).success) throw new Error('Invalid request');
 
-    // Check if Organization & User records exists
-    const organization: Organization = await organizationService.get(request.OrganizationId); // Throws error if not found
-
-    if (!organization) {
-      throw new OrganizationNotFoundError();
+    // Only the SystemAdmin or any User with access to the Organization is allowed access to this API
+    if (!(validateSystemAdminAccess(event) || validateOrganizationAdminAccess(event, request.OrganizationId))) {
+      throw new UnauthorizedAccessError();
     }
+
+    // Check if Organization record exists
+    const organization: Organization = await organizationService.get(request.OrganizationId); // Throws error if not found
 
     await Promise.all(
       request.Emails.map(async (email: string) => {

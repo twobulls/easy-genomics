@@ -21,14 +21,7 @@ export default function useAuth() {
       if (user) {
         await useUser().setCurrentUserDataFromToken();
         await useOrgsStore().loadOrgs();
-        if (useUserStore().isSuperuser) {
-          await navigateTo('/orgs');
-        } else {
-          const labsUri: string = useUserStore().mostRecentLab.LaboratoryId
-            ? `/labs/${useUserStore().mostRecentLab.LaboratoryId}`
-            : '/labs';
-          await navigateTo(labsUri);
-        }
+        await navigateTo('/');
       }
     } catch (error: any) {
       if (error.code === 'NotAuthorizedException') {

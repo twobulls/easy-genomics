@@ -1,10 +1,21 @@
 <script setup lang="ts">
-  const $route = useRoute();
   const $router = useRouter();
 
+  const userStore = useUserStore();
+
   onMounted(() => {
-    if ($route.path !== '/labs') {
-      $router.push('/labs');
+    if (userStore.isSuperuser) {
+      $router.push('/orgs');
+    } else {
+      let dest = '/labs';
+
+      if (userStore.mostRecentLabId !== null) {
+        dest += `/${userStore.mostRecentLabId}`;
+      }
+
+      $router.push(dest);
     }
   });
 </script>
+
+<template></template>

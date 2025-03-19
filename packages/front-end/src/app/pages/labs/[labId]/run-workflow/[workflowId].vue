@@ -133,14 +133,15 @@
     runStore.updateWipOmicsRun(omicsRunTempId.value, {
       transactionId: omicsRunTempId.value,
       paramsRequired: paramsRequired,
-      params: {}, // unlike seqera runs, omics runs don't have default values for parameters
     });
+    // unlike seqera runs, omics runs don't have default values for parameters
+    runStore.updateWipOmicsRunParams(omicsRunTempId.value, {});
 
     uiStore.setRequestComplete('loadOmicsWorkflow');
   }
 
   function resetParams() {
-    runStore.wipOmicsRuns[omicsRunTempId.value].params = {};
+    runStore.updateWipOmicsRun(omicsRunTempId.value, { params: {} });
   }
 
   /**

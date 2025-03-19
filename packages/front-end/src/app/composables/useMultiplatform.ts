@@ -22,6 +22,16 @@ export function useMultiplatform() {
     return platform === 'Seqera Cloud' ? runStore.updateWipSeqeraRun : runStore.updateWipOmicsRun;
   }
 
+  function platformToWipRunUpdateParamsFunction(platform: RunType): Function {
+    if (!['Seqera Cloud', 'AWS HealthOmics'].includes(platform)) {
+      throw new Error(`${platform} is not a valid platform`);
+    }
+
+    const runStore = useRunStore();
+
+    return platform === 'Seqera Cloud' ? runStore.updateWipSeqeraRunParams : runStore.updateWipOmicsRunParams;
+  }
+
   function getWipRunForPlatform(platform: RunType, wipRunTempId: string): WipRun {
     if (!['Seqera Cloud', 'AWS HealthOmics'].includes(platform)) {
       throw new Error(`${platform} is not a valid platform`);
@@ -42,6 +52,7 @@ export function useMultiplatform() {
   return {
     platformToPipelineOrWorkflow,
     platformToWipRunUpdateFunction,
+    platformToWipRunUpdateParamsFunction,
     getWipRunForPlatform,
   };
 }

@@ -10,6 +10,7 @@ type PendingRequest =
   | 'assignLabRole'
   | 'getLabUsers'
   | 'addUserToLab'
+  | 'addUsersToLab'
   | 'updateUser'
   | 'getSeqeraPipelines'
   | 'getSeqeraRuns'
@@ -38,6 +39,7 @@ type PendingRequest =
   | 'toggleOrgAdmin'
   | 'loadLabRuns'
   | 'updateDefaultOrg'
+  | 'generateSampleSheet'
   | 'downloadSampleSheet';
 
 interface UiStoreState {

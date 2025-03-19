@@ -141,22 +141,6 @@ const useRunStore = defineStore('runStore', {
       this.seqeraRuns[labId][run.id] = run;
     },
 
-    updateWipSeqeraRun(tempId: string, updates: Partial<WipRun>): void {
-      const existingWipRun = this.wipSeqeraRuns[tempId] || {};
-      const existingParams = existingWipRun.params || {};
-      this.wipSeqeraRuns[tempId] = {
-        ...existingWipRun,
-        ...updates,
-      };
-      // need to merge params separately because they're nested
-      if (updates.params) {
-        this.wipSeqeraRuns[tempId].params = {
-          ...existingParams,
-          ...updates.params,
-        };
-      }
-    },
-
     // Omics Runs
 
     async loadOmicsRunsForLab(labId: string): Promise<void> {
@@ -193,20 +177,60 @@ const useRunStore = defineStore('runStore', {
       this.omicsRuns[labId][runId] = run;
     },
 
-    updateWipOmicsRun(tempId: string, updates: Partial<WipRun>): void {
-      const existingWipRun = this.wipOmicsRuns[tempId] || {};
-      const existingParams = existingWipRun.params || {};
-      this.wipOmicsRuns[tempId] = {
+    // Temp Runs
+
+    _updateWipRun(type: 'seqera' | 'omics', tempId: string, updates: Partial<WipRun>, unsets: (keyof WipRun)[]): void {
+      const store = type === 'seqera' ? this.wipSeqeraRuns : this.wipOmicsRuns;
+
+      const existingWipRun: WipRun = store[tempId] || {};
+
+      // remove unsets
+      for (const unset of unsets) {
+        delete existingWipRun[unset];
+      }
+
+      // apply updates and save
+      store[tempId] = {
         ...existingWipRun,
         ...updates,
       };
-      // need to merge params separately because they're nested
-      if (updates.params) {
-        this.wipOmicsRuns[tempId].params = {
-          ...existingParams,
-          ...updates.params,
-        };
+    },
+
+    _updateWipRunParams(type: 'seqera' | 'omics', tempId: string, updates: object, unsets: string[]): void {
+      const store = type === 'seqera' ? this.wipSeqeraRuns : this.wipOmicsRuns;
+
+      const wipRun = store[tempId] || {};
+      const existingParams: any = wipRun.params || {};
+
+      // remove unsets
+      for (const unset of unsets) {
+        delete existingParams[unset];
       }
+
+      // apply updates
+      wipRun.params = {
+        ...existingParams,
+        ...updates,
+      };
+
+      // save
+      store[tempId] = wipRun;
+    },
+
+    updateWipSeqeraRun(tempId: string, updates: Partial<WipRun>, unsets: (keyof WipRun)[] = []): void {
+      this._updateWipRun('seqera', tempId, updates, unsets);
+    },
+
+    updateWipOmicsRun(tempId: string, updates: Partial<WipRun>, unsets: (keyof WipRun)[] = []): void {
+      this._updateWipRun('omics', tempId, updates, unsets);
+    },
+
+    updateWipSeqeraRunParams(tempId: string, updates: object, unsets: string[] = []): void {
+      this._updateWipRunParams('seqera', tempId, updates, unsets);
+    },
+
+    updateWipOmicsRunParams(tempId: string, updates: object, unsets: string[] = []): void {
+      this._updateWipRunParams('omics', tempId, updates, unsets);
     },
   },
 

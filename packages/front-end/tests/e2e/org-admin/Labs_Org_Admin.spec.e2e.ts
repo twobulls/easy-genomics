@@ -37,7 +37,7 @@ test('01 - Remove user from a Laboratory Successfully', async ({ page, baseURL }
     if (userNotAddedToLab) {
       await page.getByRole('row', { name: labName }).locator('button').click();
       await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-      await page.getByRole('tab', { name: 'Lab Users' }).click();
+      await page.getByRole('tab', { name: 'Users' }).click();
       await page.waitForTimeout(2000);
       await page.getByRole('row', { name: labManagerName }).locator('button').click();
       await page.getByRole('menuitem', { name: 'Remove From Lab' }).click();
@@ -69,7 +69,7 @@ test('01 - Remove user from a Laboratory Successfully', async ({ page, baseURL }
     if (userNotAddedToLab) {
       await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
       await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-      await page.getByRole('tab', { name: 'Lab Users' }).click();
+      await page.getByRole('tab', { name: 'Users' }).click();
       await page.waitForTimeout(2000);
       await page.getByRole('row', { name: labManagerName }).locator('button').click();
       await page.getByRole('menuitem', { name: 'Remove From Lab' }).click();
@@ -204,7 +204,7 @@ test('04 - Update a Laboratory Successfully', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: labName }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000); // this waits for s3 bucket info to load
-    await page.getByRole('tab', { name: 'Details' }).click();
+    await page.getByRole('tab', { name: 'Settings' }).click();
     await page.getByRole('button', { name: 'Edit' }).click();
 
     await page.getByPlaceholder('Enter lab name (required and').click();
@@ -334,7 +334,7 @@ test('07 - Add a Lab Manager to a Laboratory Successfully', async ({ page, baseU
   if (userNotAddedToLab == true) {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Lab Users' }).click();
+    await page.getByRole('tab', { name: 'Users' }).click();
     await page.getByRole('button', { name: 'Add Lab Users' }).click();
     await page.waitForLoadState('networkidle');
 
@@ -343,7 +343,7 @@ test('07 - Add a Lab Manager to a Laboratory Successfully', async ({ page, baseU
     await page.keyboard.type(labManagerEmail);
     await page.getByRole('option', { name: labManagerName }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText('Successfully added ' + labManagerName + ' to ' + labNameUpdated)).toBeVisible();
+    await expect(page.getByText('Successfully added 1 user to ' + labNameUpdated)).toBeVisible();
 
     // Update Lab Access to 'Lab Manager'
     await page.getByRole('row', { name: labManagerName }).locator('button').click();
@@ -375,7 +375,7 @@ test('08 - Enable HealthOmics Integration Successfully', async ({ page, baseURL 
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000); // this waits for s3 bucket info to load
-    await page.getByRole('tab', { name: 'Details' }).click();
+    await page.getByRole('tab', { name: 'Settings' }).click();
     await page.getByRole('button', { name: 'Edit' }).click();
 
     let omicsEnabled = true;
@@ -410,7 +410,7 @@ test('09 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }
   await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
   await page.waitForLoadState('networkidle');
   await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-  await page.getByRole('tab', { name: 'Lab Users' }).click();
+  await page.getByRole('tab', { name: 'Users' }).click();
 
   let userVisible = false;
   try {
@@ -426,6 +426,6 @@ test('09 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }
     await page.keyboard.type(envConfig.labTechnicianEmail);
     await page.getByRole('option', { name: labTechnicianName }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText('Successfully added ' + labTechnicianName + ' to ' + labNameUpdated)).toBeVisible();
+    await expect(page.getByText('Successfully added 1 user to ' + labNameUpdated)).toBeVisible();
   }
 });

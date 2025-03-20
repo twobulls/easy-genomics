@@ -48,7 +48,7 @@ export const handler: Handler = async (
     }
 
     const sampleSheetName: string = request.SampleSheetName;
-    if (!sampleSheetName.match(/^[a-zA-Z0-9._:!@#$%^()-]+(.csv)$/)) {
+    if (!sampleSheetName.match(/^[a-zA-Z0-9._:!@#$%^()-]+(\.csv)$/)) {
       throw new InvalidRequestError(`Invalid sample sheet name: ${sampleSheetName}`);
     }
 

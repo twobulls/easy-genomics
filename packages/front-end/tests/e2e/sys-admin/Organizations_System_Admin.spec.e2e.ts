@@ -233,14 +233,14 @@ test('07 - View All labs tab', async ({ page, baseURL }) => {
         await page.getByRole('row', { name: labNameUpdated }).click();
         await page.waitForTimeout(2000);
 
-        //Lab Users tab
+        //Users tab
         await expect(page.getByRole('tab', { name: 'Users' })).toBeVisible();
         await expect(page.getByRole('tab', { name: 'Settings' })).toBeVisible();
         await page.waitForTimeout(2000);
         await expect(page.getByRole('row', { name: labManagerName })).toBeVisible();
 
-        //Details tab
-        await page.getByRole('tab', { name: 'Details' }).click();
+        //Settings tab
+        await page.getByRole('tab', { name: 'Settings' }).click();
         await expect(page.getByText(labNameUpdated).nth(0)).toBeVisible();
         await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
       }

@@ -10,6 +10,7 @@ export const LaboratorySchema = z
     Status: z.enum(['Active', 'Inactive']),
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
+    NextFlowTowerApiBaseUrl: z.string().optional(),
     NextFlowTowerWorkspaceId: z.string().optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
@@ -27,6 +28,7 @@ export const CreateLaboratorySchema = z
     Status: z.enum(['Active', 'Inactive']),
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
+    NextFlowTowerApiBaseUrl: z.string().optional(),
     NextFlowTowerAccessToken: z.string().optional(),
     NextFlowTowerWorkspaceId: z.string().optional(),
   })
@@ -43,6 +45,7 @@ export const ReadLaboratorySchema = z
     Status: z.enum(['Active', 'Inactive']),
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
+    NextFlowTowerApiBaseUrl: z.string().optional(),
     NextFlowTowerWorkspaceId: z.string().optional(),
     HasNextFlowTowerAccessToken: z.boolean().optional(), // Return boolean indicator instead of actual NextFlowTowerAccessToken
     CreatedAt: z.string().optional(),
@@ -67,6 +70,7 @@ export const UpdateLaboratorySchema = z.object({
   Status: z.enum(['Active', 'Inactive']),
   AwsHealthOmicsEnabled: z.boolean().optional(),
   NextFlowTowerEnabled: z.boolean().optional(),
+  NextFlowTowerApiBaseUrl: z.string().optional(),
   NextFlowTowerAccessToken: z.string().optional(),
   NextFlowTowerWorkspaceId: z.string().optional(),
 });

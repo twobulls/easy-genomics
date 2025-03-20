@@ -34,6 +34,8 @@
   const { handleS3Download, downloadFolder } = useFileDownload();
   const { $api } = useNuxtApp();
 
+  const uiStore = useUiStore();
+
   const currentPath = ref([{ name: 'All Files', children: [] }]);
   const searchQuery = ref('');
   const s3Bucket = props.s3Bucket;
@@ -172,8 +174,6 @@
   const onRowClicked = useDebounceFn((item: MapType) => {
     if (item.type === 'directory' && item.children?.length) {
       openDirectory(item);
-    } else if (isHtmlFile(item)) {
-      openHtmlInNewTab(item);
     }
   }, 300);
 
@@ -204,10 +204,13 @@
   }
 
   function isHtmlFile(node: FileTreeNode): boolean {
-    return node.type === 'file' && node.name ? node.name.toLowerCase().endsWith('.html') : false;
+    return node.type === 'file' && !!node.name?.toLowerCase().endsWith('.html');
   }
 
   async function openHtmlInNewTab(node: FileTreeNode): Promise<void> {
+    const nodeId = nodeUniqueString(node);
+    uiStore.setRequestPending(`downloadHtmlFileButton-${nodeId}`);
+
     try {
       const fileDownloadPath = `${s3ObjectPath.value}/${node.name}`;
       const fileDownloadResponse = await $api.file.requestFileDownloadUrl({
@@ -233,6 +236,8 @@
     } catch (error) {
       console.error('Error opening HTML file:', error);
       useToastStore().error('Failed to open HTML file');
+    } finally {
+      uiStore.setRequestComplete(`downloadHtmlFileButton-${nodeId}`);
     }
   }
 
@@ -316,7 +321,17 @@
         {{ formatFileSize(row.size) }}
       </template>
       <template #actions-data="{ row }">
-        <div class="flex justify-end">
+        <div class="flex justify-end gap-4">
+          <!-- open in new tab -->
+          <EGButton
+            v-if="isHtmlFile(row)"
+            variant="secondary"
+            label="Open"
+            :loading="uiStore.isRequestPending(`downloadHtmlFileButton-${nodeUniqueString(row)}`)"
+            @click.stop="async () => await openHtmlInNewTab(row)"
+          />
+
+          <!-- download -->
           <EGButton
             variant="secondary"
             :label="row?.type === 'file' ? 'Download' : 'Download as zip'"

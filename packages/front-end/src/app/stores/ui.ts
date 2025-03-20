@@ -40,7 +40,8 @@ type PendingRequest =
   | 'loadLabRuns'
   | 'updateDefaultOrg'
   | 'generateSampleSheet'
-  | 'downloadSampleSheet';
+  | 'downloadSampleSheet'
+  | `downloadHtmlFileButton-${string}`;
 
 interface UiStoreState {
   pendingRequests: Set<string>;

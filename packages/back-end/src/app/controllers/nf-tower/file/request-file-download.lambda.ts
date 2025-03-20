@@ -1,4 +1,4 @@
-import { GetParameterCommandOutput } from '@aws-sdk/client-ssm';
+import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ssm';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
   InvalidRequestError,
@@ -66,12 +66,20 @@ export const handler: Handler = async (
     }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-    const getParameterResponse: GetParameterCommandOutput = await ssmService.getParameter({
-      Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
-      WithDecryption: true,
-    });
+    const getParameterResponse: GetParameterCommandOutput | void = await ssmService
+      .getParameter({
+        Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
+        WithDecryption: true,
+      })
+      .catch((error: any) => {
+        if (error instanceof ParameterNotFound) {
+          throw new LaboratoryAccessTokenUnavailableError();
+        } else {
+          throw error;
+        }
+      });
 
-    const accessToken: string | undefined = getParameterResponse.Parameter?.Value;
+    const accessToken: string | undefined = getParameterResponse ? getParameterResponse.Parameter?.Value : undefined;
     if (!accessToken) {
       throw new LaboratoryAccessTokenUnavailableError();
     }

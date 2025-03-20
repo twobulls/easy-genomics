@@ -395,8 +395,6 @@
       return;
     }
 
-    toastStore.success('Your files have begun uploading');
-
     await uploadFiles();
 
     await postUploadHook();

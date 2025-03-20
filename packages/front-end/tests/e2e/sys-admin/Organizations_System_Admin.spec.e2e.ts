@@ -234,8 +234,8 @@ test('07 - View All labs tab', async ({ page, baseURL }) => {
         await page.waitForTimeout(2000);
 
         //Lab Users tab
-        await expect(page.getByRole('tab', { name: 'Lab Users' })).toBeVisible();
-        await expect(page.getByRole('tab', { name: 'Details' })).toBeVisible();
+        await expect(page.getByRole('tab', { name: 'Users' })).toBeVisible();
+        await expect(page.getByRole('tab', { name: 'Settings' })).toBeVisible();
         await page.waitForTimeout(2000);
         await expect(page.getByRole('row', { name: labManagerName })).toBeVisible();
 

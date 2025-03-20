@@ -129,10 +129,17 @@ export default function useUser() {
 
       userStore.currentUserPermissions.orgPermissions = parsedOrgAccess as OrganizationAccess;
 
+      // set default org, or if no value use first org
       userStore.currentOrg.OrganizationId = decodedToken.DefaultOrganization
         ? decodedToken.DefaultOrganization
         : Object.keys(parsedOrgAccess)[0];
-      userStore.currentLab.LaboratoryId = decodedToken.DefaultLaboratory ? decodedToken.DefaultLaboratory : '';
+
+      // set most recent lab from default lab value
+      // this function gets called on every page view so if there's already a value in the store, don't overwrite
+      // if this is a fresh sign in, the store will always be empty anyway and it will use the incoming default value
+      if (!userStore.mostRecentLab.LaboratoryId && !!decodedToken.DefaultLaboratory) {
+        userStore.mostRecentLab.LaboratoryId = decodedToken.DefaultLaboratory;
+      }
 
       // retrieve and set personal details
       userStore.currentUserDetails.firstName = decodedToken.FirstName;
@@ -144,6 +151,19 @@ export default function useUser() {
     }
   }
 
+  async function updateDefaultLab(labId: string): Promise<void> {
+    const { $api } = useNuxtApp();
+    const userStore = useUserStore();
+
+    userStore.mostRecentLab.LaboratoryId = labId;
+
+    await $api.users.updateUserLastAccessInfo(
+      userStore.currentUserDetails.id!,
+      userStore.currentOrg.OrganizationId!,
+      userStore.mostRecentLab.LaboratoryId,
+    );
+  }
+
   return {
     displayName,
     initials,
@@ -151,5 +171,6 @@ export default function useUser() {
     invite,
     resendInvite,
     setCurrentUserDataFromToken,
+    updateDefaultLab,
   };
 }

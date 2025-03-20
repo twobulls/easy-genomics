@@ -8,7 +8,7 @@ interface UserStoreState {
   currentOrg: {
     OrganizationId: string | null;
   };
-  currentLab: {
+  mostRecentLab: {
     LaboratoryId: string | null;
   };
   currentUserPermissions: {
@@ -28,7 +28,7 @@ const initialState = (): UserStoreState => ({
   currentOrg: {
     OrganizationId: null,
   },
-  currentLab: {
+  mostRecentLab: {
     LaboratoryId: null,
   },
   currentUserPermissions: {
@@ -52,7 +52,7 @@ const useUserStore = defineStore('userStore', {
 
   getters: {
     currentOrgId: (state: UserStoreState) => state.currentOrg.OrganizationId,
-    currentLabId: (state: UserStoreState) => state.currentLab.LaboratoryId,
+    mostRecentLabId: (state: UserStoreState) => state.mostRecentLab.LaboratoryId,
 
     // permissions
 
@@ -96,16 +96,8 @@ const useUserStore = defineStore('userStore', {
 
     canViewLabForOrg:
       (_state: UserStoreState) =>
-      (orgId: string, labId: string): boolean => {
-        const canViewLabForOrg =
-          useUserStore().isOrgAdminForOrg(orgId) || useUserStore().isLabMemberForOrg(orgId, labId);
-
-        if (canViewLabForOrg && useUserStore().currentLab.LaboratoryId !== labId) {
-          useUserStore().currentLab.LaboratoryId = labId;
-        }
-
-        return canViewLabForOrg;
-      },
+      (orgId: string, labId: string): boolean =>
+        useUserStore().isOrgAdminForOrg(orgId) || useUserStore().isLabMemberForOrg(orgId, labId),
 
     canEditLabUsersForOrg:
       (_state: UserStoreState) =>

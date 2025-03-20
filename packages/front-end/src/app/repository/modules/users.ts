@@ -1,5 +1,6 @@
 import {
-  UpdateUserDefaultOrganizationSchema,
+  UpdateUserLastAccessedInfo,
+  UpdateUserLastAccessedInfoSchema,
   UpdateUserSchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
 import {
@@ -146,20 +147,22 @@ class UsersModule extends HttpFactory {
     return res;
   }
 
-  async updateUserDefaultOrg(userId: string, newDefaultOrgId: string) {
-    const data = { DefaultOrganization: newDefaultOrgId };
-    const parseResult = UpdateUserDefaultOrganizationSchema.safeParse(data);
+  async updateUserLastAccessInfo(userId: string, organizationId?: string, laboratoryId?: string) {
+    const data: UpdateUserLastAccessedInfo = {
+      OrganizationId: organizationId,
+      LaboratoryId: laboratoryId,
+    };
+    const parseResult = UpdateUserLastAccessedInfoSchema.safeParse(data);
     if (!parseResult.success) {
-      console.error('Error; updateUserDefaultOrg; safe parse failed; parseResult: ', parseResult);
+      console.error('Error; updateUserLastAccessInfo; safe parse failed; parseResult: ', parseResult);
       throw new Error(
-        `Error; updateUserDefaultOrg; safe parse failed; parseResult: ${JSON.stringify(parseResult, null, 2)}`,
+        `Error; updateUserLastAccessInfo; safe parse failed; parseResult: ${JSON.stringify(parseResult, null, 2)}`,
       );
     }
 
-    const res = await this.call<User>('PUT', `/user/update-user-default-organization-request/${userId}`, data);
-
+    const res = await this.call<{}>('PUT', `/user/update-user-last-accessed-info/${userId}`, data);
     if (!res) {
-      throw new Error('Error updating user default organization');
+      throw new Error('Error updating user last accessed info');
     }
 
     return res;

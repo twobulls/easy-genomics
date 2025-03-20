@@ -32,7 +32,8 @@ export interface User extends BaseAttributes {
   FirstName?: string;
   LastName?: string;
   Status: UserStatus;
-  DefaultOrganization?: string; // User chosen Default Organization
+  DefaultOrganization?: string; // User last accessed Organization
+  DefaultLaboratory?: string; // User last accessed Laboratory
   OrganizationAccess?: OrganizationAccess;
 }
 
@@ -41,7 +42,7 @@ export type OrganizationAccess = Record<string, OrganizationAccessDetails>;
 export type OrganizationAccessDetails = {
   Status: OrgUserStatus,
   OrganizationAdmin?: boolean,
-  LaboratoryAccess?: LaboratoryAccess
+  LaboratoryAccess?: LaboratoryAccess,
 };
 
 export type LaboratoryAccess = Record<string, LaboratoryAccessDetails>;

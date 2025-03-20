@@ -8,6 +8,9 @@ interface UserStoreState {
   currentOrg: {
     OrganizationId: string | null;
   };
+  mostRecentLab: {
+    LaboratoryId: string | null;
+  };
   currentUserPermissions: {
     isSuperuser: boolean | null;
     orgPermissions: OrganizationAccess | null;
@@ -18,13 +21,15 @@ interface UserStoreState {
     lastName: string | null;
     preferredName: string | null;
     email: string | null;
-    defaultOrgId: string | null;
   };
 }
 
 const initialState = (): UserStoreState => ({
   currentOrg: {
     OrganizationId: null,
+  },
+  mostRecentLab: {
+    LaboratoryId: null,
   },
   currentUserPermissions: {
     isSuperuser: null,
@@ -36,7 +41,6 @@ const initialState = (): UserStoreState => ({
     lastName: null,
     preferredName: null,
     email: null,
-    defaultOrgId: null,
   },
 });
 
@@ -47,7 +51,8 @@ const useUserStore = defineStore('userStore', {
   state: initialState,
 
   getters: {
-    currentOrgId: (state) => state.currentOrg.OrganizationId,
+    currentOrgId: (state: UserStoreState) => state.currentOrg.OrganizationId,
+    mostRecentLabId: (state: UserStoreState) => state.mostRecentLab.LaboratoryId,
 
     // permissions
 

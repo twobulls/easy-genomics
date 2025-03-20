@@ -497,7 +497,12 @@
   async function getSampleSheetCsv(uploadedFilePairs: UploadedFilePairInfo[]): Promise<SampleSheetResponse> {
     if (!wipRun.value.transactionId) throw new Error('no transaction id on wip run');
 
+    const sampleSheetName: string = wipRun.value.runName
+      ? `samplesheet-${wipRun.value.runName}.csv`
+      : 'samplesheet.csv';
+
     const request: SampleSheetRequest = {
+      SampleSheetName: sampleSheetName,
       LaboratoryId: props.labId,
       TransactionId: wipRun.value.transactionId,
       Platform: props.platform,

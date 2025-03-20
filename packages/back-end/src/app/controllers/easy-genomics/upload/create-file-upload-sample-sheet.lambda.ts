@@ -47,6 +47,11 @@ export const handler: Handler = async (
       throw new InvalidRequestError('Invalid sample sheet request');
     }
 
+    const sampleSheetName: string = request.SampleSheetName;
+    if (!sampleSheetName.match(/^[a-zA-Z0-9._:!@#$%^()-]+(\.csv)$/)) {
+      throw new InvalidRequestError(`Invalid sample sheet name: ${sampleSheetName}`);
+    }
+
     const laboratoryId: string = request.LaboratoryId;
     const transactionId: string = request.TransactionId;
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
@@ -58,7 +63,7 @@ export const handler: Handler = async (
 
     const platform: string = request.Platform === 'AWS HealthOmics' ? 'aws-healthomics' : 'seqera-platform';
     const s3Path: string = `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/${platform}/${transactionId}`;
-    const s3Key: string = `${s3Path}/sample-sheet.csv`;
+    const s3Key: string = `${s3Path}/${sampleSheetName}`;
     const s3Url: string = `s3://${s3Bucket}/${s3Key}`;
     const bucketLocation = (await s3Service.getBucketLocation({ Bucket: s3Bucket })).LocationConstraint;
 
@@ -95,7 +100,7 @@ export const handler: Handler = async (
       const response: SampleSheetResponse = {
         TransactionId: transactionId,
         SampleSheetInfo: {
-          Name: 'sample-sheet.csv',
+          Name: sampleSheetName,
           Size: sampleSheetCsv.length,
           Checksum: sampleSheetCsvChecksum,
           Bucket: s3Bucket,

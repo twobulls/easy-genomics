@@ -3,6 +3,7 @@
 import { RunType } from "@SharedLib/types/base-entity";
 
 export type SampleSheetRequest = {
+  SampleSheetName: string;
   LaboratoryId: string;
   TransactionId: string;
   Platform: RunType,

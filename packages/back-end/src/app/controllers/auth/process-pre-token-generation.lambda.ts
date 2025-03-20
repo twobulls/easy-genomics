@@ -30,7 +30,8 @@ export const handler: Handler = async (
           ['FirstName']: user.FirstName || '',
           ['LastName']: user.LastName || '',
           ['Status']: user.Status,
-          ['DefaultOrganization']: user.DefaultOrganization || '', // User chosen Default Organization
+          ['DefaultOrganization']: user.DefaultOrganization || '', // User last accessed Organization
+          ['DefaultLaboratory']: user.DefaultLaboratory || '', // User last accessed Laboratory
           ['OrganizationAccess']: JSON.stringify(user.OrganizationAccess),
         },
       },

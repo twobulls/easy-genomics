@@ -26,6 +26,7 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
   const modal = useModal();
+  const { updateDefaultLab } = useUser();
 
   const runStore = useRunStore();
   const labStore = useLabsStore();
@@ -36,7 +37,6 @@
 
   const { stringSortCompare } = useSort();
 
-  const orgId = labStore.labs[props.labId].OrganizationId;
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
   const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
@@ -52,6 +52,7 @@
   const tabIndex = ref(0);
   let intervalId: number | undefined;
 
+  const orgId = computed<string | null>(() => labStore.labs[props.labId].OrganizationId ?? null);
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
 
@@ -63,13 +64,17 @@
     await pollFetchLaboratoryRuns();
   });
 
-  onMounted(() => {
+  onMounted(async () => {
     // set tabIndex according to initialTab prop
     setTabIndex();
 
+    // clean up timeout
     if (intervalId) {
       clearTimeout(intervalId);
     }
+
+    // update most recent lab
+    await updateDefaultLab(props.labId);
   });
 
   onBeforeRouteLeave(() => {
@@ -524,7 +529,7 @@
   <EGPageHeader
     :title="labName"
     description="View your Lab users, details and pipelines/workflows"
-    :back-action="() => (superuser ? $router.push(`/orgs/${orgId}`) : $router.push('/labs'))"
+    :back-action="() => (superuser ? $router.push(`/orgs/${orgId || ''}`) : $router.push('/labs'))"
     :show-back="true"
     show-org-breadcrumb
     show-lab-breadcrumb
@@ -536,7 +541,7 @@
       @click="showAddUserModule = !showAddUserModule"
     />
     <EGAddLabUsersModule
-      v-if="showAddUserModule"
+      v-if="showAddUserModule && !!orgid"
       @added-user-to-lab="handleUserAddedToLab()"
       :org-id="orgId"
       :lab-id="labId"

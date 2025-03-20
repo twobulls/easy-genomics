@@ -73,6 +73,7 @@
     setTimeout(() => {
       isClicked.value = false;
     }, 2000);
+
     downloadSampleSheet(props.labId, props.url);
   };
 </script>

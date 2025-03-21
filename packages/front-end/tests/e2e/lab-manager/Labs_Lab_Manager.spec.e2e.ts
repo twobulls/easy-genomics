@@ -315,7 +315,10 @@ test('09 - Check Seqera Run File Manager if files exist', async ({ page, baseURL
     await expect(page.getByText('Your files have begun downloading').nth(0)).toBeVisible();
     await page.getByRole('row', { name: fileName2 }).locator('button').click();
     await page.waitForTimeout(5000);
-    await page.getByRole('row', { name: 'sample-sheet.csv' }).locator('button').click();
+    await page
+      .getByRole('row', { name: 'samplesheet-' + seqRunNameVar + '.csv' })
+      .locator('button')
+      .click();
     await page.waitForTimeout(5000);
   }
 });
@@ -378,10 +381,6 @@ test('11 - Launch HealthOmics Run Successfully', async ({ page, baseURL }) => {
     if (hasSeqPipeline) {
       const uuid = randomUUID();
       const omicsRunName = `EG_OMICS_Run-${uuid}`;
-      const omicsSampleSheetUrl =
-        's3://' +
-        envConfig.testS3Url +
-        '/61c86013-74f2-4d30-916a-70b03a97ba14/c583bbe8-ec83-4dff-872b-58c4e8a9fb2b/aws-healthomics';
 
       await page.getByRole('row', { name: omicsWorkflow }).locator('button').click();
       await page.getByRole('menuitem', { name: 'Run' }).click();
@@ -504,7 +503,10 @@ test('13 - Check HealthOmics Run File Manager if files exist', async ({ page, ba
     await expect(page.getByText('Your files have begun downloading').nth(0)).toBeVisible();
     await page.getByRole('row', { name: fileName2 }).locator('button').click();
     await page.waitForTimeout(5000);
-    await page.getByRole('row', { name: 'sample-sheet.csv' }).locator('button').click();
+    await page
+      .getByRole('row', { name: 'samplesheet-' + omicsRunNameVar + '.csv' })
+      .locator('button')
+      .click();
     await page.waitForTimeout(5000);
   }
 });

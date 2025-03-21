@@ -541,7 +541,7 @@
       @click="showAddUserModule = !showAddUserModule"
     />
     <EGAddLabUsersModule
-      v-if="showAddUserModule && !!orgid"
+      v-if="showAddUserModule && !!orgId"
       @added-user-to-lab="handleUserAddedToLab()"
       :org-id="orgId"
       :lab-id="labId"

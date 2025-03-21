@@ -55,11 +55,12 @@
   const defaultState: LabDetails = {
     Name: '',
     Description: '',
+    S3Bucket: '',
+    NextFlowTowerEnabled: false,
     NextFlowTowerAccessToken: '',
     NextFlowTowerWorkspaceId: '',
-    S3Bucket: '',
+    NextFlowTowerAlternateEndpoint: undefined,
     AwsHealthOmicsEnabled: false,
-    NextFlowTowerEnabled: false,
   };
 
   const state = ref({ ...defaultState } as Laboratory);
@@ -381,7 +382,7 @@
 
       <hr class="mb-6" />
 
-      <!-- Next Flow Tower Toggle -->
+      <!-- Next Flow Tower: Toggle -->
       <EGFormGroup
         label="Enable Seqera Integration"
         name="NextFlowTowerEnable"
@@ -391,7 +392,7 @@
         <UToggle class="ml-2" v-model="state.NextFlowTowerEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
-      <!-- Next Flow Tower Workspace ID -->
+      <!-- Next Flow Tower: Workspace ID -->
       <EGFormGroup
         label="Workspace ID"
         name="NextFlowTowerWorkspaceId"
@@ -405,14 +406,14 @@
         />
       </EGFormGroup>
 
-      <!-- Next Flow Tower Access Token -->
+      <!-- Next Flow Tower: Access Token -->
       <EGFormGroup
         v-if="isEditing && state.NextFlowTowerEnabled"
         label="Personal Access Token"
         name="NextFlowTowerAccessToken"
         eager-validation
       >
-        <!-- Next Flow Tower Access Token: Create  Mode -->
+        <!-- Next Flow Tower: Access Token: Create  Mode -->
         <EGPasswordInput
           v-if="formMode === LabDetailsFormModeEnum.enum.Create"
           v-model="state.NextFlowTowerAccessToken"
@@ -420,7 +421,7 @@
           :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
           :disabled="!isEditing || isSubmittingFormData"
         />
-        <!-- Next Flow Tower Access Token: Edit  Mode -->
+        <!-- Next Flow Tower: Access Token: Edit  Mode -->
         <EGPasswordInput
           v-if="formMode === LabDetailsFormModeEnum.enum.Edit"
           v-model="state.NextFlowTowerAccessToken"
@@ -430,6 +431,36 @@
           :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
           eager-validation
+          :disabled="!isEditing || isSubmittingFormData"
+        />
+      </EGFormGroup>
+
+      <!-- Next Flow Tower: Alternate Endpoint Toggle -->
+      <EGFormGroup
+        label="Use Alternate Endpoint"
+        name="NextFlowTowerAlternateEndpointToggle"
+        eager-validation
+        class="flex justify-between"
+        v-if="state.NextFlowTowerEnabled"
+      >
+        <UToggle
+          class="ml-2"
+          :modelValue="state.NextFlowTowerAlternateEndpoint !== undefined"
+          @update:modelValue="($event) => (state.NextFlowTowerAlternateEndpoint = $event ? '' : undefined)"
+          :disabled="!isEditing || isSubmittingFormData"
+        />
+      </EGFormGroup>
+
+      <!-- Next Flow Tower: Alternate Endpoint -->
+      <EGFormGroup
+        label="Alternate Endpoint"
+        name="NextFlowTowerAlternateEndpoint"
+        eager-validation
+        v-if="state.NextFlowTowerEnabled && state.NextFlowTowerAlternateEndpoint !== undefined"
+      >
+        <EGInput
+          v-model="state.NextFlowTowerAlternateEndpoint"
+          placeholder=""
           :disabled="!isEditing || isSubmittingFormData"
         />
       </EGFormGroup>

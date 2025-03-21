@@ -94,10 +94,12 @@ export const handler: Handler = async (
       throw new LaboratoryAccessTokenUnavailableError();
     }
 
+    // Get Seqera API Base URL for Laboratory or default to platform-wide configured Seqera API Base URL
+    const seqeraApiBaseUrl: string = laboratory.NextFlowTowerApiBaseUrl || process.env.SEQERA_API_BASE_URL;
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
     const apiQueryParameters: string = getNextFlowApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
     const response: CreateWorkflowLaunchResponse = await httpRequest<CreateWorkflowLaunchResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/workflow/launch?${apiQueryParameters}`,
+      `${seqeraApiBaseUrl}/workflow/launch?${apiQueryParameters}`,
       REST_API_METHOD.POST,
       { Authorization: `Bearer ${accessToken}` },
       createWorkflowLaunchRequest, // Delegate request body validation to Seqera Cloud / NextFlow Tower

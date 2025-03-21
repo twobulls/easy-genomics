@@ -57,28 +57,25 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
-    const laboratoryRun: LaboratoryRun = await laboratoryRunService
-      .add(<LaboratoryRun>{
-        LaboratoryId: laboratory.LaboratoryId,
-        RunId: request.RunId,
-        UserId: currentUserId,
-        OrganizationId: laboratory.OrganizationId,
-        RunName: request.RunName,
-        Platform: request.Platform,
-        Status: request.Status,
-        Owner: currentUserEmail,
-        WorkflowName: request.WorkflowName,
-        ExternalRunId: request.ExternalRunId,
-        InputS3Url: request.InputS3Url,
-        OutputS3Url: request.OutputS3Url,
-        SampleSheetS3Url: request.SampleSheetS3Url,
-        Settings: JSON.stringify(request.Settings || {}),
-        CreatedAt: new Date().toISOString(),
-        CreatedBy: currentUserId,
-      })
-      .catch((error: any) => {
-        throw error;
-      });
+    const laboratoryRun: LaboratoryRun = await laboratoryRunService.add(<LaboratoryRun>{
+      LaboratoryId: laboratory.LaboratoryId,
+      RunId: request.RunId,
+      UserId: currentUserId,
+      OrganizationId: laboratory.OrganizationId,
+      RunName: request.RunName,
+      Platform: request.Platform,
+      PlatformApiBaseUrl: request.PlatformApiBaseUrl,
+      Status: request.Status,
+      Owner: currentUserEmail,
+      WorkflowName: request.WorkflowName,
+      ExternalRunId: request.ExternalRunId,
+      InputS3Url: request.InputS3Url,
+      OutputS3Url: request.OutputS3Url,
+      SampleSheetS3Url: request.SampleSheetS3Url,
+      Settings: JSON.stringify(request.Settings || {}),
+      CreatedAt: new Date().toISOString(),
+      CreatedBy: currentUserId,
+    });
 
     if (laboratoryRun.ExternalRunId) {
       // Queue up run status checks

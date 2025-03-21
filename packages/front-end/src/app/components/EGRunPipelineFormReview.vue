@@ -19,6 +19,7 @@
   const labsStore = useLabsStore();
 
   const labName = labsStore.labs[props.labId].Name;
+  const labNextFlowTowerApiBaseUrl = labsStore.labs[props.labId].NextFlowTowerApiBaseUrl;
   const isLaunchingRun = ref(false);
   const emit = defineEmits(['submit-launch-request', 'submit-launch-request-error', 'has-launched', 'previous-tab']);
 
@@ -83,6 +84,7 @@
           'RunId': wipSeqeraRun.value?.transactionId,
           'RunName': wipSeqeraRun.value?.runName,
           'Platform': 'Seqera Cloud',
+          'PlatformApiBaseUrl': labNextFlowTowerApiBaseUrl,
           'Status': 'SUBMITTED',
           'WorkflowName': pipeline.value?.name,
           'ExternalRunId': res.workflowId,

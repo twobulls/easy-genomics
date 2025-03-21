@@ -70,6 +70,7 @@ export const handler: Handler = async (
           S3Bucket: request.S3Bucket, // S3 Bucket Full Name
           AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled,
           NextFlowTowerEnabled: request.NextFlowTowerEnabled,
+          NextFlowTowerApiBaseUrl: request.NextFlowTowerApiBaseUrl,
           NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
           ModifiedAt: new Date().toISOString(),
           ModifiedBy: userId,

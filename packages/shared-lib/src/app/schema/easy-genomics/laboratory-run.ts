@@ -13,6 +13,7 @@ export const LaboratoryRunSchema = z
     OrganizationId: z.string().uuid(),
     RunName: z.string(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
+    PlatformApiBaseUrl: z.string().optional(),
     Status: z.string(),
     Owner: z.string(),
     WorkflowName: z.string().optional(),
@@ -36,6 +37,7 @@ export const ReadLaboratoryRunSchema = z
     OrganizationId: z.string().uuid(),
     RunName: z.string(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
+    PlatformApiBaseUrl: z.string().optional(), // Used if Laboratory uses alternative Seqera Platform API Base URL
     Status: z.string(),
     Owner: z.string(), // User Email for display purposes
     WorkflowName: z.string().optional(), // Seqera Pipeline Name or AWS HealthOmics Workflow Name
@@ -58,6 +60,7 @@ export const AddLaboratoryRunSchema = z
     RunId: z.string().uuid(),
     RunName: z.string(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
+    PlatformApiBaseUrl: z.string().optional(),
     Status: z.string(),
     WorkflowName: z.string().optional(), // Seqera Pipeline Name or AWS HealthOmics Workflow Name
     ExternalRunId: z.string().optional(),

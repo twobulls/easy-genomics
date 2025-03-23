@@ -11,7 +11,6 @@
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
-  import EGModal from '@FE/components/EGModal';
   import { v4 as uuidv4 } from 'uuid';
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
@@ -25,7 +24,6 @@
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
-  const modal = useModal();
   const { updateDefaultLab } = useUser();
 
   const runStore = useRunStore();
@@ -45,6 +43,7 @@
   const searchOutput = ref('');
   const runToCancel = ref<LaboratoryRun | null>(null);
   const isCancelDialogOpen = ref<boolean>(false);
+  const isMissingPATModalOpen = ref<boolean>(false);
   const isOpen = ref(false);
   const primaryMessage = ref('');
   const userToRemove = ref();
@@ -238,17 +237,13 @@
   // the rest
 
   function showRedirectModal() {
-    modal.open(EGModal, {
-      title: `No Personal Access Token found`,
-      message:
-        "A Personal Access Token is required to run a pipeline. Please click 'Edit' in the next screen to set it.",
-      confirmLabel: 'Okay',
-      confirmAction() {
-        tabIndex.value = tabItems.value.findIndex((tab) => tab.key === 'details');
-        $router.push({ query: { ...$router.currentRoute.query, tab: tabItems.value[tabIndex.value].label } });
-        modal.close();
-      },
-    });
+    isMissingPATModalOpen.value = true;
+  }
+
+  function switchToSettingsTab() {
+    isMissingPATModalOpen.value = false;
+    tabIndex.value = tabItems.value.findIndex((tab) => tab.key === 'details');
+    $router.push({ query: { ...$router.currentRoute.query, tab: tabItems.value[tabIndex.value].label } });
   }
 
   async function handleRemoveUserFromLab() {
@@ -753,5 +748,14 @@
     secondary-message="This will stop any progress made."
     v-model="isCancelDialogOpen"
     :buttons-disabled="uiStore.anyRequestPending(['cancelSeqeraRun', 'cancelOmicsRun'])"
+  />
+
+  <EGDialog
+    action-label="Okay"
+    :action-variant="ButtonVariantEnum.enum.primary"
+    @action-triggered="switchToSettingsTab"
+    primary-message="No Personal Access Token found"
+    secondary-message="A Personal Access Token is required to run a pipeline. Please click 'Edit' in the next screen to set it."
+    v-model="isMissingPATModalOpen"
   />
 </template>

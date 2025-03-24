@@ -42,6 +42,9 @@
   const $route = useRoute();
   const router = useRouter();
 
+  const toastStore = useToastStore();
+  const userStore = useUserStore();
+
   const labId: string = $route.params.labId as string;
 
   const formMode = ref(props.formMode);
@@ -49,6 +52,7 @@
   const isLoadingBuckets = ref(false);
   const isLoadingFormData = ref(false);
   const canSubmit = ref(false);
+  const isPipelineSettingsOpen = ref(false);
 
   const isEditing = computed<boolean>(() => formMode.value !== LabDetailsFormModeEnum.enum.ReadOnly);
 
@@ -132,13 +136,13 @@
       isLoadingBuckets.value = true;
       s3Directories.value = await $api.infra.s3Buckets().then((res) => res.map((bucket) => bucket.Name));
     } catch (error) {
-      useToastStore().error('Failed to retrieve S3 buckets');
+      toastStore.error('Failed to retrieve S3 buckets');
     } finally {
       isLoadingBuckets.value = false;
     }
   }
 
-  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLabDetails());
+  const hasEditPermission = computed<boolean>(() => userStore.canEditLabDetails());
 
   /**
    * Retrieves the lab details from the server and sets the form state.
@@ -158,7 +162,7 @@
         throw new Error('Failed to parse lab details');
       }
     } catch (error) {
-      useToastStore().error(`Failed to retrieve lab details for lab: ${state.value.Name}`);
+      toastStore.error(`Failed to retrieve lab details for lab: ${state.value.Name}`);
     } finally {
       isLoadingFormData.value = false;
     }
@@ -202,11 +206,11 @@
       }
     } catch (error: any) {
       if (error.message === `Request error: ${ERROR_CODES['EG-304']}`) {
-        useToastStore().error('Laboratory name already taken. Please try again.');
+        toastStore.error('Laboratory name already taken. Please try again.');
       } else if (error.message === `Request error: ${ERROR_CODES['EG-308']}`) {
-        useToastStore().error('Invalid Workspace ID or Personal Access Token. Please try again.');
+        toastStore.error('Invalid Workspace ID or Personal Access Token. Please try again.');
       } else {
-        useToastStore().error('An unknown error occurred. Please refresh the page and try again.');
+        toastStore.error('An unknown error occurred. Please refresh the page and try again.');
       }
     } finally {
       useUiStore().setRequestComplete('createLab');
@@ -219,7 +223,7 @@
 
     const lab: CreateLaboratory = {
       ...state.value,
-      OrganizationId: useUserStore().currentOrgId,
+      OrganizationId: userStore.currentOrgId,
       Status: 'Active',
     };
 
@@ -234,10 +238,10 @@
 
     const res = await $api.labs.create(newLab);
     if (!res) {
-      useToastStore().error(`Failed to verify details for ${state.value.Name}`);
+      toastStore.error(`Failed to verify details for ${state.value.Name}`);
     }
 
-    useToastStore().success(`Successfully created lab: ${newLab.Name}`);
+    toastStore.success(`Successfully created lab: ${newLab.Name}`);
     router.push({ path: '/labs' });
   }
 
@@ -259,7 +263,7 @@
     const res = await $api.labs.update(labId, lab);
 
     if (!res) {
-      useToastStore().error(`Failed to verify details for ${state.value.Name}`);
+      toastStore.error(`Failed to verify details for ${state.value.Name}`);
     }
 
     emit('updated');
@@ -268,7 +272,7 @@
     switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
     await getLabDetails();
 
-    useToastStore().success(`${lab.Name} successfully updated`);
+    toastStore.success(`${lab.Name} successfully updated`);
   }
 
   const validate = (state: LabDetails): FormError[] => {
@@ -331,6 +335,11 @@
     return false;
   }
 
+  function savePipelineRestrictions() {
+    toastStore.info('Pipeline restrictions saving not implemented yet');
+    isPipelineSettingsOpen.value = false;
+  }
+
   watch(
     state,
     (newState) => {
@@ -365,7 +374,7 @@
       </EGFormGroup>
 
       <EGFormGroup
-        v-if="useUserStore().isOrgAdmin()"
+        v-if="userStore.isOrgAdmin()"
         label="Default S3 bucket directory"
         name="DefaultS3BucketDirectory"
         required
@@ -445,6 +454,19 @@
       >
         <UToggle class="ml-2" v-model="state.AwsHealthOmicsEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
+
+      <hr class="mb-6" />
+
+      <!-- Pipeline Restrictions -->
+      <EGFormGroup
+        v-if="userStore.canEditLabDetails"
+        label="Adjust Pipeline Restrictions"
+        name="PipelineRestrictions"
+        eager-validation
+        class="flex justify-between"
+      >
+        <EGButton label="View Settings" variant="secondary" @click="() => (isPipelineSettingsOpen = true)" />
+      </EGFormGroup>
     </EGCard>
 
     <!-- Form Buttons: Create Mode -->
@@ -472,7 +494,7 @@
         :size="ButtonSizeEnum.enum.sm"
         type="submit"
         label="Edit"
-        :disabled="useUserStore().isSuperuser || !hasEditPermission"
+        :disabled="userStore.isSuperuser || !hasEditPermission"
         @click="switchToFormMode(LabDetailsFormModeEnum.enum.Edit)"
       />
     </div>
@@ -496,4 +518,15 @@
       />
     </div>
   </UForm>
+
+  <EGDialog
+    action-label="Save Changes"
+    :action-variant="ButtonVariantEnum.enum.primary"
+    @action-triggered="savePipelineRestrictions"
+    primary-message="Lab Pipeline Restrictions"
+    secondary-message=""
+    v-model="isPipelineSettingsOpen"
+  >
+    omnics
+  </EGDialog>
 </template>

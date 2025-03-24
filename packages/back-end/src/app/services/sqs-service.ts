@@ -31,16 +31,9 @@ export class SqsService {
     data?: RequestType,
   ): Promise<ResponseType> => {
     try {
-      console.log(
-        `[sqs-service : sqsRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
-      );
-
       return await this.sqsClient.send(this.getSqsCommand(command, data));
     } catch (error: any) {
-      console.error(
-        `[sqs-service : sqsRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
-        error,
-      );
+      console.error(`[sqs-service : sqsRequest] command: ${command} exception encountered:`, error);
       throw this.handleError(error);
     }
   };

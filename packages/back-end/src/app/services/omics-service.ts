@@ -90,16 +90,9 @@ export class OmicsService {
     data?: RequestType,
   ): Promise<ResponseType> => {
     try {
-      console.log(
-        `[omics-service : omicsRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
-      );
-
       return await this.omicsClient.send(this.getOmicsCommand(command, data));
     } catch (error: any) {
-      console.error(
-        `[omics-service : omicsRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
-        error,
-      );
+      console.error(`[omics-service : omicsRequest] command: ${command} exception encountered:`, error);
       throw this.handleError(error);
     }
   };

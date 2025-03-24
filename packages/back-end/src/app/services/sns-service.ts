@@ -26,16 +26,9 @@ export class SnsService {
     data?: RequestType,
   ): Promise<ResponseType> => {
     try {
-      console.log(
-        `[sns-service : snsRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
-      );
-
       return await this.snsClient.send(this.getSnsCommand(command, data));
     } catch (error: any) {
-      console.error(
-        `[sns-service : snsRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
-        error,
-      );
+      console.error(`[sns-service : snsRequest] command: ${command} exception encountered:`, error);
       throw this.handleError(error);
     }
   };

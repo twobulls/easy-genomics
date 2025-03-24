@@ -39,8 +39,8 @@ export const handler: Handler = async (
       .add({
         ...request,
         OrganizationId: uuidv4(),
-        AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || false,
-        NextFlowTowerEnabled: request.NextFlowTowerEnabled || false,
+        AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || true,
+        NextFlowTowerEnabled: request.NextFlowTowerEnabled || true,
         NextFlowTowerApiBaseUrl: request.NextFlowTowerApiBaseUrl || process.env.SEQERA_API_BASE_URL,
         CreatedAt: new Date().toISOString(),
         CreatedBy: userId,

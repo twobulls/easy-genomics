@@ -59,7 +59,7 @@
     NextFlowTowerEnabled: false,
     NextFlowTowerAccessToken: '',
     NextFlowTowerWorkspaceId: '',
-    NextFlowTowerAlternateEndpoint: undefined,
+    NextFlowTowerApiBaseUrl: undefined,
     AwsHealthOmicsEnabled: false,
   };
 
@@ -392,6 +392,20 @@
         <UToggle class="ml-2" v-model="state.NextFlowTowerEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
+      <!-- Next Flow Tower: Endpoint -->
+      <EGFormGroup
+        label="Seqera Endpoint URL"
+        name="NextFlowTowerApiBaseUrl"
+        eager-validation
+        v-if="state.NextFlowTowerEnabled"
+      >
+        <EGInput
+          v-model="state.NextFlowTowerApiBaseUrl"
+          placeholder="fill org value here"
+          :disabled="!isEditing || isSubmittingFormData"
+        />
+      </EGFormGroup>
+
       <!-- Next Flow Tower: Workspace ID -->
       <EGFormGroup
         label="Workspace ID"
@@ -431,36 +445,6 @@
           :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
           :autocomplete="AutoCompleteOptionsEnum.enum.Off"
           eager-validation
-          :disabled="!isEditing || isSubmittingFormData"
-        />
-      </EGFormGroup>
-
-      <!-- Next Flow Tower: Alternate Endpoint Toggle -->
-      <EGFormGroup
-        label="Use Alternate Endpoint"
-        name="NextFlowTowerAlternateEndpointToggle"
-        eager-validation
-        class="flex justify-between"
-        v-if="state.NextFlowTowerEnabled"
-      >
-        <UToggle
-          class="ml-2"
-          :modelValue="state.NextFlowTowerAlternateEndpoint !== undefined"
-          @update:modelValue="($event) => (state.NextFlowTowerAlternateEndpoint = $event ? '' : undefined)"
-          :disabled="!isEditing || isSubmittingFormData"
-        />
-      </EGFormGroup>
-
-      <!-- Next Flow Tower: Alternate Endpoint -->
-      <EGFormGroup
-        label="Alternate Endpoint"
-        name="NextFlowTowerAlternateEndpoint"
-        eager-validation
-        v-if="state.NextFlowTowerEnabled && state.NextFlowTowerAlternateEndpoint !== undefined"
-      >
-        <EGInput
-          v-model="state.NextFlowTowerAlternateEndpoint"
-          placeholder=""
           :disabled="!isEditing || isSubmittingFormData"
         />
       </EGFormGroup>

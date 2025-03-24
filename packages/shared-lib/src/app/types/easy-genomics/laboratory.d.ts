@@ -18,7 +18,9 @@
  *   S3Bucket?: <string>,
  *   AwsHealthOmicsEnabled?: <boolean>,
  *   NextFlowTowerEnabled?: <boolean>,
+ *   NextFlowTowerApiBaseUrl?: <string>,
  *   NextFlowTowerWorkspaceId?: <string>,
+ *   HasNextFlowTowerAccessToken?: <boolean>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
  *   ModifiedAt?: <string>,
@@ -36,6 +38,7 @@ export interface Laboratory extends BaseAttributes {
   S3Bucket?: string; // S3 Bucket Full Name
   AwsHealthOmicsEnabled?: boolean;
   NextFlowTowerEnabled?: boolean;
+  NextFlowTowerApiBaseUrl?: string;
   NextFlowTowerWorkspaceId?: string;
   HasNextFlowTowerAccessToken?: boolean;
 }

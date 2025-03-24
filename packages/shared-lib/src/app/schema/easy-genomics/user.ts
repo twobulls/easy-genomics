@@ -2,12 +2,15 @@ import { z } from 'zod';
 
 export const LaboratoryAccessDetailsSchema = z.object({
   Status: z.enum(['Active', 'Inactive']),
+  LabManager: z.boolean().optional(),
+  LabTechnician: z.boolean().optional(),
 });
 
 export const LaboratoryAccessSchema = z.record(z.string(), LaboratoryAccessDetailsSchema);
 
 export const OrganizationAccessDetailsSchema = z.object({
   Status: z.enum(['Active', 'Inactive', 'Invited']),
+  OrganizationAdmin: z.boolean().optional(),
   LaboratoryAccess: LaboratoryAccessSchema.optional(),
 });
 
@@ -22,6 +25,7 @@ export const UserSchema = z
     LastName: z.string().optional(),
     Status: z.enum(['Active', 'Inactive', 'Invited']),
     DefaultOrganization: z.string().optional(),
+    DefaultLaboratory: z.string().optional(),
     OrganizationAccess: OrganizationAccessSchema.optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
@@ -56,3 +60,11 @@ export const UpdateUserDefaultOrganizationSchema = z
   })
   .strict();
 export type UpdateUserDefaultOrganization = z.infer<typeof UpdateUserDefaultOrganizationSchema>;
+
+export const UpdateUserLastAccessedInfoSchema = z
+  .object({
+    OrganizationId: z.string().optional(),
+    LaboratoryId: z.string().optional(),
+  })
+  .strict();
+export type UpdateUserLastAccessedInfo = z.infer<typeof UpdateUserLastAccessedInfoSchema>;

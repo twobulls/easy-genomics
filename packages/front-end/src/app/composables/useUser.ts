@@ -128,16 +128,17 @@ export default function useUser() {
       const parsedOrgAccess = JSON.parse(decodedToken.OrganizationAccess);
 
       userStore.currentUserPermissions.orgPermissions = parsedOrgAccess as OrganizationAccess;
-      userStore.currentUserDetails.defaultOrgId = decodedToken.DefaultOrganization || null;
 
-      // if no current org, use default
-      if (userStore.currentOrg.OrganizationId === null) {
-        userStore.currentOrg.OrganizationId = userStore.currentUserDetails.defaultOrgId;
+      // set default org, or if no value use first org
+      userStore.currentOrg.OrganizationId = decodedToken.DefaultOrganization
+        ? decodedToken.DefaultOrganization
+        : Object.keys(parsedOrgAccess)[0];
 
-        // if no default org either, use first org
-        if (userStore.currentOrg.OrganizationId === null) {
-          userStore.currentOrg.OrganizationId = Object.keys(parsedOrgAccess)[0];
-        }
+      // set most recent lab from default lab value
+      // this function gets called on every page view so if there's already a value in the store, don't overwrite
+      // if this is a fresh sign in, the store will always be empty anyway and it will use the incoming default value
+      if (!userStore.mostRecentLab.LaboratoryId && !!decodedToken.DefaultLaboratory) {
+        userStore.mostRecentLab.LaboratoryId = decodedToken.DefaultLaboratory;
       }
 
       // retrieve and set personal details
@@ -150,6 +151,19 @@ export default function useUser() {
     }
   }
 
+  async function updateDefaultLab(labId: string): Promise<void> {
+    const { $api } = useNuxtApp();
+    const userStore = useUserStore();
+
+    userStore.mostRecentLab.LaboratoryId = labId;
+
+    await $api.users.updateUserLastAccessInfo(
+      userStore.currentUserDetails.id!,
+      userStore.currentOrg.OrganizationId!,
+      userStore.mostRecentLab.LaboratoryId,
+    );
+  }
+
   return {
     displayName,
     initials,
@@ -157,5 +171,6 @@ export default function useUser() {
     invite,
     resendInvite,
     setCurrentUserDataFromToken,
+    updateDefaultLab,
   };
 }

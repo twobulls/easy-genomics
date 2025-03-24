@@ -13,6 +13,7 @@
  *   OrganizationId: <string>,
  *   RunName: <string>,
  *   Platform: <string>,
+ *   PlatformApiBaseUrl?: <string>,
  *   Status: <string>,
  *   Owner: <string>, // User Email for display purposes
  *   WorkflowName?: <string>, // Seqera Pipeline Name or AWS HealthOmics Workflow Name
@@ -36,6 +37,7 @@ export interface LaboratoryRun extends BaseAttributes {
   OrganizationId: string; // Global Secondary Index (String)
   RunName: string;
   Platform: RunType,
+  PlatformApiBaseUrl?: string, // Used if Laboratory uses alternative Seqera Platform API Base URL
   Status: string;
   Owner: string; // User Email for display purposes
   WorkflowName?: string; // Seqera Pipeline Name or AWS HealthOmics Workflow Name

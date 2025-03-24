@@ -11,12 +11,26 @@
 
   const isOpen = ref<boolean>(false);
 
+  const currentOrgId = computed<string | null>(
+    () => (userStore.isSuperuser ? (route.params.orgId as string) : userStore.currentOrgId) ?? null,
+  );
+
+  onBeforeMount(async () => {
+    // there are some cases (eg. sign in straight to a lab page) where the labs might not have been loaded
+    // in that case we'll fetch them now
+
+    if (currentOrgId.value === null) return; // this is probably a problem but nothing we can do
+
+    if (!(currentOrgId.value in labsStore.labIdsByOrg)) {
+      await labsStore.loadLabsForOrg(currentOrgId.value);
+    }
+  });
+
   const currentLab = computed<Laboratory | null>(() => labsStore.labs[labId] || null);
 
   const otherLabs = computed<Laboratory[]>(() => {
     // for superuser, use the org in the url; for normal user, currentOrgId
-    const currentOrgId = userStore.isSuperuser ? (route.params.orgId as string) : userStore.currentOrgId;
-    return Object.values(labsStore.labsForOrg(currentOrgId || ''))
+    return Object.values(labsStore.labsForOrg(currentOrgId.value || ''))
       .filter((lab) => lab.LaboratoryId !== labId)
       .sort((a, b) => useSort().stringSortCompare(a.Name, b.Name));
   });
@@ -34,7 +48,7 @@
     // this is flexible enough to work in most different contexts; eg.
     // - normal user: /labs/[labId]
     // - superuser: /orgs/[orgId]/labs/[labId]
-    const newRoute = route.fullPath.replace(/\/labs\/[^\/]+/, `/labs/${labId}`);
+    const newRoute = route.fullPath.replace(/\/labs\/.+/, `/labs/${labId}`);
     router.push(newRoute);
   }
 </script>
@@ -52,7 +66,7 @@
         </UButton>
       </div>
       <template #item="{ item }">
-        {{ item.Name }}
+        <span class="w-full text-left">{{ item.Name }}</span>
       </template>
     </UDropdown>
   </div>

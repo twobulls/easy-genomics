@@ -69,7 +69,7 @@ export const handler: Handler = async (
     }
 
     // Retrieve Seqera Cloud / NextFlow Tower AccessToken from SSM
-    const getParameterResponse: GetParameterCommandOutput = await ssmService
+    const getParameterResponse: GetParameterCommandOutput | void = await ssmService
       .getParameter({
         Name: `/easy-genomics/organization/${laboratory.OrganizationId}/laboratory/${laboratory.LaboratoryId}/nf-access-token`,
         WithDecryption: true,
@@ -82,15 +82,17 @@ export const handler: Handler = async (
         }
       });
 
-    const accessToken: string | undefined = getParameterResponse.Parameter?.Value;
+    const accessToken: string | undefined = getParameterResponse ? getParameterResponse.Parameter?.Value : undefined;
     if (!accessToken) {
       throw new LaboratoryAccessTokenUnavailableError();
     }
 
+    // Get Seqera API Base URL for Laboratory or default to platform-wide configured Seqera API Base URL
+    const seqeraApiBaseUrl: string = laboratory.NextFlowTowerApiBaseUrl || process.env.SEQERA_API_BASE_URL;
     // Get Query Parameters for Seqera Cloud / NextFlow Tower APIs
     const apiQueryParameters: string = getNextFlowApiQueryParameters(event, laboratory.NextFlowTowerWorkspaceId);
     const response: DescribePipelinesResponse = await httpRequest<DescribePipelinesResponse>(
-      `${process.env.SEQERA_API_BASE_URL}/pipelines/${id}?${apiQueryParameters}`,
+      `${seqeraApiBaseUrl}/pipelines/${id}?${apiQueryParameters}`,
       REST_API_METHOD.GET,
       { Authorization: `Bearer ${accessToken}` },
     );

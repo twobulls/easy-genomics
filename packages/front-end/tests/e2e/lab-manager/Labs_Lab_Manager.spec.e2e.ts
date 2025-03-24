@@ -8,6 +8,7 @@ const seqeraPipeline = 'quality-e2e-test-pipeline';
 const omicsWorkflow = 'k-florek/workshop-main';
 const filePath1 = './tests/e2e/fixtures/NA1287820K_R1_001.fastq.gz';
 const filePath2 = './tests/e2e/fixtures/NA1287820K_R2_001.fastq.gz';
+const filePath3 = './tests/e2e/fixtures/EasyG_File.fastq.gz';
 const fileName1 = 'NA1287820K_R1_001.fastq.gz';
 const fileName2 = 'NA1287820K_R2_001.fastq.gz';
 const labTechnicianName = 'Lab Technician';
@@ -65,7 +66,7 @@ test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
   if (hasTestLab == true) {
     await page.getByRole('row', { name: labName }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Details' }).click();
+    await page.getByRole('tab', { name: 'Settings' }).click();
 
     // check if Edit is disabled
     await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
@@ -86,7 +87,7 @@ test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
   if (hasUpdatedTestLab == true) {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Details' }).click();
+    await page.getByRole('tab', { name: 'Settings' }).click();
 
     // check if Edit is disabled
     await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
@@ -109,7 +110,7 @@ test('05 - Remove user from a Laboratory Successfully', async ({ page, baseURL }
   if (hasUpdatedTestLab) {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Lab Users' }).click();
+    await page.getByRole('tab', { name: 'Users' }).click();
     await page.waitForTimeout(5 * 1000);
     await page.waitForLoadState('networkidle');
 
@@ -139,7 +140,7 @@ test('06 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }
   await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
   await page.waitForLoadState('networkidle');
   await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-  await page.getByRole('tab', { name: 'Lab Users' }).click();
+  await page.getByRole('tab', { name: 'Users' }).click();
 
   let userHidden = false;
   try {
@@ -155,7 +156,7 @@ test('06 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }
     await page.keyboard.type(envConfig.labTechnicianEmail);
     await page.getByRole('option', { name: labTechnicianName }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText('Successfully added ' + labTechnicianName + ' to ' + labNameUpdated)).toBeVisible();
+    await expect(page.getByText('Successfully added 1 user to ' + labNameUpdated)).toBeVisible();
   }
 });
 
@@ -190,6 +191,7 @@ test('07 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
     if (hasSeqPipeline) {
       const uuid = randomUUID();
       const seqRunName = `EasyG_SEQ_Run-${uuid}`;
+
       await page.getByRole('row', { name: seqeraPipeline }).locator('button').click();
       await page.getByRole('menuitem', { name: 'Run' }).click();
       await page.waitForLoadState('networkidle');
@@ -253,7 +255,7 @@ test('08 - Check Seqera Run Details', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.getByRole('tab', { name: 'Pipeline Runs' }).click();
     await page.waitForLoadState('networkidle');
 
     // Go to Run Details
@@ -294,7 +296,7 @@ test('09 - Check Seqera Run File Manager if files exist', async ({ page, baseURL
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.getByRole('tab', { name: 'Pipeline Runs' }).click();
     await page.waitForLoadState('networkidle');
 
     // Go to File Manager
@@ -313,7 +315,10 @@ test('09 - Check Seqera Run File Manager if files exist', async ({ page, baseURL
     await expect(page.getByText('Your files have begun downloading').nth(0)).toBeVisible();
     await page.getByRole('row', { name: fileName2 }).locator('button').click();
     await page.waitForTimeout(5000);
-    await page.getByRole('row', { name: 'sample-sheet.csv' }).locator('button').click();
+    await page
+      .getByRole('row', { name: 'samplesheet-' + seqRunNameVar + '.csv' })
+      .locator('button')
+      .click();
     await page.waitForTimeout(5000);
   }
 });
@@ -376,6 +381,7 @@ test('11 - Launch HealthOmics Run Successfully', async ({ page, baseURL }) => {
     if (hasSeqPipeline) {
       const uuid = randomUUID();
       const omicsRunName = `EG_OMICS_Run-${uuid}`;
+
       await page.getByRole('row', { name: omicsWorkflow }).locator('button').click();
       await page.getByRole('menuitem', { name: 'Run' }).click();
       await page.waitForLoadState('networkidle');
@@ -393,7 +399,6 @@ test('11 - Launch HealthOmics Run Successfully', async ({ page, baseURL }) => {
       await page.getByRole('button', { name: 'Upload Files' }).click();
       await page.waitForTimeout(12 * 1000);
 
-      // ** Check if files are successfully uploaded
       await page.waitForLoadState('networkidle');
 
       // ** Check if Download Sample Sheet button is enabled
@@ -438,7 +443,7 @@ test('12 - Check HealthOmics Run Details', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.getByRole('tab', { name: 'Pipeline Runs' }).click();
     await page.waitForLoadState('networkidle');
 
     // Go to Run Details
@@ -479,7 +484,7 @@ test('13 - Check HealthOmics Run File Manager if files exist', async ({ page, ba
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
-    await page.getByRole('tab', { name: 'Lab Runs' }).click();
+    await page.getByRole('tab', { name: 'Pipeline Runs' }).click();
     await page.waitForLoadState('networkidle');
 
     // Go to File Manager
@@ -498,7 +503,213 @@ test('13 - Check HealthOmics Run File Manager if files exist', async ({ page, ba
     await expect(page.getByText('Your files have begun downloading').nth(0)).toBeVisible();
     await page.getByRole('row', { name: fileName2 }).locator('button').click();
     await page.waitForTimeout(5000);
-    await page.getByRole('row', { name: 'sample-sheet.csv' }).locator('button').click();
+    await page
+      .getByRole('row', { name: 'samplesheet-' + omicsRunNameVar + '.csv' })
+      .locator('button')
+      .click();
     await page.waitForTimeout(5000);
+  }
+});
+
+test('14 - Launch HealthOmics Run without a file successfully', async ({ page, baseURL }) => {
+  const omicsRunInput =
+    's3://' +
+    envConfig.testS3Url +
+    '/61c86013-74f2-4d30-916a-70b03a97ba14/3be753b1-bb5d-4771-a065-e171f39af2eb/aws-healthomics/79836b16-d702-46bd-bd6b-4017e0c58c7b/sample-sheet.csv';
+  const omicsRunOutdir =
+    's3://' +
+    envConfig.testS3Url +
+    '/61c86013-74f2-4d30-916a-70b03a97ba14/3be753b1-bb5d-4771-a065-e171f39af2eb/aws-healthomics/79836b16-d702-46bd-bd6b-4017e0c58c7b/results';
+
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    // update Laboratory
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'HealthOmics Workflows' }).click();
+    await page.waitForLoadState('networkidle');
+
+    let hasSeqPipeline = false;
+    try {
+      hasSeqPipeline = await page.getByRole('row', { name: omicsWorkflow }).isVisible();
+    } catch (error) {
+      console.log('Pipeline not found', error);
+    }
+
+    if (hasSeqPipeline) {
+      const uuid = randomUUID();
+      const omicsRunName2 = `EG_OMICS_Run-${uuid}`;
+      await page.getByRole('row', { name: omicsWorkflow }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Run' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // STEP 01
+      await page.getByRole('textbox', { name: 'Run Name*' }).click();
+      await page.getByRole('textbox', { name: 'Run Name*' }).fill(omicsRunName2);
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 02
+      // ** Skip uploading files
+      await page.getByRole('button', { name: 'Skip' }).click();
+      await page.waitForTimeout(12 * 1000);
+
+      // STEP 03
+      await page.getByRole('textbox', { name: 'outdir' }).fill(omicsRunOutdir);
+      await page.getByRole('textbox', { name: 'Input' }).fill(omicsRunInput);
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 04
+      await page.getByRole('button', { name: 'Launch Workflow Run' }).click();
+      await page.waitForTimeout(4000);
+      await page.getByRole('button', { name: 'Back to Runs' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // ** Check if the run name appears in the Run List
+      await expect(page.getByRole('row', { name: omicsRunName2 })).toBeVisible();
+
+      //set runNameVar to be used by other steps
+      omicsRunNameVar = omicsRunName2;
+    }
+  }
+});
+
+test('15 - Launch Seqera Run with a single file successfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    // update Laboratory
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'Seqera Pipelines' }).click();
+    await page.waitForLoadState('networkidle');
+
+    let hasSeqPipeline = false;
+    try {
+      hasSeqPipeline = await page.getByRole('row', { name: seqeraPipeline }).isVisible();
+    } catch (error) {
+      console.log('Pipeline not found', error);
+    }
+
+    if (hasSeqPipeline) {
+      const uuid = randomUUID();
+      const seqRunName3 = `EasyG_SEQ_Run-${uuid}`;
+      await page.getByRole('row', { name: seqeraPipeline }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Run' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // STEP 01
+      await page.getByRole('textbox', { name: 'Run Name*' }).click();
+      await page.getByRole('textbox', { name: 'Run Name*' }).fill(seqRunName3);
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 02
+      const fileChooserPromise = page.waitForEvent('filechooser');
+      await page.getByRole('button', { name: 'Choose Files' }).click();
+      const fileChooser = await fileChooserPromise;
+      await fileChooser.setFiles(filePath3);
+      await page.getByRole('button', { name: 'Upload Files' }).click();
+      await page.waitForTimeout(12 * 1000);
+
+      // ** Check if files are successfully uploaded
+      await page.waitForLoadState('networkidle');
+      //await expect(page.getByText('Files uploaded successfully').nth(0)).toBeVisible();  //temporily disabling due to timing issues
+
+      // ** Check if Download Sample Sheet button is enabled
+      await expect(page.getByRole('button', { name: 'Download sample sheet' })).toBeEnabled();
+
+      await page.getByRole('button', { name: 'Next step' }).click();
+
+      // STEP 03
+      await expect(page.getByRole('textbox', { name: 'Input/output options' })).not.toBeNull();
+      await expect(page.getByRole('textbox', { name: 'outdir' })).not.toBeNull();
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 04
+      await page.getByRole('button', { name: 'Launch Pipeline Run' }).click();
+      await page.waitForTimeout(4000);
+      await page.getByRole('button', { name: 'Back to Runs' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // ** Check if the run name appears in the Run List
+      await expect(page.getByRole('row', { name: seqRunName3 })).toBeVisible();
+    }
+  }
+});
+
+test('16 - Check if user can upload a single and pair files together unsuccessfully', async ({ page, baseURL }) => {
+  await page.goto(`${baseURL}/labs`);
+  await page.waitForLoadState('networkidle');
+
+  // Check if the 'Playwright test lab' which was created in another test
+  let hasTestLab = false;
+  try {
+    hasTestLab = await page.getByRole('row', { name: labNameUpdated }).isVisible();
+  } catch (error) {
+    console.log('Updated test lab not found', error);
+  }
+
+  // Check if a 'Playwright test lab' is existing then update can proceed
+  if (hasTestLab) {
+    // update Laboratory
+    await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
+    await page.getByRole('menuitem', { name: 'View / Edit' }).click();
+    await page.waitForTimeout(5 * 1000);
+    await page.getByRole('tab', { name: 'Seqera Pipelines' }).click();
+    await page.waitForLoadState('networkidle');
+
+    let hasSeqPipeline = false;
+    try {
+      hasSeqPipeline = await page.getByRole('row', { name: seqeraPipeline }).isVisible();
+    } catch (error) {
+      console.log('Pipeline not found', error);
+    }
+
+    if (hasSeqPipeline) {
+      const uuid = randomUUID();
+      const seqRunName = `EasyG_SEQ_Run-${uuid}`;
+      await page.getByRole('row', { name: seqeraPipeline }).locator('button').click();
+      await page.getByRole('menuitem', { name: 'Run' }).click();
+      await page.waitForLoadState('networkidle');
+
+      // STEP 01
+      await page.getByRole('textbox', { name: 'Run Name*' }).click();
+      await page.getByRole('textbox', { name: 'Run Name*' }).fill(seqRunName);
+      await page.getByRole('button', { name: 'Save & Continue' }).click();
+
+      // STEP 02
+      const fileChooserPromise = page.waitForEvent('filechooser');
+      await page.getByRole('button', { name: 'Choose Files' }).click();
+      const fileChooser = await fileChooserPromise;
+      await fileChooser.setFiles([filePath1, filePath2, filePath3]);
+
+      // ** Check if error appears in the page
+      await expect(page.getByRole('button', { name: 'Upload Files' })).toBeDisabled();
+      //await expect(page.getByText('There is a mix of single files and pair files. Files must be all single files or all pair files.', exact: true)).toBeVisible();
+      //await expect(page.getByRole('button', { name: 'There is a mix of single files and pair files. Files must be all single files or all pair files.', exact: true })).toBeVisible();
+      await expect(page.getByLabel('Upload Data').getByText('There is a mix of single')).toBeVisible();
+    }
   }
 });

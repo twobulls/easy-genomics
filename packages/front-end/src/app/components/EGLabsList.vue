@@ -14,12 +14,7 @@
   const labsStore = useLabsStore();
 
   const labsDisplayList = computed<Laboratory[]>(() =>
-    labsStore
-      .labsForOrg(props.orgId)
-      // arguably this filter step shouldn't need to exist on the frontend because the backend shouldn't send us labs
-      // that the user doesn't have access to, so maybe it should be taken out at some point
-      .filter((lab) => useUserStore().canViewLab(lab.LaboratoryId))
-      .sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name)),
+    labsStore.labsForOrg(props.orgId).sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name)),
   );
   const hasNoData = computed<boolean>(
     () => labsDisplayList.value.length === 0 && !useUiStore().isRequestPending('getLabs'),

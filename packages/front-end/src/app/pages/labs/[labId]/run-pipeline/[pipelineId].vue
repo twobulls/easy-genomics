@@ -180,16 +180,17 @@
       input: '', // clear the default sample sheet github link that comes from the pipeline itself
     };
 
-    runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
+    runStore.updateWipSeqeraRunParams(
+      seqeraRunTempId.value,
       // make a copy of initialParams to ensure the original doesn't get changed
-      params: JSON.parse(JSON.stringify(initialParams.value)),
-    });
+      JSON.parse(JSON.stringify(initialParams.value)),
+    );
 
     uiStore.setRequestComplete('loadSeqeraPipeline');
   }
 
   function resetParams() {
-    runStore.wipSeqeraRuns[seqeraRunTempId.value].params = JSON.parse(JSON.stringify(initialParams.value));
+    runStore.updateWipSeqeraRun(seqeraRunTempId.value, { params: JSON.parse(JSON.stringify(initialParams.value)) });
   }
 
   function confirmCancel() {

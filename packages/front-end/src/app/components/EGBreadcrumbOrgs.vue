@@ -5,6 +5,7 @@
   const router = useRouter();
   const route = useRoute();
 
+  const { $api } = useNuxtApp();
   const orgsStore = useOrgsStore();
   const userStore = useUserStore();
 
@@ -42,8 +43,21 @@
     switchOrgDialogOpen.value = true;
   }
 
-  function doSwitchOrg(): void {
+  async function doSwitchOrg(): Promise<void> {
     userStore.currentOrg.OrganizationId = switchToOrgId.value!;
+    userStore.mostRecentLab.LaboratoryId = null; // Reset
+
+    // update default org/lab in api
+    await $api.users.updateUserLastAccessInfo(
+      userStore.currentUserDetails.id!,
+      userStore.currentOrg.OrganizationId,
+      undefined,
+    );
+
+    // refresh values from api
+    await useAuth().getRefreshedToken();
+    await useUser().setCurrentUserDataFromToken();
+
     router.push('/');
     useUiStore().incrementRemountAppKey();
     useToastStore().success('You have switched organizations');
@@ -63,7 +77,7 @@
         </UButton>
       </div>
       <template #item="{ item }">
-        {{ item.Name }}
+        <span class="w-full text-left">{{ item.Name }}</span>
       </template>
     </UDropdown>
   </div>

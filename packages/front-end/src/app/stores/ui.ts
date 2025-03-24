@@ -10,6 +10,7 @@ type PendingRequest =
   | 'assignLabRole'
   | 'getLabUsers'
   | 'addUserToLab'
+  | 'addUsersToLab'
   | 'updateUser'
   | 'getSeqeraPipelines'
   | 'getSeqeraRuns'
@@ -38,7 +39,9 @@ type PendingRequest =
   | 'toggleOrgAdmin'
   | 'loadLabRuns'
   | 'updateDefaultOrg'
-  | 'downloadSampleSheet';
+  | 'generateSampleSheet'
+  | 'downloadSampleSheet'
+  | `downloadHtmlFileButton-${string}`;
 
 interface UiStoreState {
   pendingRequests: Set<string>;

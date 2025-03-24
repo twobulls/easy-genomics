@@ -15,6 +15,7 @@
  *   Country?: <string>,
  *   AwsHealthOmicsEnabled?: <string>,
  *   NextFlowTowerEnabled?: <string>,
+ *   NextFlowTowerApiBaseUrl?: <string>,
  *   BillingContact?: <string>,
  *   BillingMethod?: <string>,
  *   CreatedAt?: <string>,
@@ -34,6 +35,7 @@ export interface Organization extends BaseAttributes {
   Country?: string;
   AwsHealthOmicsEnabled?: boolean;
   NextFlowTowerEnabled?: boolean;
+  NextFlowTowerApiBaseUrl?: string;
   BillingContact?: string;
   BillingMethod?: string;
 }

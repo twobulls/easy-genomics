@@ -35,12 +35,13 @@ export const handler: Handler = async (
     // Data validation safety check
     if (!CreateOrganizationSchema.safeParse(request).success) throw new InvalidRequestError();
 
-    const response: Organization = await organizationService
+    const response: Organization | void = await organizationService
       .add({
         ...request,
         OrganizationId: uuidv4(),
         AwsHealthOmicsEnabled: request.AwsHealthOmicsEnabled || false,
         NextFlowTowerEnabled: request.NextFlowTowerEnabled || false,
+        NextFlowTowerApiBaseUrl: request.NextFlowTowerApiBaseUrl || process.env.SEQERA_API_BASE_URL,
         CreatedAt: new Date().toISOString(),
         CreatedBy: userId,
       })

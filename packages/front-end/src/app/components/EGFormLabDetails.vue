@@ -455,18 +455,24 @@
         <UToggle class="ml-2" v-model="state.AwsHealthOmicsEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
-      <hr class="mb-6" />
+      <template v-if="formMode !== LabDetailsFormModeEnum.enum.Create">
+        <hr class="mb-6" />
 
-      <!-- Pipeline Restrictions -->
-      <EGFormGroup
-        v-if="userStore.canEditLabDetails"
-        label="Adjust Pipeline Restrictions"
-        name="PipelineRestrictions"
-        eager-validation
-        class="flex justify-between"
-      >
-        <EGButton label="View Settings" variant="secondary" @click="() => (isPipelineSettingsOpen = true)" />
-      </EGFormGroup>
+        <!-- Pipeline Restrictions -->
+        <EGFormGroup
+          label="Adjust Pipeline Restrictions"
+          name="PipelineRestrictions"
+          eager-validation
+          class="flex justify-between"
+        >
+          <EGButton
+            label="View Settings"
+            variant="secondary"
+            @click="() => (isPipelineSettingsOpen = true)"
+            :disabled="formMode !== LabDetailsFormModeEnum.enum.Edit"
+          />
+        </EGFormGroup>
+      </template>
     </EGCard>
 
     <!-- Form Buttons: Create Mode -->

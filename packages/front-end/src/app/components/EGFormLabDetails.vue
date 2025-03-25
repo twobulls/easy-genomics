@@ -44,6 +44,8 @@
 
   const toastStore = useToastStore();
   const userStore = useUserStore();
+  const seqeraPipelinesStore = useSeqeraPipelinesStore();
+  const omicsWorkflowsStore = useOmicsWorkflowsStore();
 
   const labId: string = $route.params.labId as string;
 
@@ -52,7 +54,6 @@
   const isLoadingBuckets = ref(false);
   const isLoadingFormData = ref(false);
   const canSubmit = ref(false);
-  const isPipelineSettingsOpen = ref(false);
 
   const isEditing = computed<boolean>(() => formMode.value !== LabDetailsFormModeEnum.enum.ReadOnly);
 
@@ -335,11 +336,6 @@
     return false;
   }
 
-  function savePipelineRestrictions() {
-    toastStore.info('Pipeline restrictions saving not implemented yet');
-    isPipelineSettingsOpen.value = false;
-  }
-
   watch(
     state,
     (newState) => {
@@ -348,15 +344,18 @@
     { deep: true },
   );
 
+  // Pipeline Restrictions modal stuff
+
   const pipelineRestrictionsModalTabStyles = {
+    wrapper: '',
     base: 'focus:outline-none',
     list: {
-      base: '!flex border-b-2 rounded-none mb-6 mt-0',
+      base: '!flex border-b-2 rounded-none mt-0',
       background: 'bg-transparent',
       padding: 'p-0',
       height: 'h-14',
       marker: {
-        wrapper: 'duration-200 ease-out absolute bottom-0 ',
+        wrapper: 'duration-200 ease-out absolute bottom-0',
         base: 'absolute bottom-0 rounded-none h-0.5',
         background: 'bg-primary',
         shadow: 'shadow-none',
@@ -371,6 +370,29 @@
       },
     },
   };
+
+  const checkboxStyle = { base: 'size-[24px]' };
+
+  const pipelineRestrictionsModalListStyle = 'h-full max-h-[450px] overflow-y-scroll';
+  const pipelineRestrictionsModalListItemStyle = 'mx-4 my-7 text-body text-sm flex flex-row align-center gap-4';
+
+  const showPipelineRestrictionsModal = ref<boolean>(false);
+  const inputSeqeraPipelinesRestrictions = ref<Record<string, boolean> | null>(null);
+  const inputOmicsPipelinesRestrictions = ref<Record<string, boolean> | null>(null);
+
+  function openPipelineRestrictions() {
+    inputSeqeraPipelinesRestrictions.value = {};
+    inputOmicsPipelinesRestrictions.value = {};
+    showPipelineRestrictionsModal.value = true;
+  }
+
+  function savePipelineRestrictions() {
+    showPipelineRestrictionsModal.value = false;
+    toastStore.info('Pipeline restrictions saving not implemented yet');
+
+    console.log('seqera:', JSON.stringify(inputSeqeraPipelinesRestrictions.value));
+    console.log('omics:', JSON.stringify(inputOmicsPipelinesRestrictions.value));
+  }
 </script>
 
 <template>
@@ -492,7 +514,7 @@
           <EGButton
             label="View Settings"
             variant="secondary"
-            @click="() => (isPipelineSettingsOpen = true)"
+            @click="openPipelineRestrictions"
             :disabled="formMode !== LabDetailsFormModeEnum.enum.Edit"
           />
         </EGFormGroup>
@@ -554,8 +576,9 @@
     :action-variant="ButtonVariantEnum.enum.primary"
     @action-triggered="savePipelineRestrictions"
     primary-message="Lab Pipeline Restrictions"
-    secondary-message=""
-    v-model="isPipelineSettingsOpen"
+    secondary-message="Check pipelines to grant Lab users access. Unchecking or deleting a pipeline will remove user access immediately."
+    :fixed-width="650"
+    v-model="showPipelineRestrictionsModal"
   >
     <UTabs
       :ui="pipelineRestrictionsModalTabStyles"
@@ -566,10 +589,36 @@
     >
       <template #item="{ item }">
         <!-- Seqera -->
-        <div v-if="item.key === 'seqera'">seqera</div>
+        <div
+          v-if="item.key === 'seqera' && inputSeqeraPipelinesRestrictions !== null"
+          :class="pipelineRestrictionsModalListStyle"
+        >
+          <div v-for="pipeline in seqeraPipelinesStore.pipelines" :class="pipelineRestrictionsModalListItemStyle">
+            <UCheckbox
+              :label="pipeline.name"
+              :ui="checkboxStyle"
+              :model-value="inputSeqeraPipelinesRestrictions[pipeline.pipelineId]"
+              @update:model-value="($event) => (inputSeqeraPipelinesRestrictions[pipeline.pipelineId] = $event)"
+            />
+          </div>
+        </div>
 
         <!-- Omics -->
-        <div v-if="item.key === 'omics'">omics</div>
+        <div
+          v-if="item.key === 'omics' && inputSeqeraPipelinesRestrictions !== null"
+          :class="pipelineRestrictionsModalListStyle"
+        >
+          <div v-for="workflow in omicsWorkflowsStore.workflows" :class="pipelineRestrictionsModalListItemStyle">
+            <UCheckbox
+              :label="workflow.name"
+              :ui="checkboxStyle"
+              :model-value="inputOmicsPipelinesRestrictions[workflow.id]"
+              @update:model-value="($event) => (inputOmicsPipelinesRestrictions[workflow.id] = $event)"
+            />
+          </div>
+        </div>
+
+        <hr class="mb-6" />
       </template>
     </UTabs>
   </EGDialog>

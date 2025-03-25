@@ -199,7 +199,7 @@ class LabsModule extends HttpFactory {
   }
 
   async listLabRuns(labId: string): Promise<LaboratoryRun[]> {
-    const res = await this.call<LaboratoryRun[]>('GET', `/laboratory/run/list-laboratory-runs?laboratoryId=${labId}`);
+    const res = await this.call<LaboratoryRun[]>('GET', `/laboratory/run/list-laboratory-runs?LaboratoryId=${labId}`);
 
     if (!res) {
       throw new Error('Failed to retrieve Laboratory runs');

@@ -166,21 +166,22 @@ if (process.env.CI_CD === 'true') {
 
   seqeraApiBaseUrl = configSettings['back-end']['seqera-api-base-url'] || SEQERA_API_BASE_URL;
 
-  if (
-    configSettings['back-end']['vpc-peering'] &&
-    configSettings['back-end']['vpc-peering']['external-vpc-id'] &&
-    configSettings['back-end']['vpc-peering']['external-aws-account-id'] &&
-    configSettings['back-end']['vpc-peering']['external-aws-region'] &&
-    configSettings['back-end']['vpc-peering']['external-role-arn'] &&
-    configSettings['back-end']['vpc-peering']['external-cidr-block']
-  ) {
-    vpcPeering = {
-      externalVpcId: configSettings['back-end']['vpc-peering']['external-vpc-id'],
-      externalAwsAccountId: configSettings['back-end']['vpc-peering']['external-aws-account-id'],
-      externalAwsRegion: configSettings['back-end']['vpc-peering']['external-aws-region'],
-      externalRoleArn: configSettings['back-end']['vpc-peering']['external-role-arn'],
-      externalCidrBlock: configSettings['back-end']['vpc-peering']['external-cidr-block'],
-    };
+  const vpcPeeringSettings = configSettings['back-end']['vpc-peering'];
+  if (vpcPeeringSettings) {
+    const externalVpcId = vpcPeeringSettings['external-vpc-id'];
+    const externalAwsAccountId = vpcPeeringSettings['external-aws-account-id'];
+    const externalAwsRegion = vpcPeeringSettings['external-aws-region'];
+    const externalRoleArn = vpcPeeringSettings['external-role-arn'];
+    const externalCidrBlock = vpcPeeringSettings['external-cidr-block'];
+    if (externalVpcId && externalAwsAccountId && externalAwsRegion && externalRoleArn && externalCidrBlock) {
+      vpcPeering = {
+        externalVpcId: externalVpcId,
+        externalAwsAccountId: externalAwsAccountId,
+        externalAwsRegion: externalAwsRegion,
+        externalRoleArn: externalRoleArn,
+        externalCidrBlock: externalCidrBlock,
+      };
+    }
   }
 
   if (!awsAccountId) {

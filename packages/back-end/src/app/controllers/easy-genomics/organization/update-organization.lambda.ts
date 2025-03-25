@@ -36,11 +36,12 @@ export const handler: Handler = async (
 
     // Lookup by OrganizationId to confirm existence before updating
     const existing: Organization = await organizationService.get(id);
-    const updated: Organization = await organizationService
+    const updated: Organization | void = await organizationService
       .update(
         {
           ...existing,
           ...request,
+          NextFlowTowerApiBaseUrl: request.NextFlowTowerApiBaseUrl || process.env.SEQERA_API_BASE_URL,
           ModifiedAt: new Date().toISOString(),
           ModifiedBy: userId,
         },

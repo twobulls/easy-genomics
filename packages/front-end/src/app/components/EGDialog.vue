@@ -11,6 +11,7 @@
     cancelVariant?: string;
     buttonsDisabled?: boolean;
     triggerDelay?: number;
+    fixedWidth?: number;
   }>();
 
   const emit = defineEmits(['action-triggered', 'update:modelValue']);
@@ -20,8 +21,6 @@
   }
 
   const delaying = ref<boolean>(false);
-
-  const canCancel = computed(() => props.cancelLabel);
 
   function handleClick() {
     delaying.value = true;
@@ -47,6 +46,7 @@
     prevent-close
   >
     <UCard
+      :style="props.fixedWidth ? `width: ${props.fixedWidth}px;` : ''"
       :ui="{
         base: 'p-10',
         rounded: 'rounded-3xl',

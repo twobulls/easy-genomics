@@ -125,3 +125,37 @@ export function getAwsHealthOmicsApiQueryParameters(event: APIGatewayProxyEvent)
 
   return apiQueryParameters;
 }
+
+/**
+ * Helper function to return valid query parameters that exist in the object's properties.
+ * @param objectProperties
+ * @param queryParameters
+ */
+export function getFilters(objectProperties: string[], queryParameters: [string, string][]): [string, string][] {
+  return queryParameters.filter((_: [string, string]) => objectProperties.includes(_[0]));
+}
+
+/**
+ * Helper recursive function to apply filters object records by the supplied filters.
+ * @param results
+ * @param filters
+ */
+export function getFilterResults<T>(results: T[], filters: [string, string][]): T[] {
+  if (filters.length === 0) {
+    return results;
+  }
+
+  const [filterKey, filterVal] = filters.shift();
+  const filterResults = results.filter((r: T) => {
+    if (filterVal.startsWith('*')) {
+      return r[filterKey].endsWith(filterVal.slice(1)); // Ignore leading *
+    } else if (filterVal.endsWith('*')) {
+      return r[filterKey].startsWith(filterVal.slice(0, -1)); // Ignore trailing *
+    } else {
+      return r[filterKey] === filterVal;
+    }
+  });
+
+  // Recursion
+  return getFilterResults<T>(filterResults, filters);
+}

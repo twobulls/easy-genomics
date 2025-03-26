@@ -1,3 +1,4 @@
+import { LaboratoryRunSchema } from '@easy-genomics/shared-lib/lib/app/schema/easy-genomics/laboratory-run';
 import {
   InvalidRequestError,
   LaboratoryNotFoundError,
@@ -15,6 +16,7 @@ import {
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+import { getFilterResults, getFilters } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryRunService = new LaboratoryRunService();
@@ -24,13 +26,13 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    // Get Query Parameter
-    const laboratoryId: string | undefined = event.queryStringParameters?.laboratoryId;
-
-    // Check if laboratory exists and use it for permissions check
+    // Get mandatory query parameter(s)
+    const laboratoryId: string | undefined = event.queryStringParameters?.LaboratoryId;
     if (!laboratoryId) {
       throw new InvalidRequestError();
     }
+
+    // Check if laboratory exists and use it for permissions check
     const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
     if (!laboratory) {
       throw new LaboratoryNotFoundError();
@@ -49,7 +51,19 @@ export const handler: Handler = async (
 
     const laboratoryRuns: LaboratoryRun[] = await laboratoryRunService.queryByLaboratoryId(laboratoryId);
 
-    const results: ReadLaboratoryRun[] = laboratoryRuns.map((laboratoryRun: LaboratoryRun) => {
+    // Get optional query parameter(s)
+    const queryParameters: [string, string][] = <[string, string][]>(
+      // Exclude the mandatory 'LaboratoryId' query parameter
+      Object.entries(event.queryStringParameters).filter((_: [string, string]) => _[0] !== 'LaboratoryId')
+    );
+    // Sanitize query parameters to the LaboratoryRun object's properties
+    const filters: [string, string][] = getFilters(Object.keys(LaboratoryRunSchema.shape), queryParameters);
+
+    const laboratoryRunsFiltered: LaboratoryRun[] = filters.length
+      ? getFilterResults<LaboratoryRun>(laboratoryRuns, filters)
+      : laboratoryRuns;
+
+    const results: ReadLaboratoryRun[] = laboratoryRunsFiltered.map((laboratoryRun: LaboratoryRun) => {
       const readLaboratoryRun: ReadLaboratoryRun = {
         ...laboratoryRun,
         Settings: JSON.parse(laboratoryRun.Settings || '{}'),
@@ -57,11 +71,7 @@ export const handler: Handler = async (
       return readLaboratoryRun;
     });
 
-    if (results) {
-      return buildResponse(200, JSON.stringify(results), event);
-    } else {
-      throw new Error(`Unable to find Laboratory Runs: ${JSON.stringify(results)}`);
-    }
+    return buildResponse(200, JSON.stringify(results), event);
   } catch (err: any) {
     console.error(err);
     return buildErrorResponse(err, event);

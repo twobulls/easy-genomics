@@ -145,8 +145,16 @@ export function getFilterResults<T>(results: T[], filters: [string, string][]): 
     return results;
   }
 
-  const filter: [string, string] = filters.shift();
-  const filterResults = results.filter((r: T) => r[filter[0]] === filter[1]);
+  const [filterKey, filterVal] = filters.shift();
+  const filterResults = results.filter((r: T) => {
+    if (filterVal.startsWith('*')) {
+      return r[filterKey].endsWith(filterVal.slice(1)); // Ignore leading *
+    } else if (filterVal.endsWith('*')) {
+      return r[filterKey].startsWith(filterVal.slice(0, -1)); // Ignore trailing *
+    } else {
+      return r[filterKey] === filterVal;
+    }
+  });
 
   // Recursion
   return getFilterResults<T>(filterResults, filters);

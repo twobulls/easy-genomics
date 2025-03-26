@@ -15,6 +15,7 @@
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
   import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+  import { TableSort } from './EGTable.vue';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -125,11 +126,18 @@
     { key: 'actions', label: 'Actions' },
   ];
 
+  const runsTableSort = ref<TableSort>({ column: 'CreatedAt', direction: 'desc' });
+
   const runsTableItems = computed<LaboratoryRunTableItem[]>(() =>
-    runStore.labRunsForLab(props.labId).map((labRun) => ({
-      ...labRun,
-      lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
-    })),
+    runStore
+      .labRunsForLab(props.labId)
+      .map((labRun) => ({
+        ...labRun,
+        lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
+      }))
+      .sort((a: any, b: any) =>
+        stringSortCompare(a[runsTableSort.value.column], b[runsTableSort.value.column], runsTableSort.value.direction),
+      ),
   );
 
   function runsActionItems(run: LaboratoryRun): object[] {
@@ -566,7 +574,7 @@
           :row-click-action="viewRunDetails"
           :table-data="runsTableItems"
           :columns="runsTableColumns"
-          :sort="{ column: 'CreatedAt', direction: 'desc' }"
+          v-model:sort="runsTableSort"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
         >

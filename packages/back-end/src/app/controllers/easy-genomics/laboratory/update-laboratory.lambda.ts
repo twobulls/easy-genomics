@@ -11,7 +11,7 @@ import {
   InvalidRequestError,
   LaboratoryAccessTokenUnavailableError,
   LaboratoryNameTakenError,
-  LaboratoryWorkspaceIdOrAccessTokenIncorrectError,
+  LaboratorySeqeraCredentialsIncorrectError,
   RequiredIdNotFoundError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
@@ -53,11 +53,12 @@ export const handler: Handler = async (
       request.NextFlowTowerEnabled &&
       !(await validateExistingNextFlowIntegration(
         existing,
+        request.NextFlowTowerApiBaseUrl,
         request.NextFlowTowerWorkspaceId,
         request.NextFlowTowerAccessToken,
       ))
     ) {
-      throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
+      throw new LaboratorySeqeraCredentialsIncorrectError();
     }
 
     const response = await laboratoryService
@@ -105,9 +106,15 @@ export const handler: Handler = async (
 
 async function validateExistingNextFlowIntegration(
   laboratory: Laboratory,
+  baseApiUrl?: string,
   workspaceId?: string,
   accessToken?: string,
 ): Promise<boolean> {
+  // Existing integration requires at minimum the Seqera BaseApiUrl
+  if (!baseApiUrl || baseApiUrl === '') {
+    return false;
+  }
+
   if (!accessToken || accessToken === '') {
     try {
       const getNextFlowAccessToken: GetParameterCommandOutput = await ssmService.getParameter({
@@ -128,11 +135,11 @@ async function validateExistingNextFlowIntegration(
   apiParameters.set('workspaceId', `${workspaceId || ''}`); // WorkspaceId can be empty
 
   const nfResponse: ListComputeEnvsResponse = await httpRequest<ListComputeEnvsResponse>(
-    `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiParameters.toString()}`,
+    `${baseApiUrl}/compute-envs?${apiParameters.toString()}`,
     REST_API_METHOD.GET,
     { Authorization: `Bearer ${accessToken}` },
   ).catch(() => {
-    throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
+    throw new LaboratorySeqeraCredentialsIncorrectError();
   });
   return !!nfResponse;
 }

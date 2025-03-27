@@ -42,6 +42,9 @@
   const $route = useRoute();
   const router = useRouter();
 
+  const orgsStore = useOrgsStore();
+  const userStore = useUserStore();
+
   const labId: string = $route.params.labId as string;
 
   const formMode = ref(props.formMode);
@@ -59,7 +62,7 @@
     NextFlowTowerEnabled: false,
     NextFlowTowerAccessToken: '',
     NextFlowTowerWorkspaceId: '',
-    NextFlowTowerApiBaseUrl: undefined,
+    NextFlowTowerApiBaseUrl: orgsStore.orgs[userStore.currentOrgId || ''].NextFlowTowerApiBaseUrl || '',
     AwsHealthOmicsEnabled: false,
   };
 
@@ -398,12 +401,9 @@
         name="NextFlowTowerApiBaseUrl"
         eager-validation
         v-if="state.NextFlowTowerEnabled"
+        :required="state.NextFlowTowerEnabled"
       >
-        <EGInput
-          v-model="state.NextFlowTowerApiBaseUrl"
-          placeholder="fill org value here"
-          :disabled="!isEditing || isSubmittingFormData"
-        />
+        <EGInput v-model="state.NextFlowTowerApiBaseUrl" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
       <!-- Next Flow Tower: Workspace ID -->

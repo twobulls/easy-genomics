@@ -42,6 +42,9 @@
   const $route = useRoute();
   const router = useRouter();
 
+  const orgsStore = useOrgsStore();
+  const userStore = useUserStore();
+
   const labId: string = $route.params.labId as string;
 
   const formMode = ref(props.formMode);
@@ -55,11 +58,12 @@
   const defaultState: LabDetails = {
     Name: '',
     Description: '',
+    S3Bucket: '',
+    NextFlowTowerEnabled: false,
     NextFlowTowerAccessToken: '',
     NextFlowTowerWorkspaceId: '',
-    S3Bucket: '',
+    NextFlowTowerApiBaseUrl: orgsStore.orgs[userStore.currentOrgId || ''].NextFlowTowerApiBaseUrl || '',
     AwsHealthOmicsEnabled: false,
-    NextFlowTowerEnabled: false,
   };
 
   const state = ref({ ...defaultState } as Laboratory);
@@ -381,7 +385,7 @@
 
       <hr class="mb-6" />
 
-      <!-- Next Flow Tower Toggle -->
+      <!-- Next Flow Tower: Toggle -->
       <EGFormGroup
         label="Enable Seqera Integration"
         name="NextFlowTowerEnable"
@@ -391,7 +395,18 @@
         <UToggle class="ml-2" v-model="state.NextFlowTowerEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
-      <!-- Next Flow Tower Workspace ID -->
+      <!-- Next Flow Tower: Endpoint -->
+      <EGFormGroup
+        label="Seqera Endpoint URL"
+        name="NextFlowTowerApiBaseUrl"
+        eager-validation
+        v-if="state.NextFlowTowerEnabled"
+        :required="state.NextFlowTowerEnabled"
+      >
+        <EGInput v-model="state.NextFlowTowerApiBaseUrl" :disabled="!isEditing || isSubmittingFormData" />
+      </EGFormGroup>
+
+      <!-- Next Flow Tower: Workspace ID -->
       <EGFormGroup
         label="Workspace ID"
         name="NextFlowTowerWorkspaceId"
@@ -405,14 +420,14 @@
         />
       </EGFormGroup>
 
-      <!-- Next Flow Tower Access Token -->
+      <!-- Next Flow Tower: Access Token -->
       <EGFormGroup
         v-if="isEditing && state.NextFlowTowerEnabled"
         label="Personal Access Token"
         name="NextFlowTowerAccessToken"
         eager-validation
       >
-        <!-- Next Flow Tower Access Token: Create  Mode -->
+        <!-- Next Flow Tower: Access Token: Create  Mode -->
         <EGPasswordInput
           v-if="formMode === LabDetailsFormModeEnum.enum.Create"
           v-model="state.NextFlowTowerAccessToken"
@@ -420,7 +435,7 @@
           :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
           :disabled="!isEditing || isSubmittingFormData"
         />
-        <!-- Next Flow Tower Access Token: Edit  Mode -->
+        <!-- Next Flow Tower: Access Token: Edit  Mode -->
         <EGPasswordInput
           v-if="formMode === LabDetailsFormModeEnum.enum.Edit"
           v-model="state.NextFlowTowerAccessToken"

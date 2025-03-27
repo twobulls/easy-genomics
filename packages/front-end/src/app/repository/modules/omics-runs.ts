@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/named
-import { StartRunCommandOutput } from '@aws-sdk/client-omics';
+import { CancelRunCommandOutput, StartRunCommandOutput } from '@aws-sdk/client-omics';
 import { ListRuns, ReadRun } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
 import HttpFactory from '@FE/repository/factory';
 
@@ -44,6 +44,17 @@ class OmicsRunsModule extends HttpFactory {
     if (!res) {
       throw new Error('Failed to start omics run');
     }
+
+    return res;
+  }
+
+  async cancelWorkflowRun(labId: string, runId: string): Promise<CancelRunCommandOutput> {
+    const res = await this.callOmics<CancelRunCommandOutput>(
+      'PUT',
+      `/run/cancel-run-execution/${runId}?laboratoryId=${labId}`,
+    );
+
+    if (!res) throw new Error('Failed to cancel omics run');
 
     return res;
   }

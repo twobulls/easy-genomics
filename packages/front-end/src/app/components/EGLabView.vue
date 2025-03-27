@@ -128,17 +128,36 @@
 
   const runsTableSort = ref<TableSort>({ column: 'CreatedAt', direction: 'desc' });
 
-  const runsTableItems = computed<LaboratoryRunTableItem[]>(() =>
-    runStore
-      .labRunsForLab(props.labId)
-      .map((labRun) => ({
-        ...labRun,
-        lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
-      }))
-      .sort((a: any, b: any) =>
-        stringSortCompare(a[runsTableSort.value.column], b[runsTableSort.value.column], runsTableSort.value.direction),
-      ),
-  );
+  const runsTableFilterMyRunsOnly = ref<boolean>(false);
+
+  const runsTableItems = ref<LaboratoryRunTableItem[]>([]);
+
+  // fetch the runs with BE filtering any time any of the inputs change
+  watchEffect(async () => {
+    uiStore.setRequestPending('loadLabRuns');
+
+    try {
+      runsTableItems.value = (
+        await $api.labs.listLabRuns(
+          props.labId,
+          runsTableFilterMyRunsOnly.value ? userStore.currentUserDetails.email! : undefined,
+        )
+      )
+        .map((labRun) => ({
+          ...labRun,
+          lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
+        }))
+        .sort((a: any, b: any) =>
+          stringSortCompare(
+            a[runsTableSort.value.column],
+            b[runsTableSort.value.column],
+            runsTableSort.value.direction,
+          ),
+        );
+    } finally {
+      uiStore.setRequestComplete('loadLabRuns');
+    }
+  });
 
   function runsActionItems(run: LaboratoryRun): object[] {
     const buttons: object[][] = [
@@ -570,6 +589,10 @@
     <template #item="{ item }">
       <!-- Runs tab -->
       <div v-if="item.key === 'runs'">
+        <div class="mb-6 flex flex-row items-center gap-4">
+          <UCheckbox label="My runs only" :ui="{ base: 'size-[24px]' }" v-model="runsTableFilterMyRunsOnly" />
+        </div>
+
         <EGTable
           :row-click-action="viewRunDetails"
           :table-data="runsTableItems"

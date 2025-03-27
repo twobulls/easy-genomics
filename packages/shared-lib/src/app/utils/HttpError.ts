@@ -264,13 +264,13 @@ export class LaboratoryAccessTokenUnavailableError extends HttpError {
 }
 
 /**
- * Laboratory WorkspaceId Or Access Token Incorrect
+ * Laboratory Seqera Credentials Incorrect
  *
  * @param messageOpt - optional additional message
  */
-export class LaboratoryWorkspaceIdOrAccessTokenIncorrectError extends HttpError {
+export class LaboratorySeqeraCredentialsIncorrectError extends HttpError {
   constructor(messageOpt?: string) {
-    super('Laboratory WorkspaceId or Access Token is incorrect', 400, 'EG-308', messageOpt);
+    super('Laboratory Seqera BaseApiUrl, WorkspaceId, or AccessToken are incorrect', 400, 'EG-308', messageOpt);
   }
 }
 

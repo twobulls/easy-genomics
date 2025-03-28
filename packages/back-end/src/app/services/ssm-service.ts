@@ -57,16 +57,9 @@ export class SsmService {
     data?: RequestType,
   ): Promise<ResponseType> => {
     try {
-      console.log(
-        `[ssm-service : ssmRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command}`,
-      );
-
       return await this.ssmClient.send(this.getSsmCommand(command, data));
     } catch (error: any) {
-      console.error(
-        `[ssm-service : ssmRequest] accountId: ${process.env.ACCOUNT_ID}, region: ${process.env.REGION}, command: ${command} exception encountered:`,
-        error,
-      );
+      console.error(`[ssm-service : ssmRequest] command: ${command} exception encountered:`, error);
       throw this.handleError(error);
     }
   };

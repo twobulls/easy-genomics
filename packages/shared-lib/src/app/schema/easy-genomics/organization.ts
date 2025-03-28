@@ -8,6 +8,7 @@ export const OrganizationSchema = z
     Country: z.string().optional(),
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
+    NextFlowTowerApiBaseUrl: z.string().optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -22,6 +23,7 @@ export const CreateOrganizationSchema = z
     Country: z.string().optional(),
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
+    NextFlowTowerApiBaseUrl: z.string().optional(),
   })
   .strict();
 
@@ -32,5 +34,6 @@ export const UpdateOrganizationSchema = z
     Country: z.string().optional(),
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
+    NextFlowTowerApiBaseUrl: z.string().optional(),
   })
   .strict();

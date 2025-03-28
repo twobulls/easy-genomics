@@ -172,6 +172,16 @@ export class EasyGenomicsNestedStack extends NestedStack {
             SNS_USER_DELETION_TOPIC: this.sns.snsTopics.get('user-deletion-topic')?.topicArn || '',
           },
         },
+        '/easy-genomics/organization/create-organization': {
+          environment: {
+            SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
+          },
+        },
+        '/easy-genomics/organization/update-organization': {
+          environment: {
+            SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
+          },
+        },
         '/easy-genomics/organization/delete-organization': {
           environment: {
             SNS_ORGANIZATION_DELETION_TOPIC: this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || '',

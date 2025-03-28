@@ -12,6 +12,10 @@ const filePath3 = './tests/e2e/fixtures/EasyG_File.fastq.gz';
 const fileName1 = 'NA1287820K_R1_001.fastq.gz';
 const fileName2 = 'NA1287820K_R2_001.fastq.gz';
 const labTechnicianName = 'Lab Technician';
+const organizationID = '61c86013-74f2-4d30-916a-70b03a97ba14';
+let laboratoryID: string;
+let seqeraSampleSheetUrl: string;
+let omicsSampleSheetUrl: string;
 let seqRunNameVar: string;
 let omicsRunNameVar: string;
 
@@ -178,6 +182,11 @@ test('07 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
+
+    const automatedLabURL = await page.url();
+    let laboratoryID = automatedLabURL.match(/labs\/(\S+)/)?.[1];
+    console.log('Laboratory ID:' + laboratoryID);
+
     await page.getByRole('tab', { name: 'Seqera Pipelines' }).click();
     await page.waitForLoadState('networkidle');
 
@@ -215,6 +224,18 @@ test('07 - Launch Seqera Run Successfully', async ({ page, baseURL }) => {
 
       // ** Check if Download Sample Sheet button is enabled
       await expect(page.getByRole('button', { name: 'Download sample sheet' })).toBeEnabled();
+
+      // ** Check value of S3 url in the purple bar
+      seqeraSampleSheetUrl =
+        's3://' + envConfig.testS3Url + '/' + organizationID + '/' + laboratoryID + '/seqera-platform';
+      await page.waitForTimeout(2000);
+      await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toContainText(
+        seqeraSampleSheetUrl,
+      ); // checks the url value
+      await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toContainText(
+        'samplesheet-' + seqRunName + '.csv',
+      ); // checks the file name
 
       await page.getByRole('button', { name: 'Next step' }).click();
 
@@ -274,6 +295,13 @@ test('08 - Check Seqera Run Details', async ({ page, baseURL }) => {
     await expect(page.getByText(seqeraPipeline).nth(0)).toBeVisible(); // Pipeline name as title
     await expect(page.getByText(seqeraPipeline).nth(1)).toBeVisible(); // Pipeline name in the details section
     await expect(page.getByText('Seqera Cloud')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toContainText(
+      seqeraSampleSheetUrl,
+    ); // checks the url value
+    await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toContainText(
+      'samplesheet-' + seqRunNameVar + '.csv',
+    ); // checks the file name
     await expect(page.getByRole('button', { name: 'Download' })).toBeEnabled();
     await expect(page.getByText(envConfig.labManagerEmail)).toBeVisible(); // Owner
   }
@@ -368,6 +396,11 @@ test('11 - Launch HealthOmics Run Successfully', async ({ page, baseURL }) => {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000);
+
+    const automatedLabURL = await page.url();
+    let laboratoryID = automatedLabURL.match(/labs\/(\S+)/)?.[1];
+    console.log('Laboratory ID:' + laboratoryID);
+
     await page.getByRole('tab', { name: 'HealthOmics Workflows' }).click();
     await page.waitForLoadState('networkidle');
 
@@ -403,6 +436,18 @@ test('11 - Launch HealthOmics Run Successfully', async ({ page, baseURL }) => {
 
       // ** Check if Download Sample Sheet button is enabled
       await expect(page.getByRole('button', { name: 'Download sample sheet' })).toBeEnabled();
+
+      // ** Check value of S3 url in the purple bar
+      omicsSampleSheetUrl =
+        's3://' + envConfig.testS3Url + '/' + organizationID + '/' + laboratoryID + '/aws-healthomics';
+      await page.waitForTimeout(2000);
+      await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toContainText(
+        omicsSampleSheetUrl,
+      ); // checks the url value
+      await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toContainText(
+        'samplesheet-' + omicsRunName + '.csv',
+      ); // checks the file name
 
       await page.getByRole('button', { name: 'Next step' }).click();
 
@@ -462,6 +507,11 @@ test('12 - Check HealthOmics Run Details', async ({ page, baseURL }) => {
     await expect(page.getByText(omicsWorkflow).nth(0)).toBeVisible(); // Pipeline name as title
     await expect(page.getByText(omicsWorkflow).nth(1)).toBeVisible(); // Pipeline name in the details section
     await expect(page.getByText('AWS HealthOmics')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toContainText(omicsSampleSheetUrl); // checks the url value
+    await expect(page.getByRole('button', { name: 'Copy URL: s3://851725267090-' })).toContainText(
+      'samplesheet-' + omicsRunNameVar + '.csv',
+    ); // checks the file name
     await expect(page.getByRole('button', { name: 'Download' })).toBeEnabled();
     await expect(page.getByText(envConfig.labManagerEmail)).toBeVisible(); // Owner
   }

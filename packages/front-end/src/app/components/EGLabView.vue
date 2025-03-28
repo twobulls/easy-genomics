@@ -15,6 +15,7 @@
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
   import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+  import { TableSort } from './EGTable.vue';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -125,12 +126,39 @@
     { key: 'actions', label: 'Actions' },
   ];
 
-  const runsTableItems = computed<LaboratoryRunTableItem[]>(() =>
-    runStore.labRunsForLab(props.labId).map((labRun) => ({
-      ...labRun,
-      lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
-    })),
-  );
+  const runsTableSort = ref<TableSort>({ column: 'CreatedAt', direction: 'desc' });
+
+  const runsTableFilterMyRunsOnly = ref<boolean>(false);
+
+  const runsTableItems = ref<LaboratoryRunTableItem[]>([]);
+
+  // fetch the runs with BE filtering any time any of the inputs change
+  watchEffect(async () => {
+    uiStore.setRequestPending('loadLabRuns');
+
+    // without this following line, watchEffect doesn't pick up runsTableSort as a reactive dependency...
+    runsTableSort.value;
+
+    const filters: any = {};
+    if (runsTableFilterMyRunsOnly.value) filters.Owner = userStore.currentUserDetails.email!;
+
+    try {
+      runsTableItems.value = (await $api.labs.listLabRuns(props.labId, filters))
+        .map((labRun) => ({
+          ...labRun,
+          lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',
+        }))
+        .sort((a: any, b: any) =>
+          stringSortCompare(
+            a[runsTableSort.value.column],
+            b[runsTableSort.value.column],
+            runsTableSort.value.direction,
+          ),
+        );
+    } finally {
+      uiStore.setRequestComplete('loadLabRuns');
+    }
+  });
 
   function runsActionItems(run: LaboratoryRun): object[] {
     const buttons: object[][] = [
@@ -138,7 +166,7 @@
       [{ label: 'View Files', click: () => viewRunDetails(run, 'File Manager') }],
     ];
 
-    if (['SUBMITTED', 'RUNNING'].includes(run.Status)) {
+    if (['SUBMITTED', 'STARTING', 'RUNNING'].includes(run.Status)) {
       buttons.push([{ label: 'Cancel Run', click: () => initCancelRun(run), isHighlighted: true }]);
     }
 
@@ -430,7 +458,7 @@
         await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
       } else {
         uiStore.setRequestPending('cancelOmicsRun');
-        // await $api.omicsRuns.cancelPipelineRun(props.labId, runId); // TODO
+        await $api.omicsRuns.cancelWorkflowRun(props.labId, runId);
       }
     } catch (e) {
       useToastStore().error('Failed to cancel run');
@@ -562,11 +590,15 @@
     <template #item="{ item }">
       <!-- Runs tab -->
       <div v-if="item.key === 'runs'">
+        <div class="mb-6 flex flex-row items-center gap-4">
+          <UCheckbox label="My runs only" :ui="{ base: 'size-[24px]' }" v-model="runsTableFilterMyRunsOnly" />
+        </div>
+
         <EGTable
           :row-click-action="viewRunDetails"
           :table-data="runsTableItems"
           :columns="runsTableColumns"
-          :sort="{ column: 'CreatedAt', direction: 'desc' }"
+          v-model:sort="runsTableSort"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
         >

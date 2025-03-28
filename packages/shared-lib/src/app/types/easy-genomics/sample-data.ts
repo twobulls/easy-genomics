@@ -16,6 +16,7 @@ export const organization: Organization = {
   Country: 'USA',
   AwsHealthOmicsEnabled: true,
   NextFlowTowerEnabled: true,
+  NextFlowTowerApiBaseUrl: 'https://api.cloud.seqera.io',
   CreatedAt: new Date().toISOString(),
 };
 

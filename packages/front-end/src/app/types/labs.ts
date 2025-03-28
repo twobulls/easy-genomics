@@ -22,16 +22,19 @@ const NextFlowTowerWorkspaceIdSchema = z
   .max(128, 'Workspace ID must be no more than 128 characters')
   .optional();
 
+const NextFlowTowerApiBaseUrlSchema = z.string().trim().min(1, 'Seqera endpoint URL must not be empty').optional();
+
 const S3BucketSchema = z.string().trim().max(63, 'S3 bucket name must be no more than 63 characters').optional();
 
 // Just the fields required for read-only display
 const LabDetailsSchema = z.object({
   Name: LabNameSchema,
   Description: LabDescriptionSchema,
-  NextFlowTowerAccessToken: NextFlowTowerAccessTokenSchema,
-  NextFlowTowerWorkspaceId: NextFlowTowerWorkspaceIdSchema,
   S3Bucket: S3BucketSchema.optional(),
   NextFlowTowerEnabled: z.boolean(),
+  NextFlowTowerAccessToken: NextFlowTowerAccessTokenSchema,
+  NextFlowTowerWorkspaceId: NextFlowTowerWorkspaceIdSchema,
+  NextFlowTowerApiBaseUrl: NextFlowTowerApiBaseUrlSchema,
   AwsHealthOmicsEnabled: z.boolean(),
 });
 type LabDetails = z.infer<typeof LabDetailsSchema>;

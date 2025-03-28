@@ -125,3 +125,35 @@ export function getAwsHealthOmicsApiQueryParameters(event: APIGatewayProxyEvent)
 
   return apiQueryParameters;
 }
+
+/**
+ * Helper function to return valid query parameters that exist in the object's properties.
+ * @param objectProperties
+ * @param queryParameters
+ */
+export function getFilters(objectProperties: string[], queryParameters: [string, string][]): [string, string][] {
+  return queryParameters.filter((_: [string, string]) => objectProperties.includes(_[0]));
+}
+
+/**
+ * Helper recursive function to apply filters object records by the supplied filters.
+ * @param results
+ * @param filters
+ */
+export function getFilterResults<T>(results: T[], filters: [string, string][]): T[] {
+  if (filters.length === 0) {
+    return results;
+  }
+
+  const [filterKey, filterVal] = filters.shift();
+  const filterResults = results.filter((r: T) => {
+    // https://stackoverflow.com/a/3561711 - this escape function is the same as this answer EXCEPT the * is removed
+    const regexEscapedInput = filterVal.replaceAll(/[/\-\\^$+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp('^' + regexEscapedInput.replaceAll('*', '.*') + '$');
+
+    return regex.test(r[filterKey]);
+  });
+
+  // Recursion
+  return getFilterResults<T>(filterResults, filters);
+}

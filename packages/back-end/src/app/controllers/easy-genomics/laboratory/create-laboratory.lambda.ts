@@ -11,7 +11,7 @@ import {
   InvalidRequestError,
   LaboratoryAlreadyExistsError,
   LaboratoryNameTakenError,
-  LaboratoryWorkspaceIdOrAccessTokenIncorrectError,
+  LaboratorySeqeraCredentialsIncorrectError,
   OrganizationNotFoundError,
   UnauthorizedAccessError,
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
@@ -50,8 +50,15 @@ export const handler: Handler = async (
       throw new OrganizationNotFoundError();
     }
 
-    if (!(await validateNewNextFlowIntegration(request.NextFlowTowerWorkspaceId, request.NextFlowTowerAccessToken))) {
-      throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
+    if (
+      request.NextFlowTowerEnabled &&
+      !(await validateNewNextFlowIntegration(
+        request.NextFlowTowerApiBaseUrl,
+        request.NextFlowTowerWorkspaceId,
+        request.NextFlowTowerAccessToken,
+      ))
+    ) {
+      throw new LaboratorySeqeraCredentialsIncorrectError();
     }
 
     // Automatically create an S3 Bucket for this Lab based on the LaboratoryId, and must be less than 63
@@ -100,11 +107,14 @@ export const handler: Handler = async (
   }
 };
 
-async function validateNewNextFlowIntegration(workspaceId?: string, accessToken?: string): Promise<boolean> {
-  if ((!workspaceId && !accessToken) || (workspaceId === '' && accessToken === '')) {
-    return true; // If both workspaceId and accessToken are undefined or empty strings, return true to allow Lab to be created without NextFlow Integration
-  } else if ((workspaceId && !accessToken) || (workspaceId !== '' && accessToken === '')) {
-    return false; // If only workspaceId is specified, then immediately return false because accessToken is required
+async function validateNewNextFlowIntegration(
+  baseApiUrl?: string,
+  workspaceId?: string,
+  accessToken?: string,
+): Promise<boolean> {
+  // New integration requires at minimum the Seqera BaseApiUrl and AccessToken
+  if ((!baseApiUrl && !accessToken) || (baseApiUrl === '' && accessToken === '')) {
+    return false;
   }
 
   // Build Query Parameters for calling NextFlow Tower
@@ -112,11 +122,11 @@ async function validateNewNextFlowIntegration(workspaceId?: string, accessToken?
   apiParameters.set('workspaceId', `${workspaceId || ''}`); // WorkspaceId can be empty
 
   const nfResponse: ListComputeEnvsResponse = await httpRequest<ListComputeEnvsResponse>(
-    `${process.env.SEQERA_API_BASE_URL}/compute-envs?${apiParameters.toString()}`,
+    `${baseApiUrl}/compute-envs?${apiParameters.toString()}`,
     REST_API_METHOD.GET,
     { Authorization: `Bearer ${accessToken}` },
   ).catch(() => {
-    throw new LaboratoryWorkspaceIdOrAccessTokenIncorrectError();
+    throw new LaboratorySeqeraCredentialsIncorrectError();
   });
   return !!nfResponse;
 }

@@ -136,13 +136,11 @@
   watchEffect(async () => {
     uiStore.setRequestPending('loadLabRuns');
 
+    const filters: any = {};
+    if (runsTableFilterMyRunsOnly.value) filters.Owner = userStore.currentUserDetails.email!;
+
     try {
-      runsTableItems.value = (
-        await $api.labs.listLabRuns(
-          props.labId,
-          runsTableFilterMyRunsOnly.value ? userStore.currentUserDetails.email! : undefined,
-        )
-      )
+      runsTableItems.value = (await $api.labs.listLabRuns(props.labId, filters))
         .map((labRun) => ({
           ...labRun,
           lastUpdated: labRun.ModifiedAt ?? labRun.CreatedAt ?? '',

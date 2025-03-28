@@ -136,6 +136,9 @@
   watchEffect(async () => {
     uiStore.setRequestPending('loadLabRuns');
 
+    // without this following line, watchEffect doesn't pick up runsTableSort as a reactive dependency...
+    runsTableSort.value;
+
     try {
       runsTableItems.value = (
         await $api.labs.listLabRuns(

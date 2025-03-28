@@ -147,13 +147,11 @@ export function getFilterResults<T>(results: T[], filters: [string, string][]): 
 
   const [filterKey, filterVal] = filters.shift();
   const filterResults = results.filter((r: T) => {
-    if (filterVal.startsWith('*')) {
-      return r[filterKey].endsWith(filterVal.slice(1)); // Ignore leading *
-    } else if (filterVal.endsWith('*')) {
-      return r[filterKey].startsWith(filterVal.slice(0, -1)); // Ignore trailing *
-    } else {
-      return r[filterKey] === filterVal;
-    }
+    // https://stackoverflow.com/a/3561711 - this escape function is the same as this answer EXCEPT the * is removed
+    const regexEscapedInput = filterVal.replaceAll(/[/\-\\^$+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp('^' + regexEscapedInput.replaceAll('*', '.*') + '$');
+
+    return regex.test(r[filterKey]);
   });
 
   // Recursion

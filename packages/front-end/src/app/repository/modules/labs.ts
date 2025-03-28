@@ -198,10 +198,10 @@ class LabsModule extends HttpFactory {
     return res;
   }
 
-  async listLabRuns(labId: string, filterOwner?: string): Promise<LaboratoryRun[]> {
+  async listLabRuns(labId: string, filters: object = {}): Promise<LaboratoryRun[]> {
     let queryUrl = `/laboratory/run/list-laboratory-runs?LaboratoryId=${labId}`;
 
-    if (filterOwner) queryUrl += '&Owner=' + filterOwner;
+    for (const [filterKey, filterVal] of Object.entries(filters)) queryUrl += `&${filterKey}=${filterVal}`;
 
     const res = await this.call<LaboratoryRun[]>('GET', queryUrl);
 

@@ -135,6 +135,9 @@
   // fetch the runs with BE filtering any time any of the inputs change
   watchEffect(async () => {
     uiStore.setRequestPending('loadLabRuns');
+    
+    // without this following line, watchEffect doesn't pick up runsTableSort as a reactive dependency...
+    runsTableSort.value;
 
     const filters: any = {};
     if (runsTableFilterMyRunsOnly.value) filters.Owner = userStore.currentUserDetails.email!;
@@ -163,7 +166,7 @@
       [{ label: 'View Files', click: () => viewRunDetails(run, 'File Manager') }],
     ];
 
-    if (['SUBMITTED', 'RUNNING'].includes(run.Status)) {
+    if (['SUBMITTED', 'STARTING', 'RUNNING'].includes(run.Status)) {
       buttons.push([{ label: 'Cancel Run', click: () => initCancelRun(run), isHighlighted: true }]);
     }
 
@@ -455,7 +458,7 @@
         await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
       } else {
         uiStore.setRequestPending('cancelOmicsRun');
-        // await $api.omicsRuns.cancelPipelineRun(props.labId, runId); // TODO
+        await $api.omicsRuns.cancelWorkflowRun(props.labId, runId);
       }
     } catch (e) {
       useToastStore().error('Failed to cancel run');

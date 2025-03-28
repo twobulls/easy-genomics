@@ -76,6 +76,7 @@
       :rows="rows"
       :columns="columns"
       v-model:sort="sort"
+      sort-mode="manual"
       :loading="isLoading"
       :loading-state="{ icon: '', label: '' }"
       v-model="selected"

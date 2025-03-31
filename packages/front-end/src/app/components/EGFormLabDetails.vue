@@ -426,7 +426,7 @@
         label="Personal Access Token"
         name="NextFlowTowerAccessToken"
         eager-validation
-        :required="formMode === LabDetailsFormModeEnum.enum.Create"
+        :required="formMode === LabDetailsFormModeEnum.enum.Create && state.NextFlowTowerEnabled"
       >
         <!-- Next Flow Tower: Access Token: Create  Mode -->
         <EGPasswordInput

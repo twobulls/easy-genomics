@@ -48,11 +48,19 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
+    // Only store Workflows/Pipelines that have been selected
+    const awsHealthOmicsWorkflows = Object.entries(<AwsHealthOmicsWorkflows>request.AwsHealthOmicsWorkflows).filter(
+      (value: [string, boolean]) => value[1] === true,
+    );
+    const nextFlowTowerPipelines = Object.entries(<NextFlowTowerPipelines>request.NextFlowTowerPipelines).filter(
+      (value: [string, boolean]) => value[1] === true,
+    );
+
     const response: Laboratory | void = await laboratoryPipelineService
       .updateLaboratoryPipelines({
         ...existing,
-        AwsHealthOmicsWorkflows: <AwsHealthOmicsWorkflows>request.AwsHealthOmicsWorkflows,
-        NextFlowTowerPipelines: <NextFlowTowerPipelines>request.NextFlowTowerPipelines,
+        AwsHealthOmicsWorkflows: <AwsHealthOmicsWorkflows>Object.fromEntries(awsHealthOmicsWorkflows),
+        NextFlowTowerPipelines: <NextFlowTowerPipelines>Object.fromEntries(nextFlowTowerPipelines),
         ModifiedAt: new Date().toISOString(),
         ModifiedBy: userId,
       })

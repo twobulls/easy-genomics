@@ -117,7 +117,7 @@ class OrgsModule extends HttpFactory {
     return res;
   }
 
-  async update(orgId: string, body: Organization): Promise<Organization | undefined> {
+  async update(orgId: string, body: Partial<Organization>): Promise<Organization | undefined> {
     try {
       UpdateOrganizationSchema.parse(body);
     } catch (error) {

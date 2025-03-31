@@ -14,16 +14,22 @@
     defineProps<{
       name?: string;
       description?: string;
+      seqeraBaseUrl?: string;
     }>(),
     {
       name: '',
       description: '',
+      seqeraBaseUrl: '',
     },
   );
 
   // Form-related refs and computed props
   const didFormStateChange = computed(() => {
-    return props.name !== formState.Name || props.description !== formState.Description;
+    return (
+      props.name !== formState.Name ||
+      props.description !== formState.Description ||
+      props.seqeraBaseUrl !== formState.NextFlowTowerApiBaseUrl
+    );
   });
   const orgNameCharCount = computed(() => formState.Name.length);
   const orgDescriptionCharCount = computed(() => formState.Description.length);
@@ -36,6 +42,7 @@
   const formState = reactive({
     Name: props.name,
     Description: props.description,
+    NextFlowTowerApiBaseUrl: props.seqeraBaseUrl,
     isFormValid: false,
     isFormDisabled: true,
   });
@@ -101,6 +108,14 @@
           :disabled="isPending"
         />
         <EGCharacterCounter :value="orgDescriptionCharCount" :max="ORG_DESCRIPTION_MAX_LENGTH" />
+      </EGFormGroup>
+      <EGFormGroup label="Default Seqera Endpoint URL" name="NextFlowTowerApiBaseUrl">
+        <EGInput
+          v-model.trim="formState.NextFlowTowerApiBaseUrl"
+          @blur="validateForm"
+          placeholder="If left blank, will default to the value defined in the config file easy-genomics.yaml"
+          :disabled="isPending"
+        />
       </EGFormGroup>
     </EGCard>
     <EGButton

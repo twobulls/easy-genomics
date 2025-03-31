@@ -1,4 +1,5 @@
 import { CreateLaboratory, UpdateLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+import { UpdateLaboratoryPipelines } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-pipeline';
 import { LaboratoryRunSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
@@ -233,6 +234,15 @@ class LabsModule extends HttpFactory {
     }
 
     validateApiResponse(LaboratoryRunSchema, res);
+    return res;
+  }
+
+  async updateLabPipelines(labId: string, labPipelines: UpdateLaboratoryPipelines): Promise<Laboratory> {
+    const res = await this.call<any>('PUT', `/laboratory/pipeline/update-laboratory-pipelines/${labId}`, labPipelines);
+    if (!res) {
+      console.error('Error calling update laboratory platform access API');
+      throw new Error('Failed to update laboratory platform access API');
+    }
     return res;
   }
 }

@@ -2,7 +2,6 @@
   import { OrganizationUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization-user-details';
   import { OrgUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user-unified';
   import { UserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/user';
-  import { useOrgsStore, useToastStore, useUiStore } from '@FE/stores';
   import useUser from '@FE/composables/useUser';
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse } from '@FE/types/api';
@@ -24,6 +23,8 @@
   const buttonRequestPending = ref<Record<number, boolean>>({});
   const orgUsersDetailsData = ref<OrgUser[]>([]);
   const showInviteModule = ref(false);
+
+  const resetFormKey = ref(0);
 
   const hasNoData = computed<boolean>(() => orgUsersDetailsData.value.length === 0);
   const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
@@ -197,6 +198,8 @@
       throw error;
     } finally {
       useUiStore().setRequestComplete('fetchOrgData');
+      // force remount of form to get fresh org values
+      resetFormKey.value++;
     }
   }
 
@@ -326,6 +329,7 @@
   <UTabs :ui="EGTabsStyles" :default-index="0" :items="tabItems">
     <template #details>
       <EGFormOrgDetails
+        :key="resetFormKey"
         @submit-form-org-details="onSubmit($event)"
         :name="org.Name"
         :description="org.Description"

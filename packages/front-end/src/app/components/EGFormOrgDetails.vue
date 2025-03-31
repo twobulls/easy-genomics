@@ -23,12 +23,6 @@
     },
   );
 
-  // when the prop changes (as it will when autofilled with the default value) we need to manually update the form
-  watch(
-    () => props.seqeraBaseUrl,
-    (newVal) => (formState.NextFlowTowerApiBaseUrl = newVal),
-  );
-
   // Form-related refs and computed props
   const didFormStateChange = computed(() => {
     return (

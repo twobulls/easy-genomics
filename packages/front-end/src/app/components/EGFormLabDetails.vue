@@ -530,7 +530,11 @@
         <UToggle class="ml-2" v-model="state.AwsHealthOmicsEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
-      <template v-if="formMode !== LabDetailsFormModeEnum.enum.Create">
+      <template
+        v-if="
+          (state.NextFlowTowerEnabled || state.AwsHealthOmicsEnabled) && formMode !== LabDetailsFormModeEnum.enum.Create
+        "
+      >
         <hr class="mb-6" />
 
         <!-- Pipeline Restrictions -->

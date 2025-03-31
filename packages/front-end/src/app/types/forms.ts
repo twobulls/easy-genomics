@@ -49,6 +49,7 @@ export const OrgDescriptionSchema = z
 export const OrgDetailsFormSchema = z.object({
   Name: OrgNameSchema,
   Description: OrgDescriptionSchema,
+  NextFlowTowerApiBaseUrl: z.string().min(0),
 });
 export type OrgDetailsForm = z.infer<typeof OrgDetailsFormSchema>;
 

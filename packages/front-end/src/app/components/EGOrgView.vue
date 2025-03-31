@@ -269,8 +269,8 @@
   async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
       useUiStore().setRequestPending('editOrg');
-      const { Name, Description } = event.data;
-      await $api.orgs.update(props.orgId, { Name, Description });
+      const { Name, Description, NextFlowTowerApiBaseUrl } = event.data;
+      await $api.orgs.update(props.orgId, { Name, Description, NextFlowTowerApiBaseUrl });
       await fetchOrgData();
       useToastStore().success('Organization updated');
     } catch (error) {
@@ -325,7 +325,12 @@
 
   <UTabs :ui="EGTabsStyles" :default-index="0" :items="tabItems">
     <template #details>
-      <EGFormOrgDetails @submit-form-org-details="onSubmit($event)" :name="org.Name" :description="org.Description" />
+      <EGFormOrgDetails
+        @submit-form-org-details="onSubmit($event)"
+        :name="org.Name"
+        :description="org.Description"
+        :seqera-base-url="org.NextFlowTowerApiBaseUrl"
+      />
     </template>
 
     <template #labs v-if="props.superuser">

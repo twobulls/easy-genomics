@@ -41,7 +41,8 @@ type PendingRequest =
   | 'updateDefaultOrg'
   | 'generateSampleSheet'
   | 'downloadSampleSheet'
-  | `downloadHtmlFileButton-${string}`;
+  | `downloadHtmlFileButton-${string}`
+  | 'switchOrg';
 
 interface UiStoreState {
   pendingRequests: Set<string>;

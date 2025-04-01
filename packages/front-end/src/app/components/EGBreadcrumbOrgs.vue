@@ -1,11 +1,8 @@
 <script setup lang="ts">
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
-  import { ButtonVariantEnum } from '@FE/types/buttons';
 
-  const router = useRouter();
   const route = useRoute();
 
-  const { $api } = useNuxtApp();
   const orgsStore = useOrgsStore();
   const userStore = useUserStore();
 
@@ -42,26 +39,6 @@
     switchToOrgId.value = orgId;
     switchOrgDialogOpen.value = true;
   }
-
-  async function doSwitchOrg(): Promise<void> {
-    userStore.currentOrg.OrganizationId = switchToOrgId.value!;
-    userStore.mostRecentLab.LaboratoryId = null; // Reset
-
-    // update default org/lab in api
-    await $api.users.updateUserLastAccessInfo(
-      userStore.currentUserDetails.id!,
-      userStore.currentOrg.OrganizationId,
-      undefined,
-    );
-
-    // refresh values from api
-    await useAuth().getRefreshedToken();
-    await useUser().setCurrentUserDataFromToken();
-
-    router.push('/');
-    useUiStore().incrementRemountAppKey();
-    useToastStore().success('You have switched organizations');
-  }
 </script>
 
 <template>
@@ -82,14 +59,5 @@
     </UDropdown>
   </div>
 
-  <EGDialog
-    cancel-label="Cancel"
-    action-label="Continue"
-    :action-variant="ButtonVariantEnum.enum.primary"
-    @action-triggered="doSwitchOrg"
-    :trigger-delay="2000"
-    primary-message="Are you sure you would like to switch organizations?"
-    secondary-message="You are about to switch organization accounts. Ensure all unsaved work is saved and reviewed before proceeding. Switching accounts may result in losing access to current session data or active tasks."
-    v-model="switchOrgDialogOpen"
-  />
+  <EGSwitchOrgModal v-model="switchOrgDialogOpen" :switch-to-org-id="switchToOrgId" />
 </template>

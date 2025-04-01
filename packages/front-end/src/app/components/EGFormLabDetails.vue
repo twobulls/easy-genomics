@@ -400,7 +400,7 @@
         label="Seqera Endpoint URL"
         name="NextFlowTowerApiBaseUrl"
         eager-validation
-        :required="state.NextFlowTowerEnabled"
+        required
       >
         <EGInput v-model="state.NextFlowTowerApiBaseUrl" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
@@ -411,7 +411,7 @@
         label="Workspace ID"
         name="NextFlowTowerWorkspaceId"
         eager-validation
-        :required="state.NextFlowTowerEnabled"
+        required
       >
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
@@ -426,7 +426,7 @@
         label="Personal Access Token"
         name="NextFlowTowerAccessToken"
         eager-validation
-        :required="formMode === LabDetailsFormModeEnum.enum.Create && state.NextFlowTowerEnabled"
+        :required="formMode === LabDetailsFormModeEnum.enum.Create"
       >
         <!-- Next Flow Tower: Access Token: Create  Mode -->
         <EGPasswordInput

@@ -354,7 +354,6 @@
           v-model="state.Name"
           :disabled="!isEditing || isSubmittingFormData"
           placeholder="Enter lab name (required and must be unique)"
-          required
           autofocus
         />
       </EGFormGroup>
@@ -397,10 +396,10 @@
 
       <!-- Next Flow Tower: Endpoint -->
       <EGFormGroup
+        v-if="state.NextFlowTowerEnabled"
         label="Seqera Endpoint URL"
         name="NextFlowTowerApiBaseUrl"
         eager-validation
-        v-if="state.NextFlowTowerEnabled"
         :required="state.NextFlowTowerEnabled"
       >
         <EGInput v-model="state.NextFlowTowerApiBaseUrl" :disabled="!isEditing || isSubmittingFormData" />
@@ -408,10 +407,11 @@
 
       <!-- Next Flow Tower: Workspace ID -->
       <EGFormGroup
+        v-if="state.NextFlowTowerEnabled"
         label="Workspace ID"
         name="NextFlowTowerWorkspaceId"
         eager-validation
-        v-if="state.NextFlowTowerEnabled"
+        :required="state.NextFlowTowerEnabled"
       >
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
@@ -435,7 +435,6 @@
           :password="true"
           :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
           :disabled="!isEditing || isSubmittingFormData"
-          :required="formMode === LabDetailsFormModeEnum.enum.Create"
         />
         <!-- Next Flow Tower: Access Token: Edit  Mode -->
         <EGPasswordInput

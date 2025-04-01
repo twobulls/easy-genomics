@@ -135,12 +135,12 @@
   // fetch the runs with BE filtering any time any of the inputs change
   watchEffect(async () => {
     uiStore.setRequestPending('loadLabRuns');
-    
+
     // without this following line, watchEffect doesn't pick up runsTableSort as a reactive dependency...
     runsTableSort.value;
 
     const filters: any = {};
-    if (runsTableFilterMyRunsOnly.value) filters.Owner = userStore.currentUserDetails.email!;
+    if (runsTableFilterMyRunsOnly.value) filters.UserId = userStore.currentUserDetails.id!;
 
     try {
       runsTableItems.value = (await $api.labs.listLabRuns(props.labId, filters))

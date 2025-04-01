@@ -10,7 +10,7 @@
     cancelLabel?: string;
     cancelVariant?: string;
     buttonsDisabled?: boolean;
-    triggerDelay?: number;
+    loading?: boolean;
   }>();
 
   const emit = defineEmits(['action-triggered', 'update:modelValue']);
@@ -19,17 +19,8 @@
     emit('update:modelValue', false);
   }
 
-  const delaying = ref<boolean>(false);
-
-  const canCancel = computed(() => props.cancelLabel);
-
   function handleClick() {
-    delaying.value = true;
-
-    setTimeout(() => {
-      delaying.value = false;
-      emit('action-triggered');
-    }, props.triggerDelay || 0);
+    emit('action-triggered');
   }
 </script>
 
@@ -67,7 +58,7 @@
                 color="black"
                 variant="ghost"
                 :ui="{ rounded: 'rounded-full' }"
-                :disabled="buttonsDisabled || delaying"
+                :disabled="buttonsDisabled || loading"
               />
             </div>
           </div>
@@ -81,7 +72,7 @@
                 :label="cancelLabel"
                 :variant="ButtonVariantEnum.enum.secondary"
                 :size="ButtonSizeEnum.enum.sm"
-                :disabled="buttonsDisabled || delaying"
+                :disabled="buttonsDisabled || loading"
               />
             </div>
             <EGButton
@@ -89,8 +80,8 @@
               :label="actionLabel"
               :size="ButtonSizeEnum.enum.sm"
               :variant="actionVariant"
-              :disabled="buttonsDisabled || delaying"
-              :loading="delaying"
+              :disabled="buttonsDisabled || loading"
+              :loading="loading"
               autofocus
             />
           </div>

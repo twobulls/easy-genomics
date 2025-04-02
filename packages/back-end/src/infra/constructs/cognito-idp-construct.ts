@@ -4,6 +4,7 @@ import {
   CfnUserPoolGroup,
   UserPool,
   UserPoolClient,
+  UserPoolIdentityProviderOidc,
   UserPoolOperation,
 } from 'aws-cdk-lib/aws-cognito';
 import { Key } from 'aws-cdk-lib/aws-kms';
@@ -49,6 +50,15 @@ export class CognitoIdpConstruct extends Construct {
       },
       customSenderKmsKey: props.customSenderKmsKey,
       removalPolicy: removalPolicy,
+    });
+
+    // Setup Federated Auth via OIDC
+    new UserPoolIdentityProviderOidc(this, `${props.constructNamespace}-federated-auth-oidc`, {
+      userPool: this.userPool,
+      name: 'Test OIDC Federated Auth',
+      clientId: '12345678990',
+      clientSecret: 'foo-bar',
+      issuerUrl: 'https://test.dev.easy-genomics.org/auth',
     });
 
     this.userPoolClient = this.userPool.addClient('client', {

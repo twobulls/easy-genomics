@@ -24,13 +24,17 @@ const NextFlowTowerWorkspaceIdSchema = z
 
 const NextFlowTowerApiBaseUrlSchema = z.string().trim().min(1, 'Seqera endpoint URL must not be empty').optional();
 
-const S3BucketSchema = z.string().trim().max(63, 'S3 bucket name must be no more than 63 characters').optional();
+const S3BucketSchema = z
+  .string()
+  .trim()
+  .min(1, 'S3 bucket is required')
+  .max(63, 'S3 bucket name must be no more than 63 characters');
 
 // Just the fields required for read-only display
 const LabDetailsSchema = z.object({
   Name: LabNameSchema,
   Description: LabDescriptionSchema,
-  S3Bucket: S3BucketSchema.optional(),
+  S3Bucket: S3BucketSchema,
   NextFlowTowerEnabled: z.boolean(),
   NextFlowTowerAccessToken: NextFlowTowerAccessTokenSchema,
   NextFlowTowerWorkspaceId: NextFlowTowerWorkspaceIdSchema,

@@ -367,12 +367,7 @@
         />
       </EGFormGroup>
 
-      <EGFormGroup
-        v-if="useUserStore().isOrgAdmin()"
-        label="Default S3 bucket directory"
-        name="DefaultS3BucketDirectory"
-        required
-      >
+      <EGFormGroup v-if="useUserStore().isOrgAdmin()" label="Default S3 bucket directory" name="S3Bucket" required>
         <EGSelect
           :options="s3Directories"
           v-model="selectedS3Bucket"

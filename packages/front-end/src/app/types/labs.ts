@@ -14,23 +14,23 @@ const LabDescriptionSchema = z.string().trim().max(500, 'Description must be no 
  * is validated in the EGFormLabDetails component as it handles special cases
  * for edit mode when the token value may or may not be updated by the user.
  */
-const NextFlowTowerAccessTokenSchema = z.string().trim().optional();
+const NextFlowTowerAccessTokenSchema = z.string().trim().min(1, 'Seqera access token is required');
 
-const NextFlowTowerWorkspaceIdSchema = z
+const NextFlowTowerWorkspaceIdSchema = z.string().trim().max(128, 'Workspace ID must be no more than 128 characters');
+
+const NextFlowTowerApiBaseUrlSchema = z.string().trim().min(1, 'Seqera endpoint URL is required');
+
+const S3BucketSchema = z
   .string()
   .trim()
-  .max(128, 'Workspace ID must be no more than 128 characters')
-  .optional();
-
-const NextFlowTowerApiBaseUrlSchema = z.string().trim().min(1, 'Seqera endpoint URL must not be empty').optional();
-
-const S3BucketSchema = z.string().trim().max(63, 'S3 bucket name must be no more than 63 characters').optional();
+  .min(1, 'S3 bucket is required')
+  .max(63, 'S3 bucket name must be no more than 63 characters');
 
 // Just the fields required for read-only display
 const LabDetailsSchema = z.object({
   Name: LabNameSchema,
   Description: LabDescriptionSchema,
-  S3Bucket: S3BucketSchema.optional(),
+  S3Bucket: S3BucketSchema,
   NextFlowTowerEnabled: z.boolean(),
   NextFlowTowerAccessToken: NextFlowTowerAccessTokenSchema,
   NextFlowTowerWorkspaceId: NextFlowTowerWorkspaceIdSchema,
@@ -53,6 +53,7 @@ export {
   LabDetailsFormModes,
   LabDetailsSchema,
   LabNameSchema,
+  NextFlowTowerApiBaseUrlSchema,
   NextFlowTowerAccessTokenSchema,
   NextFlowTowerWorkspaceIdSchema,
   S3BucketSchema,

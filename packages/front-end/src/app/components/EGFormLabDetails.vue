@@ -23,6 +23,10 @@
     UpdateLaboratory,
     UpdateLaboratorySchema,
   } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+  import {
+    UpdateLaboratoryPipelines,
+    UpdateLaboratoryPipelinesSchema,
+  } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-pipeline';
   import { ERROR_CODES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 
   const props = withDefaults(
@@ -388,12 +392,22 @@
     showPipelineRestrictionsModal.value = true;
   }
 
-  function savePipelineRestrictions() {
+  async function savePipelineRestrictions() {
     showPipelineRestrictionsModal.value = false;
-    toastStore.info('Pipeline restrictions saving not implemented yet');
 
-    console.log('seqera:', JSON.stringify(inputSeqeraPipelinesRestrictions.value));
-    console.log('omics:', JSON.stringify(inputOmicsPipelinesRestrictions.value));
+    const labPipelines: UpdateLaboratoryPipelines = {
+      AwsHealthOmicsWorkflows: inputOmicsPipelinesRestrictions.value,
+      NextFlowTowerPipelines: inputSeqeraPipelinesRestrictions.value,
+    };
+
+    const parseResult = UpdateLaboratoryPipelinesSchema.safeParse(labPipelines);
+    if (!parseResult.success) {
+      const message = 'Update lab pipelines failed to parse lab details';
+      console.error(`${message}; parseResult: `, parseResult);
+      throw new Error(message);
+    }
+
+    await $api.labs.updateLabPipelines(labId, labPipelines);
   }
 </script>
 
@@ -516,7 +530,11 @@
         <UToggle class="ml-2" v-model="state.AwsHealthOmicsEnabled" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
-      <template v-if="formMode !== LabDetailsFormModeEnum.enum.Create">
+      <template
+        v-if="
+          (state.NextFlowTowerEnabled || state.AwsHealthOmicsEnabled) && formMode !== LabDetailsFormModeEnum.enum.Create
+        "
+      >
         <hr class="mb-6" />
 
         <!-- Pipeline Restrictions -->

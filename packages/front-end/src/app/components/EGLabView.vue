@@ -37,8 +37,6 @@
   const { stringSortCompare } = useSort();
 
   const labUsers = ref<LabUser[]>([]);
-  const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
-  const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const showAddUserModule = ref(false);
   const searchOutput = ref('');
@@ -55,6 +53,11 @@
   const orgId = computed<string | null>(() => labStore.labs[props.labId].OrganizationId ?? null);
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
+  const labPipelines: string[] = computed<string[]>(() => Object.keys(lab.value?.NextFlowTowerPipelines));
+  const labWorkflows: string[] = computed<string[]>(() => Object.keys(lab.value?.AwsHealthOmicsWorkflows));
+
+  const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
+  const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
 
   /**
    * Fetch Lab details, pipelines, workflows, runs, and Lab users before component mount and start periodic fetching
@@ -643,7 +646,7 @@
       <div v-if="item.key === 'seqeraPipelines'">
         <EGTable
           :row-click-action="viewRunSeqeraPipeline"
-          :table-data="seqeraPipelines"
+          :table-data="seqeraPipelines.filter((pipeline) => labPipelines.includes(pipeline.pipelineId.toString()))"
           :columns="seqeraPipelinesTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
@@ -676,7 +679,7 @@
       <div v-if="item.key === 'omicsWorkflows'">
         <EGTable
           :row-click-action="viewRunOmicsWorkflow"
-          :table-data="omicsWorkflows"
+          :table-data="omicsWorkflows.filter((workflow) => labWorkflows.includes(workflow.id.toString()))"
           :columns="omicsWorkflowsTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"

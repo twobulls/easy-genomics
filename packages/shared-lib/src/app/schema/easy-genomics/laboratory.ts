@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+export const AwsHealthOmicsWorkflowsSchema = z.record(z.string(), z.boolean());
+
+export const NextFlowTowerPipelinesSchema = z.record(z.string(), z.boolean());
+
 export const LaboratorySchema = z
   .object({
     OrganizationId: z.string().uuid(),
@@ -9,9 +13,11 @@ export const LaboratorySchema = z
     S3Bucket: z.string().optional(),
     Status: z.enum(['Active', 'Inactive']),
     AwsHealthOmicsEnabled: z.boolean().optional(),
+    AwsHealthOmicsWorkflows: AwsHealthOmicsWorkflowsSchema.optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
     NextFlowTowerApiBaseUrl: z.string().optional(),
     NextFlowTowerWorkspaceId: z.string().optional(),
+    NextFlowTowerPipelines: NextFlowTowerPipelinesSchema.optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -44,9 +50,11 @@ export const ReadLaboratorySchema = z
     S3Bucket: z.string().optional(),
     Status: z.enum(['Active', 'Inactive']),
     AwsHealthOmicsEnabled: z.boolean().optional(),
+    AwsHealthOmicsWorkflows: AwsHealthOmicsWorkflowsSchema.optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
     NextFlowTowerApiBaseUrl: z.string().optional(),
     NextFlowTowerWorkspaceId: z.string().optional(),
+    NextFlowTowerPipelines: NextFlowTowerPipelinesSchema.optional(),
     HasNextFlowTowerAccessToken: z.boolean().optional(), // Return boolean indicator instead of actual NextFlowTowerAccessToken
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),

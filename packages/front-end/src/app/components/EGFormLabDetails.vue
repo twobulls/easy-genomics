@@ -616,8 +616,8 @@
     <UTabs
       :ui="pipelineRestrictionsModalTabStyles"
       :items="[
-        { key: 'seqera', label: 'Seqera' },
-        { key: 'omics', label: 'HealthOmics' },
+        ...(state.NextFlowTowerEnabled ? [{ key: 'seqera', label: 'Seqera' }] : []),
+        ...(state.AwsHealthOmicsEnabled ? [{ key: 'omics', label: 'HealthOmics' }] : []),
       ]"
     >
       <template #item="{ item }">

@@ -53,8 +53,12 @@
   const orgId = computed<string | null>(() => labStore.labs[props.labId].OrganizationId ?? null);
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
-  const labPipelines: string[] = computed<string[]>(() => Object.keys(lab.value?.NextFlowTowerPipelines));
-  const labWorkflows: string[] = computed<string[]>(() => Object.keys(lab.value?.AwsHealthOmicsWorkflows));
+  const labPipelines = computed<string[] | null>(() =>
+    lab.value?.NextFlowTowerPipelines ? Object.keys(lab.value.NextFlowTowerPipelines) : null,
+  );
+  const labWorkflows = computed<string[] | null>(() =>
+    lab.value?.AwsHealthOmicsWorkflows ? Object.keys(lab.value.AwsHealthOmicsWorkflows) : null,
+  );
 
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
   const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
@@ -646,7 +650,7 @@
       <div v-if="item.key === 'seqeraPipelines'">
         <EGTable
           :row-click-action="viewRunSeqeraPipeline"
-          :table-data="seqeraPipelines.filter((pipeline) => labPipelines.includes(pipeline.pipelineId.toString()))"
+          :table-data="seqeraPipelines.filter((pipeline) => labPipelines?.includes(pipeline.pipelineId.toString()))"
           :columns="seqeraPipelinesTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getSeqeraPipelines'])"
@@ -679,7 +683,7 @@
       <div v-if="item.key === 'omicsWorkflows'">
         <EGTable
           :row-click-action="viewRunOmicsWorkflow"
-          :table-data="omicsWorkflows.filter((workflow) => labWorkflows.includes(workflow.id.toString()))"
+          :table-data="omicsWorkflows.filter((workflow) => labWorkflows?.includes(workflow.id.toString()))"
           :columns="omicsWorkflowsTableColumns"
           :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
           :show-pagination="!useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"

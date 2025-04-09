@@ -248,6 +248,22 @@
     });
   }
 
+  function noPipeflowsEnabledMessage(type: 'pipeline' | 'workflow') {
+    return `There are currently no ${type}s enabled for this lab (${type}s can be enabled from the Settings tab)`;
+  }
+
+  function noPipeflowsAvailableMessage(type: 'pipeline' | 'workflow') {
+    return `There are no ${type}s available in this environment`;
+  }
+
+  const noPipelinesMessage = computed<string>(() => {
+    if (seqeraPipelines.value.length > 0) {
+      return noPipeflowsEnabledMessage('pipeline');
+    } else {
+      return noPipeflowsAvailableMessage('pipeline');
+    }
+  });
+
   // Omics Workflows Tab
 
   const omicsWorkflowsTableColumns = [
@@ -268,6 +284,14 @@
       },
     });
   }
+
+  const noWorkflowsMessage = computed<string>(() => {
+    if (omicsWorkflows.value.length > 0) {
+      return noPipeflowsEnabledMessage('workflow');
+    } else {
+      return noPipeflowsAvailableMessage('workflow');
+    }
+  });
 
   // the rest
 
@@ -673,7 +697,7 @@
 
           <template #empty-state>
             <div class="text-muted flex h-24 items-center justify-center font-normal">
-              There are no Pipelines assigned to this Lab
+              {{ noPipelinesMessage }}
             </div>
           </template>
         </EGTable>
@@ -710,7 +734,7 @@
 
           <template #empty-state>
             <div class="text-muted flex h-24 items-center justify-center font-normal">
-              There are no Workflows assigned to this Lab
+              {{ noWorkflowsMessage }}
             </div>
           </template>
         </EGTable>

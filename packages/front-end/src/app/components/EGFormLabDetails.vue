@@ -51,6 +51,7 @@
   const userStore = useUserStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
+  const labsStore = useLabsStore();
 
   const labId: string = $route.params.labId as string;
 
@@ -59,6 +60,8 @@
   const isLoadingBuckets = ref(false);
   const isLoadingFormData = ref(false);
   const canSubmit = ref(false);
+
+  const lab = computed<Laboratory | null>(() => labsStore.labs[labId] ?? null);
 
   const isEditing = computed<boolean>(() => formMode.value !== LabDetailsFormModeEnum.enum.ReadOnly);
 
@@ -389,6 +392,15 @@
   function openPipelineRestrictions() {
     inputSeqeraPipelinesRestrictions.value = {};
     inputOmicsPipelinesRestrictions.value = {};
+
+    // use existing values
+    if (lab.value?.NextFlowTowerPipelines) {
+      inputSeqeraPipelinesRestrictions.value = lab.value.NextFlowTowerPipelines;
+    }
+    if (lab.value?.AwsHealthOmicsWorkflows) {
+      inputOmicsPipelinesRestrictions.value = lab.value.AwsHealthOmicsWorkflows;
+    }
+
     showPipelineRestrictionsModal.value = true;
   }
 

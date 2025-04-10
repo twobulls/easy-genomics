@@ -173,7 +173,7 @@ const root = new typescript.TypeScriptProject({
     'aws-sdk-client-mock',
     'aws-sdk-client-mock-jest',
     'cz-conventional-changelog',
-    'eslint',
+    'eslint@^8',
     'eslint-plugin-prettier',
     'husky',
     'lint-staged',

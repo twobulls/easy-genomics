@@ -1,9 +1,9 @@
 <script setup lang="ts">
   import {
     LabDetails,
-    LabDetailsSchema,
     LabNameSchema,
     LabDescriptionSchema,
+    NextFlowTowerApiBaseUrlSchema,
     NextFlowTowerAccessTokenSchema,
     NextFlowTowerWorkspaceIdSchema,
     LabDetailsFormModeEnum,
@@ -14,7 +14,6 @@
   import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
   import { ButtonSizeEnum, ButtonVariantEnum } from '@FE/types/buttons';
   import { useToastStore, useUiStore } from '@FE/stores';
-  import useUserStore from '@FE/stores/user';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import {
     CreateLaboratory,
@@ -291,19 +290,32 @@
     maybeAddFieldValidationErrors(errors, LabNameSchema, 'Name', state.Name);
     maybeAddFieldValidationErrors(errors, LabDescriptionSchema, 'Description', state.Description);
 
-    maybeAddFieldValidationErrors(
-      errors,
-      NextFlowTowerAccessTokenSchema,
-      'NextFlowTowerAccessToken',
-      state.NextFlowTowerAccessToken,
-    );
+    // Next Flow fields only required if Next Flow enabled
+    if (state.NextFlowTowerEnabled) {
+      maybeAddFieldValidationErrors(
+        errors,
+        NextFlowTowerApiBaseUrlSchema,
+        'NextFlowTowerApiBaseUrl',
+        state.NextFlowTowerApiBaseUrl,
+      );
 
-    maybeAddFieldValidationErrors(
-      errors,
-      NextFlowTowerWorkspaceIdSchema,
-      'NextFlowTowerWorkspaceId',
-      state.NextFlowTowerWorkspaceId,
-    );
+      maybeAddFieldValidationErrors(
+        errors,
+        NextFlowTowerWorkspaceIdSchema,
+        'NextFlowTowerWorkspaceId',
+        state.NextFlowTowerWorkspaceId,
+      );
+
+      // Access Token only required if creating lab
+      if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
+        maybeAddFieldValidationErrors(
+          errors,
+          NextFlowTowerAccessTokenSchema,
+          'NextFlowTowerAccessToken',
+          state.NextFlowTowerAccessToken,
+        );
+      }
+    }
 
     checkCanSubmitFormData(errors.length);
 
@@ -425,7 +437,7 @@
 
 <template>
   <USkeleton v-if="isLoadingFormData" class="min-h-96 w-full" />
-  <UForm v-else :validate="validate" :schema="LabDetailsSchema" :state="state" @submit="onSubmit">
+  <UForm v-else :validate="validate" :state="state" @submit="onSubmit">
     <EGCard>
       <!-- Lab Name -->
       <EGFormGroup label="Lab Name" name="Name" eager-validation required>
@@ -433,7 +445,6 @@
           v-model="state.Name"
           :disabled="!isEditing || isSubmittingFormData"
           placeholder="Enter lab name (required and must be unique)"
-          required
           autofocus
         />
       </EGFormGroup>
@@ -476,21 +487,21 @@
 
       <!-- Next Flow Tower: Endpoint -->
       <EGFormGroup
+        v-if="state.NextFlowTowerEnabled"
         label="Seqera Endpoint URL"
         name="NextFlowTowerApiBaseUrl"
         eager-validation
-        v-if="state.NextFlowTowerEnabled"
-        :required="state.NextFlowTowerEnabled"
+        required
       >
         <EGInput v-model="state.NextFlowTowerApiBaseUrl" :disabled="!isEditing || isSubmittingFormData" />
       </EGFormGroup>
 
       <!-- Next Flow Tower: Workspace ID -->
       <EGFormGroup
+        v-if="state.NextFlowTowerEnabled"
         label="Workspace ID"
         name="NextFlowTowerWorkspaceId"
         eager-validation
-        v-if="state.NextFlowTowerEnabled"
       >
         <EGInput
           v-model="state.NextFlowTowerWorkspaceId"
@@ -514,7 +525,6 @@
           :password="true"
           :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
           :disabled="!isEditing || isSubmittingFormData"
-          :required="formMode === LabDetailsFormModeEnum.enum.Create"
         />
         <!-- Next Flow Tower: Access Token: Edit  Mode -->
         <EGPasswordInput

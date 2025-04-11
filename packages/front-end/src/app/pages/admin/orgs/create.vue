@@ -12,8 +12,8 @@
   async function onSubmit(event: FormSubmitEvent<OrgDetailsForm>) {
     try {
       useUiStore().setRequestPending('createOrg');
-      const { Name, Description } = event.data;
-      await $api.orgs.create({ Name, Description });
+      const { Name, Description, NextFlowTowerApiBaseUrl } = event.data;
+      await $api.orgs.create({ Name, Description, NextFlowTowerApiBaseUrl });
       useToastStore().success('Organization created');
       router.push({ path: '/admin/orgs' });
     } catch (error) {

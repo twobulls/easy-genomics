@@ -147,7 +147,7 @@
     runsTableSort.value;
 
     const filters: any = {};
-    if (runsTableFilterMyRunsOnly.value) filters.Owner = userStore.currentUserDetails.email!;
+    if (runsTableFilterMyRunsOnly.value) filters.UserId = userStore.currentUserDetails.id!;
 
     try {
       runsTableItems.value = (await $api.labs.listLabRuns(props.labId, filters))

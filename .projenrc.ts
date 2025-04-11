@@ -173,6 +173,7 @@ const root = new typescript.TypeScriptProject({
     'aws-sdk-client-mock',
     'aws-sdk-client-mock-jest',
     'cz-conventional-changelog',
+    // eslint 9 is a breaking change: https://github.com/projen/projen/issues/3950#issuecomment-2481314810
     'eslint@^8',
     'eslint-plugin-prettier',
     'husky',

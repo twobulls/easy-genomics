@@ -143,7 +143,7 @@
       "description": "Run tests",
       "steps": [
         {
-          "exec": "jest --passWithNoTests --detectOpenHandles --updateSnapshot",
+          "exec": "jest --detectOpenHandles --passWithNoTests --updateSnapshot",
           "receiveArgs": true
         },
         {

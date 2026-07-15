@@ -22,6 +22,7 @@ export const LaboratorySchema = z
      */
     RunRetentionMonths: z.number().int().min(0).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
+    EnableNewBucketsByDefault: z.boolean().optional(),
     /**
      * BYOK provider selection per integration. Setting a provider IS the enable
      * signal — when set, ambiguous HealthOmics failures (WORKFLOW_RUN_FAILED,
@@ -68,6 +69,7 @@ export const CreateLaboratorySchema = z
     AwsHealthOmicsVpcConfigurationName: z.string().max(50).optional(),
     RunRetentionMonths: z.number().int().min(0).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
+    EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),
     SeqeraLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
@@ -109,6 +111,7 @@ export const ReadLaboratorySchema = z
     HasGitHubAccessToken: z.boolean().optional(), // Return boolean indicator instead of actual GitHubAccessToken
     RunRetentionMonths: z.number().int().min(0).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
+    EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),
     SeqeraLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
@@ -150,6 +153,7 @@ export const UpdateLaboratorySchema = z
     AwsHealthOmicsVpcConfigurationName: z.string().max(50).optional(),
     RunRetentionMonths: z.number().int().min(0).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
+    EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),
     SeqeraLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),

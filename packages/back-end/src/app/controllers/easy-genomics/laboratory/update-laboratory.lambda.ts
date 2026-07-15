@@ -77,7 +77,11 @@ export const handler: Handler = async (
       await assertHealthOmicsVpcConfigurationIsActive(request.AwsHealthOmicsVpcConfigurationName!, omicsService);
     }
 
-    if (request.S3Bucket) {
+    // Only enforce when the lab's configured bucket is changing. The S3 access UI
+    // re-sends the existing S3Bucket when toggling EnableNewBucketsByDefault; asserting
+    // against the *new* default mode would fail before migration rewrites ALLOW/DENY rows
+    // (e.g. default-on → strict: current bucket often has no ALLOW row yet).
+    if (request.S3Bucket && request.S3Bucket !== existing.S3Bucket) {
       await assertLaboratoryHasS3BucketAccess(
         {
           ...existing,

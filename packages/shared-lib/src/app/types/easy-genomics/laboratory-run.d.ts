@@ -162,4 +162,22 @@ export interface LaboratoryRun extends BaseAttributes {
     SyncedAt: string;
     ByService?: Record<string, number>;
   };
+
+  /**
+   * Approximate task completion percentage derived from HealthOmics ListRunTasks
+   * (completed / total known tasks). Denominator grows as the workflow DAG expands.
+   */
+  ProgressPercent?: number;
+
+  /** Total known tasks at last status check. */
+  TasksTotal?: number;
+
+  /** Tasks in COMPLETED status at last status check. */
+  TasksCompleted?: number;
+
+  /** Tasks in RUNNING/STARTING status at last status check. */
+  TasksRunning?: number;
+
+  /** Tasks in FAILED status at last status check. */
+  TasksFailed?: number;
 }

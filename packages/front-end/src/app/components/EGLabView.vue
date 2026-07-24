@@ -254,6 +254,7 @@
     { key: 'CreatedAt', label: 'Created At', sortable: true },
     { key: 'lastUpdated', label: 'Last Updated', sortable: true },
     { key: 'Status', label: 'Status', sortable: true },
+    { key: 'Progress', label: 'Progress', sortable: false },
     { key: 'WorkflowVersionName', label: 'Workflow version', sortable: true },
     { key: 'Owner', label: 'Owner', sortable: true },
     { key: 'actions', label: 'Actions' },
@@ -952,6 +953,20 @@
 
       <template #Status-data="{ row: run }">
         <EGStatusChip :status="run.Status" />
+      </template>
+
+      <template #Progress-data="{ row: run }">
+        <EGProgressBar
+          v-if="
+            !['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED'].includes(run.Status) &&
+            run.ProgressPercent != null
+          "
+          compact
+          :percent="run.ProgressPercent"
+          :completed="run.TasksCompleted"
+          :total="run.TasksTotal"
+        />
+        <span v-else class="text-muted text-sm">—</span>
       </template>
 
       <template #WorkflowVersionName-data="{ row: run }">

@@ -141,7 +141,8 @@ export class OmicsService {
   };
 
   /**
-   * Paginate ListRunTasks until exhausted. Used for post-run cost estimation.
+   * Paginate ListRunTasks until exhausted. Used for post-run cost estimation
+   * and in-progress task progress aggregation.
    */
   public listAllRunTasks = async (runId: string): Promise<NonNullable<ListRunTasksCommandOutput['items']>> => {
     const items: NonNullable<ListRunTasksCommandOutput['items']> = [];

@@ -1,5 +1,5 @@
-import { aggregateSeqeraProgress } from '../../../src/app/utils/seqera-run-progress-utils';
 import { ProgressData } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { aggregateSeqeraProgress } from '../../../src/app/utils/seqera-run-progress-utils';
 
 describe('aggregateSeqeraProgress', () => {
   it('returns undefined when workflowProgress is missing', () => {

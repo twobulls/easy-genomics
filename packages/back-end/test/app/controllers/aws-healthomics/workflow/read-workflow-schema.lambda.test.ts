@@ -113,6 +113,7 @@ describe('read-workflow-schema.lambda', () => {
     mockWorkflowSchemaService.prototype.getSchema = jest.fn().mockResolvedValue(savedSchema);
     mockWorkflowSchemaService.prototype.saveSchema = jest.fn().mockResolvedValue({});
     mockOmicsService.prototype.getWorkflow = jest.fn();
+    mockOmicsService.prototype.listSharedWorkflows = jest.fn().mockResolvedValue({ shares: [] });
     mockSecretsManagerService.prototype.getSecretValue = jest.fn();
 
     mockValidateOrgAdmin.mockReturnValue(true);

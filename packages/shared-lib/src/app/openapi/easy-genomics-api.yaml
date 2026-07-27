@@ -2560,6 +2560,15 @@ components:
           type: string
         name:
           type: string
+        source:
+          description: Present for HealthOmics entries only.
+          enum:
+            - PRIVATE
+            - SHARED
+          type: string
+        ownerAccountId:
+          description: AWS account that owns a SHARED HealthOmics workflow (from ShareDetails).
+          type: string
       required:
         - name
         - platform

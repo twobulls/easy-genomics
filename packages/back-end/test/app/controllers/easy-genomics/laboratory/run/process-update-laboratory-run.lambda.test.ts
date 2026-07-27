@@ -34,6 +34,7 @@ describe('process-update-laboratory-run.lambda', () => {
 
   let mockQueryByRunId: jest.Mock;
   let mockUpdateRun: jest.Mock;
+  let mockUpdateWithAttributeRemoval: jest.Mock;
   let mockQueryByLaboratoryId: jest.Mock;
   let mockGetParameter: jest.Mock;
   let mockGetRun: jest.Mock;
@@ -70,7 +71,10 @@ describe('process-update-laboratory-run.lambda', () => {
     mockSnsService = SnsService as jest.MockedClass<typeof SnsService>;
 
     mockQueryByRunId = jest.fn();
-    mockUpdateRun = jest.fn();
+    mockUpdateWithAttributeRemoval = jest.fn();
+    // Status-check path uses updateWithAttributeRemoval; backfill still uses update.
+    // Point both at the same mock so existing status-transition assertions keep working.
+    mockUpdateRun = mockUpdateWithAttributeRemoval;
     mockQueryByLaboratoryId = jest.fn();
     mockGetParameter = jest.fn();
     mockGetRun = jest.fn();
@@ -78,10 +82,15 @@ describe('process-update-laboratory-run.lambda', () => {
 
     mockRunService.prototype.queryByRunId = mockQueryByRunId;
     mockRunService.prototype.update = mockUpdateRun;
+    mockRunService.prototype.updateWithAttributeRemoval = mockUpdateWithAttributeRemoval;
     mockLabService.prototype.queryByLaboratoryId = mockQueryByLaboratoryId;
     mockSsmService.prototype.getParameter = mockGetParameter;
     mockSnsService.prototype.publish = mockPublish;
-    (createOmicsServiceForLab as jest.Mock).mockResolvedValue({ getRun: mockGetRun });
+    (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
+      getRun: mockGetRun,
+      // Default: progress fetch fails (best-effort). Tests that need task progress mock this explicitly.
+      listAllRunTasks: jest.fn().mockRejectedValue(new Error('listAllRunTasks not mocked')),
+    });
     (captureRunCostOutcome as jest.Mock).mockResolvedValue(undefined);
 
     mockQueryByLaboratoryId.mockResolvedValue({
@@ -537,6 +546,7 @@ describe('process-update-laboratory-run.lambda', () => {
         FailureReason: 'OUT_OF_MEMORY_ERROR',
         FailureStatusMessage: 'Task nf-core/rnaseq:FASTQC ran out of memory — see CloudWatch',
       }),
+      ['CurrentProcessName'],
     );
   });
 
@@ -580,6 +590,7 @@ describe('process-update-laboratory-run.lambda', () => {
         FailureReason: 'Sample sheet parsing failed',
         FailureErrorReport: 'Caused by:\n  Missing required column "sample" in samplesheet.csv',
       }),
+      ['CurrentProcessName'],
     );
   });
 
@@ -745,6 +756,7 @@ describe('process-update-laboratory-run.lambda', () => {
         Status: 'SUCCEEDED',
         RunCostOutcome: expect.objectContaining({ ActualComputeCostUsd: 4.2 }),
       }),
+      expect.any(Array),
     );
   });
 
@@ -766,8 +778,12 @@ describe('process-update-laboratory-run.lambda', () => {
       expect.objectContaining({
         Status: 'SUCCEEDED',
       }),
+      expect.any(Array),
     );
-    expect(mockUpdateRun).toHaveBeenCalledWith(expect.not.objectContaining({ RunCostOutcome: expect.anything() }));
+    expect(mockUpdateRun).toHaveBeenCalledWith(
+      expect.not.objectContaining({ RunCostOutcome: expect.anything() }),
+      expect.any(Array),
+    );
   });
 
   it('backfills RunCostOutcome for already-terminal runs missing cost', async () => {
@@ -796,5 +812,179 @@ describe('process-update-laboratory-run.lambda', () => {
         RunCostOutcome: expect.objectContaining({ ActualComputeCostUsd: 9 }),
       }),
     );
+  });
+
+  it('getSeqeraCloudStatus returns progress and currentProcessName for non-terminal runs', async () => {
+    mockQueryByLaboratoryId.mockResolvedValue({
+      OrganizationId: 'org-1',
+      LaboratoryId: 'lab-1',
+      NextFlowTowerWorkspaceId: 'ws-1',
+    });
+
+    mockGetParameter.mockResolvedValue({
+      $metadata: {},
+      Parameter: { Value: 'token' },
+    });
+
+    (getNextFlowApiQueryParameters as jest.Mock).mockReturnValue('workspaceId=ws-1');
+    (httpRequest as jest.Mock)
+      .mockResolvedValueOnce({
+        workflow: { status: 'RUNNING', duration: 60_000 },
+      })
+      .mockResolvedValueOnce({
+        progress: {
+          workflowProgress: {
+            pending: 1,
+            submitted: 0,
+            running: 2,
+            succeeded: 5,
+            failed: 0,
+            cached: 0,
+            cpus: 0,
+            cpuTime: 0,
+            cpuLoad: 0,
+            memoryRss: 0,
+            memoryReq: 0,
+            readBytes: 0,
+            writeBytes: 0,
+            volCtxSwitch: 0,
+            invCtxSwitch: 0,
+            loadTasks: 0,
+            loadCpus: 0,
+            loadMemory: 0,
+            peakCpus: 0,
+            peakTasks: 0,
+            peakMemory: 0,
+          },
+          processesProgress: [
+            {
+              process: 'BOWTIE2_ALIGN',
+              pending: 0,
+              submitted: 0,
+              running: 2,
+              succeeded: 0,
+              failed: 0,
+              cached: 0,
+              cpus: 0,
+              cpuTime: 0,
+              cpuLoad: 0,
+              memoryRss: 0,
+              memoryReq: 0,
+              readBytes: 0,
+              writeBytes: 0,
+              volCtxSwitch: 0,
+              invCtxSwitch: 0,
+              loadTasks: 0,
+              loadCpus: 0,
+              loadMemory: 0,
+              peakCpus: 0,
+              peakTasks: 0,
+              peakMemory: 0,
+            },
+          ],
+        },
+      });
+
+    const snapshot = await getSeqeraCloudStatus({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      ExternalRunId: 'ext-1',
+    } as any);
+
+    expect(snapshot.status).toBe('RUNNING');
+    expect(snapshot.progress).toEqual(
+      expect.objectContaining({
+        tasksCompleted: 5,
+        tasksRunning: 2,
+        tasksTotal: 8,
+        percent: 63,
+        currentProcessName: 'BOWTIE2_ALIGN',
+      }),
+    );
+    expect(httpRequest as jest.Mock).toHaveBeenCalledWith(
+      expect.stringContaining('/workflow/ext-1/progress?workspaceId=ws-1'),
+      expect.anything(),
+      expect.anything(),
+    );
+  });
+
+  it('getSeqeraCloudStatus continues when progress fetch fails', async () => {
+    mockQueryByLaboratoryId.mockResolvedValue({
+      OrganizationId: 'org-1',
+      LaboratoryId: 'lab-1',
+      NextFlowTowerWorkspaceId: 'ws-1',
+    });
+    mockGetParameter.mockResolvedValue({ $metadata: {}, Parameter: { Value: 'token' } });
+    (getNextFlowApiQueryParameters as jest.Mock).mockReturnValue('workspaceId=ws-1');
+    (httpRequest as jest.Mock)
+      .mockResolvedValueOnce({ workflow: { status: 'RUNNING', duration: 1000 } })
+      .mockRejectedValueOnce(new Error('progress unavailable'));
+
+    const snapshot = await getSeqeraCloudStatus({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      ExternalRunId: 'ext-1',
+    } as any);
+
+    expect(snapshot.status).toBe('RUNNING');
+    expect(snapshot.progress).toBeUndefined();
+  });
+
+  it('processStatusCheckEvent persists CurrentProcessName for Omics while RUNNING', async () => {
+    const listAllRunTasks = jest.fn().mockResolvedValue([
+      { taskId: '1', status: 'COMPLETED', name: 'FASTQC' },
+      { taskId: '2', status: 'RUNNING', name: 'BOWTIE2_ALIGN' },
+    ]);
+    (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
+      getRun: mockGetRun,
+      listAllRunTasks,
+    });
+
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+
+    mockGetRun.mockResolvedValue({ status: 'RUNNING' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', Status: 'RUNNING' });
+
+    await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(mockUpdateRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ProgressPercent: 50,
+        TasksCompleted: 1,
+        TasksTotal: 2,
+        CurrentProcessName: 'BOWTIE2_ALIGN',
+      }),
+      [],
+    );
+  });
+
+  it('processStatusCheckEvent clears CurrentProcessName on terminal transition', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+      CurrentProcessName: 'BOWTIE2_ALIGN',
+      ProgressPercent: 50,
+    });
+
+    mockGetRun.mockResolvedValue({ status: 'COMPLETED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', Status: 'COMPLETED' });
+
+    await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    const [updateArg, removeArg] = mockUpdateRun.mock.calls[0];
+    expect(updateArg.Status).toBe('COMPLETED');
+    expect(updateArg.CurrentProcessName).toBeUndefined();
+    expect(removeArg).toEqual(['CurrentProcessName']);
   });
 });

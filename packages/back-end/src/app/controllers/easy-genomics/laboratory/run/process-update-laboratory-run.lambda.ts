@@ -8,7 +8,10 @@ import {
   SnsProcessingEvent,
   SnsProcessingOperation,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sns-processing-event';
-import { DescribeWorkflowResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import {
+  DescribeWorkflowResponse,
+  WorkflowProgressResponse,
+} from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { APIGatewayProxyResult, Handler, SQSRecord } from 'aws-lambda';
 import { SQSEvent } from 'aws-lambda/trigger/sqs';
 import { v4 as uuidv4 } from 'uuid';
@@ -28,6 +31,7 @@ import {
 } from '@BE/utils/laboratory-run-ttl-utils';
 import { aggregateTaskProgress, OmicsTaskProgress } from '@BE/utils/omics-run-progress-utils';
 import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
+import { aggregateSeqeraProgress } from '@BE/utils/seqera-run-progress-utils';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryRunService = new LaboratoryRunService();
@@ -156,6 +160,7 @@ function progressFieldsFromSnapshot(progress: OmicsTaskProgress | undefined): Pa
     TasksCompleted: progress.tasksCompleted,
     TasksRunning: progress.tasksRunning,
     TasksFailed: progress.tasksFailed,
+    ...(progress.currentProcessName != null ? { CurrentProcessName: progress.currentProcessName } : {}),
   };
 }
 
@@ -166,8 +171,34 @@ function hasProgressChanged(existingRun: LaboratoryRun, progress: OmicsTaskProgr
     existingRun.TasksTotal !== progress.tasksTotal ||
     existingRun.TasksCompleted !== progress.tasksCompleted ||
     existingRun.TasksRunning !== progress.tasksRunning ||
-    existingRun.TasksFailed !== progress.tasksFailed
+    existingRun.TasksFailed !== progress.tasksFailed ||
+    existingRun.CurrentProcessName !== progress.currentProcessName
   );
+}
+
+/**
+ * Build LaboratoryRun update payload + DynamoDB REMOVE list for CurrentProcessName.
+ * Clears CurrentProcessName when the run is terminal, or when progress is present but
+ * no process is currently running (avoids leaving a stale name in DynamoDB).
+ */
+function buildProgressUpdate(
+  existingRun: LaboratoryRun,
+  progress: OmicsTaskProgress | undefined,
+  clearProcessName: boolean,
+): { update: LaboratoryRun; remove: string[] } {
+  const update: LaboratoryRun = {
+    ...existingRun,
+    ...progressFieldsFromSnapshot(progress),
+  };
+  const remove: string[] = [];
+  const shouldClear =
+    clearProcessName ||
+    (progress != null && progress.currentProcessName == null && existingRun.CurrentProcessName != null);
+  if (shouldClear) {
+    delete (update as LaboratoryRun & { CurrentProcessName?: string }).CurrentProcessName;
+    remove.push('CurrentProcessName');
+  }
+  return { update, remove };
 }
 
 export async function processStatusCheckEvent(operation: SnsProcessingOperation, laboratoryRun: LaboratoryRun) {
@@ -261,28 +292,36 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
           ? await safeCaptureRunCost(existingRun)
           : undefined;
 
-      laboratoryRun = await laboratoryRunService.update({
-        ...existingRun,
-        Status: newStatusNormalized,
-        ...(shouldSetTerminalAt ? { TerminalAt: terminalAtIso } : {}),
-        ...(newExpiresAt !== undefined ? { ExpiresAt: newExpiresAt } : {}),
-        ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
-          ? { RunDurationSeconds: snapshot.durationSeconds }
-          : {}),
-        ...(costOutcome ? { RunCostOutcome: costOutcome } : {}),
-        ...progressFieldsFromSnapshot(snapshot.progress),
-        ...(newStatusNormalized === 'FAILED' && snapshot.failureReason && existingRun.FailureReason == null
-          ? { FailureReason: snapshot.failureReason }
-          : {}),
-        ...(newStatusNormalized === 'FAILED' && snapshot.statusMessage && existingRun.FailureReason == null
-          ? { FailureStatusMessage: snapshot.statusMessage }
-          : {}),
-        ...(newStatusNormalized === 'FAILED' && snapshot.errorReport && existingRun.FailureReason == null
-          ? { FailureErrorReport: snapshot.errorReport }
-          : {}),
-        ModifiedAt: now.toISOString(),
-        ModifiedBy: 'Status Check',
-      });
+      const { update: progressUpdate, remove: progressRemove } = buildProgressUpdate(
+        existingRun,
+        snapshot.progress,
+        nextStatusTerminal,
+      );
+
+      laboratoryRun = await laboratoryRunService.updateWithAttributeRemoval(
+        {
+          ...progressUpdate,
+          Status: newStatusNormalized,
+          ...(shouldSetTerminalAt ? { TerminalAt: terminalAtIso } : {}),
+          ...(newExpiresAt !== undefined ? { ExpiresAt: newExpiresAt } : {}),
+          ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
+            ? { RunDurationSeconds: snapshot.durationSeconds }
+            : {}),
+          ...(costOutcome ? { RunCostOutcome: costOutcome } : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.failureReason && existingRun.FailureReason == null
+            ? { FailureReason: snapshot.failureReason }
+            : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.statusMessage && existingRun.FailureReason == null
+            ? { FailureStatusMessage: snapshot.statusMessage }
+            : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.errorReport && existingRun.FailureReason == null
+            ? { FailureErrorReport: snapshot.errorReport }
+            : {}),
+          ModifiedAt: now.toISOString(),
+          ModifiedBy: 'Status Check',
+        },
+        progressRemove,
+      );
       await safePropagateExpiresAt(laboratory, laboratoryRun, newExpiresAt);
       if (newStatusNormalized === 'FAILED' && existingRun.FailureOwner == null) {
         await safePublishForClassification(laboratoryRun);
@@ -294,15 +333,22 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       // No status change, but duration and/or task progress need persisting.
       // Progress can change continuously while Status stays RUNNING.
       const now = new Date();
-      laboratoryRun = await laboratoryRunService.update({
-        ...existingRun,
-        ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
-          ? { RunDurationSeconds: snapshot.durationSeconds }
-          : {}),
-        ...progressFieldsFromSnapshot(snapshot.progress),
-        ModifiedAt: now.toISOString(),
-        ModifiedBy: 'Status Check',
-      });
+      const { update: progressUpdate, remove: progressRemove } = buildProgressUpdate(
+        existingRun,
+        snapshot.progress,
+        false,
+      );
+      laboratoryRun = await laboratoryRunService.updateWithAttributeRemoval(
+        {
+          ...progressUpdate,
+          ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
+            ? { RunDurationSeconds: snapshot.durationSeconds }
+            : {}),
+          ModifiedAt: now.toISOString(),
+          ModifiedBy: 'Status Check',
+        },
+        progressRemove,
+      );
     }
   } else {
     console.error(`Unsupported SNS Processing Event Operation: ${operation}`);
@@ -410,10 +456,27 @@ export async function getSeqeraCloudStatus(laboratoryRun: LaboratoryRun): Promis
     }
   }
 
+  const status = workflow?.status || 'UNKNOWN';
+  let progress: OmicsTaskProgress | undefined;
+  if (!isTerminalLaboratoryRunStatus(status) && laboratoryRun.ExternalRunId) {
+    try {
+      const progressResponse: WorkflowProgressResponse = await httpRequest<WorkflowProgressResponse>(
+        `${process.env.SEQERA_API_BASE_URL}/workflow/${laboratoryRun.ExternalRunId}/progress?${apiQueryParameters}`,
+        REST_API_METHOD.GET,
+        { Authorization: `Bearer ${accessToken}` },
+      );
+      progress = aggregateSeqeraProgress(progressResponse.progress);
+    } catch (err) {
+      // Progress is best-effort; do not fail the status-check pipeline if progress fetch fails.
+      console.warn(`Seqera workflow progress failed for RunId=${laboratoryRun.RunId}:`, err);
+    }
+  }
+
   return {
-    status: workflow?.status || 'UNKNOWN',
+    status,
     durationSeconds,
     failureReason: workflow?.errorMessage,
     errorReport: workflow?.errorReport,
+    progress,
   };
 }

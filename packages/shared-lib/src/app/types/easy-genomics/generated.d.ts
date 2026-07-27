@@ -1332,6 +1332,11 @@ export interface components {
       TasksRunning?: number;
       /** @description Tasks in FAILED status at last status check. */
       TasksFailed?: number;
+      /**
+       * @description Name of the first currently RUNNING (or STARTING) task/process at last status check.
+       * Cleared when the run is terminal or no tasks are actively running.
+       */
+      CurrentProcessName?: string;
       /** @description Pre-run input features for historical cost similarity matching. */
       RunInputProfile?: {
         SampleCount: number;
@@ -1408,6 +1413,7 @@ export interface components {
       TasksCompleted?: number;
       TasksRunning?: number;
       TasksFailed?: number;
+      CurrentProcessName?: string;
       /** @description Pre-run input features for historical cost similarity matching. */
       RunInputProfile?: {
         SampleCount: number;

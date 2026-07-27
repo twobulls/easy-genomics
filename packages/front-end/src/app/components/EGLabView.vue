@@ -254,7 +254,6 @@
     { key: 'CreatedAt', label: 'Created At', sortable: true },
     { key: 'lastUpdated', label: 'Last Updated', sortable: true },
     { key: 'Status', label: 'Status', sortable: true },
-    { key: 'Progress', label: 'Progress', sortable: false },
     { key: 'WorkflowVersionName', label: 'Workflow version', sortable: true },
     { key: 'Owner', label: 'Owner', sortable: true },
     { key: 'actions', label: 'Actions' },
@@ -947,26 +946,25 @@
       </template>
 
       <template #lastUpdated-data="{ row: run }">
-        <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
-        <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
+        <EGProgressBar
+          v-if="
+            !['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED'].includes(run.Status) &&
+            (run.ProgressPercent != null || (run.TasksCompleted != null && run.TasksTotal != null))
+          "
+          variant="inline"
+          :percent="run.ProgressPercent"
+          :completed="run.TasksCompleted"
+          :total="run.TasksTotal"
+          :process-name="run.CurrentProcessName"
+        />
+        <template v-else>
+          <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
+          <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
+        </template>
       </template>
 
       <template #Status-data="{ row: run }">
         <EGStatusChip :status="run.Status" />
-      </template>
-
-      <template #Progress-data="{ row: run }">
-        <EGProgressBar
-          v-if="
-            !['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED'].includes(run.Status) &&
-            run.ProgressPercent != null
-          "
-          compact
-          :percent="run.ProgressPercent"
-          :completed="run.TasksCompleted"
-          :total="run.TasksTotal"
-        />
-        <span v-else class="text-muted text-sm">—</span>
       </template>
 
       <template #WorkflowVersionName-data="{ row: run }">

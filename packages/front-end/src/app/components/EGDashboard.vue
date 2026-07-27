@@ -33,7 +33,10 @@
   const overviewHeadingId = 'dashboard-overview-heading';
   const recentRunsHeadingId = 'dashboard-recent-runs-heading';
   const favouriteWorkflowsHeadingId = 'dashboard-favourite-workflows-heading';
+  const inProgressHeadingId = 'dashboard-in-progress-heading';
   const highlightedSearchIndex = ref(-1);
+
+  const IN_PROGRESS_STATUSES = new Set(['SUBMITTED', 'STARTING', 'RUNNING']);
 
   interface SearchResult {
     type: 'run' | 'seqera-pipeline' | 'omics-workflow';
@@ -240,8 +243,17 @@
     return allRuns.value.filter((run) => getAnchorTime(run) >= cutoff);
   });
 
-  const activeRuns = computed(() =>
-    filteredRunsForOverview.value.filter((r) => ['SUBMITTED', 'STARTING', 'RUNNING'].includes(r.Status)),
+  const activeRuns = computed(() => filteredRunsForOverview.value.filter((r) => IN_PROGRESS_STATUSES.has(r.Status)));
+
+  /** All currently active runs in the lab (not limited by the overview time filter). */
+  const inProgressRuns = computed(() =>
+    [...allRuns.value]
+      .filter((r) => IN_PROGRESS_STATUSES.has(r.Status))
+      .sort((a, b) => {
+        const dateA = a.CreatedAt ? new Date(a.CreatedAt).getTime() : 0;
+        const dateB = b.CreatedAt ? new Date(b.CreatedAt).getTime() : 0;
+        return dateB - dateA;
+      }),
   );
 
   const completedRuns = computed(() =>
@@ -306,7 +318,9 @@
   });
 
   const recentRuns = computed(() => {
+    // Match the design: in-progress runs live in the In progress section, not Recent runs.
     return [...allRuns.value]
+      .filter((r) => !IN_PROGRESS_STATUSES.has(r.Status))
       .sort((a, b) => {
         const dateA = a.CreatedAt ? new Date(a.CreatedAt).getTime() : 0;
         const dateB = b.CreatedAt ? new Date(b.CreatedAt).getTime() : 0;
@@ -319,7 +333,6 @@
     { key: 'RunName', label: 'Run Name', sortable: true },
     { key: 'lastUpdated', label: 'Last Updated', sortable: true },
     { key: 'Status', label: 'Status', sortable: true },
-    { key: 'Progress', label: 'Progress', sortable: false },
     { key: 'actions', label: 'Actions' },
   ];
 
@@ -663,62 +676,12 @@
       </div>
     </div>
 
-    <!-- Recent Runs -->
-    <section class="mt-8" :aria-labelledby="recentRunsHeadingId">
-      <EGText :id="recentRunsHeadingId" tag="h2" class="mb-8">Recent Runs</EGText>
-
-      <EGTable
-        :row-click-action="viewRunDetails"
-        :table-data="recentRunsTableItems"
-        :columns="recentRunsTableColumns"
-        v-model:sort="recentRunsSort"
-        :is-loading="uiStore.isRequestPending('loadDashboardData')"
-        :show-pagination="false"
-        :labelled-by="recentRunsHeadingId"
-      >
-        <template #RunName-data="{ row: run }">
-          <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
-          <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
-        </template>
-
-        <template #lastUpdated-data="{ row: run }">
-          <div class="text-body text-sm font-medium">{{ getDate(run.lastUpdated) }}</div>
-          <div class="text-muted text-xs">{{ getTime(run.lastUpdated) }}</div>
-        </template>
-
-        <template #Status-data="{ row: run }">
-          <EGStatusChip :status="run.Status" />
-        </template>
-
-        <template #Progress-data="{ row: run }">
-          <EGProgressBar
-            v-if="
-              !['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED'].includes(run.Status) &&
-              run.ProgressPercent != null
-            "
-            compact
-            :percent="run.ProgressPercent"
-            :completed="run.TasksCompleted"
-            :total="run.TasksTotal"
-          />
-          <span v-else class="text-muted text-sm">—</span>
-        </template>
-
-        <template #actions-data="{ row }">
-          <div class="flex justify-end">
-            <EGActionButton
-              :items="runsActionItems(row)"
-              :menu-label="`Actions for ${row.RunName || 'run'}`"
-              class="ml-2"
-              @click="$event.stopPropagation()"
-            />
-          </div>
-        </template>
-
-        <template #empty-state>
-          <div class="text-muted flex h-24 items-center justify-center font-normal">No recent runs</div>
-        </template>
-      </EGTable>
+    <!-- In progress -->
+    <section v-if="inProgressRuns.length > 0" class="mt-8" :aria-labelledby="inProgressHeadingId">
+      <EGText :id="inProgressHeadingId" tag="h2" class="mb-3">In progress</EGText>
+      <div class="flex flex-col gap-3">
+        <EGInProgressRunCard v-for="run in inProgressRuns" :key="run.RunId" :run="run" :lab-id="labId" />
+      </div>
     </section>
 
     <!-- Favourite Workflows -->
@@ -756,6 +719,50 @@
 
         <template #empty-state>
           <div class="text-muted flex h-24 items-center justify-center font-normal">No favourite workflows yet</div>
+        </template>
+      </EGTable>
+    </section>
+
+    <!-- Recent Runs -->
+    <section class="mt-10" :aria-labelledby="recentRunsHeadingId">
+      <EGText :id="recentRunsHeadingId" tag="h2" class="mb-8">Recent Runs</EGText>
+
+      <EGTable
+        :row-click-action="viewRunDetails"
+        :table-data="recentRunsTableItems"
+        :columns="recentRunsTableColumns"
+        v-model:sort="recentRunsSort"
+        :is-loading="uiStore.isRequestPending('loadDashboardData')"
+        :show-pagination="false"
+        :labelled-by="recentRunsHeadingId"
+      >
+        <template #RunName-data="{ row: run }">
+          <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
+          <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
+        </template>
+
+        <template #lastUpdated-data="{ row: run }">
+          <div class="text-body text-sm font-medium">{{ getDate(run.lastUpdated) }}</div>
+          <div class="text-muted text-xs">{{ getTime(run.lastUpdated) }}</div>
+        </template>
+
+        <template #Status-data="{ row: run }">
+          <EGStatusChip :status="run.Status" />
+        </template>
+
+        <template #actions-data="{ row }">
+          <div class="flex justify-end">
+            <EGActionButton
+              :items="runsActionItems(row)"
+              :menu-label="`Actions for ${row.RunName || 'run'}`"
+              class="ml-2"
+              @click="$event.stopPropagation()"
+            />
+          </div>
+        </template>
+
+        <template #empty-state>
+          <div class="text-muted flex h-24 items-center justify-center font-normal">No recent runs</div>
         </template>
       </EGTable>
     </section>

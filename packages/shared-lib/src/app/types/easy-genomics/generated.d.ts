@@ -1589,7 +1589,7 @@ export interface components {
       AnalyticsConsent?: "denied" | "granted" | "unset";
       NotifyOnOwnRuns?: boolean;
       /** @enum {string} */
-      NotificationEventFilter?: "all_terminal" | "failures_only";
+      NotificationEventFilter?: "all_terminal" | "failures_only" | "successes_only";
       CreatedAt?: string;
       CreatedBy?: string;
       ModifiedAt?: string;
@@ -1621,7 +1621,7 @@ export interface components {
       AnalyticsConsent?: "unset" | "granted" | "denied";
       NotifyOnOwnRuns?: boolean;
       /** @enum {string} */
-      NotificationEventFilter?: "all_terminal" | "failures_only";
+      NotificationEventFilter?: "all_terminal" | "failures_only" | "successes_only";
     };
     ListComputeEnvsResponse: {
       computeEnvs?: ({

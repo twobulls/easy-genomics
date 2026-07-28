@@ -2841,6 +2841,7 @@ components:
           enum:
             - all_terminal
             - failures_only
+            - successes_only
           type: string
         CreatedAt:
           type: string
@@ -2915,6 +2916,7 @@ components:
           enum:
             - all_terminal
             - failures_only
+            - successes_only
       additionalProperties: false
     ListComputeEnvsResponse:
       type: object

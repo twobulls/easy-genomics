@@ -41,7 +41,7 @@ export interface User extends BaseAttributes {
   FavouriteWorkflows?: FavouriteWorkflow[];
   AnalyticsConsent?: AnalyticsConsent; // User opt-in choice for upstream usage analytics; follows the user across browsers
   NotifyOnOwnRuns?: boolean; // Email me when my own runs finish. Defaults to false (opt-in) at the application layer.
-  NotificationEventFilter?: 'all_terminal' | 'failures_only'; // Applies whichever way the user ends up notified (as owner or as an opted-in lab member).
+  NotificationEventFilter?: 'all_terminal' | 'failures_only' | 'successes_only'; // Applies whichever way the user ends up notified (as owner or as an opted-in lab member).
 }
 
 export interface FavouriteWorkflow {

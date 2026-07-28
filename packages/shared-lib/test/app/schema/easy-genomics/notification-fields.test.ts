@@ -61,4 +61,15 @@ describe('notification preference fields', () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it('accepts NotificationEventFilter: successes_only on UserSchema', () => {
+    const result = UserSchema.safeParse({
+      UserId: '00000000-0000-0000-0000-000000000001',
+      Email: 'user@example.com',
+      Status: 'Active',
+      NotifyOnOwnRuns: true,
+      NotificationEventFilter: 'successes_only',
+    });
+    expect(result.success).toBe(true);
+  });
 });

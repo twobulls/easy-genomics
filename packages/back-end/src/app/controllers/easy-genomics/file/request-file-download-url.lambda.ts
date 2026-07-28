@@ -8,6 +8,7 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/easy-genomics-api';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { LaboratoryS3AccessService } from '@BE/services/easy-genomics/laboratory-s3-access-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { S3Service } from '@BE/services/s3-service';
 import {
@@ -16,9 +17,11 @@ import {
   validateOrganizationAdminAccess,
   validateSystemAdminAccess,
 } from '@BE/utils/auth-utils';
+import { assertLaboratoryHasS3BucketAccess } from '@BE/utils/laboratory-s3-access-utils';
 
 const laboratoryService = new LaboratoryService();
 const s3Service = new S3Service();
+const s3AccessService = new LaboratoryS3AccessService();
 
 /**
  * This API enables the Easy Genomics FE to request a secure pre-signed S3
@@ -70,6 +73,8 @@ export const handler: Handler = async (
       console.error(`Requested S3 object key '${s3Key}' does not belong to laboratory '${laboratoryId}'.`);
       throw new UnauthorizedAccessError();
     }
+
+    await assertLaboratoryHasS3BucketAccess(laboratory, s3Bucket, s3AccessService);
 
     // Check the S3 Bucket exists in the same AWS Region before creating Pre-Signed S3 Download URL
     const s3BucketLocation = await s3Service.getBucketLocation({ Bucket: s3Bucket });

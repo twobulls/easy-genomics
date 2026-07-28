@@ -1883,11 +1883,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
     // /easy-genomics/organization/s3-access/edit-s3-access-batch
     this.iam.addPolicyStatements('/easy-genomics/organization/s3-access/edit-s3-access-batch', [
       new PolicyStatement({
+        // Query labs in the org; PutItem clears Laboratory.S3Bucket when its grant is revoked.
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
         ],
-        actions: ['dynamodb:Query'],
+        actions: ['dynamodb:Query', 'dynamodb:PutItem'],
       }),
       new PolicyStatement({
         resources: [laboratoryS3AccessTableArn, laboratoryS3AccessTableAnyIndex],
@@ -2143,12 +2144,21 @@ export class EasyGenomicsNestedStack extends NestedStack {
       actions: ['dynamodb:Query'],
     });
 
+    // assertLaboratoryHasS3BucketAccess → isDataTaggedS3Bucket needs GetBucketTagging.
+    // Without this, suppressError returns undefined and every assert denies (deploy lockout).
+    const laboratoryS3AccessCatalogCheckPolicy = new PolicyStatement({
+      resources: ['*'],
+      actions: ['s3:GetBucketTagging'],
+      effect: Effect.ALLOW,
+    });
+
     // Append (do not replace): addPolicyStatements uses Map.set and would drop the
     // route's earlier DynamoDB/S3/SSM statements if we passed only the new policy.
     const laboratoryS3AccessEnforcementRoutes = [
       '/easy-genomics/file/request-list-bucket-objects',
       '/easy-genomics/file/request-top-level-bucket-objects',
       '/easy-genomics/file/request-search-bucket-objects',
+      '/easy-genomics/file/request-file-download-url',
       '/easy-genomics/file/request-folder-download-job',
       '/easy-genomics/file/request-folder-download-job-status',
       '/easy-genomics/file/process-folder-download-job',
@@ -2161,6 +2171,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       '/easy-genomics/data-collections/add-files-to-sample',
       '/easy-genomics/data-collections/remove-files-from-sample',
       '/easy-genomics/data-collections/add-tags-to-files',
+      '/easy-genomics/data-collections/edit-batch',
       '/easy-genomics/data-collections/request-list-file-tags',
       '/easy-genomics/data-collections/request-sequence-collection-sample-sheet',
       '/easy-genomics/data-collections/process-expired-laboratory-data',
@@ -2172,7 +2183,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     for (const route of laboratoryS3AccessEnforcementRoutes) {
       const existing = this.iam.policyStatements.get(route) ?? [];
-      this.iam.addPolicyStatements(route, [...existing, laboratoryS3AccessReadPolicy]);
+      this.iam.addPolicyStatements(route, [
+        ...existing,
+        laboratoryS3AccessReadPolicy,
+        laboratoryS3AccessCatalogCheckPolicy,
+      ]);
     }
 
     // update-laboratory also migrates access rows (needs catalog list + table writes).

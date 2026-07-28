@@ -284,4 +284,52 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
       ]),
     );
   });
+
+  it('grants edit-s3-access-batch PutItem on laboratory-table to clear default buckets', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+    const policies = iamInstance.policyStatements.get('/easy-genomics/organization/s3-access/edit-s3-access-batch');
+
+    expect(policies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:Query', 'dynamodb:PutItem']),
+          resources: expect.arrayContaining([expect.stringContaining('laboratory-table')]),
+        }),
+      ]),
+    );
+  });
+
+  it('appends GetBucketTagging and s3-access Query to enforcement routes', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    for (const route of [
+      '/easy-genomics/file/request-list-bucket-objects',
+      '/easy-genomics/file/request-file-download-url',
+      '/easy-genomics/data-collections/edit-batch',
+      '/easy-genomics/upload/create-file-upload-request',
+    ]) {
+      const policies = iamInstance.policyStatements.get(route);
+      expect(policies).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            actions: expect.arrayContaining(['dynamodb:Query']),
+            resources: expect.arrayContaining([expect.stringContaining('laboratory-s3-access-table')]),
+          }),
+          expect.objectContaining({
+            actions: expect.arrayContaining(['s3:GetBucketTagging']),
+          }),
+        ]),
+      );
+    }
+  });
 });

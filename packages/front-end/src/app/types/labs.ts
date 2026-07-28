@@ -72,6 +72,10 @@ const LabDetailsSchema = z.object({
   // CloudWatch engine log, redacts PII + secrets, and sends a bounded excerpt to
   // the configured LLM.
   HealthOmicsLogEnrichmentEnabled: z.boolean().optional(),
+  // Lab-wide kill switch for run notification emails. Independent of the
+  // per-user NotifyOnOwnRuns / NotifyOnLabRuns opt-ins, which control who gets
+  // notified once this is on.
+  NotificationsEnabled: z.boolean().optional(),
 });
 type LabDetails = z.infer<typeof LabDetailsSchema>;
 

@@ -1,6 +1,10 @@
 import { CreateLaboratory, UpdateLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { LaboratoryRunSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
-import { RemoveLaboratoryUserSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
+import {
+  RemoveLaboratoryUserSchema,
+  UpdateLaboratoryUserNotificationPreference,
+  UpdateLaboratoryUserNotificationPreferenceSchema,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
@@ -193,6 +197,37 @@ class LabsModule extends HttpFactory {
 
     if (!res) {
       throw new Error('Failed to retrieve Laboratory users');
+    }
+
+    return res;
+  }
+
+  /**
+   * Update the calling user's own notification preference for a Laboratory.
+   * Self-service only: the backend resolves the caller's UserId from their auth token,
+   * so this can never be used to change another user's preference.
+   * @param labId
+   * @param notifyOnLabRuns
+   */
+  async updateMyLabNotificationPreference(labId: string, notifyOnLabRuns: boolean): Promise<LaboratoryUser> {
+    const data: UpdateLaboratoryUserNotificationPreference = { NotifyOnLabRuns: notifyOnLabRuns };
+
+    const parseResult = UpdateLaboratoryUserNotificationPreferenceSchema.safeParse(data);
+    if (!parseResult.success) {
+      console.error('Error; updateMyLabNotificationPreference; safe parse failed; parseResult: ', parseResult);
+      throw new Error(
+        `Error; updateMyLabNotificationPreference; safe parse failed; parseResult: ${JSON.stringify(parseResult, null, 2)}`,
+      );
+    }
+
+    const res = await this.call<LaboratoryUser>(
+      'PUT',
+      `/laboratory/user/update-laboratory-user-notification-preference/${labId}`,
+      data,
+    );
+
+    if (!res) {
+      throw new Error('Failed to update Laboratory notification preference');
     }
 
     return res;

@@ -139,7 +139,7 @@ class UsersModule extends HttpFactory {
       }>;
       AnalyticsConsent?: 'unset' | 'granted' | 'denied';
       NotifyOnOwnRuns?: boolean;
-      NotificationEventFilter?: 'all_terminal' | 'failures_only';
+      NotificationEventFilter?: 'all_terminal' | 'failures_only' | 'successes_only';
     },
   ) {
     const parseResult = UpdateUserSchema.safeParse(data);

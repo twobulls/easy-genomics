@@ -56,6 +56,9 @@
   const retentionHelpId = 'lab-settings-retention-help';
   const seqeraSectionId = 'lab-settings-seqera-section';
   const healthOmicsSectionId = 'lab-settings-healthomics-section';
+  const notificationsToggleLabelId = 'lab-settings-notifications-toggle-label';
+  const notifyOwnRunsToggleLabelId = 'lab-settings-notify-own-runs-toggle-label';
+  const notifyLabRunsToggleLabelId = 'lab-settings-notify-lab-runs-toggle-label';
 
   const formMode = ref(props.formMode);
   const s3Directories = ref([]);
@@ -85,6 +88,7 @@
     SeqeraLlmModelId: '',
     SeqeraLlmApiKey: '',
     HealthOmicsLogEnrichmentEnabled: false,
+    NotificationsEnabled: false,
   };
 
   const state = ref({ ...defaultState } as Laboratory);
@@ -145,6 +149,135 @@
     const active = !!state.value.HealthOmicsLlmProvider || !!state.value.SeqeraLlmProvider;
     return { label: active ? 'Enabled' : 'Disabled', tone: active ? 'positive' : 'neutral' } as const;
   });
+  const runNotificationsBadge = computed(() => {
+    const active = !!state.value.NotificationsEnabled;
+    return { label: active ? 'On' : 'Off', tone: active ? 'positive' : 'neutral' } as const;
+  });
+
+  /**
+   * Run Notifications section.
+   *
+   * This section has four controls, each with a different save path:
+   * - "Enable run notifications" is the lab-wide kill switch (Laboratory.NotificationsEnabled). It
+   *   is part of `state`/`defaultState` above and is saved through this page's normal Save Changes
+   *   flow, same as any other lab detail field.
+   * - The remaining three controls below are per-user preferences, not lab details. They live in
+   *   their own refs (not `state`) and auto-save immediately on change, independent of the Save
+   *   Changes button, because batching them into the main form's dirty-state tracking would let a
+   *   user "lose" a preference change by hitting Cancel, or accidentally bundle it with an unrelated
+   *   lab edit.
+   */
+  type NotificationEventFilter = 'all_terminal' | 'failures_only' | 'successes_only';
+
+  const isLoadingNotificationPrefs = ref(true);
+  const notifyOnOwnRunsEnabled = ref(false);
+  const notifyOnLabRunsEnabled = ref(false);
+  const notificationEventFilter = ref<NotificationEventFilter>('all_terminal');
+  const isUpdatingNotifyOnOwnRuns = ref(false);
+  const isUpdatingNotifyOnLabRuns = ref(false);
+  const isUpdatingEventFilter = ref(false);
+
+  // The event filter only has an effect once at least one of the two "email me" toggles is on.
+  const showNotificationEventFilter = computed(() => notifyOnOwnRunsEnabled.value || notifyOnLabRunsEnabled.value);
+  // 'all_terminal' means both checked; 'failures_only' / 'successes_only' mean only that one.
+  const eventFilterSuccessChecked = computed(() => notificationEventFilter.value !== 'failures_only');
+  const eventFilterFailureChecked = computed(() => notificationEventFilter.value !== 'successes_only');
+
+  /**
+   * Loads the current user's account-wide notification preferences and their own
+   * lab-membership notification preference for this specific lab. These come from two
+   * different records (User, LaboratoryUser), so they're fetched separately.
+   *
+   * There is no single-record "my own membership row in lab X" endpoint today, so this
+   * reuses the existing list-laboratory-users-by-lab call (already used by EGLabView.vue)
+   * and finds the caller's own row client-side. The endpoint's laboratoryId/userId query
+   * parameters are mutually exclusive server-side (see list-laboratory-users.lambda.ts),
+   * so they cannot be combined to fetch a single row directly.
+   */
+  async function loadNotificationPreferences() {
+    isLoadingNotificationPrefs.value = true;
+    try {
+      const [currentUser, labUsers] = await Promise.all([$api.users.getUser(), $api.labs.listLabUsersByLabId(labId)]);
+      notifyOnOwnRunsEnabled.value = currentUser.NotifyOnOwnRuns === true;
+      notificationEventFilter.value = currentUser.NotificationEventFilter ?? 'all_terminal';
+
+      const myLabUser = labUsers.find((labUser) => labUser.UserId === userStore.currentUserDetails.id);
+      notifyOnLabRunsEnabled.value = myLabUser?.NotifyOnLabRuns === true;
+    } catch (error) {
+      console.error('Error loading run notification preferences:', error);
+      useToastStore().error('Failed to load run notification preferences');
+    } finally {
+      isLoadingNotificationPrefs.value = false;
+    }
+  }
+
+  async function onToggleNotifyOnOwnRuns(enabled: boolean) {
+    if (isUpdatingNotifyOnOwnRuns.value) return;
+    isUpdatingNotifyOnOwnRuns.value = true;
+    try {
+      await $api.users.updateUser(userStore.currentUserDetails.id!, { NotifyOnOwnRuns: enabled });
+      notifyOnOwnRunsEnabled.value = enabled;
+    } catch (error) {
+      console.error('Error updating run notification preference:', error);
+      useToastStore().error('Failed to update run notification preference');
+    } finally {
+      isUpdatingNotifyOnOwnRuns.value = false;
+    }
+  }
+
+  async function onToggleNotifyOnLabRuns(enabled: boolean) {
+    if (isUpdatingNotifyOnLabRuns.value) return;
+    isUpdatingNotifyOnLabRuns.value = true;
+    try {
+      await $api.labs.updateMyLabNotificationPreference(labId, enabled);
+      notifyOnLabRunsEnabled.value = enabled;
+    } catch (error) {
+      console.error('Error updating lab run notification preference:', error);
+      useToastStore().error('Failed to update lab run notification preference');
+    } finally {
+      isUpdatingNotifyOnLabRuns.value = false;
+    }
+  }
+
+  async function onChangeNotificationEventFilter(filter: NotificationEventFilter) {
+    if (isUpdatingEventFilter.value) return;
+    isUpdatingEventFilter.value = true;
+    try {
+      await $api.users.updateUser(userStore.currentUserDetails.id!, { NotificationEventFilter: filter });
+      notificationEventFilter.value = filter;
+    } catch (error) {
+      console.error('Error updating notification event filter:', error);
+      useToastStore().error('Failed to update notification event filter');
+    } finally {
+      isUpdatingEventFilter.value = false;
+    }
+  }
+
+  // The two checkboxes represent three real states (all_terminal / failures_only / successes_only).
+  // Unchecking the last remaining checked box is a no-op rather than clamping back to
+  // 'all_terminal' or leaving both unchecked — an event filter with nothing selected would
+  // silently mean "never notify", which isn't a state either of these toggles should reach.
+  async function onToggleNotifySuccesses(checked: boolean) {
+    const failureChecked = eventFilterFailureChecked.value;
+    if (!checked && !failureChecked) return;
+    const nextFilter: NotificationEventFilter = checked
+      ? failureChecked
+        ? 'all_terminal'
+        : 'successes_only'
+      : 'failures_only';
+    await onChangeNotificationEventFilter(nextFilter);
+  }
+
+  async function onToggleNotifyFailures(checked: boolean) {
+    const successChecked = eventFilterSuccessChecked.value;
+    if (!checked && !successChecked) return;
+    const nextFilter: NotificationEventFilter = checked
+      ? successChecked
+        ? 'all_terminal'
+        : 'failures_only'
+      : 'successes_only';
+    await onChangeNotificationEventFilter(nextFilter);
+  }
   function modelIdPlaceholderFor(provider: string | undefined): string {
     switch (provider) {
       case 'bedrock':
@@ -204,6 +337,9 @@
 
     if (formMode.value !== LabDetailsFormModeEnum.enum.Create) {
       await getLabDetails();
+      await loadNotificationPreferences();
+    } else {
+      isLoadingNotificationPrefs.value = false;
     }
     switchToFormMode(formMode.value);
   });
@@ -631,6 +767,7 @@
     'HealthOmicsLogEnrichmentEnabled',
     'AwsHealthOmicsNetworkingMode',
     'AwsHealthOmicsVpcConfigurationName',
+    'NotificationsEnabled',
   ] as const;
 
   type LabEditCompareKey = (typeof LAB_DETAILS_EDIT_COMPARE_KEYS)[number];
@@ -1137,6 +1274,84 @@
             :disabled="!isEditing || isSubmittingFormData || !state.AwsHealthOmicsEnabled"
           />
         </EGFormGroup>
+      </EGCollapsibleSection>
+
+      <!-- Run Notifications: the lab-wide toggle is a Laboratory field saved through this
+           page's normal Save Changes flow (see NotificationsEnabled in state/defaultState
+           above). The other three controls are per-user preferences that auto-save
+           immediately on change — see loadNotificationPreferences/onToggle*/onChange* in
+           the script for why they're kept out of `state`. Hidden in Create mode: none of
+           these preferences can be set for a lab that doesn't exist yet. -->
+      <EGCollapsibleSection
+        v-if="formMode !== LabDetailsFormModeEnum.enum.Create"
+        heading-id="lab-settings-run-notifications-heading"
+        title="Run Notifications"
+        description="Control who gets emailed when runs in this lab finish."
+        :badges="[runNotificationsBadge]"
+      >
+        <!-- Lab-wide kill switch: part of the main Save Changes flow -->
+        <EGFormGroup
+          label="Enable run notifications"
+          name="NotificationsEnabled"
+          eager-validation
+          hint="Turns run notification emails on or off for this lab. Individual users still choose which runs they're emailed about below."
+          class="flex items-center justify-between"
+        >
+          <label :id="notificationsToggleLabelId" :for="`${notificationsToggleLabelId}-input`" class="sr-only">
+            Enable run notifications
+          </label>
+          <UToggle
+            :id="`${notificationsToggleLabelId}-input`"
+            class="ml-2"
+            v-model="state.NotificationsEnabled"
+            :disabled="!isEditing || isSubmittingFormData"
+            :aria-labelledby="notificationsToggleLabelId"
+          />
+        </EGFormGroup>
+
+        <USkeleton v-if="isLoadingNotificationPrefs" class="mt-4 h-24 w-full" aria-hidden="true" />
+        <template v-else>
+          <!-- Per-user preferences: each auto-saves immediately, independent of Save Changes -->
+          <div class="mt-4 flex items-center justify-between">
+            <span :id="notifyOwnRunsToggleLabelId" class="text-sm text-black">Email me about my own runs</span>
+            <UToggle
+              class="ml-2"
+              :model-value="notifyOnOwnRunsEnabled"
+              :disabled="isUpdatingNotifyOnOwnRuns"
+              :aria-labelledby="notifyOwnRunsToggleLabelId"
+              @update:model-value="onToggleNotifyOnOwnRuns"
+            />
+          </div>
+
+          <div class="mt-3 flex items-center justify-between">
+            <span :id="notifyLabRunsToggleLabelId" class="text-sm text-black">Email me about all runs in this lab</span>
+            <UToggle
+              class="ml-2"
+              :model-value="notifyOnLabRunsEnabled"
+              :disabled="isUpdatingNotifyOnLabRuns"
+              :aria-labelledby="notifyLabRunsToggleLabelId"
+              @update:model-value="onToggleNotifyOnLabRuns"
+            />
+          </div>
+
+          <div v-if="showNotificationEventFilter" class="mt-4">
+            <p class="mb-2 text-sm text-black">Notify me when a run</p>
+            <div class="flex flex-col gap-2">
+              <UCheckbox
+                label="Succeeds"
+                :model-value="eventFilterSuccessChecked"
+                :disabled="isUpdatingEventFilter"
+                @update:model-value="onToggleNotifySuccesses"
+              />
+              <UCheckbox
+                label="Fails"
+                :model-value="eventFilterFailureChecked"
+                :disabled="isUpdatingEventFilter"
+                @update:model-value="onToggleNotifyFailures"
+              />
+            </div>
+          </div>
+        </template>
       </EGCollapsibleSection>
     </div>
 

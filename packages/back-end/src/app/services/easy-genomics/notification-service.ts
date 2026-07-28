@@ -22,6 +22,9 @@ function passesEventFilter(user: User, status: string): boolean {
   if (user.NotificationEventFilter === 'failures_only') {
     return status.toUpperCase() === 'FAILED';
   }
+  if (user.NotificationEventFilter === 'successes_only') {
+    return status.toUpperCase() !== 'FAILED';
+  }
   return true;
 }
 

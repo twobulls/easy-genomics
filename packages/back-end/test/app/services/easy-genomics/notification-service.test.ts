@@ -158,6 +158,42 @@ describe('NotificationService.notifyRunCompletion', () => {
     expect(result.sent).toBe(0);
   });
 
+  it('respects successes_only filter, emailing the owner for a COMPLETED run', async () => {
+    (userServiceInstance.get as jest.Mock).mockResolvedValue({
+      UserId: 'owner-1',
+      Email: 'owner@example.com',
+      NotifyOnOwnRuns: true,
+      NotificationEventFilter: 'successes_only',
+    });
+    (LaboratoryUserService as jest.MockedClass<typeof LaboratoryUserService>).prototype.queryByLaboratoryId = jest
+      .fn()
+      .mockResolvedValue([]);
+
+    const service = new NotificationService();
+    const result = await service.notifyRunCompletion(run); // run.Status === 'COMPLETED'
+
+    expect(result.sent).toBe(1);
+    expect(sesServiceInstance.sendRunCompletionEmail).toHaveBeenCalledWith('owner@example.com', expect.anything());
+  });
+
+  it('respects successes_only filter, excluding a FAILED run for a successes-only subscriber', async () => {
+    (userServiceInstance.get as jest.Mock).mockResolvedValue({
+      UserId: 'owner-1',
+      Email: 'owner@example.com',
+      NotifyOnOwnRuns: true,
+      NotificationEventFilter: 'successes_only',
+    });
+    (LaboratoryUserService as jest.MockedClass<typeof LaboratoryUserService>).prototype.queryByLaboratoryId = jest
+      .fn()
+      .mockResolvedValue([]);
+
+    const service = new NotificationService();
+    const result = await service.notifyRunCompletion({ ...run, Status: 'FAILED' });
+
+    expect(result.sent).toBe(0);
+    expect(sesServiceInstance.sendRunCompletionEmail).not.toHaveBeenCalled();
+  });
+
   it('deduplicates when owner has NotifyOnOwnRuns=true and also appears in lab-member list with NotifyOnLabRuns=true', async () => {
     (userServiceInstance.get as jest.Mock).mockResolvedValue({
       UserId: 'owner-1',

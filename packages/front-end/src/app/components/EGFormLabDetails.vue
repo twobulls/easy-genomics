@@ -26,6 +26,7 @@
     UpdateLaboratory,
     UpdateLaboratorySchema,
   } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
+  import { UpdateLaboratoryUserNotificationPreferenceSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
   import { ERROR_CODES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
 
   const props = withDefaults(
@@ -59,6 +60,7 @@
   const notificationsToggleLabelId = 'lab-settings-notifications-toggle-label';
   const notifyOwnRunsToggleLabelId = 'lab-settings-notify-own-runs-toggle-label';
   const notifyLabRunsToggleLabelId = 'lab-settings-notify-lab-runs-toggle-label';
+  const notifyLabRunsAdditionalEmailsInputId = 'lab-settings-notify-lab-runs-additional-emails-input';
 
   const formMode = ref(props.formMode);
   const s3Directories = ref([]);
@@ -173,9 +175,13 @@
   const notifyOnOwnRunsEnabled = ref(false);
   const notifyOnLabRunsEnabled = ref(false);
   const notificationEventFilter = ref<NotificationEventFilter>('all_terminal');
+  // Raw comma-separated text the user is editing; parsed/validated/saved on blur so we don't
+  // fire a request per keystroke like the other, single-value controls in this section do.
+  const notifyOnLabRunsAdditionalEmailsInput = ref('');
   const isUpdatingNotifyOnOwnRuns = ref(false);
   const isUpdatingNotifyOnLabRuns = ref(false);
   const isUpdatingEventFilter = ref(false);
+  const isUpdatingNotifyOnLabRunsAdditionalEmails = ref(false);
 
   // The event filter only has an effect once at least one of the two "email me" toggles is on.
   const showNotificationEventFilter = computed(() => notifyOnOwnRunsEnabled.value || notifyOnLabRunsEnabled.value);
@@ -201,8 +207,9 @@
       notifyOnOwnRunsEnabled.value = currentUser.NotifyOnOwnRuns === true;
       notificationEventFilter.value = currentUser.NotificationEventFilter ?? 'all_terminal';
 
-      const myLabUser = labUsers.find((labUser) => labUser.UserId === userStore.currentUserDetails.id);
+      const myLabUser = labUsers.find((labUser) => labUser.UserId === userStore.currentUserDetails.internalId);
       notifyOnLabRunsEnabled.value = myLabUser?.NotifyOnLabRuns === true;
+      notifyOnLabRunsAdditionalEmailsInput.value = (myLabUser?.NotifyOnLabRunsAdditionalEmails ?? []).join(', ');
     } catch (error) {
       console.error('Error loading run notification preferences:', error);
       useToastStore().error('Failed to load run notification preferences');
@@ -236,6 +243,37 @@
       useToastStore().error('Failed to update lab run notification preference');
     } finally {
       isUpdatingNotifyOnLabRuns.value = false;
+    }
+  }
+
+  async function onBlurNotifyOnLabRunsAdditionalEmails() {
+    if (isUpdatingNotifyOnLabRunsAdditionalEmails.value) return;
+
+    const emails = notifyOnLabRunsAdditionalEmailsInput.value
+      .split(',')
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+
+    const parseResult =
+      UpdateLaboratoryUserNotificationPreferenceSchema.shape.NotifyOnLabRunsAdditionalEmails.safeParse(emails);
+    if (!parseResult.success) {
+      useToastStore().error(
+        emails.length > 10
+          ? 'You can add at most 10 additional email addresses.'
+          : 'One or more email addresses are invalid.',
+      );
+      return;
+    }
+
+    isUpdatingNotifyOnLabRunsAdditionalEmails.value = true;
+    try {
+      await $api.labs.updateMyLabNotificationPreference(labId, notifyOnLabRunsEnabled.value, emails);
+      notifyOnLabRunsAdditionalEmailsInput.value = emails.join(', ');
+    } catch (error) {
+      console.error('Error updating lab run notification recipients:', error);
+      useToastStore().error('Failed to update lab run notification recipients');
+    } finally {
+      isUpdatingNotifyOnLabRunsAdditionalEmails.value = false;
     }
   }
 
@@ -1332,6 +1370,22 @@
               :aria-labelledby="notifyLabRunsToggleLabelId"
               @update:model-value="onToggleNotifyOnLabRuns"
             />
+          </div>
+
+          <div v-if="notifyOnLabRunsEnabled" class="mt-3">
+            <label :for="notifyLabRunsAdditionalEmailsInputId" class="mb-1 block text-sm text-black">
+              Also CC these emails on every lab run
+            </label>
+            <EGInput
+              :id="notifyLabRunsAdditionalEmailsInputId"
+              v-model="notifyOnLabRunsAdditionalEmailsInput"
+              placeholder="team-distro@example.com, oncall@example.com"
+              :disabled="isUpdatingNotifyOnLabRunsAdditionalEmails"
+              @blur="onBlurNotifyOnLabRunsAdditionalEmails"
+            />
+            <p class="text-muted mt-1 text-xs">
+              Comma-separated, up to 10. Sent whenever your own "all runs in this lab" notification fires.
+            </p>
           </div>
 
           <div v-if="showNotificationEventFilter" class="mt-4">

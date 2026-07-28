@@ -118,6 +118,7 @@ export default function useUser() {
 
       // retrieve and set account id and email
       userStore.currentUserDetails.id = decodedToken['cognito:username'];
+      userStore.currentUserDetails.internalId = decodedToken.UserId || decodedToken['cognito:username'];
       userStore.currentUserDetails.email = decodedToken.email;
 
       // Sync the server-side analytics consent choice so it follows the user

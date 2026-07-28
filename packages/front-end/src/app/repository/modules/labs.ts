@@ -208,9 +208,18 @@ class LabsModule extends HttpFactory {
    * so this can never be used to change another user's preference.
    * @param labId
    * @param notifyOnLabRuns
+   * @param additionalEmails Extra addresses to CC when NotifyOnLabRuns fires. Omit to leave the
+   *   caller's existing list untouched; pass an array (including []) to replace it.
    */
-  async updateMyLabNotificationPreference(labId: string, notifyOnLabRuns: boolean): Promise<LaboratoryUser> {
-    const data: UpdateLaboratoryUserNotificationPreference = { NotifyOnLabRuns: notifyOnLabRuns };
+  async updateMyLabNotificationPreference(
+    labId: string,
+    notifyOnLabRuns: boolean,
+    additionalEmails?: string[],
+  ): Promise<LaboratoryUser> {
+    const data: UpdateLaboratoryUserNotificationPreference = {
+      NotifyOnLabRuns: notifyOnLabRuns,
+      ...(additionalEmails !== undefined ? { NotifyOnLabRunsAdditionalEmails: additionalEmails } : {}),
+    };
 
     const parseResult = UpdateLaboratoryUserNotificationPreferenceSchema.safeParse(data);
     if (!parseResult.success) {

@@ -222,4 +222,76 @@ describe('NotificationService.notifyRunCompletion', () => {
     const ownerCallCount = calledAddresses.filter((addr) => addr === 'owner@example.com').length;
     expect(ownerCallCount).toBe(1);
   });
+
+  it('CCs a lab member NotifyOnLabRuns additional emails in addition to their own address', async () => {
+    (userServiceInstance.get as jest.Mock).mockResolvedValue({
+      UserId: 'owner-1',
+      Email: 'owner@example.com',
+      NotifyOnOwnRuns: false,
+    });
+    (LaboratoryUserService as jest.MockedClass<typeof LaboratoryUserService>).prototype.queryByLaboratoryId = jest
+      .fn()
+      .mockResolvedValue([
+        {
+          UserId: 'member-2',
+          NotifyOnLabRuns: true,
+          NotifyOnLabRunsAdditionalEmails: ['team-distro@example.com', 'oncall@example.com'],
+        },
+      ]);
+    (userServiceInstance.listUsers as jest.Mock).mockResolvedValue([
+      { UserId: 'member-2', Email: 'member2@example.com' },
+    ]);
+
+    const service = new NotificationService();
+    const result = await service.notifyRunCompletion(run);
+
+    expect(result.sent).toBe(3);
+    const calledAddresses = (sesServiceInstance.sendRunCompletionEmail as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(calledAddresses.sort()).toEqual(['member2@example.com', 'oncall@example.com', 'team-distro@example.com']);
+  });
+
+  it('does not CC additional emails for a lab member excluded by their own event filter', async () => {
+    (userServiceInstance.get as jest.Mock).mockResolvedValue({
+      UserId: 'owner-1',
+      Email: 'owner@example.com',
+      NotifyOnOwnRuns: false,
+    });
+    (LaboratoryUserService as jest.MockedClass<typeof LaboratoryUserService>).prototype.queryByLaboratoryId = jest
+      .fn()
+      .mockResolvedValue([
+        { UserId: 'member-2', NotifyOnLabRuns: true, NotifyOnLabRunsAdditionalEmails: ['team-distro@example.com'] },
+      ]);
+    (userServiceInstance.listUsers as jest.Mock).mockResolvedValue([
+      { UserId: 'member-2', Email: 'member2@example.com', NotificationEventFilter: 'failures_only' },
+    ]);
+
+    const service = new NotificationService();
+    const result = await service.notifyRunCompletion(run); // run.Status === 'COMPLETED'
+
+    expect(result.sent).toBe(0);
+    expect(sesServiceInstance.sendRunCompletionEmail).not.toHaveBeenCalled();
+  });
+
+  it('deduplicates a CC address that also happens to be another recipient own address', async () => {
+    (userServiceInstance.get as jest.Mock).mockResolvedValue({
+      UserId: 'owner-1',
+      Email: 'owner@example.com',
+      NotifyOnOwnRuns: true,
+    });
+    (LaboratoryUserService as jest.MockedClass<typeof LaboratoryUserService>).prototype.queryByLaboratoryId = jest
+      .fn()
+      .mockResolvedValue([
+        { UserId: 'member-2', NotifyOnLabRuns: true, NotifyOnLabRunsAdditionalEmails: ['owner@example.com'] },
+      ]);
+    (userServiceInstance.listUsers as jest.Mock).mockResolvedValue([
+      { UserId: 'member-2', Email: 'member2@example.com' },
+    ]);
+
+    const service = new NotificationService();
+    const result = await service.notifyRunCompletion(run);
+
+    expect(result.sent).toBe(2);
+    const calledAddresses = (sesServiceInstance.sendRunCompletionEmail as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(calledAddresses.sort()).toEqual(['member2@example.com', 'owner@example.com']);
+  });
 });

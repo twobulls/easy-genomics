@@ -42,28 +42,34 @@ export class NotificationService {
       return { sent: 0 };
     }
 
-    const recipients = new Map<string, User>();
+    const recipientEmails = new Set<string>();
 
     const owner: User = await userService.get(run.UserId);
     if (owner.NotifyOnOwnRuns && passesEventFilter(owner, run.Status)) {
-      recipients.set(owner.UserId, owner);
+      recipientEmails.add(owner.Email);
     }
 
     const labMembers: LaboratoryUser[] = await laboratoryUserService.queryByLaboratoryId(run.LaboratoryId);
-    const optedInMemberIds = labMembers.filter((m) => m.NotifyOnLabRuns).map((m) => m.UserId);
-    if (optedInMemberIds.length > 0) {
-      const members: User[] = await userService.listUsers(optedInMemberIds);
-      for (const member of members) {
-        if (!recipients.has(member.UserId) && passesEventFilter(member, run.Status)) {
-          recipients.set(member.UserId, member);
+    const optedInMembers = labMembers.filter((m) => m.NotifyOnLabRuns);
+    if (optedInMembers.length > 0) {
+      const members: User[] = await userService.listUsers(optedInMembers.map((m) => m.UserId));
+      const membersById = new Map(members.map((member) => [member.UserId, member]));
+      for (const labMember of optedInMembers) {
+        const member = membersById.get(labMember.UserId);
+        if (!member || !passesEventFilter(member, run.Status)) continue;
+        recipientEmails.add(member.Email);
+        // CC addresses ride on the owning member's own opt-in and event filter — they're
+        // not independently configurable, so no separate filter check applies to them.
+        for (const ccEmail of labMember.NotifyOnLabRunsAdditionalEmails ?? []) {
+          recipientEmails.add(ccEmail);
         }
       }
     }
 
     let sent = 0;
-    for (const recipient of recipients.values()) {
+    for (const email of recipientEmails) {
       try {
-        await sesService.sendRunCompletionEmail(recipient.Email, {
+        await sesService.sendRunCompletionEmail(email, {
           runName: run.RunName,
           status: run.Status,
           laboratoryName: laboratory.Name,
@@ -74,7 +80,7 @@ export class NotificationService {
         });
         sent++;
       } catch (err) {
-        console.error(`notifyRunCompletion: failed to email ${recipient.Email} for RunId=${run.RunId}:`, err);
+        console.error(`notifyRunCompletion: failed to email ${email} for RunId=${run.RunId}:`, err);
       }
     }
     return { sent };

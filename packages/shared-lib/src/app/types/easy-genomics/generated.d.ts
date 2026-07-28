@@ -1337,6 +1337,7 @@ export interface components {
       OrganizationId: string;
       Status: components["schemas"]["Status"];
       NotifyOnLabRuns?: boolean;
+      NotifyOnLabRunsAdditionalEmails?: string[];
       LabManager: boolean;
       LabTechnician: boolean;
       CreatedAt?: string;
@@ -1378,6 +1379,7 @@ export interface components {
     };
     UpdateLaboratoryUserNotificationPreferenceRequest: {
       NotifyOnLabRuns: boolean;
+      NotifyOnLabRunsAdditionalEmails?: string[];
     };
     CreateOrganizationRequest: {
       Name: string;

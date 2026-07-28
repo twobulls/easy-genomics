@@ -18,7 +18,14 @@ export const handler: Handler = async (
     const laboratoryId: string = event.pathParameters?.id || '';
     if (laboratoryId === '') throw new RequiredIdNotFoundError();
 
-    const currentUserId: string = event.requestContext.authorizer.claims['cognito:username'];
+    const claims = event.requestContext.authorizer.claims;
+    const cognitoUsername: string = claims['cognito:username'];
+    // LaboratoryUser rows are always keyed by the app's internal User.UserId (see
+    // add-laboratory-user.lambda.ts), which is exposed as the custom 'UserId' claim by
+    // process-pre-token-generation.lambda.ts. For normally-onboarded users this is the
+    // same value as 'cognito:username', but they can diverge (e.g. seeded test accounts),
+    // so the internal claim — not the raw Cognito username — is the correct lookup key.
+    const currentUserId: string = claims.UserId || cognitoUsername;
 
     const request: UpdateLaboratoryUserNotificationPreference = event.isBase64Encoded
       ? JSON.parse(atob(event.body!))
@@ -35,8 +42,12 @@ export const handler: Handler = async (
     const response: LaboratoryUser = await laboratoryUserService.update({
       ...existing,
       NotifyOnLabRuns: request.NotifyOnLabRuns,
+      // Omitted (not just empty-array) means "leave the existing list alone".
+      ...(request.NotifyOnLabRunsAdditionalEmails !== undefined
+        ? { NotifyOnLabRunsAdditionalEmails: request.NotifyOnLabRunsAdditionalEmails }
+        : {}),
       ModifiedAt: new Date().toISOString(),
-      ModifiedBy: currentUserId,
+      ModifiedBy: cognitoUsername,
     });
 
     return buildResponse(200, JSON.stringify(response), event);

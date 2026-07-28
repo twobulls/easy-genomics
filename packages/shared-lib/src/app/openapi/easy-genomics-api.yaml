@@ -2204,6 +2204,10 @@ components:
           $ref: '#/components/schemas/Status'
         NotifyOnLabRuns:
           type: boolean
+        NotifyOnLabRunsAdditionalEmails:
+          type: array
+          items:
+            type: string
         LabManager:
           type: boolean
         LabTechnician:
@@ -2304,6 +2308,12 @@ components:
       properties:
         NotifyOnLabRuns:
           type: boolean
+        NotifyOnLabRunsAdditionalEmails:
+          type: array
+          items:
+            type: string
+            format: email
+          maxItems: 10
       required:
         - NotifyOnLabRuns
       additionalProperties: false

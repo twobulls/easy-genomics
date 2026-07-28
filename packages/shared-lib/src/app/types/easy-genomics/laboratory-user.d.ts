@@ -31,4 +31,5 @@ export interface LaboratoryUser extends LaboratoryRoles, BaseAttributes {
   OrganizationId: string; // Global Secondary Index (String)
   Status: Status;
   NotifyOnLabRuns?: boolean;
+  NotifyOnLabRunsAdditionalEmails?: string[];
 }

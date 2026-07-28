@@ -10,8 +10,8 @@ jest.mock('../../../../src/app/services/omics-lab-factory');
 jest.mock('../../../../src/app/services/ssm-service');
 jest.mock('../../../../src/app/utils/rest-api-utils');
 
-import { captureRunCostOutcome } from '../../../../src/app/services/easy-genomics/run-cost-capture-service';
 import { LaboratoryService } from '../../../../src/app/services/easy-genomics/laboratory-service';
+import { captureRunCostOutcome } from '../../../../src/app/services/easy-genomics/run-cost-capture-service';
 import { createOmicsServiceForLab } from '../../../../src/app/services/omics-lab-factory';
 import { SsmService } from '../../../../src/app/services/ssm-service';
 import { getNextFlowApiQueryParameters, httpRequest } from '../../../../src/app/utils/rest-api-utils';

@@ -4,8 +4,8 @@ import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomic
 
 jest.mock('../../../../src/app/services/s3-service');
 
-import { S3Service } from '../../../../src/app/services/s3-service';
 import { buildRunInputProfile } from '../../../../src/app/services/easy-genomics/run-input-profile-service';
+import { S3Service } from '../../../../src/app/services/s3-service';
 
 describe('buildRunInputProfile', () => {
   const lab = {

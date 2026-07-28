@@ -2,13 +2,13 @@ process.env.NAME_PREFIX = 'unit-test';
 
 jest.mock('../../../../src/app/services/s3-service');
 
-import { S3Service } from '../../../../src/app/services/s3-service';
 import {
   bucketTagsIncludeDataType,
   isDataTaggedS3Bucket,
   isExcludedCatalogBucketName,
   listDataTaggedS3Buckets,
 } from '../../../../src/app/services/easy-genomics/s3-bucket-catalog-service';
+import { S3Service } from '../../../../src/app/services/s3-service';
 
 describe('s3-bucket-catalog-service', () => {
   let mockListBuckets: jest.Mock;

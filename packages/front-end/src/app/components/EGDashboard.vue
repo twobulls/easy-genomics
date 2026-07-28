@@ -275,35 +275,34 @@
     return `${hours.toFixed(1)}h`;
   });
 
-  const costExplorerEnabled = computed(
-    () => (useRuntimeConfig().public as { COST_EXPLORER_ENABLED?: boolean }).COST_EXPLORER_ENABLED === true,
-  );
+  const costExplorerEnabled = useCostExplorerEnabled();
 
-  /** Sum of Cost Explorer billed totals in the selected window (DynamoDB only). */
-  const totalBilledSpend = computed(() => {
-    const withBilled = filteredRunsForOverview.value.filter(
+  function runSpendUsd(r: {
+    BilledCost?: { TotalUsd?: number };
+    RunCostOutcome?: { ActualComputeCostUsd?: number };
+  }): number | undefined {
+    const billed = r.BilledCost?.TotalUsd;
+    if (typeof billed === 'number' && Number.isFinite(billed)) return billed;
+    const estimate = r.RunCostOutcome?.ActualComputeCostUsd;
+    if (typeof estimate === 'number' && Number.isFinite(estimate)) return estimate;
+    return undefined;
+  }
+
+  /** True unless every run that contributes a figure has BilledCost. */
+  const runSpendIsEstimateOnly = computed(() => {
+    const withAmount = filteredRunsForOverview.value.filter((r) => runSpendUsd(r) != null);
+    if (withAmount.length === 0) return true;
+    return !withAmount.every(
       (r) => typeof r.BilledCost?.TotalUsd === 'number' && Number.isFinite(r.BilledCost.TotalUsd),
     );
-    if (withBilled.length === 0) {
-      // Fall back to platform compute estimates when CE has not synced / is disabled.
-      const withEstimate = filteredRunsForOverview.value.filter(
-        (r) =>
-          typeof r.RunCostOutcome?.ActualComputeCostUsd === 'number' &&
-          Number.isFinite(r.RunCostOutcome.ActualComputeCostUsd),
-      );
-      if (withEstimate.length === 0) return '—';
-      const sum = withEstimate.reduce((s, r) => s + (r.RunCostOutcome?.ActualComputeCostUsd ?? 0), 0);
-      return `≈ US$${sum.toFixed(2)}`;
-    }
-    const sum = withBilled.reduce((s, r) => s + (r.BilledCost?.TotalUsd ?? 0), 0);
-    return `US$${sum.toFixed(2)}`;
   });
 
-  const runSpendIsEstimateOnly = computed(() => {
-    const withBilled = filteredRunsForOverview.value.some(
-      (r) => typeof r.BilledCost?.TotalUsd === 'number' && Number.isFinite(r.BilledCost.TotalUsd),
-    );
-    return !withBilled;
+  /** Per-run BilledCost ?? RunCostOutcome, so mixed CE sync windows do not under-count. */
+  const totalBilledSpend = computed(() => {
+    const amounts = filteredRunsForOverview.value.map(runSpendUsd).filter((n): n is number => n != null);
+    if (amounts.length === 0) return '—';
+    const sum = amounts.reduce((s, n) => s + n, 0);
+    return runSpendIsEstimateOnly.value ? `≈ US$${sum.toFixed(2)}` : `US$${sum.toFixed(2)}`;
   });
 
   const recentRuns = computed(() => {

@@ -38,6 +38,9 @@ async function streamToString(body: any): Promise<string> {
 /**
  * Build a RunInputProfile for cost estimation. Best-effort: missing sample sheet
  * or HeadObject failures yield zeros rather than throwing.
+ *
+ * sampleSheetS3Url is only read when its bucket matches laboratory.S3Bucket
+ * (same pin as inputFileKeys) to prevent cross-tenant S3 reads.
  */
 export async function buildRunInputProfile(params: {
   laboratory: Laboratory;
@@ -49,33 +52,37 @@ export async function buildRunInputProfile(params: {
   let SampleCount = 0;
   let InputBytesTotal = 0;
   const InputBytesByExtension: Record<string, number> = {};
+  const bucket = params.laboratory.S3Bucket;
 
   if (params.sampleSheetS3Url) {
     try {
       const parsed = parseS3Url(params.sampleSheetS3Url);
-      if (parsed) {
+      if (parsed && bucket && parsed.bucket === bucket) {
         const obj = await s3Service.getObject({ Bucket: parsed.bucket, Key: parsed.key });
         const csv = await streamToString(obj.Body);
         SampleCount = countSamplesInSampleSheetCsv(csv);
+      } else if (parsed && parsed.bucket !== bucket) {
+        console.warn(`Ignoring sampleSheetS3Url bucket=${parsed.bucket} (expected laboratory bucket=${bucket})`);
       }
     } catch (err) {
       console.warn('Failed to parse sample sheet for RunInputProfile (continuing):', err);
     }
   }
 
-  const bucket = params.laboratory.S3Bucket;
   if (bucket && keys.length > 0) {
-    for (const key of keys) {
-      try {
-        const head = await s3Service.headObject({ Bucket: bucket, Key: key });
-        const size = head.ContentLength ?? 0;
-        InputBytesTotal += size;
-        const ext = extensionOfKey(key);
-        if (ext) {
-          InputBytesByExtension[ext] = (InputBytesByExtension[ext] || 0) + size;
-        }
-      } catch (err) {
-        console.warn(`HeadObject failed for ${key} (continuing):`, err);
+    const heads = await Promise.allSettled(keys.map((key) => s3Service.headObject({ Bucket: bucket, Key: key })));
+    for (let i = 0; i < heads.length; i++) {
+      const result = heads[i];
+      const key = keys[i];
+      if (result.status !== 'fulfilled') {
+        console.warn(`HeadObject failed for ${key} (continuing):`, result.reason);
+        continue;
+      }
+      const size = result.value.ContentLength ?? 0;
+      InputBytesTotal += size;
+      const ext = extensionOfKey(key);
+      if (ext) {
+        InputBytesByExtension[ext] = (InputBytesByExtension[ext] || 0) + size;
       }
     }
   }

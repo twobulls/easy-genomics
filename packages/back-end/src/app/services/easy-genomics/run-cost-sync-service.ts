@@ -1,10 +1,7 @@
-import {
-  CostExplorerClient,
-  GetCostAndUsageCommand,
-  GetCostAndUsageCommandOutput,
-} from '@aws-sdk/client-cost-explorer';
+import { GetCostAndUsageCommandOutput } from '@aws-sdk/client-cost-explorer';
 import { BilledCost } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run-cost';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+import { CostExplorerService } from '@BE/services/cost-explorer-service';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 
 const laboratoryRunService = new LaboratoryRunService();
@@ -26,11 +23,10 @@ function formatCeDate(d: Date): string {
  * user-facing request paths.
  */
 export class RunCostSyncService {
-  private readonly ceClient: CostExplorerClient;
+  private readonly costExplorerService: CostExplorerService;
 
-  constructor(ceClient?: CostExplorerClient) {
-    // Cost Explorer API is global; endpoint is always us-east-1.
-    this.ceClient = ceClient ?? new CostExplorerClient({ region: 'us-east-1' });
+  constructor(costExplorerService?: CostExplorerService) {
+    this.costExplorerService = costExplorerService ?? new CostExplorerService();
   }
 
   public async syncRecentTerminalRuns(options?: {
@@ -69,7 +65,7 @@ export class RunCostSyncService {
       return { matched: 0, updated: 0, pages: 0 };
     }
 
-    const costsByRun = await this.fetchCostsGroupedByRunId(formatCeDate(start), formatCeDate(end));
+    const { costsByRun, pages } = await this.fetchCostsGroupedByRunId(formatCeDate(start), formatCeDate(end));
     let updated = 0;
     let matched = 0;
     const syncedAt = new Date().toISOString();
@@ -95,10 +91,13 @@ export class RunCostSyncService {
       updated++;
     }
 
-    return { matched, updated, pages: costsByRun.size > 0 ? 1 : 0 };
+    return { matched, updated, pages };
   }
 
-  private async fetchCostsGroupedByRunId(start: string, end: string): Promise<Map<string, Record<string, number>>> {
+  private async fetchCostsGroupedByRunId(
+    start: string,
+    end: string,
+  ): Promise<{ costsByRun: Map<string, Record<string, number>>; pages: number }> {
     const result = new Map<string, Record<string, number>>();
     let nextPageToken: string | undefined;
     let pages = 0;
@@ -108,24 +107,22 @@ export class RunCostSyncService {
       let attempt = 0;
       while (attempt < 5) {
         try {
-          response = await this.ceClient.send(
-            new GetCostAndUsageCommand({
-              TimePeriod: { Start: start, End: end },
-              Granularity: 'DAILY',
-              Metrics: ['UnblendedCost'],
-              GroupBy: [
-                { Type: 'TAG', Key: 'RunId' },
-                { Type: 'DIMENSION', Key: 'SERVICE' },
-              ],
-              Filter: {
-                Dimensions: {
-                  Key: 'SERVICE',
-                  Values: COST_SERVICES,
-                },
+          response = await this.costExplorerService.getCostAndUsage({
+            TimePeriod: { Start: start, End: end },
+            Granularity: 'DAILY',
+            Metrics: ['UnblendedCost'],
+            GroupBy: [
+              { Type: 'TAG', Key: 'RunId' },
+              { Type: 'DIMENSION', Key: 'SERVICE' },
+            ],
+            Filter: {
+              Dimensions: {
+                Key: 'SERVICE',
+                Values: COST_SERVICES,
               },
-              NextPageToken: nextPageToken,
-            }),
-          );
+            },
+            NextPageToken: nextPageToken,
+          });
           break;
         } catch (err: any) {
           if (err?.name === 'LimitExceededException' || err?.$metadata?.httpStatusCode === 429) {
@@ -159,7 +156,6 @@ export class RunCostSyncService {
       if (nextPageToken) await sleep(1000);
     } while (nextPageToken);
 
-    void pages;
-    return result;
+    return { costsByRun: result, pages };
   }
 }

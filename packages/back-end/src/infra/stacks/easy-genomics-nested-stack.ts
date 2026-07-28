@@ -1128,7 +1128,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
         ],
-        actions: ['dynamodb:PutItem', 'dynamodb:Query'],
+        // UpdateItem: best-effort RunInputProfile / PreRunCostEstimate attach after add().
+        actions: ['dynamodb:PutItem', 'dynamodb:Query', 'dynamodb:UpdateItem'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -1156,9 +1157,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         effect: Effect.ALLOW,
       }),
-      // Input profile: HeadObject sizes + sample sheet GetObject for cost estimation features.
+      // Input profile: HeadObject sizes + sample sheet GetObject for cost estimation.
+      // Scoped to the shared lab bucket (same naming as data-provisioning-nested-stack).
       new PolicyStatement({
-        resources: ['arn:aws:s3:::*', 'arn:aws:s3:::*/*'],
+        resources: [
+          `arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-bucket`,
+          `arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-bucket/*`,
+        ],
         actions: ['s3:GetObject', 's3:HeadObject', 's3:ListBucket'],
         effect: Effect.ALLOW,
       }),
@@ -1188,7 +1193,10 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: ['arn:aws:s3:::*', 'arn:aws:s3:::*/*'],
+        resources: [
+          `arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-bucket`,
+          `arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-bucket/*`,
+        ],
         actions: ['s3:GetObject', 's3:HeadObject', 's3:ListBucket'],
         effect: Effect.ALLOW,
       }),

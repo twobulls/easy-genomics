@@ -67,6 +67,12 @@ describe('run-cost-estimation', () => {
     expect(countSamplesInSampleSheetCsv('sample,fastq_1\ns1,a.fq\ns2,b.fq\n')).toBe(2);
   });
 
+  it('returns zero samples for empty or header-only CSV', () => {
+    expect(countSamplesInSampleSheetCsv('')).toBe(0);
+    expect(countSamplesInSampleSheetCsv('sample,fastq_1\n')).toBe(0);
+    expect(countSamplesInSampleSheetCsv('\n\n')).toBe(0);
+  });
+
   it('returns unavailable when fewer than 3 comparable runs', () => {
     const band = estimateComputeCostBand({ SampleCount: 10, InputBytesTotal: 1e9, ParameterHash: 'abc' }, [
       { ActualComputeCostUsd: 5, SampleCount: 10, InputBytesTotal: 1e9, ParameterHash: 'abc' },
@@ -74,6 +80,20 @@ describe('run-cost-estimation', () => {
     ]);
     expect(band.estimateAvailable).toBe(false);
     expect(band.confidence).toBe('NONE');
+  });
+
+  it('returns unavailable for empty candidates or zero sample/bytes profiles', () => {
+    expect(
+      estimateComputeCostBand({ SampleCount: 0, InputBytesTotal: 0, ParameterHash: 'abc' }, []).estimateAvailable,
+    ).toBe(false);
+
+    const band = estimateComputeCostBand({ SampleCount: 0, InputBytesTotal: 0, ParameterHash: 'abc' }, [
+      { ActualComputeCostUsd: 5, SampleCount: 0, InputBytesTotal: 0, ParameterHash: 'abc' },
+      { ActualComputeCostUsd: 6, SampleCount: 0, InputBytesTotal: 0, ParameterHash: 'abc' },
+      { ActualComputeCostUsd: 7, SampleCount: 0, InputBytesTotal: 0, ParameterHash: 'abc' },
+    ]);
+    // Zero inputs still produce a band when enough identical candidates exist (log-ratio floors at 1).
+    expect(band.comparableRunCount).toBe(3);
   });
 
   it('returns a p25-p75 band for similar historical runs', () => {

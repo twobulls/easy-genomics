@@ -22,32 +22,30 @@
     },
   );
 
-  const costExplorerEnabled = computed(
-    () => (useRuntimeConfig().public as { COST_EXPLORER_ENABLED?: boolean }).COST_EXPLORER_ENABLED === true,
-  );
+  const costExplorerEnabled = useCostExplorerEnabled();
 
-  const isPostRun = computed(() => !!props.labRun);
+  type CostSource = 'billed' | 'outcome' | 'preRun' | 'pending' | 'preLaunch';
+
+  /** Single billed → outcome → pre-run → pending priority cascade for post-run display. */
+  const costSource = computed<CostSource>(() => {
+    if (!props.labRun) return 'preLaunch';
+    if (props.labRun.BilledCost) return 'billed';
+    if (props.labRun.RunCostOutcome?.ActualComputeCostUsd != null) return 'outcome';
+    if (props.labRun.PreRunCostEstimate) return 'preRun';
+    return 'pending';
+  });
+
+  const isPostRun = computed(() => costSource.value !== 'preLaunch');
   const billed = computed(() => props.labRun?.BilledCost);
   const outcome = computed(() => props.labRun?.RunCostOutcome);
   const preRun = computed(() => props.labRun?.PreRunCostEstimate ?? null);
+  const isBilledPending = computed(() => costSource.value === 'pending');
 
-  /** True when post-run but no billed / platform / pre-run figure is available yet. */
-  const isBilledPending = computed(
-    () => isPostRun.value && !billed.value && outcome.value?.ActualComputeCostUsd == null && !preRun.value,
+  const rowLabel = computed(() => (costSource.value === 'billed' ? 'Billed cost' : 'Estimated cost'));
+  const chipLabel = computed(() => (costSource.value === 'billed' ? 'BILLED' : 'ESTIMATE'));
+  const chipClass = computed(() =>
+    costSource.value === 'billed' ? 'bg-green-100 text-green-800' : 'bg-primary-100 text-primary-700',
   );
-
-  const rowLabel = computed(() => {
-    if (!isPostRun.value) return 'Estimated cost';
-    if (billed.value) return 'Billed cost';
-    return 'Estimated cost';
-  });
-
-  const chipLabel = computed(() => {
-    if (billed.value) return 'BILLED';
-    return 'ESTIMATE';
-  });
-
-  const chipClass = computed(() => (billed.value ? 'bg-green-100 text-green-800' : 'bg-primary-100 text-primary-700'));
 
   function formatUsd(n: number | undefined): string {
     if (n == null || !Number.isFinite(n)) return '—';
@@ -56,26 +54,27 @@
 
   const amountText = computed(() => {
     if (props.loading) return 'Calculating estimate…';
-    if (isPostRun.value) {
-      if (billed.value) return `≈ ${formatUsd(billed.value.TotalUsd)}`;
-      if (outcome.value?.ActualComputeCostUsd != null) {
-        return `≈ ${formatUsd(outcome.value.ActualComputeCostUsd)}`;
-      }
-      if (preRun.value) {
-        return `${formatUsd(preRun.value.LowUsd)} – ${formatUsd(preRun.value.HighUsd)}`;
-      }
-      return costExplorerEnabled.value ? 'Billed cost pending' : 'Billed cost unavailable';
+    switch (costSource.value) {
+      case 'billed':
+        return `≈ ${formatUsd(billed.value?.TotalUsd)}`;
+      case 'outcome':
+        return `≈ ${formatUsd(outcome.value?.ActualComputeCostUsd)}`;
+      case 'preRun':
+        return `${formatUsd(preRun.value?.LowUsd)} – ${formatUsd(preRun.value?.HighUsd)}`;
+      case 'pending':
+        return costExplorerEnabled.value ? 'Billed cost pending' : 'Billed cost unavailable';
+      case 'preLaunch':
+      default:
+        if (!props.estimate) return '—';
+        if (!props.estimate.estimateAvailable || !props.estimate.computeCostUsd) {
+          return 'Cost estimate unavailable';
+        }
+        return `${formatUsd(props.estimate.computeCostUsd.low)} – ${formatUsd(props.estimate.computeCostUsd.high)}`;
     }
-    if (!props.estimate) return '—';
-    if (!props.estimate.estimateAvailable || !props.estimate.computeCostUsd) {
-      return 'Cost estimate unavailable';
-    }
-    const { low, high } = props.estimate.computeCostUsd;
-    return `${formatUsd(low)} – ${formatUsd(high)}`;
   });
 
   const tooltipTitle = computed(() => {
-    if (billed.value) return 'Billed cost from AWS Cost Explorer';
+    if (costSource.value === 'billed') return 'Billed cost from AWS Cost Explorer';
     if (isBilledPending.value) {
       return costExplorerEnabled.value ? 'Billed cost pending' : 'Billed cost unavailable';
     }
@@ -83,7 +82,7 @@
   });
 
   const tooltipBody = computed(() => {
-    if (billed.value) {
+    if (costSource.value === 'billed') {
       return 'Grouped by run tags. Pre-run estimate and platform compute estimate shown for comparison. Data may lag 24–48 hours.';
     }
     if (isBilledPending.value) {
@@ -91,7 +90,7 @@
         ? 'AWS Cost Explorer billed cost typically appears within 24–48 hours after the run completes. Check back later.'
         : 'Billed per-run AWS cost requires Cost Explorer (and cost allocation tags) to be enabled for this deployment. Platform and historical estimates are still available when there is run history.';
     }
-    if (isPostRun.value && outcome.value) {
+    if (costSource.value === 'outcome' && outcome.value) {
       return outcome.value.CostSource === 'SEQERA_PROGRESS'
         ? 'Seqera Tower compute estimate. Excludes storage, network, and head-job costs.'
         : 'Based on HealthOmics task instance usage. Excludes S3 and data transfer.';
@@ -104,11 +103,11 @@
 
   const breakdownLines = computed<{ label: string; value: string }[]>(() => {
     const lines: { label: string; value: string }[] = [];
-    if (billed.value?.ByService) {
+    if (costSource.value === 'billed' && billed.value?.ByService) {
       for (const [svc, amt] of Object.entries(billed.value.ByService)) {
         lines.push({ label: svc, value: `≈ ${formatUsd(amt)}` });
       }
-    } else if (outcome.value?.ActualComputeCostUsd != null) {
+    } else if (costSource.value === 'outcome' && outcome.value?.ActualComputeCostUsd != null) {
       lines.push({
         label: outcome.value.CostSource === 'SEQERA_PROGRESS' ? 'Compute (Seqera)' : 'Compute (HealthOmics)',
         value: `≈ ${formatUsd(outcome.value.ActualComputeCostUsd)}`,
@@ -119,12 +118,12 @@
           value: `≈ ${formatUsd(outcome.value.ActualStorageCostUsd)}`,
         });
       }
-    } else if (props.estimate?.computeCostUsd) {
+    } else if (costSource.value === 'preLaunch' && props.estimate?.computeCostUsd) {
       lines.push({
         label: 'Estimated compute',
         value: `${formatUsd(props.estimate.computeCostUsd.low)} – ${formatUsd(props.estimate.computeCostUsd.high)}`,
       });
-    } else if (preRun.value) {
+    } else if (costSource.value === 'preRun' && preRun.value) {
       lines.push({
         label: 'Pre-run estimate',
         value: `${formatUsd(preRun.value.LowUsd)} – ${formatUsd(preRun.value.HighUsd)}`,
@@ -142,7 +141,7 @@
         ? 'Billed amounts are synced daily from Cost Explorer once available.'
         : 'Enable Cost Explorer for this deployment to sync billed AWS charges.';
     }
-    if (isPostRun.value && !billed.value && !costExplorerEnabled.value) {
+    if (isPostRun.value && costSource.value !== 'billed' && !costExplorerEnabled.value) {
       return 'Billed AWS charges are not synced until Cost Explorer is enabled for this deployment.';
     }
     return 'Actual AWS charges may vary with runtime and retries.';

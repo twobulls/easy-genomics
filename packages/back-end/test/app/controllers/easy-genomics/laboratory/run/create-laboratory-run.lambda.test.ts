@@ -1,12 +1,25 @@
 import { APIGatewayProxyWithCognitoAuthorizerEvent, Context } from 'aws-lambda';
-import { handler } from '../../../../../../src/app/controllers/easy-genomics/laboratory/run/create-laboratory-run.lambda';
+
+const mockEstimate = jest.fn();
+const mockToPreRunCostEstimate = jest.fn();
+const mockBuildRunInputProfile = jest.fn();
 
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-run-service');
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-service');
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-data-tagging-service');
+jest.mock('../../../../../../src/app/services/easy-genomics/run-cost-estimation-service', () => ({
+  RunCostEstimationService: jest.fn().mockImplementation(() => ({
+    estimate: (...args: unknown[]) => mockEstimate(...args),
+    toPreRunCostEstimate: (...args: unknown[]) => mockToPreRunCostEstimate(...args),
+  })),
+}));
+jest.mock('../../../../../../src/app/services/easy-genomics/run-input-profile-service', () => ({
+  buildRunInputProfile: (...args: unknown[]) => mockBuildRunInputProfile(...args),
+}));
 jest.mock('../../../../../../src/app/services/sns-service');
 jest.mock('../../../../../../src/app/utils/auth-utils');
 
+import { handler } from '../../../../../../src/app/controllers/easy-genomics/laboratory/run/create-laboratory-run.lambda';
 import { LaboratoryRunService } from '../../../../../../src/app/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '../../../../../../src/app/services/easy-genomics/laboratory-service';
 import { SnsService } from '../../../../../../src/app/services/sns-service';
@@ -96,10 +109,26 @@ describe('create-laboratory-run.lambda', () => {
     mockValidateLabManager.mockReturnValue(false);
     mockValidateLabTechnician.mockReturnValue(false);
 
-    // wire instance methods as jest mocks
     mockLabService.prototype.queryByLaboratoryId = jest.fn();
     mockRunService.prototype.add = jest.fn();
+    mockRunService.prototype.update = jest.fn().mockImplementation(async (r) => r);
     mockSnsService.prototype.publish = jest.fn();
+    mockBuildRunInputProfile.mockResolvedValue({
+      SampleCount: 0,
+      InputFileCount: 0,
+      InputBytesTotal: 0,
+      ParameterHash: 'hash',
+    });
+    mockEstimate.mockResolvedValue({
+      estimateAvailable: false,
+      confidence: 'NONE',
+      comparableRunCount: 0,
+      currency: 'USD',
+      label: 'Estimated compute cost',
+      disclaimer: 'unavailable',
+      exclusions: [],
+    });
+    mockToPreRunCostEstimate.mockReturnValue(undefined);
 
     process.env.SNS_LABORATORY_RUN_UPDATE_TOPIC = 'arn:aws:sns:region:acct:lab-run-update';
   });
@@ -208,5 +237,83 @@ describe('create-laboratory-run.lambda', () => {
 
     expect(result.statusCode).toBe(403);
     expect(mockRunService.prototype.add).not.toHaveBeenCalled();
+  });
+
+  it('persists the run before attaching cost estimate, and still succeeds if estimate fails', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      LaboratoryId: LAB_ID,
+      S3Bucket: 'lab-bucket',
+    });
+
+    const added = {
+      ...baseRequest,
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      Owner: 'user@example.com',
+      Settings: JSON.stringify({ param: 'value' }),
+      CreatedBy: 'user-1',
+    };
+    (mockRunService.prototype.add as jest.Mock).mockResolvedValue(added);
+    mockBuildRunInputProfile.mockRejectedValue(new Error('S3 timeout'));
+
+    const result = await handler(createEvent(baseRequest), createContext(), () => {});
+
+    expect(result.statusCode).toBe(200);
+    expect(mockRunService.prototype.add).toHaveBeenCalled();
+    expect(mockRunService.prototype.add).toHaveBeenCalledWith(
+      expect.not.objectContaining({ PreRunCostEstimate: expect.anything() }),
+    );
+  });
+
+  it('updates the run with RunInputProfile and PreRunCostEstimate after add', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      LaboratoryId: LAB_ID,
+      S3Bucket: 'lab-bucket',
+    });
+
+    const added = {
+      ...baseRequest,
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      Owner: 'user@example.com',
+      Settings: JSON.stringify({ param: 'value' }),
+      CreatedBy: 'user-1',
+    };
+    (mockRunService.prototype.add as jest.Mock).mockResolvedValue(added);
+    mockBuildRunInputProfile.mockResolvedValue({
+      SampleCount: 3,
+      InputFileCount: 2,
+      InputBytesTotal: 999,
+      ParameterHash: 'abc',
+    });
+    mockEstimate.mockResolvedValue({
+      estimateAvailable: true,
+      confidence: 'HIGH',
+      comparableRunCount: 8,
+      computeCostUsd: { low: 1, median: 2, high: 3 },
+      currency: 'USD',
+      label: 'Estimated compute cost',
+      disclaimer: 'd',
+      exclusions: [],
+    });
+    mockToPreRunCostEstimate.mockReturnValue({
+      LowUsd: 1,
+      HighUsd: 3,
+      MedianUsd: 2,
+      Confidence: 'HIGH',
+      ComparableRunCount: 8,
+      EstimatedAt: '2026-01-01T00:00:00Z',
+      Exclusions: [],
+    });
+
+    const result = await handler(createEvent(baseRequest), createContext(), () => {});
+
+    expect(result.statusCode).toBe(200);
+    expect(mockRunService.prototype.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        RunInputProfile: expect.objectContaining({ SampleCount: 3 }),
+        PreRunCostEstimate: expect.objectContaining({ MedianUsd: 2 }),
+      }),
+    );
   });
 });

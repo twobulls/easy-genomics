@@ -38,6 +38,46 @@ const dataTaggingService = new LaboratoryDataTaggingService();
 const runCostEstimationService = new RunCostEstimationService();
 const snsService = new SnsService();
 
+/**
+ * Best-effort input profile + pre-run estimate. Runs after laboratoryRunService.add()
+ * so a timeout here cannot leave an externally-submitted run untracked.
+ */
+async function attachPreRunCostEstimate(
+  laboratory: Laboratory,
+  laboratoryRun: LaboratoryRun,
+  request: AddLaboratoryRun,
+): Promise<LaboratoryRun> {
+  try {
+    const runInputProfile = await buildRunInputProfile({
+      laboratory,
+      inputFileKeys: request.InputFileKeys,
+      sampleSheetS3Url: request.SampleSheetS3Url,
+      settings: request.Settings,
+    });
+    const estimate = await runCostEstimationService.estimate(laboratory, {
+      platform: request.Platform,
+      workflowExternalId: request.WorkflowExternalId || '',
+      workflowVersionName: request.WorkflowVersionName,
+      inputFileKeys: request.InputFileKeys,
+      sampleSheetS3Url: request.SampleSheetS3Url,
+      settings: request.Settings,
+      sampleCount: runInputProfile.SampleCount,
+      inputBytesTotal: runInputProfile.InputBytesTotal,
+    });
+    const preRunCostEstimate = runCostEstimationService.toPreRunCostEstimate(estimate);
+    return await laboratoryRunService.update({
+      ...laboratoryRun,
+      RunInputProfile: runInputProfile,
+      ...(preRunCostEstimate ? { PreRunCostEstimate: preRunCostEstimate } : {}),
+      ModifiedAt: new Date().toISOString(),
+      ModifiedBy: laboratoryRun.CreatedBy || 'system',
+    });
+  } catch (err) {
+    console.warn('Failed to attach RunInputProfile / PreRunCostEstimate (continuing):', err);
+    return laboratoryRun;
+  }
+}
+
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
 ): Promise<APIGatewayProxyResult> => {
@@ -77,32 +117,9 @@ export const handler: Handler = async (
         ? calculateExpiresAtEpochSeconds(createdAt, retentionMonths)
         : undefined;
 
-    // Best-effort input profile + pre-run estimate for historical cost calibration.
-    let runInputProfile;
-    let preRunCostEstimate;
-    try {
-      runInputProfile = await buildRunInputProfile({
-        laboratory,
-        inputFileKeys: request.InputFileKeys,
-        sampleSheetS3Url: request.SampleSheetS3Url,
-        settings: request.Settings,
-      });
-      const estimate = await runCostEstimationService.estimate(laboratory, {
-        platform: request.Platform,
-        workflowExternalId: request.WorkflowExternalId || '',
-        workflowVersionName: request.WorkflowVersionName,
-        inputFileKeys: request.InputFileKeys,
-        sampleSheetS3Url: request.SampleSheetS3Url,
-        settings: request.Settings,
-        sampleCount: runInputProfile.SampleCount,
-        inputBytesTotal: runInputProfile.InputBytesTotal,
-      });
-      preRunCostEstimate = runCostEstimationService.toPreRunCostEstimate(estimate);
-    } catch (err) {
-      console.warn('Failed to build RunInputProfile / PreRunCostEstimate (continuing):', err);
-    }
-
-    const laboratoryRun: LaboratoryRun = await laboratoryRunService.add(<LaboratoryRun>{
+    // Persist the run first so an external platform submission is never left untracked
+    // if subsequent best-effort cost estimation times out.
+    let laboratoryRun: LaboratoryRun = await laboratoryRunService.add(<LaboratoryRun>{
       LaboratoryId: laboratory.LaboratoryId,
       RunId: request.RunId,
       UserId: currentUserId,
@@ -125,9 +142,9 @@ export const handler: Handler = async (
       CreatedBy: currentUserId,
       ...(isTerminalAtCreate ? { TerminalAt: createdAt.toISOString() } : {}),
       ...(laboratorioRunExpiresAt !== undefined ? { ExpiresAt: laboratorioRunExpiresAt } : {}),
-      ...(runInputProfile ? { RunInputProfile: runInputProfile } : {}),
-      ...(preRunCostEstimate ? { PreRunCostEstimate: preRunCostEstimate } : {}),
     });
+
+    laboratoryRun = await attachPreRunCostEstimate(laboratory, laboratoryRun, request);
 
     // Best-effort: associate input files with a workflow tag and record this run's usage
     // history per file so the data tagging page can show "files used by workflow X" and

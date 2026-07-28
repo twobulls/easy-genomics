@@ -55,10 +55,13 @@ export class RunCostEstimationService {
     }
 
     const since = new Date(Date.now() - 180 * 24 * 3600 * 1000).toISOString();
+    // Bound history fetch: estimator only keeps top-k (~10) nearest neighbors.
+    const HISTORY_QUERY_LIMIT = 200;
     let historical: LaboratoryRun[];
     try {
       historical = await this.laboratoryRunService.queryByWorkflowExternalId(request.workflowExternalId, {
         sinceTerminalAt: since,
+        limit: HISTORY_QUERY_LIMIT,
       });
     } catch (err) {
       // GSI may not exist yet in older stacks; fall back to empty history.

@@ -15,6 +15,10 @@ import {
   CreateLaboratorySchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
+import {
+  DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
+  DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
+} from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryS3AccessService } from '@BE/services/easy-genomics/laboratory-s3-access-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
@@ -87,6 +91,10 @@ export const handler: Handler = async (
         NextFlowTowerEnabled: request.NextFlowTowerEnabled ?? organization.NextFlowTowerEnabled ?? false,
         NextFlowTowerApiBaseUrl: request.NextFlowTowerApiBaseUrl,
         NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
+        RunListStatusPollIntervalSeconds:
+          request.RunListStatusPollIntervalSeconds ?? DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
+        RunDetailProgressPollIntervalSeconds:
+          request.RunDetailProgressPollIntervalSeconds ?? DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
         HealthOmicsLlmProvider: request.HealthOmicsLlmProvider,
         HealthOmicsLlmModelId: request.HealthOmicsLlmModelId,
         SeqeraLlmProvider: request.SeqeraLlmProvider,

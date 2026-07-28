@@ -1616,6 +1616,14 @@ components:
         RunRetentionMonths:
           type: integer
           minimum: 0
+        RunListStatusPollIntervalSeconds:
+          type: integer
+          minimum: 30
+          maximum: 1800
+        RunDetailProgressPollIntervalSeconds:
+          type: integer
+          minimum: 10
+          maximum: 300
         EnableNewWorkflowsByDefault:
           type: boolean
         EnableNewBucketsByDefault:
@@ -1707,6 +1715,12 @@ components:
           description: |-
             Laboratory-wide run retention policy, in months, applied after a run reaches a terminal state.
             - 0 means "never delete run records" (no TTL expiration).
+          type: number
+        RunListStatusPollIntervalSeconds:
+          description: Polling interval, in seconds, for the lab runs list status refresh.
+          type: number
+        RunDetailProgressPollIntervalSeconds:
+          description: Polling interval, in seconds, for the run detail page progress refresh.
           type: number
         HealthOmicsLlmProvider:
           description: |-
@@ -1808,6 +1822,10 @@ components:
         AwsHealthOmicsVpcConfigurationName:
           type: string
         RunRetentionMonths:
+          type: number
+        RunListStatusPollIntervalSeconds:
+          type: number
+        RunDetailProgressPollIntervalSeconds:
           type: number
         EnableNewWorkflowsByDefault:
           type: boolean
@@ -2485,6 +2503,14 @@ components:
         RunRetentionMonths:
           type: integer
           minimum: 0
+        RunListStatusPollIntervalSeconds:
+          type: integer
+          minimum: 30
+          maximum: 1800
+        RunDetailProgressPollIntervalSeconds:
+          type: integer
+          minimum: 10
+          maximum: 300
         EnableNewWorkflowsByDefault:
           type: boolean
         EnableNewBucketsByDefault:

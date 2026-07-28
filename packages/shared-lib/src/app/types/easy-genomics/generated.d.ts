@@ -1075,6 +1075,8 @@ export interface components {
       AwsHealthOmicsNetworkingMode?: "RESTRICTED" | "VPC";
       AwsHealthOmicsVpcConfigurationName?: string;
       RunRetentionMonths?: number;
+      RunListStatusPollIntervalSeconds?: number;
+      RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
       EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */
@@ -1128,6 +1130,10 @@ export interface components {
        * - 0 means "never delete run records" (no TTL expiration).
        */
       RunRetentionMonths?: number;
+      /** @description Polling interval, in seconds, for the lab runs list status refresh. */
+      RunListStatusPollIntervalSeconds?: number;
+      /** @description Polling interval, in seconds, for the run detail page progress refresh. */
+      RunDetailProgressPollIntervalSeconds?: number;
       /**
        * @description BYOK LLM provider selection per integration. Each lab can pick a different
        * provider/model/key for HealthOmics vs Seqera. Setting a provider IS the
@@ -1187,6 +1193,8 @@ export interface components {
       AwsHealthOmicsNetworkingMode?: "RESTRICTED" | "VPC";
       AwsHealthOmicsVpcConfigurationName?: string;
       RunRetentionMonths?: number;
+      RunListStatusPollIntervalSeconds?: number;
+      RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
       EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */
@@ -1506,6 +1514,8 @@ export interface components {
       AwsHealthOmicsNetworkingMode?: "RESTRICTED" | "VPC";
       AwsHealthOmicsVpcConfigurationName?: string;
       RunRetentionMonths?: number;
+      RunListStatusPollIntervalSeconds?: number;
+      RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
       EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */

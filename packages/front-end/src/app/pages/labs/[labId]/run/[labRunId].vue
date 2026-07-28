@@ -5,6 +5,7 @@
     WorkflowProgressResponse,
     Workflow,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+  import { getRunDetailProgressPollIntervalMs } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
   import { ReadRunTasks } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
   import { TaskListItem, GetRunResponse } from '@aws-sdk/client-omics';
   import { useLabsStore, useRunStore, useUiStore } from '@FE/stores';
@@ -12,7 +13,6 @@
   import { v4 as uuidv4 } from 'uuid';
 
   const TERMINAL_STATUSES = new Set(['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED']);
-  const DETAIL_PROGRESS_POLL_MS = 30 * 1000;
 
   const $route = useRoute();
   const $router = useRouter();
@@ -28,6 +28,9 @@
   const labRunId = $route.params.labRunId as string;
 
   const lab = computed<Laboratory | null>(() => labsStore.labs[labId] ?? null);
+  const detailProgressPollIntervalMs = computed<number>(() =>
+    getRunDetailProgressPollIntervalMs(lab.value?.RunDetailProgressPollIntervalSeconds),
+  );
   const labRun = computed<LaboratoryRun | null>(() => runStore.labRuns[labRunId] ?? null);
   // Prefer OutputS3Url as the authoritative reference for the File Manager root when available (supports custom output dirs).
   // Fall back to InputS3Url for legacy runs where OutputS3Url was not set.
@@ -99,6 +102,9 @@
     if (await ensureLabInActiveOrg({ labId, forceReload: true })) {
       return;
     }
+    if (!labsStore.labs[labId]) {
+      await labsStore.loadLab(labId);
+    }
     await fetchLabRuns();
     progressPollActive = true;
     scheduleProgressPoll();
@@ -142,8 +148,13 @@
           scheduleProgressPoll();
         }
       }
-    }, DETAIL_PROGRESS_POLL_MS);
+    }, detailProgressPollIntervalMs.value);
   }
+
+  watch(detailProgressPollIntervalMs, (next, prev) => {
+    if (!progressPollActive || next === prev) return;
+    scheduleProgressPoll();
+  });
 
   async function fetchTaskProgress(options: { silent?: boolean } = {}) {
     const run = runStore.labRuns[labRunId];

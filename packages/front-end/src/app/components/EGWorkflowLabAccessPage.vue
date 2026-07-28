@@ -194,6 +194,8 @@
       NextFlowTowerApiBaseUrl: lab.NextFlowTowerApiBaseUrl,
       NextFlowTowerWorkspaceId: lab.NextFlowTowerWorkspaceId,
       RunRetentionMonths: lab.RunRetentionMonths,
+      RunListStatusPollIntervalSeconds: lab.RunListStatusPollIntervalSeconds,
+      RunDetailProgressPollIntervalSeconds: lab.RunDetailProgressPollIntervalSeconds,
       EnableNewWorkflowsByDefault: pendingEnableNewByDefault.value[lab.LaboratoryId],
     };
   }

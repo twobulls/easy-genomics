@@ -1329,22 +1329,26 @@
       >
         <!-- Lab-wide kill switch: part of the main Save Changes flow -->
         <EGFormGroup
-          label="Enable run notifications"
           name="NotificationsEnabled"
           eager-validation
           hint="Turns run notification emails on or off for this lab. Individual users still choose which runs they're emailed about below."
-          class="flex items-center justify-between"
         >
-          <label :id="notificationsToggleLabelId" :for="`${notificationsToggleLabelId}-input`" class="sr-only">
-            Enable run notifications
-          </label>
-          <UToggle
-            :id="`${notificationsToggleLabelId}-input`"
-            class="ml-2"
-            v-model="state.NotificationsEnabled"
-            :disabled="!isEditing || isSubmittingFormData"
-            :aria-labelledby="notificationsToggleLabelId"
-          />
+          <div class="flex items-center justify-between">
+            <label
+              :id="notificationsToggleLabelId"
+              :for="`${notificationsToggleLabelId}-input`"
+              class="text-sm text-black"
+            >
+              Enable run notifications
+            </label>
+            <UToggle
+              :id="`${notificationsToggleLabelId}-input`"
+              class="ml-2"
+              v-model="state.NotificationsEnabled"
+              :disabled="!isEditing || isSubmittingFormData"
+              :aria-labelledby="notificationsToggleLabelId"
+            />
+          </div>
         </EGFormGroup>
 
         <USkeleton v-if="isLoadingNotificationPrefs" class="mt-4 h-24 w-full" aria-hidden="true" />

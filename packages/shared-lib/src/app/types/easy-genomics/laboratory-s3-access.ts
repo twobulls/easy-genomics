@@ -3,8 +3,9 @@
  * Partition key: LaboratoryId; sort key: BucketName.
  *
  * Semantics depend on Laboratory.EnableNewBucketsByDefault:
- * - false (strict): only ALLOW rows grant access.
- * - true: DENY rows block access; no row = implicit allow (incl. new data buckets).
+ * - false/undefined (strict): only ALLOW rows grant access. If the lab has zero
+ *   access rows (pre-seed), Laboratory.S3Bucket is treated as allowed.
+ * - true: DENY rows block access; no row = implicit allow for catalog (data-tagged) buckets.
  */
 export const LABORATORY_S3_ACCESS_EFFECTS = ['ALLOW', 'DENY'] as const;
 export type LaboratoryS3AccessEffect = (typeof LABORATORY_S3_ACCESS_EFFECTS)[number];

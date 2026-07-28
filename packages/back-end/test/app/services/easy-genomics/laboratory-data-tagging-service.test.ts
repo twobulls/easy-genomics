@@ -1,11 +1,17 @@
 process.env.NAME_PREFIX = 'unit-test';
 
 const mockListByLaboratoryId = jest.fn();
+const mockIsDataTaggedS3Bucket = jest.fn();
 
 jest.mock('../../../../src/app/services/easy-genomics/laboratory-s3-access-service', () => ({
   LaboratoryS3AccessService: jest.fn().mockImplementation(() => ({
     listByLaboratoryId: mockListByLaboratoryId,
   })),
+}));
+
+jest.mock('../../../../src/app/services/easy-genomics/s3-bucket-catalog-service', () => ({
+  isDataTaggedS3Bucket: (...args: unknown[]) => mockIsDataTaggedS3Bucket(...args),
+  listDataTaggedS3Buckets: jest.fn(),
 }));
 
 import { ConditionalCheckFailedException, type AttributeValue } from '@aws-sdk/client-dynamodb';
@@ -27,6 +33,11 @@ function labFixture(overrides?: Partial<Laboratory>): Laboratory {
 }
 
 describe('LaboratoryDataTaggingService helpers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockIsDataTaggedS3Bucket.mockResolvedValue(true);
+  });
+
   it('round-trips S3 refs via base64url encoding', () => {
     const ref = encodeS3ObjectRef('b', 'org-1/lab-1/a/b.txt');
     expect(decodeS3ObjectRef(ref)).toEqual({ bucket: 'b', key: 'org-1/lab-1/a/b.txt' });

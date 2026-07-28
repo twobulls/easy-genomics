@@ -187,11 +187,6 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
     await assertLabS3Access(laboratory, bucket, s3AccessService);
   }
 
-  /** @deprecated Use assertLaboratoryHasS3BucketAccess */
-  public async assertBucketMatchesLab(laboratory: Laboratory, bucket: string): Promise<void> {
-    await this.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
-  }
-
   public async listTags(laboratoryId: string): Promise<ListLaboratoryDataTagsResponse> {
     const tags: LaboratoryDataTag[] = [];
     let startKey: Record<string, unknown> | undefined;
@@ -845,7 +840,7 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
 
   /**
    * Idempotently associate a set of input file keys with a workflow tag. The keys must lie under
-   * the laboratory prefix; bucket validation is performed by the caller via `assertBucketMatchesLab`.
+   * the laboratory prefix; bucket validation is performed by the caller via `assertLaboratoryHasS3BucketAccess`.
    * Re-applying the same workflow tag to a file is a no-op (no FileCount drift, no duplicate MAP rows).
    *
    * Uses an atomic DynamoDB `UpdateItem` (list_append + NOT contains) so concurrent launches cannot

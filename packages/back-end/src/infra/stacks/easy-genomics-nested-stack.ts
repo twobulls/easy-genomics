@@ -348,7 +348,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         // every lab's FILE# rows, deletes the underlying S3 object + tagging-table rows for
         // files whose last referencing run has TTL'd out, and skips anything tagged Permanent.
         // Only `DRY_RUN=false` enables real deletes (unset or any other value stays dry-run).
-        // Runtime `assertBucketMatchesLab` / `assertKeyUnderLabPrefix` bound blast radius; IAM
+        // Runtime `assertLaboratoryHasS3BucketAccess` / `assertKeyUnderLabPrefix` bound blast radius; IAM
         // still uses `s3://*/*` because lab buckets are provisioned per org at data-setup time.
         '/easy-genomics/data-collections/process-expired-laboratory-data': {
           timeoutSeconds: 900,

@@ -5,6 +5,29 @@ import { S3Service } from '../s3-service';
 
 const s3Service = new S3Service();
 
+const DATA_BUCKET_TAG_KEY = 'easy-genomics:s3-bucket-type';
+const DATA_BUCKET_TAG_VALUE = 'data';
+
+export function isExcludedCatalogBucketName(bucketName: string): boolean {
+  return bucketName.startsWith('cdk') || bucketName.startsWith('amplify');
+}
+
+export function bucketTagsIncludeDataType(tagSet: Tag[] | undefined): boolean {
+  return !!tagSet?.find((t: Tag) => t.Key === DATA_BUCKET_TAG_KEY && t.Value === DATA_BUCKET_TAG_VALUE);
+}
+
+/**
+ * True when `bucketName` is a data-tagged S3 bucket (same filter as the catalog).
+ * Uses a single GetBucketTagging call — preferred on hot assert paths.
+ */
+export async function isDataTaggedS3Bucket(bucketName: string): Promise<boolean> {
+  if (!bucketName || isExcludedCatalogBucketName(bucketName)) {
+    return false;
+  }
+  const tagging: GetBucketTaggingCommandOutput | undefined = await s3Service.getBucketTagging({ Bucket: bucketName });
+  return bucketTagsIncludeDataType(tagging?.TagSet);
+}
+
 /**
  * Lists data-tagged S3 buckets (same filter as list-buckets.lambda).
  */
@@ -15,7 +38,7 @@ export async function listDataTaggedS3Buckets(): Promise<S3BucketCatalogEntry[]>
   }
 
   const buckets: Bucket[] = response.Buckets.filter(
-    (bucket: Bucket) => !bucket.Name?.startsWith('cdk') && !bucket.Name?.startsWith('amplify'),
+    (bucket: Bucket) => bucket.Name && !isExcludedCatalogBucketName(bucket.Name),
   );
 
   const bucketTags: Awaited<GetBucketTaggingCommandOutput>[] = await Promise.all(
@@ -24,11 +47,8 @@ export async function listDataTaggedS3Buckets(): Promise<S3BucketCatalogEntry[]>
 
   const filteredBuckets: S3Bucket[] = [];
   bucketTags.forEach((bucketTag: GetBucketTaggingCommandOutput | undefined, index: number) => {
-    if (bucketTag) {
-      const ts: Tag[] | undefined = bucketTag.TagSet;
-      if (ts && ts.find((t: Tag) => t.Key === 'easy-genomics:s3-bucket-type' && t.Value === 'data')) {
-        filteredBuckets.push(<S3Bucket>{ Name: buckets[index].Name });
-      }
+    if (bucketTag && bucketTagsIncludeDataType(bucketTag.TagSet)) {
+      filteredBuckets.push(<S3Bucket>{ Name: buckets[index].Name });
     }
   });
 

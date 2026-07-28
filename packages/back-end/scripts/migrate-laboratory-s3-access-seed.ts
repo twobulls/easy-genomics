@@ -1,20 +1,56 @@
 /**
  * One-time idempotent migration: seed ALLOW rows for each laboratory's current S3Bucket.
  *
+ * Wired into `pnpm run deploy` (runs after CDK so the access table exists). Safe to re-run.
+ * Runtime fallback in `isS3BucketAccessAllowed` also covers unmigrated labs that still have
+ * a configured S3Bucket and zero access rows.
+ *
  * Usage (from packages/back-end):
+ *   pnpm run migrate-laboratory-s3-access-seed
  *   NAME_PREFIX=<prefix> AWS_REGION=<region> npx tsx scripts/migrate-laboratory-s3-access-seed.ts
  */
 import { ScanCommandOutput } from '@aws-sdk/client-dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { join } from 'path';
+import type { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
+import {
+  getStackEnvName,
+  loadConfigurations,
+  resolveConfiguration,
+} from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import { LaboratoryS3AccessService } from '../src/app/services/easy-genomics/laboratory-s3-access-service';
 import { DynamoDBService } from '../src/app/services/dynamodb-service';
+import { shouldSeedAllowForLaboratory } from './lib/migrate-laboratory-s3-access-seed-lib';
 
-const namePrefix = process.env.NAME_PREFIX;
-if (!namePrefix) {
-  console.error('NAME_PREFIX environment variable is required');
-  process.exit(1);
+function resolveNamePrefix(): string {
+  if (process.env.NAME_PREFIX) {
+    return process.env.NAME_PREFIX;
+  }
+
+  if (process.env.CI_CD === 'true') {
+    const envName = process.env.ENV_NAME;
+    const envType = process.env.ENV_TYPE;
+    if (!envName || !envType) {
+      throw new Error('CI_CD=true but ENV_NAME / ENV_TYPE are not set (needed to derive NAME_PREFIX).');
+    }
+    return `${envType}-${envName}`;
+  }
+
+  const configPath = join(__dirname, '../../../config/easy-genomics.yaml');
+  const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(configPath);
+  const configuration = resolveConfiguration(configurations, getStackEnvName() ?? process.env.ENV_NAME);
+  const envName = Object.keys(configuration)[0];
+  const settings = Object.values(configuration)[0];
+  const envType = settings['env-type'];
+  if (!envName || !envType) {
+    throw new Error('env-name / env-type missing from easy-genomics.yaml (needed to derive NAME_PREFIX).');
+  }
+  return `${envType}-${envName}`;
 }
+
+const namePrefix = resolveNamePrefix();
+process.env.NAME_PREFIX = namePrefix;
 
 class LaboratoryScanService extends DynamoDBService {
   readonly TABLE_NAME = `${namePrefix}-laboratory-table`;
@@ -37,29 +73,38 @@ class LaboratoryScanService extends DynamoDBService {
 }
 
 async function main(): Promise<void> {
+  console.log(`Seeding laboratory S3 access for NAME_PREFIX=${namePrefix}`);
+
   const scanService = new LaboratoryScanService();
   const accessService = new LaboratoryS3AccessService();
-  const laboratories = await scanService.scanAll();
+
+  let laboratories: Laboratory[];
+  try {
+    laboratories = await scanService.scanAll();
+  } catch (err: any) {
+    // Fresh/greenfield deploy: laboratory table may not exist yet.
+    if (err?.name === 'ResourceNotFoundException' || err?.__type?.includes('ResourceNotFoundException')) {
+      console.log('Laboratory table not found; nothing to seed.');
+      return;
+    }
+    throw err;
+  }
 
   let seeded = 0;
   let skipped = 0;
 
   for (const lab of laboratories) {
     const bucket = lab.S3Bucket?.trim();
-    if (!bucket) {
-      skipped++;
-      continue;
-    }
+    const existing = bucket ? await accessService.findAssignment(lab.LaboratoryId, bucket) : undefined;
 
-    const existing = await accessService.findAssignment(lab.LaboratoryId, bucket);
-    if (existing && existing.Effect !== 'DENY') {
+    if (!shouldSeedAllowForLaboratory({ configuredBucket: lab.S3Bucket, existing })) {
       skipped++;
       continue;
     }
 
     await accessService.upsert({
       LaboratoryId: lab.LaboratoryId,
-      BucketName: bucket,
+      BucketName: bucket!,
       OrganizationId: lab.OrganizationId,
       Effect: 'ALLOW',
     });

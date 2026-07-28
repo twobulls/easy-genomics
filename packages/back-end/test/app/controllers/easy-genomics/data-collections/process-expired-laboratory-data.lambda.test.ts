@@ -21,6 +21,11 @@ jest.mock('../../../../../src/app/services/easy-genomics/laboratory-s3-access-se
   })),
 }));
 
+jest.mock('../../../../../src/app/services/easy-genomics/s3-bucket-catalog-service', () => ({
+  isDataTaggedS3Bucket: jest.fn().mockResolvedValue(true),
+  listDataTaggedS3Buckets: jest.fn().mockResolvedValue([{ name: 'my-bucket' }]),
+}));
+
 jest.mock('../../../../../src/app/services/easy-genomics/laboratory-data-tagging-service', () => {
   const actual = jest.requireActual('../../../../../src/app/services/easy-genomics/laboratory-data-tagging-service');
   const proto = actual.LaboratoryDataTaggingService.prototype as {

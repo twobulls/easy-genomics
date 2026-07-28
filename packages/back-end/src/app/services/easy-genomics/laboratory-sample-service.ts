@@ -78,10 +78,6 @@ export class LaboratorySampleService extends DynamoDBService {
     this.taggingService.assertKeyUnderLabPrefix(laboratory, key);
   }
 
-  public async assertBucketMatchesLab(laboratory: Laboratory, bucket: string): Promise<void> {
-    await this.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
-  }
-
   public async assertLaboratoryHasS3BucketAccess(laboratory: Laboratory, bucket: string): Promise<void> {
     await this.taggingService.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
   }

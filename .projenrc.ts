@@ -444,6 +444,10 @@ backEndApp.addScripts({
   // See `scripts/preflight-deletion-protection.ts` and
   // `docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md`.
   ['preflight-deletion-protection']: 'tsx scripts/preflight-deletion-protection.ts',
+  // Idempotent seed of ALLOW rows for each lab's configured S3Bucket. Runs AFTER
+  // `cdk deploy` so the laboratory-s3-access-table exists. Complements the runtime
+  // fallback in `isS3BucketAccessAllowed` for unmigrated labs.
+  ['migrate-laboratory-s3-access-seed']: 'tsx scripts/migrate-laboratory-s3-access-seed.ts',
   // NOTE: `--all` is required now that the back-end synthesizes multiple
   // top-level stacks (`*-main-back-end-stack`, `*-easy-genomics-api-stack`,
   // and optionally `*-api-domain-stack`). Without it, `cdk deploy` refuses to
@@ -456,8 +460,11 @@ backEndApp.addScripts({
   // of synthesizing again (~5 min per synth for this app). Deploy therefore requires a
   // prior `build` — every flow already guarantees that (nx deploy dependsOn build; the
   // build-and-deploy scripts chain build first).
+  //
+  // After stacks deploy, seed laboratory S3 access rows so existing labs are not
+  // locked out by the new assert gates (runtime fallback covers the brief window).
   ['deploy']:
-    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices',
+    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices && pnpm run migrate-laboratory-s3-access-seed',
   ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy --require-approval any-change', // Run root build-back-end script to inc shared-lib
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
   ['local-server']: 'tsx src/local-server/index.ts',

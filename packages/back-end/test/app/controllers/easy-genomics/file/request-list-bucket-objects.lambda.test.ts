@@ -444,7 +444,7 @@ describe('request-list-bucket-objects Lambda', () => {
       const event = createMockEvent({
         LaboratoryId: 'test-lab-id',
         S3Bucket: 'custom-bucket',
-        S3Prefix: 'custom-prefix/',
+        S3Prefix: 'test-org-id/test-lab-id/custom-prefix/',
       });
       const context = createMockContext();
 
@@ -454,9 +454,26 @@ describe('request-list-bucket-objects Lambda', () => {
       expect(mockListBucketObjectsV2).toHaveBeenCalledWith(
         expect.objectContaining({
           Bucket: 'custom-bucket',
-          Prefix: 'custom-prefix/',
+          Prefix: 'test-org-id/test-lab-id/custom-prefix/',
         }),
       );
+    });
+
+    it('rejects S3Prefix outside the laboratory owned root', async () => {
+      mockValidateOrgAdmin.mockReturnValue(true);
+      mockQueryByLaboratoryId.mockResolvedValue(mockLaboratory);
+
+      const event = createMockEvent({
+        LaboratoryId: 'test-lab-id',
+        S3Bucket: 'custom-bucket',
+        S3Prefix: 'other-org/other-lab/',
+      });
+      const context = createMockContext();
+
+      const result = await handler(event, context, () => {});
+
+      expect(result.statusCode).toBe(403);
+      expect(mockListBucketObjectsV2).not.toHaveBeenCalled();
     });
   });
 

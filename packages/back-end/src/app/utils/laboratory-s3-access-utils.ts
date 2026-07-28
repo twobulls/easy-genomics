@@ -5,6 +5,7 @@ import type {
   S3BucketCatalogEntry,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-s3-access';
 import { LaboratoryS3AccessService } from '@BE/services/easy-genomics/laboratory-s3-access-service';
+import { isDataTaggedS3Bucket } from '@BE/services/easy-genomics/s3-bucket-catalog-service';
 
 /** Legacy rows and explicit ALLOW. */
 export function rowIsAllow(row: LaboratoryS3Access): boolean {
@@ -35,26 +36,52 @@ export function denyBucketNames(accessList: LaboratoryS3Access[]): Set<string> {
   return names;
 }
 
+/**
+ * Whether a lab may use `bucketName` given its access rows.
+ *
+ * Strict mode (`EnableNewBucketsByDefault !== true`): ALLOW rows grant access.
+ * If the lab has zero access rows (pre-seed migration), the configured
+ * `Laboratory.S3Bucket` is treated as allowed so existing labs are not locked out.
+ *
+ * Default-on: anything not on an explicit DENY row is allowed (catalog membership
+ * is enforced separately by `assertLaboratoryHasS3BucketAccess`).
+ */
 export function isS3BucketAccessAllowed(
-  laboratory: Pick<Laboratory, 'EnableNewBucketsByDefault'>,
+  laboratory: Pick<Laboratory, 'EnableNewBucketsByDefault' | 'S3Bucket'>,
   accessRows: LaboratoryS3Access[],
   bucketName: string,
 ): boolean {
   const defaultOn = laboratory.EnableNewBucketsByDefault === true;
   if (!defaultOn) {
-    return allowBucketNames(accessRows).has(bucketName);
+    if (allowBucketNames(accessRows).has(bucketName)) {
+      return true;
+    }
+    // Unmigrated labs: no access rows yet → allow the configured default bucket only.
+    if (accessRows.length === 0) {
+      const configured = laboratory.S3Bucket?.trim();
+      return !!configured && configured === bucketName;
+    }
+    return false;
   }
   return !denyBucketNames(accessRows).has(bucketName);
 }
 
 export function grantedBucketNamesForLaboratory(
-  laboratory: Pick<Laboratory, 'EnableNewBucketsByDefault'>,
+  laboratory: Pick<Laboratory, 'EnableNewBucketsByDefault' | 'S3Bucket'>,
   accessRows: LaboratoryS3Access[],
   catalog: S3BucketCatalogEntry[],
 ): string[] {
   const defaultOn = laboratory.EnableNewBucketsByDefault === true;
   if (!defaultOn) {
-    return [...allowBucketNames(accessRows)].sort();
+    const allowed = allowBucketNames(accessRows);
+    // Unmigrated labs: surface the configured default so the UI matches assert fallback.
+    if (allowed.size === 0 && accessRows.length === 0) {
+      const configured = laboratory.S3Bucket?.trim();
+      if (configured) {
+        allowed.add(configured);
+      }
+    }
+    return [...allowed].sort();
   }
   const denied = denyBucketNames(accessRows);
   return catalog
@@ -63,8 +90,13 @@ export function grantedBucketNamesForLaboratory(
     .sort();
 }
 
+/**
+ * Deny unless `bucketName` is a data-tagged catalog bucket and the lab is allowed
+ * to use it. When `catalog` is omitted, membership is checked via a single-bucket
+ * tag lookup (cheaper than listing the full catalog on every request).
+ */
 export async function assertLaboratoryHasS3BucketAccess(
-  laboratory: Pick<Laboratory, 'LaboratoryId' | 'EnableNewBucketsByDefault'>,
+  laboratory: Pick<Laboratory, 'LaboratoryId' | 'EnableNewBucketsByDefault' | 'S3Bucket'>,
   bucketName: string,
   accessService: LaboratoryS3AccessService,
   catalog?: S3BucketCatalogEntry[],
@@ -76,6 +108,11 @@ export async function assertLaboratoryHasS3BucketAccess(
   if (catalog) {
     const catalogNames = new Set(catalog.map((b) => b.name));
     if (!catalogNames.has(bucketName)) {
+      throw new S3BucketAccessDeniedError();
+    }
+  } else {
+    const inCatalog = await isDataTaggedS3Bucket(bucketName);
+    if (!inCatalog) {
       throw new S3BucketAccessDeniedError();
     }
   }

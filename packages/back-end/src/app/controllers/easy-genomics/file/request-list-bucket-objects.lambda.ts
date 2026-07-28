@@ -65,6 +65,12 @@ export const handler: Handler = async (
     }
     await assertLaboratoryHasS3BucketAccess(laboratory, s3Bucket, s3AccessService);
 
+    const normalizedPrefix = s3Prefix.endsWith('/') ? s3Prefix : `${s3Prefix}/`;
+    const laboratoryOwnedPrefix = `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/`;
+    if (!normalizedPrefix.startsWith(laboratoryOwnedPrefix)) {
+      throw new UnauthorizedAccessError();
+    }
+
     let isTruncated = true;
     let continuationToken: string | undefined = undefined;
     let allContents: any[] = [];
@@ -73,7 +79,7 @@ export const handler: Handler = async (
     while (isTruncated) {
       const response: ListObjectsV2CommandOutput = await s3Service.listBucketObjectsV2({
         Bucket: s3Bucket,
-        Prefix: s3Prefix,
+        Prefix: normalizedPrefix,
         MaxKeys: request.MaxKeys,
         ContinuationToken: continuationToken,
       });

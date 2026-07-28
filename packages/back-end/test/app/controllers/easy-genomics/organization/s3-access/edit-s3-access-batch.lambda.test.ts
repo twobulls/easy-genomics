@@ -160,6 +160,39 @@ describe('edit-s3-access-batch.lambda', () => {
     expect(JSON.parse(result.body).clearedDefaults).toEqual([]);
   });
 
+  it('grant in default-on mode removes an explicit DENY row', async () => {
+    (mockLabService.prototype.queryByOrganizationId as jest.Mock).mockResolvedValue([
+      makeLab({ S3Bucket: 'bucket-a', EnableNewBucketsByDefault: true }),
+    ]);
+
+    const result = await handler(
+      createEvent(ORG_ID, { assignments: [{ laboratoryId: LAB_ID, bucketName: 'bucket-b', granted: true }] }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockAccessService.prototype.remove).toHaveBeenCalledWith(LAB_ID, 'bucket-b');
+    expect(mockAccessService.prototype.upsert).not.toHaveBeenCalled();
+    expect(mockLabService.prototype.update).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when laboratoryId does not belong to the organization', async () => {
+    (mockLabService.prototype.queryByOrganizationId as jest.Mock).mockResolvedValue([makeLab()]);
+
+    const result = await handler(
+      createEvent(ORG_ID, {
+        assignments: [{ laboratoryId: '00000000-0000-0000-0000-000000000099', bucketName: 'bucket-a', granted: true }],
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(400);
+    expect(mockAccessService.prototype.upsert).not.toHaveBeenCalled();
+    expect(mockAccessService.prototype.remove).not.toHaveBeenCalled();
+  });
+
   it('returns 403 when caller is not an admin', async () => {
     (validateOrganizationAdminAccess as jest.Mock).mockReturnValue(false);
 

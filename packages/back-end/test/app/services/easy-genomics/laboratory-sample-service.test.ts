@@ -8,6 +8,11 @@ jest.mock('../../../../src/app/services/easy-genomics/laboratory-s3-access-servi
   })),
 }));
 
+jest.mock('../../../../src/app/services/easy-genomics/s3-bucket-catalog-service', () => ({
+  isDataTaggedS3Bucket: jest.fn().mockResolvedValue(true),
+  listDataTaggedS3Buckets: jest.fn().mockResolvedValue([{ name: 'my-bucket' }]),
+}));
+
 import { ConditionalCheckFailedException, type AttributeValue } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';

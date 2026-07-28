@@ -33,7 +33,7 @@
   });
 
   const notifyOnOwnRunsEnabled = ref(false);
-  const notificationEventFilter = ref<'all_terminal' | 'failures_only'>('all_terminal');
+  const notificationEventFilter = ref<'all_terminal' | 'failures_only' | 'successes_only'>('all_terminal');
   const notificationPrefsLoading = ref(true);
   const notificationPrefsUpdating = ref(false);
 
@@ -64,7 +64,9 @@
     }
   }
 
-  async function onChangeNotificationEventFilter(filter: 'all_terminal' | 'failures_only'): Promise<void> {
+  async function onChangeNotificationEventFilter(
+    filter: 'all_terminal' | 'failures_only' | 'successes_only',
+  ): Promise<void> {
     if (notificationPrefsUpdating.value) return;
     notificationPrefsUpdating.value = true;
     try {
@@ -192,6 +194,7 @@
             :options="[
               { label: 'Every finished run', value: 'all_terminal' },
               { label: 'Failed runs only', value: 'failures_only' },
+              { label: 'Succeeded runs only', value: 'successes_only' },
             ]"
             @update:model-value="onChangeNotificationEventFilter"
           />

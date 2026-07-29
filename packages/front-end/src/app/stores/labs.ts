@@ -1,4 +1,5 @@
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
+import { Auth } from 'aws-amplify';
 import { defineStore } from 'pinia';
 
 interface LabsStoreState {
@@ -12,6 +13,19 @@ const initialState = (): LabsStoreState => ({
   labs: {},
   labIdsByOrg: {},
 });
+
+async function shouldSuppressLabLoadErrorToast(): Promise<boolean> {
+  if (useUiStore().isLoggingOut) {
+    return true;
+  }
+  try {
+    await Auth.currentAuthenticatedUser();
+    return false;
+  } catch {
+    // No session (logout or expiry) — lab fetch failures are expected.
+    return true;
+  }
+}
 
 const useLabsStore = defineStore('labsStore', {
   state: initialState,
@@ -36,7 +50,9 @@ const useLabsStore = defineStore('labsStore', {
         this.labs[lab.LaboratoryId] = lab;
       } catch (error) {
         console.error('Failed to load lab:', error);
-        useToastStore().error('Failed to load lab details. Please refresh.');
+        if (!(await shouldSuppressLabLoadErrorToast())) {
+          useToastStore().error('Failed to load lab details. Please refresh.');
+        }
       }
     },
 
@@ -53,7 +69,9 @@ const useLabsStore = defineStore('labsStore', {
         }
       } catch (error) {
         console.error('Failed to load labs:', error);
-        useToastStore().error('Failed to load labs. Please refresh.');
+        if (!(await shouldSuppressLabLoadErrorToast())) {
+          useToastStore().error('Failed to load labs. Please refresh.');
+        }
       }
     },
   },

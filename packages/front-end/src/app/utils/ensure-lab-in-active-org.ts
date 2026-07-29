@@ -1,5 +1,5 @@
 import { storeToRefs } from 'pinia';
-import { useToastStore } from '@FE/stores';
+import { useToastStore, useUiStore } from '@FE/stores';
 
 export type EnsureLabInActiveOrgOptions = {
   labId: string;
@@ -30,9 +30,15 @@ export async function ensureLabInActiveOrg({
 }: EnsureLabInActiveOrgOptions): Promise<boolean> {
   const userStore = useUserStore();
   const labsStore = useLabsStore();
+  const uiStore = useUiStore();
   const { currentOrgId } = storeToRefs(userStore);
 
   if (superuser || userStore.isSuperuser) {
+    return false;
+  }
+
+  // No active org (e.g. mid-logout): do not fetch or bounce through /labs.
+  if (!currentOrgId.value || uiStore.isLoggingOut) {
     return false;
   }
 
@@ -42,8 +48,10 @@ export async function ensureLabInActiveOrg({
       await labsStore.loadLab(labId);
     } catch (error) {
       console.error('Failed to load laboratory for org validation', error);
-      useToastStore().error('Failed to load laboratory');
-      await navigateTo(redirectTo);
+      if (!uiStore.isLoggingOut) {
+        useToastStore().error('Failed to load laboratory');
+        await navigateTo(redirectTo);
+      }
       return true;
     }
   }
@@ -51,8 +59,10 @@ export async function ensureLabInActiveOrg({
   const lab = labsStore.labs[labId];
   if (!lab) {
     console.error('Laboratory not found after load', { labId });
-    useToastStore().error('Failed to load laboratory');
-    await navigateTo(redirectTo);
+    if (!uiStore.isLoggingOut) {
+      useToastStore().error('Failed to load laboratory');
+      await navigateTo(redirectTo);
+    }
     return true;
   }
 

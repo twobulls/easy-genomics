@@ -48,6 +48,28 @@ export const WORKFLOW_RUN_PRESET_NAME_MAX_LENGTH = 60;
  */
 export type WorkflowRunPresetParams = Record<string, string | number | boolean>;
 
+/**
+ * Parameters that belong to one specific run and are never part of a preset.
+ *
+ * `input` and `outdir` are seeded from the S3 transaction path created for each
+ * individual run (the generated sample sheet and its `/results` folder), and the
+ * run name is likewise unique per run. Replaying a previous run's values would
+ * point a new run at a stale sample sheet and write its results back over the
+ * earlier run's output, so these are stripped on save rather than merely hidden.
+ */
+export const RUN_SPECIFIC_PARAM_NAMES: readonly string[] = ['input', 'output', 'outdir', 'runname', 'run_name'];
+
+const RUN_SPECIFIC_PARAM_LOOKUP: ReadonlySet<string> = new Set(RUN_SPECIFIC_PARAM_NAMES);
+
+export function isRunSpecificParam(name: string): boolean {
+  return RUN_SPECIFIC_PARAM_LOOKUP.has(name.toLowerCase());
+}
+
+/** Removes the per-run parameters so a preset only ever carries reusable values. */
+export function omitRunSpecificParams(params: WorkflowRunPresetParams): WorkflowRunPresetParams {
+  return Object.fromEntries(Object.entries(params).filter(([name]) => !isRunSpecificParam(name)));
+}
+
 export interface WorkflowRunPreset extends BaseAttributes {
   LaboratoryId: string; // DynamoDB Partition Key (String)
   PresetKey: string; // DynamoDB Sort Key (String)

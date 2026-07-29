@@ -1,5 +1,8 @@
 <script setup lang="ts">
-  import type { WorkflowRunPresetParams } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/workflow-run-preset';
+  import {
+    isRunSpecificParam,
+    type WorkflowRunPresetParams,
+  } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/workflow-run-preset';
   import { ButtonSizeEnum } from '@FE/types/buttons';
   import { useToastStore } from '@FE/stores';
 
@@ -247,18 +250,11 @@
     },
   );
 
-  /**
-   * Parameters that belong to one specific run rather than to a reusable configuration:
-   * the data source paths and the run name. Presets neither store nor overwrite these,
-   * so applying a preset never repoints a run at another run's files.
-   */
-  const RUN_SPECIFIC_PARAMS = new Set(['input', 'output', 'outdir', 'runname', 'run_name']);
-
   const presetableParams = computed<WorkflowRunPresetParams>(
     () =>
       Object.fromEntries(
         Object.entries(localProps.params).filter(
-          ([name, value]) => !RUN_SPECIFIC_PARAMS.has(name) && value !== '' && value !== undefined && value !== null,
+          ([name, value]) => !isRunSpecificParam(name) && value !== '' && value !== undefined && value !== null,
         ),
       ) as WorkflowRunPresetParams,
   );
@@ -270,7 +266,7 @@
    */
   function applyPreset(presetParams: WorkflowRunPresetParams): void {
     for (const name of Object.keys(localProps.params)) {
-      if (RUN_SPECIFIC_PARAMS.has(name)) continue;
+      if (isRunSpecificParam(name)) continue;
       localProps.params[name] = presetParams[name] ?? paramDefaults.value[name];
     }
   }

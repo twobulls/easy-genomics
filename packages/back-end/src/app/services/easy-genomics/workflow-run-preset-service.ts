@@ -13,6 +13,7 @@ import {
 import { WorkflowRunPresetSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/workflow-run-preset';
 import {
   ListWorkflowRunPresetsResponse,
+  omitRunSpecificParams,
   WorkflowRunPreset,
   WorkflowRunPresetParams,
   WorkflowRunPresetScope,
@@ -94,7 +95,7 @@ export class WorkflowRunPresetService extends DynamoDBService implements Service
       Scope: owner.Scope,
       WorkflowId: owner.WorkflowId,
       Name: name.trim(),
-      Params: params,
+      Params: omitRunSpecificParams(params),
       CreatedAt: createdAt,
       CreatedBy: owner.UserId,
       CreatedByEmail: createdByEmail,
@@ -126,7 +127,7 @@ export class WorkflowRunPresetService extends DynamoDBService implements Service
     return this.update({
       ...existing,
       Name: changes.Name?.trim() ?? existing.Name,
-      Params: changes.Params ?? existing.Params,
+      Params: changes.Params ? omitRunSpecificParams(changes.Params) : existing.Params,
       ModifiedAt: new Date().toISOString(),
       ModifiedBy: owner.UserId,
     });

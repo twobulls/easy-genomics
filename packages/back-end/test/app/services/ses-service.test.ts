@@ -121,6 +121,66 @@ describe('SesService', () => {
     expect(templateData.FORGOT_PASSWORD_JWT).toBe('forgot-jwt');
   });
 
+  it('uses org branding for invitation email when provided', async () => {
+    mockSend.mockResolvedValueOnce({ MessageId: 'msg-5' });
+    const service = new SesService({
+      accountId: '123456789012',
+      region: 'us-west-2',
+      domainName: 'example.com',
+      envType: 'dev',
+      envName: 'sandbox',
+    });
+
+    await service.sendNewUserInvitationEmail('test@example.com', 'My Org', 'jwt-token', {
+      logoUrl: 'https://acme-labs.example/logo.png',
+      footerText: 'Acme Labs footer',
+    });
+
+    const cmdInput = (SendTemplatedEmailCommand as unknown as jest.Mock).mock.calls[0][0];
+    const templateData = JSON.parse(cmdInput.TemplateData);
+    expect(templateData.EASY_GENOMICS_EMAIL_LOGO).toBe('https://acme-labs.example/logo.png');
+    expect(templateData.ORG_FOOTER_TEXT).toBe('Acme Labs footer');
+  });
+
+  it('falls back to default branding for invitation email when branding is omitted', async () => {
+    mockSend.mockResolvedValueOnce({ MessageId: 'msg-6' });
+    const service = new SesService({
+      accountId: '123456789012',
+      region: 'us-west-2',
+      domainName: 'example.com',
+      envType: 'dev',
+      envName: 'sandbox',
+    });
+
+    await service.sendNewUserInvitationEmail('test@example.com', 'My Org', 'jwt-token');
+
+    const cmdInput = (SendTemplatedEmailCommand as unknown as jest.Mock).mock.calls[0][0];
+    const templateData = JSON.parse(cmdInput.TemplateData);
+    expect(templateData.EASY_GENOMICS_EMAIL_LOGO).toBe('https://example.com/images/email/easy-genomics.png');
+    expect(templateData.ORG_FOOTER_TEXT).toBe('Sent from Easy Genomics');
+  });
+
+  it('uses org branding for courtesy email when provided (prod, so SES is actually called)', async () => {
+    mockSend.mockResolvedValueOnce({ MessageId: 'msg-7' });
+    const service = new SesService({
+      accountId: '123456789012',
+      region: 'us-west-2',
+      domainName: 'example.com',
+      envType: 'prod',
+      envName: 'production',
+    });
+
+    await service.sendExistingUserCourtesyEmail('test@example.com', 'My Org', {
+      logoUrl: 'https://acme-labs.example/logo.png',
+      footerText: 'Acme Labs footer',
+    });
+
+    const cmdInput = (SendTemplatedEmailCommand as unknown as jest.Mock).mock.calls[0][0];
+    const templateData = JSON.parse(cmdInput.TemplateData);
+    expect(templateData.EASY_GENOMICS_EMAIL_LOGO).toBe('https://acme-labs.example/logo.png');
+    expect(templateData.ORG_FOOTER_TEXT).toBe('Acme Labs footer');
+  });
+
   it('wraps SES errors with request-specific context', async () => {
     mockSend.mockRejectedValueOnce(new Error('Email address is not verified'));
     const service = new SesService({

@@ -25,6 +25,7 @@ export class SesService {
     toAddress: string,
     organizationName: string,
     invitationJwt: string,
+    branding?: { logoUrl?: string; footerText?: string },
   ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send New User Invitation Email request: ${toAddress}`;
     console.info(logRequestMessage);
@@ -43,7 +44,9 @@ export class SesService {
         DOMAIN_NAME: this.props.domainName,
         INVITATION_JWT: invitationJwt,
         ORGANIZATION_NAME: organizationName,
-        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/email/easy-genomics.png`,
+        EASY_GENOMICS_EMAIL_LOGO:
+          branding?.logoUrl || `https://${this.props.domainName}/images/email/easy-genomics.png`,
+        ORG_FOOTER_TEXT: branding?.footerText || 'Sent from Easy Genomics',
       }),
     });
 
@@ -59,6 +62,7 @@ export class SesService {
   public async sendExistingUserCourtesyEmail(
     toAddress: string,
     organizationName: string,
+    branding?: { logoUrl?: string; footerText?: string },
   ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send Existing User Courtesy Email request: ${toAddress}`;
     console.info(logRequestMessage);
@@ -86,7 +90,9 @@ export class SesService {
         COPYRIGHT_YEAR: `${new Date().getFullYear()}`,
         DOMAIN_NAME: this.props.domainName,
         ORGANIZATION_NAME: organizationName,
-        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/email/easy-genomics.png`,
+        EASY_GENOMICS_EMAIL_LOGO:
+          branding?.logoUrl || `https://${this.props.domainName}/images/email/easy-genomics.png`,
+        ORG_FOOTER_TEXT: branding?.footerText || 'Sent from Easy Genomics',
       }),
     });
 

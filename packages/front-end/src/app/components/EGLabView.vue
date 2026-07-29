@@ -342,6 +342,7 @@
           const lastUpdated = labRun.ModifiedAt ?? labRun.CreatedAt ?? '';
           const searchIndex = [
             labRun.RunName,
+            labRun.Description,
             (labRun as any).WorkflowName,
             labRun.Status,
             labRun.Owner,
@@ -949,6 +950,7 @@
       <template #RunName-data="{ row: run }">
         <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
         <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
+        <div v-if="run.Description" class="text-muted line-clamp-1 text-xs font-normal">{{ run.Description }}</div>
       </template>
 
       <template #CreatedAt-data="{ row: run }">

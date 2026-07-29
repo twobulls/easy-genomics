@@ -1223,6 +1223,7 @@ export interface components {
       /** Format: uuid */
       RunId: string;
       RunName: string;
+      Description?: string;
       /** @enum {string} */
       Platform: "AWS HealthOmics" | "Seqera Cloud";
       PlatformApiBaseUrl?: string;
@@ -1249,6 +1250,8 @@ export interface components {
       RunId: string;
       RunName: string;
       Owner: string;
+      /** @description Optional user-authored note for this run; set at creation time. */
+      Description?: string;
       WorkflowName?: string;
       PlatformApiBaseUrl?: string;
       WorkflowVersionName?: string;
@@ -1390,6 +1393,8 @@ export interface components {
       RunId: string;
       RunName: string;
       Owner: string;
+      /** @description Optional user-authored note for this run; set at creation time. */
+      Description?: string;
       WorkflowName?: string;
       PlatformApiBaseUrl?: string;
       WorkflowVersionName?: string;

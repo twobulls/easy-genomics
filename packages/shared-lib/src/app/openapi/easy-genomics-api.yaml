@@ -1889,6 +1889,9 @@ components:
           format: uuid
         RunName:
           type: string
+        Description:
+          type: string
+          maxLength: 500
         Platform:
           type: string
           enum:
@@ -1949,6 +1952,9 @@ components:
         RunName:
           type: string
         Owner:
+          type: string
+        Description:
+          description: Optional user-authored note for this run; set at creation time.
           type: string
         WorkflowName:
           type: string
@@ -2190,6 +2196,9 @@ components:
         RunName:
           type: string
         Owner:
+          type: string
+        Description:
+          description: Optional user-authored note for this run; set at creation time.
           type: string
         WorkflowName:
           type: string

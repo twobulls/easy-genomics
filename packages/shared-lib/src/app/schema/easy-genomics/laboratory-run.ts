@@ -24,6 +24,8 @@ export const LaboratoryRunSchema = z
     UserId: z.string().uuid(),
     OrganizationId: z.string().uuid(),
     RunName: z.string(),
+    /** Optional user-authored note for this run; set at creation time. */
+    Description: z.string().max(500).optional(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     PlatformApiBaseUrl: z.string().optional(),
     Status: z.string(),
@@ -133,6 +135,8 @@ export const ReadLaboratoryRunSchema = z
     UserId: z.string().uuid(),
     OrganizationId: z.string().uuid(),
     RunName: z.string(),
+    /** Optional user-authored note for this run; set at creation time. */
+    Description: z.string().max(500).optional(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     PlatformApiBaseUrl: z.string().optional(), // Used if Laboratory uses alternative Seqera Platform API Base URL
     Status: z.string(),
@@ -176,6 +180,8 @@ export const AddLaboratoryRunSchema = z
     LaboratoryId: z.string().uuid(),
     RunId: z.string().uuid(),
     RunName: z.string(),
+    /** Optional user-authored note for this run; set at creation time. */
+    Description: z.string().max(500).optional(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     PlatformApiBaseUrl: z.string().optional(),
     Status: z.string(),

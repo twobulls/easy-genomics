@@ -188,6 +188,55 @@ describe('create-laboratory-run.lambda', () => {
     );
   });
 
+  it('passes Description through to laboratory run add when provided', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      LaboratoryId: LAB_ID,
+    });
+
+    (mockRunService.prototype.add as jest.Mock).mockResolvedValue({
+      ...baseRequest,
+      Description: 'My run notes',
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      Owner: 'user@example.com',
+      Settings: JSON.stringify({ param: 'value' }),
+    });
+
+    const body = {
+      ...baseRequest,
+      Description: 'My run notes',
+    };
+
+    const result = await handler(createEvent(body), createContext(), () => {});
+
+    expect(result.statusCode).toBe(200);
+    expect(mockRunService.prototype.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Description: 'My run notes',
+      }),
+    );
+  });
+
+  it('omits Description from laboratory run add when not provided', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      LaboratoryId: LAB_ID,
+    });
+
+    (mockRunService.prototype.add as jest.Mock).mockResolvedValue({
+      ...baseRequest,
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      Owner: 'user@example.com',
+      Settings: JSON.stringify({ param: 'value' }),
+    });
+
+    const result = await handler(createEvent(baseRequest), createContext(), () => {});
+
+    expect(result.statusCode).toBe(200);
+    const addArg = (mockRunService.prototype.add as jest.Mock).mock.calls[0][0];
+    expect(addArg).not.toHaveProperty('Description');
+  });
+
   it('does not queue status check when ExternalRunId is missing', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: 'org-1',

@@ -357,6 +357,11 @@
               <dd :class="rowContentStyle">{{ labRun.RunName }}</dd>
             </div>
 
+            <div v-if="labRun.Description" :class="rowStyle">
+              <dt :class="rowLabelStyle">Description</dt>
+              <dd :class="rowContentStyle">{{ labRun.Description }}</dd>
+            </div>
+
             <div :class="rowStyle">
               <dt :class="rowLabelStyle">{{ pipelineOrWorkflow }}</dt>
               <dd :class="rowContentStyle">{{ labRun.WorkflowName }}</dd>

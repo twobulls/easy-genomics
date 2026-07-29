@@ -159,15 +159,11 @@
   /**
    * Run Notifications section.
    *
-   * This section has four controls, each with a different save path:
-   * - "Enable run notifications" is the lab-wide kill switch (Laboratory.NotificationsEnabled). It
-   *   is part of `state`/`defaultState` above and is saved through this page's normal Save Changes
-   *   flow, same as any other lab detail field.
-   * - The remaining three controls below are per-user preferences, not lab details. They live in
-   *   their own refs (not `state`) and auto-save immediately on change, independent of the Save
-   *   Changes button, because batching them into the main form's dirty-state tracking would let a
-   *   user "lose" a preference change by hitting Cancel, or accidentally bundle it with an unrelated
-   *   lab edit.
+   * All five controls here — the lab-wide kill switch plus the four per-user preferences —
+   * are staged locally and only persisted when Save Changes is clicked, same as every other
+   * field on this form. The four per-user controls aren't Laboratory fields (they live on
+   * User/LaboratoryUser), so they're kept in their own refs rather than `state`, but they
+   * share the same dirty-check / Save / Cancel lifecycle via `uneditedNotify*` baselines below.
    */
   type NotificationEventFilter = 'all_terminal' | 'failures_only' | 'successes_only';
 
@@ -175,19 +171,44 @@
   const notifyOnOwnRunsEnabled = ref(false);
   const notifyOnLabRunsEnabled = ref(false);
   const notificationEventFilter = ref<NotificationEventFilter>('all_terminal');
-  // Raw comma-separated text the user is editing; parsed/validated/saved on blur so we don't
-  // fire a request per keystroke like the other, single-value controls in this section do.
+  // Raw comma-separated text the user is editing; parsed/validated only at Save time.
   const notifyOnLabRunsAdditionalEmailsInput = ref('');
-  const isUpdatingNotifyOnOwnRuns = ref(false);
-  const isUpdatingNotifyOnLabRuns = ref(false);
-  const isUpdatingEventFilter = ref(false);
-  const isUpdatingNotifyOnLabRunsAdditionalEmails = ref(false);
+
+  // Baseline snapshots for the Cancel button / dirty-check, set whenever preferences are
+  // (re)loaded or successfully saved.
+  const uneditedNotifyOnOwnRunsEnabled = ref(false);
+  const uneditedNotifyOnLabRunsEnabled = ref(false);
+  const uneditedNotificationEventFilter = ref<NotificationEventFilter>('all_terminal');
+  const uneditedNotifyOnLabRunsAdditionalEmailsInput = ref('');
 
   // The event filter only has an effect once at least one of the two "email me" toggles is on.
   const showNotificationEventFilter = computed(() => notifyOnOwnRunsEnabled.value || notifyOnLabRunsEnabled.value);
   // 'all_terminal' means both checked; 'failures_only' / 'successes_only' mean only that one.
   const eventFilterSuccessChecked = computed(() => notificationEventFilter.value !== 'failures_only');
   const eventFilterFailureChecked = computed(() => notificationEventFilter.value !== 'successes_only');
+
+  function parseAdditionalEmailsInput(raw: string): string[] {
+    return raw
+      .split(',')
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+  }
+
+  function additionalEmailsEqual(a: string, b: string): boolean {
+    const left = parseAdditionalEmailsInput(a);
+    const right = parseAdditionalEmailsInput(b);
+    return left.length === right.length && left.every((email, i) => email === right[i]);
+  }
+
+  const additionalEmailsError = computed<string | null>(() => {
+    const parsed = parseAdditionalEmailsInput(notifyOnLabRunsAdditionalEmailsInput.value);
+    const result =
+      UpdateLaboratoryUserNotificationPreferenceSchema.shape.NotifyOnLabRunsAdditionalEmails.safeParse(parsed);
+    if (result.success) return null;
+    return parsed.length > 10
+      ? 'You can add at most 10 additional email addresses.'
+      : 'One or more email addresses are invalid.';
+  });
 
   /**
    * Loads the current user's account-wide notification preferences and their own
@@ -210,6 +231,11 @@
       const myLabUser = labUsers.find((labUser) => labUser.UserId === userStore.currentUserDetails.internalId);
       notifyOnLabRunsEnabled.value = myLabUser?.NotifyOnLabRuns === true;
       notifyOnLabRunsAdditionalEmailsInput.value = (myLabUser?.NotifyOnLabRunsAdditionalEmails ?? []).join(', ');
+
+      uneditedNotifyOnOwnRunsEnabled.value = notifyOnOwnRunsEnabled.value;
+      uneditedNotifyOnLabRunsEnabled.value = notifyOnLabRunsEnabled.value;
+      uneditedNotificationEventFilter.value = notificationEventFilter.value;
+      uneditedNotifyOnLabRunsAdditionalEmailsInput.value = notifyOnLabRunsAdditionalEmailsInput.value;
     } catch (error) {
       console.error('Error loading run notification preferences:', error);
       useToastStore().error('Failed to load run notification preferences');
@@ -218,76 +244,55 @@
     }
   }
 
-  async function onToggleNotifyOnOwnRuns(enabled: boolean) {
-    if (isUpdatingNotifyOnOwnRuns.value) return;
-    isUpdatingNotifyOnOwnRuns.value = true;
-    try {
-      await $api.users.updateUser(userStore.currentUserDetails.id!, { NotifyOnOwnRuns: enabled });
-      notifyOnOwnRunsEnabled.value = enabled;
-    } catch (error) {
-      console.error('Error updating run notification preference:', error);
-      useToastStore().error('Failed to update run notification preference');
-    } finally {
-      isUpdatingNotifyOnOwnRuns.value = false;
-    }
+  function notificationPrefsChanged(): boolean {
+    if (isLoadingNotificationPrefs.value) return false;
+    return (
+      notifyOnOwnRunsEnabled.value !== uneditedNotifyOnOwnRunsEnabled.value ||
+      notifyOnLabRunsEnabled.value !== uneditedNotifyOnLabRunsEnabled.value ||
+      notificationEventFilter.value !== uneditedNotificationEventFilter.value ||
+      !additionalEmailsEqual(
+        notifyOnLabRunsAdditionalEmailsInput.value,
+        uneditedNotifyOnLabRunsAdditionalEmailsInput.value,
+      )
+    );
   }
 
-  async function onToggleNotifyOnLabRuns(enabled: boolean) {
-    if (isUpdatingNotifyOnLabRuns.value) return;
-    isUpdatingNotifyOnLabRuns.value = true;
-    try {
-      await $api.labs.updateMyLabNotificationPreference(labId, enabled);
-      notifyOnLabRunsEnabled.value = enabled;
-    } catch (error) {
-      console.error('Error updating lab run notification preference:', error);
-      useToastStore().error('Failed to update lab run notification preference');
-    } finally {
-      isUpdatingNotifyOnLabRuns.value = false;
+  /** Persists whichever of the two notification-preference records actually changed. */
+  async function saveNotificationPreferencesIfChanged() {
+    const userPrefsChanged =
+      notifyOnOwnRunsEnabled.value !== uneditedNotifyOnOwnRunsEnabled.value ||
+      notificationEventFilter.value !== uneditedNotificationEventFilter.value;
+    if (userPrefsChanged) {
+      try {
+        await $api.users.updateUser(userStore.currentUserDetails.id!, {
+          NotifyOnOwnRuns: notifyOnOwnRunsEnabled.value,
+          NotificationEventFilter: notificationEventFilter.value,
+        });
+        uneditedNotifyOnOwnRunsEnabled.value = notifyOnOwnRunsEnabled.value;
+        uneditedNotificationEventFilter.value = notificationEventFilter.value;
+      } catch (error) {
+        console.error('Error updating run notification preference:', error);
+        useToastStore().error('Failed to update your run notification preference');
+      }
     }
-  }
 
-  async function onBlurNotifyOnLabRunsAdditionalEmails() {
-    if (isUpdatingNotifyOnLabRunsAdditionalEmails.value) return;
-
-    const emails = notifyOnLabRunsAdditionalEmailsInput.value
-      .split(',')
-      .map((email) => email.trim())
-      .filter((email) => email.length > 0);
-
-    const parseResult =
-      UpdateLaboratoryUserNotificationPreferenceSchema.shape.NotifyOnLabRunsAdditionalEmails.safeParse(emails);
-    if (!parseResult.success) {
-      useToastStore().error(
-        emails.length > 10
-          ? 'You can add at most 10 additional email addresses.'
-          : 'One or more email addresses are invalid.',
+    const labPrefsChanged =
+      notifyOnLabRunsEnabled.value !== uneditedNotifyOnLabRunsEnabled.value ||
+      !additionalEmailsEqual(
+        notifyOnLabRunsAdditionalEmailsInput.value,
+        uneditedNotifyOnLabRunsAdditionalEmailsInput.value,
       );
-      return;
-    }
-
-    isUpdatingNotifyOnLabRunsAdditionalEmails.value = true;
-    try {
-      await $api.labs.updateMyLabNotificationPreference(labId, notifyOnLabRunsEnabled.value, emails);
-      notifyOnLabRunsAdditionalEmailsInput.value = emails.join(', ');
-    } catch (error) {
-      console.error('Error updating lab run notification recipients:', error);
-      useToastStore().error('Failed to update lab run notification recipients');
-    } finally {
-      isUpdatingNotifyOnLabRunsAdditionalEmails.value = false;
-    }
-  }
-
-  async function onChangeNotificationEventFilter(filter: NotificationEventFilter) {
-    if (isUpdatingEventFilter.value) return;
-    isUpdatingEventFilter.value = true;
-    try {
-      await $api.users.updateUser(userStore.currentUserDetails.id!, { NotificationEventFilter: filter });
-      notificationEventFilter.value = filter;
-    } catch (error) {
-      console.error('Error updating notification event filter:', error);
-      useToastStore().error('Failed to update notification event filter');
-    } finally {
-      isUpdatingEventFilter.value = false;
+    if (labPrefsChanged) {
+      try {
+        const emails = parseAdditionalEmailsInput(notifyOnLabRunsAdditionalEmailsInput.value);
+        await $api.labs.updateMyLabNotificationPreference(labId, notifyOnLabRunsEnabled.value, emails);
+        notifyOnLabRunsAdditionalEmailsInput.value = emails.join(', ');
+        uneditedNotifyOnLabRunsEnabled.value = notifyOnLabRunsEnabled.value;
+        uneditedNotifyOnLabRunsAdditionalEmailsInput.value = notifyOnLabRunsAdditionalEmailsInput.value;
+      } catch (error) {
+        console.error('Error updating lab run notification recipients:', error);
+        useToastStore().error('Failed to update lab run notification recipients');
+      }
     }
   }
 
@@ -295,26 +300,16 @@
   // Unchecking the last remaining checked box is a no-op rather than clamping back to
   // 'all_terminal' or leaving both unchecked — an event filter with nothing selected would
   // silently mean "never notify", which isn't a state either of these toggles should reach.
-  async function onToggleNotifySuccesses(checked: boolean) {
+  function onToggleNotifySuccesses(checked: boolean) {
     const failureChecked = eventFilterFailureChecked.value;
     if (!checked && !failureChecked) return;
-    const nextFilter: NotificationEventFilter = checked
-      ? failureChecked
-        ? 'all_terminal'
-        : 'successes_only'
-      : 'failures_only';
-    await onChangeNotificationEventFilter(nextFilter);
+    notificationEventFilter.value = checked ? (failureChecked ? 'all_terminal' : 'successes_only') : 'failures_only';
   }
 
-  async function onToggleNotifyFailures(checked: boolean) {
+  function onToggleNotifyFailures(checked: boolean) {
     const successChecked = eventFilterSuccessChecked.value;
     if (!checked && !successChecked) return;
-    const nextFilter: NotificationEventFilter = checked
-      ? successChecked
-        ? 'all_terminal'
-        : 'failures_only'
-      : 'successes_only';
-    await onChangeNotificationEventFilter(nextFilter);
+    notificationEventFilter.value = checked ? (successChecked ? 'all_terminal' : 'failures_only') : 'successes_only';
   }
   function modelIdPlaceholderFor(provider: string | undefined): string {
     switch (provider) {
@@ -496,6 +491,10 @@
    */
   function handleCancelEdit() {
     state.value = { ...uneditedLabDetails.value! };
+    notifyOnOwnRunsEnabled.value = uneditedNotifyOnOwnRunsEnabled.value;
+    notifyOnLabRunsEnabled.value = uneditedNotifyOnLabRunsEnabled.value;
+    notificationEventFilter.value = uneditedNotificationEventFilter.value;
+    notifyOnLabRunsAdditionalEmailsInput.value = uneditedNotifyOnLabRunsAdditionalEmailsInput.value;
     isEditingNextFlowTowerAccessToken.value = false;
     isEditingGitHubAccessToken.value = false;
     canSubmit.value = false;
@@ -635,6 +634,8 @@
         return;
       }
 
+      await saveNotificationPreferencesIfChanged();
+
       emit('updated');
       isEditingNextFlowTowerAccessToken.value = false;
       isEditingGitHubAccessToken.value = false;
@@ -706,6 +707,8 @@
       useToastStore().error(`Failed to verify details for ${state.value.Name}`);
     }
 
+    await saveNotificationPreferencesIfChanged();
+
     emit('updated');
 
     isEditingNextFlowTowerAccessToken.value = false;
@@ -763,6 +766,10 @@
       );
     }
 
+    if (additionalEmailsError.value) {
+      errors.push({ path: 'NotifyOnLabRunsAdditionalEmailsInput', message: additionalEmailsError.value });
+    }
+
     checkCanSubmitFormData(errors.length);
 
     return errors;
@@ -778,8 +785,9 @@
       // In Create mode, the form can be submitted if there are no validation errors
       canSubmit.value = noValidationErrors;
     } else if (formMode.value === LabDetailsFormModeEnum.enum.Edit) {
-      // In Edit mode, the form can be submitted if there are no validation errors and the form data has changed
-      const dataChanged = formDataChanged();
+      // In Edit mode, the form can be submitted if there are no validation errors and either the
+      // lab details or the notification preferences have changed
+      const dataChanged = formDataChanged() || notificationPrefsChanged();
       canSubmit.value = noValidationErrors && dataChanged;
     }
   }
@@ -877,6 +885,13 @@
       validate(newState);
     },
     { deep: true },
+  );
+
+  // The four per-user notification controls aren't part of `state`, so they need their own
+  // trigger to re-run validation/dirty-checking when they change.
+  watch(
+    [notifyOnOwnRunsEnabled, notifyOnLabRunsEnabled, notificationEventFilter, notifyOnLabRunsAdditionalEmailsInput],
+    () => validate(state.value),
   );
 </script>
 
@@ -1314,12 +1329,13 @@
         </EGFormGroup>
       </EGCollapsibleSection>
 
-      <!-- Run Notifications: the lab-wide toggle is a Laboratory field saved through this
-           page's normal Save Changes flow (see NotificationsEnabled in state/defaultState
-           above). The other three controls are per-user preferences that auto-save
-           immediately on change — see loadNotificationPreferences/onToggle*/onChange* in
-           the script for why they're kept out of `state`. Hidden in Create mode: none of
-           these preferences can be set for a lab that doesn't exist yet. -->
+      <!-- Run Notifications: all five controls save via this page's normal Save Changes /
+           Cancel flow. The lab-wide toggle is a real Laboratory field (state.NotificationsEnabled);
+           the other four are per-user preferences kept in their own refs (they aren't Laboratory
+           fields) but share the same dirty-check/save/cancel lifecycle — see
+           loadNotificationPreferences/notificationPrefsChanged/saveNotificationPreferencesIfChanged
+           in the script. Hidden in Create mode: none of these preferences can be set for a lab
+           that doesn't exist yet. -->
       <EGCollapsibleSection
         v-if="formMode !== LabDetailsFormModeEnum.enum.Create"
         heading-id="lab-settings-run-notifications-heading"
@@ -1327,7 +1343,7 @@
         description="Control who gets emailed when runs in this lab finish."
         :badges="[runNotificationsBadge]"
       >
-        <!-- Lab-wide kill switch: part of the main Save Changes flow -->
+        <!-- Lab-wide kill switch -->
         <EGFormGroup
           name="NotificationsEnabled"
           eager-validation
@@ -1353,15 +1369,14 @@
 
         <USkeleton v-if="isLoadingNotificationPrefs" class="mt-4 h-24 w-full" aria-hidden="true" />
         <template v-else>
-          <!-- Per-user preferences: each auto-saves immediately, independent of Save Changes -->
+          <!-- Per-user preferences: staged locally like every other field, saved via Save Changes -->
           <div class="mt-4 flex items-center justify-between">
             <span :id="notifyOwnRunsToggleLabelId" class="text-sm text-black">Email me about my own runs</span>
             <UToggle
               class="ml-2"
-              :model-value="notifyOnOwnRunsEnabled"
-              :disabled="isUpdatingNotifyOnOwnRuns"
+              v-model="notifyOnOwnRunsEnabled"
+              :disabled="!isEditing || isSubmittingFormData"
               :aria-labelledby="notifyOwnRunsToggleLabelId"
-              @update:model-value="onToggleNotifyOnOwnRuns"
             />
           </div>
 
@@ -1369,10 +1384,9 @@
             <span :id="notifyLabRunsToggleLabelId" class="text-sm text-black">Email me about all runs in this lab</span>
             <UToggle
               class="ml-2"
-              :model-value="notifyOnLabRunsEnabled"
-              :disabled="isUpdatingNotifyOnLabRuns"
+              v-model="notifyOnLabRunsEnabled"
+              :disabled="!isEditing || isSubmittingFormData"
               :aria-labelledby="notifyLabRunsToggleLabelId"
-              @update:model-value="onToggleNotifyOnLabRuns"
             />
           </div>
 
@@ -1384,10 +1398,12 @@
               :id="notifyLabRunsAdditionalEmailsInputId"
               v-model="notifyOnLabRunsAdditionalEmailsInput"
               placeholder="team-distro@example.com, oncall@example.com"
-              :disabled="isUpdatingNotifyOnLabRunsAdditionalEmails"
-              @blur="onBlurNotifyOnLabRunsAdditionalEmails"
+              :disabled="!isEditing || isSubmittingFormData"
             />
-            <p class="text-muted mt-1 text-xs">
+            <p v-if="additionalEmailsError" class="text-alert-danger-dark mt-1 text-xs font-medium">
+              {{ additionalEmailsError }}
+            </p>
+            <p v-else class="text-muted mt-1 text-xs">
               Comma-separated, up to 10. Sent whenever your own "all runs in this lab" notification fires.
             </p>
           </div>
@@ -1398,13 +1414,13 @@
               <UCheckbox
                 label="Succeeds"
                 :model-value="eventFilterSuccessChecked"
-                :disabled="isUpdatingEventFilter"
+                :disabled="!isEditing || isSubmittingFormData"
                 @update:model-value="onToggleNotifySuccesses"
               />
               <UCheckbox
                 label="Fails"
                 :model-value="eventFilterFailureChecked"
-                :disabled="isUpdatingEventFilter"
+                :disabled="!isEditing || isSubmittingFormData"
                 @update:model-value="onToggleNotifyFailures"
               />
             </div>

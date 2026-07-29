@@ -2971,6 +2971,131 @@ components:
             - granted
             - denied
       additionalProperties: false
+    CreateWorkflowRunPresetRequest:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+          format: uuid
+        WorkflowId:
+          type: string
+          minLength: 1
+        Scope:
+          type: string
+          enum:
+            - USER
+            - LAB
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        Params:
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+      required:
+        - LaboratoryId
+        - WorkflowId
+        - Scope
+        - Name
+        - Params
+      additionalProperties: false
+    WorkflowRunPresetScope:
+      enum:
+        - LAB
+        - USER
+      type: string
+    WorkflowRunPresetParams:
+      description: |-
+        Run parameter values as rendered by the workflow parameter form. Nested objects
+        and arrays are intentionally unsupported — the HealthOmics parameter template is
+        a flat map of scalars.
+      type: object
+    WorkflowRunPreset:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+        PresetKey:
+          type: string
+        PresetId:
+          type: string
+        Scope:
+          $ref: '#/components/schemas/WorkflowRunPresetScope'
+        WorkflowId:
+          type: string
+        Name:
+          type: string
+        Params:
+          $ref: '#/components/schemas/WorkflowRunPresetParams'
+        CreatedByEmail:
+          description: Email of the creating user, denormalised so shared lab presets can show authorship without a user lookup.
+          type: string
+        CreatedAt:
+          type: string
+        CreatedBy:
+          type: string
+        ModifiedAt:
+          type: string
+        ModifiedBy:
+          type: string
+      required:
+        - LaboratoryId
+        - Name
+        - Params
+        - PresetId
+        - PresetKey
+        - Scope
+        - WorkflowId
+    ListWorkflowRunPresetsResponse:
+      type: object
+      properties:
+        UserPresets:
+          description: Presets owned by the calling user for this laboratory + workflow.
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowRunPreset'
+        LabPresets:
+          description: Presets shared with the whole laboratory for this workflow.
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowRunPreset'
+      required:
+        - LabPresets
+        - UserPresets
+    UpdateWorkflowRunPresetRequest:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+          format: uuid
+        WorkflowId:
+          type: string
+          minLength: 1
+        Scope:
+          type: string
+          enum:
+            - USER
+            - LAB
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        Params:
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+      required:
+        - LaboratoryId
+        - WorkflowId
+        - Scope
+      additionalProperties: false
     ListComputeEnvsResponse:
       type: object
       properties:
@@ -9500,6 +9625,144 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-run-preset/create-workflow-run-preset:
+    post:
+      operationId: createWorkflowRunPreset
+      summary: Create Workflow Run Preset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRunPresetRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowRunPreset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-run-preset/delete-workflow-run-preset/{id}:
+    delete:
+      operationId: deleteWorkflowRunPreset
+      summary: Delete Workflow Run Preset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: laboratoryId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Laboratory owning the preset
+        - name: workflowId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Workflow the preset belongs to
+        - name: scope
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 'Preset tier: USER or LAB'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-run-preset/list-workflow-run-presets:
+    get:
+      operationId: listWorkflowRunPresets
+      summary: List Workflow Run Presets
+      parameters:
+        - name: laboratoryId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Laboratory to list presets for
+        - name: workflowId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Workflow to list presets for
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWorkflowRunPresetsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-run-preset/update-workflow-run-preset/{id}:
+    put:
+      operationId: updateWorkflowRunPreset
+      summary: Update Workflow Run Preset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkflowRunPresetRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowRunPreset'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

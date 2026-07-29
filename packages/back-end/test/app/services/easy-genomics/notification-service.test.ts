@@ -1,11 +1,13 @@
 jest.mock('../../../../src/app/services/easy-genomics/laboratory-service');
 jest.mock('../../../../src/app/services/easy-genomics/laboratory-user-service');
+jest.mock('../../../../src/app/services/easy-genomics/organization-service');
 jest.mock('../../../../src/app/services/easy-genomics/user-service');
 jest.mock('../../../../src/app/services/ses-service');
 
 import { LaboratoryService } from '../../../../src/app/services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '../../../../src/app/services/easy-genomics/laboratory-user-service';
 import { NotificationService } from '../../../../src/app/services/easy-genomics/notification-service';
+import { OrganizationService } from '../../../../src/app/services/easy-genomics/organization-service';
 import { UserService } from '../../../../src/app/services/easy-genomics/user-service';
 import { SesService } from '../../../../src/app/services/ses-service';
 
@@ -21,11 +23,14 @@ const userServiceInstance = (UserService as jest.MockedClass<typeof UserService>
 // instance-targeted mocking as UserService.get (see comment above).
 const sesServiceInstance = (SesService as jest.MockedClass<typeof SesService>).mock
   .instances[0] as jest.Mocked<SesService>;
+const organizationServiceInstance = (OrganizationService as jest.MockedClass<typeof OrganizationService>).mock
+  .instances[0] as jest.Mocked<OrganizationService>;
 
 describe('NotificationService.notifyRunCompletion', () => {
   const run = {
     RunId: 'run-1',
     LaboratoryId: 'lab-1',
+    OrganizationId: 'org-1',
     UserId: 'owner-1',
     RunName: 'My Run',
     Status: 'COMPLETED',
@@ -39,6 +44,7 @@ describe('NotificationService.notifyRunCompletion', () => {
       .fn()
       .mockResolvedValue({ LaboratoryId: 'lab-1', Name: 'Test Lab', NotificationsEnabled: true });
     sesServiceInstance.sendRunCompletionEmail = jest.fn().mockResolvedValue({});
+    organizationServiceInstance.get = jest.fn().mockResolvedValue({ OrganizationId: 'org-1', Name: 'Test Org' });
     userServiceInstance.get = jest.fn();
     userServiceInstance.listUsers = jest.fn().mockResolvedValue([]);
   });
@@ -293,5 +299,55 @@ describe('NotificationService.notifyRunCompletion', () => {
     expect(result.sent).toBe(2);
     const calledAddresses = (sesServiceInstance.sendRunCompletionEmail as jest.Mock).mock.calls.map((c) => c[0]);
     expect(calledAddresses.sort()).toEqual(['member2@example.com', 'owner@example.com']);
+  });
+
+  it('passes the organization logo/footer branding through to sendRunCompletionEmail when set', async () => {
+    (userServiceInstance.get as jest.Mock).mockResolvedValue({
+      UserId: 'owner-1',
+      Email: 'owner@example.com',
+      NotifyOnOwnRuns: true,
+    });
+    (LaboratoryUserService as jest.MockedClass<typeof LaboratoryUserService>).prototype.queryByLaboratoryId = jest
+      .fn()
+      .mockResolvedValue([]);
+    organizationServiceInstance.get = jest.fn().mockResolvedValue({
+      OrganizationId: 'org-1',
+      Name: 'Test Org',
+      EmailBrandingLogoUrl: 'https://acme-labs.example/logo.png',
+      EmailBrandingFooterText: 'Acme Labs footer',
+    });
+
+    const service = new NotificationService();
+    await service.notifyRunCompletion(run);
+
+    expect(sesServiceInstance.sendRunCompletionEmail).toHaveBeenCalledWith(
+      'owner@example.com',
+      expect.objectContaining({
+        logoUrl: 'https://acme-labs.example/logo.png',
+        footerText: 'Acme Labs footer',
+      }),
+    );
+  });
+
+  it('passes undefined branding through to sendRunCompletionEmail when the org has none set', async () => {
+    (userServiceInstance.get as jest.Mock).mockResolvedValue({
+      UserId: 'owner-1',
+      Email: 'owner@example.com',
+      NotifyOnOwnRuns: true,
+    });
+    (LaboratoryUserService as jest.MockedClass<typeof LaboratoryUserService>).prototype.queryByLaboratoryId = jest
+      .fn()
+      .mockResolvedValue([]);
+
+    const service = new NotificationService();
+    await service.notifyRunCompletion(run);
+
+    expect(sesServiceInstance.sendRunCompletionEmail).toHaveBeenCalledWith(
+      'owner@example.com',
+      expect.objectContaining({
+        logoUrl: undefined,
+        footerText: undefined,
+      }),
+    );
   });
 });

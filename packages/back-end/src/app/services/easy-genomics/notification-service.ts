@@ -4,11 +4,13 @@ import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-gen
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { LaboratoryUserService } from '@BE/services/easy-genomics/laboratory-user-service';
+import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
 import { UserService } from '@BE/services/easy-genomics/user-service';
 import { SesService } from '@BE/services/ses-service';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryUserService = new LaboratoryUserService();
+const organizationService = new OrganizationService();
 const userService = new UserService();
 const sesService = new SesService({
   accountId: process.env.ACCOUNT_ID!,
@@ -41,6 +43,8 @@ export class NotificationService {
       console.log(`notifyRunCompletion: NotificationsEnabled=false for LaboratoryId=${run.LaboratoryId}, skipping`);
       return { sent: 0 };
     }
+
+    const organization = await organizationService.get(laboratory.OrganizationId);
 
     const recipientEmails = new Set<string>();
 
@@ -77,6 +81,8 @@ export class NotificationService {
           runDurationSeconds: run.RunDurationSeconds,
           runId: run.RunId,
           laboratoryId: run.LaboratoryId,
+          logoUrl: organization.EmailBrandingLogoUrl,
+          footerText: organization.EmailBrandingFooterText,
         });
         sent++;
       } catch (err) {

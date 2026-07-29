@@ -1,4 +1,5 @@
 import { SendTemplatedEmailCommand, SendTemplatedEmailCommandOutput, SESClient } from '@aws-sdk/client-ses';
+import { formatRunTime } from '@BE/utils/format-run-time';
 
 export interface SesServiceProps {
   accountId: string;
@@ -142,6 +143,8 @@ export class SesService {
       runDurationSeconds?: number;
       runId: string;
       laboratoryId: string;
+      logoUrl?: string;
+      footerText?: string;
     },
   ): Promise<SendTemplatedEmailCommandOutput> {
     const logRequestMessage = `Send Run Completion Email request: ${toAddress}`;
@@ -163,9 +166,10 @@ export class SesService {
         STATUS: data.status,
         LABORATORY_NAME: data.laboratoryName,
         WORKFLOW_NAME: data.workflowName || 'N/A',
-        RUN_DURATION_SECONDS: data.runDurationSeconds != null ? `${data.runDurationSeconds}` : 'N/A',
+        RUN_TIME: data.runDurationSeconds != null ? formatRunTime(data.runDurationSeconds) : 'N/A',
         RUN_LINK: `https://${this.props.domainName}/labs/${data.laboratoryId}/run/${data.runId}`,
-        EASY_GENOMICS_EMAIL_LOGO: `https://${this.props.domainName}/images/email/easy-genomics.png`,
+        EASY_GENOMICS_EMAIL_LOGO: data.logoUrl || `https://${this.props.domainName}/images/email/easy-genomics.png`,
+        ORG_FOOTER_TEXT: data.footerText || 'Sent from Easy Genomics',
       }),
     });
 

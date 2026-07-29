@@ -164,5 +164,67 @@ describe('SesService', () => {
       const templateData = JSON.parse(cmdInput.TemplateData);
       expect(templateData.RUN_LINK).toBe('https://example.com/labs/lab-1/run/run-1');
     });
+
+    it('formats RUN_TIME as a labeled duration string instead of raw seconds', async () => {
+      mockSend.mockResolvedValueOnce({ MessageId: 'msg-2' });
+      const service = new SesService({
+        accountId: '123456789012',
+        region: 'us-west-2',
+        domainName: 'example.com',
+        envType: 'dev',
+        envName: 'sandbox',
+      });
+
+      await service.sendRunCompletionEmail('tech@example.com', {
+        runName: 'My Run',
+        status: 'COMPLETED',
+        laboratoryName: 'Test Lab',
+        runDurationSeconds: 911,
+        runId: 'run-1',
+        laboratoryId: 'lab-1',
+      });
+
+      const cmdInput = (SendTemplatedEmailCommand as unknown as jest.Mock).mock.calls[0][0];
+      const templateData = JSON.parse(cmdInput.TemplateData);
+      expect(templateData.RUN_TIME).toBe('0d 0h 15m 11s');
+      expect(templateData.RUN_DURATION_SECONDS).toBeUndefined();
+    });
+
+    it('uses the org logo/footer when provided, falling back to defaults otherwise', async () => {
+      mockSend.mockResolvedValueOnce({ MessageId: 'msg-3' }).mockResolvedValueOnce({ MessageId: 'msg-4' });
+      const service = new SesService({
+        accountId: '123456789012',
+        region: 'us-west-2',
+        domainName: 'example.com',
+        envType: 'dev',
+        envName: 'sandbox',
+      });
+
+      await service.sendRunCompletionEmail('tech@example.com', {
+        runName: 'My Run',
+        status: 'COMPLETED',
+        laboratoryName: 'Test Lab',
+        runId: 'run-1',
+        laboratoryId: 'lab-1',
+        logoUrl: 'https://acme-labs.example/logo.png',
+        footerText: 'Processed for Acme Labs.',
+      });
+      await service.sendRunCompletionEmail('tech@example.com', {
+        runName: 'My Run',
+        status: 'COMPLETED',
+        laboratoryName: 'Test Lab',
+        runId: 'run-1',
+        laboratoryId: 'lab-1',
+      });
+
+      const calls = (SendTemplatedEmailCommand as unknown as jest.Mock).mock.calls;
+      const brandedData = JSON.parse(calls[0][0].TemplateData);
+      const defaultData = JSON.parse(calls[1][0].TemplateData);
+
+      expect(brandedData.EASY_GENOMICS_EMAIL_LOGO).toBe('https://acme-labs.example/logo.png');
+      expect(brandedData.ORG_FOOTER_TEXT).toBe('Processed for Acme Labs.');
+      expect(defaultData.EASY_GENOMICS_EMAIL_LOGO).toBe('https://example.com/images/email/easy-genomics.png');
+      expect(defaultData.ORG_FOOTER_TEXT).toBe('Sent from Easy Genomics');
+    });
   });
 });

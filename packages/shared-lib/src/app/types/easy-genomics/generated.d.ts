@@ -302,6 +302,10 @@ export interface paths {
     /** Read Organization */
     get: operations["readOrganization"];
   };
+  "/easy-genomics/organization/request-organization-branding-test-email": {
+    /** Request Organization Branding Test Email */
+    post: operations["requestOrganizationBrandingTestEmail"];
+  };
   "/easy-genomics/organization/update-organization/{id}": {
     /** Update Organization */
     put: operations["updateOrganization"];
@@ -1418,6 +1422,12 @@ export interface components {
       CreatedBy?: string;
       ModifiedAt?: string;
       ModifiedBy?: string;
+    };
+    RequestOrganizationBrandingTestEmailRequest: {
+      OrganizationId: string;
+      /** Format: uri */
+      EmailBrandingLogoUrl?: string;
+      EmailBrandingFooterText?: string;
     };
     UpdateOrganizationRequest: {
       Name: string;
@@ -4986,6 +4996,27 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["Organization"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Request Organization Branding Test Email */
+  requestOrganizationBrandingTestEmail: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RequestOrganizationBrandingTestEmailRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": unknown;
         };
       };
       400: components["responses"]["BadRequest"];

@@ -203,6 +203,37 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
     );
   });
 
+  it('wires SEQERA_API_BASE_URL environment for request-organization-branding-test-email endpoint', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const lambdaConstructMock = LambdaConstruct as unknown as jest.Mock;
+    const lambdaProps = lambdaConstructMock.mock.calls[0][2];
+    const triggerConfig =
+      lambdaProps.lambdaFunctionsResources['/easy-genomics/organization/request-organization-branding-test-email'];
+
+    expect(triggerConfig.environment.SEQERA_API_BASE_URL).toBeDefined();
+  });
+
+  it('adds IAM policy statements for request-organization-branding-test-email endpoint', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/organization/request-organization-branding-test-email',
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['ses:SendTemplatedEmail']),
+        }),
+      ]),
+    );
+  });
+
   it('adds IAM policy statements for request-unlinked-bucket-objects endpoint', () => {
     const app = new App();
     const parentStack = new Stack(app, 'parent-stack');

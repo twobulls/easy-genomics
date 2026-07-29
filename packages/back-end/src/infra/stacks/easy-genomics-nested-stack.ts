@@ -275,6 +275,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
             ORG_EMAIL_ASSETS_BUCKET_NAME: this.orgEmailAssetsBucket.bucket.bucketName,
           },
         },
+        '/easy-genomics/organization/request-organization-branding-test-email': {
+          environment: {
+            SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
+          },
+        },
         '/easy-genomics/organization/delete-organization': {
           environment: {
             SNS_ORGANIZATION_DELETION_TOPIC: this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || '',
@@ -550,6 +555,23 @@ export class EasyGenomicsNestedStack extends NestedStack {
         resources: [`${this.orgEmailAssetsBucket.bucket.bucketArn}/*`],
         actions: ['s3:PutObject'],
         effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/organization/request-organization-branding-test-email
+    this.iam.addPolicyStatements('/easy-genomics/organization/request-organization-branding-test-email', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.appDomainName}`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@*`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
+        ],
+        actions: ['ses:SendTemplatedEmail'],
+        effect: Effect.ALLOW,
+        conditions: {
+          StringEquals: {
+            'ses:FromAddress': `no.reply@${this.props.appDomainName}`,
+          },
+        },
       }),
     ]);
     // /easy-genomics/organization/delete-organization

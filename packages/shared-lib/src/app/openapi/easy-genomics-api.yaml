@@ -2396,6 +2396,20 @@ components:
       required:
         - Name
         - OrganizationId
+    RequestOrganizationBrandingTestEmailRequest:
+      type: object
+      properties:
+        OrganizationId:
+          type: string
+        EmailBrandingLogoUrl:
+          type: string
+          format: uri
+        EmailBrandingFooterText:
+          type: string
+          maxLength: 280
+      required:
+        - OrganizationId
+      additionalProperties: false
     UpdateOrganizationRequest:
       type: object
       properties:
@@ -8851,6 +8865,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/organization/request-organization-branding-test-email:
+    post:
+      operationId: requestOrganizationBrandingTestEmail
+      summary: Request Organization Branding Test Email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestOrganizationBrandingTestEmailRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: {}
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

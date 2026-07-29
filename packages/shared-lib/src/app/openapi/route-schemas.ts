@@ -452,8 +452,6 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
   'GET /aws-healthomics/workflow/list-shared-workflows': {
     query: [
       { name: 'laboratoryId', required: false, description: 'Laboratory to verify HealthOmics access' },
-      { name: 'maxResults', required: false, description: 'Pagination page size' },
-      { name: 'startingToken', required: false, description: 'Pagination offset token' },
       { name: 'name', required: false, description: 'Filter by workflow name' },
     ],
   },

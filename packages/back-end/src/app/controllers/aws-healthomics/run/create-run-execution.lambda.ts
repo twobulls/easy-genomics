@@ -19,6 +19,7 @@ import {
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
 import { assertLaboratoryHasWorkflowAccess } from '@BE/utils/laboratory-workflow-access-utils';
+import { resolveSharedWorkflowOwnerId } from '@BE/utils/omics-shared-workflow-utils';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
@@ -34,6 +35,8 @@ const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
  *    - requestId (transactionId)
  *    - name
  *    - parameters (JSON document defining the inputs for the Workflow including the sample-sheet)
+ *    - workflowOwnerId in the body is ignored; for SHARED workflows it is always
+ *      resolved server-side from ACTIVE ListShares (never taken from the client)
  *
  * @param event
  */
@@ -93,10 +96,15 @@ export const handler: Handler = async (
     );
 
     const parameters = JSON.parse(request.parameters!.toString());
-    const { workflowVersionName, ...startRunRequestWithoutVersion } = request;
+    // Strip client-supplied workflowOwnerId — always resolve from ACTIVE shares.
+    const { workflowVersionName, ...rest } = request;
+    const startRunRequestWithoutVersion = { ...rest };
+    delete startRunRequestWithoutVersion.workflowOwnerId;
+    const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, request.workflowId!);
     const response = await omicsService.startRun(<StartRunCommandInput>{
       ...startRunRequestWithoutVersion,
       ...(workflowVersionName ? { workflowVersionName } : {}),
+      ...(workflowOwnerId ? { workflowOwnerId } : {}),
       parameters: {
         ...parameters,
         outdir: '/mnt/workflow/pubdir', // AWS HealthOmics requires explicitly setting 'outdir' = '/mnt/workflow/pubdir' for internal output

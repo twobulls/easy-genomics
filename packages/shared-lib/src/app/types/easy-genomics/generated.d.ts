@@ -1469,6 +1469,13 @@ export interface components {
       platform: "HealthOmics" | "Seqera";
       workflowId: string;
       name: string;
+      /**
+       * @description Present for HealthOmics entries only.
+       * @enum {string}
+       */
+      source?: "PRIVATE" | "SHARED";
+      /** @description AWS account that owns a SHARED HealthOmics workflow (from ShareDetails). */
+      ownerAccountId?: string;
     };
     ListUnifiedWorkflowCatalogResponse: {
       workflows: components["schemas"]["UnifiedWorkflowCatalogEntry"][];
@@ -3503,10 +3510,6 @@ export interface operations {
       query?: {
         /** @description Laboratory to verify HealthOmics access */
         laboratoryId?: string;
-        /** @description Pagination page size */
-        maxResults?: string;
-        /** @description Pagination offset token */
-        startingToken?: string;
         /** @description Filter by workflow name */
         name?: string;
       };

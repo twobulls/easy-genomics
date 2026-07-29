@@ -7,6 +7,7 @@ import { fetchGitHubSchemaJsonFile } from '@BE/services/aws-healthomics/fetch-gi
 import { GITHUB_SCHEMA_URL_TAG, parseGitHubSchemaFileUrl } from '@BE/services/aws-healthomics/parse-github-schema-url';
 import { WorkflowSchema, WorkflowSchemaService } from '@BE/services/aws-healthomics/workflow-schema-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { LaboratoryWorkflowAccessService } from '@BE/services/easy-genomics/laboratory-workflow-access-service';
 import { OmicsService } from '@BE/services/omics-service';
 import { SecretsManagerService } from '@BE/services/secrets-manager-service';
 import {
@@ -14,8 +15,11 @@ import {
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+import { assertLaboratoryHasWorkflowAccess } from '@BE/utils/laboratory-workflow-access-utils';
+import { resolveSharedWorkflowOwnerId } from '@BE/utils/omics-shared-workflow-utils';
 
 const laboratoryService = new LaboratoryService();
+const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
 const omicsService = new OmicsService();
 const secretsManagerService = new SecretsManagerService();
 const workflowSchemaService = new WorkflowSchemaService();
@@ -40,9 +44,11 @@ function parseGitHubRepoUrl(url: string): { owner: string; repo: string } {
  * Used when DynamoDB has no cached schema (EventBridge trigger may have failed).
  */
 async function fetchSchemaFromGitHub(workflowId: string): Promise<WorkflowSchema | null> {
+  const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, workflowId);
   const workflow = await omicsService.getWorkflow(<GetWorkflowCommandInput>{
     id: workflowId,
     type: 'PRIVATE',
+    ...(workflowOwnerId ? { workflowOwnerId } : {}),
   });
 
   const githubSchemaUrlTag = workflow.tags?.[GITHUB_SCHEMA_URL_TAG];
@@ -127,6 +133,8 @@ export const handler: Handler = async (
     ) {
       throw new UnauthorizedAccessError();
     }
+
+    await assertLaboratoryHasWorkflowAccess(laboratory, 'HEALTH_OMICS', workflowId, laboratoryWorkflowAccessService);
 
     // 1. In-memory cache check
     const cacheKey = `${workflowId}#${SCHEMA_VERSION}`;

@@ -10,6 +10,7 @@ import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
+import { OrgEmailAssetsBucketConstruct } from '../constructs/org-email-assets-bucket-construct';
 import { SesConstruct } from '../constructs/ses-construct';
 import { SnsConstruct, TopicDetails, Topics } from '../constructs/sns-construct';
 import { QueueDetails, Queues, SqsConstruct } from '../constructs/sqs-construct';
@@ -36,6 +37,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
   iam: IamConstruct;
   lambda: LambdaConstruct;
+  orgEmailAssetsBucket: OrgEmailAssetsBucketConstruct;
   ses: SesConstruct;
   sns: SnsConstruct;
   sqs: SqsConstruct;
@@ -171,6 +173,17 @@ export class EasyGenomicsNestedStack extends NestedStack {
       );
     }
 
+    // Constructed ahead of `setupIamPolicies()` (rather than alongside `this.ses` below) because
+    // that method's IAM policy statement reads `this.orgEmailAssetsBucket.bucket.bucketArn`.
+    this.orgEmailAssetsBucket = new OrgEmailAssetsBucketConstruct(
+      this,
+      `${this.props.constructNamespace}-org-email-assets`,
+      {
+        bucketName: `${this.props.namePrefix}-org-email-assets-bucket`,
+        envType: this.props.envType,
+      },
+    );
+
     this.setupIamPolicies();
 
     this.lambda = new LambdaConstruct(this, `${this.props.constructNamespace}`, {
@@ -255,6 +268,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
         '/easy-genomics/organization/update-organization': {
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
+          },
+        },
+        '/easy-genomics/organization/create-organization-logo-upload-request': {
+          environment: {
+            ORG_EMAIL_ASSETS_BUCKET_NAME: this.orgEmailAssetsBucket.bucket.bucketName,
           },
         },
         '/easy-genomics/organization/delete-organization': {
@@ -523,6 +541,14 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
         ],
         actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/organization/create-organization-logo-upload-request
+    this.iam.addPolicyStatements('/easy-genomics/organization/create-organization-logo-upload-request', [
+      new PolicyStatement({
+        resources: [`${this.orgEmailAssetsBucket.bucket.bucketArn}/*`],
+        actions: ['s3:PutObject'],
         effect: Effect.ALLOW,
       }),
     ]);

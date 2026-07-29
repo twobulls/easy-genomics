@@ -1676,11 +1676,11 @@ components:
     ReadLaboratory:
       type: object
       properties:
+        OrganizationId:
+          type: string
         Name:
           type: string
         LaboratoryId:
-          type: string
-        OrganizationId:
           type: string
         Status:
           enum:
@@ -1818,6 +1818,8 @@ components:
     LaboratoryRun:
       type: object
       properties:
+        OrganizationId:
+          type: string
         LaboratoryId:
           type: string
         UserId:
@@ -1826,8 +1828,6 @@ components:
           enum:
             - AWS HealthOmics
             - Seqera Cloud
-          type: string
-        OrganizationId:
           type: string
         Status:
           type: string
@@ -1964,6 +1964,8 @@ components:
     ReadLaboratoryRun:
       type: object
       properties:
+        OrganizationId:
+          type: string
         LaboratoryId:
           type: string
         UserId:
@@ -1972,8 +1974,6 @@ components:
           enum:
             - AWS HealthOmics
             - Seqera Cloud
-          type: string
-        OrganizationId:
           type: string
         Status:
           type: string
@@ -2317,6 +2317,25 @@ components:
       required:
         - NotifyOnLabRuns
       additionalProperties: false
+    CreateOrganizationLogoUploadRequestRequest:
+      type: object
+      properties:
+        OrganizationId:
+          type: string
+        ContentType:
+          type: string
+          enum:
+            - image/png
+            - image/jpeg
+        ContentLength:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 2097152
+      required:
+        - OrganizationId
+        - ContentType
+        - ContentLength
+      additionalProperties: false
     CreateOrganizationRequest:
       type: object
       properties:
@@ -2480,11 +2499,11 @@ components:
     OrganizationUserDetails:
       type: object
       properties:
+        OrganizationId:
+          type: string
         OrganizationAdmin:
           type: boolean
         UserId:
-          type: string
-        OrganizationId:
           type: string
         UserStatus:
           enum:
@@ -8699,6 +8718,32 @@ paths:
     get:
       operationId: listBuckets
       summary: List Buckets
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/organization/create-organization-logo-upload-request:
+    post:
+      operationId: createOrganizationLogoUploadRequest
+      summary: Create Organization Logo Upload Request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationLogoUploadRequestRequest'
       responses:
         '200':
           description: Success

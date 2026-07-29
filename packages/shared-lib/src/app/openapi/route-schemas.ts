@@ -47,6 +47,7 @@ import {
 } from '../schema/easy-genomics/laboratory-user';
 import { BatchUpdateLaboratoryWorkflowAccessRequestSchema } from '../schema/easy-genomics/laboratory-workflow-access';
 import { CreateOrganizationSchema, UpdateOrganizationSchema } from '../schema/easy-genomics/organization';
+import { OrganizationLogoUploadRequestSchema } from '../schema/easy-genomics/organization-email-branding';
 import {
   AddOrganizationUserSchema,
   EditOrganizationUserSchema,
@@ -99,6 +100,13 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
   'PUT /easy-genomics/organization/update-organization/{id}': {
     request: UpdateOrganizationSchema,
     response: 'Organization',
+  },
+  // OrganizationId travels in the request body rather than as a path parameter: the 'create-'
+  // verb never registers a path-level {id} resource (see ALLOWED_LAMBDA_FUNCTION_OPERATIONS_WITH_RESOURCE_ID
+  // in verb-operations.ts), so this mirrors the LaboratoryId-in-body pattern used by
+  // 'POST /easy-genomics/upload/create-file-upload-request' below.
+  'POST /easy-genomics/organization/create-organization-logo-upload-request': {
+    request: OrganizationLogoUploadRequestSchema,
   },
   'DELETE /easy-genomics/organization/delete-organization/{id}': {},
   'GET /easy-genomics/organization/list-organizations': {

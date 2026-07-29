@@ -282,6 +282,10 @@ export interface paths {
     /** List Buckets */
     get: operations["listBuckets"];
   };
+  "/easy-genomics/organization/create-organization-logo-upload-request": {
+    /** Create Organization Logo Upload Request */
+    post: operations["createOrganizationLogoUploadRequest"];
+  };
   "/easy-genomics/organization/create-organization": {
     /** Create Organization */
     post: operations["createOrganization"];
@@ -1073,9 +1077,9 @@ export interface components {
       ModifiedBy?: string;
     };
     ReadLaboratory: {
+      OrganizationId: string;
       Name: string;
       LaboratoryId: string;
-      OrganizationId: string;
       /** @enum {string} */
       Status: "Active" | "Inactive";
       Description?: string;
@@ -1136,11 +1140,11 @@ export interface components {
       };
     };
     LaboratoryRun: {
+      OrganizationId: string;
       LaboratoryId: string;
       UserId: string;
       /** @enum {string} */
       Platform: "AWS HealthOmics" | "Seqera Cloud";
-      OrganizationId: string;
       Status: string;
       RunId: string;
       RunName: string;
@@ -1238,11 +1242,11 @@ export interface components {
       NotifiedAt?: string;
     };
     ReadLaboratoryRun: {
+      OrganizationId: string;
       LaboratoryId: string;
       UserId: string;
       /** @enum {string} */
       Platform: "AWS HealthOmics" | "Seqera Cloud";
-      OrganizationId: string;
       Status: string;
       RunId: string;
       RunName: string;
@@ -1381,6 +1385,12 @@ export interface components {
       NotifyOnLabRuns: boolean;
       NotifyOnLabRunsAdditionalEmails?: string[];
     };
+    CreateOrganizationLogoUploadRequestRequest: {
+      OrganizationId: string;
+      /** @enum {string} */
+      ContentType: "image/png" | "image/jpeg";
+      ContentLength: number;
+    };
     CreateOrganizationRequest: {
       Name: string;
       Description?: string;
@@ -1451,9 +1461,9 @@ export interface components {
       OrganizationAdmin: boolean;
     };
     OrganizationUserDetails: {
+      OrganizationId: string;
       OrganizationAdmin: boolean;
       UserId: string;
-      OrganizationId: string;
       /** @enum {string} */
       UserStatus: "Active" | "Inactive" | "Invited";
       /** @enum {string} */
@@ -4871,6 +4881,27 @@ export interface operations {
   };
   /** List Buckets */
   listBuckets: {
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Create Organization Logo Upload Request */
+  createOrganizationLogoUploadRequest: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateOrganizationLogoUploadRequestRequest"];
+      };
+    };
     responses: {
       /** @description Success */
       200: {

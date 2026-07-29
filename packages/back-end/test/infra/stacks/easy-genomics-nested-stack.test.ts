@@ -185,6 +185,24 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
     );
   });
 
+  it('adds IAM policy statements for create-organization-logo-upload-request endpoint', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/organization/create-organization-logo-upload-request',
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['s3:PutObject']),
+        }),
+      ]),
+    );
+  });
+
   it('adds IAM policy statements for request-unlinked-bucket-objects endpoint', () => {
     const app = new App();
     const parentStack = new Stack(app, 'parent-stack');

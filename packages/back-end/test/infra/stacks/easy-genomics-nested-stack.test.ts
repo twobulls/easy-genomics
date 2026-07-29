@@ -11,11 +11,17 @@ jest.mock('aws-cdk-lib/aws-lambda-event-sources', () => ({
 }));
 
 jest.mock('../../../src/infra/constructs/iam-construct', () => ({
-  IamConstruct: jest.fn().mockImplementation(() => ({
-    policyStatements: new Map<string, unknown[]>(),
-    addPolicyStatements: jest.fn(),
-    getPolicyStatements: jest.fn().mockReturnValue([]),
-  })),
+  IamConstruct: jest.fn().mockImplementation(() => {
+    const policyStatements = new Map<string, unknown[]>();
+    return {
+      policyStatements,
+      // Mirror production Map.set semantics so callers that merge via .get() + set are testable.
+      addPolicyStatements: jest.fn((name: string, statements: unknown[]) => {
+        policyStatements.set(name, statements);
+      }),
+      getPolicyStatements: jest.fn((name: string) => policyStatements.get(name) ?? []),
+    };
+  }),
 }));
 
 jest.mock('../../../src/infra/constructs/lambda-construct', () => ({
@@ -231,5 +237,99 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
         }),
       ]),
     );
+  });
+
+  it('appends laboratory-s3-access IAM without replacing update-laboratory base policies', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+    const updateLaboratoryPolicies = iamInstance.policyStatements.get('/easy-genomics/laboratory/update-laboratory');
+
+    expect(updateLaboratoryPolicies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:Query', 'dynamodb:PutItem']),
+        }),
+        expect.objectContaining({
+          actions: expect.arrayContaining(['ssm:GetParameter', 'ssm:PutParameter']),
+        }),
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:PutItem', 'dynamodb:DeleteItem', 'dynamodb:Query']),
+        }),
+        expect.objectContaining({
+          actions: expect.arrayContaining(['s3:ListAllMyBuckets', 's3:GetBucketTagging']),
+        }),
+      ]),
+    );
+  });
+
+  it('grants create-laboratory PutItem on laboratory-s3-access-table', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/laboratory/create-laboratory',
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:PutItem']),
+          resources: expect.arrayContaining([expect.stringContaining('laboratory-s3-access-table')]),
+        }),
+      ]),
+    );
+  });
+
+  it('grants edit-s3-access-batch PutItem on laboratory-table to clear default buckets', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+    const policies = iamInstance.policyStatements.get('/easy-genomics/organization/s3-access/edit-s3-access-batch');
+
+    expect(policies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:Query', 'dynamodb:PutItem']),
+          resources: expect.arrayContaining([expect.stringContaining('laboratory-table')]),
+        }),
+      ]),
+    );
+  });
+
+  it('appends GetBucketTagging and s3-access Query to enforcement routes', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    for (const route of [
+      '/easy-genomics/file/request-list-bucket-objects',
+      '/easy-genomics/file/request-file-download-url',
+      '/easy-genomics/data-collections/edit-batch',
+      '/easy-genomics/upload/create-file-upload-request',
+    ]) {
+      const policies = iamInstance.policyStatements.get(route);
+      expect(policies).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            actions: expect.arrayContaining(['dynamodb:Query']),
+            resources: expect.arrayContaining([expect.stringContaining('laboratory-s3-access-table')]),
+          }),
+          expect.objectContaining({
+            actions: expect.arrayContaining(['s3:GetBucketTagging']),
+          }),
+        ]),
+      );
+    }
   });
 });

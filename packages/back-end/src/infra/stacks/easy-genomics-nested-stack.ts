@@ -348,7 +348,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         // every lab's FILE# rows, deletes the underlying S3 object + tagging-table rows for
         // files whose last referencing run has TTL'd out, and skips anything tagged Permanent.
         // Only `DRY_RUN=false` enables real deletes (unset or any other value stays dry-run).
-        // Runtime `assertBucketMatchesLab` / `assertKeyUnderLabPrefix` bound blast radius; IAM
+        // Runtime `assertLaboratoryHasS3BucketAccess` / `assertKeyUnderLabPrefix` bound blast radius; IAM
         // still uses `s3://*/*` because lab buckets are provisioned per org at data-setup time.
         '/easy-genomics/data-collections/process-expired-laboratory-data': {
           timeoutSeconds: 900,
@@ -642,6 +642,14 @@ export class EasyGenomicsNestedStack extends NestedStack {
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-unique-reference-table`,
+        ],
+        actions: ['dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        // Seed ALLOW row for the lab's configured S3Bucket on create.
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-s3-access-table`,
         ],
         actions: ['dynamodb:PutItem'],
         effect: Effect.ALLOW,
@@ -1843,6 +1851,67 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
     ]);
 
+    const laboratoryS3AccessTableArn = `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-s3-access-table`;
+    const laboratoryS3AccessTableAnyIndex = `${laboratoryS3AccessTableArn}/index/*`;
+
+    const s3BucketCatalogIam = [
+      new PolicyStatement({
+        resources: ['*'],
+        actions: ['s3:ListAllMyBuckets', 's3:GetBucketTagging'],
+        effect: Effect.ALLOW,
+      }),
+    ];
+
+    // /easy-genomics/organization/s3-access/list-s3-bucket-catalog
+    this.iam.addPolicyStatements('/easy-genomics/organization/s3-access/list-s3-bucket-catalog', s3BucketCatalogIam);
+
+    // /easy-genomics/organization/s3-access/list-s3-access-assignments
+    this.iam.addPolicyStatements('/easy-genomics/organization/s3-access/list-s3-access-assignments', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [laboratoryS3AccessTableArn, laboratoryS3AccessTableAnyIndex],
+        actions: ['dynamodb:Query'],
+      }),
+    ]);
+
+    // /easy-genomics/organization/s3-access/edit-s3-access-batch
+    this.iam.addPolicyStatements('/easy-genomics/organization/s3-access/edit-s3-access-batch', [
+      new PolicyStatement({
+        // Query labs in the org; PutItem clears Laboratory.S3Bucket when its grant is revoked.
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query', 'dynamodb:PutItem'],
+      }),
+      new PolicyStatement({
+        resources: [laboratoryS3AccessTableArn, laboratoryS3AccessTableAnyIndex],
+        actions: ['dynamodb:PutItem', 'dynamodb:DeleteItem'],
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/s3-access/list-granted-buckets
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/s3-access/list-granted-buckets', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [laboratoryS3AccessTableArn, laboratoryS3AccessTableAnyIndex],
+        actions: ['dynamodb:Query'],
+      }),
+      ...s3BucketCatalogIam,
+    ]);
+
     const laboratoryDataTaggingTableArn = `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-data-tagging-table`;
     const laboratoryDataTaggingTableAnyIndex = `${laboratoryDataTaggingTableArn}/index/*`;
 
@@ -2063,11 +2132,73 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         // Wildcard bucket: lab S3Bucket values come from org provisioning. The sweep Lambda
-        // calls `assertBucketMatchesLab` + `assertKeyUnderLabPrefix` before each delete.
+        // calls `assertLaboratoryHasS3BucketAccess` + `assertKeyUnderLabPrefix` before each delete.
         resources: ['arn:aws:s3:::*/*'],
         actions: ['s3:DeleteObject'],
         effect: Effect.ALLOW,
       }),
+    ]);
+
+    const laboratoryS3AccessReadPolicy = new PolicyStatement({
+      resources: [laboratoryS3AccessTableArn, laboratoryS3AccessTableAnyIndex],
+      actions: ['dynamodb:Query'],
+    });
+
+    // assertLaboratoryHasS3BucketAccess → isDataTaggedS3Bucket needs GetBucketTagging.
+    // Without this, suppressError returns undefined and every assert denies (deploy lockout).
+    const laboratoryS3AccessCatalogCheckPolicy = new PolicyStatement({
+      resources: ['*'],
+      actions: ['s3:GetBucketTagging'],
+      effect: Effect.ALLOW,
+    });
+
+    // Append (do not replace): addPolicyStatements uses Map.set and would drop the
+    // route's earlier DynamoDB/S3/SSM statements if we passed only the new policy.
+    const laboratoryS3AccessEnforcementRoutes = [
+      '/easy-genomics/file/request-list-bucket-objects',
+      '/easy-genomics/file/request-top-level-bucket-objects',
+      '/easy-genomics/file/request-search-bucket-objects',
+      '/easy-genomics/file/request-file-download-url',
+      '/easy-genomics/file/request-folder-download-job',
+      '/easy-genomics/file/request-folder-download-job-status',
+      '/easy-genomics/file/process-folder-download-job',
+      '/easy-genomics/upload/create-file-upload-request',
+      '/easy-genomics/upload/create-file-upload-sample-sheet',
+      '/easy-genomics/data-collections/request-laboratory-bucket-objects',
+      '/easy-genomics/data-collections/request-unlinked-bucket-objects',
+      '/easy-genomics/data-collections/create-sample',
+      '/easy-genomics/data-collections/create-bulk-samples',
+      '/easy-genomics/data-collections/add-files-to-sample',
+      '/easy-genomics/data-collections/remove-files-from-sample',
+      '/easy-genomics/data-collections/add-tags-to-files',
+      '/easy-genomics/data-collections/edit-batch',
+      '/easy-genomics/data-collections/request-list-file-tags',
+      '/easy-genomics/data-collections/request-sequence-collection-sample-sheet',
+      '/easy-genomics/data-collections/process-expired-laboratory-data',
+      '/easy-genomics/laboratory/run/update-laboratory-run',
+      '/easy-genomics/laboratory/run/request-apply-run-retention-policy',
+      '/easy-genomics/laboratory/run/process-laboratory-run-stream',
+      '/easy-genomics/laboratory/run/process-update-laboratory-run',
+    ];
+
+    for (const route of laboratoryS3AccessEnforcementRoutes) {
+      const existing = this.iam.policyStatements.get(route) ?? [];
+      this.iam.addPolicyStatements(route, [
+        ...existing,
+        laboratoryS3AccessReadPolicy,
+        laboratoryS3AccessCatalogCheckPolicy,
+      ]);
+    }
+
+    // update-laboratory also migrates access rows (needs catalog list + table writes).
+    const updateLaboratoryExisting = this.iam.policyStatements.get('/easy-genomics/laboratory/update-laboratory') ?? [];
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/update-laboratory', [
+      ...updateLaboratoryExisting,
+      new PolicyStatement({
+        resources: [laboratoryS3AccessTableArn, laboratoryS3AccessTableAnyIndex],
+        actions: ['dynamodb:PutItem', 'dynamodb:DeleteItem', 'dynamodb:Query'],
+      }),
+      ...s3BucketCatalogIam,
     ]);
   };
 }

@@ -113,6 +113,27 @@ pnpm run seed-workflow-tagging-test-runs:dry-run -- --laboratoryId <uuid> --rese
 GSI queries) on `laboratory-data-tagging-table` (+ indexes); `s3:ListBucket` (and `ListBucket` on the lab bucket) when
 discovering keys. No Omics or Tower API calls.
 
+## `migrate-laboratory-s3-access-seed.ts`
+
+**Purpose:** Idempotent one-time seed of `ALLOW` rows in `laboratory-s3-access-table` for each laboratory's configured
+`S3Bucket`. Required so existing labs are not locked out by the new S3 access gates (strict mode denies when there are
+zero access rows).
+
+**When it runs:** Automatically after `cdk deploy` via the back-end `deploy` / `build-and-deploy` scripts. Safe to
+re-run manually. A runtime fallback in `isS3BucketAccessAllowed` also allows a lab's configured `S3Bucket` when it has
+zero access rows, covering the brief window before this script finishes.
+
+**Usage:**
+
+```bash
+cd packages/back-end
+pnpm run migrate-laboratory-s3-access-seed
+```
+
+**Environment:** `NAME_PREFIX` (or the same `easy-genomics.yaml` / `CI_CD` + `ENV_NAME` / `ENV_TYPE` setup as
+`preflight-deletion-protection`), plus AWS credentials with DynamoDB read on `laboratory-table` and read/write on
+`laboratory-s3-access-table`.
+
 ## `migrate-samples-and-sequence-collections.ts`
 
 **Purpose:** Rewrites DynamoDB rows in `laboratory-data-tagging-table` after the sequence-set → sample and

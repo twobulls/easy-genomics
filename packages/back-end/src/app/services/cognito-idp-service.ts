@@ -77,6 +77,7 @@ export class CognitoIdpService {
     organizationId: string,
     organizationName: string,
     resend?: boolean,
+    branding?: { logoUrl?: string; footerText?: string },
   ): Promise<string> {
     console.log(`[cognito-idp-service : adminCreateUser] organizationName: ${organizationName}, email: ${email}`);
 
@@ -95,6 +96,8 @@ export class CognitoIdpService {
       ClientMetadata: {
         ['OrganizationId']: organizationId,
         ['OrganizationName']: organizationName,
+        ...(branding?.logoUrl ? { EmailBrandingLogoUrl: branding.logoUrl } : {}),
+        ...(branding?.footerText ? { EmailBrandingFooterText: branding.footerText } : {}),
       },
     };
 
@@ -351,7 +354,7 @@ export class CognitoIdpService {
     data?: RequestType,
   ): Promise<ResponseType> => {
     try {
-      return await this.cognitoIdpClient.send(this.getCognitoIdpCommand(command, data));
+      return (await this.cognitoIdpClient.send(this.getCognitoIdpCommand(command, data))) as ResponseType;
     } catch (error: any) {
       console.error(`[cognitoIdp-service : cognitoIdpRequest] command: ${command} exception encountered:`, error);
       throw this.handleError(error);

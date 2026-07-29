@@ -115,9 +115,12 @@
     @update:open="emit('update:open', $event)"
   >
     <!-- Card: circle (+ count when N>1) + trailing chevron; chevron hints hover reveals analysis history (parent is absolute left-0 top-0 on card). -->
+    <!-- tabindex restores Tab reachability for SR/keyboard; hover popover activation remains mouse/focus-visible. -->
     <span
       v-if="isCard"
-      class="focus-visible:ring-primary-500 inline-flex cursor-default items-center gap-1 rounded-tl-xl pb-1.5 pl-2 pr-1.5 pt-2 transition-colors hover:bg-gray-100"
+      tabindex="0"
+      role="button"
+      class="focus-visible:ring-primary-500 inline-flex cursor-default items-center gap-1 rounded-tl-xl pb-1.5 pl-2 pr-1.5 pt-2 transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2"
       :aria-label="triggerAriaLabel"
       @mousedown.stop
       @click.stop
@@ -143,7 +146,9 @@
     <!-- Table: dot + status text, no chip outline -->
     <span
       v-else
-      class="focus-visible:ring-primary-500 inline-flex max-w-full cursor-default items-center gap-1.5 text-[11px] font-medium leading-none"
+      tabindex="0"
+      role="button"
+      class="focus-visible:ring-primary-500 inline-flex max-w-full cursor-default items-center gap-1.5 text-[11px] font-medium leading-none focus:outline-none focus-visible:ring-2"
       :aria-label="triggerAriaLabel"
       @mousedown.stop
       @click.stop

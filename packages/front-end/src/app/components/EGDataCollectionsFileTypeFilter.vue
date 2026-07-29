@@ -21,6 +21,14 @@
     emit('update:modelValue', { ...props.modelValue, [kind]: enabled });
   }
 
+  /** Activate via synthetic click so Headless PopoverButton's click handler opens the panel. */
+  function onTriggerKeydown(e: KeyboardEvent): void {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).click();
+  }
+
   const rows = [
     {
       kind: 'fastq' as const,
@@ -43,10 +51,13 @@
 
 <template>
   <UPopover v-model:open="filterOpen" :popper="{ placement: 'bottom-end' }">
+    <!-- span + tabindex avoids nested <button> inside Headless PopoverButton while remaining keyboard-reachable -->
     <span
-      class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700"
+      tabindex="0"
+      class="focus-visible:ring-primary-500 text-muted inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       :class="{ 'ring-primary/30 ring-1': isFilterActive }"
       :aria-label="`File type filter: ${triggerLabel}`"
+      @keydown="onTriggerKeydown"
     >
       {{ triggerLabel }}
       <UIcon name="i-heroicons-chevron-down" class="h-4 w-4 shrink-0" aria-hidden="true" />

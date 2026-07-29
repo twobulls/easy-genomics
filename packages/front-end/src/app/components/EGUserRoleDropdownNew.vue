@@ -49,14 +49,7 @@
 <template>
   <div class="flex w-full justify-end">
     <UDropdown v-model:open="isOpen" class="UDropdown" :items="items" :disabled="disabled">
-      <span
-        class="focus-visible:outline-primary-500 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-        :class="{ 'opacity-50': disabled }"
-        :aria-label="menuLabel"
-      >
-        {{ assignedRole }}
-        <UIcon name="i-heroicons-chevron-down" class="h-4 w-4 shrink-0" aria-hidden="true" />
-      </span>
+      <EGUserRoleDropdownTrigger :role-label="assignedRole" :aria-label="menuLabel" :disabled="disabled" />
       <template #item="{ item }">
         <span class="flex items-center gap-2 truncate" :class="{ 'is-highlighted': item.isHighlighted }">
           <UIcon

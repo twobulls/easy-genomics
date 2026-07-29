@@ -25,14 +25,12 @@
       type="button"
       class="-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors"
       :class="
-        activeTab === tab.key
-          ? 'border-primary text-primary-700'
-          : 'border-transparent text-gray-600 hover:text-gray-800'
+        activeTab === tab.key ? 'border-primary text-primary-700' : 'text-muted border-transparent hover:text-gray-800'
       "
       @click="emit('update:activeTab', tab.key)"
     >
       {{ tab.label }}
-      <span class="ml-1 font-normal text-gray-600">
+      <span class="text-muted ml-1 font-normal">
         ·
         {{ tab.key === 'collections' ? collectionCount : tab.key === 'samples' ? sampleCount : fileCount }}
       </span>

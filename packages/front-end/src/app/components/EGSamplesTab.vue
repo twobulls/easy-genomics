@@ -48,6 +48,8 @@
   const uiStore = useUiStore();
 
   const SEQUENCE_SET_IDS_CHUNK = 100;
+  /** Shared UCheckbox UI so sr-only labels stay consistent without repeating the object literal. */
+  const srOnlyCheckboxUi = { label: 'sr-only' };
 
   const bulkPanelMode = ref<'closed' | 'add' | 'remove'>('closed');
   const bulkAddTagIds = ref<string[]>([]);
@@ -627,7 +629,7 @@
 
           <div
             v-else-if="!filtered.length"
-            class="flex min-h-[14rem] items-center justify-center p-6 text-center text-sm text-gray-600"
+            class="text-muted flex min-h-[14rem] items-center justify-center p-6 text-center text-sm"
           >
             No samples match your current search or filters.
           </div>
@@ -727,7 +729,7 @@
                     <UCheckbox
                       :model-value="isSelected(s.SampleId)"
                       :label="`Select sample ${s.Name}`"
-                      :ui="{ label: 'sr-only' }"
+                      :ui="srOnlyCheckboxUi"
                       @update:model-value="toggle(s.SampleId)"
                     />
                   </div>
@@ -742,7 +744,7 @@
                   <div class="mt-2 flex min-h-[1.25rem] min-w-0 max-w-full flex-wrap gap-1">
                     <span
                       v-if="!standardTagIdsForSet(s.SampleId).length"
-                      class="inline-flex min-w-0 max-w-full overflow-hidden rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-600"
+                      class="text-muted inline-flex min-w-0 max-w-full overflow-hidden rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium"
                       @click.stop
                     >
                       <span class="truncate">Untagged</span>
@@ -773,10 +775,10 @@
               <thead class="sticky top-0 z-10 bg-gray-50">
                 <tr>
                   <th class="w-10 p-3" />
-                  <th class="p-3 text-left text-xs uppercase text-gray-600">Sample ID</th>
-                  <th class="p-3 text-left text-xs uppercase text-gray-600">Contents</th>
-                  <th class="p-3 text-left text-xs uppercase text-gray-600">Tags</th>
-                  <th class="p-3 text-left text-xs uppercase text-gray-600">Run Status</th>
+                  <th class="text-muted p-3 text-left text-xs uppercase">Sample ID</th>
+                  <th class="text-muted p-3 text-left text-xs uppercase">Contents</th>
+                  <th class="text-muted p-3 text-left text-xs uppercase">Tags</th>
+                  <th class="text-muted p-3 text-left text-xs uppercase">Run Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -846,17 +848,17 @@
                       <UCheckbox
                         :model-value="isSelected(s.SampleId)"
                         :label="`Select sample ${s.Name}`"
-                        :ui="{ label: 'sr-only' }"
+                        :ui="srOnlyCheckboxUi"
                         @update:model-value="toggle(s.SampleId)"
                       />
                     </td>
                     <td class="p-3 font-medium">{{ s.Name }}</td>
-                    <td class="p-3 text-gray-600">{{ contentsLabel(s) }}</td>
+                    <td class="text-muted p-3">{{ contentsLabel(s) }}</td>
                     <td class="p-3">
                       <div class="flex min-w-0 max-w-full flex-wrap gap-1">
                         <span
                           v-if="!standardTagIdsForSet(s.SampleId).length"
-                          class="inline-flex min-w-0 max-w-full overflow-hidden rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium text-gray-600"
+                          class="text-muted inline-flex min-w-0 max-w-full overflow-hidden rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-medium"
                           @click.stop
                         >
                           <span class="truncate">Untagged</span>
@@ -977,7 +979,7 @@
               <UCheckbox
                 :model-value="bulkAddTagIds.includes(t.TagId)"
                 :label="`Add tag ${t.Name}`"
-                :ui="{ label: 'sr-only' }"
+                :ui="srOnlyCheckboxUi"
                 @update:model-value="toggleBulkAddTag(t.TagId)"
               />
               <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full" :style="{ background: t.ColorHex }" />
@@ -1037,7 +1039,7 @@
               <UCheckbox
                 :model-value="bulkRemoveTagIds.includes(tid)"
                 :label="`Remove tag ${tagById(tid)?.Name || tid}`"
-                :ui="{ label: 'sr-only' }"
+                :ui="srOnlyCheckboxUi"
                 @update:model-value="toggleBulkRemoveTag(tid)"
               />
               <span

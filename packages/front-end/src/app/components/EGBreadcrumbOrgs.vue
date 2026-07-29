@@ -44,17 +44,15 @@
 <template>
   <div>
     <UDropdown v-model:open="isOpen" :items="items" :popper="{ placement: 'bottom-start' }">
-      <span
-        class="font-schibsted text-body inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm"
+      <EGBreadcrumbDropdownTrigger
+        :label="currentOrg?.Name ?? ''"
         :aria-label="
           items.length > 0
             ? `Organization: ${currentOrg?.Name}. Switch organization`
             : `Organization: ${currentOrg?.Name}`
         "
-      >
-        {{ currentOrg?.Name }}
-        <UIcon v-if="items.length > 0" name="i-heroicons-chevron-up-down" class="h-4 w-4 shrink-0" aria-hidden="true" />
-      </span>
+        :show-chevron="items.length > 0"
+      />
       <template #item="{ item }">
         <span class="w-full text-left">{{ item.Name }}</span>
       </template>

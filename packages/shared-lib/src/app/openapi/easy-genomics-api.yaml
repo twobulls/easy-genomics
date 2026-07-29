@@ -6899,18 +6899,6 @@ paths:
           schema:
             type: string
           description: Laboratory to verify HealthOmics access
-        - name: maxResults
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Pagination page size
-        - name: startingToken
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Pagination offset token
         - name: name
           in: query
           required: false

@@ -35,7 +35,8 @@ const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
  *    - requestId (transactionId)
  *    - name
  *    - parameters (JSON document defining the inputs for the Workflow including the sample-sheet)
- *    - optional workflowOwnerId (resolved from ListShares when omitted for SHARED workflows)
+ *    - workflowOwnerId in the body is ignored; for SHARED workflows it is always
+ *      resolved server-side from ACTIVE ListShares (never taken from the client)
  *
  * @param event
  */
@@ -95,9 +96,11 @@ export const handler: Handler = async (
     );
 
     const parameters = JSON.parse(request.parameters!.toString());
-    const { workflowVersionName, workflowOwnerId: requestOwnerId, ...startRunRequestWithoutVersion } = request;
-    const workflowOwnerId =
-      requestOwnerId ?? (await resolveSharedWorkflowOwnerId(omicsService, request.workflowId!));
+    // Strip client-supplied workflowOwnerId — always resolve from ACTIVE shares.
+    const { workflowVersionName, ...rest } = request;
+    const startRunRequestWithoutVersion = { ...rest };
+    delete startRunRequestWithoutVersion.workflowOwnerId;
+    const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, request.workflowId!);
     const response = await omicsService.startRun(<StartRunCommandInput>{
       ...startRunRequestWithoutVersion,
       ...(workflowVersionName ? { workflowVersionName } : {}),

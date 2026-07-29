@@ -27,7 +27,7 @@ export const CreateRunRequestSchema = z
     requestId: z.string().optional(), // unique id to prevent multiple runs
     retentionMode: z.enum(['RETAIN', 'REMOVE']).optional(),
     storageType: z.enum(['STATIC', 'DYNAMIC']).optional(),
-    workflowOwnerId: z.string().optional(),
+    workflowOwnerId: z.string().optional(), // Ignored by create-run-execution; resolved server-side from ListShares
     workflowVersionName: z.string().min(1).max(64).optional(),
   })
   .strict();

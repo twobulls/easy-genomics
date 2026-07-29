@@ -3510,10 +3510,6 @@ export interface operations {
       query?: {
         /** @description Laboratory to verify HealthOmics access */
         laboratoryId?: string;
-        /** @description Pagination page size */
-        maxResults?: string;
-        /** @description Pagination offset token */
-        startingToken?: string;
         /** @description Filter by workflow name */
         name?: string;
       };

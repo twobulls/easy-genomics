@@ -39,7 +39,11 @@ const useOmicsWorkflowsStore = defineStore('omicsWorkflowsStore', {
 
       const [privateRes, sharedRes] = await Promise.all([
         $api.omicsWorkflows.list(labId),
-        $api.omicsWorkflows.listShared(labId).catch(() => ({ items: [] as LabOmicsWorkflow[] })),
+        $api.omicsWorkflows.listShared(labId).catch((err) => {
+          console.error('Failed to load shared Omics workflows', err);
+          useToastStore().error('Failed to load shared workflows. Please refresh.');
+          return { items: [] as LabOmicsWorkflow[] };
+        }),
       ]);
 
       if (!privateRes.items) {
@@ -49,29 +53,32 @@ const useOmicsWorkflowsStore = defineStore('omicsWorkflowsStore', {
       this.workflowIdsByLab[labId] = [];
       const seen = new Set<string>();
 
+      const addWorkflowRow = (workflowId: string, row: LabOmicsWorkflow) => {
+        if (seen.has(workflowId)) {
+          return;
+        }
+        seen.add(workflowId);
+        this.workflows[workflowId] = row;
+        this.workflowIdsByLab[labId].push(workflowId);
+      };
+
       for (const workflow of privateRes.items) {
-        if (!workflow.id || seen.has(workflow.id)) {
+        if (!workflow.id) {
           continue;
         }
-        seen.add(workflow.id);
-        const row: LabOmicsWorkflow = { ...workflow, source: 'PRIVATE' };
-        this.workflows[workflow.id] = row;
-        this.workflowIdsByLab[labId].push(workflow.id);
+        addWorkflowRow(workflow.id, { ...workflow, source: 'PRIVATE' });
       }
 
       for (const workflow of sharedRes.items ?? []) {
-        if (!workflow.id || seen.has(workflow.id)) {
+        if (!workflow.id) {
           continue;
         }
-        seen.add(workflow.id);
-        const row: LabOmicsWorkflow = {
+        addWorkflowRow(workflow.id, {
           id: workflow.id,
           name: workflow.name,
           source: 'SHARED',
           ...(workflow.ownerAccountId ? { ownerAccountId: workflow.ownerAccountId } : {}),
-        };
-        this.workflows[workflow.id] = row;
-        this.workflowIdsByLab[labId].push(workflow.id);
+        });
       }
     },
   },

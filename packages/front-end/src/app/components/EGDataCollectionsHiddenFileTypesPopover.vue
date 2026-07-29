@@ -17,6 +17,14 @@
     emit('openFileTypeFilter');
   }
 
+  /** Activate via synthetic click so Headless PopoverButton's click handler opens the panel. */
+  function onTriggerKeydown(e: KeyboardEvent): void {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).click();
+  }
+
   const chipLabel = computed(() => {
     const n = props.hiddenCount;
     return n === 1 ? '1 hidden by file type' : `${n} hidden by file type`;
@@ -31,15 +39,16 @@
 
 <template>
   <UPopover v-model:open="popoverOpen" :popper="{ placement: 'bottom-start' }">
-    <button
-      type="button"
-      class="text-muted inline-flex max-w-full items-center gap-1 rounded-full border border-gray-200 bg-white py-0.5 pl-2 pr-2.5 text-xs font-medium hover:bg-gray-100"
-      :aria-expanded="popoverOpen"
-      aria-haspopup="dialog"
+    <!-- span + tabindex avoids nested <button> inside Headless PopoverButton while remaining keyboard-reachable -->
+    <span
+      tabindex="0"
+      class="text-muted focus-visible:ring-primary-500 inline-flex max-w-full items-center gap-1 rounded-full border border-gray-200 bg-white py-0.5 pl-2 pr-2.5 text-xs font-medium hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      :aria-label="chipLabel"
+      @keydown="onTriggerKeydown"
     >
       <UIcon name="i-heroicons-eye" class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       <span class="truncate">{{ chipLabel }}</span>
-    </button>
+    </span>
 
     <template #panel>
       <div class="w-[min(17.5rem,calc(100vw-2rem))]">

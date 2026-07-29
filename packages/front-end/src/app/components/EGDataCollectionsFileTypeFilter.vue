@@ -21,6 +21,14 @@
     emit('update:modelValue', { ...props.modelValue, [kind]: enabled });
   }
 
+  /** Activate via synthetic click so Headless PopoverButton's click handler opens the panel. */
+  function onTriggerKeydown(e: KeyboardEvent): void {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).click();
+  }
+
   const rows = [
     {
       kind: 'fastq' as const,
@@ -43,18 +51,17 @@
 
 <template>
   <UPopover v-model:open="filterOpen" :popper="{ placement: 'bottom-end' }">
-    <UButton
-      size="sm"
-      variant="outline"
-      color="gray"
-      trailing-icon="i-heroicons-chevron-down"
+    <!-- span + tabindex avoids nested <button> inside Headless PopoverButton while remaining keyboard-reachable -->
+    <span
+      tabindex="0"
+      class="focus-visible:ring-primary-500 text-muted inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
       :class="{ 'ring-primary/30 ring-1': isFilterActive }"
       :aria-label="`File type filter: ${triggerLabel}`"
-      :aria-expanded="filterOpen"
-      aria-haspopup="listbox"
+      @keydown="onTriggerKeydown"
     >
       {{ triggerLabel }}
-    </UButton>
+      <UIcon name="i-heroicons-chevron-down" class="h-4 w-4 shrink-0" aria-hidden="true" />
+    </span>
 
     <template #panel>
       <div class="w-[min(17.5rem,calc(100vw-2rem))] py-1" role="listbox" aria-label="File type filter">
@@ -68,6 +75,8 @@
             <UCheckbox
               class="mt-0.5 shrink-0"
               :model-value="modelValue[row.kind]"
+              :label="row.title"
+              :ui="{ label: 'sr-only' }"
               @update:model-value="setKind(row.kind, $event)"
             />
             <div class="min-w-0 max-w-[11rem] flex-1">

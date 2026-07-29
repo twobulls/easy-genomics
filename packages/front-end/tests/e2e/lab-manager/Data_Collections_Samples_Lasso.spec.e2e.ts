@@ -107,3 +107,41 @@ test('03 - Clicking a sample card toggles selection without starting a lasso dra
   await expect(page.getByRole('button', { name: 'Deselect all (1)' })).toBeVisible();
   await expect(firstCard).toHaveAttribute('aria-selected', 'true');
 });
+
+test('04 - Cards view exposes listbox/option roles and accessible checkbox names', async ({ page, baseURL }) => {
+  if (!(await openSamplesTab(page, baseURL))) return;
+
+  const samplesRegion = page.getByRole('region', { name: 'Samples' });
+  await clearSampleSelection(page);
+
+  const listbox = samplesRegion.getByRole('listbox').first();
+  await expect(listbox).toBeVisible();
+  await expect(listbox).toHaveAttribute('aria-labelledby', /samples-batch-heading-/);
+  await expect(listbox).toHaveAttribute('aria-multiselectable', 'true');
+
+  const firstOption = listbox.getByRole('option').first();
+  await expect(firstOption).toBeVisible();
+  await expect(firstOption).toHaveAttribute('aria-selected', 'false');
+
+  const sampleName = (await firstOption.getAttribute('aria-label'))?.split(',')[0]?.trim();
+  test.skip(!sampleName, 'Sample option missing accessible name');
+
+  const selectCheckbox = samplesRegion.getByRole('checkbox', { name: `Select sample ${sampleName}` }).first();
+  await expect(selectCheckbox).toBeVisible();
+  await selectCheckbox.check();
+  await expect(firstOption).toHaveAttribute('aria-selected', 'true');
+});
+
+test('05 - File type filter trigger is keyboard-activatable', async ({ page, baseURL }) => {
+  if (!(await openSamplesTab(page, baseURL))) return;
+
+  const samplesRegion = page.getByRole('region', { name: 'Samples' });
+  const filterTrigger = samplesRegion.getByLabel(/^File type filter:/);
+  await expect(filterTrigger).toBeVisible();
+
+  await filterTrigger.focus();
+  await expect(filterTrigger).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  await expect(page.getByRole('listbox', { name: 'File type filter' })).toBeVisible();
+});

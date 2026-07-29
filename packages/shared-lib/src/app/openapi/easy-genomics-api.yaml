@@ -2332,6 +2332,12 @@ components:
           type: boolean
         NextFlowTowerApiBaseUrl:
           type: string
+        EmailBrandingLogoUrl:
+          type: string
+          format: uri
+        EmailBrandingFooterText:
+          type: string
+          maxLength: 280
       required:
         - Name
       additionalProperties: false
@@ -2351,6 +2357,10 @@ components:
         NextFlowTowerEnabled:
           type: boolean
         NextFlowTowerApiBaseUrl:
+          type: string
+        EmailBrandingLogoUrl:
+          type: string
+        EmailBrandingFooterText:
           type: string
         BillingContact:
           type: string
@@ -2382,6 +2392,12 @@ components:
           type: boolean
         NextFlowTowerApiBaseUrl:
           type: string
+        EmailBrandingLogoUrl:
+          type: string
+          format: uri
+        EmailBrandingFooterText:
+          type: string
+          maxLength: 280
       required:
         - Name
       additionalProperties: false

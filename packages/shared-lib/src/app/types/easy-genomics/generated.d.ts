@@ -1388,6 +1388,9 @@ export interface components {
       AwsHealthOmicsEnabled?: boolean;
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
+      /** Format: uri */
+      EmailBrandingLogoUrl?: string;
+      EmailBrandingFooterText?: string;
     };
     Organization: {
       OrganizationId: string;
@@ -1397,6 +1400,8 @@ export interface components {
       AwsHealthOmicsEnabled?: boolean;
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
+      EmailBrandingLogoUrl?: string;
+      EmailBrandingFooterText?: string;
       BillingContact?: string;
       BillingMethod?: string;
       CreatedAt?: string;
@@ -1411,6 +1416,9 @@ export interface components {
       AwsHealthOmicsEnabled?: boolean;
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
+      /** Format: uri */
+      EmailBrandingLogoUrl?: string;
+      EmailBrandingFooterText?: string;
     };
     AddOrganizationUserRequest: {
       /** Format: uuid */

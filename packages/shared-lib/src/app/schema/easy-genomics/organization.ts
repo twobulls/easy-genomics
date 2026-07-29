@@ -9,6 +9,8 @@ export const OrganizationSchema = z
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
     NextFlowTowerApiBaseUrl: z.string().optional(),
+    EmailBrandingLogoUrl: z.string().url().optional(),
+    EmailBrandingFooterText: z.string().max(280).optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -24,6 +26,8 @@ export const CreateOrganizationSchema = z
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
     NextFlowTowerApiBaseUrl: z.string().optional(),
+    EmailBrandingLogoUrl: z.string().url().optional(),
+    EmailBrandingFooterText: z.string().max(280).optional(),
   })
   .strict();
 
@@ -35,5 +39,7 @@ export const UpdateOrganizationSchema = z
     AwsHealthOmicsEnabled: z.boolean().optional(),
     NextFlowTowerEnabled: z.boolean().optional(),
     NextFlowTowerApiBaseUrl: z.string().optional(),
+    EmailBrandingLogoUrl: z.string().url().optional(),
+    EmailBrandingFooterText: z.string().max(280).optional(),
   })
   .strict();

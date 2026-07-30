@@ -243,11 +243,30 @@ export class LaboratoryRunService extends DynamoDBService implements Service<Lab
   };
 
   public update = async (laboratoryRun: LaboratoryRun): Promise<LaboratoryRun> => {
+    return this.updateWithAttributeRemoval(laboratoryRun, []);
+  };
+
+  /**
+   * Same as `update`, but also REMOVEs the listed attributes from DynamoDB.
+   * Used when clearing optional fields (e.g. CurrentProcessName) that must not linger
+   * after a SET-only update would leave the previous value in place.
+   */
+  public updateWithAttributeRemoval = async (
+    laboratoryRun: LaboratoryRun,
+    remove: string[],
+  ): Promise<LaboratoryRun> => {
     const logRequestMessage = `Update LaboratoryRun LaboratoryId=${laboratoryRun.LaboratoryId}, RunId=${laboratoryRun.RunId} request`;
     console.info(logRequestMessage);
 
     // Data validation safety check
     if (!LaboratoryRunSchema.safeParse(laboratoryRun).success) throw new Error('Invalid request');
+
+    const removeAttrs = remove.filter((key) => key.length > 0);
+    // Ensure removed attributes are not also SET
+    const runForUpdate = { ...laboratoryRun } as LaboratoryRun & Record<string, unknown>;
+    for (const key of removeAttrs) {
+      delete runForUpdate[key];
+    }
 
     const updateExclusions: string[] = [
       'LaboratoryId',
@@ -264,14 +283,21 @@ export class LaboratoryRunService extends DynamoDBService implements Service<Lab
     ];
 
     const expressionAttributeNames: { [p: string]: string } = this.getExpressionAttributeNamesDefinition(
-      laboratoryRun,
+      runForUpdate,
       updateExclusions,
     );
     const expressionAttributeValues: { [p: string]: any } = this.getExpressionAttributeValuesDefinition(
-      laboratoryRun,
+      runForUpdate,
       updateExclusions,
     );
-    const updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
+    let updateExpression: string = this.getUpdateExpression(expressionAttributeNames, expressionAttributeValues);
+
+    if (removeAttrs.length > 0) {
+      for (const key of removeAttrs) {
+        expressionAttributeNames[`#Remove${key}`] = key;
+      }
+      updateExpression += ` REMOVE ${removeAttrs.map((key) => `#Remove${key}`).join(', ')}`;
+    }
 
     const response: UpdateItemCommandOutput = await this.updateItem({
       TableName: this.LABORATORY_RUN_TABLE_NAME,

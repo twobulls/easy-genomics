@@ -11,6 +11,7 @@
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
+  import { getRunListStatusPollIntervalMs } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
   import { v4 as uuidv4 } from 'uuid';
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import type { LabOmicsWorkflow } from '@FE/stores/omicsWorkflows';
@@ -62,6 +63,9 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const orgId = computed<string | null>(() => lab.value?.OrganizationId ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
+  const runListStatusPollIntervalMs = computed<number>(() =>
+    getRunListStatusPollIntervalMs(lab.value?.RunListStatusPollIntervalSeconds),
+  );
 
   const usersHeadingId = 'lab-users-heading';
 
@@ -111,6 +115,7 @@
     if (intervalId) {
       clearTimeout(intervalId);
     }
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, runListStatusPollIntervalMs.value);
 
     await updateDefaultLab(props.labId);
 
@@ -605,7 +610,7 @@
   async function pollFetchLaboratoryRuns() {
     runsTableRefreshKey.value++;
     await requestLabRunStatusCheck();
-    intervalId = window.setTimeout(pollFetchLaboratoryRuns, 2 * 60 * 1000);
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, runListStatusPollIntervalMs.value);
   }
 
   async function requestLabRunStatusCheck() {
@@ -622,6 +627,12 @@
       console.error('Failed to request lab run status check', error);
     }
   }
+
+  watch(runListStatusPollIntervalMs, (next, prev) => {
+    if (next === prev || intervalId == null) return;
+    clearTimeout(intervalId);
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, next);
+  });
 
   async function getSeqeraPipelines(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraPipelines');
@@ -946,8 +957,21 @@
       </template>
 
       <template #lastUpdated-data="{ row: run }">
-        <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
-        <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
+        <EGProgressBar
+          v-if="
+            !['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED'].includes(run.Status) &&
+            (run.ProgressPercent != null || (run.TasksCompleted != null && run.TasksTotal != null))
+          "
+          variant="inline"
+          :percent="run.ProgressPercent"
+          :completed="run.TasksCompleted"
+          :total="run.TasksTotal"
+          :process-name="run.CurrentProcessName"
+        />
+        <template v-else>
+          <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
+          <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
+        </template>
       </template>
 
       <template #Status-data="{ row: run }">

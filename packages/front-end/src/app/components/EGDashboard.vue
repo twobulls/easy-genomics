@@ -33,7 +33,10 @@
   const overviewHeadingId = 'dashboard-overview-heading';
   const recentRunsHeadingId = 'dashboard-recent-runs-heading';
   const favouriteWorkflowsHeadingId = 'dashboard-favourite-workflows-heading';
+  const inProgressHeadingId = 'dashboard-in-progress-heading';
   const highlightedSearchIndex = ref(-1);
+
+  const IN_PROGRESS_STATUSES = new Set(['SUBMITTED', 'STARTING', 'RUNNING']);
 
   interface SearchResult {
     type: 'run' | 'seqera-pipeline' | 'omics-workflow';
@@ -240,8 +243,17 @@
     return allRuns.value.filter((run) => getAnchorTime(run) >= cutoff);
   });
 
-  const activeRuns = computed(() =>
-    filteredRunsForOverview.value.filter((r) => ['SUBMITTED', 'STARTING', 'RUNNING'].includes(r.Status)),
+  const activeRuns = computed(() => filteredRunsForOverview.value.filter((r) => IN_PROGRESS_STATUSES.has(r.Status)));
+
+  /** All currently active runs in the lab (not limited by the overview time filter). */
+  const inProgressRuns = computed(() =>
+    [...allRuns.value]
+      .filter((r) => IN_PROGRESS_STATUSES.has(r.Status))
+      .sort((a, b) => {
+        const dateA = a.CreatedAt ? new Date(a.CreatedAt).getTime() : 0;
+        const dateB = b.CreatedAt ? new Date(b.CreatedAt).getTime() : 0;
+        return dateB - dateA;
+      }),
   );
 
   const completedRuns = computed(() =>
@@ -306,7 +318,9 @@
   });
 
   const recentRuns = computed(() => {
+    // Match the design: in-progress runs live in the In progress section, not Recent runs.
     return [...allRuns.value]
+      .filter((r) => !IN_PROGRESS_STATUSES.has(r.Status))
       .sort((a, b) => {
         const dateA = a.CreatedAt ? new Date(a.CreatedAt).getTime() : 0;
         const dateB = b.CreatedAt ? new Date(b.CreatedAt).getTime() : 0;
@@ -662,8 +676,55 @@
       </div>
     </div>
 
+    <!-- In progress -->
+    <section v-if="inProgressRuns.length > 0" class="mt-8" :aria-labelledby="inProgressHeadingId">
+      <EGText :id="inProgressHeadingId" tag="h2" class="mb-3">In progress</EGText>
+      <div class="flex flex-col gap-3">
+        <EGInProgressRunCard v-for="run in inProgressRuns" :key="run.RunId" :run="run" :lab-id="labId" />
+      </div>
+    </section>
+
+    <!-- Favourite Workflows -->
+    <section class="mt-10" :aria-labelledby="favouriteWorkflowsHeadingId">
+      <div class="mb-8">
+        <EGText :id="favouriteWorkflowsHeadingId" tag="h2" class="mb-0">Favourite Workflows</EGText>
+        <p class="text-muted text-sm">Quick launch your most used workflows.</p>
+      </div>
+
+      <EGTable
+        :table-data="displayedFavouriteWorkflows"
+        :columns="favouriteWorkflowsTableColumns"
+        :is-loading="uiStore.isRequestPending('loadDashboardData')"
+        :show-pagination="false"
+        :labelled-by="favouriteWorkflowsHeadingId"
+      >
+        <template #WorkflowName-data="{ row: workflow }">
+          <div class="text-body text-sm font-semibold">{{ workflow.WorkflowName }}</div>
+        </template>
+
+        <template #Description-data="{ row: workflow }">
+          <div class="text-muted text-sm">{{ workflow.Description || '—' }}</div>
+        </template>
+
+        <template #run-data="{ row: workflow }">
+          <button
+            type="button"
+            class="text-primary hover:text-primary-dark hover:bg-primary-muted focus-visible:outline-primary-500 flex items-center justify-center rounded-full p-1 transition-all duration-150 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            :aria-label="`Run workflow ${workflow.WorkflowName}`"
+            @click.stop="runFavouriteWorkflow(workflow)"
+          >
+            <UIcon name="i-heroicons-play-circle" class="h-6 w-6" aria-hidden="true" />
+          </button>
+        </template>
+
+        <template #empty-state>
+          <div class="text-muted flex h-24 items-center justify-center font-normal">No favourite workflows yet</div>
+        </template>
+      </EGTable>
+    </section>
+
     <!-- Recent Runs -->
-    <section class="mt-8" :aria-labelledby="recentRunsHeadingId">
+    <section class="mt-10" :aria-labelledby="recentRunsHeadingId">
       <EGText :id="recentRunsHeadingId" tag="h2" class="mb-8">Recent Runs</EGText>
 
       <EGTable
@@ -702,45 +763,6 @@
 
         <template #empty-state>
           <div class="text-muted flex h-24 items-center justify-center font-normal">No recent runs</div>
-        </template>
-      </EGTable>
-    </section>
-
-    <!-- Favourite Workflows -->
-    <section class="mt-10" :aria-labelledby="favouriteWorkflowsHeadingId">
-      <div class="mb-8">
-        <EGText :id="favouriteWorkflowsHeadingId" tag="h2" class="mb-0">Favourite Workflows</EGText>
-        <p class="text-muted text-sm">Quick launch your most used workflows.</p>
-      </div>
-
-      <EGTable
-        :table-data="displayedFavouriteWorkflows"
-        :columns="favouriteWorkflowsTableColumns"
-        :is-loading="uiStore.isRequestPending('loadDashboardData')"
-        :show-pagination="false"
-        :labelled-by="favouriteWorkflowsHeadingId"
-      >
-        <template #WorkflowName-data="{ row: workflow }">
-          <div class="text-body text-sm font-semibold">{{ workflow.WorkflowName }}</div>
-        </template>
-
-        <template #Description-data="{ row: workflow }">
-          <div class="text-muted text-sm">{{ workflow.Description || '—' }}</div>
-        </template>
-
-        <template #run-data="{ row: workflow }">
-          <button
-            type="button"
-            class="text-primary hover:text-primary-dark hover:bg-primary-muted focus-visible:outline-primary-500 flex items-center justify-center rounded-full p-1 transition-all duration-150 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-            :aria-label="`Run workflow ${workflow.WorkflowName}`"
-            @click.stop="runFavouriteWorkflow(workflow)"
-          >
-            <UIcon name="i-heroicons-play-circle" class="h-6 w-6" aria-hidden="true" />
-          </button>
-        </template>
-
-        <template #empty-state>
-          <div class="text-muted flex h-24 items-center justify-center font-normal">No favourite workflows yet</div>
         </template>
       </EGTable>
     </section>

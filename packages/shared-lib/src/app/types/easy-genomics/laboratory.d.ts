@@ -73,6 +73,10 @@ export interface Laboratory extends BaseAttributes {
    * - 0 means "never delete run records" (no TTL expiration).
    */
   RunRetentionMonths?: number;
+  /** Polling interval, in seconds, for the lab runs list status refresh. */
+  RunListStatusPollIntervalSeconds?: number;
+  /** Polling interval, in seconds, for the run detail page progress refresh. */
+  RunDetailProgressPollIntervalSeconds?: number;
 
   /**
    * BYOK LLM provider selection per integration. Each lab can pick a different

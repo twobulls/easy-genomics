@@ -19,6 +19,10 @@ import { OmicsService } from '../../../../../src/app/services/omics-service';
 import { SsmService } from '../../../../../src/app/services/ssm-service';
 import { validateOrganizationAdminAccess } from '../../../../../src/app/utils/auth-utils';
 import { httpRequest } from '../../../../../src/app/utils/rest-api-utils';
+import {
+  DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
+  DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
+} from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
 
 describe('create-laboratory.lambda', () => {
   const ORG_ID = '00000000-0000-0000-0000-000000000001';
@@ -163,6 +167,37 @@ describe('create-laboratory.lambda', () => {
 
     expect(result.statusCode).toBe(200);
     expect(mockS3AccessService.prototype.upsert).not.toHaveBeenCalled();
+  });
+
+  it('writes default polling intervals when they are omitted', async () => {
+    (mockOrgService.prototype.get as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      AwsHealthOmicsEnabled: true,
+      NextFlowTowerEnabled: true,
+    });
+
+    (mockLabService.prototype.add as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: 'lab-1',
+    });
+
+    const result = await handler(
+      createEvent({
+        ...baseRequest,
+        RunListStatusPollIntervalSeconds: undefined,
+        RunDetailProgressPollIntervalSeconds: undefined,
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockLabService.prototype.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        RunListStatusPollIntervalSeconds: DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
+        RunDetailProgressPollIntervalSeconds: DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
+      }),
+    );
   });
 
   it('returns 400 for invalid request body', async () => {

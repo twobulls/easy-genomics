@@ -137,6 +137,42 @@ describe('update-laboratory.lambda', () => {
     );
   });
 
+  it('preserves existing polling intervals when they are omitted from the request', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      RunListStatusPollIntervalSeconds: 180,
+      RunDetailProgressPollIntervalSeconds: 45,
+    });
+
+    (mockLabService.prototype.update as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, {
+        ...baseRequest,
+        RunListStatusPollIntervalSeconds: undefined,
+        RunDetailProgressPollIntervalSeconds: undefined,
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockLabService.prototype.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        RunListStatusPollIntervalSeconds: 180,
+        RunDetailProgressPollIntervalSeconds: 45,
+      }),
+      expect.objectContaining({
+        RunListStatusPollIntervalSeconds: 180,
+        RunDetailProgressPollIntervalSeconds: 45,
+      }),
+    );
+  });
+
   it('returns 400 when id path parameter is missing', async () => {
     const result = await handler(createEvent(undefined, baseRequest), createContext(), () => {});
 

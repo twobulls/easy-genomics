@@ -107,6 +107,10 @@ export const handler: Handler = async (
           NextFlowTowerApiBaseUrl: request.NextFlowTowerApiBaseUrl,
           NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
           RunRetentionMonths: request.RunRetentionMonths,
+          RunListStatusPollIntervalSeconds:
+            request.RunListStatusPollIntervalSeconds ?? existing.RunListStatusPollIntervalSeconds,
+          RunDetailProgressPollIntervalSeconds:
+            request.RunDetailProgressPollIntervalSeconds ?? existing.RunDetailProgressPollIntervalSeconds,
           EnableNewWorkflowsByDefault: request.EnableNewWorkflowsByDefault ?? existing.EnableNewWorkflowsByDefault,
           EnableNewBucketsByDefault: request.EnableNewBucketsByDefault ?? existing.EnableNewBucketsByDefault,
           // Map LLM settings directly from the request (not `?? existing`) so selecting

@@ -21,6 +21,8 @@ export const LaboratorySchema = z
      * - 0 means "never delete run records" (no TTL expiration).
      */
     RunRetentionMonths: z.number().int().min(0).optional(),
+    RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
+    RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
     EnableNewBucketsByDefault: z.boolean().optional(),
     /**
@@ -74,6 +76,8 @@ export const CreateLaboratorySchema = z
     // name of an existing HealthOmics Configuration resource; AWS caps the name at 50 chars
     AwsHealthOmicsVpcConfigurationName: z.string().max(50).optional(),
     RunRetentionMonths: z.number().int().min(0).optional(),
+    RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
+    RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
     EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
@@ -116,6 +120,8 @@ export const ReadLaboratorySchema = z
     HasNextFlowTowerAccessToken: z.boolean().optional(), // Return boolean indicator instead of actual NextFlowTowerAccessToken
     HasGitHubAccessToken: z.boolean().optional(), // Return boolean indicator instead of actual GitHubAccessToken
     RunRetentionMonths: z.number().int().min(0).optional(),
+    RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
+    RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
     EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
@@ -159,6 +165,8 @@ export const UpdateLaboratorySchema = z
     // name of an existing HealthOmics Configuration resource; AWS caps the name at 50 chars
     AwsHealthOmicsVpcConfigurationName: z.string().max(50).optional(),
     RunRetentionMonths: z.number().int().min(0).optional(),
+    RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
+    RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
     EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),

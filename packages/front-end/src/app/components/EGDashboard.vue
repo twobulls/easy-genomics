@@ -624,48 +624,8 @@
       </div>
     </div>
 
-    <!-- Dashboard Overview -->
-    <section class="mt-8" :aria-labelledby="overviewHeadingId">
-      <div class="flex items-center justify-between">
-        <EGText :id="overviewHeadingId" tag="h2" class="mb-0">Dashboard overview</EGText>
-        <div>
-          <label :for="overviewTimeFilterId" class="sr-only">Overview time period</label>
-          <select
-            :id="overviewTimeFilterId"
-            v-model="overviewTimeFilter"
-            class="text-body focus-visible:outline-primary-500 rounded-lg border border-neutral-100 bg-white px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-            :aria-label="`Overview time period, ${overviewTimeFilterLabel}`"
-          >
-            <option v-for="opt in timeFilterOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <div class="mt-4 grid grid-cols-4 gap-4">
-        <div
-          v-for="stat in overviewStats"
-          :key="stat.key"
-          class="flex items-center gap-4 rounded-2xl border border-neutral-100 bg-white p-6"
-        >
-          <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-            :class="stat.bgColor"
-            aria-hidden="true"
-          >
-            <UIcon :name="stat.icon" class="h-6 w-6" :class="stat.iconColor" />
-          </div>
-          <dl class="m-0 min-w-0">
-            <dt class="text-muted text-sm">{{ stat.label }}</dt>
-            <dd class="text-heading m-0 font-serif text-3xl font-semibold">{{ stat.value }}</dd>
-          </dl>
-        </div>
-      </div>
-    </section>
-
     <!-- Recent Runs -->
-    <section class="mt-10" :aria-labelledby="recentRunsHeadingId">
+    <section class="mt-8" :aria-labelledby="recentRunsHeadingId">
       <EGText :id="recentRunsHeadingId" tag="h2" class="mb-8">Recent Runs</EGText>
 
       <EGTable
@@ -745,6 +705,46 @@
           <div class="text-muted flex h-24 items-center justify-center font-normal">No favourite workflows yet</div>
         </template>
       </EGTable>
+    </section>
+
+    <!-- Lab metrics -->
+    <section class="mt-10" :aria-labelledby="overviewHeadingId">
+      <div class="flex items-center justify-between">
+        <EGText :id="overviewHeadingId" tag="h2" class="mb-0">Lab metrics</EGText>
+        <div>
+          <label :for="overviewTimeFilterId" class="sr-only">Overview time period</label>
+          <select
+            :id="overviewTimeFilterId"
+            v-model="overviewTimeFilter"
+            class="text-body focus-visible:outline-primary-500 rounded-lg border border-neutral-100 bg-white px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            :aria-label="`Overview time period, ${overviewTimeFilterLabel}`"
+          >
+            <option v-for="opt in timeFilterOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <dl class="mt-4 grid grid-cols-4 gap-4">
+        <div
+          v-for="stat in overviewStats"
+          :key="stat.key"
+          class="flex items-center gap-4 rounded-2xl border border-neutral-100 bg-white p-6"
+        >
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+            :class="stat.bgColor"
+            aria-hidden="true"
+          >
+            <UIcon :name="stat.icon" class="h-6 w-6" :class="stat.iconColor" />
+          </div>
+          <div>
+            <dt class="text-muted text-sm">{{ stat.label }}</dt>
+            <dd class="text-heading m-0 font-serif text-3xl font-semibold">{{ stat.value }}</dd>
+          </div>
+        </div>
+      </dl>
     </section>
   </div>
 </template>

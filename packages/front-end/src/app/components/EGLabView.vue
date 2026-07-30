@@ -740,8 +740,9 @@
 
   watch(
     () => userStore.currentOrgId,
-    async () => {
-      if (props.superuser || uiStore.isRequestPending('loadLabData')) {
+    async (orgId) => {
+      // Skip when org is cleared (logout) or a lab load is already in flight.
+      if (!orgId || props.superuser || uiStore.isRequestPending('loadLabData') || uiStore.isLoggingOut) {
         return;
       }
       // Force reload on org switch so we don't trust a stale persisted lab org id.

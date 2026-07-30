@@ -1,9 +1,8 @@
 <script setup lang="ts">
-  import {
-    WORKFLOW_RUN_PRESET_LIMIT,
-    type WorkflowRunPreset,
-    type WorkflowRunPresetParams,
-    type WorkflowRunPresetScope,
+  import type {
+    WorkflowRunPreset,
+    WorkflowRunPresetParams,
+    WorkflowRunPresetScope,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/workflow-run-preset';
   import { useToastStore, useUiStore, useWorkflowRunPresetsStore } from '@FE/stores';
   import { ButtonSizeEnum, ButtonVariantEnum } from '@FE/types/buttons';
@@ -175,20 +174,18 @@
 </script>
 
 <template>
-  <div class="border-stroke-light mb-6 rounded-2xl border bg-white p-5">
-    <div class="flex flex-wrap items-start justify-between gap-3">
-      <div class="min-w-0">
-        <div class="flex items-center gap-2">
-          <UIcon name="i-heroicons-bookmark-square" class="text-primary-500 h-5 w-5 shrink-0" />
-          <h3 class="text-heading text-sm font-semibold">Parameter presets</h3>
-          <span v-if="loading" class="text-muted text-xs">Loading…</span>
-        </div>
-        <p class="text-muted mt-1 text-xs">
-          Apply a saved set of values, or save the current ones to reuse on future runs of this workflow.
-        </p>
+  <div>
+    <div class="mb-4">
+      <div class="flex items-center gap-1.5">
+        <UIcon name="i-heroicons-bookmark-square" class="text-primary-500 h-4 w-4 shrink-0" />
+        <h3 class="text-heading text-sm font-semibold">Parameter presets</h3>
+        <span v-if="loading" class="text-muted text-xs">Loading…</span>
       </div>
-
+      <p class="text-muted mt-2 text-xs leading-relaxed">
+        Apply a saved set of values, or save the current ones to reuse on future runs of this workflow.
+      </p>
       <EGButton
+        class="mt-4 w-full"
         :size="ButtonSizeEnum.enum.xs"
         :variant="ButtonVariantEnum.enum.secondary"
         icon="i-heroicons-plus-20-solid"
@@ -200,11 +197,8 @@
     </div>
 
     <!-- Offer to convert pre-preset saved defaults instead of migrating them server-side. -->
-    <div
-      v-if="hasLegacyDefaults"
-      class="bg-primary-muted mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl p-3"
-    >
-      <p class="text-body min-w-0 text-xs">
+    <div v-if="hasLegacyDefaults" class="bg-primary-muted mb-4 rounded-lg p-3">
+      <p class="text-body mb-2.5 text-xs leading-relaxed">
         You have older saved defaults for this workflow. Name them to manage them alongside your presets.
       </p>
       <EGButton
@@ -216,21 +210,18 @@
       />
     </div>
 
-    <div v-if="presets.length" class="mt-4 space-y-3">
+    <div v-if="presets.length" class="space-y-4">
       <div v-for="group in presetGroups" :key="group.scope">
-        <div class="mb-1.5 flex items-center gap-1.5">
+        <div class="mb-2 flex items-center gap-1.5">
           <UIcon :name="group.icon" class="text-muted h-3.5 w-3.5" />
           <span class="text-muted text-[11px] font-semibold uppercase tracking-wide">{{ group.label }}</span>
-          <span class="text-muted text-[11px] tabular-nums">
-            {{ group.items.length }}/{{ WORKFLOW_RUN_PRESET_LIMIT }}
-          </span>
         </div>
 
-        <div class="flex flex-wrap gap-2">
-          <div
+        <ul class="space-y-1.5">
+          <li
             v-for="preset in group.items"
             :key="preset.PresetId"
-            class="flex items-center rounded-full border transition-colors"
+            class="flex items-center rounded-lg border transition-colors"
             :class="
               appliedPresetId === preset.PresetId
                 ? 'border-primary-500 bg-primary-muted'
@@ -239,7 +230,7 @@
           >
             <button
               type="button"
-              class="focus-visible:outline-primary-500 flex max-w-xs items-center gap-1.5 rounded-l-full py-1.5 pl-3 pr-2 text-xs focus-visible:outline focus-visible:outline-2"
+              class="focus-visible:outline-primary-500 flex min-w-0 flex-1 items-center gap-1.5 rounded-l-lg px-2.5 py-2 text-left text-xs focus-visible:outline focus-visible:outline-2"
               :class="appliedPresetId === preset.PresetId ? 'text-primary-dark font-medium' : 'text-body'"
               :aria-pressed="appliedPresetId === preset.PresetId"
               :disabled="saving"
@@ -265,18 +256,18 @@
                 variant="ghost"
                 size="2xs"
                 icon="i-heroicons-ellipsis-vertical-20-solid"
-                class="rounded-r-full"
+                class="rounded-r-lg"
                 :disabled="saving"
                 :aria-label="`Manage preset ${preset.Name}`"
               />
             </UDropdown>
-          </div>
-        </div>
+          </li>
+        </ul>
       </div>
     </div>
 
-    <p v-else-if="!loading" class="text-muted mt-4 text-xs">
-      No presets saved for this workflow yet. Fill in the parameters below, then save them as a preset.
+    <p v-else-if="!loading" class="text-muted mt-1 text-xs leading-relaxed">
+      No presets saved for this workflow yet. Fill in the parameters, then save them as a preset.
     </p>
   </div>
 

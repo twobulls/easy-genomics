@@ -34,10 +34,10 @@ export type WorkflowRunPresetScope = (typeof WORKFLOW_RUN_PRESET_SCOPES)[number]
 
 /**
  * Maximum presets one owner may keep per workflow, applied independently to each
- * tier: a user may hold 5 personal presets for a workflow, and the laboratory a
- * further 5 shared ones.
+ * tier: a user may hold 20 personal presets for a workflow, and the laboratory a
+ * further 20 shared ones. The cap is enforced server-side and is not shown in the UI.
  */
-export const WORKFLOW_RUN_PRESET_LIMIT = 5;
+export const WORKFLOW_RUN_PRESET_LIMIT = 20;
 
 export const WORKFLOW_RUN_PRESET_NAME_MAX_LENGTH = 60;
 

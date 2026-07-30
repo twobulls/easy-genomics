@@ -36,14 +36,12 @@
       label: 'Only me',
       description: 'A private preset visible just to you.',
       icon: 'i-heroicons-user',
-      used: props.userPresetCount,
     },
     {
       value: 'LAB' as WorkflowRunPresetScope,
       label: 'Everyone in this lab',
       description: 'A shared standard any lab member can apply or edit.',
       icon: 'i-heroicons-user-group',
-      used: props.labPresetCount,
     },
   ]);
 
@@ -164,9 +162,6 @@
               <div class="flex items-center gap-1.5">
                 <UIcon :name="tier.icon" class="text-muted h-4 w-4" />
                 <span class="text-heading text-sm font-medium">{{ tier.label }}</span>
-                <span class="text-muted ml-auto text-xs tabular-nums">
-                  {{ tier.used }} / {{ WORKFLOW_RUN_PRESET_LIMIT }}
-                </span>
               </div>
               <p class="text-muted mt-0.5 text-xs">
                 {{ tierIsFull(tier.value) ? 'Limit reached — delete a preset here first.' : tier.description }}

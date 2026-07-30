@@ -330,22 +330,24 @@
   />
 
   <div class="flex">
-    <div class="mr-4 w-1/4">
+    <div class="mr-4 w-1/4 space-y-5">
       <EGCard>
         <p class="text-muted mb-1 text-sm">Step 3 of 4</p>
         <h2 class="text-heading mb-0 text-lg font-medium">Edit Parameters</h2>
       </EGCard>
+
+      <EGCard>
+        <EGWorkflowPresets
+          :lab-id="props.labId"
+          :workflow-id="props.workflowId"
+          :current-params="presetableParams"
+          :has-legacy-defaults="props.hasSavedDefaults"
+          @apply="applyPreset"
+          @legacy-adopted="emit('defaults-cleared')"
+        />
+      </EGCard>
     </div>
     <div class="w-3/4">
-      <EGWorkflowPresets
-        :lab-id="props.labId"
-        :workflow-id="props.workflowId"
-        :current-params="presetableParams"
-        :has-legacy-defaults="props.hasSavedDefaults"
-        @apply="applyPreset"
-        @legacy-adopted="emit('defaults-cleared')"
-      />
-
       <EGCard>
         <div v-for="schemaField in orderedSchema" :key="schemaField.name" class="mb-6">
           <EGFormGroup

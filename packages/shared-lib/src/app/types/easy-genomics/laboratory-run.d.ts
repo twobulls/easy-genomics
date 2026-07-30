@@ -12,6 +12,7 @@
  *   UserId: <string>,
  *   OrganizationId: <string>,
  *   RunName: <string>,
+ *   Description?: <string>,
  *   Platform: <string>,
  *   PlatformApiBaseUrl?: <string>,
  *   Status: <string>,
@@ -37,6 +38,8 @@ export interface LaboratoryRun extends BaseAttributes {
   UserId: string; // Global Secondary Index (String)
   OrganizationId: string; // Global Secondary Index (String)
   RunName: string;
+  /** Optional user-authored note for this run; set at creation time. */
+  Description?: string;
   Platform: RunType,
   PlatformApiBaseUrl?: string, // Used if Laboratory uses alternative Seqera Platform API Base URL
   Status: string;

@@ -115,10 +115,12 @@
 
       try {
         const inputFileKeys = wipSeqeraRun.value?.inputFileKeys ?? [];
+        const description = wipSeqeraRun.value?.description?.trim();
         const labRunRequest = {
           'LaboratoryId': props.labId,
           'RunId': wipSeqeraRun.value?.transactionId,
           'RunName': wipSeqeraRun.value?.runName,
+          ...(description ? { Description: description } : {}),
           'Platform': 'Seqera Cloud',
           'PlatformApiBaseUrl': labNextFlowTowerApiBaseUrl,
           'Status': 'SUBMITTED',
@@ -200,7 +202,12 @@
           <dt class="w-48 text-black">Run Name</dt>
           <dd class="text-muted text-left">{{ wipSeqeraRun?.runName }}</dd>
         </div>
+        <div v-if="wipSeqeraRun?.description?.trim()" class="text-md flex border-b px-4 py-4">
+          <dt class="w-48 text-black">Description</dt>
+          <dd class="text-muted whitespace-pre-wrap break-words text-left">{{ wipSeqeraRun.description }}</dd>
+        </div>
         <EGRunCostRow :estimate="costEstimate" :loading="costEstimateLoading" class="border-b" />
+
       </dl>
     </section>
   </EGCard>

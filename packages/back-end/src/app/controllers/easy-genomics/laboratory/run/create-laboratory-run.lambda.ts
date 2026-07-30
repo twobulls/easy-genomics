@@ -125,6 +125,7 @@ export const handler: Handler = async (
       UserId: currentUserId,
       OrganizationId: laboratory.OrganizationId,
       RunName: request.RunName,
+      ...(request.Description ? { Description: request.Description } : {}),
       Platform: request.Platform,
       PlatformApiBaseUrl: request.PlatformApiBaseUrl,
       Status: request.Status,

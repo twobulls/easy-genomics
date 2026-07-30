@@ -56,7 +56,10 @@
     const results: SearchResult[] = [];
 
     for (const run of allRuns.value) {
-      const haystack = [run.RunName, run.WorkflowName, run.Owner, run.Status].filter(Boolean).join(' ').toLowerCase();
+      const haystack = [run.RunName, run.Description, run.WorkflowName, run.Owner, run.Status]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
       if (haystack.includes(q)) {
         results.push({
           type: 'run',
@@ -739,6 +742,7 @@
         <template #RunName-data="{ row: run }">
           <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
           <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
+          <div v-if="run.Description" class="text-muted line-clamp-1 text-xs font-normal">{{ run.Description }}</div>
         </template>
 
         <template #lastUpdated-data="{ row: run }">

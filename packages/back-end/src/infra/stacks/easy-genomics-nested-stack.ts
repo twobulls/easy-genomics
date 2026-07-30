@@ -367,6 +367,26 @@ export class EasyGenomicsNestedStack extends NestedStack {
             },
           ],
         },
+        // Daily Cost Explorer sync: batch GetCostAndUsage by TAG:RunId, write BilledCost
+        // onto LaboratoryRun. Never call CE from user-facing routes.
+        // Gated by cost-explorer.enabled (default false) so accounts without CE
+        // do not deploy a failing scheduled Lambda.
+        '/easy-genomics/laboratory/run/process-sync-run-costs': this.props.costExplorerEnabled
+          ? {
+              timeoutSeconds: 900,
+              memorySizeMb: 1024,
+              callbacks: [
+                (lambdaFunction) => {
+                  new Rule(this, `${this.props.namePrefix}-run-cost-sync-schedule`, {
+                    ruleName: `${this.props.namePrefix}-run-cost-sync-schedule`,
+                    schedule: Schedule.cron({ minute: '0', hour: '5' }),
+                    description: 'Daily AWS Cost Explorer sync for billed per-run costs.',
+                    targets: [new LambdaFunction(lambdaFunction)],
+                  });
+                },
+              ],
+            }
+          : { skip: true },
       },
       environment: {
         // Defines the common environment settings for all lambda functions
@@ -1108,7 +1128,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
         ],
-        actions: ['dynamodb:PutItem'],
+        // UpdateItem: best-effort RunInputProfile / PreRunCostEstimate attach after add().
+        actions: ['dynamodb:PutItem', 'dynamodb:Query', 'dynamodb:UpdateItem'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -1136,9 +1157,47 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         effect: Effect.ALLOW,
       }),
+      // Input profile: HeadObject sizes + sample sheet GetObject for cost estimation.
+      // Scoped to the shared lab bucket (same naming as data-provisioning-nested-stack).
+      new PolicyStatement({
+        resources: [
+          `arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-bucket`,
+          `arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-bucket/*`,
+        ],
+        actions: ['s3:GetObject', 's3:HeadObject', 's3:ListBucket'],
+        effect: Effect.ALLOW,
+      }),
       new PolicyStatement({
         resources: [`${this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || ''}`],
         actions: ['sns:Publish'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/request-estimate-run-cost (pre-run historical estimate; no CE)
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/request-estimate-run-cost', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-bucket`,
+          `arn:aws:s3:::${this.props.env.account!}-${this.props.namePrefix}-lab-bucket/*`,
+        ],
+        actions: ['s3:GetObject', 's3:HeadObject', 's3:ListBucket'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -1295,7 +1354,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
-        actions: ['omics:GetRun'],
+        actions: ['omics:GetRun', 'omics:ListRunTasks'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -2259,5 +2318,26 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+
+    // /easy-genomics/laboratory/run/process-sync-run-costs
+    // Daily Cost Explorer sync. Scoped ce:GetCostAndUsage only — never grant ce:* to lab roles.
+    // Only when cost-explorer.enabled (Lambda itself is also skipped when disabled).
+    if (this.props.costExplorerEnabled) {
+      this.iam.addPolicyStatements('/easy-genomics/laboratory/run/process-sync-run-costs', [
+        new PolicyStatement({
+          resources: [
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+            `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+          ],
+          actions: ['dynamodb:Scan', 'dynamodb:Query', 'dynamodb:UpdateItem'],
+          effect: Effect.ALLOW,
+        }),
+        new PolicyStatement({
+          resources: ['*'],
+          actions: ['ce:GetCostAndUsage', 'ce:GetDimensionValues'],
+          effect: Effect.ALLOW,
+        }),
+      ]);
+    }
   };
 }

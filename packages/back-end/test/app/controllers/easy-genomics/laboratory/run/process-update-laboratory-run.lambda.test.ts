@@ -12,6 +12,7 @@ import {
 
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-service');
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-run-service');
+jest.mock('../../../../../../src/app/services/easy-genomics/run-cost-capture-service');
 jest.mock('../../../../../../src/app/services/ssm-service');
 jest.mock('../../../../../../src/app/services/sns-service');
 jest.mock('../../../../../../src/app/services/omics-lab-factory');
@@ -19,6 +20,7 @@ jest.mock('../../../../../../src/app/utils/rest-api-utils');
 
 import { LaboratoryRunService } from '../../../../../../src/app/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '../../../../../../src/app/services/easy-genomics/laboratory-service';
+import { captureRunCostOutcome } from '../../../../../../src/app/services/easy-genomics/run-cost-capture-service';
 import { createOmicsServiceForLab } from '../../../../../../src/app/services/omics-lab-factory';
 import { SnsService } from '../../../../../../src/app/services/sns-service';
 import { SsmService } from '../../../../../../src/app/services/ssm-service';
@@ -80,6 +82,7 @@ describe('process-update-laboratory-run.lambda', () => {
     mockSsmService.prototype.getParameter = mockGetParameter;
     mockSnsService.prototype.publish = mockPublish;
     (createOmicsServiceForLab as jest.Mock).mockResolvedValue({ getRun: mockGetRun });
+    (captureRunCostOutcome as jest.Mock).mockResolvedValue(undefined);
 
     mockQueryByLaboratoryId.mockResolvedValue({
       LaboratoryId: 'lab-1',
@@ -711,5 +714,87 @@ describe('process-update-laboratory-run.lambda', () => {
 
     await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
     expect(mockPublish).toHaveBeenCalled();
+  });
+
+  it('attaches RunCostOutcome when transitioning to a terminal status', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({
+      status: 'SUCCEEDED',
+      startTime: new Date('2026-01-01T00:00:00Z'),
+      stopTime: new Date('2026-01-01T01:00:00Z'),
+    } as any);
+    (captureRunCostOutcome as jest.Mock).mockResolvedValue({
+      ActualComputeCostUsd: 4.2,
+      CostSource: 'HEALTHOMICS_TASKS',
+      CostCapturedAt: '2026-01-01T02:00:00Z',
+    });
+    mockUpdateRun.mockImplementation(async (r) => r);
+
+    await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(captureRunCostOutcome).toHaveBeenCalled();
+    expect(mockUpdateRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Status: 'SUCCEEDED',
+        RunCostOutcome: expect.objectContaining({ ActualComputeCostUsd: 4.2 }),
+      }),
+    );
+  });
+
+  it('swallows cost-capture failures on terminal transition', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    (captureRunCostOutcome as jest.Mock).mockRejectedValue(new Error('capture failed'));
+    mockUpdateRun.mockImplementation(async (r) => r);
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+    expect(mockUpdateRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Status: 'SUCCEEDED',
+      }),
+    );
+    expect(mockUpdateRun).toHaveBeenCalledWith(expect.not.objectContaining({ RunCostOutcome: expect.anything() }));
+  });
+
+  it('backfills RunCostOutcome for already-terminal runs missing cost', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'SUCCEEDED',
+      Platform: 'AWS HealthOmics',
+      TerminalAt: '2026-01-01T00:00:00Z',
+      RunDurationSeconds: 100,
+    });
+    (captureRunCostOutcome as jest.Mock).mockResolvedValue({
+      ActualComputeCostUsd: 9,
+      CostSource: 'HEALTHOMICS_TASKS',
+      CostCapturedAt: '2026-01-02T00:00:00Z',
+    });
+    mockUpdateRun.mockImplementation(async (r) => r);
+
+    await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(captureRunCostOutcome).toHaveBeenCalled();
+    expect(mockUpdateRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        RunCostOutcome: expect.objectContaining({ ActualComputeCostUsd: 9 }),
+      }),
+    );
   });
 });

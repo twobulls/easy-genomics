@@ -17,6 +17,8 @@ import { associateInputsWithWorkflowTag } from '@BE/services/easy-genomics/assoc
 import { LaboratoryDataTaggingService } from '@BE/services/easy-genomics/laboratory-data-tagging-service';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { RunCostEstimationService } from '@BE/services/easy-genomics/run-cost-estimation-service';
+import { buildRunInputProfile } from '@BE/services/easy-genomics/run-input-profile-service';
 import { SnsService } from '@BE/services/sns-service';
 import {
   validateLaboratoryManagerAccess,
@@ -33,7 +35,48 @@ import {
 const laboratoryRunService = new LaboratoryRunService();
 const laboratoryService = new LaboratoryService();
 const dataTaggingService = new LaboratoryDataTaggingService();
+const runCostEstimationService = new RunCostEstimationService();
 const snsService = new SnsService();
+
+/**
+ * Best-effort input profile + pre-run estimate. Runs after laboratoryRunService.add()
+ * so a timeout here cannot leave an externally-submitted run untracked.
+ */
+async function attachPreRunCostEstimate(
+  laboratory: Laboratory,
+  laboratoryRun: LaboratoryRun,
+  request: AddLaboratoryRun,
+): Promise<LaboratoryRun> {
+  try {
+    const runInputProfile = await buildRunInputProfile({
+      laboratory,
+      inputFileKeys: request.InputFileKeys,
+      sampleSheetS3Url: request.SampleSheetS3Url,
+      settings: request.Settings,
+    });
+    const estimate = await runCostEstimationService.estimate(laboratory, {
+      platform: request.Platform,
+      workflowExternalId: request.WorkflowExternalId || '',
+      workflowVersionName: request.WorkflowVersionName,
+      inputFileKeys: request.InputFileKeys,
+      sampleSheetS3Url: request.SampleSheetS3Url,
+      settings: request.Settings,
+      sampleCount: runInputProfile.SampleCount,
+      inputBytesTotal: runInputProfile.InputBytesTotal,
+    });
+    const preRunCostEstimate = runCostEstimationService.toPreRunCostEstimate(estimate);
+    return await laboratoryRunService.update({
+      ...laboratoryRun,
+      RunInputProfile: runInputProfile,
+      ...(preRunCostEstimate ? { PreRunCostEstimate: preRunCostEstimate } : {}),
+      ModifiedAt: new Date().toISOString(),
+      ModifiedBy: laboratoryRun.CreatedBy || 'system',
+    });
+  } catch (err) {
+    console.warn('Failed to attach RunInputProfile / PreRunCostEstimate (continuing):', err);
+    return laboratoryRun;
+  }
+}
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -74,7 +117,9 @@ export const handler: Handler = async (
         ? calculateExpiresAtEpochSeconds(createdAt, retentionMonths)
         : undefined;
 
-    const laboratoryRun: LaboratoryRun = await laboratoryRunService.add(<LaboratoryRun>{
+    // Persist the run first so an external platform submission is never left untracked
+    // if subsequent best-effort cost estimation times out.
+    let laboratoryRun: LaboratoryRun = await laboratoryRunService.add(<LaboratoryRun>{
       LaboratoryId: laboratory.LaboratoryId,
       RunId: request.RunId,
       UserId: currentUserId,
@@ -98,6 +143,8 @@ export const handler: Handler = async (
       ...(isTerminalAtCreate ? { TerminalAt: createdAt.toISOString() } : {}),
       ...(laboratorioRunExpiresAt !== undefined ? { ExpiresAt: laboratorioRunExpiresAt } : {}),
     });
+
+    laboratoryRun = await attachPreRunCostEstimate(laboratory, laboratoryRun, request);
 
     // Best-effort: associate input files with a workflow tag and record this run's usage
     // history per file so the data tagging page can show "files used by workflow X" and

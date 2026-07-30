@@ -275,6 +275,36 @@
     return `${hours.toFixed(1)}h`;
   });
 
+  const costExplorerEnabled = useCostExplorerEnabled();
+
+  function runSpendUsd(r: {
+    BilledCost?: { TotalUsd?: number };
+    RunCostOutcome?: { ActualComputeCostUsd?: number };
+  }): number | undefined {
+    const billed = r.BilledCost?.TotalUsd;
+    if (typeof billed === 'number' && Number.isFinite(billed)) return billed;
+    const estimate = r.RunCostOutcome?.ActualComputeCostUsd;
+    if (typeof estimate === 'number' && Number.isFinite(estimate)) return estimate;
+    return undefined;
+  }
+
+  /** True unless every run that contributes a figure has BilledCost. */
+  const runSpendIsEstimateOnly = computed(() => {
+    const withAmount = filteredRunsForOverview.value.filter((r) => runSpendUsd(r) != null);
+    if (withAmount.length === 0) return true;
+    return !withAmount.every(
+      (r) => typeof r.BilledCost?.TotalUsd === 'number' && Number.isFinite(r.BilledCost.TotalUsd),
+    );
+  });
+
+  /** Per-run BilledCost ?? RunCostOutcome, so mixed CE sync windows do not under-count. */
+  const totalBilledSpend = computed(() => {
+    const amounts = filteredRunsForOverview.value.map(runSpendUsd).filter((n): n is number => n != null);
+    if (amounts.length === 0) return '—';
+    const sum = amounts.reduce((s, n) => s + n, 0);
+    return runSpendIsEstimateOnly.value ? `≈ US$${sum.toFixed(2)}` : `US$${sum.toFixed(2)}`;
+  });
+
   const recentRuns = computed(() => {
     return [...allRuns.value]
       .sort((a, b) => {
@@ -529,6 +559,14 @@
       bgColor: 'bg-background-light-grey',
       iconColor: 'text-muted',
     },
+    {
+      key: 'run-spend',
+      icon: 'i-heroicons-currency-dollar',
+      value: totalBilledSpend.value,
+      label: !costExplorerEnabled.value || runSpendIsEstimateOnly.value ? 'Estimated run spend' : 'Run spend',
+      bgColor: 'bg-primary-muted',
+      iconColor: 'text-primary',
+    },
   ]);
 </script>
 
@@ -726,7 +764,7 @@
         </div>
       </div>
 
-      <dl class="mt-4 grid grid-cols-4 gap-4">
+      <dl class="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
         <div
           v-for="stat in overviewStats"
           :key="stat.key"

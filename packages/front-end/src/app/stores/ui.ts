@@ -50,7 +50,9 @@ type PendingRequest =
   | 'dataCollectionsMutate'
   | 'dataCollectionsSamples'
   | 'dataCollectionsRunSequenceCollections'
-  | 'runFromCollectionsWorkflows';
+  | 'runFromCollectionsWorkflows'
+  | 'loadWorkflowRunPresets'
+  | 'saveWorkflowRunPreset';
 
 interface UiStoreState {
   pendingRequests: Set<string>;

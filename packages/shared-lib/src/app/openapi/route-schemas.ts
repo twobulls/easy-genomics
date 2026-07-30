@@ -65,6 +65,10 @@ import {
   CreateUserForgotPasswordRequestSchema,
   ConfirmUserForgotPasswordRequestSchema,
 } from '../schema/easy-genomics/user-password';
+import {
+  CreateWorkflowRunPresetSchema,
+  UpdateWorkflowRunPresetSchema,
+} from '../schema/easy-genomics/workflow-run-preset';
 
 export interface QueryParam {
   name: string;
@@ -431,6 +435,31 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
   'PUT /easy-genomics/user/update-user-request/{id}': {
     request: UpdateUserSchema,
     response: 'User',
+  },
+
+  // ── easy-genomics/workflow-run-preset/ ───────────────────────────────────────
+
+  'POST /easy-genomics/workflow-run-preset/create-workflow-run-preset': {
+    request: CreateWorkflowRunPresetSchema,
+    response: 'WorkflowRunPreset',
+  },
+  'DELETE /easy-genomics/workflow-run-preset/delete-workflow-run-preset/{id}': {
+    query: [
+      { name: 'laboratoryId', required: true, description: 'Laboratory owning the preset' },
+      { name: 'workflowId', required: true, description: 'Workflow the preset belongs to' },
+      { name: 'scope', required: true, description: 'Preset tier: USER or LAB' },
+    ],
+  },
+  'GET /easy-genomics/workflow-run-preset/list-workflow-run-presets': {
+    response: 'ListWorkflowRunPresetsResponse',
+    query: [
+      { name: 'laboratoryId', required: true, description: 'Laboratory to list presets for' },
+      { name: 'workflowId', required: true, description: 'Workflow to list presets for' },
+    ],
+  },
+  'PUT /easy-genomics/workflow-run-preset/update-workflow-run-preset/{id}': {
+    request: UpdateWorkflowRunPresetSchema,
+    response: 'WorkflowRunPreset',
   },
 
   // ── aws-healthomics/run/ ─────────────────────────────────────────────────────

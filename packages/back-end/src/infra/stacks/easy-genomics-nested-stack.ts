@@ -2200,5 +2200,64 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       ...s3BucketCatalogIam,
     ]);
+
+    // ── easy-genomics/workflow-run-preset ──────────────────────────────────────
+    // Every preset handler resolves the Laboratory first (to authorise the caller), then
+    // reads or writes the preset table.
+    const workflowRunPresetTableArn = `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-workflow-run-preset-table`;
+    const workflowRunPresetTableAnyIndex = `${workflowRunPresetTableArn}/index/*`;
+    const workflowRunPresetDynamoResources = [workflowRunPresetTableArn, workflowRunPresetTableAnyIndex];
+
+    const laboratoryReadForWorkflowRunPresets = [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ];
+
+    // /easy-genomics/workflow-run-preset/list-workflow-run-presets
+    this.iam.addPolicyStatements('/easy-genomics/workflow-run-preset/list-workflow-run-presets', [
+      ...laboratoryReadForWorkflowRunPresets,
+      new PolicyStatement({
+        resources: workflowRunPresetDynamoResources,
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/workflow-run-preset/create-workflow-run-preset
+    // Query enforces the per-workflow cap and name uniqueness before the PutItem.
+    this.iam.addPolicyStatements('/easy-genomics/workflow-run-preset/create-workflow-run-preset', [
+      ...laboratoryReadForWorkflowRunPresets,
+      new PolicyStatement({
+        resources: workflowRunPresetDynamoResources,
+        actions: ['dynamodb:Query', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/workflow-run-preset/update-workflow-run-preset
+    this.iam.addPolicyStatements('/easy-genomics/workflow-run-preset/update-workflow-run-preset', [
+      ...laboratoryReadForWorkflowRunPresets,
+      new PolicyStatement({
+        resources: workflowRunPresetDynamoResources,
+        actions: ['dynamodb:Query', 'dynamodb:GetItem', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/workflow-run-preset/delete-workflow-run-preset
+    this.iam.addPolicyStatements('/easy-genomics/workflow-run-preset/delete-workflow-run-preset', [
+      ...laboratoryReadForWorkflowRunPresets,
+      new PolicyStatement({
+        resources: workflowRunPresetDynamoResources,
+        actions: ['dynamodb:GetItem', 'dynamodb:DeleteItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
   };
 }

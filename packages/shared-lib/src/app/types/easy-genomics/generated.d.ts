@@ -398,6 +398,22 @@ export interface paths {
     /** Update User Request */
     put: operations["updateUserRequest"];
   };
+  "/easy-genomics/workflow-run-preset/create-workflow-run-preset": {
+    /** Create Workflow Run Preset */
+    post: operations["createWorkflowRunPreset"];
+  };
+  "/easy-genomics/workflow-run-preset/delete-workflow-run-preset/{id}": {
+    /** Delete Workflow Run Preset */
+    delete: operations["deleteWorkflowRunPreset"];
+  };
+  "/easy-genomics/workflow-run-preset/list-workflow-run-presets": {
+    /** List Workflow Run Presets */
+    get: operations["listWorkflowRunPresets"];
+  };
+  "/easy-genomics/workflow-run-preset/update-workflow-run-preset/{id}": {
+    /** Update Workflow Run Preset */
+    put: operations["updateWorkflowRunPreset"];
+  };
   "/nf-tower/compute-env/list-compute-envs": {
     /** List Compute Envs */
     get: operations["listComputeEnvs"];
@@ -1649,6 +1665,57 @@ export interface components {
         })[];
       /** @enum {string} */
       AnalyticsConsent?: "unset" | "granted" | "denied";
+    };
+    CreateWorkflowRunPresetRequest: {
+      /** Format: uuid */
+      LaboratoryId: string;
+      WorkflowId: string;
+      /** @enum {string} */
+      Scope: "USER" | "LAB";
+      Name: string;
+      Params: {
+        [key: string]: string | number | boolean;
+      };
+    };
+    /** @enum {string} */
+    WorkflowRunPresetScope: "LAB" | "USER";
+    /**
+     * @description Run parameter values as rendered by the workflow parameter form. Nested objects
+     * and arrays are intentionally unsupported — the HealthOmics parameter template is
+     * a flat map of scalars.
+     */
+    WorkflowRunPresetParams: Record<string, never>;
+    WorkflowRunPreset: {
+      LaboratoryId: string;
+      PresetKey: string;
+      PresetId: string;
+      Scope: components["schemas"]["WorkflowRunPresetScope"];
+      WorkflowId: string;
+      Name: string;
+      Params: components["schemas"]["WorkflowRunPresetParams"];
+      /** @description Email of the creating user, denormalised so shared lab presets can show authorship without a user lookup. */
+      CreatedByEmail?: string;
+      CreatedAt?: string;
+      CreatedBy?: string;
+      ModifiedAt?: string;
+      ModifiedBy?: string;
+    };
+    ListWorkflowRunPresetsResponse: {
+      /** @description Presets owned by the calling user for this laboratory + workflow. */
+      UserPresets: components["schemas"]["WorkflowRunPreset"][];
+      /** @description Presets shared with the whole laboratory for this workflow. */
+      LabPresets: components["schemas"]["WorkflowRunPreset"][];
+    };
+    UpdateWorkflowRunPresetRequest: {
+      /** Format: uuid */
+      LaboratoryId: string;
+      WorkflowId: string;
+      /** @enum {string} */
+      Scope: "USER" | "LAB";
+      Name?: string;
+      Params?: {
+        [key: string]: string | number | boolean;
+      };
     };
     ListComputeEnvsResponse: {
       computeEnvs?: ({
@@ -5502,6 +5569,106 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["User"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Create Workflow Run Preset */
+  createWorkflowRunPreset: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateWorkflowRunPresetRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["WorkflowRunPreset"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Delete Workflow Run Preset */
+  deleteWorkflowRunPreset: {
+    parameters: {
+      query: {
+        /** @description Laboratory owning the preset */
+        laboratoryId: string;
+        /** @description Workflow the preset belongs to */
+        workflowId: string;
+        /** @description Preset tier: USER or LAB */
+        scope: string;
+      };
+      path: {
+        id: string;
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** List Workflow Run Presets */
+  listWorkflowRunPresets: {
+    parameters: {
+      query: {
+        /** @description Laboratory to list presets for */
+        laboratoryId: string;
+        /** @description Workflow to list presets for */
+        workflowId: string;
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ListWorkflowRunPresetsResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Update Workflow Run Preset */
+  updateWorkflowRunPreset: {
+    parameters: {
+      path: {
+        id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateWorkflowRunPresetRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["WorkflowRunPreset"];
         };
       };
       400: components["responses"]["BadRequest"];

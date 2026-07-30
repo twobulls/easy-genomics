@@ -450,6 +450,39 @@ export class TagNameAlreadyExistsError extends HttpError {
 }
 
 /**
+ * Workflow run preset not found
+ *
+ * @param presetId
+ * @param messageOpt - optional additional message
+ */
+export class WorkflowRunPresetNotFoundError extends HttpError {
+  constructor(presetId: string, messageOpt?: string) {
+    super(`Workflow run preset '${presetId}' could not be found`, 404, 'EG-333', messageOpt);
+  }
+}
+
+/**
+ * Owner already holds the maximum number of presets for this workflow
+ *
+ * @param limit
+ * @param messageOpt - optional additional message
+ */
+export class WorkflowRunPresetLimitReachedError extends HttpError {
+  constructor(limit: number, messageOpt?: string) {
+    super(`Only ${limit} presets can be saved per workflow`, 409, 'EG-334', messageOpt);
+  }
+}
+
+/**
+ * A preset with the same name already exists for this owner and workflow
+ */
+export class WorkflowRunPresetNameTakenError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('A preset with this name already exists', 409, 'EG-335', messageOpt);
+  }
+}
+
+/**
  * S3 bucket does not match laboratory configuration
  */
 export class S3BucketMismatchError extends HttpError {

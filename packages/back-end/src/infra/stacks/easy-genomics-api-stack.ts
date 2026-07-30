@@ -411,5 +411,23 @@ export class EasyGenomicsApiStack extends Stack {
       lsi: baseLSIAttributes,
     });
     this.dynamoDBTables.set(laboratoryDataTaggingTableName, laboratoryDataTaggingTable);
+
+    // Saved AWS HealthOmics workflow run parameter presets.
+    // Personal and laboratory-shared presets share this table, separated by the sort key
+    // prefix (USER#<UserId>#<WorkflowId>#<PresetId> / LAB#<WorkflowId>#<PresetId>), so the
+    // run form loads both tiers from one partition without a secondary index.
+    const workflowRunPresetTableName = `${this.props.namePrefix}-workflow-run-preset-table`;
+    const workflowRunPresetTable = this.dynamoDB.createTable(workflowRunPresetTableName, {
+      partitionKey: {
+        name: 'LaboratoryId',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'PresetKey',
+        type: AttributeType.STRING,
+      },
+      lsi: baseLSIAttributes,
+    });
+    this.dynamoDBTables.set(workflowRunPresetTableName, workflowRunPresetTable);
   };
 }

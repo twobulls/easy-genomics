@@ -52,4 +52,34 @@ describe('process-poll-active-runs.lambda', () => {
 
     expect(mockPublish).not.toHaveBeenCalled();
   });
+
+  it('continues enqueueing remaining runs when snsService.publish rejects for one of them', async () => {
+    mockQueryActiveForPolling.mockResolvedValue([
+      { RunId: 'run-1', LaboratoryId: 'lab-1', ExternalRunId: 'ext-1' },
+      { RunId: 'run-2', LaboratoryId: 'lab-1', ExternalRunId: 'ext-2' },
+      { RunId: 'run-3', LaboratoryId: 'lab-1', ExternalRunId: 'ext-3' },
+    ]);
+    mockPublish
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error('SNS publish failed'))
+      .mockResolvedValueOnce({});
+
+    const result = await handler({}, createContext(), () => {});
+
+    expect(mockPublish).toHaveBeenCalledTimes(3);
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toEqual({ Status: 'Success', ActiveRuns: 3, Enqueued: 2 });
+  });
+
+  it('returns an error response when laboratoryRunService.queryActiveForPolling throws', async () => {
+    mockQueryActiveForPolling.mockRejectedValue(new Error('DynamoDB query failed'));
+
+    const result = await handler({}, createContext(), () => {});
+
+    expect(mockPublish).not.toHaveBeenCalled();
+    expect(result.statusCode).not.toBe(200);
+    expect(JSON.parse(result.body)).toEqual(
+      expect.objectContaining({ Error: 'DynamoDB query failed', ErrorCode: 'EG-100' }),
+    );
+  });
 });

@@ -1,3 +1,4 @@
+import { LaboratoryUserNotFoundError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, Context } from 'aws-lambda';
 import { handler } from '../../../../../../src/app/controllers/easy-genomics/laboratory/user/update-laboratory-user-notification-preference.lambda';
 
@@ -59,6 +60,16 @@ describe('update-laboratory-user-notification-preference.lambda', () => {
 
     expect(result.statusCode).not.toBe(200);
     expect(mockGet).not.toHaveBeenCalled();
+  });
+
+  it('rejects a request from a caller who is not a member of the laboratory', async () => {
+    mockGet.mockRejectedValue(new LaboratoryUserNotFoundError(LAB_ID, 'user-1'));
+    const event = createEvent({ NotifyOnLabRuns: true });
+
+    const result = await handler(event, createContext(), () => {});
+
+    expect(result.statusCode).toBe(404);
+    expect(mockUpdate).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid request body', async () => {

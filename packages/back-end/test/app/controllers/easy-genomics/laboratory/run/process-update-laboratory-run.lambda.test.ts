@@ -801,6 +801,33 @@ describe('process-update-laboratory-run.lambda', () => {
     );
   });
 
+  it('safePublishForNotification: swallows SNS errors so the status-check pipeline completes', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    process.env.SNS_LABORATORY_RUN_NOTIFICATION_TOPIC = 'arn:aws:sns:region:acct:notification-topic.fifo';
+    mockPublish.mockRejectedValue(new Error('SNS unavailable'));
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+    expect(mockPublish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        TopicArn: 'arn:aws:sns:region:acct:notification-topic.fifo',
+        MessageGroupId: 'notify-laboratory-run-run-1',
+      }),
+    );
+  });
+
   it('backfill branch: heals a missing notification on an already-terminal run whose other fields are already populated', async () => {
     mockQueryByRunId.mockResolvedValue({
       RunId: 'run-1',

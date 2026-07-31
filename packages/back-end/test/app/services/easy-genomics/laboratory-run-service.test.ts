@@ -49,6 +49,26 @@ describe('LaboratoryRunService.markTerminalNotified', () => {
     updateItem.mockRestore();
     get.mockRestore();
   });
+
+  it('rethrows non-conditional errors instead of swallowing them', async () => {
+    const svc = new LaboratoryRunService();
+    const transientError = new Error('ProvisionedThroughputExceededException');
+    transientError.name = 'ProvisionedThroughputExceededException';
+    const updateItem = jest
+      .spyOn(svc as unknown as { updateItem: jest.Mock }, 'updateItem')
+      .mockRejectedValue(transientError);
+
+    await expect(
+      svc.markTerminalNotified({
+        LaboratoryId: 'lab-1',
+        RunId: 'run-1',
+        ModifiedAt: '2026-07-24T00:01:00.000Z',
+        ModifiedBy: 'Status Check',
+      }),
+    ).rejects.toBe(transientError);
+
+    updateItem.mockRestore();
+  });
 });
 
 describe('LaboratoryRunService.queryActiveForPolling', () => {

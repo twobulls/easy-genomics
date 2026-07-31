@@ -34,12 +34,10 @@ export const handler: Handler = async (
     const organizationId: string = event.request.clientMetadata ? event.request.clientMetadata.OrganizationId : '';
     const organizationName: string = event.request.clientMetadata ? event.request.clientMetadata.OrganizationName : '';
     const emailBrandingLogoUrl: string | undefined = event.request.clientMetadata?.EmailBrandingLogoUrl;
-    const emailBrandingFooterText: string | undefined = event.request.clientMetadata?.EmailBrandingFooterText;
 
     const newUserInvitationJwt: string = generateNewUserInvitationJwt(email, userId, organizationId, temporaryPassword);
     await sesService.sendNewUserInvitationEmail(email, organizationName, newUserInvitationJwt, {
       logoUrl: emailBrandingLogoUrl,
-      footerText: emailBrandingFooterText,
     });
   } else if (event.triggerSource === 'CustomEmailSender_ForgotPassword') {
     const email: string = event.request.userAttributes.email;

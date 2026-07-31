@@ -22,12 +22,10 @@ describe('CognitoIdpService.adminCreateUser', () => {
 
     await service.adminCreateUser('user@example.com', 'org-1', 'My Org', false, {
       logoUrl: 'https://acme-labs.example/logo.png',
-      footerText: 'Acme Labs footer',
     });
 
     const input = (AdminCreateUserCommand as unknown as jest.Mock).mock.calls[0][0];
     expect(input.ClientMetadata.EmailBrandingLogoUrl).toBe('https://acme-labs.example/logo.png');
-    expect(input.ClientMetadata.EmailBrandingFooterText).toBe('Acme Labs footer');
   });
 
   it('omits branding keys from ClientMetadata when not provided', async () => {
@@ -37,6 +35,5 @@ describe('CognitoIdpService.adminCreateUser', () => {
 
     const input = (AdminCreateUserCommand as unknown as jest.Mock).mock.calls[0][0];
     expect(input.ClientMetadata.EmailBrandingLogoUrl).toBeUndefined();
-    expect(input.ClientMetadata.EmailBrandingFooterText).toBeUndefined();
   });
 });

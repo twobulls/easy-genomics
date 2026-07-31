@@ -28,7 +28,6 @@ describe('UserInviteService', () => {
       OrganizationId: 'org-1',
       Name: 'Acme Labs',
       EmailBrandingLogoUrl: 'https://acme-labs.example/logo.png',
-      EmailBrandingFooterText: 'Acme Labs footer',
     } as any;
 
     const service = new UserInviteService();
@@ -39,7 +38,7 @@ describe('UserInviteService', () => {
       'org-1',
       'Acme Labs',
       false,
-      { logoUrl: 'https://acme-labs.example/logo.png', footerText: 'Acme Labs footer' },
+      { logoUrl: 'https://acme-labs.example/logo.png' },
     );
   });
 
@@ -48,7 +47,6 @@ describe('UserInviteService', () => {
       OrganizationId: 'org-1',
       Name: 'Acme Labs',
       EmailBrandingLogoUrl: 'https://acme-labs.example/logo.png',
-      EmailBrandingFooterText: 'Acme Labs footer',
     } as any;
     const user = { UserId: 'user-1', Email: 'user@example.com', Status: 'Active' } as any;
 
@@ -57,7 +55,6 @@ describe('UserInviteService', () => {
 
     expect(sesServiceInstance.sendExistingUserCourtesyEmail).toHaveBeenCalledWith('user@example.com', 'Acme Labs', {
       logoUrl: 'https://acme-labs.example/logo.png',
-      footerText: 'Acme Labs footer',
     });
   });
 });

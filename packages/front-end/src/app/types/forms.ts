@@ -32,8 +32,6 @@ export const ORG_NAME_MAX_LENGTH = 50;
 */
 export const ORG_DESCRIPTION_MAX_LENGTH = 500;
 
-export const ORG_FOOTER_TEXT_MAX_LENGTH = 280;
-
 export const OrgNameSchema = z
   .string()
   .min(ORG_NAME_MIN_LENGTH, {
@@ -50,21 +48,17 @@ export const OrgDescriptionSchema = z
 
 export const OrgEmailBrandingLogoUrlSchema = z.string().url().optional().or(z.literal(''));
 
-export const OrgFooterTextSchema = z
-  .string()
-  .max(ORG_FOOTER_TEXT_MAX_LENGTH, {
-    message: `${ORG_FOOTER_TEXT_MAX_LENGTH} ${getCharacterText(ORG_FOOTER_TEXT_MAX_LENGTH)} max`,
-  })
-  .optional();
-
 export const OrgDetailsFormSchema = z.object({
   Name: OrgNameSchema,
   Description: OrgDescriptionSchema,
   NextFlowTowerApiBaseUrl: z.string().min(0),
-  EmailBrandingLogoUrl: OrgEmailBrandingLogoUrlSchema,
-  EmailBrandingFooterText: OrgFooterTextSchema,
 });
 export type OrgDetailsForm = z.infer<typeof OrgDetailsFormSchema>;
+
+export const OrgEmailBrandingFormSchema = z.object({
+  EmailBrandingLogoUrl: OrgEmailBrandingLogoUrlSchema,
+});
+export type OrgEmailBrandingForm = z.infer<typeof OrgEmailBrandingFormSchema>;
 
 const AutoCompleteOptions = {
   On: 'on',

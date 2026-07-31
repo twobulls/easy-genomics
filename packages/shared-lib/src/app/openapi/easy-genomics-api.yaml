@@ -2352,11 +2352,14 @@ components:
         NextFlowTowerApiBaseUrl:
           type: string
         EmailBrandingLogoUrl:
-          type: string
-          format: uri
-        EmailBrandingFooterText:
-          type: string
-          maxLength: 280
+          anyOf:
+            - anyOf:
+                - not: {}
+                - type: string
+                  format: uri
+            - type: string
+              enum:
+                - ''
       required:
         - Name
       additionalProperties: false
@@ -2378,8 +2381,6 @@ components:
         NextFlowTowerApiBaseUrl:
           type: string
         EmailBrandingLogoUrl:
-          type: string
-        EmailBrandingFooterText:
           type: string
         BillingContact:
           type: string
@@ -2404,9 +2405,6 @@ components:
         EmailBrandingLogoUrl:
           type: string
           format: uri
-        EmailBrandingFooterText:
-          type: string
-          maxLength: 280
       required:
         - OrganizationId
       additionalProperties: false
@@ -2426,11 +2424,14 @@ components:
         NextFlowTowerApiBaseUrl:
           type: string
         EmailBrandingLogoUrl:
-          type: string
-          format: uri
-        EmailBrandingFooterText:
-          type: string
-          maxLength: 280
+          anyOf:
+            - anyOf:
+                - not: {}
+                - type: string
+                  format: uri
+            - type: string
+              enum:
+                - ''
       required:
         - Name
       additionalProperties: false

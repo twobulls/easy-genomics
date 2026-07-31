@@ -77,7 +77,7 @@ export class CognitoIdpService {
     organizationId: string,
     organizationName: string,
     resend?: boolean,
-    branding?: { logoUrl?: string; footerText?: string },
+    branding?: { logoUrl?: string },
   ): Promise<string> {
     console.log(`[cognito-idp-service : adminCreateUser] organizationName: ${organizationName}, email: ${email}`);
 
@@ -97,7 +97,6 @@ export class CognitoIdpService {
         ['OrganizationId']: organizationId,
         ['OrganizationName']: organizationName,
         ...(branding?.logoUrl ? { EmailBrandingLogoUrl: branding.logoUrl } : {}),
-        ...(branding?.footerText ? { EmailBrandingFooterText: branding.footerText } : {}),
       },
     };
 

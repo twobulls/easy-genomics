@@ -82,7 +82,6 @@ export class NotificationService {
           runId: run.RunId,
           laboratoryId: run.LaboratoryId,
           logoUrl: organization.EmailBrandingLogoUrl,
-          footerText: organization.EmailBrandingFooterText,
         });
         sent++;
       } catch (err) {

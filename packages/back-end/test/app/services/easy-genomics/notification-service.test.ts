@@ -301,7 +301,7 @@ describe('NotificationService.notifyRunCompletion', () => {
     expect(calledAddresses.sort()).toEqual(['member2@example.com', 'owner@example.com']);
   });
 
-  it('passes the organization logo/footer branding through to sendRunCompletionEmail when set', async () => {
+  it('passes the organization logo branding through to sendRunCompletionEmail when set', async () => {
     (userServiceInstance.get as jest.Mock).mockResolvedValue({
       UserId: 'owner-1',
       Email: 'owner@example.com',
@@ -314,7 +314,6 @@ describe('NotificationService.notifyRunCompletion', () => {
       OrganizationId: 'org-1',
       Name: 'Test Org',
       EmailBrandingLogoUrl: 'https://acme-labs.example/logo.png',
-      EmailBrandingFooterText: 'Acme Labs footer',
     });
 
     const service = new NotificationService();
@@ -324,7 +323,6 @@ describe('NotificationService.notifyRunCompletion', () => {
       'owner@example.com',
       expect.objectContaining({
         logoUrl: 'https://acme-labs.example/logo.png',
-        footerText: 'Acme Labs footer',
       }),
     );
   });
@@ -346,7 +344,6 @@ describe('NotificationService.notifyRunCompletion', () => {
       'owner@example.com',
       expect.objectContaining({
         logoUrl: undefined,
-        footerText: undefined,
       }),
     );
   });

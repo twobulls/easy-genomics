@@ -157,7 +157,7 @@ export class SesConstruct extends Construct {
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                         <tr>
                             <td style="padding-bottom: 20px; color: #323840; font-size: 14px; font-family: Arial, sans-serif;">
-                                {{ORG_FOOTER_TEXT}}
+                                Sent from Easy Genomics
                             </td>
                         </tr>
                         <tr>
@@ -269,7 +269,7 @@ export class SesConstruct extends Construct {
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                         <tr>
                             <td style="padding-bottom: 20px; color: #323840; font-size: 14px; font-family: Arial, sans-serif;">
-                                {{ORG_FOOTER_TEXT}}
+                                Sent from Easy Genomics
                             </td>
                         </tr>
                         <tr>
@@ -441,14 +441,13 @@ export class SesConstruct extends Construct {
             <tr>
                 <td style="padding: 24px;">
                     <img src="{{EASY_GENOMICS_EMAIL_LOGO}}" alt="Easy Genomics" width="160" style="display:block; margin-bottom: 24px;" />
-                    <h2 style="margin: 0 0 12px;">Run "{{RUN_NAME}}" is {{STATUS}}</h2>
+                    <h2 style="margin: 0 0 12px;">Run "{{RUN_NAME}}" {{STATUS_PHRASE}}</h2>
                     <p style="margin: 0 0 8px;"><strong>Laboratory:</strong> {{LABORATORY_NAME}}</p>
                     <p style="margin: 0 0 8px;"><strong>Workflow:</strong> {{WORKFLOW_NAME}}</p>
                     <p style="margin: 0 0 8px;"><strong>Run time:</strong> {{RUN_TIME}}</p>
                     <p style="margin: 24px 0;">
                         <a href="{{RUN_LINK}}" style="background:#0f62fe; color:#ffffff; padding: 12px 20px; text-decoration:none; border-radius:4px;">View run details</a>
                     </p>
-                    <p style="margin: 0 0 8px; font-size: 13px; color: #666;">{{ORG_FOOTER_TEXT}}</p>
                     <p style="margin: 32px 0 0; font-size: 12px; color: #666;">&copy; {{COPYRIGHT_YEAR}} Easy Genomics, {{DOMAIN_NAME}}</p>
                 </td>
             </tr>
@@ -457,7 +456,7 @@ export class SesConstruct extends Construct {
 </body>
 </html>`,
         textPart:
-          'Run "{{RUN_NAME}}" is {{STATUS}} in {{LABORATORY_NAME}} ({{WORKFLOW_NAME}}, {{RUN_TIME}}). View it at {{RUN_LINK}} — {{ORG_FOOTER_TEXT}}',
+          'Run "{{RUN_NAME}}" {{STATUS_PHRASE}} in {{LABORATORY_NAME}} ({{WORKFLOW_NAME}}, {{RUN_TIME}}). View it at {{RUN_LINK}}',
       },
     });
     runCompletionEmailTemplate.applyRemovalPolicy(RemovalPolicy.DESTROY);

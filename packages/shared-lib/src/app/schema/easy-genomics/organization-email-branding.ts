@@ -20,6 +20,5 @@ export const OrganizationBrandingTestEmailRequestSchema = z
   .object({
     OrganizationId: z.string(),
     EmailBrandingLogoUrl: z.string().url().optional(),
-    EmailBrandingFooterText: z.string().max(280).optional(),
   })
   .strict();

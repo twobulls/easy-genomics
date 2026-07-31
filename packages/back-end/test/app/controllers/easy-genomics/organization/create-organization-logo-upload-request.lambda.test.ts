@@ -76,5 +76,6 @@ describe('create-organization-logo-upload-request.lambda', () => {
       ContentType: 'image/png',
       ContentLength: 1000,
     });
+    expect(validateOrganizationAdminAccess).toHaveBeenCalledWith(expect.anything(), 'org-1');
   });
 });

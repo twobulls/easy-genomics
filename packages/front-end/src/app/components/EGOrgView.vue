@@ -6,7 +6,7 @@
   import { ButtonVariantEnum } from '@FE/types/buttons';
   import { DeletedResponse } from '@FE/types/api';
   import type { FormSubmitEvent } from '#ui/types';
-  import { OrgDetailsForm } from '@FE/types/forms';
+  import { OrgDetailsForm, OrgEmailBrandingForm } from '@FE/types/forms';
   import { VALIDATION_MESSAGES } from '@FE/constants/validation';
 
   const props = defineProps<{
@@ -53,6 +53,7 @@
       items.push({ key: 'workflow-access', label: 'Workflow access', icon: 'i-heroicons-key' });
     }
     items.push({ key: 'details', label: 'Settings', icon: 'i-heroicons-cog-6-tooth' });
+    items.push({ key: 'email-branding', label: 'Email Branding', icon: 'i-heroicons-envelope' });
     return items;
   });
 
@@ -377,6 +378,23 @@
       useUiStore().setRequestComplete('editOrg');
     }
   }
+
+  async function onSubmitEmailBranding(event: FormSubmitEvent<OrgEmailBrandingForm>) {
+    try {
+      useUiStore().setRequestPending('editOrg');
+      const { EmailBrandingLogoUrl } = event.data;
+      await $api.orgs.update(props.orgId, {
+        Name: org.value.Name,
+        EmailBrandingLogoUrl,
+      });
+      await fetchOrgData();
+      useToastStore().success('Organization updated');
+    } catch (error) {
+      useToastStore().error(VALIDATION_MESSAGES.network);
+    } finally {
+      useUiStore().setRequestComplete('editOrg');
+    }
+  }
 </script>
 
 <template>
@@ -427,6 +445,23 @@
       :name="org.Name"
       :description="org.Description"
       :seqera-base-url="org.NextFlowTowerApiBaseUrl"
+    />
+  </div>
+
+  <!-- Email Branding tab -->
+  <div
+    v-if="activeTabKey === 'email-branding'"
+    role="tabpanel"
+    id="panel-email-branding"
+    aria-labelledby="tab-email-branding"
+    tabindex="0"
+  >
+    <h2 class="sr-only">Email branding</h2>
+    <EGFormOrgEmailBranding
+      :key="resetFormKey"
+      :org-id="props.orgId"
+      :email-branding-logo-url="org.EmailBrandingLogoUrl"
+      @submit-form-org-email-branding="onSubmitEmailBranding($event)"
     />
   </div>
 

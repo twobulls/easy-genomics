@@ -42,11 +42,7 @@ describe('request-organization-branding-test-email.lambda', () => {
 
   it('sends the test email to the requesting admin using the unsaved branding values', async () => {
     const result = await handler(
-      buildEvent(
-        { EmailBrandingLogoUrl: 'https://acme-labs.example/logo.png', EmailBrandingFooterText: 'Acme footer' },
-        'org-1',
-        'admin@example.com',
-      ),
+      buildEvent({ EmailBrandingLogoUrl: 'https://acme-labs.example/logo.png' }, 'org-1', 'admin@example.com'),
       {} as any,
       () => {},
     );
@@ -56,10 +52,10 @@ describe('request-organization-branding-test-email.lambda', () => {
       'admin@example.com',
       expect.objectContaining({
         logoUrl: 'https://acme-labs.example/logo.png',
-        footerText: 'Acme footer',
         runName: expect.any(String),
       }),
     );
+    expect(validateOrganizationAdminAccess).toHaveBeenCalledWith(expect.anything(), 'org-1');
   });
 
   it('rejects a non-URL EmailBrandingLogoUrl with 400', async () => {
@@ -67,5 +63,18 @@ describe('request-organization-branding-test-email.lambda', () => {
 
     expect(result.statusCode).toBe(400);
     expect(sesServiceInstance.sendRunCompletionEmail).not.toHaveBeenCalled();
+  });
+
+  it('returns a clear 400 (not an unclassified 500) when SES rejects the send, e.g. sandbox mode', async () => {
+    sesServiceInstance.sendRunCompletionEmail = jest.fn().mockRejectedValue(new Error('Email address not verified'));
+
+    const result = await handler(buildEvent({}), {} as any, () => {});
+
+    expect(result.statusCode).toBe(400);
+    expect(JSON.parse(result.body)).toEqual({
+      Error:
+        "Invalid request: Could not send test email — check that this environment's SES configuration allows sending to this address",
+      ErrorCode: 'EG-102',
+    });
   });
 });

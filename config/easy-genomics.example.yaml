@@ -14,6 +14,8 @@ easy-genomics:
         # `${envType}-${envName}-easy-genomics-api-stack` (no trailing slash).
         aws-easy-genomics-api-url: # e.g. 'https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/prod'
         ## The following Front-End Infrastructure settings will need to be pre-configured in AWS and defined when 'env-type' is 'pre-prod' or 'prod'.
+        # aws-hosted-zone-id also drives SES email sending setup (domain identity, DKIM, MAIL FROM) —
+        # see docs/deployment/production.md Section 3 for the full SES + org-email-assets-bucket setup.
         aws-hosted-zone-id: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
         aws-certificate-arn: # Not required when env-type: 'dev', but must exist for the same app-domain-name if configured
         google-client-id: # Google Cloud Client ID for Google Sign in integration, if left empty no Google SSO will be implemented

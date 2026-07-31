@@ -6,11 +6,10 @@ const base = {
 };
 
 describe('OrganizationSchema email branding fields', () => {
-  it('accepts a valid EmailBrandingLogoUrl and EmailBrandingFooterText', () => {
+  it('accepts a valid EmailBrandingLogoUrl', () => {
     const result = OrganizationSchema.safeParse({
       ...base,
       EmailBrandingLogoUrl: 'https://example.com/logo.png',
-      EmailBrandingFooterText: 'Processed for Acme Labs.',
     });
     expect(result.success).toBe(true);
   });
@@ -23,24 +22,23 @@ describe('OrganizationSchema email branding fields', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects EmailBrandingFooterText over 280 characters', () => {
+  it('accepts an empty string EmailBrandingLogoUrl (clearing the field back to default)', () => {
     const result = OrganizationSchema.safeParse({
       ...base,
-      EmailBrandingFooterText: 'x'.repeat(281),
+      EmailBrandingLogoUrl: '',
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
-  it('allows both branding fields to be omitted', () => {
+  it('allows EmailBrandingLogoUrl to be omitted', () => {
     const result = OrganizationSchema.safeParse(base);
     expect(result.success).toBe(true);
   });
 
-  it('UpdateOrganizationSchema also accepts the branding fields', () => {
+  it('UpdateOrganizationSchema also accepts EmailBrandingLogoUrl', () => {
     const result = UpdateOrganizationSchema.safeParse({
       Name: 'Test Org',
       EmailBrandingLogoUrl: 'https://example.com/logo.png',
-      EmailBrandingFooterText: 'Footer',
     });
     expect(result.success).toBe(true);
   });

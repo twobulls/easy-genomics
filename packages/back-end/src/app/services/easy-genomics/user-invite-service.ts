@@ -32,7 +32,7 @@ export class UserInviteService {
       organization.OrganizationId,
       organization.Name,
       false,
-      { logoUrl: organization.EmailBrandingLogoUrl, footerText: organization.EmailBrandingFooterText },
+      { logoUrl: organization.EmailBrandingLogoUrl },
     );
 
     // Attempt to add the new User record, and add the Organization-User access mapping in one transaction
@@ -71,7 +71,6 @@ export class UserInviteService {
     // Attempt to re-trigger Cognito process-custom-email-sender to send SES email template
     await cognitoIdpService.adminCreateUser(user.Email, organization.OrganizationId, organization.Name, true, {
       logoUrl: organization.EmailBrandingLogoUrl,
-      footerText: organization.EmailBrandingFooterText,
     });
 
     if (!existingOrganizationUser) {
@@ -131,7 +130,6 @@ export class UserInviteService {
     // Send out courtesy notification email to advise user they have been added to an Organization
     await sesService.sendExistingUserCourtesyEmail(user.Email, organization.Name, {
       logoUrl: organization.EmailBrandingLogoUrl,
-      footerText: organization.EmailBrandingFooterText,
     });
 
     // Attempt to update the existing User record, and add the Organization-User access mapping in one transaction

@@ -181,6 +181,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       {
         bucketName: `${this.props.namePrefix}-org-email-assets-bucket`,
         envType: this.props.envType,
+        appDomainName: this.props.appDomainName,
       },
     );
 
@@ -273,11 +274,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
         '/easy-genomics/organization/create-organization-logo-upload-request': {
           environment: {
             ORG_EMAIL_ASSETS_BUCKET_NAME: this.orgEmailAssetsBucket.bucket.bucketName,
-          },
-        },
-        '/easy-genomics/organization/request-organization-branding-test-email': {
-          environment: {
-            SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
           },
         },
         '/easy-genomics/organization/delete-organization': {
@@ -1328,6 +1324,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
         ],
         actions: ['dynamodb:GetItem', 'dynamodb:BatchGetItem'],
         effect: Effect.ALLOW,

@@ -1402,9 +1402,7 @@ export interface components {
       AwsHealthOmicsEnabled?: boolean;
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
-      /** Format: uri */
-      EmailBrandingLogoUrl?: string;
-      EmailBrandingFooterText?: string;
+      EmailBrandingLogoUrl?: unknown;
     };
     Organization: {
       OrganizationId: string;
@@ -1415,7 +1413,6 @@ export interface components {
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
       EmailBrandingLogoUrl?: string;
-      EmailBrandingFooterText?: string;
       BillingContact?: string;
       BillingMethod?: string;
       CreatedAt?: string;
@@ -1427,7 +1424,6 @@ export interface components {
       OrganizationId: string;
       /** Format: uri */
       EmailBrandingLogoUrl?: string;
-      EmailBrandingFooterText?: string;
     };
     UpdateOrganizationRequest: {
       Name: string;
@@ -1436,9 +1432,7 @@ export interface components {
       AwsHealthOmicsEnabled?: boolean;
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
-      /** Format: uri */
-      EmailBrandingLogoUrl?: string;
-      EmailBrandingFooterText?: string;
+      EmailBrandingLogoUrl?: unknown;
     };
     AddOrganizationUserRequest: {
       /** Format: uuid */

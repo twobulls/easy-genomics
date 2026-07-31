@@ -75,12 +75,72 @@ You will need the **Hosted Zone ID** in [Section 5](#5-easy-genomicsyaml-product
 
 ---
 
-## 3. ACM certificate
+## 3. SES email sending setup
+
+Easy Genomics sends transactional email (user invitations, password resets, run-completion notifications) via Amazon
+SES, using the same domain as `app-domain-name`. Two things happen automatically at deploy time; one requires a manual,
+one-time step.
+
+### 3.1 Domain identity (automatic)
+
+If `aws-hosted-zone-id` is set (required for `prod` — see Section 2), the CDK stack automatically creates an SES domain
+identity for `app-domain-name` and writes the required DKIM and MAIL FROM DNS records directly into that hosted zone. No
+manual verification step is needed — this differs from the ACM certificate in [Section 4](#4-acm-certificate), which
+requires an explicit request.
+
+Confirm verification succeeded after your first deploy:
+
+```bash
+aws sesv2 get-email-identity --email-identity genomics.mylab.org \
+  --query '{Verified: VerifiedForSendingStatus, Dkim: DkimAttributes.Status, MailFrom: MailFromAttributes.MailFromDomainStatus}'
+# Expected: all three "SUCCESS" / true
+```
+
+If `aws-hosted-zone-id` is left unset, this entire step — including the transactional email templates — is silently
+skipped, and every email-sending feature (invitations, password resets, notifications) will fail with no obvious error
+until someone tries to send one. This is optional only for `env-type: 'dev'`; required for `pre-prod` and `prod`.
+
+### 3.2 Request SES production access (manual, one-time)
+
+A brand-new AWS account's SES is in **sandbox mode**: it can send only to individually-verified recipient email
+addresses, regardless of the domain identity above. Before real users can receive invitations or notifications:
+
+1. AWS Console → **SES → Account dashboard**.
+2. Click **Request production access**.
+3. Fill out the use-case form (transactional email — user invitations, password resets, workflow notifications) and
+   submit.
+
+AWS review typically takes a few hours to one business day. Until it's approved, you can still test the deployment by
+manually verifying your own email address as an SES identity (**SES → Identities → Create identity → Email address**)
+and using it as `sys-admin-email`.
+
+### 3.3 Org-level email branding bucket
+
+If your deployment includes the org email branding feature, a second, small S3 bucket
+(`{env-type}-{env-name}-org-email-assets-bucket`) is created for org-uploaded logo images. It's deliberately
+public-read-only (email clients need unauthenticated access to render the image) — no action is needed for this to work,
+but be aware:
+
+- **Account-level Block Public Access:** if your AWS account (or an AWS Organizations SCP) has account-level Block
+  Public Access enabled — the default for newer AWS accounts — this bucket's public-read policy will fail to attach, and
+  org-uploaded logos will silently fail to render (the platform's own default branding is unaffected, since it isn't
+  stored in this bucket). Verify before deploying:
+
+  ```bash
+  aws s3control get-public-access-block --account-id <your-account-id>
+  # If any of the four settings is "true", either disable account-level BPA
+  # (the bucket's own settings already restrict everything except public GetObject),
+  # or ask whoever manages your account's SCPs to add an exception for this bucket.
+  ```
+
+---
+
+## 4. ACM certificate
 
 Easy Genomics uses CloudFront for the front-end, and CloudFront requires the ACM certificate to be in **`us-east-1`**
 regardless of your deployment region.
 
-### 3.1 Request the certificate
+### 4.1 Request the certificate
 
 1. In the AWS console, switch to the **US East (N. Virginia) / us-east-1** region.
 2. Open **Certificate Manager → Request a certificate**.
@@ -97,7 +157,7 @@ aws acm request-certificate \
   --validation-method DNS
 ```
 
-### 3.2 DNS validation
+### 4.2 DNS validation
 
 After requesting the certificate, ACM provides one or more CNAME records that prove domain ownership.
 
@@ -105,7 +165,7 @@ After requesting the certificate, ACM provides one or more CNAME records that pr
   that adds the CNAME records automatically.
 - **Manual:** copy the CNAME name and value from ACM and add them to the Route 53 hosted zone created in Section 2.
 
-### 3.3 Wait for Issued status
+### 4.3 Wait for Issued status
 
 Validation typically completes in 1–5 minutes once the DNS records propagate.
 
@@ -118,14 +178,14 @@ aws acm describe-certificate \
 # Expected: ISSUED
 ```
 
-### 3.4 Record the certificate ARN
+### 4.4 Record the certificate ARN
 
 You will need the **Certificate ARN** (format: `arn:aws:acm:us-east-1:…:certificate/…`) in
 [Section 5](#5-easy-genomicsyaml-production-values).
 
 ---
 
-## 4. `easy-genomics.yaml` production values
+## 5. `easy-genomics.yaml` production values
 
 Copy the example config and edit it for your production environment:
 
@@ -146,7 +206,7 @@ easy-genomics:
         app-domain-name: 'genomics.mylab.org' # must match your Route 53 hosted zone domain
 
         aws-hosted-zone-id: 'Z0123456789ABCDEFGHIJK' # PROD: required — from Section 2
-        aws-certificate-arn: 'arn:aws:acm:us-east-1:123456789012:certificate/...' # PROD: required — from Section 3; must be us-east-1
+        aws-certificate-arn: 'arn:aws:acm:us-east-1:123456789012:certificate/...' # PROD: required — from Section 4; must be us-east-1
 
         # Optional: Google SSO — leave all four fields empty to disable Google sign-in
         # google-client-id:
@@ -189,7 +249,7 @@ easy-genomics:
 
 ---
 
-## 5. Account isolation
+## 6. Account isolation
 
 ### Recommended: separate AWS account
 
@@ -227,7 +287,7 @@ standard CDK application.
 
 ---
 
-## 6. Run the deployment
+## 7. Run the deployment
 
 Configure AWS credentials before deploying — see [`aws-setup.md`](./aws-setup.md).
 
@@ -276,7 +336,7 @@ team.
 
 ---
 
-## 7. Post-deploy smoke test checklist
+## 8. Post-deploy smoke test checklist
 
 Run these checks immediately after a successful first deploy:
 
@@ -288,3 +348,10 @@ Run these checks immediately after a successful first deploy:
 - [ ] Open CloudWatch → Log Groups, filter by `prod-{env-name}` — no `ERROR`-level entries at startup
 - [ ] (If AWS HealthOmics workflows are planned) Confirm the HealthOmics service is accessible in your chosen region
       from this account — some regions require explicit service opt-in
+- [ ] `aws sesv2 get-email-identity --email-identity <your-domain>` shows `VerifiedForSendingStatus: true` and both
+      `DkimAttributes.Status` / `MailFromAttributes.MailFromDomainStatus` as `SUCCESS` (see Section 3.1)
+- [ ] Invite a test user and confirm the invitation email is actually received — requires either SES production access
+      to be approved, or the recipient address to be individually verified (see Section 3.2)
+- [ ] (If the org email branding feature is deployed) Confirm `aws s3control get-public-access-block` shows all four
+      settings `false` for this account, or that an SCP exception exists for the org-email-assets bucket (see Section
+      3.3)

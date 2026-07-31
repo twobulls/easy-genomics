@@ -45,17 +45,26 @@ export const handler: Handler = async (
 
     const requestingAdminEmail: string = event.requestContext.authorizer.claims.email;
 
-    await sesService.sendRunCompletionEmail(requestingAdminEmail, {
-      runName: 'Sample Run',
-      status: 'COMPLETED',
-      laboratoryName: 'Sample Laboratory',
-      workflowName: 'nf-core/demo-1.0.1',
-      runDurationSeconds: 911,
-      runId: 'sample-run-id',
-      laboratoryId: 'sample-laboratory-id',
-      logoUrl: request.EmailBrandingLogoUrl,
-      footerText: request.EmailBrandingFooterText,
-    });
+    try {
+      await sesService.sendRunCompletionEmail(requestingAdminEmail, {
+        runName: 'Sample Run',
+        status: 'COMPLETED',
+        laboratoryName: 'Sample Laboratory',
+        workflowName: 'nf-core/demo-1.0.1',
+        runDurationSeconds: 911,
+        runId: 'sample-run-id',
+        laboratoryId: 'sample-laboratory-id',
+        logoUrl: request.EmailBrandingLogoUrl,
+      });
+    } catch (sendError) {
+      console.error(sendError);
+      // Most likely cause in non-prod environments is SES sandbox mode rejecting sends to
+      // an unverified recipient address — surface an actionable message instead of the
+      // generic unclassified error buildErrorResponse would otherwise produce.
+      throw new InvalidRequestError(
+        "Could not send test email — check that this environment's SES configuration allows sending to this address",
+      );
+    }
 
     return buildResponse(200, JSON.stringify({ Sent: true }), event);
   } catch (err: any) {

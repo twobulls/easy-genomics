@@ -9,6 +9,7 @@ describe('OrgEmailAssetsBucketConstruct', () => {
     new OrgEmailAssetsBucketConstruct(stack, 'test-construct', {
       bucketName: 'dev-demo-org-email-assets-bucket',
       envType: 'dev',
+      appDomainName: 'dev-demo.easygenomics.org',
     });
 
     const template = Template.fromStack(stack);
@@ -33,5 +34,42 @@ describe('OrgEmailAssetsBucketConstruct', () => {
         ]),
       },
     });
+  });
+
+  it('scopes the upload CORS rule to the app domain, not a wildcard origin', () => {
+    const app = new App();
+    const stack = new Stack(app, 'test-stack');
+    new OrgEmailAssetsBucketConstruct(stack, 'test-construct', {
+      bucketName: 'dev-demo-org-email-assets-bucket',
+      envType: 'dev',
+      appDomainName: 'dev-demo.easygenomics.org',
+    });
+
+    const template = Template.fromStack(stack);
+
+    template.hasResourceProperties('AWS::S3::Bucket', {
+      CorsConfiguration: {
+        CorsRules: Match.arrayWith([
+          Match.objectLike({
+            AllowedMethods: Match.arrayWith(['GET', 'PUT', 'HEAD']),
+            AllowedOrigins: ['https://dev-demo.easygenomics.org'],
+          }),
+        ]),
+      },
+    });
+  });
+
+  it('seeds the default logo/lock images via a BucketDeployment targeting this bucket', () => {
+    const app = new App();
+    const stack = new Stack(app, 'test-stack');
+    new OrgEmailAssetsBucketConstruct(stack, 'test-construct', {
+      bucketName: 'dev-demo-org-email-assets-bucket',
+      envType: 'dev',
+      appDomainName: 'dev-demo.easygenomics.org',
+    });
+
+    const template = Template.fromStack(stack);
+
+    template.resourceCountIs('Custom::CDKBucketDeployment', 1);
   });
 });

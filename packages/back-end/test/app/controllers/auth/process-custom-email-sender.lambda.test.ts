@@ -17,7 +17,7 @@ describe('process-custom-email-sender.lambda', () => {
     sesServiceInstance.sendUserForgotPasswordEmail = jest.fn().mockResolvedValue({});
   });
 
-  it('passes EmailBrandingLogoUrl/EmailBrandingFooterText from clientMetadata through to sendNewUserInvitationEmail', async () => {
+  it('passes EmailBrandingLogoUrl from clientMetadata through to sendNewUserInvitationEmail', async () => {
     const event = {
       triggerSource: 'CustomEmailSender_AdminCreateUser',
       request: {
@@ -27,7 +27,6 @@ describe('process-custom-email-sender.lambda', () => {
           OrganizationId: 'org-1',
           OrganizationName: 'Acme Labs',
           EmailBrandingLogoUrl: 'https://acme-labs.example/logo.png',
-          EmailBrandingFooterText: 'Acme Labs footer',
         },
       },
     } as any;
@@ -38,7 +37,7 @@ describe('process-custom-email-sender.lambda', () => {
       'user@example.com',
       'Acme Labs',
       expect.any(String),
-      { logoUrl: 'https://acme-labs.example/logo.png', footerText: 'Acme Labs footer' },
+      { logoUrl: 'https://acme-labs.example/logo.png' },
     );
   });
 
@@ -58,7 +57,7 @@ describe('process-custom-email-sender.lambda', () => {
       'user@example.com',
       'Acme Labs',
       expect.any(String),
-      { logoUrl: undefined, footerText: undefined },
+      { logoUrl: undefined },
     );
   });
 });

@@ -385,6 +385,7 @@ const backEndApp = new awscdk.AwsCdkTypeScriptApp({
     '@aws-sdk/client-cloudformation@^3.786.0',
     '@aws-sdk/client-cloudwatch-logs@3.782.0',
     '@aws-sdk/client-cognito-identity-provider',
+    '@aws-sdk/client-cost-explorer@3.782.0',
     '@aws-sdk/client-dynamodb',
     `@aws-sdk/client-omics@${awsSdkClientOmicsVersion}`,
     '@aws-sdk/client-ses',
@@ -444,6 +445,10 @@ backEndApp.addScripts({
   // See `scripts/preflight-deletion-protection.ts` and
   // `docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md`.
   ['preflight-deletion-protection']: 'tsx scripts/preflight-deletion-protection.ts',
+  // Idempotent seed of ALLOW rows for each lab's configured S3Bucket. Runs AFTER
+  // `cdk deploy` so the laboratory-s3-access-table exists. Complements the runtime
+  // fallback in `isS3BucketAccessAllowed` for unmigrated labs.
+  ['migrate-laboratory-s3-access-seed']: 'tsx scripts/migrate-laboratory-s3-access-seed.ts',
   // NOTE: `--all` is required now that the back-end synthesizes multiple
   // top-level stacks (`*-main-back-end-stack`, `*-easy-genomics-api-stack`,
   // and optionally `*-api-domain-stack`). Without it, `cdk deploy` refuses to
@@ -456,8 +461,11 @@ backEndApp.addScripts({
   // of synthesizing again (~5 min per synth for this app). Deploy therefore requires a
   // prior `build` — every flow already guarantees that (nx deploy dependsOn build; the
   // build-and-deploy scripts chain build first).
+  //
+  // After stacks deploy, seed laboratory S3 access rows so existing labs are not
+  // locked out by the new assert gates (runtime fallback covers the brief window).
   ['deploy']:
-    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices',
+    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices && pnpm run migrate-laboratory-s3-access-seed',
   ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy --require-approval any-change', // Run root build-back-end script to inc shared-lib
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
   ['local-server']: 'tsx src/local-server/index.ts',
@@ -716,6 +724,18 @@ root.gitignore.addPatterns(
   'packages/front-end/tests/e2e/.auth/*.json',
   'packages/front-end/playwright-report',
   '.pnpm-store',
+  // Graphify — opt-in via amer-easy-genomics-dev-ai-tools (local graph never committed)
+  'graphify-out/',
+  '.graphifyignore',
+  '.graphifyignore.with-docs',
+  // AI definitions — live in amer-easy-genomics-dev-ai-tools; local symlinks via that repo's setup.sh
+  'CLAUDE.md',
+  'AGENTS.md',
+  '.cursorrules',
+  '.mcp.json',
+  '.cursor/mcp.json',
+  '.cursor/rules/',
+  '.claude/',
 );
 // Exception: Include .env example files (used for local dev setup documentation)
 root.gitignore.addPatterns('!packages/back-end/.env.local.example', '!config/.env.nuxt.local.example');

@@ -16,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryDataTaggingService } from '@BE/services/easy-genomics/laboratory-data-tagging-service';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
-import { SnsService } from '@BE/services/sns-service';
+import { SqsService } from '@BE/services/sqs-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
@@ -30,7 +30,7 @@ import {
   shouldExpireWithRetentionMonths,
 } from '@BE/utils/laboratory-run-ttl-utils';
 
-const snsService = new SnsService();
+const sqsService = new SqsService();
 
 const laboratoryRunService = new LaboratoryRunService();
 const laboratoryService = new LaboratoryService();
@@ -128,9 +128,9 @@ export const handler: Handler = async (
       Type: 'LaboratoryRun',
       Record: response,
     };
-    await snsService.publish({
-      TopicArn: process.env.SNS_LABORATORY_RUN_UPDATE_TOPIC,
-      Message: JSON.stringify(record),
+    await sqsService.sendMessage({
+      QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
+      MessageBody: JSON.stringify(record),
       MessageGroupId: `update-laboratory-run-${response.RunId}`,
       MessageDeduplicationId: uuidv4(),
     });

@@ -23,6 +23,7 @@
  *   HasNextFlowTowerAccessToken?: <boolean>,
  *   HasGitHubAccessToken?: <boolean>,
  *   EnableNewWorkflowsByDefault?: <boolean>,
+ *   EnableNewBucketsByDefault?: <boolean>,
  *   CreatedAt?: <string>,
  *   CreatedBy?: <string>,
  *   ModifiedAt?: <string>,
@@ -69,10 +70,20 @@ export interface Laboratory extends BaseAttributes {
   NotificationsEnabled?: boolean;
 
   /**
+   * When true, data buckets without a DENY row are allowed for this lab.
+   * When false/omitted, only explicit ALLOW rows grant bucket access.
+   */
+  EnableNewBucketsByDefault?: boolean;
+
+  /**
    * Laboratory-wide run retention policy, in months, applied after a run reaches a terminal state.
    * - 0 means "never delete run records" (no TTL expiration).
    */
   RunRetentionMonths?: number;
+  /** Polling interval, in seconds, for the lab runs list status refresh. */
+  RunListStatusPollIntervalSeconds?: number;
+  /** Polling interval, in seconds, for the run detail page progress refresh. */
+  RunDetailProgressPollIntervalSeconds?: number;
 
   /**
    * BYOK LLM provider selection per integration. Each lab can pick a different
@@ -102,4 +113,11 @@ export interface Laboratory extends BaseAttributes {
   /** Boolean indicators returned by read-laboratory; the actual keys never leave SSM. */
   HasHealthOmicsLlmApiKey?: boolean;
   HasSeqeraLlmApiKey?: boolean;
+
+  /**
+   * AWS HealthOmics run cache id used for call caching ("resume"). Lazily provisioned on the
+   * first HealthOmics run and reused for all subsequent runs, so a failed run can be retried and
+   * resume from its last completed task instead of recomputing everything. Managed internally.
+   */
+  HealthOmicsRunCacheId?: string;
 }

@@ -4,6 +4,7 @@ import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { DataProvisioningNestedStack } from './data-provisioning-nested-stack';
 import { EasyGenomicsNestedStack } from './easy-genomics-nested-stack';
+import { LogRetentionNestedStack } from './log-retention-nested-stack';
 import { baseLSIAttributes, DynamoConstruct } from '../constructs/dynamodb-construct';
 import { SpecRestApiConstruct } from '../constructs/spec-rest-api-construct';
 import {
@@ -87,6 +88,14 @@ export class EasyGenomicsApiStack extends Stack {
       easyGenomicsNestedStackProps,
     );
 
+    // Custom::LogRetention for every easy-genomics Lambda lives here (its own
+    // template) so the route-heavy EasyGenomicsNestedStack stays under the
+    // CloudFormation 500-resource limit. functionName is deterministic, so no
+    // cross-stack reference to the Lambda functions is required.
+    new LogRetentionNestedStack(this, `${this.props.envName}-easy-genomics-log-retention-nested-stack`, {
+      logGroupNames: this.easyGenomicsNestedStack.lambda.logGroupNames,
+    });
+
     // Dedicated API Gateway for the Easy Genomics domain, deployed directly from
     // easy-genomics-api.yaml via SpecRestApi. Keeping the API at this stack level
     // means its resources land in this template (not `BackEndStack`); reusing the
@@ -141,22 +150,24 @@ export class EasyGenomicsApiStack extends Stack {
     // authorizer, add a single RestApi-scoped suppression here.
 
     // Lambda execution roles that require broader S3 access (signed URLs,
-    // bucket listing, multi-object downloads, etc.).
+    // bucket listing, multi-object downloads, etc.). Paths target the explicit
+    // `${lambdaId}-role` construct (inline policies live on the Role itself;
+    // there is no longer a ServiceRole/DefaultPolicy AWS::IAM::Policy resource).
     NagSuppressions.addResourceSuppressionsByPath(
       this,
       [
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-file-download-url/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-list-bucket-objects/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-top-level-bucket-objects/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-laboratory-bucket-objects/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-search-bucket-objects/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-folder-download-job/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-folder-download-job-status/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-folder-download-job/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-update-laboratory/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-list-buckets/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-create-file-upload-request/ServiceRole/DefaultPolicy/Resource`,
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-create-file-upload-sample-sheet/ServiceRole/DefaultPolicy/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-file-download-url-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-list-bucket-objects-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-top-level-bucket-objects-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-laboratory-bucket-objects-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-search-bucket-objects-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-folder-download-job-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-folder-download-job-status-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-folder-download-job-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-update-laboratory-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-list-buckets-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-create-file-upload-request-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-create-file-upload-sample-sheet-role/Resource`,
       ],
       [
         {
@@ -168,10 +179,14 @@ export class EasyGenomicsApiStack extends Stack {
     );
 
     // Lab Runs processor needs access to read any omics run to fetch status.
+    // This handler has an SQS event source, so it still gets a mutable role with
+    // a DefaultPolicy for the event-source grants — suppress both the Role
+    // (inline handler policy) and the DefaultPolicy (event-source grants).
     NagSuppressions.addResourceSuppressionsByPath(
       this,
       [
-        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-update-laboratory-run/ServiceRole/DefaultPolicy/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-update-laboratory-run-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-update-laboratory-run-role/DefaultPolicy/Resource`,
       ],
       [
         {
@@ -345,6 +360,17 @@ export class EasyGenomicsApiStack extends Stack {
             type: AttributeType.STRING,
           },
         },
+        {
+          // Historical cost estimator: query completed runs by workflow identity + terminal time.
+          partitionKey: {
+            name: 'WorkflowExternalId',
+            type: AttributeType.STRING,
+          },
+          sortKey: {
+            name: 'TerminalAt',
+            type: AttributeType.STRING,
+          },
+        },
       ],
       lsi: baseLSIAttributes,
     });
@@ -379,6 +405,21 @@ export class EasyGenomicsApiStack extends Stack {
     });
     this.dynamoDBTables.set(laboratoryWorkflowAccessTableName, laboratoryWorkflowAccessTable);
 
+    // Laboratory S3 bucket access allowlist
+    const laboratoryS3AccessTableName = `${this.props.namePrefix}-laboratory-s3-access-table`;
+    const laboratoryS3AccessTable = this.dynamoDB.createTable(laboratoryS3AccessTableName, {
+      partitionKey: {
+        name: 'LaboratoryId',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'BucketName',
+        type: AttributeType.STRING,
+      },
+      lsi: baseLSIAttributes,
+    });
+    this.dynamoDBTables.set(laboratoryS3AccessTableName, laboratoryS3AccessTable);
+
     // Laboratory data tagging (user-defined tags on S3 objects within the lab prefix)
     const laboratoryDataTaggingTableName = `${this.props.namePrefix}-laboratory-data-tagging-table`;
     const laboratoryDataTaggingTable = this.dynamoDB.createTable(laboratoryDataTaggingTableName, {
@@ -405,5 +446,23 @@ export class EasyGenomicsApiStack extends Stack {
       lsi: baseLSIAttributes,
     });
     this.dynamoDBTables.set(laboratoryDataTaggingTableName, laboratoryDataTaggingTable);
+
+    // Saved AWS HealthOmics workflow run parameter presets.
+    // Personal and laboratory-shared presets share this table, separated by the sort key
+    // prefix (USER#<UserId>#<WorkflowId>#<PresetId> / LAB#<WorkflowId>#<PresetId>), so the
+    // run form loads both tiers from one partition without a secondary index.
+    const workflowRunPresetTableName = `${this.props.namePrefix}-workflow-run-preset-table`;
+    const workflowRunPresetTable = this.dynamoDB.createTable(workflowRunPresetTableName, {
+      partitionKey: {
+        name: 'LaboratoryId',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'PresetKey',
+        type: AttributeType.STRING,
+      },
+      lsi: baseLSIAttributes,
+    });
+    this.dynamoDBTables.set(workflowRunPresetTableName, workflowRunPresetTable);
   };
 }

@@ -50,7 +50,9 @@ type PendingRequest =
   | 'dataCollectionsMutate'
   | 'dataCollectionsSamples'
   | 'dataCollectionsRunSequenceCollections'
-  | 'runFromCollectionsWorkflows';
+  | 'runFromCollectionsWorkflows'
+  | 'loadWorkflowRunPresets'
+  | 'saveWorkflowRunPreset';
 
 interface UiStoreState {
   pendingRequests: Set<string>;
@@ -58,6 +60,8 @@ interface UiStoreState {
   remountAppKey: number;
   hasSidebar: boolean;
   sidebarCollapsed: boolean;
+  /** True while an intentional logout is in progress; suppresses auth/lab error toasts. */
+  isLoggingOut: boolean;
 }
 
 const initialState = (): UiStoreState => ({
@@ -66,6 +70,7 @@ const initialState = (): UiStoreState => ({
   remountAppKey: 0,
   hasSidebar: false,
   sidebarCollapsed: false,
+  isLoggingOut: false,
 });
 
 const useUiStore = defineStore('uiStore', {
@@ -85,7 +90,14 @@ const useUiStore = defineStore('uiStore', {
 
   actions: {
     reset() {
+      // Preserve across store wipes so in-flight logout requests still skip error toasts.
+      const { isLoggingOut } = this;
       Object.assign(this, initialState());
+      this.isLoggingOut = isLoggingOut;
+    },
+
+    setLoggingOut(loggingOut: boolean): void {
+      this.isLoggingOut = loggingOut;
     },
 
     setRequestPending(val: PendingRequest): void {

@@ -12,6 +12,7 @@
  *   UserId: <string>,
  *   OrganizationId: <string>,
  *   RunName: <string>,
+ *   Description?: <string>,
  *   Platform: <string>,
  *   PlatformApiBaseUrl?: <string>,
  *   Status: <string>,
@@ -37,6 +38,8 @@ export interface LaboratoryRun extends BaseAttributes {
   UserId: string; // Global Secondary Index (String)
   OrganizationId: string; // Global Secondary Index (String)
   RunName: string;
+  /** Optional user-authored note for this run; set at creation time. */
+  Description?: string;
   Platform: RunType,
   PlatformApiBaseUrl?: string, // Used if Laboratory uses alternative Seqera Platform API Base URL
   Status: string;
@@ -141,4 +144,64 @@ export interface LaboratoryRun extends BaseAttributes {
    * published for this run. Prevents a duplicate status-check message from double-emailing.
    */
   NotifiedAt?: string;
+
+  /** Pre-run input features for historical cost similarity matching. */
+  RunInputProfile?: {
+    SampleCount: number;
+    InputFileCount: number;
+    InputBytesTotal: number;
+    ParameterHash: string;
+    InputBytesByExtension?: Record<string, number>;
+  };
+
+  /** Snapshot of the pre-run estimate band shown at Review & Launch. */
+  PreRunCostEstimate?: {
+    LowUsd: number;
+    HighUsd: number;
+    MedianUsd: number;
+    Confidence: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
+    ComparableRunCount: number;
+    EstimatedAt: string;
+    Exclusions: string[];
+  };
+
+  /** Platform compute/storage estimate captured at terminal state. */
+  RunCostOutcome?: {
+    ActualComputeCostUsd?: number;
+    ActualStorageCostUsd?: number;
+    CostSource: 'HEALTHOMICS_TASKS' | 'SEQERA_PROGRESS';
+    CostCapturedAt: string;
+  };
+
+  /** AWS Cost Explorer billed cost synced ~24–48h after completion. */
+  BilledCost?: {
+    TotalUsd: number;
+    AsOfDate: string;
+    SyncedAt: string;
+    ByService?: Record<string, number>;
+  };
+
+  /**
+   * Approximate task completion percentage derived from HealthOmics ListRunTasks
+   * (completed / total known tasks). Denominator grows as the workflow DAG expands.
+   */
+  ProgressPercent?: number;
+
+  /** Total known tasks at last status check. */
+  TasksTotal?: number;
+
+  /** Tasks in COMPLETED status at last status check. */
+  TasksCompleted?: number;
+
+  /** Tasks in RUNNING/STARTING status at last status check. */
+  TasksRunning?: number;
+
+  /** Tasks in FAILED status at last status check. */
+  TasksFailed?: number;
+
+  /**
+   * Name of the first currently RUNNING (or STARTING) task/process at last status check.
+   * Cleared when the run is terminal or no tasks are actively running.
+   */
+  CurrentProcessName?: string;
 }

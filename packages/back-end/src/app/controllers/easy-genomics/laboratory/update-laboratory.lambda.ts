@@ -16,17 +16,21 @@ import {
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
+import { migrateS3AccessOnDefaultModeChange } from '@BE/services/easy-genomics/laboratory-s3-access-default-migration';
+import { LaboratoryS3AccessService } from '@BE/services/easy-genomics/laboratory-s3-access-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { migrateWorkflowAccessOnDefaultModeChange } from '@BE/services/easy-genomics/laboratory-workflow-access-default-migration';
 import { OmicsService } from '@BE/services/omics-service';
 import { SsmService } from '@BE/services/ssm-service';
 import { validateOrganizationAdminAccess } from '@BE/utils/auth-utils';
 import { assertHealthOmicsVpcConfigurationIsActive } from '@BE/utils/laboratory-omics-vpc-utils';
+import { assertLaboratoryHasS3BucketAccess } from '@BE/utils/laboratory-s3-access-utils';
 import { httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
 const ssmService = new SsmService();
 const omicsService = new OmicsService();
+const s3AccessService = new LaboratoryS3AccessService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -73,6 +77,21 @@ export const handler: Handler = async (
       await assertHealthOmicsVpcConfigurationIsActive(request.AwsHealthOmicsVpcConfigurationName!, omicsService);
     }
 
+    // Only enforce when the lab's configured bucket is changing. The S3 access UI
+    // re-sends the existing S3Bucket when toggling EnableNewBucketsByDefault; asserting
+    // against the *new* default mode would fail before migration rewrites ALLOW/DENY rows
+    // (e.g. default-on → strict: current bucket often has no ALLOW row yet).
+    if (request.S3Bucket && request.S3Bucket !== existing.S3Bucket) {
+      await assertLaboratoryHasS3BucketAccess(
+        {
+          ...existing,
+          EnableNewBucketsByDefault: request.EnableNewBucketsByDefault ?? existing.EnableNewBucketsByDefault,
+        },
+        request.S3Bucket,
+        s3AccessService,
+      );
+    }
+
     const response = await laboratoryService
       .update(
         {
@@ -88,7 +107,12 @@ export const handler: Handler = async (
           NextFlowTowerApiBaseUrl: request.NextFlowTowerApiBaseUrl,
           NextFlowTowerWorkspaceId: request.NextFlowTowerWorkspaceId,
           RunRetentionMonths: request.RunRetentionMonths,
+          RunListStatusPollIntervalSeconds:
+            request.RunListStatusPollIntervalSeconds ?? existing.RunListStatusPollIntervalSeconds,
+          RunDetailProgressPollIntervalSeconds:
+            request.RunDetailProgressPollIntervalSeconds ?? existing.RunDetailProgressPollIntervalSeconds,
           EnableNewWorkflowsByDefault: request.EnableNewWorkflowsByDefault ?? existing.EnableNewWorkflowsByDefault,
+          EnableNewBucketsByDefault: request.EnableNewBucketsByDefault ?? existing.EnableNewBucketsByDefault,
           // Map LLM settings directly from the request (not `?? existing`) so selecting
           // "None" (sent as undefined) clears the field via the full-item PUT overwrite.
           HealthOmicsLlmProvider: request.HealthOmicsLlmProvider,
@@ -119,6 +143,17 @@ export const handler: Handler = async (
         laboratoryId: existing.LaboratoryId,
         previousDefaultOn,
         nextDefaultOn,
+      });
+    }
+
+    const previousBucketsDefaultOn = existing.EnableNewBucketsByDefault === true;
+    const nextBucketsDefaultOn = response.EnableNewBucketsByDefault === true;
+    if (previousBucketsDefaultOn !== nextBucketsDefaultOn) {
+      await migrateS3AccessOnDefaultModeChange({
+        organizationId: existing.OrganizationId,
+        laboratoryId: existing.LaboratoryId,
+        previousDefaultOn: previousBucketsDefaultOn,
+        nextDefaultOn: nextBucketsDefaultOn,
       });
     }
 

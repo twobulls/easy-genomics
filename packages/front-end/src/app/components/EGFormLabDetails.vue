@@ -6,6 +6,8 @@
     NextFlowTowerApiBaseUrlSchema,
     NextFlowTowerAccessTokenSchema,
     GitHubAccessTokenSchema,
+    RunDetailProgressPollIntervalSecondsSchema,
+    RunListStatusPollIntervalSecondsSchema,
     NextFlowTowerWorkspaceIdSchema,
     RunRetentionMonthsSchema,
     NetworkingModeSchema,
@@ -28,6 +30,10 @@
   } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
   import { UpdateLaboratoryUserNotificationPreferenceSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-user';
   import { ERROR_CODES } from '@easy-genomics/shared-lib/src/app/constants/errorMessages';
+  import {
+    DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
+    DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
+  } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
 
   const props = withDefaults(
     defineProps<{
@@ -55,6 +61,8 @@
   const seqeraToggleLabelId = 'lab-settings-seqera-toggle-label';
   const healthOmicsToggleLabelId = 'lab-settings-healthomics-toggle-label';
   const retentionHelpId = 'lab-settings-retention-help';
+  const runsListPollHelpId = 'lab-settings-runs-list-poll-help';
+  const runDetailPollHelpId = 'lab-settings-run-detail-poll-help';
   const seqeraSectionId = 'lab-settings-seqera-section';
   const healthOmicsSectionId = 'lab-settings-healthomics-section';
   const notificationsToggleLabelId = 'lab-settings-notifications-toggle-label';
@@ -75,6 +83,8 @@
     Description: '',
     S3Bucket: '',
     RunRetentionMonths: 6,
+    RunListStatusPollIntervalSeconds: DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
+    RunDetailProgressPollIntervalSeconds: DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
     NextFlowTowerEnabled: false,
     NextFlowTowerAccessToken: '',
     GitHubAccessToken: '',
@@ -403,8 +413,9 @@
   });
 
   /**
-   * Submit requires a usable S3 directory for org admins. The bucket must appear in the infra list,
-   * OR in edit mode we allow the existing persisted bucket when the list does not include it (stale API, rename, permissions).
+   * Submit requires a usable S3 directory for org admins: the bucket must be one the lab is
+   * currently granted access to (present in the loaded list). A previously persisted bucket that
+   * is no longer granted (e.g. access revoked) is not accepted, so the admin must pick a valid one.
    */
   const isS3BucketValidForSubmit = computed(() => {
     if (!useUserStore().isOrgAdmin()) {
@@ -419,21 +430,33 @@
       return false;
     }
 
-    if (s3Directories.value.some((dir) => dir === bucket)) {
-      return true;
-    }
+    return s3Directories.value.some((dir) => dir === bucket);
+  });
 
-    return (
-      formMode.value !== LabDetailsFormModeEnum.enum.Create &&
-      uneditedLabDetails.value != null &&
-      uneditedLabDetails.value.S3Bucket === bucket
-    );
+  /**
+   * True when the lab has a persisted default bucket that is no longer in the granted list
+   * (e.g. an admin revoked access). Used to explain why the select is empty and submit is blocked.
+   */
+  const persistedBucketNoLongerGranted = computed(() => {
+    if (isLoadingBuckets.value || !useUserStore().isOrgAdmin()) {
+      return false;
+    }
+    const bucket = uneditedLabDetails.value?.S3Bucket;
+    if (!bucket) {
+      return false;
+    }
+    return !s3Directories.value.some((dir) => dir === bucket);
   });
 
   async function getS3Buckets() {
     try {
       isLoadingBuckets.value = true;
-      s3Directories.value = await $api.infra.s3Buckets().then((res) => res.map((bucket) => bucket.Name));
+      if (formMode.value !== LabDetailsFormModeEnum.enum.Create && labId) {
+        const granted = await $api.s3Access.listGrantedBuckets(labId);
+        s3Directories.value = granted.buckets;
+      } else {
+        s3Directories.value = await $api.infra.s3Buckets().then((res) => res.map((bucket) => bucket.Name));
+      }
     } catch (error) {
       useToastStore().error('Failed to retrieve S3 buckets');
     } finally {
@@ -461,6 +484,10 @@
           ...labDetails,
           // ?? only: RunRetentionMonths 0 (never delete) must not become 6.
           RunRetentionMonths: labDetails.RunRetentionMonths ?? 6,
+          RunListStatusPollIntervalSeconds:
+            labDetails.RunListStatusPollIntervalSeconds ?? DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
+          RunDetailProgressPollIntervalSeconds:
+            labDetails.RunDetailProgressPollIntervalSeconds ?? DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
           // BYOK: server never echoes back the keys — only Has*LlmApiKey indicators.
           // Initialize the password inputs to empty so they don't show stale data.
           HealthOmicsLlmApiKey: '',
@@ -725,6 +752,18 @@
     maybeAddFieldValidationErrors(errors, LabNameSchema, 'Name', state.Name);
     maybeAddFieldValidationErrors(errors, LabDescriptionSchema, 'Description', state.Description);
     maybeAddFieldValidationErrors(errors, RunRetentionMonthsSchema, 'RunRetentionMonths', state.RunRetentionMonths);
+    maybeAddFieldValidationErrors(
+      errors,
+      RunListStatusPollIntervalSecondsSchema,
+      'RunListStatusPollIntervalSeconds',
+      state.RunListStatusPollIntervalSeconds,
+    );
+    maybeAddFieldValidationErrors(
+      errors,
+      RunDetailProgressPollIntervalSecondsSchema,
+      'RunDetailProgressPollIntervalSeconds',
+      state.RunDetailProgressPollIntervalSeconds,
+    );
 
     // Next Flow fields only required if Next Flow enabled
     if (state.NextFlowTowerEnabled) {
@@ -797,6 +836,8 @@
     'Name',
     'Description',
     'RunRetentionMonths',
+    'RunListStatusPollIntervalSeconds',
+    'RunDetailProgressPollIntervalSeconds',
     'S3Bucket',
     'AwsHealthOmicsEnabled',
     'NextFlowTowerEnabled',
@@ -819,7 +860,11 @@
   type LabEditCompareKey = (typeof LAB_DETAILS_EDIT_COMPARE_KEYS)[number];
 
   function valuesDifferForLabEdit(key: LabEditCompareKey, a: unknown, b: unknown): boolean {
-    if (key === 'RunRetentionMonths') {
+    if (
+      key === 'RunRetentionMonths' ||
+      key === 'RunListStatusPollIntervalSeconds' ||
+      key === 'RunDetailProgressPollIntervalSeconds'
+    ) {
       const norm = (v: unknown) => {
         if (v === undefined || v === null || v === '') return '_unset_';
         const n = Number(v);
@@ -945,6 +990,46 @@
         <p :id="retentionHelpId" class="text-muted mt-1 text-xs">0 = never delete run records</p>
       </EGFormGroup>
 
+      <EGFormGroup
+        label="Runs list status poll interval (seconds)"
+        name="RunListStatusPollIntervalSeconds"
+        eager-validation
+      >
+        <EGInput
+          v-model.number="state.RunListStatusPollIntervalSeconds"
+          type="number"
+          min="30"
+          max="1800"
+          step="1"
+          :disabled="!isEditing || isSubmittingFormData"
+          placeholder="Enter seconds between list updates"
+          :aria-describedby="runsListPollHelpId"
+        />
+        <p :id="runsListPollHelpId" class="text-muted mt-1 text-xs">
+          Controls how often the lab runs list refreshes run statuses. Allowed range: 30 to 1800 seconds.
+        </p>
+      </EGFormGroup>
+
+      <EGFormGroup
+        label="Run detail progress poll interval (seconds)"
+        name="RunDetailProgressPollIntervalSeconds"
+        eager-validation
+      >
+        <EGInput
+          v-model.number="state.RunDetailProgressPollIntervalSeconds"
+          type="number"
+          min="10"
+          max="300"
+          step="1"
+          :disabled="!isEditing || isSubmittingFormData"
+          placeholder="Enter seconds between run detail updates"
+          :aria-describedby="runDetailPollHelpId"
+        />
+        <p :id="runDetailPollHelpId" class="text-muted mt-1 text-xs">
+          Controls how often the run detail page refreshes task progress. Allowed range: 10 to 300 seconds.
+        </p>
+      </EGFormGroup>
+
       <EGFormGroup v-if="useUserStore().isOrgAdmin()" label="Default S3 bucket directory" name="S3Bucket" required>
         <EGSelect
           :options="s3Directories"
@@ -953,6 +1038,10 @@
           placeholder="Please select an S3 bucket from the list below"
           searchable-placeholder="Search existing S3 buckets..."
         />
+        <p v-if="isEditing && persistedBucketNoLongerGranted" class="text-alert-danger-dark mt-1 text-xs">
+          This lab’s previous default bucket ({{ uneditedLabDetails?.S3Bucket }}) is no longer accessible, likely
+          because access was revoked. Select a currently available S3 bucket to continue.
+        </p>
       </EGFormGroup>
     </EGCollapsibleSection>
 

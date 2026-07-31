@@ -11,6 +11,14 @@
   );
   const isOpen = ref(false);
   const attrs = useAttrs();
+
+  /** Activate via synthetic click so Headless MenuButton's click handler opens the menu. */
+  function onTriggerKeydown(e: KeyboardEvent): void {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).click();
+  }
 </script>
 
 <template>
@@ -21,17 +29,16 @@
     :popper="{ placement: 'bottom-start' }"
     v-bind="attrs"
   >
-    <div class="h-10 w-10 rounded-full border">
-      <UButton
-        :class="{ active: isOpen }"
-        class="hover:bg-null h-full w-full justify-center text-black"
-        variant="ghost"
-        icon="i-heroicons-ellipsis-horizontal-20-solid"
-        :aria-label="menuLabel"
-        :aria-expanded="isOpen"
-        aria-haspopup="menu"
-      />
-    </div>
+    <!-- span + tabindex avoids nested <button> inside Headless MenuButton while remaining keyboard-reachable -->
+    <span
+      tabindex="0"
+      class="hover:bg-null focus-visible:ring-primary-500 inline-flex h-10 w-10 items-center justify-center rounded-full border text-black focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+      :class="{ active: isOpen }"
+      :aria-label="menuLabel"
+      @keydown="onTriggerKeydown"
+    >
+      <UIcon name="i-heroicons-ellipsis-horizontal-20-solid" class="h-5 w-5" aria-hidden="true" />
+    </span>
     <template #item="{ item }">
       <span class="flex items-center gap-2 truncate" :class="{ 'is-highlighted': item.isHighlighted }">
         <UIcon

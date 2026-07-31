@@ -17,7 +17,9 @@ import { associateInputsWithWorkflowTag } from '@BE/services/easy-genomics/assoc
 import { LaboratoryDataTaggingService } from '@BE/services/easy-genomics/laboratory-data-tagging-service';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
-import { SnsService } from '@BE/services/sns-service';
+import { RunCostEstimationService } from '@BE/services/easy-genomics/run-cost-estimation-service';
+import { buildRunInputProfile } from '@BE/services/easy-genomics/run-input-profile-service';
+import { SqsService } from '@BE/services/sqs-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
@@ -33,7 +35,48 @@ import {
 const laboratoryRunService = new LaboratoryRunService();
 const laboratoryService = new LaboratoryService();
 const dataTaggingService = new LaboratoryDataTaggingService();
-const snsService = new SnsService();
+const runCostEstimationService = new RunCostEstimationService();
+const sqsService = new SqsService();
+
+/**
+ * Best-effort input profile + pre-run estimate. Runs after laboratoryRunService.add()
+ * so a timeout here cannot leave an externally-submitted run untracked.
+ */
+async function attachPreRunCostEstimate(
+  laboratory: Laboratory,
+  laboratoryRun: LaboratoryRun,
+  request: AddLaboratoryRun,
+): Promise<LaboratoryRun> {
+  try {
+    const runInputProfile = await buildRunInputProfile({
+      laboratory,
+      inputFileKeys: request.InputFileKeys,
+      sampleSheetS3Url: request.SampleSheetS3Url,
+      settings: request.Settings,
+    });
+    const estimate = await runCostEstimationService.estimate(laboratory, {
+      platform: request.Platform,
+      workflowExternalId: request.WorkflowExternalId || '',
+      workflowVersionName: request.WorkflowVersionName,
+      inputFileKeys: request.InputFileKeys,
+      sampleSheetS3Url: request.SampleSheetS3Url,
+      settings: request.Settings,
+      sampleCount: runInputProfile.SampleCount,
+      inputBytesTotal: runInputProfile.InputBytesTotal,
+    });
+    const preRunCostEstimate = runCostEstimationService.toPreRunCostEstimate(estimate);
+    return await laboratoryRunService.update({
+      ...laboratoryRun,
+      RunInputProfile: runInputProfile,
+      ...(preRunCostEstimate ? { PreRunCostEstimate: preRunCostEstimate } : {}),
+      ModifiedAt: new Date().toISOString(),
+      ModifiedBy: laboratoryRun.CreatedBy || 'system',
+    });
+  } catch (err) {
+    console.warn('Failed to attach RunInputProfile / PreRunCostEstimate (continuing):', err);
+    return laboratoryRun;
+  }
+}
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -74,12 +117,15 @@ export const handler: Handler = async (
         ? calculateExpiresAtEpochSeconds(createdAt, retentionMonths)
         : undefined;
 
-    const laboratoryRun: LaboratoryRun = await laboratoryRunService.add(<LaboratoryRun>{
+    // Persist the run first so an external platform submission is never left untracked
+    // if subsequent best-effort cost estimation times out.
+    let laboratoryRun: LaboratoryRun = await laboratoryRunService.add(<LaboratoryRun>{
       LaboratoryId: laboratory.LaboratoryId,
       RunId: request.RunId,
       UserId: currentUserId,
       OrganizationId: laboratory.OrganizationId,
       RunName: request.RunName,
+      ...(request.Description ? { Description: request.Description } : {}),
       Platform: request.Platform,
       PlatformApiBaseUrl: request.PlatformApiBaseUrl,
       Status: request.Status,
@@ -99,6 +145,8 @@ export const handler: Handler = async (
       ...(laboratorioRunExpiresAt !== undefined ? { ExpiresAt: laboratorioRunExpiresAt } : {}),
     });
 
+    laboratoryRun = await attachPreRunCostEstimate(laboratory, laboratoryRun, request);
+
     // Best-effort: associate input files with a workflow tag and record this run's usage
     // history per file so the data tagging page can show "files used by workflow X" and
     // per-file analysis history. Failures here must NEVER block run creation.
@@ -116,9 +164,9 @@ export const handler: Handler = async (
         Type: 'LaboratoryRun',
         Record: laboratoryRun,
       };
-      await snsService.publish({
-        TopicArn: process.env.SNS_LABORATORY_RUN_UPDATE_TOPIC,
-        Message: JSON.stringify(record),
+      await sqsService.sendMessage({
+        QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
+        MessageBody: JSON.stringify(record),
         MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
         MessageDeduplicationId: uuidv4(),
       });

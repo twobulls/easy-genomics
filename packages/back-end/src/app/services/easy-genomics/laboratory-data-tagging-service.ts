@@ -31,8 +31,11 @@ import {
 } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { v5 as uuidv5 } from 'uuid';
 import { DynamoDBService } from '../dynamodb-service';
+import { LaboratoryS3AccessService } from '@BE/services/easy-genomics/laboratory-s3-access-service';
+import { assertLaboratoryHasS3BucketAccess as assertLabS3Access } from '@BE/utils/laboratory-s3-access-utils';
 
 const TABLE_NAME = `${process.env.NAME_PREFIX}-laboratory-data-tagging-table`;
+const s3AccessService = new LaboratoryS3AccessService();
 const GSI1_NAME = 'Gsi1Pk_Index';
 
 /** Namespace UUID for v5 workflow tag ids (stable per lab + platform + workflow identity). */
@@ -177,10 +180,11 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
     }
   }
 
-  public assertBucketMatchesLab(laboratory: Laboratory, bucket: string): void {
-    if (!laboratory.S3Bucket || laboratory.S3Bucket !== bucket) {
+  public async assertLaboratoryHasS3BucketAccess(laboratory: Laboratory, bucket: string): Promise<void> {
+    if (!bucket) {
       throw new S3BucketMismatchError();
     }
+    await assertLabS3Access(laboratory, bucket, s3AccessService);
   }
 
   public async listTags(laboratoryId: string): Promise<ListLaboratoryDataTagsResponse> {
@@ -836,7 +840,7 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
 
   /**
    * Idempotently associate a set of input file keys with a workflow tag. The keys must lie under
-   * the laboratory prefix; bucket validation is performed by the caller via `assertBucketMatchesLab`.
+   * the laboratory prefix; bucket validation is performed by the caller via `assertLaboratoryHasS3BucketAccess`.
    * Re-applying the same workflow tag to a file is a no-op (no FileCount drift, no duplicate MAP rows).
    *
    * Uses an atomic DynamoDB `UpdateItem` (list_append + NOT contains) so concurrent launches cannot
@@ -852,7 +856,7 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
   ): Promise<void> {
     if (!keys.length) return;
     const laboratoryId = laboratory.LaboratoryId;
-    this.assertBucketMatchesLab(laboratory, bucket);
+    await this.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
 
     const tagRow = await this.getTagRow(laboratoryId, workflowTagId);
     if (!tagRow) throw new Error(`Unknown tag: ${workflowTagId}`);
@@ -948,7 +952,7 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
   ): Promise<void> {
     if (!keys.length) return;
     const laboratoryId = laboratory.LaboratoryId;
-    this.assertBucketMatchesLab(laboratory, bucket);
+    await this.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
 
     const now = new Date().toISOString();
     for (const key of keys) {
@@ -1025,7 +1029,7 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
     expiresAt: number | undefined,
   ): Promise<void> {
     const laboratoryId = laboratory.LaboratoryId;
-    this.assertBucketMatchesLab(laboratory, bucket);
+    await this.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
 
     for (const key of inputFileKeys) {
       if (!key || !key.startsWith(`${laboratory.OrganizationId}/${laboratoryId}/`)) continue;
@@ -1085,7 +1089,7 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
     options: { preserveEmptyFileRow?: boolean } = {},
   ): Promise<void> {
     const laboratoryId = laboratory.LaboratoryId;
-    this.assertBucketMatchesLab(laboratory, bucket);
+    await this.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
 
     for (const [runId, rawKeys] of Object.entries(runIdToInputKeys)) {
       const keys = (rawKeys || []).filter((k): k is string => typeof k === 'string' && k.length > 0);
@@ -1255,7 +1259,7 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
     removeTagIds: string[],
   ): Promise<void> {
     const laboratoryId = laboratory.LaboratoryId;
-    this.assertBucketMatchesLab(laboratory, bucket);
+    await this.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
 
     const add = addTagIds || [];
     const remove = removeTagIds || [];
@@ -1371,7 +1375,7 @@ export class LaboratoryDataTaggingService extends DynamoDBService {
     mode: { type: 'clear' } | { type: 'existing'; batchTagId: string } | { type: 'new'; name: string },
   ): Promise<void> {
     const laboratoryId = laboratory.LaboratoryId;
-    this.assertBucketMatchesLab(laboratory, bucket);
+    await this.assertLaboratoryHasS3BucketAccess(laboratory, bucket);
 
     let targetBatchId: string | undefined;
     if (mode.type === 'new') {

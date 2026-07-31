@@ -1,9 +1,21 @@
 import { z } from 'zod';
+import {
+  BilledCostSchema,
+  PreRunCostEstimateSchema,
+  RunCostOutcomeSchema,
+  RunInputProfileSchema,
+} from './laboratory-run-cost';
 
-const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-type Literal = z.infer<typeof literalSchema>;
-type Json = Literal | { [key: string]: Json } | Json[];
-const jsonSchema: z.ZodType<Json> = z.lazy(() => z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)]));
+const laboratoryRunCostFields = {
+  /** Pre-run input features for historical cost similarity matching. */
+  RunInputProfile: RunInputProfileSchema.optional(),
+  /** Snapshot of the pre-run estimate band shown at Review & Launch. */
+  PreRunCostEstimate: PreRunCostEstimateSchema.optional(),
+  /** Platform compute/storage estimate captured at terminal state. */
+  RunCostOutcome: RunCostOutcomeSchema.optional(),
+  /** AWS Cost Explorer billed cost synced ~24–48h after completion. */
+  BilledCost: BilledCostSchema.optional(),
+};
 
 export const LaboratoryRunSchema = z
   .object({
@@ -12,6 +24,8 @@ export const LaboratoryRunSchema = z
     UserId: z.string().uuid(),
     OrganizationId: z.string().uuid(),
     RunName: z.string(),
+    /** Optional user-authored note for this run; set at creation time. */
+    Description: z.string().max(500).optional(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     PlatformApiBaseUrl: z.string().optional(),
     Status: z.string(),
@@ -103,6 +117,26 @@ export const LaboratoryRunSchema = z
      * published for this run. Prevents a duplicate status-check message from double-emailing.
      */
     NotifiedAt: z.string().optional(),
+    ...laboratoryRunCostFields,
+    /**
+     * Approximate task completion percentage derived from HealthOmics ListRunTasks
+     * (or Seqera progress when populated). Denominator grows as the workflow DAG
+     * expands, so prefer showing TasksCompleted/TasksTotal alongside this value.
+     */
+    ProgressPercent: z.number().min(0).max(100).optional(),
+    /** Total known tasks at last status check (denominator for ProgressPercent). */
+    TasksTotal: z.number().nonnegative().optional(),
+    /** Tasks in COMPLETED status at last status check. */
+    TasksCompleted: z.number().nonnegative().optional(),
+    /** Tasks in RUNNING/STARTING status at last status check. */
+    TasksRunning: z.number().nonnegative().optional(),
+    /** Tasks in FAILED status at last status check. */
+    TasksFailed: z.number().nonnegative().optional(),
+    /**
+     * Name of the first currently RUNNING (or STARTING) task/process at last status check.
+     * Cleared when the run is terminal or no tasks are actively running.
+     */
+    CurrentProcessName: z.string().optional(),
   })
   .strict();
 export type LaboratoryRun = z.infer<typeof LaboratoryRunSchema>;
@@ -114,6 +148,8 @@ export const ReadLaboratoryRunSchema = z
     UserId: z.string().uuid(),
     OrganizationId: z.string().uuid(),
     RunName: z.string(),
+    /** Optional user-authored note for this run; set at creation time. */
+    Description: z.string().max(500).optional(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     PlatformApiBaseUrl: z.string().optional(), // Used if Laboratory uses alternative Seqera Platform API Base URL
     Status: z.string(),
@@ -141,6 +177,13 @@ export const ReadLaboratoryRunSchema = z
     FailureSummary: z.string().optional(),
     FailureAction: z.string().optional(),
     FailureClassifiedBy: z.enum(['lookup', 'llm']).optional(),
+    ...laboratoryRunCostFields,
+    ProgressPercent: z.number().min(0).max(100).optional(),
+    TasksTotal: z.number().nonnegative().optional(),
+    TasksCompleted: z.number().nonnegative().optional(),
+    TasksRunning: z.number().nonnegative().optional(),
+    TasksFailed: z.number().nonnegative().optional(),
+    CurrentProcessName: z.string().optional(),
   })
   .strict();
 export type ReadLaboratoryRun = z.infer<typeof ReadLaboratoryRunSchema>;
@@ -150,6 +193,8 @@ export const AddLaboratoryRunSchema = z
     LaboratoryId: z.string().uuid(),
     RunId: z.string().uuid(),
     RunName: z.string(),
+    /** Optional user-authored note for this run; set at creation time. */
+    Description: z.string().max(500).optional(),
     Platform: z.enum(['AWS HealthOmics', 'Seqera Cloud']),
     PlatformApiBaseUrl: z.string().optional(),
     Status: z.string(),

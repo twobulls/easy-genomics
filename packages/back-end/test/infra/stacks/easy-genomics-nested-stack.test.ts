@@ -12,16 +12,23 @@ jest.mock('aws-cdk-lib/aws-lambda-event-sources', () => ({
 }));
 
 jest.mock('../../../src/infra/constructs/iam-construct', () => ({
-  IamConstruct: jest.fn().mockImplementation(() => ({
-    policyStatements: new Map<string, unknown[]>(),
-    addPolicyStatements: jest.fn(),
-    getPolicyStatements: jest.fn().mockReturnValue([]),
-  })),
+  IamConstruct: jest.fn().mockImplementation(() => {
+    const policyStatements = new Map<string, unknown[]>();
+    return {
+      policyStatements,
+      // Mirror production Map.set semantics so callers that merge via .get() + set are testable.
+      addPolicyStatements: jest.fn((name: string, statements: unknown[]) => {
+        policyStatements.set(name, statements);
+      }),
+      getPolicyStatements: jest.fn((name: string) => policyStatements.get(name) ?? []),
+    };
+  }),
 }));
 
 jest.mock('../../../src/infra/constructs/lambda-construct', () => ({
   LambdaConstruct: jest.fn().mockImplementation(() => ({
     lambdaFunctions: new Map<string, unknown>(),
+    logGroupNames: [],
   })),
 }));
 
@@ -29,30 +36,20 @@ jest.mock('../../../src/infra/constructs/ses-construct', () => ({
   SesConstruct: jest.fn().mockImplementation(() => ({})),
 }));
 
-jest.mock('../../../src/infra/constructs/sns-construct', () => ({
-  SnsConstruct: jest.fn().mockImplementation(() => ({
-    snsTopics: new Map<string, any>([
-      ['organization-deletion-topic', { topicArn: 'arn:aws:sns:org', addToResourcePolicy: jest.fn() }],
-      ['laboratory-deletion-topic', { topicArn: 'arn:aws:sns:lab', addToResourcePolicy: jest.fn() }],
-      ['user-deletion-topic', { topicArn: 'arn:aws:sns:user', addToResourcePolicy: jest.fn() }],
-      ['laboratory-run-update-topic', { topicArn: 'arn:aws:sns:run', addToResourcePolicy: jest.fn() }],
-      ['laboratory-run-notification-topic', { topicArn: 'arn:aws:sns:run-notify', addToResourcePolicy: jest.fn() }],
-      ['user-invite-topic', { topicArn: 'arn:aws:sns:invite', addToResourcePolicy: jest.fn() }],
-      ['folder-download-topic', { topicArn: 'arn:aws:sns:folder-download', addToResourcePolicy: jest.fn() }],
-    ]),
-  })),
-}));
-
 jest.mock('../../../src/infra/constructs/sqs-construct', () => ({
   SqsConstruct: jest.fn().mockImplementation(() => ({
     sqsQueues: new Map<string, any>([
-      ['organization-management-queue', {}],
-      ['laboratory-management-queue', {}],
-      ['user-management-queue', {}],
-      ['laboratory-run-update-queue', {}],
-      ['laboratory-run-notification-queue', {}],
-      ['user-invite-queue', {}],
-      ['folder-download-queue', {}],
+      ['organization-management-queue', { queueUrl: 'https://sqs/org', queueArn: 'arn:aws:sqs:org' }],
+      ['laboratory-management-queue', { queueUrl: 'https://sqs/lab', queueArn: 'arn:aws:sqs:lab' }],
+      ['user-management-queue', { queueUrl: 'https://sqs/user', queueArn: 'arn:aws:sqs:user' }],
+      ['laboratory-run-update-queue', { queueUrl: 'https://sqs/run', queueArn: 'arn:aws:sqs:run' }],
+      ['laboratory-run-notification-queue', { queueUrl: 'https://sqs/run-notify', queueArn: 'arn:aws:sqs:run-notify' }],
+      ['user-invite-queue', { queueUrl: 'https://sqs/invite', queueArn: 'arn:aws:sqs:invite' }],
+      [
+        'laboratory-run-failure-classification-queue',
+        { queueUrl: 'https://sqs/classify', queueArn: 'arn:aws:sqs:classify' },
+      ],
+      ['folder-download-queue', { queueUrl: 'https://sqs/folder', queueArn: 'arn:aws:sqs:folder' }],
     ]),
   })),
 }));
@@ -151,7 +148,7 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
     expect(notificationQueueConfig.deadLetterQueue.maxReceiveCount).toBe(3);
   });
 
-  it('wires the new notification topic ARN into the existing process-update-laboratory-run lambda', () => {
+  it('wires the new notification queue URL into the existing process-update-laboratory-run lambda', () => {
     const app = new App();
     const parentStack = new Stack(app, 'parent-stack');
     new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
@@ -161,7 +158,7 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
     const triggerConfig =
       lambdaProps.lambdaFunctionsResources['/easy-genomics/laboratory/run/process-update-laboratory-run'];
 
-    expect(triggerConfig.environment.SNS_LABORATORY_RUN_NOTIFICATION_TOPIC).toBe('arn:aws:sns:run-notify');
+    expect(triggerConfig.environment.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL).toBe('https://sqs/run-notify');
   });
 
   it('adds IAM policy statements for top-level bucket objects endpoint', () => {
@@ -321,7 +318,101 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
     );
   });
 
-  it('adds sns:Publish IAM policy for process-poll-active-runs to re-enqueue status checks', () => {
+  it('appends laboratory-s3-access IAM without replacing update-laboratory base policies', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+    const updateLaboratoryPolicies = iamInstance.policyStatements.get('/easy-genomics/laboratory/update-laboratory');
+
+    expect(updateLaboratoryPolicies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:Query', 'dynamodb:PutItem']),
+        }),
+        expect.objectContaining({
+          actions: expect.arrayContaining(['ssm:GetParameter', 'ssm:PutParameter']),
+        }),
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:PutItem', 'dynamodb:DeleteItem', 'dynamodb:Query']),
+        }),
+        expect.objectContaining({
+          actions: expect.arrayContaining(['s3:ListAllMyBuckets', 's3:GetBucketTagging']),
+        }),
+      ]),
+    );
+  });
+
+  it('grants create-laboratory PutItem on laboratory-s3-access-table', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/laboratory/create-laboratory',
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:PutItem']),
+          resources: expect.arrayContaining([expect.stringContaining('laboratory-s3-access-table')]),
+        }),
+      ]),
+    );
+  });
+
+  it('grants edit-s3-access-batch PutItem on laboratory-table to clear default buckets', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+    const policies = iamInstance.policyStatements.get('/easy-genomics/organization/s3-access/edit-s3-access-batch');
+
+    expect(policies).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['dynamodb:Query', 'dynamodb:PutItem']),
+          resources: expect.arrayContaining([expect.stringContaining('laboratory-table')]),
+        }),
+      ]),
+    );
+  });
+
+  it('appends GetBucketTagging and s3-access Query to enforcement routes', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    for (const route of [
+      '/easy-genomics/file/request-list-bucket-objects',
+      '/easy-genomics/file/request-file-download-url',
+      '/easy-genomics/data-collections/edit-batch',
+      '/easy-genomics/upload/create-file-upload-request',
+    ]) {
+      const policies = iamInstance.policyStatements.get(route);
+      expect(policies).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            actions: expect.arrayContaining(['dynamodb:Query']),
+            resources: expect.arrayContaining([expect.stringContaining('laboratory-s3-access-table')]),
+          }),
+          expect.objectContaining({
+            actions: expect.arrayContaining(['s3:GetBucketTagging']),
+          }),
+        ]),
+      );
+    }
+  });
+
+  it('adds sqs:SendMessage IAM policy for process-poll-active-runs to re-enqueue status checks', () => {
     const app = new App();
     const parentStack = new Stack(app, 'parent-stack');
     new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
@@ -333,7 +424,7 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
       '/easy-genomics/laboratory/run/process-poll-active-runs',
       expect.arrayContaining([
         expect.objectContaining({
-          actions: expect.arrayContaining(['sns:Publish']),
+          actions: expect.arrayContaining(['sqs:SendMessage']),
         }),
       ]),
     );
@@ -349,7 +440,7 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
     const pollerConfig = lambdaProps.lambdaFunctionsResources['/easy-genomics/laboratory/run/process-poll-active-runs'];
 
     expect(pollerConfig).toBeDefined();
-    expect(pollerConfig.environment.SNS_LABORATORY_RUN_UPDATE_TOPIC).toBe('arn:aws:sns:run');
+    expect(pollerConfig.environment.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL).toBe('https://sqs/run');
     expect(pollerConfig.callbacks).toHaveLength(1);
   });
 

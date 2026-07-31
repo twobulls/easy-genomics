@@ -4,6 +4,7 @@ import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy
 import { APIGatewayProxyResult, Handler, SQSRecord } from 'aws-lambda';
 import { SQSEvent } from 'aws-lambda/trigger/sqs';
 import { NotificationService } from '@BE/services/easy-genomics/notification-service';
+import { parseSqsJsonBody } from '@BE/utils/sqs-json-body';
 
 const notificationService = new NotificationService();
 
@@ -17,8 +18,7 @@ export const handler: Handler = async (event: SQSEvent): Promise<APIGatewayProxy
   try {
     const sqsRecords: SQSRecord[] = event.Records;
     for (const sqsRecord of sqsRecords) {
-      const body = JSON.parse(sqsRecord.body);
-      const snsEvent: SnsProcessingEvent = <SnsProcessingEvent>JSON.parse(body.Message);
+      const snsEvent: SnsProcessingEvent = parseSqsJsonBody<SnsProcessingEvent>(sqsRecord.body);
 
       if (snsEvent.Type !== 'LaboratoryRun') {
         console.error(`Unsupported SNS Processing Event Type: ${snsEvent.Type}`);

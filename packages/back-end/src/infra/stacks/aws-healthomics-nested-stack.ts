@@ -219,6 +219,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
           appliesTo: [
             `Resource::arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`,
             `Resource::arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
+            `Resource::arn:aws:omics:${this.props.env.region!}::workflow/*`,
           ],
         },
       ],
@@ -330,10 +331,10 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
           },
         },
       }),
-      // Allow GetRun, ListRuns, and CancelRun only for Runs tagged with the same LaboratoryId and OrganizationId as the principal
+      // Allow GetRun, ListRuns, ListRunTasks, and CancelRun only for Runs tagged with the same LaboratoryId and OrganizationId as the principal
       new PolicyStatement({
         resources: ['*'],
-        actions: ['omics:GetRun', 'omics:ListRuns', 'omics:CancelRun'],
+        actions: ['omics:GetRun', 'omics:ListRuns', 'omics:ListRunTasks', 'omics:CancelRun'],
         effect: Effect.ALLOW,
         conditions: {
           StringEquals: {
@@ -358,6 +359,13 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       new PolicyStatement({
         resources: [`${this.workflowDefinitionsBucketArn}/*`],
         actions: ['s3:GetObject'],
+        effect: Effect.ALLOW,
+      }),
+      // Allow provisioning and reading run caches (call caching / resume support). Run caches are
+      // provisioned per-laboratory and reused across runs so failed runs can be resumed on retry.
+      new PolicyStatement({
+        resources: ['*'],
+        actions: ['omics:CreateRunCache', 'omics:GetRunCache', 'omics:ListRunCaches'],
         effect: Effect.ALLOW,
       }),
       // Allow passing the workflow run role to HealthOmics when starting a run
@@ -576,8 +584,17 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       }),
       workflowAccessQuery(),
       new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
+        resources: [
+          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
+          // Cross-account shared workflows use an empty account id in the ARN
+          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
+        ],
         actions: ['omics:GetWorkflow'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
+        actions: ['omics:ListShares'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -593,8 +610,16 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       }),
       workflowAccessQuery(),
       new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
+        resources: [
+          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
+          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
+        ],
         actions: ['omics:ListWorkflowVersions'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
+        actions: ['omics:ListShares'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -639,68 +664,18 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
         effect: Effect.ALLOW,
       }),
-      // Permissions below are used by the GitHub fallback path only
-      new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
-        actions: ['omics:GetWorkflow'],
-        effect: Effect.ALLOW,
-      }),
-      new PolicyStatement({
-        resources: [this.githubPatSecretArn],
-        actions: ['secretsmanager:GetSecretValue'],
-        effect: Effect.ALLOW,
-      }),
-    ]);
-
-    // /aws-healthomics/workflow/process-fetch-workflow-schema (EventBridge triggered)
-    this.iam.addPolicyStatements('/aws-healthomics/workflow/process-fetch-workflow-schema', [
-      new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
-        actions: ['omics:GetWorkflow'],
-        effect: Effect.ALLOW,
-      }),
+      // Permissions below are used by the GitHub fallback path only (incl. SHARED)
       new PolicyStatement({
         resources: [
-          `arn:aws:ssm:${this.props.env.region!}:${this.props.env.account!}:parameter/easy-genomics/organization/*/laboratory/*/github-access-token`,
+          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
+          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
         ],
-        actions: ['ssm:GetParameter'],
-        effect: Effect.ALLOW,
-      }),
-      new PolicyStatement({
-        resources: [this.githubPatSecretArn],
-        actions: ['secretsmanager:GetSecretValue'],
-        effect: Effect.ALLOW,
-      }),
-      new PolicyStatement({
-        resources: [this.workflowSchemaTableArn],
-        actions: ['dynamodb:PutItem'],
-        effect: Effect.ALLOW,
-      }),
-    ]);
-
-    // /aws-healthomics/workflow/read-workflow-schema (API Gateway GET)
-    this.iam.addPolicyStatements('/aws-healthomics/workflow/read-workflow-schema', [
-      new PolicyStatement({
-        resources: [
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
-          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
-        ],
-        actions: ['dynamodb:Query'],
-      }),
-      new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
-        actions: ['omics:ListWorkflowVersions'],
-        effect: Effect.ALLOW,
-      }),
-      new PolicyStatement({
-        resources: [this.workflowSchemaTableArn],
-        actions: ['dynamodb:GetItem'],
-        effect: Effect.ALLOW,
-      }),
-      // Permissions below are used by the GitHub fallback path only
-      new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`],
         actions: ['omics:GetWorkflow'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
+        actions: ['omics:ListShares'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -758,6 +733,28 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+    // /aws-healthomics/run/read-run-tasks
+    this.iam.addPolicyStatements('/aws-healthomics/run/read-run-tasks', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
+        actions: ['omics:ListRunTasks'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:iam::${this.props.env.account!}:role/${this.props.namePrefix}-easy-genomics-omics-access-role`,
+        ],
+        actions: ['sts:AssumeRole', 'sts:TagSession'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /aws-healthomics/run/cancel-run-execution
     this.iam.addPolicyStatements('/aws-healthomics/run/cancel-run-execution', [
       new PolicyStatement({
@@ -795,7 +792,8 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
         ],
-        actions: ['dynamodb:Query'],
+        // PutItem: persist the lazily-provisioned HealthOmics run cache id on the Laboratory.
+        actions: ['dynamodb:Query', 'dynamodb:PutItem'],
       }),
       new PolicyStatement({
         resources: [
@@ -809,8 +807,15 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         resources: [
           `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`,
           `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
+          // Cross-account shared workflows (StartRun with workflowOwnerId)
+          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
         ],
         actions: ['omics:StartRun', 'omics:TagResource'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
+        actions: ['omics:ListShares'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({

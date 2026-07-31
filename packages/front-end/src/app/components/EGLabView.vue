@@ -11,9 +11,10 @@
   import useUser from '@FE/composables/useUser';
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
+  import { getRunListStatusPollIntervalMs } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
   import { v4 as uuidv4 } from 'uuid';
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-  import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
+  import type { LabOmicsWorkflow } from '@FE/stores/omicsWorkflows';
   import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
   import EGDataCollectionsPage from '@FE/components/EGDataCollectionsPage.vue';
   import type { DataCollectionsTab } from '@FE/components/EGDataCollectionsTabBar.vue';
@@ -42,7 +43,7 @@
 
   const labUsers = ref<LabUser[]>([]);
   const seqeraPipelines = computed<SeqeraPipeline[]>(() => seqeraPipelinesStore.pipelinesForLab(props.labId));
-  const omicsWorkflows = computed<OmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
+  const omicsWorkflows = computed<LabOmicsWorkflow[]>(() => omicsWorkflowsStore.workflowsForLab(props.labId));
   const canAddUsers = computed<boolean>(() => userStore.canAddLabUsers(props.labId));
   const canCreateOmicsWorkflows = computed<boolean>(() => userStore.canEditLabUsers(props.labId));
   const showAddUserModule = ref(false);
@@ -62,19 +63,23 @@
   const lab = computed<Laboratory | null>(() => labStore.labs[props.labId] ?? null);
   const orgId = computed<string | null>(() => lab.value?.OrganizationId ?? null);
   const labName = computed<string>(() => lab.value?.Name || '');
+  const runListStatusPollIntervalMs = computed<number>(() =>
+    getRunListStatusPollIntervalMs(lab.value?.RunListStatusPollIntervalSeconds),
+  );
 
   const usersHeadingId = 'lab-users-heading';
 
   /** Prevents duplicate redirects when multiple watchers or lifecycle hooks fire. */
   const hasRedirectedForOrgMismatch = ref(false);
 
-  async function redirectIfLabOrgMismatch(): Promise<boolean> {
+  async function redirectIfLabOrgMismatch(forceReload = false): Promise<boolean> {
     if (hasRedirectedForOrgMismatch.value) {
       return true;
     }
     const redirected = await ensureLabInActiveOrg({
       labId: props.labId,
       superuser: props.superuser,
+      forceReload,
     });
     if (redirected) {
       hasRedirectedForOrgMismatch.value = true;
@@ -110,6 +115,7 @@
     if (intervalId) {
       clearTimeout(intervalId);
     }
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, runListStatusPollIntervalMs.value);
 
     await updateDefaultLab(props.labId);
 
@@ -336,6 +342,7 @@
           const lastUpdated = labRun.ModifiedAt ?? labRun.CreatedAt ?? '';
           const searchIndex = [
             labRun.RunName,
+            labRun.Description,
             (labRun as any).WorkflowName,
             labRun.Status,
             labRun.Owner,
@@ -471,6 +478,7 @@
 
   const omicsWorkflowsTableColumns = [
     { key: 'Name', label: 'Name' },
+    { key: 'source', label: 'Source' },
     { key: 'description', label: 'Description' },
     { key: 'actions', label: 'Actions' },
   ];
@@ -479,7 +487,7 @@
     [{ label: 'Run', click: () => viewRunOmicsWorkflow(workflow) }],
   ];
 
-  function viewRunOmicsWorkflow(workflow: OmicsWorkflow) {
+  function viewRunOmicsWorkflow(workflow: LabOmicsWorkflow) {
     $router.push({
       path: `/labs/${props.labId}/run-workflow/${workflow.id}`,
       query: {
@@ -603,7 +611,7 @@
   async function pollFetchLaboratoryRuns() {
     runsTableRefreshKey.value++;
     await requestLabRunStatusCheck();
-    intervalId = window.setTimeout(pollFetchLaboratoryRuns, 2 * 60 * 1000);
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, runListStatusPollIntervalMs.value);
   }
 
   async function requestLabRunStatusCheck() {
@@ -620,6 +628,12 @@
       console.error('Failed to request lab run status check', error);
     }
   }
+
+  watch(runListStatusPollIntervalMs, (next, prev) => {
+    if (next === prev || intervalId == null) return;
+    clearTimeout(intervalId);
+    intervalId = window.setTimeout(pollFetchLaboratoryRuns, next);
+  });
 
   async function getSeqeraPipelines(): Promise<void> {
     useUiStore().setRequestPending('getSeqeraPipelines');
@@ -738,11 +752,13 @@
 
   watch(
     () => userStore.currentOrgId,
-    async () => {
-      if (props.superuser || uiStore.isRequestPending('loadLabData')) {
+    async (orgId) => {
+      // Skip when org is cleared (logout) or a lab load is already in flight.
+      if (!orgId || props.superuser || uiStore.isRequestPending('loadLabData') || uiStore.isLoggingOut) {
         return;
       }
-      await redirectIfLabOrgMismatch();
+      // Force reload on org switch so we don't trust a stale persisted lab org id.
+      await redirectIfLabOrgMismatch(true);
     },
   );
 
@@ -759,6 +775,20 @@
     if (lastProcessedLabRef.value === newLab) {
       return;
     }
+
+    // Org check without reloading: ensureLabInActiveOrg(load) would assign a new lab object and re-trigger this watch.
+    if (
+      !props.superuser &&
+      !hasRedirectedForOrgMismatch.value &&
+      userStore.currentOrgId &&
+      newLab.OrganizationId &&
+      userStore.currentOrgId !== newLab.OrganizationId
+    ) {
+      hasRedirectedForOrgMismatch.value = true;
+      await navigateTo('/labs');
+      return;
+    }
+
     lastProcessedLabRef.value = newLab;
 
     const promises = [getLabUsers()];
@@ -920,6 +950,7 @@
       <template #RunName-data="{ row: run }">
         <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
         <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
+        <div v-if="run.Description" class="text-muted line-clamp-1 text-xs font-normal">{{ run.Description }}</div>
       </template>
 
       <template #CreatedAt-data="{ row: run }">
@@ -928,8 +959,21 @@
       </template>
 
       <template #lastUpdated-data="{ row: run }">
-        <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
-        <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
+        <EGProgressBar
+          v-if="
+            !['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED'].includes(run.Status) &&
+            (run.ProgressPercent != null || (run.TasksCompleted != null && run.TasksTotal != null))
+          "
+          variant="inline"
+          :percent="run.ProgressPercent"
+          :completed="run.TasksCompleted"
+          :total="run.TasksTotal"
+          :process-name="run.CurrentProcessName"
+        />
+        <template v-else>
+          <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
+          <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
+        </template>
       </template>
 
       <template #Status-data="{ row: run }">
@@ -1031,6 +1075,18 @@
         <div class="flex items-center">
           {{ workflow?.name }}
         </div>
+      </template>
+
+      <template #source-data="{ row: workflow }">
+        <UBadge
+          size="sm"
+          class="rounded-xl border-0 font-serif ring-0"
+          :class="
+            workflow?.source === 'SHARED' ? 'bg-alert-blue-muted text-alert-blue' : 'bg-primary-muted text-primary-dark'
+          "
+        >
+          {{ workflow?.source === 'SHARED' ? 'Shared' : 'Private' }}
+        </UBadge>
       </template>
 
       <template #description-data="{ row: workflow }">

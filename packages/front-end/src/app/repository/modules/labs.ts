@@ -1,6 +1,10 @@
 import { CreateLaboratory, UpdateLaboratory } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory';
 import { LaboratoryRunSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import {
+  EstimateRunCostRequest,
+  EstimateRunCostResponse,
+} from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run-cost';
+import {
   RemoveLaboratoryUserSchema,
   UpdateLaboratoryUserNotificationPreference,
   UpdateLaboratoryUserNotificationPreferenceSchema,
@@ -326,6 +330,21 @@ class LabsModule extends HttpFactory {
     }
 
     validateApiResponse(LaboratoryRunSchema, res);
+    return res;
+  }
+
+  /**
+   * Pre-run historical compute cost estimate (no Cost Explorer calls).
+   */
+  async estimateRunCost(laboratoryId: string, body: EstimateRunCostRequest): Promise<EstimateRunCostResponse> {
+    const res = await this.call<any>(
+      'POST',
+      `/laboratory/run/request-estimate-run-cost?laboratoryId=${laboratoryId}`,
+      body,
+    );
+    if (!res) {
+      throw new Error('Failed to estimate run cost');
+    }
     return res;
   }
 

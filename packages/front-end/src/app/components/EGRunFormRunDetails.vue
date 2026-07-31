@@ -72,14 +72,17 @@
   const formStateSchema = computed(() =>
     z.object({
       runName: getRunNameSchema(),
+      description: z.string().max(500, 'Run description must be 500 characters or less').optional(),
     }),
   );
   type FormState = {
     runName: string;
+    description: string;
   };
 
   const formState = reactive<FormState>({
     runName: '',
+    description: '',
   });
 
   const selectedWorkflowVersion = ref<string>(OMICS_VERSION_DEFAULT);
@@ -99,8 +102,11 @@
   const canProceed = ref(false);
 
   const runNameCharCount = computed(() => formState.runName.length);
+  const descriptionCharCount = computed(() => formState.description.length);
 
   const pipelineOrWorkflow = computed<string>(() => platformToPipelineOrWorkflow(props.platform));
+
+  const pipelineOrWorkflowDescriptionLabel = computed<string>(() => `${pipelineOrWorkflow.value} description`);
 
   const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
 
@@ -126,6 +132,9 @@
     (val) => {
       if (val.runName != null && val.runName !== formState.runName) {
         formState.runName = val.runName;
+      }
+      if ((val.description ?? '') !== formState.description) {
+        formState.description = val.description ?? '';
       }
       selectedWorkflowVersion.value = workflowVersionToSelectValue(val.workflowVersionName);
       validate(formState);
@@ -160,6 +169,12 @@
     const errors: FormError[] = [];
 
     maybeAddFieldValidationErrors(errors, getRunNameSchema(), 'runName', currentState.runName);
+    maybeAddFieldValidationErrors(
+      errors,
+      z.string().max(500, 'Run description must be 500 characters or less'),
+      'description',
+      currentState.description,
+    );
 
     canProceed.value = errors.length === 0;
 
@@ -193,6 +208,13 @@
     formState.runName = nextRunName;
     wipRunUpdateFunction.value(props.wipRunTempId, { runName: nextRunName });
   }
+
+  watch(
+    () => formState.description,
+    (nextDescription) => {
+      wipRunUpdateFunction.value(props.wipRunTempId, { description: nextDescription });
+    },
+  );
 
   function onSubmit() {
     emit('next-step');
@@ -248,7 +270,12 @@
         <EGCharacterCounter :value="runNameCharCount" :max="maxRunNameLength" />
       </EGFormGroup>
 
-      <EGFormGroup label="Description" name="pipelineDescription">
+      <EGFormGroup label="Run description" name="description" hint="Optional. Visible on the run list and run details.">
+        <EGTextArea v-model="formState.description" placeholder="Add an optional description for this run" />
+        <EGCharacterCounter :value="descriptionCharCount" :max="500" />
+      </EGFormGroup>
+
+      <EGFormGroup :label="pipelineOrWorkflowDescriptionLabel" name="pipelineDescription">
         <EGTextArea :model-value="props.pipelineOrWorkflowDescription" :disabled="true" />
       </EGFormGroup>
     </EGCard>

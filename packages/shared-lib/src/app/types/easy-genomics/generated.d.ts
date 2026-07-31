@@ -22,6 +22,10 @@ export interface paths {
     /** List Runs */
     get: operations["listRuns"];
   };
+  "/aws-healthomics/run/read-run-tasks/{id}": {
+    /** Read Run Tasks */
+    get: operations["readRunTasks"];
+  };
   "/aws-healthomics/run/read-run/{id}": {
     /** Read Run */
     get: operations["readRun"];
@@ -230,6 +234,10 @@ export interface paths {
     /** Request Apply Run Retention Policy */
     post: operations["requestApplyRunRetentionPolicy"];
   };
+  "/easy-genomics/laboratory/run/request-estimate-run-cost": {
+    /** Request Estimate Run Cost */
+    post: operations["requestEstimateRunCost"];
+  };
   "/easy-genomics/laboratory/run/request-laboratory-run-status-check": {
     /** Request Laboratory Run Status Check */
     post: operations["requestLaboratoryRunStatusCheck"];
@@ -237,6 +245,10 @@ export interface paths {
   "/easy-genomics/laboratory/run/update-laboratory-run/{id}": {
     /** Update Laboratory Run */
     put: operations["updateLaboratoryRun"];
+  };
+  "/easy-genomics/laboratory/s3-access/list-granted-buckets": {
+    /** List Granted Buckets */
+    get: operations["listGrantedBuckets"];
   };
   "/easy-genomics/laboratory/update-laboratory/{id}": {
     /** Update Laboratory */
@@ -305,6 +317,18 @@ export interface paths {
   "/easy-genomics/organization/request-organization-branding-test-email": {
     /** Request Organization Branding Test Email */
     post: operations["requestOrganizationBrandingTestEmail"];
+  };
+  "/easy-genomics/organization/s3-access/edit-s3-access-batch": {
+    /** Edit S3 Access Batch */
+    post: operations["editS3AccessBatch"];
+  };
+  "/easy-genomics/organization/s3-access/list-s3-access-assignments": {
+    /** List S3 Access Assignments */
+    get: operations["listS3AccessAssignments"];
+  };
+  "/easy-genomics/organization/s3-access/list-s3-bucket-catalog": {
+    /** List S3 Bucket Catalog */
+    get: operations["listS3BucketCatalog"];
   };
   "/easy-genomics/organization/update-organization/{id}": {
     /** Update Organization */
@@ -394,6 +418,22 @@ export interface paths {
     /** Update User Request */
     put: operations["updateUserRequest"];
   };
+  "/easy-genomics/workflow-run-preset/create-workflow-run-preset": {
+    /** Create Workflow Run Preset */
+    post: operations["createWorkflowRunPreset"];
+  };
+  "/easy-genomics/workflow-run-preset/delete-workflow-run-preset/{id}": {
+    /** Delete Workflow Run Preset */
+    delete: operations["deleteWorkflowRunPreset"];
+  };
+  "/easy-genomics/workflow-run-preset/list-workflow-run-presets": {
+    /** List Workflow Run Presets */
+    get: operations["listWorkflowRunPresets"];
+  };
+  "/easy-genomics/workflow-run-preset/update-workflow-run-preset/{id}": {
+    /** Update Workflow Run Preset */
+    put: operations["updateWorkflowRunPreset"];
+  };
   "/nf-tower/compute-env/list-compute-envs": {
     /** List Compute Envs */
     get: operations["listComputeEnvs"];
@@ -480,6 +520,59 @@ export interface components {
       storageType?: "STATIC" | "DYNAMIC";
       workflowOwnerId?: string;
       workflowVersionName?: string;
+    };
+    /** @description <p>A workflow run task.</p> */
+    TaskListItem: {
+      /** @description <p>The task's ID.</p> */
+      taskId?: string;
+      /**
+       * @description <p>The task's status.</p>
+       * @enum {string}
+       */
+      status?: "CANCELLED" | "COMPLETED" | "FAILED" | "PENDING" | "RUNNING" | "STARTING" | "STOPPING";
+      /** @description <p>The task's name.</p> */
+      name?: string;
+      /** @description <p>The task's CPU count.</p> */
+      cpus?: number;
+      /** @description <p>Set to true if Amazon Web Services HealthOmics found a matching entry in the run cache for this task.</p> */
+      cacheHit?: boolean;
+      /** @description <p>The S3 URI of the cache location.</p> */
+      cacheS3Uri?: string;
+      /** @description <p>The task's memory use in gigabyes.</p> */
+      memory?: number;
+      /**
+       * Format: date-time
+       * @description <p>When the task was created.</p>
+       */
+      creationTime?: string;
+      /**
+       * Format: date-time
+       * @description <p>When the task started.</p>
+       */
+      startTime?: string;
+      /**
+       * Format: date-time
+       * @description <p>When the task stopped.</p>
+       */
+      stopTime?: string;
+      /** @description <p> The number of Graphics Processing Units (GPU) specified for the task. </p> */
+      gpus?: number;
+      /** @description <p> The instance type for a task.</p> */
+      instanceType?: string;
+      /** @description <p>The universally unique identifier (UUID) for the workflow task.</p> */
+      uuid?: string;
+    };
+    /** @description Response for GET /aws-healthomics/run/read-run-tasks/{id}. */
+    ReadRunTasks: {
+      /** @description Aggregated task progress derived from HealthOmics ListRunTasks. */
+      progress: {
+        tasksTotal: number;
+        tasksCompleted: number;
+        tasksRunning: number;
+        tasksFailed: number;
+        percent: number;
+      };
+      tasks: components["schemas"]["TaskListItem"][];
     };
     AddFilesToSampleRequest: {
       LaboratoryId: string;
@@ -799,6 +892,7 @@ export interface components {
     };
     RequestLaboratoryBucketObjectsRequest: {
       LaboratoryId: string;
+      S3Bucket?: string;
       RelativePrefix?: string;
       MaxTotalKeys?: number;
       MaxTransactionFolders?: number;
@@ -993,8 +1087,11 @@ export interface components {
       AwsHealthOmicsNetworkingMode?: "RESTRICTED" | "VPC";
       AwsHealthOmicsVpcConfigurationName?: string;
       RunRetentionMonths?: number;
+      RunListStatusPollIntervalSeconds?: number;
+      RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
       NotificationsEnabled?: boolean;
+      EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */
       HealthOmicsLlmProvider?: "bedrock" | "openai" | "anthropic";
       HealthOmicsLlmModelId?: string;
@@ -1043,10 +1140,19 @@ export interface components {
        */
       NotificationsEnabled?: boolean;
       /**
+       * @description When true, data buckets without a DENY row are allowed for this lab.
+       * When false/omitted, only explicit ALLOW rows grant bucket access.
+       */
+      EnableNewBucketsByDefault?: boolean;
+      /**
        * @description Laboratory-wide run retention policy, in months, applied after a run reaches a terminal state.
        * - 0 means "never delete run records" (no TTL expiration).
        */
       RunRetentionMonths?: number;
+      /** @description Polling interval, in seconds, for the lab runs list status refresh. */
+      RunListStatusPollIntervalSeconds?: number;
+      /** @description Polling interval, in seconds, for the run detail page progress refresh. */
+      RunDetailProgressPollIntervalSeconds?: number;
       /**
        * @description BYOK LLM provider selection per integration. Each lab can pick a different
        * provider/model/key for HealthOmics vs Seqera. Setting a provider IS the
@@ -1075,6 +1181,12 @@ export interface components {
       /** @description Boolean indicators returned by read-laboratory; the actual keys never leave SSM. */
       HasHealthOmicsLlmApiKey?: boolean;
       HasSeqeraLlmApiKey?: boolean;
+      /**
+       * @description AWS HealthOmics run cache id used for call caching ("resume"). Lazily provisioned on the
+       * first HealthOmics run and reused for all subsequent runs, so a failed run can be retried and
+       * resume from its last completed task instead of recomputing everything. Managed internally.
+       */
+      HealthOmicsRunCacheId?: string;
       CreatedAt?: string;
       CreatedBy?: string;
       ModifiedAt?: string;
@@ -1100,8 +1212,11 @@ export interface components {
       AwsHealthOmicsNetworkingMode?: "RESTRICTED" | "VPC";
       AwsHealthOmicsVpcConfigurationName?: string;
       RunRetentionMonths?: number;
+      RunListStatusPollIntervalSeconds?: number;
+      RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
       NotificationsEnabled?: boolean;
+      EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */
       HealthOmicsLlmProvider?: "anthropic" | "bedrock" | "openai";
       HealthOmicsLlmModelId?: string;
@@ -1114,6 +1229,7 @@ export interface components {
       /** @description Boolean indicators. The actual keys live in SSM and are never returned. */
       HasHealthOmicsLlmApiKey?: boolean;
       HasSeqeraLlmApiKey?: boolean;
+      HealthOmicsRunCacheId?: string;
     };
     RequestLaboratoryRequest: {
       /** Format: uuid */
@@ -1127,6 +1243,7 @@ export interface components {
       /** Format: uuid */
       RunId: string;
       RunName: string;
+      Description?: string;
       /** @enum {string} */
       Platform: "AWS HealthOmics" | "Seqera Cloud";
       PlatformApiBaseUrl?: string;
@@ -1153,6 +1270,8 @@ export interface components {
       RunId: string;
       RunName: string;
       Owner: string;
+      /** @description Optional user-authored note for this run; set at creation time. */
+      Description?: string;
       WorkflowName?: string;
       PlatformApiBaseUrl?: string;
       WorkflowVersionName?: string;
@@ -1244,6 +1363,59 @@ export interface components {
        * published for this run. Prevents a duplicate status-check message from double-emailing.
        */
       NotifiedAt?: string;
+      /**
+       * @description Approximate task completion percentage derived from HealthOmics ListRunTasks
+       * (or Seqera progress when populated). Denominator grows as the workflow DAG
+       * expands, so prefer showing TasksCompleted/TasksTotal alongside this value.
+       */
+      ProgressPercent?: number;
+      /** @description Total known tasks at last status check (denominator for ProgressPercent). */
+      TasksTotal?: number;
+      /** @description Tasks in COMPLETED status at last status check. */
+      TasksCompleted?: number;
+      /** @description Tasks in RUNNING/STARTING status at last status check. */
+      TasksRunning?: number;
+      /** @description Tasks in FAILED status at last status check. */
+      TasksFailed?: number;
+      /**
+       * @description Name of the first currently RUNNING (or STARTING) task/process at last status check.
+       * Cleared when the run is terminal or no tasks are actively running.
+       */
+      CurrentProcessName?: string;
+      /** @description Pre-run input features for historical cost similarity matching. */
+      RunInputProfile?: {
+        SampleCount: number;
+        InputFileCount: number;
+        InputBytesTotal: number;
+        ParameterHash: string;
+        InputBytesByExtension?: Record<string, never>;
+      };
+      /** @description Snapshot of the pre-run estimate band shown at Review & Launch. */
+      PreRunCostEstimate?: {
+        LowUsd: number;
+        HighUsd: number;
+        MedianUsd: number;
+        /** @enum {string} */
+        Confidence: "HIGH" | "LOW" | "MEDIUM" | "NONE";
+        ComparableRunCount: number;
+        EstimatedAt: string;
+        Exclusions: string[];
+      };
+      /** @description Platform compute/storage estimate captured at terminal state. */
+      RunCostOutcome?: {
+        /** @enum {string} */
+        CostSource: "HEALTHOMICS_TASKS" | "SEQERA_PROGRESS";
+        CostCapturedAt: string;
+        ActualComputeCostUsd?: number;
+        ActualStorageCostUsd?: number;
+      };
+      /** @description AWS Cost Explorer billed cost synced ~24–48h after completion. */
+      BilledCost?: {
+        TotalUsd: number;
+        AsOfDate: string;
+        SyncedAt: string;
+        ByService?: Record<string, never>;
+      };
     };
     ReadLaboratoryRun: {
       OrganizationId: string;
@@ -1255,6 +1427,8 @@ export interface components {
       RunId: string;
       RunName: string;
       Owner: string;
+      /** @description Optional user-authored note for this run; set at creation time. */
+      Description?: string;
       WorkflowName?: string;
       PlatformApiBaseUrl?: string;
       WorkflowVersionName?: string;
@@ -1281,6 +1455,75 @@ export interface components {
       FailureAction?: string;
       /** @enum {string} */
       FailureClassifiedBy?: "llm" | "lookup";
+      ProgressPercent?: number;
+      TasksTotal?: number;
+      TasksCompleted?: number;
+      TasksRunning?: number;
+      TasksFailed?: number;
+      CurrentProcessName?: string;
+      /** @description Pre-run input features for historical cost similarity matching. */
+      RunInputProfile?: {
+        SampleCount: number;
+        InputFileCount: number;
+        InputBytesTotal: number;
+        ParameterHash: string;
+        InputBytesByExtension?: Record<string, never>;
+      };
+      /** @description Snapshot of the pre-run estimate band shown at Review & Launch. */
+      PreRunCostEstimate?: {
+        LowUsd: number;
+        HighUsd: number;
+        MedianUsd: number;
+        /** @enum {string} */
+        Confidence: "HIGH" | "LOW" | "MEDIUM" | "NONE";
+        ComparableRunCount: number;
+        EstimatedAt: string;
+        Exclusions: string[];
+      };
+      /** @description Platform compute/storage estimate captured at terminal state. */
+      RunCostOutcome?: {
+        /** @enum {string} */
+        CostSource: "HEALTHOMICS_TASKS" | "SEQERA_PROGRESS";
+        CostCapturedAt: string;
+        ActualComputeCostUsd?: number;
+        ActualStorageCostUsd?: number;
+      };
+      /** @description AWS Cost Explorer billed cost synced ~24–48h after completion. */
+      BilledCost?: {
+        TotalUsd: number;
+        AsOfDate: string;
+        SyncedAt: string;
+        ByService?: Record<string, never>;
+      };
+    };
+    RequestEstimateRunCostRequest: {
+      /** @enum {string} */
+      platform: "AWS HealthOmics" | "Seqera Cloud";
+      workflowExternalId: string;
+      workflowVersionName?: string;
+      inputFileKeys?: string[];
+      sampleSheetS3Url?: string;
+      settings?: string | {
+        [key: string]: unknown;
+      };
+      sampleCount?: number;
+      inputBytesTotal?: number;
+    };
+    EstimateRunCostResponse: {
+      /** @constant */
+      currency: "USD";
+      label: string;
+      estimateAvailable: boolean;
+      /** @enum {string} */
+      confidence: "HIGH" | "LOW" | "MEDIUM" | "NONE";
+      comparableRunCount: number;
+      disclaimer: string;
+      exclusions: string[];
+      computeCostUsd?: {
+        high: number;
+        low: number;
+        median: number;
+      };
     };
     UpdateLaboratoryRunRequest: {
       Status: string;
@@ -1290,6 +1533,9 @@ export interface components {
       Settings?: string | {
         [key: string]: unknown;
       };
+    };
+    ListGrantedLaboratoryBucketsResponse: {
+      buckets: string[];
     };
     UpdateLaboratoryRequest: {
       Name: string;
@@ -1307,8 +1553,11 @@ export interface components {
       AwsHealthOmicsNetworkingMode?: "RESTRICTED" | "VPC";
       AwsHealthOmicsVpcConfigurationName?: string;
       RunRetentionMonths?: number;
+      RunListStatusPollIntervalSeconds?: number;
+      RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
       NotificationsEnabled?: boolean;
+      EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */
       HealthOmicsLlmProvider?: "bedrock" | "openai" | "anthropic";
       HealthOmicsLlmModelId?: string;
@@ -1425,6 +1674,35 @@ export interface components {
       /** Format: uri */
       EmailBrandingLogoUrl?: string;
     };
+    EditS3AccessBatchRequest: {
+      assignments: {
+          laboratoryId: string;
+          bucketName: string;
+          granted: boolean;
+        }[];
+    };
+    LaboratoryS3Access: {
+      LaboratoryId: string;
+      BucketName: string;
+      OrganizationId: string;
+      /**
+       * @description ALLOW or DENY; omitted/undefined on legacy rows means ALLOW.
+       * @enum {string}
+       */
+      Effect?: "ALLOW" | "DENY";
+      CreatedAt?: string;
+      ModifiedAt?: string;
+    };
+    ListLaboratoryS3AccessAssignmentsResponse: {
+      assignments: components["schemas"]["LaboratoryS3Access"][];
+    };
+    /** @description API / UI catalog row (data-tagged S3 buckets). */
+    S3BucketCatalogEntry: {
+      name: string;
+    };
+    ListS3BucketCatalogResponse: {
+      buckets: components["schemas"]["S3BucketCatalogEntry"][];
+    };
     UpdateOrganizationRequest: {
       Name: string;
       Description?: string;
@@ -1524,6 +1802,13 @@ export interface components {
       platform: "HealthOmics" | "Seqera";
       workflowId: string;
       name: string;
+      /**
+       * @description Present for HealthOmics entries only.
+       * @enum {string}
+       */
+      source?: "PRIVATE" | "SHARED";
+      /** @description AWS account that owns a SHARED HealthOmics workflow (from ShareDetails). */
+      ownerAccountId?: string;
     };
     ListUnifiedWorkflowCatalogResponse: {
       workflows: components["schemas"]["UnifiedWorkflowCatalogEntry"][];
@@ -1646,6 +1931,57 @@ export interface components {
       NotifyOnOwnRuns?: boolean;
       /** @enum {string} */
       NotificationEventFilter?: "all_terminal" | "failures_only" | "successes_only";
+    };
+    CreateWorkflowRunPresetRequest: {
+      /** Format: uuid */
+      LaboratoryId: string;
+      WorkflowId: string;
+      /** @enum {string} */
+      Scope: "USER" | "LAB";
+      Name: string;
+      Params: {
+        [key: string]: string | number | boolean;
+      };
+    };
+    /** @enum {string} */
+    WorkflowRunPresetScope: "LAB" | "USER";
+    /**
+     * @description Run parameter values as rendered by the workflow parameter form. Nested objects
+     * and arrays are intentionally unsupported — the HealthOmics parameter template is
+     * a flat map of scalars.
+     */
+    WorkflowRunPresetParams: Record<string, never>;
+    WorkflowRunPreset: {
+      LaboratoryId: string;
+      PresetKey: string;
+      PresetId: string;
+      Scope: components["schemas"]["WorkflowRunPresetScope"];
+      WorkflowId: string;
+      Name: string;
+      Params: components["schemas"]["WorkflowRunPresetParams"];
+      /** @description Email of the creating user, denormalised so shared lab presets can show authorship without a user lookup. */
+      CreatedByEmail?: string;
+      CreatedAt?: string;
+      CreatedBy?: string;
+      ModifiedAt?: string;
+      ModifiedBy?: string;
+    };
+    ListWorkflowRunPresetsResponse: {
+      /** @description Presets owned by the calling user for this laboratory + workflow. */
+      UserPresets: components["schemas"]["WorkflowRunPreset"][];
+      /** @description Presets shared with the whole laboratory for this workflow. */
+      LabPresets: components["schemas"]["WorkflowRunPreset"][];
+    };
+    UpdateWorkflowRunPresetRequest: {
+      /** Format: uuid */
+      LaboratoryId: string;
+      WorkflowId: string;
+      /** @enum {string} */
+      Scope: "USER" | "LAB";
+      Name?: string;
+      Params?: {
+        [key: string]: string | number | boolean;
+      };
     };
     ListComputeEnvsResponse: {
       computeEnvs?: ({
@@ -3461,6 +3797,31 @@ export interface operations {
       500: components["responses"]["InternalError"];
     };
   };
+  /** Read Run Tasks */
+  readRunTasks: {
+    parameters: {
+      query?: {
+        /** @description Laboratory to verify HealthOmics access */
+        laboratoryId?: string;
+      };
+      path: {
+        id: string;
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ReadRunTasks"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
   /** Read Run */
   readRun: {
     parameters: {
@@ -3564,10 +3925,6 @@ export interface operations {
       query?: {
         /** @description Laboratory to verify HealthOmics access */
         laboratoryId?: string;
-        /** @description Pagination page size */
-        maxResults?: string;
-        /** @description Pagination offset token */
-        startingToken?: string;
         /** @description Filter by workflow name */
         name?: string;
       };
@@ -4620,6 +4977,33 @@ export interface operations {
       500: components["responses"]["InternalError"];
     };
   };
+  /** Request Estimate Run Cost */
+  requestEstimateRunCost: {
+    parameters: {
+      query: {
+        /** @description Laboratory UUID */
+        laboratoryId: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RequestEstimateRunCostRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["EstimateRunCostResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
   /** Request Laboratory Run Status Check */
   requestLaboratoryRunStatusCheck: {
     responses: {
@@ -4653,6 +5037,28 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["LaboratoryRun"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** List Granted Buckets */
+  listGrantedBuckets: {
+    parameters: {
+      query?: {
+        /** @description Laboratory ID */
+        laboratoryId?: string;
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ListGrantedLaboratoryBucketsResponse"];
         };
       };
       400: components["responses"]["BadRequest"];
@@ -5011,6 +5417,71 @@ export interface operations {
       200: {
         content: {
           "application/json": unknown;
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Edit S3 Access Batch */
+  editS3AccessBatch: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EditS3AccessBatchRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** List S3 Access Assignments */
+  listS3AccessAssignments: {
+    parameters: {
+      query?: {
+        /** @description Filter by organization */
+        organizationId?: string;
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ListLaboratoryS3AccessAssignmentsResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** List S3 Bucket Catalog */
+  listS3BucketCatalog: {
+    parameters: {
+      query?: {
+        /** @description Filter by organization */
+        organizationId?: string;
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ListS3BucketCatalogResponse"];
         };
       };
       400: components["responses"]["BadRequest"];
@@ -5484,6 +5955,106 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["User"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Create Workflow Run Preset */
+  createWorkflowRunPreset: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateWorkflowRunPresetRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["WorkflowRunPreset"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Delete Workflow Run Preset */
+  deleteWorkflowRunPreset: {
+    parameters: {
+      query: {
+        /** @description Laboratory owning the preset */
+        laboratoryId: string;
+        /** @description Workflow the preset belongs to */
+        workflowId: string;
+        /** @description Preset tier: USER or LAB */
+        scope: string;
+      };
+      path: {
+        id: string;
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** List Workflow Run Presets */
+  listWorkflowRunPresets: {
+    parameters: {
+      query: {
+        /** @description Laboratory to list presets for */
+        laboratoryId: string;
+        /** @description Workflow to list presets for */
+        workflowId: string;
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ListWorkflowRunPresetsResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Update Workflow Run Preset */
+  updateWorkflowRunPreset: {
+    parameters: {
+      path: {
+        id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateWorkflowRunPresetRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["WorkflowRunPreset"];
         };
       };
       400: components["responses"]["BadRequest"];

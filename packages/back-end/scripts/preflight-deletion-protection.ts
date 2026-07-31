@@ -112,7 +112,9 @@ const EG_TABLE_SUFFIXES = [
   'laboratory-run-table',
   'unique-reference-table',
   'laboratory-workflow-access-table',
+  'laboratory-s3-access-table',
   'laboratory-data-tagging-table',
+  'workflow-run-preset-table',
 ] as const;
 
 type FailureReason = 'deletion-protection-disabled' | 'pitr-disabled';

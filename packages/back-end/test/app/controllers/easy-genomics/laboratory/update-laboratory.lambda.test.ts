@@ -7,13 +7,25 @@ import { handler } from '../../../../../src/app/controllers/easy-genomics/labora
 jest.mock('../../../../../src/app/services/easy-genomics/laboratory-service');
 jest.mock('../../../../../src/app/services/ssm-service');
 jest.mock('../../../../../src/app/services/omics-service');
+jest.mock('../../../../../src/app/services/easy-genomics/laboratory-s3-access-service');
+jest.mock('../../../../../src/app/services/easy-genomics/laboratory-s3-access-default-migration', () => ({
+  migrateS3AccessOnDefaultModeChange: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('../../../../../src/app/services/easy-genomics/laboratory-workflow-access-default-migration', () => ({
+  migrateWorkflowAccessOnDefaultModeChange: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('../../../../../src/app/utils/auth-utils');
 jest.mock('../../../../../src/app/utils/rest-api-utils');
+jest.mock('../../../../../src/app/utils/laboratory-s3-access-utils', () => ({
+  assertLaboratoryHasS3BucketAccess: jest.fn().mockResolvedValue(undefined),
+}));
 
+import { migrateS3AccessOnDefaultModeChange } from '../../../../../src/app/services/easy-genomics/laboratory-s3-access-default-migration';
 import { LaboratoryService } from '../../../../../src/app/services/easy-genomics/laboratory-service';
 import { OmicsService } from '../../../../../src/app/services/omics-service';
 import { SsmService } from '../../../../../src/app/services/ssm-service';
 import { validateOrganizationAdminAccess } from '../../../../../src/app/utils/auth-utils';
+import { assertLaboratoryHasS3BucketAccess } from '../../../../../src/app/utils/laboratory-s3-access-utils';
 import { httpRequest } from '../../../../../src/app/utils/rest-api-utils';
 
 describe('update-laboratory.lambda', () => {
@@ -148,6 +160,42 @@ describe('update-laboratory.lambda', () => {
         NotificationsEnabled: false,
       }),
       expect.anything(),
+    );
+  });
+
+  it('preserves existing polling intervals when they are omitted from the request', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      RunListStatusPollIntervalSeconds: 180,
+      RunDetailProgressPollIntervalSeconds: 45,
+    });
+
+    (mockLabService.prototype.update as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, {
+        ...baseRequest,
+        RunListStatusPollIntervalSeconds: undefined,
+        RunDetailProgressPollIntervalSeconds: undefined,
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockLabService.prototype.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        RunListStatusPollIntervalSeconds: 180,
+        RunDetailProgressPollIntervalSeconds: 45,
+      }),
+      expect.objectContaining({
+        RunListStatusPollIntervalSeconds: 180,
+        RunDetailProgressPollIntervalSeconds: 45,
+      }),
     );
   });
 
@@ -339,6 +387,82 @@ describe('update-laboratory.lambda', () => {
         AwsHealthOmicsNetworkingMode: 'VPC',
         AwsHealthOmicsVpcConfigurationName: 'wslh-prod-vpc',
       }),
+      expect.anything(),
+    );
+  });
+
+  it('skips S3 access assert when only EnableNewBucketsByDefault changes', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      S3Bucket: 'bucket',
+      EnableNewBucketsByDefault: true,
+    });
+
+    (mockLabService.prototype.update as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      S3Bucket: 'bucket',
+      EnableNewBucketsByDefault: false,
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, {
+        ...baseRequest,
+        NextFlowTowerEnabled: false,
+        NextFlowTowerApiBaseUrl: undefined,
+        NextFlowTowerWorkspaceId: undefined,
+        NextFlowTowerAccessToken: undefined,
+        EnableNewBucketsByDefault: false,
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(assertLaboratoryHasS3BucketAccess).not.toHaveBeenCalled();
+    expect(migrateS3AccessOnDefaultModeChange).toHaveBeenCalledWith({
+      organizationId: ORG_ID,
+      laboratoryId: LAB_ID,
+      previousDefaultOn: true,
+      nextDefaultOn: false,
+    });
+  });
+
+  it('asserts S3 access when S3Bucket changes', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      S3Bucket: 'old-bucket',
+      EnableNewBucketsByDefault: false,
+    });
+
+    (mockLabService.prototype.update as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      S3Bucket: 'bucket',
+      EnableNewBucketsByDefault: false,
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, {
+        ...baseRequest,
+        NextFlowTowerEnabled: false,
+        NextFlowTowerApiBaseUrl: undefined,
+        NextFlowTowerWorkspaceId: undefined,
+        NextFlowTowerAccessToken: undefined,
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(assertLaboratoryHasS3BucketAccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        LaboratoryId: LAB_ID,
+        EnableNewBucketsByDefault: false,
+      }),
+      'bucket',
       expect.anything(),
     );
   });

@@ -9,6 +9,7 @@ import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { AuthNestedStack } from './auth-nested-stack';
 import { AwsHealthOmicsNestedStack } from './aws-healthomics-nested-stack';
+import { LogRetentionNestedStack } from './log-retention-nested-stack';
 import { NFTowerNestedStack } from './nf-tower-nested-stack';
 import { AnalyticsConstruct } from '../constructs/analytics/analytics-construct';
 import { SpecRestApiConstruct } from '../constructs/spec-rest-api-construct';
@@ -109,6 +110,17 @@ export class BackEndStack extends Stack {
       `${this.props.envName}-nf-tower-nested-stack`,
       nfTowerNestedStackProps,
     );
+
+    // Custom::LogRetention for auth / HealthOmics / NF-Tower Lambdas — kept in
+    // a sibling nested stack so LambdaConstruct no longer emits them into each
+    // domain template (same pattern as EasyGenomicsApiStack).
+    new LogRetentionNestedStack(this, `${this.props.envName}-platform-log-retention-nested-stack`, {
+      logGroupNames: [
+        ...authNestedStack.lambda.logGroupNames,
+        ...awsHealthOmicsNestedStack.lambda.logGroupNames,
+        ...nfTowerNestedStack.lambda.logGroupNames,
+      ],
+    });
 
     // Shared API Gateway for the remaining (smaller) back-end domains, deployed
     // from easy-genomics-api.yaml via SpecRestApi. Built after the nested stacks

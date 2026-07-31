@@ -92,6 +92,91 @@ components:
         - name
         - parameters
       additionalProperties: false
+    TaskListItem:
+      description: <p>A workflow run task.</p>
+      type: object
+      properties:
+        taskId:
+          description: <p>The task's ID.</p>
+          type: string
+        status:
+          description: <p>The task's status.</p>
+          enum:
+            - CANCELLED
+            - COMPLETED
+            - FAILED
+            - PENDING
+            - RUNNING
+            - STARTING
+            - STOPPING
+          type: string
+        name:
+          description: <p>The task's name.</p>
+          type: string
+        cpus:
+          description: <p>The task's CPU count.</p>
+          type: number
+        cacheHit:
+          description: <p>Set to true if Amazon Web Services HealthOmics found a matching entry in the run cache for this task.</p>
+          type: boolean
+        cacheS3Uri:
+          description: <p>The S3 URI of the cache location.</p>
+          type: string
+        memory:
+          description: <p>The task's memory use in gigabyes.</p>
+          type: number
+        creationTime:
+          description: <p>When the task was created.</p>
+          type: string
+          format: date-time
+        startTime:
+          description: <p>When the task started.</p>
+          type: string
+          format: date-time
+        stopTime:
+          description: <p>When the task stopped.</p>
+          type: string
+          format: date-time
+        gpus:
+          description: <p> The number of Graphics Processing Units (GPU) specified for the task. </p>
+          type: number
+        instanceType:
+          description: <p> The instance type for a task.</p>
+          type: string
+        uuid:
+          description: <p>The universally unique identifier (UUID) for the workflow task.</p>
+          type: string
+    ReadRunTasks:
+      description: Response for GET /aws-healthomics/run/read-run-tasks/{id}.
+      type: object
+      properties:
+        progress:
+          description: Aggregated task progress derived from HealthOmics ListRunTasks.
+          type: object
+          properties:
+            tasksTotal:
+              type: number
+            tasksCompleted:
+              type: number
+            tasksRunning:
+              type: number
+            tasksFailed:
+              type: number
+            percent:
+              type: number
+          required:
+            - percent
+            - tasksCompleted
+            - tasksFailed
+            - tasksRunning
+            - tasksTotal
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskListItem'
+      required:
+        - progress
+        - tasks
     AddFilesToSampleRequest:
       type: object
       properties:
@@ -1024,6 +1109,9 @@ components:
         LaboratoryId:
           type: string
           minLength: 1
+        S3Bucket:
+          type: string
+          minLength: 1
         RelativePrefix:
           type: string
         MaxTotalKeys:
@@ -1528,9 +1616,19 @@ components:
         RunRetentionMonths:
           type: integer
           minimum: 0
+        RunListStatusPollIntervalSeconds:
+          type: integer
+          minimum: 30
+          maximum: 1800
+        RunDetailProgressPollIntervalSeconds:
+          type: integer
+          minimum: 10
+          maximum: 300
         EnableNewWorkflowsByDefault:
           type: boolean
         NotificationsEnabled:
+          type: boolean
+        EnableNewBucketsByDefault:
           type: boolean
         HealthOmicsLlmProvider:
           type: string
@@ -1616,10 +1714,21 @@ components:
             (enabled) at the application layer when absent. Does not itself subscribe anyone —
             individual opt-in still gates whether any email is actually sent.
           type: boolean
+        EnableNewBucketsByDefault:
+          description: |-
+            When true, data buckets without a DENY row are allowed for this lab.
+            When false/omitted, only explicit ALLOW rows grant bucket access.
+          type: boolean
         RunRetentionMonths:
           description: |-
             Laboratory-wide run retention policy, in months, applied after a run reaches a terminal state.
             - 0 means "never delete run records" (no TTL expiration).
+          type: number
+        RunListStatusPollIntervalSeconds:
+          description: Polling interval, in seconds, for the lab runs list status refresh.
+          type: number
+        RunDetailProgressPollIntervalSeconds:
+          description: Polling interval, in seconds, for the run detail page progress refresh.
           type: number
         HealthOmicsLlmProvider:
           description: |-
@@ -1660,6 +1769,12 @@ components:
           type: boolean
         HasSeqeraLlmApiKey:
           type: boolean
+        HealthOmicsRunCacheId:
+          description: |-
+            AWS HealthOmics run cache id used for call caching ("resume"). Lazily provisioned on the
+            first HealthOmics run and reused for all subsequent runs, so a failed run can be retried and
+            resume from its last completed task instead of recomputing everything. Managed internally.
+          type: string
         CreatedAt:
           type: string
         CreatedBy:
@@ -1716,9 +1831,15 @@ components:
           type: string
         RunRetentionMonths:
           type: number
+        RunListStatusPollIntervalSeconds:
+          type: number
+        RunDetailProgressPollIntervalSeconds:
+          type: number
         EnableNewWorkflowsByDefault:
           type: boolean
         NotificationsEnabled:
+          type: boolean
+        EnableNewBucketsByDefault:
           type: boolean
         HealthOmicsLlmProvider:
           enum:
@@ -1747,6 +1868,8 @@ components:
           type: boolean
         HasSeqeraLlmApiKey:
           type: boolean
+        HealthOmicsRunCacheId:
+          type: string
       required:
         - LaboratoryId
         - Name
@@ -1776,6 +1899,9 @@ components:
           format: uuid
         RunName:
           type: string
+        Description:
+          type: string
+          maxLength: 500
         Platform:
           type: string
           enum:
@@ -1836,6 +1962,9 @@ components:
         RunName:
           type: string
         Owner:
+          type: string
+        Description:
+          description: Optional user-authored note for this run; set at creation time.
           type: string
         WorkflowName:
           type: string
@@ -1952,6 +2081,115 @@ components:
             (`attribute_not_exists(NotifiedAt)`), the first time a terminal-state notification is
             published for this run. Prevents a duplicate status-check message from double-emailing.
           type: string
+        ProgressPercent:
+          description: |-
+            Approximate task completion percentage derived from HealthOmics ListRunTasks
+            (or Seqera progress when populated). Denominator grows as the workflow DAG
+            expands, so prefer showing TasksCompleted/TasksTotal alongside this value.
+          type: number
+        TasksTotal:
+          description: Total known tasks at last status check (denominator for ProgressPercent).
+          type: number
+        TasksCompleted:
+          description: Tasks in COMPLETED status at last status check.
+          type: number
+        TasksRunning:
+          description: Tasks in RUNNING/STARTING status at last status check.
+          type: number
+        TasksFailed:
+          description: Tasks in FAILED status at last status check.
+          type: number
+        CurrentProcessName:
+          description: |-
+            Name of the first currently RUNNING (or STARTING) task/process at last status check.
+            Cleared when the run is terminal or no tasks are actively running.
+          type: string
+        RunInputProfile:
+          type: object
+          properties:
+            SampleCount:
+              type: number
+            InputFileCount:
+              type: number
+            InputBytesTotal:
+              type: number
+            ParameterHash:
+              type: string
+            InputBytesByExtension:
+              type: object
+          required:
+            - InputBytesTotal
+            - InputFileCount
+            - ParameterHash
+            - SampleCount
+          description: Pre-run input features for historical cost similarity matching.
+        PreRunCostEstimate:
+          type: object
+          properties:
+            LowUsd:
+              type: number
+            HighUsd:
+              type: number
+            MedianUsd:
+              type: number
+            Confidence:
+              enum:
+                - HIGH
+                - LOW
+                - MEDIUM
+                - NONE
+              type: string
+            ComparableRunCount:
+              type: number
+            EstimatedAt:
+              type: string
+            Exclusions:
+              type: array
+              items:
+                type: string
+          required:
+            - ComparableRunCount
+            - Confidence
+            - EstimatedAt
+            - Exclusions
+            - HighUsd
+            - LowUsd
+            - MedianUsd
+          description: Snapshot of the pre-run estimate band shown at Review & Launch.
+        RunCostOutcome:
+          type: object
+          properties:
+            CostSource:
+              enum:
+                - HEALTHOMICS_TASKS
+                - SEQERA_PROGRESS
+              type: string
+            CostCapturedAt:
+              type: string
+            ActualComputeCostUsd:
+              type: number
+            ActualStorageCostUsd:
+              type: number
+          required:
+            - CostCapturedAt
+            - CostSource
+          description: Platform compute/storage estimate captured at terminal state.
+        BilledCost:
+          type: object
+          properties:
+            TotalUsd:
+              type: number
+            AsOfDate:
+              type: string
+            SyncedAt:
+              type: string
+            ByService:
+              type: object
+          required:
+            - AsOfDate
+            - SyncedAt
+            - TotalUsd
+          description: AWS Cost Explorer billed cost synced ~24–48h after completion.
       required:
         - LaboratoryId
         - OrganizationId
@@ -1982,6 +2220,9 @@ components:
         RunName:
           type: string
         Owner:
+          type: string
+        Description:
+          description: Optional user-authored note for this run; set at creation time.
           type: string
         WorkflowName:
           type: string
@@ -2043,6 +2284,104 @@ components:
             - llm
             - lookup
           type: string
+        ProgressPercent:
+          type: number
+        TasksTotal:
+          type: number
+        TasksCompleted:
+          type: number
+        TasksRunning:
+          type: number
+        TasksFailed:
+          type: number
+        CurrentProcessName:
+          type: string
+        RunInputProfile:
+          type: object
+          properties:
+            SampleCount:
+              type: number
+            InputFileCount:
+              type: number
+            InputBytesTotal:
+              type: number
+            ParameterHash:
+              type: string
+            InputBytesByExtension:
+              type: object
+          required:
+            - InputBytesTotal
+            - InputFileCount
+            - ParameterHash
+            - SampleCount
+          description: Pre-run input features for historical cost similarity matching.
+        PreRunCostEstimate:
+          type: object
+          properties:
+            LowUsd:
+              type: number
+            HighUsd:
+              type: number
+            MedianUsd:
+              type: number
+            Confidence:
+              enum:
+                - HIGH
+                - LOW
+                - MEDIUM
+                - NONE
+              type: string
+            ComparableRunCount:
+              type: number
+            EstimatedAt:
+              type: string
+            Exclusions:
+              type: array
+              items:
+                type: string
+          required:
+            - ComparableRunCount
+            - Confidence
+            - EstimatedAt
+            - Exclusions
+            - HighUsd
+            - LowUsd
+            - MedianUsd
+          description: Snapshot of the pre-run estimate band shown at Review & Launch.
+        RunCostOutcome:
+          type: object
+          properties:
+            CostSource:
+              enum:
+                - HEALTHOMICS_TASKS
+                - SEQERA_PROGRESS
+              type: string
+            CostCapturedAt:
+              type: string
+            ActualComputeCostUsd:
+              type: number
+            ActualStorageCostUsd:
+              type: number
+          required:
+            - CostCapturedAt
+            - CostSource
+          description: Platform compute/storage estimate captured at terminal state.
+        BilledCost:
+          type: object
+          properties:
+            TotalUsd:
+              type: number
+            AsOfDate:
+              type: string
+            SyncedAt:
+              type: string
+            ByService:
+              type: object
+          required:
+            - AsOfDate
+            - SyncedAt
+            - TotalUsd
+          description: AWS Cost Explorer billed cost synced ~24–48h after completion.
       required:
         - LaboratoryId
         - OrganizationId
@@ -2052,6 +2391,86 @@ components:
         - RunName
         - Status
         - UserId
+    RequestEstimateRunCostRequest:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum:
+            - AWS HealthOmics
+            - Seqera Cloud
+        workflowExternalId:
+          type: string
+          minLength: 1
+        workflowVersionName:
+          type: string
+        inputFileKeys:
+          type: array
+          items:
+            type: string
+        sampleSheetS3Url:
+          type: string
+        settings:
+          anyOf:
+            - type: string
+            - type: object
+              additionalProperties: {}
+        sampleCount:
+          type: number
+          minimum: 0
+        inputBytesTotal:
+          type: number
+          minimum: 0
+      required:
+        - platform
+        - workflowExternalId
+      additionalProperties: false
+    EstimateRunCostResponse:
+      type: object
+      properties:
+        currency:
+          type: string
+          const: USD
+        label:
+          type: string
+        estimateAvailable:
+          type: boolean
+        confidence:
+          enum:
+            - HIGH
+            - LOW
+            - MEDIUM
+            - NONE
+          type: string
+        comparableRunCount:
+          type: number
+        disclaimer:
+          type: string
+        exclusions:
+          type: array
+          items:
+            type: string
+        computeCostUsd:
+          type: object
+          properties:
+            high:
+              type: number
+            low:
+              type: number
+            median:
+              type: number
+          required:
+            - high
+            - low
+            - median
+      required:
+        - comparableRunCount
+        - confidence
+        - currency
+        - disclaimer
+        - estimateAvailable
+        - exclusions
+        - label
     UpdateLaboratoryRunRequest:
       type: object
       properties:
@@ -2071,6 +2490,15 @@ components:
       required:
         - Status
       additionalProperties: false
+    ListGrantedLaboratoryBucketsResponse:
+      type: object
+      properties:
+        buckets:
+          type: array
+          items:
+            type: string
+      required:
+        - buckets
     UpdateLaboratoryRequest:
       type: object
       properties:
@@ -2108,9 +2536,19 @@ components:
         RunRetentionMonths:
           type: integer
           minimum: 0
+        RunListStatusPollIntervalSeconds:
+          type: integer
+          minimum: 30
+          maximum: 1800
+        RunDetailProgressPollIntervalSeconds:
+          type: integer
+          minimum: 10
+          maximum: 300
         EnableNewWorkflowsByDefault:
           type: boolean
         NotificationsEnabled:
+          type: boolean
+        EnableNewBucketsByDefault:
           type: boolean
         HealthOmicsLlmProvider:
           type: string
@@ -2408,6 +2846,79 @@ components:
       required:
         - OrganizationId
       additionalProperties: false
+    EditS3AccessBatchRequest:
+      type: object
+      properties:
+        assignments:
+          type: array
+          items:
+            type: object
+            properties:
+              laboratoryId:
+                type: string
+                minLength: 1
+              bucketName:
+                type: string
+                minLength: 1
+              granted:
+                type: boolean
+            required:
+              - laboratoryId
+              - bucketName
+              - granted
+            additionalProperties: false
+      required:
+        - assignments
+      additionalProperties: false
+    LaboratoryS3Access:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+        BucketName:
+          type: string
+        OrganizationId:
+          type: string
+        Effect:
+          description: ALLOW or DENY; omitted/undefined on legacy rows means ALLOW.
+          enum:
+            - ALLOW
+            - DENY
+          type: string
+        CreatedAt:
+          type: string
+        ModifiedAt:
+          type: string
+      required:
+        - BucketName
+        - LaboratoryId
+        - OrganizationId
+    ListLaboratoryS3AccessAssignmentsResponse:
+      type: object
+      properties:
+        assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/LaboratoryS3Access'
+      required:
+        - assignments
+    S3BucketCatalogEntry:
+      description: API / UI catalog row (data-tagged S3 buckets).
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    ListS3BucketCatalogResponse:
+      type: object
+      properties:
+        buckets:
+          type: array
+          items:
+            $ref: '#/components/schemas/S3BucketCatalogEntry'
+      required:
+        - buckets
     UpdateOrganizationRequest:
       type: object
       properties:
@@ -2655,6 +3166,15 @@ components:
         workflowId:
           type: string
         name:
+          type: string
+        source:
+          description: Present for HealthOmics entries only.
+          enum:
+            - PRIVATE
+            - SHARED
+          type: string
+        ownerAccountId:
+          description: AWS account that owns a SHARED HealthOmics workflow (from ShareDetails).
           type: string
       required:
         - name
@@ -2977,6 +3497,131 @@ components:
             - all_terminal
             - failures_only
             - successes_only
+      additionalProperties: false
+    CreateWorkflowRunPresetRequest:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+          format: uuid
+        WorkflowId:
+          type: string
+          minLength: 1
+        Scope:
+          type: string
+          enum:
+            - USER
+            - LAB
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        Params:
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+      required:
+        - LaboratoryId
+        - WorkflowId
+        - Scope
+        - Name
+        - Params
+      additionalProperties: false
+    WorkflowRunPresetScope:
+      enum:
+        - LAB
+        - USER
+      type: string
+    WorkflowRunPresetParams:
+      description: |-
+        Run parameter values as rendered by the workflow parameter form. Nested objects
+        and arrays are intentionally unsupported — the HealthOmics parameter template is
+        a flat map of scalars.
+      type: object
+    WorkflowRunPreset:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+        PresetKey:
+          type: string
+        PresetId:
+          type: string
+        Scope:
+          $ref: '#/components/schemas/WorkflowRunPresetScope'
+        WorkflowId:
+          type: string
+        Name:
+          type: string
+        Params:
+          $ref: '#/components/schemas/WorkflowRunPresetParams'
+        CreatedByEmail:
+          description: Email of the creating user, denormalised so shared lab presets can show authorship without a user lookup.
+          type: string
+        CreatedAt:
+          type: string
+        CreatedBy:
+          type: string
+        ModifiedAt:
+          type: string
+        ModifiedBy:
+          type: string
+      required:
+        - LaboratoryId
+        - Name
+        - Params
+        - PresetId
+        - PresetKey
+        - Scope
+        - WorkflowId
+    ListWorkflowRunPresetsResponse:
+      type: object
+      properties:
+        UserPresets:
+          description: Presets owned by the calling user for this laboratory + workflow.
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowRunPreset'
+        LabPresets:
+          description: Presets shared with the whole laboratory for this workflow.
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowRunPreset'
+      required:
+        - LabPresets
+        - UserPresets
+    UpdateWorkflowRunPresetRequest:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+          format: uuid
+        WorkflowId:
+          type: string
+          minLength: 1
+        Scope:
+          type: string
+          enum:
+            - USER
+            - LAB
+        Name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        Params:
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+      required:
+        - LaboratoryId
+        - WorkflowId
+        - Scope
       additionalProperties: false
     ListComputeEnvsResponse:
       type: object
@@ -6860,6 +7505,39 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
+  /aws-healthomics/run/read-run-tasks/{id}:
+    get:
+      operationId: readRunTasks
+      summary: Read Run Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: laboratoryId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Laboratory to verify HealthOmics access
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadRunTasks'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /aws-healthomics/run/read-run/{id}:
     get:
       operationId: readRun
@@ -7002,18 +7680,6 @@ paths:
           schema:
             type: string
           description: Laboratory to verify HealthOmics access
-        - name: maxResults
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Pagination page size
-        - name: startingToken
-          in: query
-          required: false
-          schema:
-            type: string
-          description: Pagination offset token
         - name: name
           in: query
           required: false
@@ -8388,6 +9054,40 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
+  /easy-genomics/laboratory/run/request-estimate-run-cost:
+    post:
+      operationId: requestEstimateRunCost
+      summary: Request Estimate Run Cost
+      parameters:
+        - name: laboratoryId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Laboratory UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestEstimateRunCostRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimateRunCostResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /easy-genomics/laboratory/run/request-laboratory-run-status-check:
     post:
       operationId: requestLaboratoryRunStatusCheck
@@ -8431,6 +9131,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LaboratoryRun'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/laboratory/s3-access/list-granted-buckets:
+    get:
+      operationId: listGrantedBuckets
+      summary: List Granted Buckets
+      parameters:
+        - name: laboratoryId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Laboratory ID
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListGrantedLaboratoryBucketsResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -8892,6 +9620,88 @@ paths:
           content:
             application/json:
               schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/organization/s3-access/edit-s3-access-batch:
+    post:
+      operationId: editS3AccessBatch
+      summary: Edit S3 Access Batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditS3AccessBatchRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/organization/s3-access/list-s3-access-assignments:
+    get:
+      operationId: listS3AccessAssignments
+      summary: List S3 Access Assignments
+      parameters:
+        - name: organizationId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by organization
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLaboratoryS3AccessAssignmentsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/organization/s3-access/list-s3-bucket-catalog:
+    get:
+      operationId: listS3BucketCatalog
+      summary: List S3 Bucket Catalog
+      parameters:
+        - name: organizationId
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by organization
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListS3BucketCatalogResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -9494,6 +10304,144 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-run-preset/create-workflow-run-preset:
+    post:
+      operationId: createWorkflowRunPreset
+      summary: Create Workflow Run Preset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRunPresetRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowRunPreset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-run-preset/delete-workflow-run-preset/{id}:
+    delete:
+      operationId: deleteWorkflowRunPreset
+      summary: Delete Workflow Run Preset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: laboratoryId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Laboratory owning the preset
+        - name: workflowId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Workflow the preset belongs to
+        - name: scope
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 'Preset tier: USER or LAB'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-run-preset/list-workflow-run-presets:
+    get:
+      operationId: listWorkflowRunPresets
+      summary: List Workflow Run Presets
+      parameters:
+        - name: laboratoryId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Laboratory to list presets for
+        - name: workflowId
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Workflow to list presets for
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListWorkflowRunPresetsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-run-preset/update-workflow-run-preset/{id}:
+    put:
+      operationId: updateWorkflowRunPreset
+      summary: Update Workflow Run Preset
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkflowRunPresetRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowRunPreset'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

@@ -33,6 +33,18 @@ const RunRetentionMonthsSchema = z
   .min(0, 'Run retention must be 0 or greater')
   .max(120, 'Run retention must be 120 months or less');
 
+const RunListStatusPollIntervalSecondsSchema = z
+  .number({ invalid_type_error: 'Runs list polling interval must be a number' })
+  .int('Runs list polling interval must be a whole number')
+  .min(30, 'Runs list polling interval must be between 30 and 1800 seconds')
+  .max(1800, 'Runs list polling interval must be between 30 and 1800 seconds');
+
+const RunDetailProgressPollIntervalSecondsSchema = z
+  .number({ invalid_type_error: 'Run detail polling interval must be a number' })
+  .int('Run detail polling interval must be a whole number')
+  .min(10, 'Run detail polling interval must be between 10 and 300 seconds')
+  .max(300, 'Run detail polling interval must be between 10 and 300 seconds');
+
 const LlmProviderSchema = z.enum(['bedrock', 'openai', 'anthropic']);
 const LlmModelIdSchema = z.string().trim().max(256, 'Model ID must be no more than 256 characters');
 const LlmApiKeySchema = z.string().trim().min(1, 'API key cannot be empty');
@@ -50,6 +62,8 @@ const LabDetailsSchema = z.object({
   Description: LabDescriptionSchema,
   S3Bucket: S3BucketSchema,
   RunRetentionMonths: RunRetentionMonthsSchema,
+  RunListStatusPollIntervalSeconds: RunListStatusPollIntervalSecondsSchema,
+  RunDetailProgressPollIntervalSeconds: RunDetailProgressPollIntervalSecondsSchema,
   NextFlowTowerEnabled: z.boolean(),
   NextFlowTowerAccessToken: NextFlowTowerAccessTokenSchema,
   GitHubAccessToken: GitHubAccessTokenSchema.optional(),
@@ -101,6 +115,8 @@ export {
   NextFlowTowerAccessTokenSchema,
   GitHubAccessTokenSchema,
   NextFlowTowerWorkspaceIdSchema,
+  RunDetailProgressPollIntervalSecondsSchema,
+  RunListStatusPollIntervalSecondsSchema,
   RunRetentionMonthsSchema,
   S3BucketSchema,
   VpcConfigurationNameSchema,

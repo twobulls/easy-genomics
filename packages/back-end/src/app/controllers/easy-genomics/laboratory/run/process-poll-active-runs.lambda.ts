@@ -4,16 +4,16 @@ import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy
 import { APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
-import { SnsService } from '@BE/services/sns-service';
+import { SqsService } from '@BE/services/sqs-service';
 
 const laboratoryRunService = new LaboratoryRunService();
-const snsService = new SnsService();
+const sqsService = new SqsService();
 
 /**
  * Scheduled poller: without this, a run's status only refreshes while a user has the lab
  * dashboard open (front-end `setTimeout` polling). This finds every currently non-terminal
  * run via the sparse `PollStatus_Index` GSI and re-enqueues a status check for each on the
- * same topic/queue `create-laboratory-run` already uses, so `process-update-laboratory-run`
+ * same queue `create-laboratory-run` already uses, so `process-update-laboratory-run`
  * observes terminal transitions even with no browser open.
  */
 export const handler: Handler = async (): Promise<APIGatewayProxyResult> => {
@@ -30,9 +30,9 @@ export const handler: Handler = async (): Promise<APIGatewayProxyResult> => {
         Record: run,
       };
       try {
-        await snsService.publish({
-          TopicArn: process.env.SNS_LABORATORY_RUN_UPDATE_TOPIC,
-          Message: JSON.stringify(record),
+        await sqsService.sendMessage({
+          QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
+          MessageBody: JSON.stringify(record),
           MessageGroupId: `update-laboratory-run-${run.RunId}`,
           MessageDeduplicationId: uuidv4(),
         });

@@ -37,6 +37,8 @@ import {
   RequestLaboratorySchema,
 } from '../schema/easy-genomics/laboratory';
 import { AddLaboratoryRunSchema, EditLaboratoryRunSchema } from '../schema/easy-genomics/laboratory-run';
+import { EstimateRunCostRequestSchema } from '../schema/easy-genomics/laboratory-run-cost';
+import { BatchUpdateLaboratoryS3AccessRequestSchema } from '../schema/easy-genomics/laboratory-s3-access';
 import {
   AddBulkLaboratoryUsersSchema,
   AddLaboratoryUserSchema,
@@ -69,6 +71,10 @@ import {
   CreateUserForgotPasswordRequestSchema,
   ConfirmUserForgotPasswordRequestSchema,
 } from '../schema/easy-genomics/user-password';
+import {
+  CreateWorkflowRunPresetSchema,
+  UpdateWorkflowRunPresetSchema,
+} from '../schema/easy-genomics/workflow-run-preset';
 
 export interface QueryParam {
   name: string;
@@ -166,6 +172,27 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
     query: [{ name: 'organizationId', required: false, description: 'Filter by organization' }],
   },
 
+  // ── easy-genomics/organization/s3-access/ ─────────────────────────────────────
+
+  'POST /easy-genomics/organization/s3-access/edit-s3-access-batch': {
+    request: BatchUpdateLaboratoryS3AccessRequestSchema,
+  },
+  'GET /easy-genomics/organization/s3-access/list-s3-access-assignments': {
+    response: 'ListLaboratoryS3AccessAssignmentsResponse',
+    query: [{ name: 'organizationId', required: false, description: 'Filter by organization' }],
+  },
+  'GET /easy-genomics/organization/s3-access/list-s3-bucket-catalog': {
+    response: 'ListS3BucketCatalogResponse',
+    query: [{ name: 'organizationId', required: false, description: 'Filter by organization' }],
+  },
+
+  // ── easy-genomics/laboratory/s3-access/ ─────────────────────────────────────
+
+  'GET /easy-genomics/laboratory/s3-access/list-granted-buckets': {
+    response: 'ListGrantedLaboratoryBucketsResponse',
+    query: [{ name: 'laboratoryId', required: false, description: 'Laboratory ID' }],
+  },
+
   // ── easy-genomics/laboratory/ ────────────────────────────────────────────────
 
   'POST /easy-genomics/laboratory/create-laboratory': {
@@ -244,6 +271,11 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
     query: [
       { name: 'LaboratoryId', required: true, description: 'Filter by laboratory (PascalCase matches the handler)' },
     ],
+  },
+  'POST /easy-genomics/laboratory/run/request-estimate-run-cost': {
+    request: EstimateRunCostRequestSchema,
+    response: 'EstimateRunCostResponse',
+    query: [{ name: 'laboratoryId', required: true, description: 'Laboratory UUID' }],
   },
   'POST /easy-genomics/laboratory/run/request-apply-run-retention-policy': {},
   'POST /easy-genomics/laboratory/run/request-laboratory-run-status-check': {},
@@ -434,6 +466,31 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
     response: 'User',
   },
 
+  // ── easy-genomics/workflow-run-preset/ ───────────────────────────────────────
+
+  'POST /easy-genomics/workflow-run-preset/create-workflow-run-preset': {
+    request: CreateWorkflowRunPresetSchema,
+    response: 'WorkflowRunPreset',
+  },
+  'DELETE /easy-genomics/workflow-run-preset/delete-workflow-run-preset/{id}': {
+    query: [
+      { name: 'laboratoryId', required: true, description: 'Laboratory owning the preset' },
+      { name: 'workflowId', required: true, description: 'Workflow the preset belongs to' },
+      { name: 'scope', required: true, description: 'Preset tier: USER or LAB' },
+    ],
+  },
+  'GET /easy-genomics/workflow-run-preset/list-workflow-run-presets': {
+    response: 'ListWorkflowRunPresetsResponse',
+    query: [
+      { name: 'laboratoryId', required: true, description: 'Laboratory to list presets for' },
+      { name: 'workflowId', required: true, description: 'Workflow to list presets for' },
+    ],
+  },
+  'PUT /easy-genomics/workflow-run-preset/update-workflow-run-preset/{id}': {
+    request: UpdateWorkflowRunPresetSchema,
+    response: 'WorkflowRunPreset',
+  },
+
   // ── aws-healthomics/run/ ─────────────────────────────────────────────────────
 
   'PUT /aws-healthomics/run/cancel-run-execution/{id}': {
@@ -455,6 +512,10 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
   'GET /aws-healthomics/run/read-run/{id}': {
     query: [{ name: 'laboratoryId', required: false, description: 'Laboratory to verify HealthOmics access' }],
   },
+  'GET /aws-healthomics/run/read-run-tasks/{id}': {
+    query: [{ name: 'laboratoryId', required: false, description: 'Laboratory to verify HealthOmics access' }],
+    response: 'ReadRunTasks',
+  },
 
   // ── aws-healthomics/workflow/ ────────────────────────────────────────────────
 
@@ -475,8 +536,6 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
   'GET /aws-healthomics/workflow/list-shared-workflows': {
     query: [
       { name: 'laboratoryId', required: false, description: 'Laboratory to verify HealthOmics access' },
-      { name: 'maxResults', required: false, description: 'Pagination page size' },
-      { name: 'startingToken', required: false, description: 'Pagination offset token' },
       { name: 'name', required: false, description: 'Filter by workflow name' },
     ],
   },

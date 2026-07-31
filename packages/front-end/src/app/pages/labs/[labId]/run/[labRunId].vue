@@ -5,9 +5,14 @@
     WorkflowProgressResponse,
     Workflow,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
-  import { RunTask, GetRunResponse } from '@aws-sdk/client-omics';
+  import { getRunDetailProgressPollIntervalMs } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
+  import { ReadRunTasks } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
+  import { TaskListItem, GetRunResponse } from '@aws-sdk/client-omics';
   import { useLabsStore, useRunStore, useUiStore } from '@FE/stores';
   import { ensureLabInActiveOrg } from '@FE/utils/ensure-lab-in-active-org';
+  import { v4 as uuidv4 } from 'uuid';
+
+  const TERMINAL_STATUSES = new Set(['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED']);
 
   const $route = useRoute();
   const $router = useRouter();
@@ -23,6 +28,9 @@
   const labRunId = $route.params.labRunId as string;
 
   const lab = computed<Laboratory | null>(() => labsStore.labs[labId] ?? null);
+  const detailProgressPollIntervalMs = computed<number>(() =>
+    getRunDetailProgressPollIntervalMs(lab.value?.RunDetailProgressPollIntervalSeconds),
+  );
   const labRun = computed<LaboratoryRun | null>(() => runStore.labRuns[labRunId] ?? null);
   // Prefer OutputS3Url as the authoritative reference for the File Manager root when available (supports custom output dirs).
   // Fall back to InputS3Url for legacy runs where OutputS3Url was not set.
@@ -79,16 +87,35 @@
   const seqeraProgress = ref<WorkflowProgressResponse | null>(null);
   // Full workflow detail for FAILED Seqera runs (errorMessage, errorReport)
   const seqeraRunDetail = ref<Workflow | null>(null);
+  // Live Omics task progress (RUNNING / FAILED)
+  const omicsProgress = ref<ReadRunTasks | null>(null);
   // Task-level data for FAILED Omics runs
-  const omicsFailedTasks = ref<RunTask[]>([]);
+  const omicsFailedTasks = ref<TaskListItem[]>([]);
   // Full run detail for FAILED Omics runs (failureReason, statusMessage)
   const omicsRunDetail = ref<GetRunResponse | null>(null);
 
+  let progressPollTimeoutId: number | undefined;
+  // Guard so an in-flight poll's `finally` cannot reschedule after unmount.
+  let progressPollActive = false;
+
   onBeforeMount(async () => {
-    if (await ensureLabInActiveOrg({ labId })) {
+    if (await ensureLabInActiveOrg({ labId, forceReload: true })) {
       return;
     }
+    if (!labsStore.labs[labId]) {
+      await labsStore.loadLab(labId);
+    }
     await fetchLabRuns();
+    progressPollActive = true;
+    scheduleProgressPoll();
+  });
+
+  onBeforeUnmount(() => {
+    progressPollActive = false;
+    if (progressPollTimeoutId != null) {
+      window.clearTimeout(progressPollTimeoutId);
+      progressPollTimeoutId = undefined;
+    }
   });
 
   async function fetchLabRuns() {
@@ -101,7 +128,35 @@
     }
   }
 
-  async function fetchTaskProgress() {
+  function scheduleProgressPoll() {
+    if (!progressPollActive) return;
+    if (progressPollTimeoutId != null) {
+      window.clearTimeout(progressPollTimeoutId);
+    }
+    const run = runStore.labRuns[labRunId];
+    if (!run || TERMINAL_STATUSES.has(run.Status)) return;
+
+    progressPollTimeoutId = window.setTimeout(async () => {
+      if (!progressPollActive) return;
+      try {
+        await runStore.loadLabRunsForLab(labId);
+        await fetchTaskProgress({ silent: true });
+      } catch (error) {
+        console.error('Failed to poll run progress:', error);
+      } finally {
+        if (progressPollActive) {
+          scheduleProgressPoll();
+        }
+      }
+    }, detailProgressPollIntervalMs.value);
+  }
+
+  watch(detailProgressPollIntervalMs, (next, prev) => {
+    if (!progressPollActive || next === prev) return;
+    scheduleProgressPoll();
+  });
+
+  async function fetchTaskProgress(options: { silent?: boolean } = {}) {
     const run = runStore.labRuns[labRunId];
     if (!run?.ExternalRunId) return;
 
@@ -110,26 +165,47 @@
         seqeraProgress.value = await $api.seqeraRuns.getWorkflowProgress(labId, run.ExternalRunId);
       } catch (error) {
         console.error('Failed to fetch Seqera workflow progress:', error);
-        useToastStore().error('Could not load Seqera task progress for this run.');
+        if (!options.silent) {
+          useToastStore().error('Could not load Seqera task progress for this run.');
+        }
       }
       if (run.Status === 'FAILED') {
         try {
           seqeraRunDetail.value = await $api.seqeraRuns.get(labId, run.ExternalRunId);
         } catch (error) {
           console.error('Failed to fetch Seqera workflow detail:', error);
-          useToastStore().error('Could not load Seqera failure details for this run.');
+          if (!options.silent) {
+            useToastStore().error('Could not load Seqera failure details for this run.');
+          }
         }
       }
     }
 
-    if (run.Platform === 'AWS HealthOmics' && run.Status === 'FAILED') {
+    if (
+      run.Platform === 'AWS HealthOmics' &&
+      ['FAILED', 'RUNNING', 'STARTING', 'PENDING', 'STOPPING'].includes(run.Status)
+    ) {
       try {
-        const omicsRun = await $api.omicsRuns.get(labId, run.ExternalRunId);
-        omicsRunDetail.value = omicsRun;
-        omicsFailedTasks.value = (omicsRun.tasks ?? []).filter((t: RunTask) => t.status === 'FAILED');
+        const progressResponse = await $api.omicsRuns.getRunProgress(labId, run.ExternalRunId);
+        omicsProgress.value = progressResponse;
+        if (run.Status === 'FAILED') {
+          omicsFailedTasks.value = (progressResponse.tasks ?? []).filter((t) => t.status === 'FAILED');
+        }
       } catch (error) {
-        console.error('Failed to fetch Omics run task details:', error);
-        useToastStore().error('Could not load HealthOmics failure details for this run.');
+        console.error('Failed to fetch Omics run task progress:', error);
+        if (!options.silent) {
+          useToastStore().error('Could not load HealthOmics task progress for this run.');
+        }
+      }
+      if (run.Status === 'FAILED') {
+        try {
+          omicsRunDetail.value = await $api.omicsRuns.get(labId, run.ExternalRunId);
+        } catch (error) {
+          console.error('Failed to fetch Omics run details:', error);
+          if (!options.silent) {
+            useToastStore().error('Could not load HealthOmics failure details for this run.');
+          }
+        }
       }
     }
   }
@@ -162,6 +238,24 @@
         return 'bg-gray-100 text-gray-900 border-gray-200';
     }
   });
+
+  const isHealthOmics = computed<boolean>(() => labRun.value?.Platform === 'AWS HealthOmics');
+  const isFailed = computed<boolean>(() => labRun.value?.Status?.toUpperCase() === 'FAILED');
+
+  // Retry is HealthOmics-only and relaunches the wizard pre-filled from this run. The workflow id
+  // comes from the GetRun response loaded for failed runs (it isn't stored on the LaboratoryRun).
+  const retryWorkflowId = computed<string | null>(() => omicsRunDetail.value?.workflowId ?? null);
+  const canRetry = computed<boolean>(() => isHealthOmics.value && isFailed.value && !!retryWorkflowId.value);
+
+  function retryRun() {
+    const workflowId = retryWorkflowId.value;
+    if (!workflowId) return;
+
+    $router.push({
+      path: `/labs/${labId}/run-workflow/${workflowId}`,
+      query: { omicsRunTempId: uuidv4(), retryFromRunId: labRunId },
+    });
+  }
 
   const tabItems = computed(() => [
     { key: 'runDetails', label: 'Run Details' },
@@ -236,6 +330,22 @@
     <template #default="{ item }">
       <!-- Run Details -->
       <div v-if="item.key === 'runDetails'" class="space-y-3">
+        <!-- Retry action for failed HealthOmics runs. Relaunches the wizard pre-filled from this
+             run; unchanged completed tasks are reused via the run cache on retry. -->
+        <section
+          v-if="canRetry"
+          class="stroke-light flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-solid bg-white p-6 max-md:px-5"
+        >
+          <div class="flex flex-col gap-1">
+            <h3 class="text-sm font-medium text-black">Retry this run</h3>
+            <p class="text-muted text-sm">
+              Relaunch pre-filled from this run. Completed steps are reused where the sample data and their inputs are
+              unchanged; changing the sample data re-runs from the start.
+            </p>
+          </div>
+          <EGButton icon="i-heroicons-arrow-path" label="Retry Run" size="sm" @click="retryRun" />
+        </section>
+
         <section
           v-if="labRun"
           class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 pt-0 max-md:px-5"
@@ -245,6 +355,11 @@
             <div :class="rowStyle">
               <dt :class="rowLabelStyle">Run Name</dt>
               <dd :class="rowContentStyle">{{ labRun.RunName }}</dd>
+            </div>
+
+            <div v-if="labRun.Description" :class="rowStyle">
+              <dt :class="rowLabelStyle">Description</dt>
+              <dd :class="rowContentStyle">{{ labRun.Description }}</dd>
             </div>
 
             <div :class="rowStyle">
@@ -268,6 +383,8 @@
               <dt :class="rowLabelStyle">Platform</dt>
               <dd :class="rowContentStyle">{{ labRun.Platform }}</dd>
             </div>
+
+            <EGRunCostRow :lab-run="labRun" :label-class="rowLabelStyle" :value-class="rowContentStyle" />
 
             <div :class="rowStyle">
               <dt :class="rowLabelStyle">Owner</dt>
@@ -386,12 +503,44 @@
           </template>
         </section>
 
-        <!-- Omics task-level failures for FAILED runs -->
+        <!-- Omics task progress + failures -->
         <section
-          v-if="labRun?.Platform === 'AWS HealthOmics' && (omicsFailureReason || omicsFailedTasks.length)"
+          v-if="
+            labRun?.Platform === 'AWS HealthOmics' &&
+            (omicsFailureReason ||
+              omicsFailedTasks.length ||
+              (omicsProgress?.progress && !TERMINAL_STATUSES.has(labRun.Status)))
+          "
           class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 max-md:px-5"
         >
-          <h3 class="mb-4 text-sm font-medium text-black">Failed Tasks</h3>
+          <h3 class="mb-4 text-sm font-medium text-black">
+            {{ labRun.Status === 'FAILED' ? 'Failed Tasks' : 'Task Progress' }}
+          </h3>
+          <div v-if="omicsProgress?.progress && !TERMINAL_STATUSES.has(labRun.Status)" class="mb-4">
+            <EGProgressBar
+              :percent="omicsProgress.progress.percent"
+              :completed="omicsProgress.progress.tasksCompleted"
+              :total="omicsProgress.progress.tasksTotal"
+            />
+            <ul class="mt-3 flex flex-wrap gap-6 text-sm" aria-label="Task counts by status">
+              <li>
+                <span class="font-medium text-green-700">Completed:</span>
+                {{ omicsProgress.progress.tasksCompleted }}
+              </li>
+              <li>
+                <span class="text-body font-medium">Running:</span>
+                {{ omicsProgress.progress.tasksRunning }}
+              </li>
+              <li>
+                <span class="font-medium text-red-700">Failed:</span>
+                {{ omicsProgress.progress.tasksFailed }}
+              </li>
+              <li>
+                <span class="text-muted font-medium">Total known:</span>
+                {{ omicsProgress.progress.tasksTotal }}
+              </li>
+            </ul>
+          </div>
           <div v-if="omicsFailureReason" class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm">
             <p class="font-medium text-red-800">Failure reason</p>
             <p class="text-red-700">{{ omicsFailureReason }}</p>
@@ -406,7 +555,6 @@
                 <span class="sr-only">Failed task:</span>
                 Task {{ task.taskId }} — {{ task.name }}
               </p>
-              <p v-if="task.statusMessage" class="text-red-600">{{ task.statusMessage }}</p>
             </div>
           </div>
         </section>

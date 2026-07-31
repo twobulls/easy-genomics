@@ -8,15 +8,19 @@ import {
   SnsProcessingEvent,
   SnsProcessingOperation,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sns-processing-event';
-import { DescribeWorkflowResponse } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import {
+  DescribeWorkflowResponse,
+  WorkflowProgressResponse,
+} from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 import { APIGatewayProxyResult, Handler, SQSRecord } from 'aws-lambda';
 import { SQSEvent } from 'aws-lambda/trigger/sqs';
 import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryDataTaggingService } from '@BE/services/easy-genomics/laboratory-data-tagging-service';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { captureRunCostOutcome } from '@BE/services/easy-genomics/run-cost-capture-service';
 import { createOmicsServiceForLab } from '@BE/services/omics-lab-factory';
-import { SnsService } from '@BE/services/sns-service';
+import { SqsService } from '@BE/services/sqs-service';
 import { SsmService } from '@BE/services/ssm-service';
 import {
   calculateExpiresAtEpochSeconds,
@@ -25,62 +29,78 @@ import {
   isTerminalLaboratoryRunStatus,
   shouldExpireWithRetentionMonths,
 } from '@BE/utils/laboratory-run-ttl-utils';
+import { aggregateTaskProgress, OmicsTaskProgress } from '@BE/utils/omics-run-progress-utils';
 import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
+import { aggregateSeqeraProgress } from '@BE/utils/seqera-run-progress-utils';
+import { parseSqsJsonBody } from '@BE/utils/sqs-json-body';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryRunService = new LaboratoryRunService();
 const laboratoryDataTaggingService = new LaboratoryDataTaggingService();
-const snsService = new SnsService();
+const sqsService = new SqsService();
 const ssmService = new SsmService();
 
 /**
- * Best-effort SNS publish that hands off a freshly-failed run to the
- * classification pipeline. Failures here are swallowed because classification
- * is a downstream enhancement — the status-check pipeline must never break if
- * the topic is misconfigured or SNS is temporarily unavailable.
+ * Best-effort platform cost capture. Must never break the status-check pipeline.
  */
-async function safePublishForClassification(run: LaboratoryRun): Promise<void> {
-  const topicArn = process.env.SNS_LABORATORY_RUN_FAILURE_CLASSIFICATION_TOPIC;
-  if (!topicArn) return;
+async function safeCaptureRunCost(run: LaboratoryRun): Promise<LaboratoryRun['RunCostOutcome'] | undefined> {
+  if (run.RunCostOutcome?.CostCapturedAt) return run.RunCostOutcome;
   try {
-    const record: SnsProcessingEvent = {
-      Operation: 'UPDATE',
-      Type: 'LaboratoryRun',
-      Record: run,
-    };
-    await snsService.publish({
-      TopicArn: topicArn,
-      Message: JSON.stringify(record),
-      MessageGroupId: `classify-laboratory-run-${run.RunId}`,
-      MessageDeduplicationId: uuidv4(),
-    });
+    return await captureRunCostOutcome(run);
   } catch (err) {
-    console.warn('Failed to publish FAILED run to classification topic (continuing):', err);
+    console.warn(`Failed to capture run cost for RunId=${run.RunId} (continuing):`, err);
+    return undefined;
   }
 }
 
 /**
- * Best-effort SNS publish that hands a freshly-terminal run off to the notification sender.
- * Only called when `markTerminalNotified` won its conditional write — see that method's
- * docstring for why this closes the duplicate-status-check race.
+ * Best-effort SQS publish that hands off a freshly-failed run to the
+ * classification pipeline. Failures here are swallowed because classification
+ * is a downstream enhancement — the status-check pipeline must never break if
+ * the queue is misconfigured or SQS is temporarily unavailable.
  */
-async function safePublishForNotification(run: LaboratoryRun): Promise<void> {
-  const topicArn = process.env.SNS_LABORATORY_RUN_NOTIFICATION_TOPIC;
-  if (!topicArn) return;
+async function safePublishForClassification(run: LaboratoryRun): Promise<void> {
+  const queueUrl = process.env.SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL;
+  if (!queueUrl) return;
   try {
     const record: SnsProcessingEvent = {
       Operation: 'UPDATE',
       Type: 'LaboratoryRun',
       Record: run,
     };
-    await snsService.publish({
-      TopicArn: topicArn,
-      Message: JSON.stringify(record),
+    await sqsService.sendMessage({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify(record),
+      MessageGroupId: `classify-laboratory-run-${run.RunId}`,
+      MessageDeduplicationId: uuidv4(),
+    });
+  } catch (err) {
+    console.warn('Failed to publish FAILED run to classification queue (continuing):', err);
+  }
+}
+
+/**
+ * Best-effort SQS publish that hands a freshly-terminal run off to the notification sender.
+ * Only called when `markTerminalNotified` won its conditional write — see that method's
+ * docstring for why this closes the duplicate-status-check race.
+ */
+async function safePublishForNotification(run: LaboratoryRun): Promise<void> {
+  const queueUrl = process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL;
+  if (!queueUrl) return;
+  try {
+    const record: SnsProcessingEvent = {
+      Operation: 'UPDATE',
+      Type: 'LaboratoryRun',
+      Record: run,
+    };
+    await sqsService.sendMessage({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify(record),
       MessageGroupId: `notify-laboratory-run-${run.RunId}`,
       MessageDeduplicationId: uuidv4(),
     });
   } catch (err) {
-    console.warn('Failed to publish terminal run to notification topic (continuing):', err);
+    console.warn('Failed to publish terminal run to notification queue (continuing):', err);
   }
 }
 
@@ -115,8 +135,7 @@ export const handler: Handler = async (event: SQSEvent): Promise<APIGatewayProxy
   try {
     const sqsRecords: SQSRecord[] = event.Records;
     for (const sqsRecord of sqsRecords) {
-      const body = JSON.parse(sqsRecord.body);
-      const snsEvent: SnsProcessingEvent = <SnsProcessingEvent>JSON.parse(body.Message);
+      const snsEvent: SnsProcessingEvent = parseSqsJsonBody<SnsProcessingEvent>(sqsRecord.body);
 
       switch (snsEvent.Type) {
         case 'LaboratoryRun':
@@ -149,12 +168,62 @@ type PlatformRunSnapshot = {
   // HealthOmics surfaces it as `statusMessage`, Seqera as `workflow.errorReport`.
   statusMessage?: string;
   errorReport?: string;
+  progress?: OmicsTaskProgress;
 };
 
 function toMsIfPresent(value: Date | string | undefined): number | undefined {
   if (!value) return undefined;
   const t = value instanceof Date ? value.getTime() : new Date(value).getTime();
   return Number.isFinite(t) ? t : undefined;
+}
+
+function progressFieldsFromSnapshot(progress: OmicsTaskProgress | undefined): Partial<LaboratoryRun> {
+  if (!progress) return {};
+  return {
+    ProgressPercent: progress.percent,
+    TasksTotal: progress.tasksTotal,
+    TasksCompleted: progress.tasksCompleted,
+    TasksRunning: progress.tasksRunning,
+    TasksFailed: progress.tasksFailed,
+    ...(progress.currentProcessName != null ? { CurrentProcessName: progress.currentProcessName } : {}),
+  };
+}
+
+function hasProgressChanged(existingRun: LaboratoryRun, progress: OmicsTaskProgress | undefined): boolean {
+  if (!progress) return false;
+  return (
+    existingRun.ProgressPercent !== progress.percent ||
+    existingRun.TasksTotal !== progress.tasksTotal ||
+    existingRun.TasksCompleted !== progress.tasksCompleted ||
+    existingRun.TasksRunning !== progress.tasksRunning ||
+    existingRun.TasksFailed !== progress.tasksFailed ||
+    existingRun.CurrentProcessName !== progress.currentProcessName
+  );
+}
+
+/**
+ * Build LaboratoryRun update payload + DynamoDB REMOVE list for CurrentProcessName.
+ * Clears CurrentProcessName when the run is terminal, or when progress is present but
+ * no process is currently running (avoids leaving a stale name in DynamoDB).
+ */
+function buildProgressUpdate(
+  existingRun: LaboratoryRun,
+  progress: OmicsTaskProgress | undefined,
+  clearProcessName: boolean,
+): { update: LaboratoryRun; remove: string[] } {
+  const update: LaboratoryRun = {
+    ...existingRun,
+    ...progressFieldsFromSnapshot(progress),
+  };
+  const remove: string[] = [];
+  const shouldClear =
+    clearProcessName ||
+    (progress != null && progress.currentProcessName == null && existingRun.CurrentProcessName != null);
+  if (shouldClear) {
+    delete (update as LaboratoryRun & { CurrentProcessName?: string }).CurrentProcessName;
+    remove.push('CurrentProcessName');
+  }
+  return { update, remove };
 }
 
 export async function processStatusCheckEvent(operation: SnsProcessingOperation, laboratoryRun: LaboratoryRun) {
@@ -176,14 +245,19 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
     const missingNotification = existingRun.NotifiedAt == null;
 
     // Backfill branch: run is already terminal but missing one or more of
-    // TerminalAt / ExpiresAt / RunDurationSeconds / NotifiedAt. Fetch platform data once so we can
-    // heal historical rows without waiting for another status transition. The NotifiedAt case
-    // closes a rare gap: if the status-change branch below's `update()` call previously succeeded
-    // but its subsequent `markTerminalNotified()` call then failed with a transient (non-conditional)
-    // error, `existingRun.Status` is already terminal on SQS retry, so that branch never runs again
-    // and the run would otherwise never get notified. The poller's routine re-enqueue of this
-    // already-terminal-but-unnotified run lands here instead, giving notification another chance.
-    if (isAlreadyTerminal && (missingTerminalAt || missingExpiresAt || missingDuration || missingNotification)) {
+    // TerminalAt / ExpiresAt / RunDurationSeconds / RunCostOutcome / NotifiedAt. Fetch platform
+    // data once so we can heal historical rows without waiting for another status transition.
+    // The NotifiedAt case closes a rare gap: if the status-change branch below's `update()` call
+    // previously succeeded but its subsequent `markTerminalNotified()` call then failed with a
+    // transient (non-conditional) error, `existingRun.Status` is already terminal on SQS retry,
+    // so that branch never runs again and the run would otherwise never get notified. The
+    // poller's routine re-enqueue of this already-terminal-but-unnotified run lands here
+    // instead, giving notification another chance.
+    const missingCost = existingRun.RunCostOutcome?.CostCapturedAt == null;
+    if (
+      isAlreadyTerminal &&
+      (missingTerminalAt || missingExpiresAt || missingDuration || missingCost || missingNotification)
+    ) {
       const now = new Date();
       const terminalAtIso = getTerminalAtIsoString(existingRun, now);
 
@@ -198,6 +272,8 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
         }
       }
 
+      const costOutcome = missingCost ? await safeCaptureRunCost(existingRun) : undefined;
+
       const backfilledExpiresAt = missingExpiresAt
         ? calculateExpiresAtEpochSeconds(new Date(terminalAtIso), retentionMonths)
         : undefined;
@@ -209,6 +285,7 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
         ...(snapshot?.durationSeconds != null && existingRun.RunDurationSeconds == null
           ? { RunDurationSeconds: snapshot.durationSeconds }
           : {}),
+        ...(costOutcome ? { RunCostOutcome: costOutcome } : {}),
         ModifiedAt: now.toISOString(),
         ModifiedBy: 'Status Check',
       });
@@ -258,26 +335,41 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
           ? calculateExpiresAtEpochSeconds(new Date(terminalAtIso), retentionMonths)
           : undefined;
 
-      laboratoryRun = await laboratoryRunService.update({
-        ...existingRun,
-        Status: newStatusNormalized,
-        ...(shouldSetTerminalAt ? { TerminalAt: terminalAtIso } : {}),
-        ...(newExpiresAt !== undefined ? { ExpiresAt: newExpiresAt } : {}),
-        ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
-          ? { RunDurationSeconds: snapshot.durationSeconds }
-          : {}),
-        ...(newStatusNormalized === 'FAILED' && snapshot.failureReason && existingRun.FailureReason == null
-          ? { FailureReason: snapshot.failureReason }
-          : {}),
-        ...(newStatusNormalized === 'FAILED' && snapshot.statusMessage && existingRun.FailureReason == null
-          ? { FailureStatusMessage: snapshot.statusMessage }
-          : {}),
-        ...(newStatusNormalized === 'FAILED' && snapshot.errorReport && existingRun.FailureReason == null
-          ? { FailureErrorReport: snapshot.errorReport }
-          : {}),
-        ModifiedAt: now.toISOString(),
-        ModifiedBy: 'Status Check',
-      });
+      const costOutcome =
+        nextStatusTerminal && existingRun.RunCostOutcome?.CostCapturedAt == null
+          ? await safeCaptureRunCost(existingRun)
+          : undefined;
+
+      const { update: progressUpdate, remove: progressRemove } = buildProgressUpdate(
+        existingRun,
+        snapshot.progress,
+        nextStatusTerminal,
+      );
+
+      laboratoryRun = await laboratoryRunService.updateWithAttributeRemoval(
+        {
+          ...progressUpdate,
+          Status: newStatusNormalized,
+          ...(shouldSetTerminalAt ? { TerminalAt: terminalAtIso } : {}),
+          ...(newExpiresAt !== undefined ? { ExpiresAt: newExpiresAt } : {}),
+          ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
+            ? { RunDurationSeconds: snapshot.durationSeconds }
+            : {}),
+          ...(costOutcome ? { RunCostOutcome: costOutcome } : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.failureReason && existingRun.FailureReason == null
+            ? { FailureReason: snapshot.failureReason }
+            : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.statusMessage && existingRun.FailureReason == null
+            ? { FailureStatusMessage: snapshot.statusMessage }
+            : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.errorReport && existingRun.FailureReason == null
+            ? { FailureErrorReport: snapshot.errorReport }
+            : {}),
+          ModifiedAt: now.toISOString(),
+          ModifiedBy: 'Status Check',
+        },
+        progressRemove,
+      );
       await safePropagateExpiresAt(laboratory, laboratoryRun, newExpiresAt);
       if (newStatusNormalized === 'FAILED' && existingRun.FailureOwner == null) {
         await safePublishForClassification(laboratoryRun);
@@ -293,15 +385,29 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
           await safePublishForNotification(notifiedRun);
         }
       }
-    } else if (snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null) {
-      // No status change, but the platform now reports a duration we hadn't captured yet.
+    } else if (
+      (snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null) ||
+      hasProgressChanged(existingRun, snapshot.progress)
+    ) {
+      // No status change, but duration and/or task progress need persisting.
+      // Progress can change continuously while Status stays RUNNING.
       const now = new Date();
-      laboratoryRun = await laboratoryRunService.update({
-        ...existingRun,
-        RunDurationSeconds: snapshot.durationSeconds,
-        ModifiedAt: now.toISOString(),
-        ModifiedBy: 'Status Check',
-      });
+      const { update: progressUpdate, remove: progressRemove } = buildProgressUpdate(
+        existingRun,
+        snapshot.progress,
+        false,
+      );
+      laboratoryRun = await laboratoryRunService.updateWithAttributeRemoval(
+        {
+          ...progressUpdate,
+          ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
+            ? { RunDurationSeconds: snapshot.durationSeconds }
+            : {}),
+          ModifiedAt: now.toISOString(),
+          ModifiedBy: 'Status Check',
+        },
+        progressRemove,
+      );
     }
   } else {
     console.error(`Unsupported SNS Processing Event Operation: ${operation}`);
@@ -339,11 +445,24 @@ export async function getAWSHealthOmicsStatus(laboratoryRun: LaboratoryRun): Pro
   const durationSeconds =
     startMs != null && stopMs != null && stopMs >= startMs ? Math.round((stopMs - startMs) / 1000) : undefined;
 
+  const status = response.status || 'UNKNOWN';
+  let progress: OmicsTaskProgress | undefined;
+  if (!isTerminalLaboratoryRunStatus(status) && laboratoryRun.ExternalRunId) {
+    try {
+      const tasks = await omicsService.listAllRunTasks(laboratoryRun.ExternalRunId);
+      progress = aggregateTaskProgress(tasks);
+    } catch (err) {
+      // Progress is best-effort; do not fail the status-check pipeline if ListRunTasks fails.
+      console.warn(`ListRunTasks failed for RunId=${laboratoryRun.RunId}:`, err);
+    }
+  }
+
   return {
-    status: response.status || 'UNKNOWN',
+    status,
     durationSeconds,
     failureReason: response.failureReason,
     statusMessage: response.statusMessage,
+    progress,
   };
 }
 
@@ -396,10 +515,27 @@ export async function getSeqeraCloudStatus(laboratoryRun: LaboratoryRun): Promis
     }
   }
 
+  const status = workflow?.status || 'UNKNOWN';
+  let progress: OmicsTaskProgress | undefined;
+  if (!isTerminalLaboratoryRunStatus(status) && laboratoryRun.ExternalRunId) {
+    try {
+      const progressResponse: WorkflowProgressResponse = await httpRequest<WorkflowProgressResponse>(
+        `${process.env.SEQERA_API_BASE_URL}/workflow/${laboratoryRun.ExternalRunId}/progress?${apiQueryParameters}`,
+        REST_API_METHOD.GET,
+        { Authorization: `Bearer ${accessToken}` },
+      );
+      progress = aggregateSeqeraProgress(progressResponse.progress);
+    } catch (err) {
+      // Progress is best-effort; do not fail the status-check pipeline if progress fetch fails.
+      console.warn(`Seqera workflow progress failed for RunId=${laboratoryRun.RunId}:`, err);
+    }
+  }
+
   return {
-    status: workflow?.status || 'UNKNOWN',
+    status,
     durationSeconds,
     failureReason: workflow?.errorMessage,
     errorReport: workflow?.errorReport,
+    progress,
   };
 }

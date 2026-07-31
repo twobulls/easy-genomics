@@ -7,11 +7,13 @@ import OmicsRunsModule from '@FE/repository/modules/omics-runs';
 import OmicsWorkflowsModule from '@FE/repository/modules/omics-workflows';
 import OrganizationEmailBrandingModule from '@FE/repository/modules/organization-email-branding';
 import OrgsModule from '@FE/repository/modules/orgs';
+import S3AccessModule from '@FE/repository/modules/s3-access';
 import SeqeraPipelinesModule from '@FE/repository/modules/seqera-pipelines';
 import SeqeraRunsModules from '@FE/repository/modules/seqera-runs';
 import UploadsModule from '@FE/repository/modules/uploads';
 import UsersModule from '@FE/repository/modules/users';
 import WorkflowAccessModule from '@FE/repository/modules/workflow-access';
+import WorkflowRunPresetsModule from '@FE/repository/modules/workflow-run-presets';
 
 interface IApiInstance {
   dataCollections: DataCollectionsModule;
@@ -27,6 +29,8 @@ interface IApiInstance {
   uploads: UploadsModule;
   users: UsersModule;
   workflowAccess: WorkflowAccessModule;
+  s3Access: S3AccessModule;
+  workflowRunPresets: WorkflowRunPresetsModule;
 }
 
 interface FetchOptions {
@@ -51,6 +55,8 @@ const createApiInstance = (apiFetcher: any): IApiInstance => ({
   uploads: new UploadsModule(apiFetcher),
   users: new UsersModule(apiFetcher),
   workflowAccess: new WorkflowAccessModule(apiFetcher),
+  s3Access: new S3AccessModule(apiFetcher),
+  workflowRunPresets: new WorkflowRunPresetsModule(apiFetcher),
 });
 
 export default defineNuxtPlugin((nuxtApp) => {

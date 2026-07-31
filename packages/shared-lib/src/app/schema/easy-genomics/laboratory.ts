@@ -21,7 +21,10 @@ export const LaboratorySchema = z
      * - 0 means "never delete run records" (no TTL expiration).
      */
     RunRetentionMonths: z.number().int().min(0).optional(),
+    RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
+    RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
+    EnableNewBucketsByDefault: z.boolean().optional(),
     /**
      * Lab-manager kill switch for run-completion email notifications. Defaults to `true`
      * (enabled) at the application layer when absent. Does not itself subscribe anyone —
@@ -48,6 +51,12 @@ export const LaboratorySchema = z
      * lookup + LLM on failureReason only).
      */
     HealthOmicsLogEnrichmentEnabled: z.boolean().optional(),
+    /**
+     * AWS HealthOmics run cache id (call caching / "resume"). Lazily provisioned on the first
+     * HealthOmics run and reused for all subsequent runs so failed runs can resume from their
+     * last completed task. Managed internally; not set via the create/update Laboratory APIs.
+     */
+    HealthOmicsRunCacheId: z.string().optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -73,8 +82,11 @@ export const CreateLaboratorySchema = z
     // name of an existing HealthOmics Configuration resource; AWS caps the name at 50 chars
     AwsHealthOmicsVpcConfigurationName: z.string().max(50).optional(),
     RunRetentionMonths: z.number().int().min(0).optional(),
+    RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
+    RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
     NotificationsEnabled: z.boolean().optional(),
+    EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),
     SeqeraLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
@@ -115,8 +127,11 @@ export const ReadLaboratorySchema = z
     HasNextFlowTowerAccessToken: z.boolean().optional(), // Return boolean indicator instead of actual NextFlowTowerAccessToken
     HasGitHubAccessToken: z.boolean().optional(), // Return boolean indicator instead of actual GitHubAccessToken
     RunRetentionMonths: z.number().int().min(0).optional(),
+    RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
+    RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
     NotificationsEnabled: z.boolean().optional(),
+    EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),
     SeqeraLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
@@ -125,6 +140,7 @@ export const ReadLaboratorySchema = z
     /** Boolean indicators. The actual keys live in SSM and are never returned. */
     HasHealthOmicsLlmApiKey: z.boolean().optional(),
     HasSeqeraLlmApiKey: z.boolean().optional(),
+    HealthOmicsRunCacheId: z.string().optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -157,8 +173,11 @@ export const UpdateLaboratorySchema = z
     // name of an existing HealthOmics Configuration resource; AWS caps the name at 50 chars
     AwsHealthOmicsVpcConfigurationName: z.string().max(50).optional(),
     RunRetentionMonths: z.number().int().min(0).optional(),
+    RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
+    RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
     NotificationsEnabled: z.boolean().optional(),
+    EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),
     SeqeraLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),

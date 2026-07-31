@@ -33,7 +33,10 @@
   const overviewHeadingId = 'dashboard-overview-heading';
   const recentRunsHeadingId = 'dashboard-recent-runs-heading';
   const favouriteWorkflowsHeadingId = 'dashboard-favourite-workflows-heading';
+  const inProgressHeadingId = 'dashboard-in-progress-heading';
   const highlightedSearchIndex = ref(-1);
+
+  const IN_PROGRESS_STATUSES = new Set(['SUBMITTED', 'STARTING', 'RUNNING']);
 
   interface SearchResult {
     type: 'run' | 'seqera-pipeline' | 'omics-workflow';
@@ -53,7 +56,10 @@
     const results: SearchResult[] = [];
 
     for (const run of allRuns.value) {
-      const haystack = [run.RunName, run.WorkflowName, run.Owner, run.Status].filter(Boolean).join(' ').toLowerCase();
+      const haystack = [run.RunName, run.Description, run.WorkflowName, run.Owner, run.Status]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
       if (haystack.includes(q)) {
         results.push({
           type: 'run',
@@ -240,8 +246,17 @@
     return allRuns.value.filter((run) => getAnchorTime(run) >= cutoff);
   });
 
-  const activeRuns = computed(() =>
-    filteredRunsForOverview.value.filter((r) => ['SUBMITTED', 'STARTING', 'RUNNING'].includes(r.Status)),
+  const activeRuns = computed(() => filteredRunsForOverview.value.filter((r) => IN_PROGRESS_STATUSES.has(r.Status)));
+
+  /** All currently active runs in the lab (not limited by the overview time filter). */
+  const inProgressRuns = computed(() =>
+    [...allRuns.value]
+      .filter((r) => IN_PROGRESS_STATUSES.has(r.Status))
+      .sort((a, b) => {
+        const dateA = a.CreatedAt ? new Date(a.CreatedAt).getTime() : 0;
+        const dateB = b.CreatedAt ? new Date(b.CreatedAt).getTime() : 0;
+        return dateB - dateA;
+      }),
   );
 
   const completedRuns = computed(() =>
@@ -275,8 +290,40 @@
     return `${hours.toFixed(1)}h`;
   });
 
+  const costExplorerEnabled = useCostExplorerEnabled();
+
+  function runSpendUsd(r: {
+    BilledCost?: { TotalUsd?: number };
+    RunCostOutcome?: { ActualComputeCostUsd?: number };
+  }): number | undefined {
+    const billed = r.BilledCost?.TotalUsd;
+    if (typeof billed === 'number' && Number.isFinite(billed)) return billed;
+    const estimate = r.RunCostOutcome?.ActualComputeCostUsd;
+    if (typeof estimate === 'number' && Number.isFinite(estimate)) return estimate;
+    return undefined;
+  }
+
+  /** True unless every run that contributes a figure has BilledCost. */
+  const runSpendIsEstimateOnly = computed(() => {
+    const withAmount = filteredRunsForOverview.value.filter((r) => runSpendUsd(r) != null);
+    if (withAmount.length === 0) return true;
+    return !withAmount.every(
+      (r) => typeof r.BilledCost?.TotalUsd === 'number' && Number.isFinite(r.BilledCost.TotalUsd),
+    );
+  });
+
+  /** Per-run BilledCost ?? RunCostOutcome, so mixed CE sync windows do not under-count. */
+  const totalBilledSpend = computed(() => {
+    const amounts = filteredRunsForOverview.value.map(runSpendUsd).filter((n): n is number => n != null);
+    if (amounts.length === 0) return '—';
+    const sum = amounts.reduce((s, n) => s + n, 0);
+    return runSpendIsEstimateOnly.value ? `≈ US$${sum.toFixed(2)}` : `US$${sum.toFixed(2)}`;
+  });
+
   const recentRuns = computed(() => {
+    // Match the design: in-progress runs live in the In progress section, not Recent runs.
     return [...allRuns.value]
+      .filter((r) => !IN_PROGRESS_STATUSES.has(r.Status))
       .sort((a, b) => {
         const dateA = a.CreatedAt ? new Date(a.CreatedAt).getTime() : 0;
         const dateB = b.CreatedAt ? new Date(b.CreatedAt).getTime() : 0;
@@ -529,6 +576,14 @@
       bgColor: 'bg-background-light-grey',
       iconColor: 'text-muted',
     },
+    {
+      key: 'run-spend',
+      icon: 'i-heroicons-currency-dollar',
+      value: totalBilledSpend.value,
+      label: !costExplorerEnabled.value || runSpendIsEstimateOnly.value ? 'Estimated run spend' : 'Run spend',
+      bgColor: 'bg-primary-muted',
+      iconColor: 'text-primary',
+    },
   ]);
 </script>
 
@@ -624,88 +679,12 @@
       </div>
     </div>
 
-    <!-- Dashboard Overview -->
-    <section class="mt-8" :aria-labelledby="overviewHeadingId">
-      <div class="flex items-center justify-between">
-        <EGText :id="overviewHeadingId" tag="h2" class="mb-0">Dashboard overview</EGText>
-        <div>
-          <label :for="overviewTimeFilterId" class="sr-only">Overview time period</label>
-          <select
-            :id="overviewTimeFilterId"
-            v-model="overviewTimeFilter"
-            class="text-body focus-visible:outline-primary-500 rounded-lg border border-neutral-100 bg-white px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-            :aria-label="`Overview time period, ${overviewTimeFilterLabel}`"
-          >
-            <option v-for="opt in timeFilterOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+    <!-- In progress -->
+    <section v-if="inProgressRuns.length > 0" class="mt-8" :aria-labelledby="inProgressHeadingId">
+      <EGText :id="inProgressHeadingId" tag="h2" class="mb-3">In progress</EGText>
+      <div class="flex flex-col gap-3">
+        <EGInProgressRunCard v-for="run in inProgressRuns" :key="run.RunId" :run="run" :lab-id="labId" />
       </div>
-
-      <dl class="mt-4 grid grid-cols-4 gap-4">
-        <div
-          v-for="stat in overviewStats"
-          :key="stat.key"
-          class="flex items-center gap-4 rounded-2xl border border-neutral-100 bg-white p-6"
-        >
-          <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-            :class="stat.bgColor"
-            aria-hidden="true"
-          >
-            <UIcon :name="stat.icon" class="h-6 w-6" :class="stat.iconColor" />
-          </div>
-          <div>
-            <dt class="text-muted text-sm">{{ stat.label }}</dt>
-            <dd class="text-heading m-0 font-serif text-3xl font-semibold">{{ stat.value }}</dd>
-          </div>
-        </div>
-      </dl>
-    </section>
-
-    <!-- Recent Runs -->
-    <section class="mt-10" :aria-labelledby="recentRunsHeadingId">
-      <EGText :id="recentRunsHeadingId" tag="h2" class="mb-8">Recent Runs</EGText>
-
-      <EGTable
-        :row-click-action="viewRunDetails"
-        :table-data="recentRunsTableItems"
-        :columns="recentRunsTableColumns"
-        v-model:sort="recentRunsSort"
-        :is-loading="uiStore.isRequestPending('loadDashboardData')"
-        :show-pagination="false"
-        :labelled-by="recentRunsHeadingId"
-      >
-        <template #RunName-data="{ row: run }">
-          <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
-          <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
-        </template>
-
-        <template #lastUpdated-data="{ row: run }">
-          <div class="text-body text-sm font-medium">{{ getDate(run.lastUpdated) }}</div>
-          <div class="text-muted text-xs">{{ getTime(run.lastUpdated) }}</div>
-        </template>
-
-        <template #Status-data="{ row: run }">
-          <EGStatusChip :status="run.Status" />
-        </template>
-
-        <template #actions-data="{ row }">
-          <div class="flex justify-end">
-            <EGActionButton
-              :items="runsActionItems(row)"
-              :menu-label="`Actions for ${row.RunName || 'run'}`"
-              class="ml-2"
-              @click="$event.stopPropagation()"
-            />
-          </div>
-        </template>
-
-        <template #empty-state>
-          <div class="text-muted flex h-24 items-center justify-center font-normal">No recent runs</div>
-        </template>
-      </EGTable>
     </section>
 
     <!-- Favourite Workflows -->
@@ -745,6 +724,91 @@
           <div class="text-muted flex h-24 items-center justify-center font-normal">No favourite workflows yet</div>
         </template>
       </EGTable>
+    </section>
+
+    <!-- Recent Runs -->
+    <section class="mt-10" :aria-labelledby="recentRunsHeadingId">
+      <EGText :id="recentRunsHeadingId" tag="h2" class="mb-8">Recent Runs</EGText>
+
+      <EGTable
+        :row-click-action="viewRunDetails"
+        :table-data="recentRunsTableItems"
+        :columns="recentRunsTableColumns"
+        v-model:sort="recentRunsSort"
+        :is-loading="uiStore.isRequestPending('loadDashboardData')"
+        :show-pagination="false"
+        :labelled-by="recentRunsHeadingId"
+      >
+        <template #RunName-data="{ row: run }">
+          <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
+          <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
+          <div v-if="run.Description" class="text-muted line-clamp-1 text-xs font-normal">{{ run.Description }}</div>
+        </template>
+
+        <template #lastUpdated-data="{ row: run }">
+          <div class="text-body text-sm font-medium">{{ getDate(run.lastUpdated) }}</div>
+          <div class="text-muted text-xs">{{ getTime(run.lastUpdated) }}</div>
+        </template>
+
+        <template #Status-data="{ row: run }">
+          <EGStatusChip :status="run.Status" />
+        </template>
+
+        <template #actions-data="{ row }">
+          <div class="flex justify-end">
+            <EGActionButton
+              :items="runsActionItems(row)"
+              :menu-label="`Actions for ${row.RunName || 'run'}`"
+              class="ml-2"
+              @click="$event.stopPropagation()"
+            />
+          </div>
+        </template>
+
+        <template #empty-state>
+          <div class="text-muted flex h-24 items-center justify-center font-normal">No recent runs</div>
+        </template>
+      </EGTable>
+    </section>
+
+    <!-- Lab metrics -->
+    <section class="mt-10" :aria-labelledby="overviewHeadingId">
+      <div class="flex items-center justify-between">
+        <EGText :id="overviewHeadingId" tag="h2" class="mb-0">Lab metrics</EGText>
+        <div>
+          <label :for="overviewTimeFilterId" class="sr-only">Overview time period</label>
+          <select
+            :id="overviewTimeFilterId"
+            v-model="overviewTimeFilter"
+            class="text-body focus-visible:outline-primary-500 rounded-lg border border-neutral-100 bg-white px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            :aria-label="`Overview time period, ${overviewTimeFilterLabel}`"
+          >
+            <option v-for="opt in timeFilterOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <dl class="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <div
+          v-for="stat in overviewStats"
+          :key="stat.key"
+          class="flex items-center gap-4 rounded-2xl border border-neutral-100 bg-white p-6"
+        >
+          <div
+            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+            :class="stat.bgColor"
+            aria-hidden="true"
+          >
+            <UIcon :name="stat.icon" class="h-6 w-6" :class="stat.iconColor" />
+          </div>
+          <div>
+            <dt class="text-muted text-sm">{{ stat.label }}</dt>
+            <dd class="text-heading m-0 font-serif text-3xl font-semibold">{{ stat.value }}</dd>
+          </div>
+        </div>
+      </dl>
     </section>
   </div>
 </template>

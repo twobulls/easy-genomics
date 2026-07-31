@@ -77,7 +77,7 @@
 
   usePageTitle(() => (workflow.value?.name ? `Run workflow — ${workflow.value.name}` : 'Run workflow'));
 
-  const schema = computed<Record<string, WorkflowParameter> | null>(() => workflow.value?.parameterTemplate ?? null);
+  const schema = computed<Record<string, WorkflowParameter>>(() => workflow.value?.parameterTemplate ?? {});
 
   watch(
     omicsRunTempId,
@@ -181,8 +181,12 @@
       workflowVersionOptions.value = undefined;
     }
 
+    // GetWorkflowResponse.parameterTemplate is optional per the AWS SDK type — HealthOmics can
+    // legitimately return a workflow with no parameter template (e.g. one that takes no params).
+    const parameterTemplate = omicsWorkflow.parameterTemplate ?? {};
+
     // Identify AWS HealthOmics workflow schema required parameters
-    const paramsRequired: string[] = Object.entries(omicsWorkflow.parameterTemplate)
+    const paramsRequired: string[] = Object.entries(parameterTemplate)
       .map((param: [string, object]) => {
         const paramName: string = param[0];
         const paramDetails: any = param[1];
@@ -202,7 +206,7 @@
       rawSavedDefaults = user.OmicsWorkflowDefaultParams?.[workflowId] ?? {};
       workflowDefaultParams = Object.fromEntries(
         Object.entries(rawSavedDefaults).filter(([paramName]) =>
-          Object.prototype.hasOwnProperty.call(omicsWorkflow.parameterTemplate, paramName),
+          Object.prototype.hasOwnProperty.call(parameterTemplate, paramName),
         ),
       );
     }

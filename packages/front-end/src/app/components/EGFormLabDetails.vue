@@ -766,7 +766,7 @@
       );
     }
 
-    if (additionalEmailsError.value) {
+    if (notifyOnLabRunsEnabled.value && additionalEmailsError.value) {
       errors.push({ path: 'NotifyOnLabRunsAdditionalEmailsInput', message: additionalEmailsError.value });
     }
 

@@ -3,11 +3,11 @@ import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent } from
 import { handler } from '../../../../../src/app/controllers/easy-genomics/user/create-bulk-user-invitation-requests.lambda';
 
 jest.mock('../../../../../src/app/services/easy-genomics/organization-service');
-jest.mock('../../../../../src/app/services/sns-service');
+jest.mock('../../../../../src/app/services/sqs-service');
 jest.mock('../../../../../src/app/utils/auth-utils');
 
 import { OrganizationService } from '../../../../../src/app/services/easy-genomics/organization-service';
-import { SnsService } from '../../../../../src/app/services/sns-service';
+import { SqsService } from '../../../../../src/app/services/sqs-service';
 import { validateSystemAdminAccess, validateOrganizationAdminAccess } from '../../../../../src/app/utils/auth-utils';
 
 const ORG_ID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
@@ -37,14 +37,14 @@ describe('create-bulk-user-invitation-requests Lambda', () => {
   let mockValidateSysAdmin: jest.MockedFunction<typeof validateSystemAdminAccess>;
   let mockValidateOrgAdmin: jest.MockedFunction<typeof validateOrganizationAdminAccess>;
   let mockOrgGet: jest.Mock;
-  let mockSnsPublish: jest.Mock;
+  let mockSqsSendMessage: jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    process.env.SNS_USER_INVITE_TOPIC = 'arn:aws:sns:us-east-1:123456789012:test-topic.fifo';
+    process.env.SQS_USER_INVITE_QUEUE_URL = 'arn:aws:sns:us-east-1:123456789012:test-topic.fifo';
 
     mockValidateSysAdmin = validateSystemAdminAccess as jest.MockedFunction<typeof validateSystemAdminAccess>;
     mockValidateOrgAdmin = validateOrganizationAdminAccess as jest.MockedFunction<
@@ -55,9 +55,9 @@ describe('create-bulk-user-invitation-requests Lambda', () => {
     mockOrgGet = jest.fn();
     MockOrgService.prototype.get = mockOrgGet;
 
-    const MockSnsService = SnsService as jest.MockedClass<typeof SnsService>;
-    mockSnsPublish = jest.fn();
-    MockSnsService.prototype.publish = mockSnsPublish;
+    const MockSqsService = SqsService as jest.MockedClass<typeof SqsService>;
+    mockSqsSendMessage = jest.fn();
+    MockSqsService.prototype.sendMessage = mockSqsSendMessage;
   });
 
   it('returns EG-102 when the request body fails Zod validation', async () => {
@@ -98,7 +98,7 @@ describe('create-bulk-user-invitation-requests Lambda', () => {
   it('publishes one SNS message per email and returns success', async () => {
     mockValidateSysAdmin.mockReturnValue(true);
     mockOrgGet.mockResolvedValue({ OrganizationId: ORG_ID });
-    mockSnsPublish.mockResolvedValue({});
+    mockSqsSendMessage.mockResolvedValue({});
 
     const emails = ['a@example.com', 'b@example.com'];
     const result = (await handler(
@@ -109,6 +109,6 @@ describe('create-bulk-user-invitation-requests Lambda', () => {
 
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual({ Status: 'success' });
-    expect(mockSnsPublish).toHaveBeenCalledTimes(emails.length);
+    expect(mockSqsSendMessage).toHaveBeenCalledTimes(emails.length);
   });
 });

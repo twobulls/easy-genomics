@@ -2,9 +2,8 @@ import * as fs from 'fs';
 import path from 'path';
 import { AssociativeArray, HttpRequest } from '@easy-genomics/shared-lib/src/app/utils/common';
 import { aws_lambda, aws_lambda_nodejs, Duration } from 'aws-cdk-lib';
-import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { IEventSource, IFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
-import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import { CommonApiNestedStackProps } from '../types/back-end-stack';
 
@@ -18,6 +17,12 @@ export const LAMBDA_FUNCTION_ROOT_DIR = 'src/app/controllers'; // DO NOT CHANGE
 // using this map. It deliberately does NOT extend any single domain's
 // nested-stack props, so no domain can accidentally inherit another domain's
 // API ownership just by sharing Cognito/VPC dependencies.
+//
+// Per-handler IAM is folded into the Role as an inline policy (instead of a
+// separate AWS::IAM::Policy) so each handler costs 2 CFN resources instead of
+// 3. Log retention is NOT created here — callers provision it in a sibling
+// nested stack via `logGroupNames` to keep Custom::LogRetention out of the
+// route-heavy domain templates.
 export interface LambdaConstructProps extends CommonApiNestedStackProps {
   lambdaFunctionsDir: string;
   lambdaFunctionsNamespace: string;
@@ -67,6 +72,12 @@ const ALLOWED_LAMBDA_FUNCTION_OPERATIONS: AssociativeArray<HttpRequest> = {
 export class LambdaConstruct extends Construct {
   private props: LambdaConstructProps;
   readonly lambdaFunctions: Map<string, IFunction> = new Map();
+  /**
+   * Deterministic `/aws/lambda/<functionName>` log group names for every
+   * handler registered by this construct. Used by `LogRetentionNestedStack`
+   * so Custom::LogRetention resources live in a separate template.
+   */
+  readonly logGroupNames: string[] = [];
 
   constructor(scope: Construct, id: string, props: LambdaConstructProps) {
     super(scope, id);
@@ -101,32 +112,14 @@ export class LambdaConstruct extends Construct {
     const lambdaTimeoutSeconds = this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.timeoutSeconds || 30;
     const lambdaMemorySizeMb = this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.memorySizeMb || 1024;
     const lambdaNodeModules = this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.nodeModules;
+    const hasEventSources = (this.props.lambdaFunctionsResources[lambdaApiEndpoint]?.events?.length ?? 0) > 0;
 
-    const lambdaHandler: IFunction = new aws_lambda_nodejs.NodejsFunction(this, `${lambdaId}`, {
-      runtime: Runtime.NODEJS_20_X,
-      timeout: Duration.seconds(lambdaTimeoutSeconds),
-      memorySize: lambdaMemorySizeMb,
-      functionName: `${this.props.lambdaFunctionsNamespace}-${lambdaName}`.slice(0, 64),
-      entry: `${lambdaFunction.path}`,
-      handler: 'handler',
-      tracing: aws_lambda.Tracing.ACTIVE,
-      bundling: {
-        loader: { '.hbs': 'text' },
-        externalModules: ['@aws-sdk/*'],
-        nodeModules: lambdaNodeModules,
-      },
-      logRetention: RetentionDays.ONE_DAY,
-      logRetentionRetryOptions: {
-        // Attempt to avoid LogRetention creation failure due to throttling
-        maxRetries: 10, // AWS default is 3
-      },
-      environment: {
-        ...commonProcessEnv, // Common process.env settings
-        ...lambdaProcessEnv, // Specific process.env settings
-      },
-    });
+    const functionName = `${this.props.lambdaFunctionsNamespace}-${lambdaName}`.slice(0, 64);
+    this.logGroupNames.push(`/aws/lambda/${functionName}`);
 
-    // Attach relevant IAM policies to Lambda Function matching specific API Endpoint
+    // Attach relevant IAM policies to Lambda Function matching specific API Endpoint.
+    // Folded into the Role as an inline policy so we do not emit a separate
+    // AWS::IAM::Policy resource per handler (CloudFormation stack budget).
     const iamPolicyStatements: PolicyStatement[] | undefined = this.props.iamPolicyStatements?.get(lambdaApiEndpoint);
     if (iamPolicyStatements) {
       if (process.env.CI_CD === 'true') {
@@ -134,12 +127,52 @@ export class LambdaConstruct extends Construct {
           `Attaching IAM Policy to REST API Endpoint: ${lambdaApiEndpoint}\n${JSON.stringify(iamPolicyStatements, null, 2)}`,
         );
       }
-      iamPolicyStatements.forEach((iamPolicyStatement: PolicyStatement) => {
-        lambdaHandler.addToRolePolicy(iamPolicyStatement);
-      });
     } else {
       console.warn(`WARNING: ${lambdaApiEndpoint} does not have any IAM Policies attached`);
     }
+
+    const role = new Role(this, `${lambdaId}-role`, {
+      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        // Required when supplying a custom role — Function skips its default managed policies.
+        ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+        // Replaces the inline xray:Put* statement Tracing.ACTIVE would otherwise add via
+        // addToRolePolicy (which would recreate a DefaultPolicy AWS::IAM::Policy resource).
+        ManagedPolicy.fromAwsManagedPolicyName('AWSXRayDaemonWriteAccess'),
+      ],
+      inlinePolicies:
+        iamPolicyStatements && iamPolicyStatements.length > 0
+          ? {
+              handler: new PolicyDocument({ statements: iamPolicyStatements }),
+            }
+          : undefined,
+    });
+
+    // Handlers with event sources need a mutable role so SqsEventSource /
+    // DynamoEventSource grants (sqs:ReceiveMessage, dynamodb:GetRecords, …)
+    // can land on a DefaultPolicy. Everything else uses withoutPolicyUpdates()
+    // so Tracing.ACTIVE's addToRolePolicy call is a silent no-op.
+    const functionRole = hasEventSources ? role : role.withoutPolicyUpdates();
+
+    const lambdaHandler: IFunction = new aws_lambda_nodejs.NodejsFunction(this, `${lambdaId}`, {
+      runtime: Runtime.NODEJS_20_X,
+      timeout: Duration.seconds(lambdaTimeoutSeconds),
+      memorySize: lambdaMemorySizeMb,
+      functionName,
+      entry: `${lambdaFunction.path}`,
+      handler: 'handler',
+      tracing: aws_lambda.Tracing.ACTIVE,
+      role: functionRole,
+      bundling: {
+        loader: { '.hbs': 'text' },
+        externalModules: ['@aws-sdk/*'],
+        nodeModules: lambdaNodeModules,
+      },
+      environment: {
+        ...commonProcessEnv, // Common process.env settings
+        ...lambdaProcessEnv, // Specific process.env settings
+      },
+    });
 
     if (lambdaFunction.command === 'process') {
       // Register Event Source Listeners/Triggers for the respective Lambda function

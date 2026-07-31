@@ -19,7 +19,7 @@ import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { RunCostEstimationService } from '@BE/services/easy-genomics/run-cost-estimation-service';
 import { buildRunInputProfile } from '@BE/services/easy-genomics/run-input-profile-service';
-import { SnsService } from '@BE/services/sns-service';
+import { SqsService } from '@BE/services/sqs-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
@@ -36,7 +36,7 @@ const laboratoryRunService = new LaboratoryRunService();
 const laboratoryService = new LaboratoryService();
 const dataTaggingService = new LaboratoryDataTaggingService();
 const runCostEstimationService = new RunCostEstimationService();
-const snsService = new SnsService();
+const sqsService = new SqsService();
 
 /**
  * Best-effort input profile + pre-run estimate. Runs after laboratoryRunService.add()
@@ -164,9 +164,9 @@ export const handler: Handler = async (
         Type: 'LaboratoryRun',
         Record: laboratoryRun,
       };
-      await snsService.publish({
-        TopicArn: process.env.SNS_LABORATORY_RUN_UPDATE_TOPIC,
-        Message: JSON.stringify(record),
+      await sqsService.sendMessage({
+        QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
+        MessageBody: JSON.stringify(record),
         MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
         MessageDeduplicationId: uuidv4(),
       });

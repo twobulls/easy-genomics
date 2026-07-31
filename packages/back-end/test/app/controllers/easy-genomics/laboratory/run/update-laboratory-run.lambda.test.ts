@@ -3,14 +3,14 @@ import { handler } from '../../../../../../src/app/controllers/easy-genomics/lab
 
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-run-service');
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-service');
-jest.mock('../../../../../../src/app/services/sns-service');
+jest.mock('../../../../../../src/app/services/sqs-service');
 jest.mock('../../../../../../src/app/utils/auth-utils');
 
 import { LaboratoryDataTaggingService } from '../../../../../../src/app/services/easy-genomics/laboratory-data-tagging-service';
 
 import { LaboratoryRunService } from '../../../../../../src/app/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '../../../../../../src/app/services/easy-genomics/laboratory-service';
-import { SnsService } from '../../../../../../src/app/services/sns-service';
+import { SqsService } from '../../../../../../src/app/services/sqs-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
@@ -23,7 +23,7 @@ describe('update-laboratory-run.lambda', () => {
 
   let mockRunService: jest.MockedClass<typeof LaboratoryRunService>;
   let mockLabService: jest.MockedClass<typeof LaboratoryService>;
-  let mockSnsService: jest.MockedClass<typeof SnsService>;
+  let mockSqsService: jest.MockedClass<typeof SqsService>;
   let mockValidateOrgAdmin: jest.MockedFunction<typeof validateOrganizationAdminAccess>;
   let mockValidateLabManager: jest.MockedFunction<typeof validateLaboratoryManagerAccess>;
   let mockValidateLabTechnician: jest.MockedFunction<typeof validateLaboratoryTechnicianAccess>;
@@ -89,7 +89,7 @@ describe('update-laboratory-run.lambda', () => {
     jest.clearAllMocks();
     mockRunService = LaboratoryRunService as jest.MockedClass<typeof LaboratoryRunService>;
     mockLabService = LaboratoryService as jest.MockedClass<typeof LaboratoryService>;
-    mockSnsService = SnsService as jest.MockedClass<typeof SnsService>;
+    mockSqsService = SqsService as jest.MockedClass<typeof SqsService>;
     mockValidateOrgAdmin = validateOrganizationAdminAccess as any;
     mockValidateLabManager = validateLaboratoryManagerAccess as any;
     mockValidateLabTechnician = validateLaboratoryTechnicianAccess as any;
@@ -106,7 +106,7 @@ describe('update-laboratory-run.lambda', () => {
     mockRunService.prototype.queryByRunId = mockQueryByRunId;
     mockRunService.prototype.update = mockUpdateRun;
     mockLabService.prototype.queryByLaboratoryId = mockQueryByLaboratoryId;
-    mockSnsService.prototype.publish = mockPublish;
+    mockSqsService.prototype.sendMessage = mockPublish;
 
     mockQueryByLaboratoryId.mockResolvedValue({
       LaboratoryId: LAB_ID,
@@ -114,7 +114,7 @@ describe('update-laboratory-run.lambda', () => {
       RunRetentionMonths: 0,
     });
 
-    process.env.SNS_LABORATORY_RUN_UPDATE_TOPIC = 'arn:aws:sns:region:acct:lab-run-update';
+    process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL = 'arn:aws:sns:region:acct:lab-run-update';
 
     propagateExpiresSpy = jest
       .spyOn(LaboratoryDataTaggingService.prototype, 'updateRunUsageExpiresAt')
@@ -185,7 +185,7 @@ describe('update-laboratory-run.lambda', () => {
     const body = JSON.parse(result.body);
     expect(body.Status).toBe('RUNNING');
     expect(mockRunService.prototype.update).toHaveBeenCalled();
-    expect(mockSnsService.prototype.publish).toHaveBeenCalled();
+    expect(mockSqsService.prototype.sendMessage).toHaveBeenCalled();
     expect(mockUpdateRun).toHaveBeenCalled();
     expect(mockPublish).toHaveBeenCalled();
   });

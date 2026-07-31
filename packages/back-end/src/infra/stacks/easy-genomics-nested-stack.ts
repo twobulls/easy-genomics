@@ -1,22 +1,20 @@
 import { Duration, NestedStack } from 'aws-cdk-lib';
 import { Schedule, Rule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
-import { Effect, PolicyStatement, StarPrincipal } from 'aws-cdk-lib/aws-iam';
+import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { DynamoEventSource, SqsDlq, SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
-import { Topic } from 'aws-cdk-lib/aws-sns';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
 import { SesConstruct } from '../constructs/ses-construct';
-import { SnsConstruct, TopicDetails, Topics } from '../constructs/sns-construct';
 import { QueueDetails, Queues, SqsConstruct } from '../constructs/sqs-construct';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
 
 /**
- * Easy Genomics nested stack: lambdas, SNS, SQS, SES, IAM, route registration.
+ * Easy Genomics nested stack: lambdas, SQS, SES, IAM.
  *
  * NOTE: This stack does NOT own the easy-genomics DynamoDB tables. Tables are
  * created by the parent `EasyGenomicsApiStack` and injected here via
@@ -30,6 +28,10 @@ import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
  * IAM policy statements in this nested stack reference table ARNs by string
  * template (built from `props.namePrefix`), so they continue to work
  * regardless of which stack physically owns the table resources.
+ *
+ * Async work is published directly to FIFO SQS queues (no SNS hop). Each
+ * former SNS→SQS pair was 1:1 with no fan-out, so collapsing them saves
+ * Topic + TopicPolicy + Subscription resources per queue.
  */
 export class EasyGenomicsNestedStack extends NestedStack {
   readonly props: EasyGenomicsNestedStackProps;
@@ -37,7 +39,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
   iam: IamConstruct;
   lambda: LambdaConstruct;
   ses: SesConstruct;
-  sns: SnsConstruct;
   sqs: SqsConstruct;
   /**
    * DLQ for the laboratory-run DynamoDB Stream subscriber. Held as a class field so
@@ -50,21 +51,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
     super(scope, id);
     this.props = props;
 
-    // The enforceSSL option for sns topics is currently broken, that may get fixed in the
-    // future. In the meantime we will apply a policy enforcing ssl in the policies section.
-    this.sns = new SnsConstruct(this, `${this.props.constructNamespace}-sns`, {
-      namePrefix: this.props.namePrefix,
-      topics: <Topics>{
-        ['organization-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
-        ['laboratory-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
-        ['user-deletion-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
-        ['laboratory-run-update-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
-        ['laboratory-run-failure-classification-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
-        ['user-invite-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
-        ['folder-download-topic']: <TopicDetails>{ fifo: true, enforceSSL: true },
-      },
-    });
-
     this.sqs = new SqsConstruct(this, `${this.props.constructNamespace}-sqs`, {
       namePrefix: this.props.namePrefix,
       envType: this.props.envType,
@@ -73,28 +59,24 @@ export class EasyGenomicsNestedStack extends NestedStack {
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
-          snsTopics: [this.sns.snsTopics.get('organization-deletion-topic')],
           enforceSSL: true,
         },
         ['laboratory-management-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
-          snsTopics: [this.sns.snsTopics.get('laboratory-deletion-topic')],
           enforceSSL: true,
         },
         ['user-management-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
-          snsTopics: [this.sns.snsTopics.get('user-deletion-topic')],
           enforceSSL: true,
         },
         ['laboratory-run-update-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
-          snsTopics: [this.sns.snsTopics.get('laboratory-run-update-topic')],
           enforceSSL: true,
         },
         // Failure classification consumer. Visibility timeout is generous (5 min) to
@@ -104,21 +86,18 @@ export class EasyGenomicsNestedStack extends NestedStack {
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(5),
-          snsTopics: [this.sns.snsTopics.get('laboratory-run-failure-classification-topic')],
           enforceSSL: true,
         },
         ['user-invite-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
-          snsTopics: [this.sns.snsTopics.get('user-invite-topic')],
           enforceSSL: true,
         },
         ['folder-download-queue']: <QueueDetails>{
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
-          snsTopics: [this.sns.snsTopics.get('folder-download-topic')],
           enforceSSL: true,
         },
       },
@@ -173,7 +152,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/user/create-bulk-user-invitation-requests': {
           environment: {
-            SNS_USER_INVITE_TOPIC: this.sns.snsTopics.get('user-invite-topic')?.topicArn || '',
+            SQS_USER_INVITE_QUEUE_URL: this.sqs.sqsQueues.get('user-invite-queue')?.queueUrl || '',
           },
         },
         '/easy-genomics/laboratory/user/add-bulk-laboratory-users': {
@@ -185,7 +164,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
             COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
             JWT_SECRET_KEY: this.props.jwtSecretKey,
-            SNS_USER_INVITE_TOPIC: this.sns.snsTopics.get('user-invite-topic')?.topicArn || '',
           },
         },
         '/easy-genomics/user/confirm-user-invitation-request': {
@@ -217,14 +195,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
             COGNITO_USER_POOL_CLIENT_ID: this.props.userPoolClient?.userPoolClientId!,
             COGNITO_USER_POOL_ID: this.props.userPool?.userPoolId!,
             JWT_SECRET_KEY: this.props.jwtSecretKey,
-            SNS_USER_DELETION_TOPIC: this.sns.snsTopics.get('user-deletion-topic')?.topicArn || '',
+            SQS_USER_DELETION_QUEUE_URL: this.sqs.sqsQueues.get('user-management-queue')?.queueUrl || '',
           },
         },
         '/easy-genomics/user/process-delete-user': {
           events: [new SqsEventSource(this.sqs.sqsQueues.get('user-management-queue')!, { batchSize: 1 })],
-          environment: {
-            SNS_USER_DELETION_TOPIC: this.sns.snsTopics.get('user-deletion-topic')?.topicArn || '',
-          },
         },
         '/easy-genomics/organization/create-organization': {
           environment: {
@@ -238,14 +213,12 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/organization/delete-organization': {
           environment: {
-            SNS_ORGANIZATION_DELETION_TOPIC: this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || '',
+            SQS_ORGANIZATION_DELETION_QUEUE_URL:
+              this.sqs.sqsQueues.get('organization-management-queue')?.queueUrl || '',
           },
         },
         '/easy-genomics/organization/process-delete-organization': {
           events: [new SqsEventSource(this.sqs.sqsQueues.get('organization-management-queue')!, { batchSize: 1 })],
-          environment: {
-            SNS_ORGANIZATION_DELETION_TOPIC: this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || '',
-          },
         },
         '/easy-genomics/laboratory/create-laboratory': {
           environment: {
@@ -259,32 +232,28 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/laboratory/delete-laboratory': {
           environment: {
-            SNS_LABORATORY_DELETION_TOPIC: this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || '',
+            SQS_LABORATORY_DELETION_QUEUE_URL: this.sqs.sqsQueues.get('laboratory-management-queue')?.queueUrl || '',
           },
         },
         '/easy-genomics/laboratory/process-delete-laboratory': {
           events: [new SqsEventSource(this.sqs.sqsQueues.get('laboratory-management-queue')!, { batchSize: 1 })],
-          environment: {
-            SNS_LABORATORY_DELETION_TOPIC: this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || '',
-          },
         },
         '/easy-genomics/laboratory/run/create-laboratory-run': {
           environment: {
-            SNS_LABORATORY_RUN_UPDATE_TOPIC: this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || '',
+            SQS_LABORATORY_RUN_UPDATE_QUEUE_URL: this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueUrl || '',
           },
         },
         '/easy-genomics/laboratory/run/update-laboratory-run': {
           environment: {
-            SNS_LABORATORY_RUN_UPDATE_TOPIC: this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || '',
+            SQS_LABORATORY_RUN_UPDATE_QUEUE_URL: this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueUrl || '',
           },
         },
         '/easy-genomics/laboratory/run/process-update-laboratory-run': {
           events: [new SqsEventSource(this.sqs.sqsQueues.get('laboratory-run-update-queue')!, { batchSize: 5 })],
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
-            SNS_LABORATORY_RUN_UPDATE_TOPIC: this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || '',
-            SNS_LABORATORY_RUN_FAILURE_CLASSIFICATION_TOPIC:
-              this.sns.snsTopics.get('laboratory-run-failure-classification-topic')?.topicArn || '',
+            SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL:
+              this.sqs.sqsQueues.get('laboratory-run-failure-classification-queue')?.queueUrl || '',
           },
         },
         // Async classifier consumer for FAILED runs. Idempotent (skips runs that already
@@ -324,7 +293,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/laboratory/run/request-laboratory-run-status-check': {
           environment: {
-            SNS_LABORATORY_RUN_UPDATE_TOPIC: this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || '',
+            SQS_LABORATORY_RUN_UPDATE_QUEUE_URL: this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueUrl || '',
           },
         },
         '/easy-genomics/organization/workflow-access/list-workflow-catalog': {
@@ -336,7 +305,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/file/request-folder-download-job': {
           environment: {
-            SNS_FOLDER_DOWNLOAD_TOPIC: this.sns.snsTopics.get('folder-download-topic')?.topicArn || '',
+            SQS_FOLDER_DOWNLOAD_QUEUE_URL: this.sqs.sqsQueues.get('folder-download-queue')?.queueUrl || '',
           },
         },
         '/easy-genomics/file/process-folder-download-job': {
@@ -427,24 +396,6 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
   // Easy Genomics specific IAM policies
   private setupIamPolicies = () => {
-    // Currently the enforceSSL option for SNS topics is broken
-    // We have to apply the policy ourselves.
-    this.sns.snsTopics.forEach((snsTopic: Topic) => {
-      snsTopic.addToResourcePolicy(
-        new PolicyStatement({
-          resources: [`${snsTopic.topicArn}`],
-          actions: ['sns:Publish'],
-          conditions: {
-            StringEquals: {
-              'aws:SecureTransport': false,
-            },
-          },
-          effect: Effect.DENY,
-          principals: [new StarPrincipal()],
-        }),
-      );
-    });
-
     // /easy-genomics/organization/create-organization
     this.iam.addPolicyStatements('/easy-genomics/organization/create-organization', [
       new PolicyStatement({
@@ -527,8 +478,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('organization-deletion-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('organization-management-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -821,8 +772,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('laboratory-deletion-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('laboratory-management-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -1103,8 +1054,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('user-deletion-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('user-management-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -1168,8 +1119,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -1253,8 +1204,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -1310,8 +1261,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
       dataTaggingUsagePropagationStatement,
@@ -1343,13 +1294,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('laboratory-run-update-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('laboratory-run-failure-classification-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('laboratory-run-failure-classification-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -1526,8 +1477,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('user-invite-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('user-invite-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
     ]);
@@ -1768,8 +1719,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
-        resources: [`${this.sns.snsTopics.get('folder-download-topic')?.topicArn || ''}`],
-        actions: ['sns:Publish'],
+        resources: [`${this.sqs.sqsQueues.get('folder-download-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),
     ]);

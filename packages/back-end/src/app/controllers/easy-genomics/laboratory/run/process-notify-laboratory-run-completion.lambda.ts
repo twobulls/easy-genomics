@@ -1,4 +1,4 @@
-import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
+import { buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/sns-processing-event';
 import { APIGatewayProxyResult, Handler, SQSRecord } from 'aws-lambda';
@@ -32,6 +32,6 @@ export const handler: Handler = async (event: SQSEvent): Promise<APIGatewayProxy
     return buildResponse(200, JSON.stringify({ Status: 'Success' }));
   } catch (err: any) {
     console.error(err);
-    return buildErrorResponse(err);
+    throw err;
   }
 };

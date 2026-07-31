@@ -52,4 +52,18 @@ describe('process-notify-laboratory-run-completion.lambda', () => {
     expect(result.statusCode).toBe(200);
     expect(mockNotify).not.toHaveBeenCalled();
   });
+
+  it('rethrows a systemic notifyRunCompletion failure so SQS retries the message instead of deleting it', async () => {
+    mockNotify.mockRejectedValue(new Error('DynamoDB throttled'));
+    const snsBody = {
+      Message: JSON.stringify({
+        Operation: 'UPDATE',
+        Type: 'LaboratoryRun',
+        Record: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'COMPLETED' },
+      }),
+    };
+    const event = createEvent([{ body: JSON.stringify(snsBody) } as any]);
+
+    await expect(handler(event, createContext(), () => {})).rejects.toThrow('DynamoDB throttled');
+  });
 });

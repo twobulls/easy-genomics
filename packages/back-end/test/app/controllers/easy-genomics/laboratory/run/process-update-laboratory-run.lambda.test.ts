@@ -14,7 +14,7 @@ jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-service')
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-run-service');
 jest.mock('../../../../../../src/app/services/easy-genomics/run-cost-capture-service');
 jest.mock('../../../../../../src/app/services/ssm-service');
-jest.mock('../../../../../../src/app/services/sns-service');
+jest.mock('../../../../../../src/app/services/sqs-service');
 jest.mock('../../../../../../src/app/services/omics-lab-factory');
 jest.mock('../../../../../../src/app/utils/rest-api-utils');
 
@@ -22,7 +22,7 @@ import { LaboratoryRunService } from '../../../../../../src/app/services/easy-ge
 import { LaboratoryService } from '../../../../../../src/app/services/easy-genomics/laboratory-service';
 import { captureRunCostOutcome } from '../../../../../../src/app/services/easy-genomics/run-cost-capture-service';
 import { createOmicsServiceForLab } from '../../../../../../src/app/services/omics-lab-factory';
-import { SnsService } from '../../../../../../src/app/services/sns-service';
+import { SqsService } from '../../../../../../src/app/services/sqs-service';
 import { SsmService } from '../../../../../../src/app/services/ssm-service';
 import { getNextFlowApiQueryParameters, httpRequest } from '../../../../../../src/app/utils/rest-api-utils';
 
@@ -30,7 +30,7 @@ describe('process-update-laboratory-run.lambda', () => {
   let mockLabService: jest.MockedClass<typeof LaboratoryService>;
   let mockRunService: jest.MockedClass<typeof LaboratoryRunService>;
   let mockSsmService: jest.MockedClass<typeof SsmService>;
-  let mockSnsService: jest.MockedClass<typeof SnsService>;
+  let mockSqsService: jest.MockedClass<typeof SqsService>;
 
   let mockQueryByRunId: jest.Mock;
   let mockUpdateRun: jest.Mock;
@@ -68,7 +68,7 @@ describe('process-update-laboratory-run.lambda', () => {
     mockLabService = LaboratoryService as jest.MockedClass<typeof LaboratoryService>;
     mockRunService = LaboratoryRunService as jest.MockedClass<typeof LaboratoryRunService>;
     mockSsmService = SsmService as jest.MockedClass<typeof SsmService>;
-    mockSnsService = SnsService as jest.MockedClass<typeof SnsService>;
+    mockSqsService = SqsService as jest.MockedClass<typeof SqsService>;
 
     mockQueryByRunId = jest.fn();
     mockUpdateWithAttributeRemoval = jest.fn();
@@ -85,7 +85,7 @@ describe('process-update-laboratory-run.lambda', () => {
     mockRunService.prototype.updateWithAttributeRemoval = mockUpdateWithAttributeRemoval;
     mockLabService.prototype.queryByLaboratoryId = mockQueryByLaboratoryId;
     mockSsmService.prototype.getParameter = mockGetParameter;
-    mockSnsService.prototype.publish = mockPublish;
+    mockSqsService.prototype.sendMessage = mockPublish;
     (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
       getRun: mockGetRun,
       // Default: progress fetch fails (best-effort). Tests that need task progress mock this explicitly.
@@ -642,7 +642,7 @@ describe('process-update-laboratory-run.lambda', () => {
   });
 
   it('safePublishForClassification: publishes to SNS when run transitions to FAILED and FailureOwner is unset', async () => {
-    process.env.SNS_LABORATORY_RUN_FAILURE_CLASSIFICATION_TOPIC = 'arn:aws:sns:us-east-1:123:classify.fifo';
+    process.env.SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL = 'arn:aws:sns:us-east-1:123:classify.fifo';
 
     mockQueryByRunId.mockResolvedValue({
       RunId: 'run-1',
@@ -660,14 +660,14 @@ describe('process-update-laboratory-run.lambda', () => {
 
     expect(mockPublish).toHaveBeenCalledWith(
       expect.objectContaining({
-        TopicArn: 'arn:aws:sns:us-east-1:123:classify.fifo',
+        QueueUrl: 'arn:aws:sns:us-east-1:123:classify.fifo',
         MessageGroupId: 'classify-laboratory-run-run-1',
       }),
     );
   });
 
   it('safePublishForClassification: skips publish when FailureOwner is already set', async () => {
-    process.env.SNS_LABORATORY_RUN_FAILURE_CLASSIFICATION_TOPIC = 'arn:aws:sns:us-east-1:123:classify.fifo';
+    process.env.SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL = 'arn:aws:sns:us-east-1:123:classify.fifo';
 
     mockQueryByRunId.mockResolvedValue({
       RunId: 'run-1',
@@ -688,7 +688,7 @@ describe('process-update-laboratory-run.lambda', () => {
   });
 
   it('safePublishForClassification: skips publish when topic ARN env var is unset', async () => {
-    delete process.env.SNS_LABORATORY_RUN_FAILURE_CLASSIFICATION_TOPIC;
+    delete process.env.SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL;
 
     mockQueryByRunId.mockResolvedValue({
       RunId: 'run-1',
@@ -708,7 +708,7 @@ describe('process-update-laboratory-run.lambda', () => {
   });
 
   it('safePublishForClassification: swallows SNS errors so the status-check pipeline completes', async () => {
-    process.env.SNS_LABORATORY_RUN_FAILURE_CLASSIFICATION_TOPIC = 'arn:aws:sns:us-east-1:123:classify.fifo';
+    process.env.SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL = 'arn:aws:sns:us-east-1:123:classify.fifo';
     mockPublish.mockRejectedValue(new Error('SNS unavailable'));
 
     mockQueryByRunId.mockResolvedValue({

@@ -20,6 +20,7 @@ import { ClassificationInput } from '@BE/services/llm-classification/llm-classif
 import { LLMClassificationService, ProviderConfig } from '@BE/services/llm-classification/llm-classification-service';
 import { fetchRedactedLogExcerpt } from '@BE/services/llm-classification/run-log-fetcher';
 import { SsmService } from '@BE/services/ssm-service';
+import { parseSqsJsonBody } from '@BE/utils/sqs-json-body';
 
 const laboratoryRunService = new LaboratoryRunService();
 const laboratoryService = new LaboratoryService();
@@ -32,8 +33,7 @@ export const handler: Handler = async (event: SQSEvent): Promise<APIGatewayProxy
   try {
     const sqsRecords: SQSRecord[] = event.Records;
     for (const sqsRecord of sqsRecords) {
-      const body = JSON.parse(sqsRecord.body);
-      const snsEvent: SnsProcessingEvent = <SnsProcessingEvent>JSON.parse(body.Message);
+      const snsEvent: SnsProcessingEvent = parseSqsJsonBody<SnsProcessingEvent>(sqsRecord.body);
 
       if (snsEvent.Type !== 'LaboratoryRun') {
         console.error(`Unsupported SNS Processing Event Type: ${snsEvent.Type}`);

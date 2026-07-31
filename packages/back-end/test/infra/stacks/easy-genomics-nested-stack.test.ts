@@ -27,6 +27,7 @@ jest.mock('../../../src/infra/constructs/iam-construct', () => ({
 jest.mock('../../../src/infra/constructs/lambda-construct', () => ({
   LambdaConstruct: jest.fn().mockImplementation(() => ({
     lambdaFunctions: new Map<string, unknown>(),
+    logGroupNames: [],
   })),
 }));
 
@@ -34,28 +35,19 @@ jest.mock('../../../src/infra/constructs/ses-construct', () => ({
   SesConstruct: jest.fn().mockImplementation(() => ({})),
 }));
 
-jest.mock('../../../src/infra/constructs/sns-construct', () => ({
-  SnsConstruct: jest.fn().mockImplementation(() => ({
-    snsTopics: new Map<string, any>([
-      ['organization-deletion-topic', { topicArn: 'arn:aws:sns:org', addToResourcePolicy: jest.fn() }],
-      ['laboratory-deletion-topic', { topicArn: 'arn:aws:sns:lab', addToResourcePolicy: jest.fn() }],
-      ['user-deletion-topic', { topicArn: 'arn:aws:sns:user', addToResourcePolicy: jest.fn() }],
-      ['laboratory-run-update-topic', { topicArn: 'arn:aws:sns:run', addToResourcePolicy: jest.fn() }],
-      ['user-invite-topic', { topicArn: 'arn:aws:sns:invite', addToResourcePolicy: jest.fn() }],
-      ['folder-download-topic', { topicArn: 'arn:aws:sns:folder-download', addToResourcePolicy: jest.fn() }],
-    ]),
-  })),
-}));
-
 jest.mock('../../../src/infra/constructs/sqs-construct', () => ({
   SqsConstruct: jest.fn().mockImplementation(() => ({
     sqsQueues: new Map<string, any>([
-      ['organization-management-queue', {}],
-      ['laboratory-management-queue', {}],
-      ['user-management-queue', {}],
-      ['laboratory-run-update-queue', {}],
-      ['user-invite-queue', {}],
-      ['folder-download-queue', {}],
+      ['organization-management-queue', { queueUrl: 'https://sqs/org', queueArn: 'arn:aws:sqs:org' }],
+      ['laboratory-management-queue', { queueUrl: 'https://sqs/lab', queueArn: 'arn:aws:sqs:lab' }],
+      ['user-management-queue', { queueUrl: 'https://sqs/user', queueArn: 'arn:aws:sqs:user' }],
+      ['laboratory-run-update-queue', { queueUrl: 'https://sqs/run', queueArn: 'arn:aws:sqs:run' }],
+      ['user-invite-queue', { queueUrl: 'https://sqs/invite', queueArn: 'arn:aws:sqs:invite' }],
+      [
+        'laboratory-run-failure-classification-queue',
+        { queueUrl: 'https://sqs/classify', queueArn: 'arn:aws:sqs:classify' },
+      ],
+      ['folder-download-queue', { queueUrl: 'https://sqs/folder', queueArn: 'arn:aws:sqs:folder' }],
     ]),
   })),
 }));

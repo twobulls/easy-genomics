@@ -10,11 +10,11 @@ import { SnsProcessingEvent } from '@easy-genomics/shared-lib/src/app/types/easy
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 import { OrganizationService } from '@BE/services/easy-genomics/organization-service';
-import { SnsService } from '@BE/services/sns-service';
+import { SqsService } from '@BE/services/sqs-service';
 import { validateOrganizationAdminAccess, validateSystemAdminAccess } from '@BE/utils/auth-utils';
 
 const organizationService = new OrganizationService();
-const snsService = new SnsService();
+const sqsService = new SqsService();
 
 export const handler: Handler = async (
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
@@ -49,9 +49,9 @@ export const handler: Handler = async (
             CreatedBy: currentUserId,
           },
         };
-        return snsService.publish({
-          TopicArn: process.env.SNS_USER_INVITE_TOPIC,
-          Message: JSON.stringify(record),
+        return sqsService.sendMessage({
+          QueueUrl: process.env.SQS_USER_INVITE_QUEUE_URL,
+          MessageBody: JSON.stringify(record),
           MessageGroupId: `create-user-invite-${organization.OrganizationId}`,
           MessageDeduplicationId: uuidv4(),
         });

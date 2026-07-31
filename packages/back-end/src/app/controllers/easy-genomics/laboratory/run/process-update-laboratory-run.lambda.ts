@@ -20,7 +20,7 @@ import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { captureRunCostOutcome } from '@BE/services/easy-genomics/run-cost-capture-service';
 import { createOmicsServiceForLab } from '@BE/services/omics-lab-factory';
-import { SnsService } from '@BE/services/sns-service';
+import { SqsService } from '@BE/services/sqs-service';
 import { SsmService } from '@BE/services/ssm-service';
 import {
   calculateExpiresAtEpochSeconds,
@@ -32,11 +32,12 @@ import {
 import { aggregateTaskProgress, OmicsTaskProgress } from '@BE/utils/omics-run-progress-utils';
 import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 import { aggregateSeqeraProgress } from '@BE/utils/seqera-run-progress-utils';
+import { parseSqsJsonBody } from '@BE/utils/sqs-json-body';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryRunService = new LaboratoryRunService();
 const laboratoryDataTaggingService = new LaboratoryDataTaggingService();
-const snsService = new SnsService();
+const sqsService = new SqsService();
 const ssmService = new SsmService();
 
 /**
@@ -53,28 +54,28 @@ async function safeCaptureRunCost(run: LaboratoryRun): Promise<LaboratoryRun['Ru
 }
 
 /**
- * Best-effort SNS publish that hands off a freshly-failed run to the
+ * Best-effort SQS publish that hands off a freshly-failed run to the
  * classification pipeline. Failures here are swallowed because classification
  * is a downstream enhancement — the status-check pipeline must never break if
- * the topic is misconfigured or SNS is temporarily unavailable.
+ * the queue is misconfigured or SQS is temporarily unavailable.
  */
 async function safePublishForClassification(run: LaboratoryRun): Promise<void> {
-  const topicArn = process.env.SNS_LABORATORY_RUN_FAILURE_CLASSIFICATION_TOPIC;
-  if (!topicArn) return;
+  const queueUrl = process.env.SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL;
+  if (!queueUrl) return;
   try {
     const record: SnsProcessingEvent = {
       Operation: 'UPDATE',
       Type: 'LaboratoryRun',
       Record: run,
     };
-    await snsService.publish({
-      TopicArn: topicArn,
-      Message: JSON.stringify(record),
+    await sqsService.sendMessage({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify(record),
       MessageGroupId: `classify-laboratory-run-${run.RunId}`,
       MessageDeduplicationId: uuidv4(),
     });
   } catch (err) {
-    console.warn('Failed to publish FAILED run to classification topic (continuing):', err);
+    console.warn('Failed to publish FAILED run to classification queue (continuing):', err);
   }
 }
 
@@ -109,8 +110,7 @@ export const handler: Handler = async (event: SQSEvent): Promise<APIGatewayProxy
   try {
     const sqsRecords: SQSRecord[] = event.Records;
     for (const sqsRecord of sqsRecords) {
-      const body = JSON.parse(sqsRecord.body);
-      const snsEvent: SnsProcessingEvent = <SnsProcessingEvent>JSON.parse(body.Message);
+      const snsEvent: SnsProcessingEvent = parseSqsJsonBody<SnsProcessingEvent>(sqsRecord.body);
 
       switch (snsEvent.Type) {
         case 'LaboratoryRun':

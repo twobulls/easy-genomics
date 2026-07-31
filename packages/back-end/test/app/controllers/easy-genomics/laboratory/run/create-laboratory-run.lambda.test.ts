@@ -157,6 +157,29 @@ describe('create-laboratory-run.lambda', () => {
     expect(mockSqsService.prototype.sendMessage).toHaveBeenCalled();
   });
 
+  it('still returns 200 with the persisted run when queuing the status check fails', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      LaboratoryId: LAB_ID,
+    });
+
+    (mockRunService.prototype.add as jest.Mock).mockResolvedValue({
+      ...baseRequest,
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      Owner: 'user@example.com',
+      Settings: JSON.stringify({ param: 'value' }),
+    });
+
+    (mockSqsService.prototype.sendMessage as jest.Mock).mockRejectedValue(new Error('SQS unavailable'));
+
+    const result = await handler(createEvent(baseRequest), createContext(), () => {});
+
+    expect(result.statusCode).toBe(200);
+    const body = JSON.parse(result.body);
+    expect(body.RunId).toBe(RUN_ID);
+    expect(mockSqsService.prototype.sendMessage).toHaveBeenCalled();
+  });
+
   it('passes WorkflowVersionName through to laboratory run add when provided', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: '00000000-0000-0000-0000-000000000001',

@@ -119,7 +119,8 @@
       next(true);
     } else if (!nextRoute.value) {
       // if there's currently no nextRoute, don't navigate yet and show the confirm cancel dialog
-      nextRoute.value = to.path;
+      // Use fullPath so breadcrumb / link exits keep query (e.g. ?tab=HealthOmics+Workflows)
+      nextRoute.value = to.fullPath;
       next(false);
     } else if (!exitConfirmed.value) {
       // don't go if exit hasn't been confirmed

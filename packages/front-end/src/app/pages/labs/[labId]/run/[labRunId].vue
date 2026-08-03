@@ -26,6 +26,7 @@
 
   const labId = $route.params.labId as string;
   const labRunId = $route.params.labRunId as string;
+  const { labTab } = useLabBreadcrumbs(labId);
 
   const lab = computed<Laboratory | null>(() => labsStore.labs[labId] ?? null);
   const detailProgressPollIntervalMs = computed<number>(() =>
@@ -313,12 +314,12 @@
     :title="labRun?.RunName || ''"
     :description="labRun?.WorkflowName || ''"
     :show-back="true"
-    :back-action="() => $router.push(`/labs/${labId}?tab=Lab Runs`)"
+    :back-action="() => $router.push(labTab('Lab Runs'))"
     :is-loading="isLoading"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
     show-org-breadcrumb
     show-lab-breadcrumb
-    :breadcrumbs="[labRun?.RunName]"
+    :breadcrumbs="[{ label: 'Lab Runs', to: labTab('Lab Runs') }, labRun?.RunName || '']"
   />
 
   <EGDetailTabs

@@ -156,6 +156,7 @@ export class GithubActionsCICDRelease extends Component {
       // Privacy-safe upstream analytics (institution opt-in). When unset/false, analytics stays off.
       'ANALYTICS_ENABLED': '${{ vars.ANALYTICS_ENABLED }}',
       'ANALYTICS_ALLOW_DEV': '${{ vars.ANALYTICS_ALLOW_DEV }}',
+      'COST_EXPLORER_ENABLED': '${{ vars.COST_EXPLORER_ENABLED }}',
       // Front-End specific settings
       'SLACK_E2E_TEST_WEBHOOK_URL': '${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}',
     };

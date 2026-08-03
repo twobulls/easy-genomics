@@ -1,4 +1,16 @@
 <script setup lang="ts">
+  export type PageBreadcrumb =
+    | string
+    | {
+        label: string;
+        to?: string | Record<string, unknown>;
+      };
+
+  type NormalizedBreadcrumb = {
+    label: string;
+    to?: string | Record<string, unknown>;
+  };
+
   const props = withDefaults(
     defineProps<{
       title: string;
@@ -14,7 +26,7 @@
       };
       showOrgBreadcrumb?: boolean;
       showLabBreadcrumb?: boolean;
-      breadcrumbs?: string[];
+      breadcrumbs?: PageBreadcrumb[];
     }>(),
     {
       backButtonLabel: 'Back',
@@ -27,7 +39,26 @@
   const skeletonTitleLines = computed(() => props.skeletonConfig?.titleLines ?? 1);
   const skeletonDescriptionLines = computed(() => props.skeletonConfig?.descriptionLines ?? 1);
 
-  const breadcrumbs = computed<string[]>(() => props.breadcrumbs?.filter((crumb: string) => !!crumb) || []);
+  const breadcrumbs = computed<NormalizedBreadcrumb[]>(() => {
+    if (!props.breadcrumbs?.length) return [];
+
+    return props.breadcrumbs
+      .map((crumb): NormalizedBreadcrumb | null => {
+        if (typeof crumb === 'string') {
+          return crumb ? { label: crumb } : null;
+        }
+        return crumb.label ? { label: crumb.label, to: crumb.to } : null;
+      })
+      .filter((crumb): crumb is NormalizedBreadcrumb => crumb !== null);
+  });
+
+  function isCurrentCrumb(index: number): boolean {
+    return index === breadcrumbs.value.length - 1;
+  }
+
+  function isClickableCrumb(crumb: NormalizedBreadcrumb, index: number): boolean {
+    return Boolean(crumb.to) && !isCurrentCrumb(index);
+  }
 </script>
 
 <template>
@@ -52,7 +83,14 @@
             <template v-for="(crumb, crumbIndex) in breadcrumbs" :key="crumbIndex">
               <li aria-hidden="true">/</li>
               <li>
-                <span :aria-current="crumbIndex === breadcrumbs.length - 1 ? 'page' : undefined">{{ crumb }}</span>
+                <NuxtLink
+                  v-if="isClickableCrumb(crumb, crumbIndex) && crumb.to"
+                  :to="crumb.to"
+                  class="focus-visible:ring-primary-500 text-gray-500 hover:text-gray-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+                >
+                  {{ crumb.label }}
+                </NuxtLink>
+                <span v-else :aria-current="isCurrentCrumb(crumbIndex) ? 'page' : undefined">{{ crumb.label }}</span>
               </li>
             </template>
           </ol>

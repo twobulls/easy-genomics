@@ -21,6 +21,7 @@
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
+  const { labTab, labTabHref } = useLabBreadcrumbs(labId);
 
   // check permissions to be on this page
   if (!userStore.canViewLab(labId)) {
@@ -344,11 +345,11 @@
     title="Run Pipeline"
     :description="labName"
     :show-back="!hasLaunched"
-    :back-action="() => (nextRoute = `/labs/${labId}?tab=Seqera+Pipelines`)"
+    :back-action="() => (nextRoute = labTabHref('Seqera Pipelines'))"
     back-button-label="Exit Run"
     show-org-breadcrumb
     show-lab-breadcrumb
-    :breadcrumbs="[pipeline?.name]"
+    :breadcrumbs="[{ label: 'Seqera Pipelines', to: labTab('Seqera Pipelines') }, pipeline?.name || '']"
   />
 
   <template v-if="uiStore.isRequestPending('loadSeqeraPipeline') || !seqeraRunTempId">
@@ -417,7 +418,7 @@
   <template v-if="hasLaunched">
     <EGEmptyDataCTA
       message="Your Workflow Run has Launched! Check on your progress via Runs."
-      :primary-button-action="() => $router.push(`/labs/${labId}?tab=Lab+Runs`)"
+      :primary-button-action="() => $router.push(labTab('Lab Runs'))"
       primary-button-label="Back to Runs"
       :secondary-button-action="() => resetRunPipeline()"
       secondary-button-label="Launch Another Workflow Run"

@@ -10,6 +10,7 @@
 
   const labId = $route.params.labId as string;
   const seqeraRunId = $route.params.seqeraRunId as string;
+  const { labTab } = useLabBreadcrumbs(labId);
 
   const seqeraRunReports = ref([]);
   const tabIndex = ref(0);
@@ -103,11 +104,12 @@
     :title="seqeraRun?.runName || ''"
     :description="seqeraRun?.projectName || ''"
     :show-back="true"
-    :back-action="() => $router.push(`/labs/${labId}`)"
+    :back-action="() => $router.push(labTab('Lab Runs'))"
     :is-loading="useUiStore().isRequestPending('loadSeqeraRun')"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
     show-org-breadcrumb
     show-lab-breadcrumb
+    :breadcrumbs="[{ label: 'Lab Runs', to: labTab('Lab Runs') }, seqeraRun?.runName || '']"
   />
 
   <EGDetailTabs

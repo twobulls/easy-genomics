@@ -130,7 +130,7 @@
 </script>
 
 <template>
-  <div :aria-busy="uiStore.anyRequestPending(['getLabUsers', 'addUsersToLab'])">
+  <div class="add-lab-users" :aria-busy="uiStore.anyRequestPending(['getLabUsers', 'addUsersToLab'])">
     <EGCard :padding="4">
       <p :id="addUsersStatusId" class="sr-only" aria-live="polite" aria-atomic="true">{{ addUsersStatusMessage }}</p>
       <div class="flex flex-col gap-3">
@@ -155,7 +155,6 @@
             :ui="{
               base: 'h-[52px]',
             }"
-            :popper="{ strategy: 'fixed' }"
             :aria-label="`Select users to add to ${labName}`"
           >
             <template #option="{ option: user }">
@@ -192,7 +191,6 @@
               class="w-44"
               size="xl"
               :disabled="uiStore.anyRequestPending(['getLabUsers', 'addUsersToLab'])"
-              :popper="{ strategy: 'fixed' }"
               aria-label="Role for added users"
             />
           </div>
@@ -222,3 +220,13 @@
     </EGCard>
   </div>
 </template>
+
+<style scoped lang="scss">
+  .add-lab-users {
+    // Nuxt UI's SelectMenu options list picks up a stray left margin from Headless UI's
+    // default list styling, leaving the dropdown narrower than its trigger on one side.
+    :deep([role='listbox']) {
+      margin-left: 0;
+    }
+  }
+</style>

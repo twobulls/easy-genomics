@@ -116,8 +116,9 @@ export default function useUser() {
       const token = await useAuth().getToken();
       const decodedToken: any = decodeJwt(token);
 
-      // retrieve and set account id and email
-      userStore.currentUserDetails.id = decodedToken['cognito:username'];
+      // Prefer the platform UserId claim (DynamoDB) when present; fall back to Cognito username.
+      // Seeded Cognito users can have a different cognito:username than the DynamoDB UserId.
+      userStore.currentUserDetails.id = decodedToken.UserId || decodedToken['cognito:username'];
       userStore.currentUserDetails.email = decodedToken.email;
 
       // Sync the server-side analytics consent choice so it follows the user

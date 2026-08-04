@@ -83,7 +83,9 @@ export const handler: Handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
-    const currentUserId = event.requestContext.authorizer.claims['cognito:username'];
+    // Prefer platform UserId claim (set by pre-token-generation) so run ownership matches DynamoDB User records.
+    const currentUserId =
+      event.requestContext.authorizer.claims.UserId || event.requestContext.authorizer.claims['cognito:username'];
     const currentUserEmail = event.requestContext.authorizer.claims.email;
     // Post Request Body
     const request: AddLaboratoryRun = event.isBase64Encoded ? JSON.parse(atob(event.body!)) : JSON.parse(event.body!);

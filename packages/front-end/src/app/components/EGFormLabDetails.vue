@@ -1017,16 +1017,17 @@
       >
         <div class="mb-3 flex items-center gap-1.5">
           <p class="text-muted text-xs">
-            Documented HealthOmics error codes are always classified using a built-in lookup; the LLM is used only for
-            ambiguous HealthOmics codes and free-text Seqera errors. Each integration can use a different provider — for
-            example a cheaper model for high-volume Seqera traffic, a more accurate model for HealthOmics ambiguous
-            cases.
+            Documented HealthOmics error codes use a built-in lookup; the LLM only handles ambiguous or free-text cases.
           </p>
           <!-- Provider guidance: helps an admin decide which LLM to bring (Bedrock vs OpenAI vs Anthropic)
                before they pick one in the dropdowns below. -->
           <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
             <template #text>
               <div class="space-y-1.5 py-1">
+                <p>
+                  Each integration can use a different provider — for example a cheaper model for high-volume Seqera
+                  traffic, a more accurate model for HealthOmics ambiguous cases.
+                </p>
                 <p class="font-medium text-black">Which provider should I choose?</p>
                 <p>
                   <span class="font-medium text-black">Amazon Bedrock</span>
@@ -1213,12 +1214,23 @@
           </UTooltip>
         </div>
 
-        <EGFormGroup
-          label="Networking mode"
-          name="AwsHealthOmicsNetworkingMode"
-          eager-validation
-          hint="Restricted (default) reaches only S3 and ECR in-region. VPC routes this lab's runs through a saved configuration. Only available when HealthOmics is enabled."
-        >
+        <EGFormGroup label="Networking mode" name="AwsHealthOmicsNetworkingMode" eager-validation>
+          <div class="mb-2 flex items-center gap-1.5">
+            <p class="text-muted text-xs">Only available when HealthOmics is enabled.</p>
+            <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
+              <template #text>
+                <p>
+                  Restricted (default) reaches only S3 and ECR in-region. VPC routes this lab's runs through a saved
+                  configuration.
+                </p>
+              </template>
+              <UIcon
+                name="i-heroicons-information-circle"
+                class="text-muted h-4 w-4 shrink-0"
+                aria-label="Networking mode guidance"
+              />
+            </UTooltip>
+          </div>
           <USelect
             v-model="state.AwsHealthOmicsNetworkingMode"
             :options="networkingModeOptions"

@@ -100,7 +100,8 @@
     SeqeraLlmModelId: '',
     SeqeraLlmApiKey: '',
     HealthOmicsLogEnrichmentEnabled: false,
-    NotificationsEnabled: false,
+    // Backend kill-switch semantics: absent/undefined means enabled, only `=== false` disables.
+    NotificationsEnabled: true,
   };
 
   const state = ref({ ...defaultState } as Laboratory);
@@ -492,6 +493,10 @@
           // Initialize the password inputs to empty so they don't show stale data.
           HealthOmicsLlmApiKey: '',
           SeqeraLlmApiKey: '',
+          // Backend kill-switch semantics: absent means enabled, only `=== false` disables.
+          // Normalize here so an unset field doesn't load as a `false` that then gets
+          // saved back as an explicit disable on the next Save Changes.
+          NotificationsEnabled: labDetails.NotificationsEnabled !== false,
         };
         state.value = { ...state.value, ...withRetentionDefault };
         // Store the unedited lab details to support the cancel button in Edit mode

@@ -1172,4 +1172,59 @@ describe('process-update-laboratory-run.lambda', () => {
       }),
     );
   });
+
+  it('compensates a failed notification publish by restoring PollStatus and clearing NotifiedAt', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/notification-queue.fifo';
+    mockPublish.mockRejectedValue(new Error('SQS unavailable'));
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+
+    // The failed run stays retryable: PollStatus is restored so the poller finds it again,
+    // and NotifiedAt is removed so the backfill branch's missingNotification check re-fires.
+    expect(mockUpdateWithAttributeRemoval).toHaveBeenCalledWith(
+      expect.objectContaining({ RunId: 'run-1', LaboratoryId: 'lab-1', PollStatus: 'ACTIVE' }),
+      ['NotifiedAt'],
+    );
+  });
+
+  it('compensates a failed notification publish when the notification queue URL is not configured', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    delete process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL;
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+
+    expect(mockPublish).not.toHaveBeenCalled();
+    expect(mockUpdateWithAttributeRemoval).toHaveBeenCalledWith(
+      expect.objectContaining({ RunId: 'run-1', LaboratoryId: 'lab-1', PollStatus: 'ACTIVE' }),
+      ['NotifiedAt'],
+    );
+  });
 });

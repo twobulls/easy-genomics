@@ -83,10 +83,17 @@ async function safePublishForClassification(run: LaboratoryRun): Promise<void> {
  * Best-effort SQS publish that hands a freshly-terminal run off to the notification sender.
  * Only called when `markTerminalNotified` won its conditional write — see that method's
  * docstring for why this closes the duplicate-status-check race.
+ *
+ * Returns whether the publish actually succeeded so the caller can compensate: `markTerminalNotified`
+ * already committed NotifiedAt and removed PollStatus, so a swallowed failure here would otherwise
+ * drop the notification permanently — nothing else re-checks a run once it looks notified.
  */
-async function safePublishForNotification(run: LaboratoryRun): Promise<void> {
+async function safePublishForNotification(run: LaboratoryRun): Promise<boolean> {
   const queueUrl = process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL;
-  if (!queueUrl) return;
+  if (!queueUrl) {
+    console.warn(`SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL not configured, skipping notify for RunId=${run.RunId}`);
+    return false;
+  }
   try {
     const record: SnsProcessingEvent = {
       Operation: 'UPDATE',
@@ -99,8 +106,38 @@ async function safePublishForNotification(run: LaboratoryRun): Promise<void> {
       MessageGroupId: `notify-laboratory-run-${run.RunId}`,
       MessageDeduplicationId: uuidv4(),
     });
+    return true;
   } catch (err) {
     console.warn('Failed to publish terminal run to notification queue (continuing):', err);
+    return false;
+  }
+}
+
+/**
+ * Reverts a winning `markTerminalNotified` conditional write after its notification publish
+ * failed: removes `NotifiedAt` and restores `PollStatus: 'ACTIVE'` so the run re-enters the
+ * `PollStatus_Index` poller and the backfill branch above picks it up for another notify attempt.
+ */
+async function compensateFailedNotification(run: LaboratoryRun): Promise<void> {
+  try {
+    await laboratoryRunService.updateWithAttributeRemoval(
+      {
+        ...run,
+        PollStatus: 'ACTIVE',
+        ModifiedAt: new Date().toISOString(),
+        ModifiedBy: 'Status Check',
+      },
+      ['NotifiedAt'],
+    );
+  } catch (err) {
+    console.error(`Failed to compensate unpublished notification for RunId=${run.RunId}:`, err);
+  }
+}
+
+async function publishForNotificationWithCompensation(run: LaboratoryRun): Promise<void> {
+  const published = await safePublishForNotification(run);
+  if (!published) {
+    await compensateFailedNotification(run);
   }
 }
 
@@ -300,7 +337,7 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
           ModifiedBy: 'Status Check',
         });
         if (published) {
-          await safePublishForNotification(notifiedRun);
+          await publishForNotificationWithCompensation(notifiedRun);
         }
       }
 
@@ -382,7 +419,7 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
           ModifiedBy: 'Status Check',
         });
         if (published) {
-          await safePublishForNotification(notifiedRun);
+          await publishForNotificationWithCompensation(notifiedRun);
         }
       }
     } else if (

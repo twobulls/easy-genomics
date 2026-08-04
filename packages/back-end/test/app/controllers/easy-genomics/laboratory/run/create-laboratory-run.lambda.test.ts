@@ -1,3 +1,4 @@
+import { LaboratoryRunAlreadyExistsError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, Context } from 'aws-lambda';
 
 const mockEstimate = jest.fn();
@@ -28,7 +29,6 @@ import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
 } from '../../../../../../src/app/utils/auth-utils';
-import { LaboratoryRunAlreadyExistsError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 
 describe('create-laboratory-run.lambda', () => {
   const LAB_ID = '00000000-0000-0000-0000-000000000002';

@@ -39,7 +39,7 @@ const runCostEstimationService = new RunCostEstimationService();
 const sqsService = new SqsService();
 
 /**
- * Best-effort input profile + pre-run estimate. Runs after laboratoryRunService.add()
+ * Best-effort input profile + pre-run estimate. Runs after laboratoryRunService.addOrGetExisting()
  * so a timeout here cannot leave an externally-submitted run untracked.
  */
 async function attachPreRunCostEstimate(
@@ -121,31 +121,34 @@ export const handler: Handler = async (
 
     // Persist the run first so an external platform submission is never left untracked
     // if subsequent best-effort cost estimation times out.
-    let laboratoryRun: LaboratoryRun = await laboratoryRunService.addOrGetExisting(<LaboratoryRun>{
-      LaboratoryId: laboratory.LaboratoryId,
-      RunId: request.RunId,
-      UserId: currentUserId,
-      OrganizationId: laboratory.OrganizationId,
-      RunName: request.RunName,
-      ...(request.Description ? { Description: request.Description } : {}),
-      Platform: request.Platform,
-      PlatformApiBaseUrl: request.PlatformApiBaseUrl,
-      Status: request.Status,
-      Owner: currentUserEmail,
-      WorkflowName: request.WorkflowName,
-      WorkflowVersionName: request.WorkflowVersionName,
-      WorkflowExternalId: request.WorkflowExternalId,
-      InputFileKeys: request.InputFileKeys,
-      ExternalRunId: request.ExternalRunId,
-      InputS3Url: request.InputS3Url,
-      OutputS3Url: request.OutputS3Url,
-      SampleSheetS3Url: request.SampleSheetS3Url,
-      Settings: JSON.stringify(request.Settings || {}),
-      CreatedAt: createdAt.toISOString(),
-      CreatedBy: currentUserId,
-      ...(isTerminalAtCreate ? { TerminalAt: createdAt.toISOString() } : {}),
-      ...(laboratorioRunExpiresAt !== undefined ? { ExpiresAt: laboratorioRunExpiresAt } : {}),
-    }, currentUserId);
+    let laboratoryRun: LaboratoryRun = await laboratoryRunService.addOrGetExisting(
+      <LaboratoryRun>{
+        LaboratoryId: laboratory.LaboratoryId,
+        RunId: request.RunId,
+        UserId: currentUserId,
+        OrganizationId: laboratory.OrganizationId,
+        RunName: request.RunName,
+        ...(request.Description ? { Description: request.Description } : {}),
+        Platform: request.Platform,
+        PlatformApiBaseUrl: request.PlatformApiBaseUrl,
+        Status: request.Status,
+        Owner: currentUserEmail,
+        WorkflowName: request.WorkflowName,
+        WorkflowVersionName: request.WorkflowVersionName,
+        WorkflowExternalId: request.WorkflowExternalId,
+        InputFileKeys: request.InputFileKeys,
+        ExternalRunId: request.ExternalRunId,
+        InputS3Url: request.InputS3Url,
+        OutputS3Url: request.OutputS3Url,
+        SampleSheetS3Url: request.SampleSheetS3Url,
+        Settings: JSON.stringify(request.Settings || {}),
+        CreatedAt: createdAt.toISOString(),
+        CreatedBy: currentUserId,
+        ...(isTerminalAtCreate ? { TerminalAt: createdAt.toISOString() } : {}),
+        ...(laboratorioRunExpiresAt !== undefined ? { ExpiresAt: laboratorioRunExpiresAt } : {}),
+      },
+      currentUserId,
+    );
 
     laboratoryRun = await attachPreRunCostEstimate(laboratory, laboratoryRun, request);
 

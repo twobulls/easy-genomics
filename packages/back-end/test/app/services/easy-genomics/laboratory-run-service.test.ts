@@ -36,9 +36,7 @@ describe('LaboratoryRunService.addOrGetExisting', () => {
     const svc = new LaboratoryRunService();
     const conditionalError = new Error('ConditionalCheckFailedException');
     conditionalError.name = 'ConditionalCheckFailedException';
-    const putItem = jest
-      .spyOn(svc as unknown as { putItem: jest.Mock }, 'putItem')
-      .mockRejectedValue(conditionalError);
+    const putItem = jest.spyOn(svc as unknown as { putItem: jest.Mock }, 'putItem').mockRejectedValue(conditionalError);
     const existing = validRun({ RunName: 'First attempt' });
     const get = jest.spyOn(svc, 'get').mockResolvedValue(existing);
 
@@ -55,9 +53,7 @@ describe('LaboratoryRunService.addOrGetExisting', () => {
     const svc = new LaboratoryRunService();
     const conditionalError = new Error('ConditionalCheckFailedException');
     conditionalError.name = 'ConditionalCheckFailedException';
-    const putItem = jest
-      .spyOn(svc as unknown as { putItem: jest.Mock }, 'putItem')
-      .mockRejectedValue(conditionalError);
+    const putItem = jest.spyOn(svc as unknown as { putItem: jest.Mock }, 'putItem').mockRejectedValue(conditionalError);
     const existing = validRun({ UserId: '00000000-0000-0000-0000-000000000099' });
     const get = jest.spyOn(svc, 'get').mockResolvedValue(existing);
 
@@ -72,9 +68,7 @@ describe('LaboratoryRunService.addOrGetExisting', () => {
     const svc = new LaboratoryRunService();
     const transientError = new Error('ProvisionedThroughputExceededException');
     transientError.name = 'ProvisionedThroughputExceededException';
-    const putItem = jest
-      .spyOn(svc as unknown as { putItem: jest.Mock }, 'putItem')
-      .mockRejectedValue(transientError);
+    const putItem = jest.spyOn(svc as unknown as { putItem: jest.Mock }, 'putItem').mockRejectedValue(transientError);
 
     const run = validRun();
 

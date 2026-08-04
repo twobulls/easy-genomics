@@ -1,8 +1,8 @@
 process.env.NAME_PREFIX = 'unit-test';
 
-import { LaboratoryRunService } from '../../../../src/app/services/easy-genomics/laboratory-run-service';
-import { LaboratoryRunAlreadyExistsError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
+import { LaboratoryRunAlreadyExistsError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { LaboratoryRunService } from '../../../../src/app/services/easy-genomics/laboratory-run-service';
 
 describe('LaboratoryRunService.addOrGetExisting', () => {
   const validRun = (overrides: Partial<LaboratoryRun> = {}): LaboratoryRun =>

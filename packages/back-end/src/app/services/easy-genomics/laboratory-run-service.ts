@@ -10,6 +10,7 @@ import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { LaboratoryRunSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { LaboratoryRunAlreadyExistsError, LaboratoryRunNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { isConditionalCheckFailed } from './laboratory-data-tagging-service';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
@@ -98,8 +99,8 @@ export class LaboratoryRunService extends DynamoDBService implements Service<Lab
   ): Promise<LaboratoryRun> => {
     try {
       return await this.add(laboratoryRun);
-    } catch (err: any) {
-      if (err?.name !== 'ConditionalCheckFailedException') throw err;
+    } catch (err: unknown) {
+      if (!isConditionalCheckFailed(err)) throw err;
       const existing = await this.get(laboratoryRun.LaboratoryId, laboratoryRun.RunId);
       if (existing.UserId === requestingUserId) return existing;
       throw new LaboratoryRunAlreadyExistsError();

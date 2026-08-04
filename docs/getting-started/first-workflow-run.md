@@ -164,6 +164,10 @@ You can optionally upload a custom sample sheet instead; this guide uses the def
 
 The upload steps are **the same for Seqera and HealthOmics**; only the lab tab you start from differs.
 
+> **Alternative — Data Collections:** You can also import and organize samples on the lab **Data Collections** tab,
+> build a **Sequence Collection**, then **Launch Workflow** (the run wizard opens with the collection’s sample sheet
+> already generated). See [Data Collections](./data-collections.md).
+
 ### Shared upload steps
 
 1. Open your lab.
@@ -265,9 +269,11 @@ the run details page to see updated status.
 
 ## What’s next
 
+- **Organize lab data** — import samples, tags, and sequence collections on the
+  [Data Collections](./data-collections.md) page, then launch workflows from a collection.
 - **Pipeline authoring and configuration** — see [Nextflow documentation](https://www.nextflow.io/docs/latest/) and
   [Seqera Platform documentation](https://docs.seqera.io/).
-- **Operational issues** — troubleshooting is covered in a separate guide (DOCS-06).
+- **Operational issues** — see [Troubleshooting](../operations/troubleshooting.md).
 
 You have now completed the core Easy Genomics setup: organization, lab, integrations, team access, data upload, and a
 first workflow run on Seqera Cloud and/or AWS HealthOmics.

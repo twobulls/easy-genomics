@@ -168,6 +168,23 @@ For paired-end reads, the two files of a pair must share the same sample-ID pref
 > `samplesheet[-<run>].csv` key automatically, so a run name with spaces is fine — but a manually supplied filename with
 > spaces or unusual characters is normalised or rejected.
 
+To launch with a sample sheet generated from a **Sequence Collection** instead of the run-wizard upload path, see
+[Data Collections](../getting-started/data-collections.md).
+
+---
+
+## Data Collections
+
+Lab **Data Collections** (Samples / Sequence Collections / Files) depends on the lab’s **Default S3 bucket directory**.
+For the full feature guide, see [Data Collections](../getting-started/data-collections.md).
+
+| Symptom                                                                  | Cause / expectation                                                                   | Fix                                                                                           |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Amber banner: default S3 bucket not configured; **Import data** disabled | Lab has no **Default S3 bucket directory**.                                           | Open lab **Settings** (or ask an org admin) and set **Default S3 bucket directory**.          |
+| **Files** tab empty or cannot scan                                       | Same S3 prerequisite, or nothing unlinked under the lab prefix after the last scan.   | Configure S3 if needed; choose **Rescan bucket**; confirm objects are not already in samples. |
+| Regex import / **Group with regex** skips files                          | Filenames that do not match the pattern are unmatched and skipped.                    | Adjust the regex or presets; review the unmatched list before confirming.                     |
+| Deleted a sequence collection; samples still present                     | Delete removes only the collection record. Samples and files are preserved by design. | Expected — delete or reorganize samples separately if needed (no sample-delete UI yet).       |
+
 ---
 
 ## Still stuck?

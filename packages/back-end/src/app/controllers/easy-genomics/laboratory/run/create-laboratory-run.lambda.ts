@@ -121,7 +121,7 @@ export const handler: Handler = async (
 
     // Persist the run first so an external platform submission is never left untracked
     // if subsequent best-effort cost estimation times out.
-    let laboratoryRun: LaboratoryRun = await laboratoryRunService.add(<LaboratoryRun>{
+    let laboratoryRun: LaboratoryRun = await laboratoryRunService.addOrGetExisting(<LaboratoryRun>{
       LaboratoryId: laboratory.LaboratoryId,
       RunId: request.RunId,
       UserId: currentUserId,
@@ -145,7 +145,8 @@ export const handler: Handler = async (
       CreatedBy: currentUserId,
       ...(isTerminalAtCreate ? { TerminalAt: createdAt.toISOString() } : {}),
       ...(laboratorioRunExpiresAt !== undefined ? { ExpiresAt: laboratorioRunExpiresAt } : {}),
-    });
+      ...(!isTerminalAtCreate ? { PollStatus: 'ACTIVE' } : {}),
+    }, currentUserId);
 
     laboratoryRun = await attachPreRunCostEstimate(laboratory, laboratoryRun, request);
 
@@ -160,18 +161,22 @@ export const handler: Handler = async (
     });
 
     if (laboratoryRun.ExternalRunId) {
-      // Queue up run status checks
-      const record: SnsProcessingEvent = {
-        Operation: 'UPDATE',
-        Type: 'LaboratoryRun',
-        Record: laboratoryRun,
-      };
-      await sqsService.sendMessage({
-        QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
-        MessageBody: JSON.stringify(record),
-        MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
-        MessageDeduplicationId: uuidv4(),
-      });
+      // Queue up run status checks (best-effort; failure here must not block the response)
+      try {
+        const record: SnsProcessingEvent = {
+          Operation: 'UPDATE',
+          Type: 'LaboratoryRun',
+          Record: laboratoryRun,
+        };
+        await sqsService.sendMessage({
+          QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
+          MessageBody: JSON.stringify(record),
+          MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
+          MessageDeduplicationId: uuidv4(),
+        });
+      } catch (err) {
+        console.warn('Failed to queue run status check (continuing):', err);
+      }
     }
 
     return buildResponse(200, JSON.stringify(laboratoryRun), event);

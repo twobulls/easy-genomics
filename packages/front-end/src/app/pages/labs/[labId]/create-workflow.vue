@@ -6,6 +6,7 @@
   const labsStore = useLabsStore();
   const uiStore = useUiStore();
   const userStore = useUserStore();
+  const { labTab } = useLabBreadcrumbs(labId);
 
   // only lab managers and above can create workflows
   if (!userStore.canEditLabUsers(labId)) {
@@ -26,7 +27,7 @@
   const labName = computed<string>(() => labsStore.labs[labId]?.Name || '');
 
   function backToWorkflowsTab() {
-    $router.push(`/labs/${labId}?tab=HealthOmics+Workflows`);
+    $router.push(labTab('HealthOmics Workflows'));
   }
 
   function handleWorkflowCreated() {
@@ -43,6 +44,7 @@
     back-button-label="Back to Workflows"
     show-org-breadcrumb
     show-lab-breadcrumb
+    :breadcrumbs="[{ label: 'HealthOmics Workflows', to: labTab('HealthOmics Workflows') }, 'Create Workflow']"
   />
 
   <template v-if="uiStore.isRequestPending('loadLabData')">

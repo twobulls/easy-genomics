@@ -1330,6 +1330,20 @@ export interface components {
        */
       FailureClassifiedBy?: "llm" | "lookup";
       /**
+       * @description Sparse marker present only while the run is non-terminal. Backs the `PollStatus_Index`
+       * GSI so the notification poller can query "every active run" in O(1) regardless of total
+       * run history, instead of scanning or iterating every lab. Removed (not set false) on the
+       * non-terminal -> terminal transition.
+       * @constant
+       */
+      PollStatus?: "ACTIVE";
+      /**
+       * @description ISO timestamp set exactly once, guarded by a conditional write
+       * (`attribute_not_exists(NotifiedAt)`), the first time a terminal-state notification is
+       * published for this run. Prevents a duplicate status-check message from double-emailing.
+       */
+      NotifiedAt?: string;
+      /**
        * @description Approximate task completion percentage derived from HealthOmics ListRunTasks
        * (or Seqera progress when populated). Denominator grows as the workflow DAG
        * expands, so prefer showing TasksCompleted/TasksTotal alongside this value.

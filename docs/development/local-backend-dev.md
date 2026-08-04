@@ -35,19 +35,23 @@ Fill in the values. Use this reference:
 | `COGNITO_USER_POOL_ID`        | AWS Console → Cognito → User Pools → _{name-prefix}-easy-genomics-auth-user-pool_ → User pool ID                                                               |
 | `COGNITO_USER_POOL_CLIENT_ID` | Same pool → App integration → App client ID                                                                                                                    |
 | `JWT_SECRET_KEY`              | From easy-genomics.yaml `back-end.jwt-secret-key` (must match deployed value)                                                                                  |
-| `SNS_*_TOPIC`                 | AWS Console → SNS → Topics. Look for `{name-prefix}-*-topic`                                                                                                   |
+| `SQS_*_QUEUE_URL`             | AWS Console → SQS, or `aws sqs get-queue-url --queue-name '{name-prefix}-…-queue.fifo'`. Required for status checks, deletes, invites, folder download.        |
+| `SNS_*_TOPIC`                 | Optional legacy. Prefer `SQS_*_QUEUE_URL`. AWS Console → SNS → Topics (`{name-prefix}-*-topic`)                                                                |
 | `COGNITO_KMS_KEY_ID`          | AWS Console → KMS → Customer managed keys → `{name-prefix}-easy-genomics-cognito-idp-kms-key`                                                                  |
 | `COGNITO_KMS_KEY_ARN`         | Same key → ARN                                                                                                                                                 |
 | `SEQERA_API_BASE_URL`         | Optional. Default: `https://api.cloud.seqera.io`                                                                                                               |
 | `GITHUB_PAT_SECRET_NAME`      | Optional. AWS Secrets Manager secret name for the GitHub PAT used to fetch nf-core workflow schemas. From easy-genomics.yaml `back-end.github-pat-secret-name` |
 
-**SNS topic names:**
+**SQS queue names (FIFO):**
 
-- `{name-prefix}-organization-deletion-topic`
-- `{name-prefix}-laboratory-deletion-topic`
-- `{name-prefix}-user-deletion-topic`
-- `{name-prefix}-laboratory-run-update-topic`
-- `{name-prefix}-user-invite-topic`
+- `{name-prefix}-laboratory-run-update-queue.fifo` → `SQS_LABORATORY_RUN_UPDATE_QUEUE_URL` (lab/dashboard status check)
+- `{name-prefix}-laboratory-run-failure-classification-queue.fifo` →
+  `SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL`
+- `{name-prefix}-organization-management-queue.fifo` → `SQS_ORGANIZATION_DELETION_QUEUE_URL`
+- `{name-prefix}-laboratory-management-queue.fifo` → `SQS_LABORATORY_DELETION_QUEUE_URL`
+- `{name-prefix}-user-management-queue.fifo` → `SQS_USER_DELETION_QUEUE_URL`
+- `{name-prefix}-user-invite-queue.fifo` → `SQS_USER_INVITE_QUEUE_URL`
+- `{name-prefix}-folder-download-queue.fifo` → `SQS_FOLDER_DOWNLOAD_QUEUE_URL`
 
 #### 3. Generate front-end config (if not already done)
 

@@ -9,7 +9,7 @@ import {
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { LaboratoryRunSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/laboratory-run';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
-import { LaboratoryRunNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
+import { LaboratoryRunAlreadyExistsError, LaboratoryRunNotFoundError } from '@easy-genomics/shared-lib/src/app/utils/HttpError';
 import { Service } from '../../types/service';
 import { DynamoDBService } from '../dynamodb-service';
 
@@ -81,6 +81,28 @@ export class LaboratoryRunService extends DynamoDBService implements Service<Lab
       return laboratoryRun;
     } else {
       throw new Error(`${logRequestMessage} unsuccessful: HTTP Status Code=${response.$metadata.httpStatusCode}`);
+    }
+  };
+
+  /**
+   * Same conditional-insert as `add`, but treats a same-user retry as a successful replay
+   * instead of throwing. `RunId` is a client-generated idempotency token that's intentionally
+   * reused across retries one step earlier (the AWS HealthOmics submission) — a double-click
+   * or the front-end's auto-retry-on-EG-110 can resubmit the identical create-laboratory-run
+   * request. Only the requester's own prior write is treated as a replay; a RunId collision
+   * with a different user's run is a genuine anomaly, not a retry, so it's still rejected.
+   */
+  public addOrGetExisting = async (
+    laboratoryRun: LaboratoryRun,
+    requestingUserId: string,
+  ): Promise<LaboratoryRun> => {
+    try {
+      return await this.add(laboratoryRun);
+    } catch (err: any) {
+      if (err?.name !== 'ConditionalCheckFailedException') throw err;
+      const existing = await this.get(laboratoryRun.LaboratoryId, laboratoryRun.RunId);
+      if (existing.UserId === requestingUserId) return existing;
+      throw new LaboratoryRunAlreadyExistsError();
     }
   };
 

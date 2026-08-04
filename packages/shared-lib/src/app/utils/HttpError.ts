@@ -373,6 +373,17 @@ export class LaboratoryRunNotFoundError extends HttpError {
 }
 
 /**
+ * Laboratory Run already exists with this RunId, for a different user than the requester.
+ * A same-user collision is treated as an idempotent retry (see LaboratoryRunService.addOrGetExisting)
+ * and never reaches this error.
+ */
+export class LaboratoryRunAlreadyExistsError extends HttpError {
+  constructor(messageOpt?: string) {
+    super('Laboratory run already exists', 400, 'EG-336', messageOpt);
+  }
+}
+
+/**
  * Sequence set not found
  *
  * @param sequenceSetId

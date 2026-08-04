@@ -1193,9 +1193,26 @@
       <EGCollapsibleSection
         heading-id="lab-settings-healthomics-vpc-networking-heading"
         title="HealthOmics VPC Networking"
-        description="Route this lab's HealthOmics runs through a saved VPC configuration so they can reach resources outside the default restricted network, for example internet reference datasets, license servers, or private VPC and on-prem data. Restricted runs can only reach S3 and ECR in-region."
+        description="Route this lab's HealthOmics runs through a custom VPC configuration."
         :badges="[healthOmicsVpcNetworkingBadge]"
       >
+        <div class="mb-3 flex items-center gap-1.5">
+          <p class="text-muted text-xs">Routes this lab's HealthOmics runs through a saved VPC configuration.</p>
+          <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
+            <template #text>
+              <p>
+                Lets runs reach resources outside the default restricted network — for example internet reference
+                datasets, license servers, or private VPC and on-prem data.
+              </p>
+            </template>
+            <UIcon
+              name="i-heroicons-information-circle"
+              class="text-muted h-4 w-4 shrink-0"
+              aria-label="VPC networking guidance"
+            />
+          </UTooltip>
+        </div>
+
         <EGFormGroup
           label="Networking mode"
           name="AwsHealthOmicsNetworkingMode"

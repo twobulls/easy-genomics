@@ -9,6 +9,7 @@
 
   const labId = $route.params.labId as string;
   const omicsRunId = $route.params.omicsRunId as string;
+  const { labTab } = useLabBreadcrumbs(labId);
   const tabIndex = ref(0);
 
   if (!useUserStore().canViewLab(labId)) {
@@ -68,11 +69,12 @@
   <EGPageHeader
     :title="omicsRun?.name || ''"
     :show-back="true"
-    :back-action="() => $router.push(`/labs/${labId}`)"
+    :back-action="() => $router.push(labTab('Lab Runs'))"
     :is-loading="useUiStore().isRequestPending('loadOmicsRun')"
     :skeleton-config="{ titleLines: 2, descriptionLines: 1 }"
     show-org-breadcrumb
     show-lab-breadcrumb
+    :breadcrumbs="[{ label: 'Lab Runs', to: labTab('Lab Runs') }, omicsRun?.name || '']"
   />
 
   <EGDetailTabs

@@ -165,7 +165,9 @@ export class LambdaConstruct extends Construct {
       role: functionRole,
       bundling: {
         loader: { '.hbs': 'text' },
-        externalModules: ['@aws-sdk/*'],
+        // Keep aws-cdk-lib out of runtime zips if anything imports it by mistake
+        // (it previously inflated every handler to ~40–50MB via shared-lib CORS helpers).
+        externalModules: ['@aws-sdk/*', 'aws-cdk-lib'],
         nodeModules: lambdaNodeModules,
       },
       environment: {

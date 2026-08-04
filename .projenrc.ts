@@ -464,8 +464,11 @@ backEndApp.addScripts({
   //
   // After stacks deploy, seed laboratory S3 access rows so existing labs are not
   // locked out by the new assert gates (runtime fallback covers the brief window).
+  //
+  // Then drop cdk.out on local deploys. Stale NodejsFunction asset hashes accumulate
+  // across synths (CDK never prunes them). CI keeps the assembly for nx/debugging.
   ['deploy']:
-    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices && pnpm run migrate-laboratory-s3-access-seed',
+    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices && pnpm run migrate-laboratory-s3-access-seed && if [ "${CI_CD:-}" != "true" ]; then rm -rf cdk.out; fi',
   ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy --require-approval any-change', // Run root build-back-end script to inc shared-lib
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
   ['local-server']: 'tsx src/local-server/index.ts',
@@ -631,9 +634,10 @@ frontEndApp.addScripts({
     'pnpm run nuxt-reset && pnpm run nuxt-prepare && pnpm exec projen build && pnpm run nuxt-load-settings && pnpm run nuxt-generate && pnpm exec projen synth:silent',
   // `--app cdk.out` reuses the assembly synthesized at the END of the build script above,
   // which includes the BucketDeployment because `dist/` exists by then.
-  ['deploy']: 'pnpm cdk bootstrap --app cdk.out && pnpm exec projen deploy --app cdk.out',
-  ['build-and-deploy']:
-    'pnpm -w run build-front-end && pnpm cdk bootstrap --app cdk.out && pnpm exec projen deploy --app cdk.out --require-approval any-change', // Run root build-front-end script to inc shared-lib
+  // Drop cdk.out after successful local deploy (see back-end deploy comment).
+  ['deploy']:
+    'pnpm cdk bootstrap --app cdk.out && pnpm exec projen deploy --app cdk.out && if [ "${CI_CD:-}" != "true" ]; then rm -rf cdk.out; fi',
+  ['build-and-deploy']: 'pnpm -w run build-front-end && pnpm run deploy --require-approval any-change', // Run root build-front-end script to inc shared-lib; deploy cleans cdk.out locally
   ['nuxt-dev']: 'pnpm -w run build-front-end && pnpm kill-port 3000 && nuxt dev',
   ['nuxt-load-settings']: 'npx esrun nuxt-load-configuration-settings.ts',
   ['nuxt-generate']: 'nuxt generate',

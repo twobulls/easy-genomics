@@ -48,8 +48,10 @@ export class Nx extends Component {
 
             // github action workflows and need to restore the nx cache for
 
-            // subsequent job to fetch artifacts
-            outputs: ['{projectRoot}/lib', '{projectRoot}/cdk.out'],
+            // subsequent job to fetch artifacts.
+            // Do NOT cache cdk.out: each Lambda asset is tens of MB and a full
+            // assembly is multi‑GB; Nx was duplicating it under node_modules/.cache.
+            outputs: ['{projectRoot}/lib'],
           },
           deploy: { dependsOn: ['build'] },
         },

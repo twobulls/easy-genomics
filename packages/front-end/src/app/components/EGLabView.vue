@@ -20,6 +20,7 @@
   import type { DataCollectionsTab } from '@FE/components/EGDataCollectionsTabBar.vue';
   import { TableSort } from './EGTable.vue';
   import { ensureLabInActiveOrg } from '@FE/utils/ensure-lab-in-active-org';
+  import { isLaboratoryRunOwnedByUser } from '@FE/utils/laboratory-run-ownership';
 
   const props = defineProps<{
     superuser?: boolean;
@@ -235,6 +236,12 @@
     tabIndex.value = 0;
   }
 
+  // Keep tab in sync when navigating via query (e.g. Dashboard "View all" → Pipeline Runs)
+  watch(
+    () => props.initialTab,
+    () => setTabIndex(),
+  );
+
   function handleTabChange(newIndex: number) {
     const fromTab = tabItems.value[tabIndex.value]?.key || '';
     const toTab = tabItems.value[newIndex]?.key || '';
@@ -323,7 +330,7 @@
     return runsTableItems.value.filter((run) => matchesRunSearch(run, runsSearchQuery.value));
   });
 
-  // fetch the runs with BE filtering any time any of the inputs change
+  // fetch the runs any time any of the inputs change; apply "My runs only" client-side
   watchEffect(async () => {
     uiStore.setRequestPending('loadLabRuns');
 
@@ -333,11 +340,19 @@
     // laboratory run polling refresh key
     runsTableRefreshKey.value;
 
-    const filters: any = {};
-    if (runsTableFilterMyRunsOnly.value) filters.UserId = userStore.currentUserDetails.id!;
+    const myRunsOnly = runsTableFilterMyRunsOnly.value;
+    const currentUser = {
+      id: userStore.currentUserDetails.id,
+      email: userStore.currentUserDetails.email,
+    };
 
     try {
-      runsTableItems.value = (await $api.labs.listLabRuns(props.labId, filters))
+      let labRuns = await $api.labs.listLabRuns(props.labId);
+      if (myRunsOnly) {
+        labRuns = labRuns.filter((labRun) => isLaboratoryRunOwnedByUser(labRun, currentUser));
+      }
+
+      runsTableItems.value = labRuns
         .map((labRun) => {
           const lastUpdated = labRun.ModifiedAt ?? labRun.CreatedAt ?? '';
           const searchIndex = [
@@ -930,7 +945,16 @@
           :disabled="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
           class="w-[408px]"
         />
-        <UCheckbox label="My runs only" :ui="{ base: 'size-[24px]' }" v-model="runsTableFilterMyRunsOnly" />
+        <div class="flex items-center gap-2">
+          <UToggle
+            id="pipeline-runs-my-runs-only"
+            v-model="runsTableFilterMyRunsOnly"
+            aria-labelledby="pipeline-runs-my-runs-only-label"
+          />
+          <label id="pipeline-runs-my-runs-only-label" for="pipeline-runs-my-runs-only" class="text-body text-sm">
+            My runs only
+          </label>
+        </div>
       </div>
       <p class="text-muted mt-1 text-xs">
         Search by all run fields or use queries like
@@ -1002,7 +1026,13 @@
       </template>
 
       <template #empty-state>
-        <div class="text-muted flex h-24 items-center justify-center font-normal">There are no Runs in your Lab</div>
+        <div class="text-muted flex h-24 items-center justify-center font-normal">
+          {{
+            runsTableFilterMyRunsOnly
+              ? 'There are no runs initiated by you in this Lab'
+              : 'There are no Runs in your Lab'
+          }}
+        </div>
       </template>
     </EGTable>
     <p v-if="runRecordsRetentionNotice" class="text-muted mt-3 max-w-3xl text-xs leading-relaxed">
@@ -1082,9 +1112,7 @@
           size="sm"
           class="rounded-xl border-0 font-serif ring-0"
           :class="
-            workflow?.source === 'SHARED'
-              ? 'bg-alert-blue-muted text-alert-blue'
-              : 'bg-primary-muted text-primary-dark'
+            workflow?.source === 'SHARED' ? 'bg-alert-blue-muted text-alert-blue' : 'bg-primary-muted text-primary-dark'
           "
         >
           {{ workflow?.source === 'SHARED' ? 'Shared' : 'Private' }}

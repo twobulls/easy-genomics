@@ -263,9 +263,11 @@ class LabsModule extends HttpFactory {
   }
 
   async listLabRuns(labId: string, filters: object = {}): Promise<LaboratoryRun[]> {
-    let queryUrl = `/laboratory/run/list-laboratory-runs?LaboratoryId=${labId}`;
+    let queryUrl = `/laboratory/run/list-laboratory-runs?LaboratoryId=${encodeURIComponent(labId)}`;
 
-    for (const [filterKey, filterVal] of Object.entries(filters)) queryUrl += `&${filterKey}=${filterVal}`;
+    for (const [filterKey, filterVal] of Object.entries(filters)) {
+      queryUrl += `&${encodeURIComponent(filterKey)}=${encodeURIComponent(String(filterVal))}`;
+    }
 
     const res = await this.call<LaboratoryRun[]>('GET', queryUrl);
 

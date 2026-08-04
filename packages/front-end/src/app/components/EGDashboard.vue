@@ -5,6 +5,7 @@
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { WorkflowListItem as OmicsWorkflow } from '@aws-sdk/client-omics';
   import { useUiStore, useSeqeraPipelinesStore, useOmicsWorkflowsStore } from '@FE/stores';
+  import { isLaboratoryRunOwnedByUser } from '@FE/utils/laboratory-run-ownership';
   import { TableSort } from './EGTable.vue';
 
   const props = defineProps<{
@@ -13,6 +14,7 @@
 
   const { $api } = useNuxtApp();
   const $router = useRouter();
+  const $route = useRoute();
   const labStore = useLabsStore();
   const userStore = useUserStore();
   const uiStore = useUiStore();
@@ -34,7 +36,9 @@
   const recentRunsHeadingId = 'dashboard-recent-runs-heading';
   const favouriteWorkflowsHeadingId = 'dashboard-favourite-workflows-heading';
   const inProgressHeadingId = 'dashboard-in-progress-heading';
+  const recentRunsMyRunsOnlyId = 'dashboard-recent-runs-my-runs-only';
   const highlightedSearchIndex = ref(-1);
+  const recentRunsMyRunsOnly = ref(false);
 
   const IN_PROGRESS_STATUSES = new Set(['SUBMITTED', 'STARTING', 'RUNNING']);
 
@@ -322,8 +326,14 @@
 
   const recentRuns = computed(() => {
     // Match the design: in-progress runs live in the In progress section, not Recent runs.
+    const currentUser = {
+      id: userStore.currentUserDetails.id,
+      email: userStore.currentUserDetails.email,
+    };
+
     return [...allRuns.value]
       .filter((r) => !IN_PROGRESS_STATUSES.has(r.Status))
+      .filter((r) => !recentRunsMyRunsOnly.value || isLaboratoryRunOwnedByUser(r, currentUser))
       .sort((a, b) => {
         const dateA = a.CreatedAt ? new Date(a.CreatedAt).getTime() : 0;
         const dateB = b.CreatedAt ? new Date(b.CreatedAt).getTime() : 0;
@@ -331,6 +341,13 @@
       })
       .slice(0, 5);
   });
+
+  function viewAllRuns() {
+    $router.push({
+      path: `/labs/${props.labId}`,
+      query: { ...$route.query, tab: 'Pipeline Runs' },
+    });
+  }
 
   const recentRunsTableColumns = [
     { key: 'RunName', label: 'Run Name', sortable: true },
@@ -728,7 +745,29 @@
 
     <!-- Recent Runs -->
     <section class="mt-10" :aria-labelledby="recentRunsHeadingId">
-      <EGText :id="recentRunsHeadingId" tag="h2" class="mb-8">Recent Runs</EGText>
+      <div class="mb-8 flex items-center justify-between gap-4">
+        <EGText :id="recentRunsHeadingId" tag="h2" class="mb-0">Recent Runs</EGText>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <UToggle
+              :id="recentRunsMyRunsOnlyId"
+              v-model="recentRunsMyRunsOnly"
+              :aria-labelledby="`${recentRunsMyRunsOnlyId}-label`"
+            />
+            <label :id="`${recentRunsMyRunsOnlyId}-label`" :for="recentRunsMyRunsOnlyId" class="text-body text-sm">
+              My runs only
+            </label>
+          </div>
+          <button
+            type="button"
+            class="text-primary hover:text-primary-dark focus-visible:outline-primary-500 inline-flex items-center gap-1 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+            @click="viewAllRuns"
+          >
+            View all
+            <UIcon name="i-heroicons-arrow-right" class="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
 
       <EGTable
         :row-click-action="viewRunDetails"
@@ -741,7 +780,10 @@
       >
         <template #RunName-data="{ row: run }">
           <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
-          <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
+          <div v-if="run.WorkflowName || run.Owner" class="text-muted text-xs font-normal">
+            <template v-if="run.WorkflowName && run.Owner">{{ run.WorkflowName }} · {{ run.Owner }}</template>
+            <template v-else>{{ run.WorkflowName || run.Owner }}</template>
+          </div>
           <div v-if="run.Description" class="text-muted line-clamp-1 text-xs font-normal">{{ run.Description }}</div>
         </template>
 
@@ -766,7 +808,9 @@
         </template>
 
         <template #empty-state>
-          <div class="text-muted flex h-24 items-center justify-center font-normal">No recent runs</div>
+          <div class="text-muted flex h-24 items-center justify-center font-normal">
+            {{ recentRunsMyRunsOnly ? 'No recent runs initiated by you' : 'No recent runs' }}
+          </div>
         </template>
       </EGTable>
     </section>

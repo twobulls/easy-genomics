@@ -158,29 +158,6 @@ describe('create-laboratory-run.lambda', () => {
     expect(mockSqsService.prototype.sendMessage).toHaveBeenCalled();
   });
 
-  it('still returns 200 with the persisted run when queuing the status check fails', async () => {
-    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
-      OrganizationId: '00000000-0000-0000-0000-000000000001',
-      LaboratoryId: LAB_ID,
-    });
-
-    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockResolvedValue({
-      ...baseRequest,
-      OrganizationId: '00000000-0000-0000-0000-000000000001',
-      Owner: 'user@example.com',
-      Settings: JSON.stringify({ param: 'value' }),
-    });
-
-    (mockSqsService.prototype.sendMessage as jest.Mock).mockRejectedValue(new Error('SQS unavailable'));
-
-    const result = await handler(createEvent(baseRequest), createContext(), () => {});
-
-    expect(result.statusCode).toBe(200);
-    const body = JSON.parse(result.body);
-    expect(body.RunId).toBe(RUN_ID);
-    expect(mockSqsService.prototype.sendMessage).toHaveBeenCalled();
-  });
-
   it('passes WorkflowVersionName through to laboratory run addOrGetExisting when provided', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: '00000000-0000-0000-0000-000000000001',
@@ -312,34 +289,6 @@ describe('create-laboratory-run.lambda', () => {
 
     expect(result.statusCode).toBe(403);
     expect(mockRunService.prototype.addOrGetExisting).not.toHaveBeenCalled();
-  });
-
-  it('sets PollStatus=ACTIVE on a newly created non-terminal run', async () => {
-    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
-      LaboratoryId: LAB_ID,
-      OrganizationId: '00000000-0000-0000-0000-000000000001',
-    });
-    const addOrGetExistingSpy = jest.fn().mockImplementation((run) => Promise.resolve(run));
-    mockRunService.prototype.addOrGetExisting = addOrGetExistingSpy;
-
-    const event = createEvent(baseRequest);
-    await handler(event, createContext(), () => {});
-
-    expect(addOrGetExistingSpy).toHaveBeenCalledWith(expect.objectContaining({ PollStatus: 'ACTIVE' }), 'user-1');
-  });
-
-  it('does not set PollStatus when the run is created already terminal', async () => {
-    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
-      LaboratoryId: LAB_ID,
-      OrganizationId: '00000000-0000-0000-0000-000000000001',
-    });
-    const addOrGetExistingSpy = jest.fn().mockImplementation((run) => Promise.resolve(run));
-    mockRunService.prototype.addOrGetExisting = addOrGetExistingSpy;
-
-    const event = createEvent({ ...baseRequest, Status: 'COMPLETED' });
-    await handler(event, createContext(), () => {});
-
-    expect(addOrGetExistingSpy).toHaveBeenCalledWith(expect.not.objectContaining({ PollStatus: 'ACTIVE' }), 'user-1');
   });
 
   it('persists the run before attaching cost estimate, and still succeeds if estimate fails', async () => {

@@ -145,7 +145,6 @@ export const handler: Handler = async (
       CreatedBy: currentUserId,
       ...(isTerminalAtCreate ? { TerminalAt: createdAt.toISOString() } : {}),
       ...(laboratorioRunExpiresAt !== undefined ? { ExpiresAt: laboratorioRunExpiresAt } : {}),
-      ...(!isTerminalAtCreate ? { PollStatus: 'ACTIVE' } : {}),
     }, currentUserId);
 
     laboratoryRun = await attachPreRunCostEstimate(laboratory, laboratoryRun, request);
@@ -161,22 +160,18 @@ export const handler: Handler = async (
     });
 
     if (laboratoryRun.ExternalRunId) {
-      // Queue up run status checks (best-effort; failure here must not block the response)
-      try {
-        const record: SnsProcessingEvent = {
-          Operation: 'UPDATE',
-          Type: 'LaboratoryRun',
-          Record: laboratoryRun,
-        };
-        await sqsService.sendMessage({
-          QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
-          MessageBody: JSON.stringify(record),
-          MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
-          MessageDeduplicationId: uuidv4(),
-        });
-      } catch (err) {
-        console.warn('Failed to queue run status check (continuing):', err);
-      }
+      // Queue up run status checks
+      const record: SnsProcessingEvent = {
+        Operation: 'UPDATE',
+        Type: 'LaboratoryRun',
+        Record: laboratoryRun,
+      };
+      await sqsService.sendMessage({
+        QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
+        MessageBody: JSON.stringify(record),
+        MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
+        MessageDeduplicationId: uuidv4(),
+      });
     }
 
     return buildResponse(200, JSON.stringify(laboratoryRun), event);

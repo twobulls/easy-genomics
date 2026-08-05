@@ -184,10 +184,8 @@ export class DynamoDBService {
    * Helper service function to assist the generation of the DynamoDB
    * ExpressionAttributeValues from an object's property values & types.
    *
-   * Conversion is delegated to `marshall` so nested objects and arrays produce
-   * well-formed AttributeValues. Hand-rolling these shapes previously emitted
-   * `{ M: <plain object> }`, which the AWS SDK cannot serialize, so any update
-   * carrying a nested attribute threw before reaching DynamoDB.
+   * Delegates to `marshall` so nested objects and arrays produce well-formed
+   * AttributeValues (e.g. nested objects as `{ M: { ... } }`).
    *
    * @param object
    */

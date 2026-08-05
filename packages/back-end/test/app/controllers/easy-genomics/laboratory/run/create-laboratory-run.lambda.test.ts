@@ -1,3 +1,4 @@
+import { LaboratoryRunAlreadyExistsError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, Context } from 'aws-lambda';
 
 const mockEstimate = jest.fn();
@@ -110,7 +111,7 @@ describe('create-laboratory-run.lambda', () => {
     mockValidateLabTechnician.mockReturnValue(false);
 
     mockLabService.prototype.queryByLaboratoryId = jest.fn();
-    mockRunService.prototype.add = jest.fn();
+    mockRunService.prototype.addOrGetExisting = jest.fn();
     mockRunService.prototype.update = jest.fn().mockImplementation(async (r) => r);
     mockSqsService.prototype.sendMessage = jest.fn();
     mockBuildRunInputProfile.mockResolvedValue({
@@ -139,7 +140,7 @@ describe('create-laboratory-run.lambda', () => {
       LaboratoryId: LAB_ID,
     });
 
-    (mockRunService.prototype.add as jest.Mock).mockResolvedValue({
+    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockResolvedValue({
       ...baseRequest,
       OrganizationId: '00000000-0000-0000-0000-000000000001',
       Owner: 'user@example.com',
@@ -153,17 +154,17 @@ describe('create-laboratory-run.lambda', () => {
     expect(body.LaboratoryId).toBe(LAB_ID);
     expect(body.RunId).toBe(RUN_ID);
     expect(mockLabService.prototype.queryByLaboratoryId).toHaveBeenCalledWith(LAB_ID);
-    expect(mockRunService.prototype.add).toHaveBeenCalled();
+    expect(mockRunService.prototype.addOrGetExisting).toHaveBeenCalled();
     expect(mockSqsService.prototype.sendMessage).toHaveBeenCalled();
   });
 
-  it('passes WorkflowVersionName through to laboratory run add when provided', async () => {
+  it('passes WorkflowVersionName through to laboratory run addOrGetExisting when provided', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: '00000000-0000-0000-0000-000000000001',
       LaboratoryId: LAB_ID,
     });
 
-    (mockRunService.prototype.add as jest.Mock).mockResolvedValue({
+    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockResolvedValue({
       ...baseRequest,
       Platform: 'AWS HealthOmics',
       WorkflowVersionName: 'my-omics-version',
@@ -181,20 +182,21 @@ describe('create-laboratory-run.lambda', () => {
     const result = await handler(createEvent(body), createContext(), () => {});
 
     expect(result.statusCode).toBe(200);
-    expect(mockRunService.prototype.add).toHaveBeenCalledWith(
+    expect(mockRunService.prototype.addOrGetExisting).toHaveBeenCalledWith(
       expect.objectContaining({
         WorkflowVersionName: 'my-omics-version',
       }),
+      'user-1',
     );
   });
 
-  it('passes Description through to laboratory run add when provided', async () => {
+  it('passes Description through to laboratory run addOrGetExisting when provided', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: '00000000-0000-0000-0000-000000000001',
       LaboratoryId: LAB_ID,
     });
 
-    (mockRunService.prototype.add as jest.Mock).mockResolvedValue({
+    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockResolvedValue({
       ...baseRequest,
       Description: 'My run notes',
       OrganizationId: '00000000-0000-0000-0000-000000000001',
@@ -210,20 +212,21 @@ describe('create-laboratory-run.lambda', () => {
     const result = await handler(createEvent(body), createContext(), () => {});
 
     expect(result.statusCode).toBe(200);
-    expect(mockRunService.prototype.add).toHaveBeenCalledWith(
+    expect(mockRunService.prototype.addOrGetExisting).toHaveBeenCalledWith(
       expect.objectContaining({
         Description: 'My run notes',
       }),
+      'user-1',
     );
   });
 
-  it('omits Description from laboratory run add when not provided', async () => {
+  it('omits Description from laboratory run addOrGetExisting when not provided', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: '00000000-0000-0000-0000-000000000001',
       LaboratoryId: LAB_ID,
     });
 
-    (mockRunService.prototype.add as jest.Mock).mockResolvedValue({
+    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockResolvedValue({
       ...baseRequest,
       OrganizationId: '00000000-0000-0000-0000-000000000001',
       Owner: 'user@example.com',
@@ -233,7 +236,7 @@ describe('create-laboratory-run.lambda', () => {
     const result = await handler(createEvent(baseRequest), createContext(), () => {});
 
     expect(result.statusCode).toBe(200);
-    const addArg = (mockRunService.prototype.add as jest.Mock).mock.calls[0][0];
+    const addArg = (mockRunService.prototype.addOrGetExisting as jest.Mock).mock.calls[0][0];
     expect(addArg).not.toHaveProperty('Description');
   });
 
@@ -243,7 +246,7 @@ describe('create-laboratory-run.lambda', () => {
       LaboratoryId: 'lab-1',
     });
 
-    (mockRunService.prototype.add as jest.Mock).mockResolvedValue({
+    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockResolvedValue({
       ...baseRequest,
       ExternalRunId: undefined,
       OrganizationId: 'org-1',
@@ -261,7 +264,7 @@ describe('create-laboratory-run.lambda', () => {
     const result = await handler(createEvent({}), createContext(), () => {});
 
     expect(result.statusCode).toBe(400);
-    expect(mockRunService.prototype.add).not.toHaveBeenCalled();
+    expect(mockRunService.prototype.addOrGetExisting).not.toHaveBeenCalled();
   });
 
   it('returns 404 when laboratory is not found', async () => {
@@ -285,7 +288,7 @@ describe('create-laboratory-run.lambda', () => {
     const result = await handler(createEvent(baseRequest), createContext(), () => {});
 
     expect(result.statusCode).toBe(403);
-    expect(mockRunService.prototype.add).not.toHaveBeenCalled();
+    expect(mockRunService.prototype.addOrGetExisting).not.toHaveBeenCalled();
   });
 
   it('persists the run before attaching cost estimate, and still succeeds if estimate fails', async () => {
@@ -302,15 +305,16 @@ describe('create-laboratory-run.lambda', () => {
       Settings: JSON.stringify({ param: 'value' }),
       CreatedBy: 'user-1',
     };
-    (mockRunService.prototype.add as jest.Mock).mockResolvedValue(added);
+    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockResolvedValue(added);
     mockBuildRunInputProfile.mockRejectedValue(new Error('S3 timeout'));
 
     const result = await handler(createEvent(baseRequest), createContext(), () => {});
 
     expect(result.statusCode).toBe(200);
-    expect(mockRunService.prototype.add).toHaveBeenCalled();
-    expect(mockRunService.prototype.add).toHaveBeenCalledWith(
+    expect(mockRunService.prototype.addOrGetExisting).toHaveBeenCalled();
+    expect(mockRunService.prototype.addOrGetExisting).toHaveBeenCalledWith(
       expect.not.objectContaining({ PreRunCostEstimate: expect.anything() }),
+      'user-1',
     );
   });
 
@@ -328,7 +332,7 @@ describe('create-laboratory-run.lambda', () => {
       Settings: JSON.stringify({ param: 'value' }),
       CreatedBy: 'user-1',
     };
-    (mockRunService.prototype.add as jest.Mock).mockResolvedValue(added);
+    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockResolvedValue(added);
     mockBuildRunInputProfile.mockResolvedValue({
       SampleCount: 3,
       InputFileCount: 2,
@@ -364,5 +368,20 @@ describe('create-laboratory-run.lambda', () => {
         PreRunCostEstimate: expect.objectContaining({ MedianUsd: 2 }),
       }),
     );
+  });
+
+  it('returns a classified 400 (not a raw error) when addOrGetExisting reports a genuine RunId collision', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: '00000000-0000-0000-0000-000000000001',
+      LaboratoryId: LAB_ID,
+    });
+
+    (mockRunService.prototype.addOrGetExisting as jest.Mock).mockRejectedValue(new LaboratoryRunAlreadyExistsError());
+
+    const result = await handler(createEvent(baseRequest), createContext(), () => {});
+
+    expect(result.statusCode).toBe(400);
+    const body = JSON.parse(result.body);
+    expect(body.ErrorCode).toBe('EG-336');
   });
 });

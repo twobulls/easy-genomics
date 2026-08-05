@@ -10,9 +10,12 @@
   import { TaskListItem, GetRunResponse } from '@aws-sdk/client-omics';
   import { useLabsStore, useRunStore, useUiStore } from '@FE/stores';
   import { ensureLabInActiveOrg } from '@FE/utils/ensure-lab-in-active-org';
+  import {
+    isTerminalRunStatus,
+    showOmicsTaskProgressCard,
+    showSeqeraTaskProgressCard,
+  } from '@FE/utils/run-progress-card-visibility';
   import { v4 as uuidv4 } from 'uuid';
-
-  const TERMINAL_STATUSES = new Set(['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED']);
 
   const $route = useRoute();
   const $router = useRouter();
@@ -135,7 +138,7 @@
       window.clearTimeout(progressPollTimeoutId);
     }
     const run = runStore.labRuns[labRunId];
-    if (!run || TERMINAL_STATUSES.has(run.Status)) return;
+    if (!run || isTerminalRunStatus(run.Status)) return;
 
     progressPollTimeoutId = window.setTimeout(async () => {
       if (!progressPollActive) return;
@@ -308,21 +311,20 @@
   const rowLabelStyle = 'w-[200px] font-medium text-black';
   const rowContentStyle = 'text-muted text-left';
 
-  const showSeqeraProgressCard = computed(
-    () => labRun.value?.Platform === 'Seqera Cloud' && !!(seqeraFailureReason.value || seqeraProgress.value?.progress),
+  const showSeqeraProgressCard = computed<boolean>(() =>
+    showSeqeraTaskProgressCard(labRun.value, {
+      failureReason: seqeraFailureReason.value,
+      hasProgress: !!seqeraProgress.value?.progress,
+    }),
   );
 
-  const showOmicsProgressCard = computed(
-    () =>
-      labRun.value?.Platform === 'AWS HealthOmics' &&
-      !!(
-        omicsFailureReason.value ||
-        omicsFailedTasks.value.length ||
-        (omicsProgress.value?.progress && !TERMINAL_STATUSES.has(labRun.value.Status))
-      ),
+  const showOmicsProgressCard = computed<boolean>(() =>
+    showOmicsTaskProgressCard(labRun.value, {
+      failureReason: omicsFailureReason.value,
+      failedTaskCount: omicsFailedTasks.value.length,
+      hasProgress: !!omicsProgress.value?.progress,
+    }),
   );
-
-  const showTaskProgressCard = computed(() => showSeqeraProgressCard.value || showOmicsProgressCard.value);
 </script>
 
 <template>
@@ -338,7 +340,7 @@
     :breadcrumbs="[{ label: 'Lab Runs', to: labTab('Lab Runs') }, labRun?.RunName || '']"
   />
 
-  <div v-if="showTaskProgressCard" class="mb-6 space-y-3">
+  <div v-if="showSeqeraProgressCard || showOmicsProgressCard" class="mb-6 space-y-3">
     <!-- Seqera task-level progress for FAILED or RUNNING runs -->
     <section
       v-if="showSeqeraProgressCard"
@@ -392,7 +394,7 @@
       <h3 class="mb-4 text-sm font-medium text-black">
         {{ labRun.Status === 'FAILED' ? 'Failed Tasks' : 'Task Progress' }}
       </h3>
-      <div v-if="omicsProgress?.progress && !TERMINAL_STATUSES.has(labRun.Status)" class="mb-4">
+      <div v-if="omicsProgress?.progress && !isTerminalRunStatus(labRun.Status)" class="mb-4">
         <EGProgressBar
           :percent="omicsProgress.progress.percent"
           :completed="omicsProgress.progress.tasksCompleted"

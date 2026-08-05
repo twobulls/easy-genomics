@@ -16,6 +16,11 @@
     extractS3KeysFromCsv,
     validateSampleSheetFile,
   } from '@FE/utils/sample-sheet-utils';
+  import {
+    analyzeUploadFileAlerts,
+    UPLOAD_ALERT_BANNER_LEAD,
+    type UploadFileAlertAnalysis,
+  } from '@FE/utils/run-upload-file-alerts';
   import { useToastStore } from '@FE/stores';
   import { useNetwork } from '@vueuse/core';
   import { RunType } from '@easy-genomics/shared-lib/src/app/types/base-entity';
@@ -135,6 +140,18 @@
     filePairs.value.some((filePair) => filePair.r1File && filePair.r2File),
   );
 
+  const isHealthOmics = computed(() => props.platform === 'AWS HealthOmics');
+
+  const uploadFileAlerts = computed<UploadFileAlertAnalysis>(() =>
+    analyzeUploadFileAlerts(
+      filePairs.value.map((pair) => ({
+        sampleId: pair.sampleId,
+        hasR1: !!pair.r1File,
+        hasR2: !!pair.r2File,
+      })),
+    ),
+  );
+
   const areAllFilesUploaded = computed(() => filesNotUploaded.value.length === 0);
 
   const areAllPairsComplete = computed<boolean>(() => {
@@ -142,10 +159,10 @@
   });
 
   const canProceedToNextStep = computed<boolean>(() => {
-    // Check both conditions:
-    // 1. All existing files are uploaded successfully
-    // 2. All pairs are complete (have both R1 and R2)
-    return areAllFilesUploaded.value && areAllPairsComplete.value && hasSampleSheetUrl.value;
+    // HealthOmics: warn-only for pairing issues — only require uploads + sample sheet.
+    // Seqera: keep requiring every sample to have an R1 (existing behavior).
+    const pairingOk = isHealthOmics.value || areAllPairsComplete.value;
+    return areAllFilesUploaded.value && pairingOk && hasSampleSheetUrl.value;
   });
 
   // overall upload status for all files
@@ -164,20 +181,23 @@
   const showGenerateSampleSheetButton = computed<boolean>(
     () =>
       uploadStatus.value === 'success' && // everything uploaded
-      filesProblemAlertMessage.value === null && // no file problems
+      (isHealthOmics.value || filesProblemAlertMessage.value === null) && // Seqera still blocks on file problems
       !wipRun.value.sampleSheetS3Url, // no sample sheet yet
   );
 
   const filesForTable = computed(() => {
-    const files: { sampleId: string; fileName: string; progress: number; error?: string }[] = [];
+    const files: { sampleId: string; fileName: string; progress: number; error?: string; showAlert: boolean }[] = [];
+    const flagged = uploadFileAlerts.value.flaggedSampleIds;
 
     filePairs.value.forEach((filePair: FilePair) => {
+      const showAlert = isHealthOmics.value && flagged.has(filePair.sampleId);
       if (filePair.r1File) {
         files.push({
           sampleId: filePair.sampleId,
           fileName: filePair.r1File.name,
           progress: filePair.r1File.progress || 0,
           error: filePair.r1File.error,
+          showAlert,
         });
       }
       if (filePair.r2File) {
@@ -186,6 +206,7 @@
           fileName: filePair.r2File.name,
           progress: filePair.r2File.progress || 0,
           error: filePair.r2File.error,
+          showAlert,
         });
       }
     });
@@ -196,6 +217,7 @@
   const isDropzoneEnabled = computed(() => uploadStatus.value !== 'uploading');
 
   const filesProblemAlertMessage = computed<string | null>(() => {
+    // Seqera (and non-HealthOmics): keep existing hard-error copy used to block upload.
     // don't need internet connection message because the modal takes care of it
     // don't need no files uploaded message because there will visibly be nothing there which should be self explanatory
     if (!areAllPairsComplete.value) return 'There is an R2 file with no matching R1 file.';
@@ -209,10 +231,15 @@
   const isUploadButtonDisabled = computed(() => {
     const noInternet = !isOnline.value;
     const noFiles = filesNotUploaded.value.length === 0;
-    const hasIncompletePairs = !areAllPairsComplete.value;
-    const hasBothSinglesAndPairs = haveMatchedFiles.value && haveUnmatchedFiles.value;
     const isUploading = uploadStatus.value === 'uploading';
 
+    // HealthOmics: warn-only for pairing — only gate on connectivity / work left / in-flight upload.
+    if (isHealthOmics.value) {
+      return noInternet || noFiles || isUploading;
+    }
+
+    const hasIncompletePairs = !areAllPairsComplete.value;
+    const hasBothSinglesAndPairs = haveMatchedFiles.value && haveUnmatchedFiles.value;
     return noInternet || noFiles || hasIncompletePairs || hasBothSinglesAndPairs || isUploading;
   });
 
@@ -882,8 +909,9 @@
     // If the file isn't in error state, can't retry
     if (!row.error) return false;
 
-    // if there's a problem with the selected files, that needs to be addressed before uploading
-    if (filesProblemAlertMessage.value !== null) return false;
+    // Seqera: if there's a problem with the selected files, that needs to be addressed before uploading.
+    // HealthOmics: warn-only — allow retry even when alerts are present.
+    if (!isHealthOmics.value && filesProblemAlertMessage.value !== null) return false;
 
     return true;
   };
@@ -1094,6 +1122,13 @@
         aria-label="Uploaded files"
         aria-live="polite"
       >
+        <div v-if="isHealthOmics" class="text-muted mb-3 flex items-center justify-between text-sm">
+          <span>{{ files.length }} files • {{ filePairs.length }} samples</span>
+          <span v-if="uploadFileAlerts.flaggedFileCount > 0">
+            {{ uploadFileAlerts.flaggedFileCount }}
+            {{ uploadFileAlerts.flaggedFileCount === 1 ? 'file' : 'files' }} flagged
+          </span>
+        </div>
         <div class="files-list-header text-body mb-4 border-b border-[#d9d9d9]" role="row">
           <div class="file-cell sample-id flex w-[30%] min-w-[240px]">Sample ID</div>
           <div class="file-cell flex w-[60%] min-w-[320px]">Sample File</div>
@@ -1122,18 +1157,25 @@
               </div>
             </div>
             <div
-              class="file-cell flex w-[60%] min-w-[320px] items-center"
+              class="file-cell flex w-[60%] min-w-[320px] items-center gap-2"
               :style="{ color: row.progress === 100 && !row.error ? '#306239' : 'inherit' }"
             >
               <template v-if="row.error">
                 <UIcon
                   name="i-heroicons-exclamation-triangle"
-                  class="text-alert-danger-dark mr-2"
+                  class="text-alert-danger-dark mr-2 shrink-0"
                   size="20"
                   aria-hidden="true"
                 />
               </template>
-              <div class="truncate">{{ row.fileName }}</div>
+              <div class="min-w-0 flex-1 truncate">{{ row.fileName }}</div>
+              <span
+                v-if="row.showAlert && !row.error"
+                class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FAF2DE] px-2.5 py-0.5 text-xs font-semibold leading-5 text-[#835C24]"
+              >
+                <UIcon name="i-heroicons-exclamation-triangle" class="shrink-0" size="14" aria-hidden="true" />
+                Alert
+              </span>
             </div>
 
             <div class="file-cell flex w-[10%] min-w-[70px] items-center justify-end gap-4">
@@ -1194,8 +1236,22 @@
       </div>
     </template>
 
+    <!-- HealthOmics: caution-style warn-only banner -->
     <div
-      v-if="!isFromSequenceCollections && filesProblemAlertMessage"
+      v-if="isHealthOmics && !isFromSequenceCollections && uploadFileAlerts.bannerDetail"
+      role="alert"
+      class="bg-alert-caution-muted text-alert-caution border-alert-caution/30 my-10 flex items-start gap-3 rounded-lg border p-6"
+    >
+      <UIcon class="mt-0.5 shrink-0 text-2xl" name="i-heroicons-exclamation-triangle" aria-hidden="true" />
+      <div class="text-sm text-gray-800">
+        <span class="font-semibold">{{ UPLOAD_ALERT_BANNER_LEAD }}</span>
+        {{ ' ' }}{{ uploadFileAlerts.bannerDetail }}
+      </div>
+    </div>
+
+    <!-- Seqera / other: existing blocking danger banner -->
+    <div
+      v-else-if="!isFromSequenceCollections && filesProblemAlertMessage"
       role="alert"
       class="bg-alert-danger-muted text-alert-danger my-10 flex items-center gap-2 rounded-lg p-6"
     >

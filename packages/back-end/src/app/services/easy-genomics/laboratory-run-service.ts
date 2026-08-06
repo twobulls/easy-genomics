@@ -275,8 +275,12 @@ export class LaboratoryRunService extends DynamoDBService implements Service<Lab
 
   /**
    * Same as `update`, but also REMOVEs the listed attributes from DynamoDB.
-   * Used when clearing optional fields (e.g. CurrentProcessName) that must not linger
+   * Used when clearing optional fields (e.g. NotifiedAt) that must not linger
    * after a SET-only update would leave the previous value in place.
+   *
+   * Always scrubs legacy `CurrentProcessName` (removed from the schema) so
+   * older DynamoDB items do not fail `.strict()` validation or leave the
+   * attribute behind after a write.
    */
   public updateWithAttributeRemoval = async (
     laboratoryRun: LaboratoryRun,
@@ -285,12 +289,15 @@ export class LaboratoryRunService extends DynamoDBService implements Service<Lab
     const logRequestMessage = `Update LaboratoryRun LaboratoryId=${laboratoryRun.LaboratoryId}, RunId=${laboratoryRun.RunId} request`;
     console.info(logRequestMessage);
 
-    // Data validation safety check
-    if (!LaboratoryRunSchema.safeParse(laboratoryRun).success) throw new Error('Invalid request');
-
-    const removeAttrs = remove.filter((key) => key.length > 0);
-    // Ensure removed attributes are not also SET
+    const LEGACY_REMOVE = 'CurrentProcessName';
     const runForUpdate = { ...laboratoryRun } as LaboratoryRun & Record<string, unknown>;
+    delete runForUpdate[LEGACY_REMOVE];
+
+    // Data validation safety check
+    if (!LaboratoryRunSchema.safeParse(runForUpdate).success) throw new Error('Invalid request');
+
+    const removeAttrs = [...new Set([...remove.filter((key) => key.length > 0), LEGACY_REMOVE])];
+    // Ensure removed attributes are not also SET
     for (const key of removeAttrs) {
       delete runForUpdate[key];
     }

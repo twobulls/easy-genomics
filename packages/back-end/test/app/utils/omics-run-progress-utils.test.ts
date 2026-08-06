@@ -40,33 +40,4 @@ describe('aggregateTaskProgress', () => {
 
     expect(aggregateTaskProgress(items).percent).toBe(33);
   });
-
-  it('returns the first RUNNING or STARTING task name as currentProcessName', () => {
-    const items: TaskListItem[] = [
-      { taskId: '1', status: 'COMPLETED', name: 'FASTQC' },
-      { taskId: '2', status: 'RUNNING', name: 'BOWTIE2_ALIGN' },
-      { taskId: '3', status: 'STARTING', name: 'SAMTOOLS_SORT' },
-      { taskId: '4', status: 'PENDING', name: 'BCFTOOLS' },
-    ];
-
-    expect(aggregateTaskProgress(items).currentProcessName).toBe('BOWTIE2_ALIGN');
-  });
-
-  it('skips running tasks without a name and uses the next named running task', () => {
-    const items: TaskListItem[] = [
-      { taskId: '1', status: 'RUNNING' },
-      { taskId: '2', status: 'STARTING', name: 'SAMTOOLS_SORT' },
-    ];
-
-    expect(aggregateTaskProgress(items).currentProcessName).toBe('SAMTOOLS_SORT');
-  });
-
-  it('omits currentProcessName when no tasks are running', () => {
-    const items: TaskListItem[] = [
-      { taskId: '1', status: 'COMPLETED', name: 'FASTQC' },
-      { taskId: '2', status: 'PENDING', name: 'BOWTIE2_ALIGN' },
-    ];
-
-    expect(aggregateTaskProgress(items).currentProcessName).toBeUndefined();
-  });
 });

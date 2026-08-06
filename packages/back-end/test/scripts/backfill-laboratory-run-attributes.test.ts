@@ -17,22 +17,16 @@ function buildRun(overrides: Partial<LaboratoryRun> = {}): LaboratoryRun {
   };
 }
 
-async function flushAsync(): Promise<void> {
-  for (let i = 0; i < 10; i++) {
-    await new Promise<void>((resolve) => setImmediate(resolve));
-  }
-}
-
 interface ScriptRunResult {
   listAllLaboratoryRuns: jest.Mock;
   update: jest.Mock;
 }
 
 /**
- * The script has no exports — it runs `main()` as a side effect of being required, reading
- * `process.argv` at that moment. Re-running it per test therefore requires a fresh module
- * registry (so the service it imports internally picks up this call's mocked implementations)
- * rather than an exported entry point.
+ * The script's CLI entry is gated behind `require.main === module`, so tests import the
+ * module, mock the service it depends on, then await the exported `main()` directly.
+ * `jest.resetModules()` per call ensures each test gets a fresh module registry that
+ * picks up that call's mocked implementations.
  */
 async function runScript(
   argv: string[],
@@ -51,8 +45,8 @@ async function runScript(
   LaboratoryRunService.prototype.update = update;
 
   process.argv = ['node', 'backfill-laboratory-run-attributes.ts', ...argv];
-  await import(SCRIPT_MODULE_PATH);
-  await flushAsync();
+  const { main } = await import(SCRIPT_MODULE_PATH);
+  await main();
 
   return { listAllLaboratoryRuns, update };
 }

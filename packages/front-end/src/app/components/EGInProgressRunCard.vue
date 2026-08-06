@@ -63,7 +63,6 @@
       :percent="run.ProgressPercent"
       :completed="run.TasksCompleted"
       :total="run.TasksTotal"
-      :process-name="run.CurrentProcessName"
     />
     <p v-else class="text-muted text-sm">Progress updates will appear once the workflow reports tasks.</p>
 

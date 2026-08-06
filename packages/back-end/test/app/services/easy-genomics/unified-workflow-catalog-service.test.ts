@@ -1,5 +1,8 @@
 import type { WorkflowListItem } from '@aws-sdk/client-omics';
+import { LaboratoryService } from '../../../../src/app/services/easy-genomics/laboratory-service';
 import { buildUnifiedWorkflowCatalogForOrganization } from '../../../../src/app/services/easy-genomics/unified-workflow-catalog-service';
+import { OmicsService } from '../../../../src/app/services/omics-service';
+import { listAllSharedWorkflowSummaries } from '../../../../src/app/utils/omics-shared-workflow-utils';
 
 jest.mock('../../../../src/app/services/easy-genomics/laboratory-service');
 jest.mock('../../../../src/app/services/omics-service');
@@ -12,10 +15,6 @@ jest.mock('../../../../src/app/utils/rest-api-utils', () => ({
   httpRequest: jest.fn(),
   REST_API_METHOD: { GET: 'GET' },
 }));
-
-import { LaboratoryService } from '../../../../src/app/services/easy-genomics/laboratory-service';
-import { OmicsService } from '../../../../src/app/services/omics-service';
-import { listAllSharedWorkflowSummaries } from '../../../../src/app/utils/omics-shared-workflow-utils';
 
 describe('buildUnifiedWorkflowCatalogForOrganization', () => {
   const ORG_ID = 'org-001';

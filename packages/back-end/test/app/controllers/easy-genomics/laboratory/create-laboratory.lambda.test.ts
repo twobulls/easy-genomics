@@ -1,7 +1,19 @@
 import { ConditionalCheckFailedException, TransactionCanceledException } from '@aws-sdk/client-dynamodb';
+import { ResourceNotFoundException } from '@aws-sdk/client-omics';
+import {
+  DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
+  DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
+} from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, Context } from 'aws-lambda';
 
 import { handler } from '../../../../../src/app/controllers/easy-genomics/laboratory/create-laboratory.lambda';
+import { LaboratoryS3AccessService } from '../../../../../src/app/services/easy-genomics/laboratory-s3-access-service';
+import { LaboratoryService } from '../../../../../src/app/services/easy-genomics/laboratory-service';
+import { OrganizationService } from '../../../../../src/app/services/easy-genomics/organization-service';
+import { OmicsService } from '../../../../../src/app/services/omics-service';
+import { SsmService } from '../../../../../src/app/services/ssm-service';
+import { validateOrganizationAdminAccess } from '../../../../../src/app/utils/auth-utils';
+import { httpRequest } from '../../../../../src/app/utils/rest-api-utils';
 
 jest.mock('../../../../../src/app/services/easy-genomics/organization-service');
 jest.mock('../../../../../src/app/services/easy-genomics/laboratory-service');
@@ -10,19 +22,6 @@ jest.mock('../../../../../src/app/services/ssm-service');
 jest.mock('../../../../../src/app/services/omics-service');
 jest.mock('../../../../../src/app/utils/auth-utils');
 jest.mock('../../../../../src/app/utils/rest-api-utils');
-
-import { ResourceNotFoundException } from '@aws-sdk/client-omics';
-import { LaboratoryS3AccessService } from '../../../../../src/app/services/easy-genomics/laboratory-s3-access-service';
-import { LaboratoryService } from '../../../../../src/app/services/easy-genomics/laboratory-service';
-import { OrganizationService } from '../../../../../src/app/services/easy-genomics/organization-service';
-import { OmicsService } from '../../../../../src/app/services/omics-service';
-import { SsmService } from '../../../../../src/app/services/ssm-service';
-import { validateOrganizationAdminAccess } from '../../../../../src/app/utils/auth-utils';
-import { httpRequest } from '../../../../../src/app/utils/rest-api-utils';
-import {
-  DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
-  DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
-} from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
 
 describe('create-laboratory.lambda', () => {
   const ORG_ID = '00000000-0000-0000-0000-000000000001';

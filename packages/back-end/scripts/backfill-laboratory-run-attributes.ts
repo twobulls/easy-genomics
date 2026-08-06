@@ -55,7 +55,7 @@ function getFlagValue(flag: string): string | undefined {
   return undefined;
 }
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   const dryRun = process.argv.includes('--dry-run');
   const labFilter = getFlagValue('--lab');
 
@@ -138,7 +138,10 @@ async function main(): Promise<void> {
   if (pollStatusErrors > 0 || notifiedAtErrors > 0) process.exit(1);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Skip auto-run under Jest (JEST_WORKER_ID is set) so tests can import and await `main`.
+if (!process.env.JEST_WORKER_ID) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

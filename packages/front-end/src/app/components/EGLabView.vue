@@ -978,8 +978,7 @@
       </template>
 
       <template #CreatedAt-data="{ row: run }">
-        <div class="text-body text-sm font-medium">{{ getDate(run.CreatedAt) }}</div>
-        <div class="text-muted">{{ getTime(run.CreatedAt) }}</div>
+        <div class="text-body text-sm font-medium">{{ getDateOrTimeIfToday(run.CreatedAt) }}</div>
       </template>
 
       <template #lastUpdated-data="{ row: run }">

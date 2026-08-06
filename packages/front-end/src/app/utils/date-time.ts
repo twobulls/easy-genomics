@@ -1,4 +1,4 @@
-import { format, parseISO, isValid } from 'date-fns';
+import { format, parseISO, isValid, isToday } from 'date-fns';
 
 function parseAndValidateDate(input: string | null | undefined) {
   if (!input) {
@@ -44,4 +44,18 @@ export function getTime(input: string | null | undefined): string | null {
   const offset = offsetInHours >= 0 ? `+${Math.abs(offsetInHours)}` : `-${Math.abs(offsetInHours)}`;
   const formattedDate = format(date, 'hh:mm:ss a');
   return `${formattedDate} GMT${offset}`;
+}
+
+/**
+ * Return time if the date is today (local calendar day), otherwise return the date only.
+ */
+export function getDateOrTimeIfToday(input: string | null | undefined): string | null {
+  if (!input) {
+    return null;
+  }
+
+  const date = parseAndValidateDate(input);
+  if (!date) return null;
+
+  return isToday(date) ? getTime(input) : getDate(input);
 }

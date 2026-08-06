@@ -17,22 +17,15 @@ function buildRun(overrides: Partial<LaboratoryRun> = {}): LaboratoryRun {
   };
 }
 
-async function flushAsync(): Promise<void> {
-  for (let i = 0; i < 10; i++) {
-    await new Promise<void>((resolve) => setImmediate(resolve));
-  }
-}
-
 interface ScriptRunResult {
   listAllLaboratoryRuns: jest.Mock;
   update: jest.Mock;
 }
 
 /**
- * The script has no exports — it runs `main()` as a side effect of being required, reading
- * `process.argv` at that moment. Re-running it per test therefore requires a fresh module
- * registry (so the service it imports internally picks up this call's mocked implementations)
- * rather than an exported entry point.
+ * Re-running the script per test requires a fresh module registry so the service it imports
+ * picks up this call's mocked implementations. `main` is exported and awaited (auto-run is
+ * skipped under Jest via JEST_WORKER_ID) to avoid racing a fire-and-forget side effect.
  */
 async function runScript(
   argv: string[],
@@ -51,13 +44,17 @@ async function runScript(
   LaboratoryRunService.prototype.update = update;
 
   process.argv = ['node', 'backfill-laboratory-run-attributes.ts', ...argv];
-  await import(SCRIPT_MODULE_PATH);
-  await flushAsync();
+  const { main } = await import(SCRIPT_MODULE_PATH);
+  await main();
 
   return { listAllLaboratoryRuns, update };
 }
 
 describe('backfill-laboratory-run-attributes script', () => {
+  // Each test resets modules and re-imports the script; cold starts under a full suite
+  // can exceed Jest's default 5s before main even runs.
+  jest.setTimeout(15_000);
+
   const originalArgv = process.argv;
   let exitSpy: jest.SpyInstance;
 

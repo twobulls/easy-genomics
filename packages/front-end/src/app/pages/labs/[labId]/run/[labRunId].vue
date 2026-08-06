@@ -10,9 +10,12 @@
   import { TaskListItem, GetRunResponse } from '@aws-sdk/client-omics';
   import { useLabsStore, useRunStore, useUiStore } from '@FE/stores';
   import { ensureLabInActiveOrg } from '@FE/utils/ensure-lab-in-active-org';
+  import {
+    isTerminalRunStatus,
+    showOmicsTaskProgressCard,
+    showSeqeraTaskProgressCard,
+  } from '@FE/utils/run-progress-card-visibility';
   import { v4 as uuidv4 } from 'uuid';
-
-  const TERMINAL_STATUSES = new Set(['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED', 'ABORTED']);
 
   const $route = useRoute();
   const $router = useRouter();
@@ -135,7 +138,7 @@
       window.clearTimeout(progressPollTimeoutId);
     }
     const run = runStore.labRuns[labRunId];
-    if (!run || TERMINAL_STATUSES.has(run.Status)) return;
+    if (!run || isTerminalRunStatus(run.Status)) return;
 
     progressPollTimeoutId = window.setTimeout(async () => {
       if (!progressPollActive) return;
@@ -307,6 +310,21 @@
   const rowStyle = 'flex border-b p-6 text-sm';
   const rowLabelStyle = 'w-[200px] font-medium text-black';
   const rowContentStyle = 'text-muted text-left';
+
+  const showSeqeraProgressCard = computed<boolean>(() =>
+    showSeqeraTaskProgressCard(labRun.value, {
+      failureReason: seqeraFailureReason.value,
+      hasProgress: !!seqeraProgress.value?.progress,
+    }),
+  );
+
+  const showOmicsProgressCard = computed<boolean>(() =>
+    showOmicsTaskProgressCard(labRun.value, {
+      failureReason: omicsFailureReason.value,
+      failedTaskCount: omicsFailedTasks.value.length,
+      hasProgress: !!omicsProgress.value?.progress,
+    }),
+  );
 </script>
 
 <template>
@@ -321,6 +339,104 @@
     show-lab-breadcrumb
     :breadcrumbs="[{ label: 'Lab Runs', to: labTab('Lab Runs') }, labRun?.RunName || '']"
   />
+
+  <div v-if="showSeqeraProgressCard || showOmicsProgressCard" class="mb-6 space-y-3">
+    <!-- Seqera task-level progress for FAILED or RUNNING runs -->
+    <section
+      v-if="showSeqeraProgressCard"
+      class="stroke-light flex flex-col rounded-2xl border border-solid bg-white p-6 max-md:px-5"
+    >
+      <h3 class="mb-4 text-sm font-medium text-black">Task Breakdown</h3>
+      <div v-if="seqeraFailureReason" class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm">
+        <p class="font-medium text-red-800">Failure reason</p>
+        <p class="text-red-700">{{ seqeraFailureReason }}</p>
+        <details v-if="seqeraErrorReport" class="mt-2">
+          <summary class="cursor-pointer text-xs text-red-600">Show full error report</summary>
+          <pre class="mt-2 whitespace-pre-wrap break-all text-xs text-red-600">{{ seqeraErrorReport }}</pre>
+        </details>
+      </div>
+      <template v-if="seqeraProgress?.progress">
+        <ul class="mb-4 flex flex-wrap gap-6 text-sm" aria-label="Task counts by status">
+          <li>
+            <span class="font-medium text-green-700">Succeeded:</span>
+            {{ seqeraProgress.progress.workflowProgress?.succeedCountFmt ?? '0' }}
+          </li>
+          <li>
+            <span class="font-medium text-red-700">Failed:</span>
+            {{ seqeraProgress.progress.workflowProgress?.failedCountFmt ?? '0' }}
+          </li>
+          <li>
+            <span class="text-body font-medium">Running:</span>
+            {{ seqeraProgress.progress.workflowProgress?.runningCountFmt ?? '0' }}
+          </li>
+        </ul>
+        <div v-if="seqeraProgress.progress.processesProgress?.length" class="space-y-2">
+          <div
+            v-for="proc in seqeraProgress.progress.processesProgress?.filter((p) => p.failed > 0)"
+            :key="proc.process"
+            class="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm"
+          >
+            <p class="font-medium text-red-800">
+              <span class="sr-only">Failed process:</span>
+              {{ proc.process }}
+            </p>
+            <p class="text-red-600">{{ proc.failed }} task(s) failed</p>
+          </div>
+        </div>
+      </template>
+    </section>
+
+    <!-- Omics task progress + failures -->
+    <section
+      v-if="showOmicsProgressCard"
+      class="stroke-light flex flex-col rounded-2xl border border-solid bg-white p-6 max-md:px-5"
+    >
+      <h3 class="mb-4 text-sm font-medium text-black">
+        {{ labRun.Status === 'FAILED' ? 'Failed Tasks' : 'Task Progress' }}
+      </h3>
+      <div v-if="omicsProgress?.progress && !isTerminalRunStatus(labRun.Status)" class="mb-4">
+        <EGProgressBar
+          :percent="omicsProgress.progress.percent"
+          :completed="omicsProgress.progress.tasksCompleted"
+          :total="omicsProgress.progress.tasksTotal"
+        />
+        <ul class="mt-3 flex flex-wrap gap-6 text-sm" aria-label="Task counts by status">
+          <li>
+            <span class="font-medium text-green-700">Completed:</span>
+            {{ omicsProgress.progress.tasksCompleted }}
+          </li>
+          <li>
+            <span class="text-body font-medium">Running:</span>
+            {{ omicsProgress.progress.tasksRunning }}
+          </li>
+          <li>
+            <span class="font-medium text-red-700">Failed:</span>
+            {{ omicsProgress.progress.tasksFailed }}
+          </li>
+          <li>
+            <span class="text-muted font-medium">Total known:</span>
+            {{ omicsProgress.progress.tasksTotal }}
+          </li>
+        </ul>
+      </div>
+      <div v-if="omicsFailureReason" class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm">
+        <p class="font-medium text-red-800">Failure reason</p>
+        <p class="text-red-700">{{ omicsFailureReason }}</p>
+      </div>
+      <div class="space-y-2">
+        <div
+          v-for="task in omicsFailedTasks"
+          :key="task.taskId"
+          class="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm"
+        >
+          <p class="font-medium text-red-800">
+            <span class="sr-only">Failed task:</span>
+            Task {{ task.taskId }} — {{ task.name }}
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <EGDetailTabs
     :model-value="tabIndex"
@@ -456,107 +572,6 @@
               <span class="font-medium text-black">What to do next:</span>
               {{ labRun.FailureAction }}
             </p>
-          </div>
-        </section>
-
-        <!-- Seqera task-level progress for FAILED or RUNNING runs -->
-        <section
-          v-if="labRun?.Platform === 'Seqera Cloud' && (seqeraFailureReason || seqeraProgress?.progress)"
-          class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 max-md:px-5"
-        >
-          <h3 class="mb-4 text-sm font-medium text-black">Task Breakdown</h3>
-          <div v-if="seqeraFailureReason" class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm">
-            <p class="font-medium text-red-800">Failure reason</p>
-            <p class="text-red-700">{{ seqeraFailureReason }}</p>
-            <details v-if="seqeraErrorReport" class="mt-2">
-              <summary class="cursor-pointer text-xs text-red-600">Show full error report</summary>
-              <pre class="mt-2 whitespace-pre-wrap break-all text-xs text-red-600">{{ seqeraErrorReport }}</pre>
-            </details>
-          </div>
-          <template v-if="seqeraProgress?.progress">
-            <ul class="mb-4 flex flex-wrap gap-6 text-sm" aria-label="Task counts by status">
-              <li>
-                <span class="font-medium text-green-700">Succeeded:</span>
-                {{ seqeraProgress.progress.workflowProgress?.succeedCountFmt ?? '0' }}
-              </li>
-              <li>
-                <span class="font-medium text-red-700">Failed:</span>
-                {{ seqeraProgress.progress.workflowProgress?.failedCountFmt ?? '0' }}
-              </li>
-              <li>
-                <span class="text-body font-medium">Running:</span>
-                {{ seqeraProgress.progress.workflowProgress?.runningCountFmt ?? '0' }}
-              </li>
-            </ul>
-            <div v-if="seqeraProgress.progress.processesProgress?.length" class="space-y-2">
-              <div
-                v-for="proc in seqeraProgress.progress.processesProgress?.filter((p) => p.failed > 0)"
-                :key="proc.process"
-                class="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm"
-              >
-                <p class="font-medium text-red-800">
-                  <span class="sr-only">Failed process:</span>
-                  {{ proc.process }}
-                </p>
-                <p class="text-red-600">{{ proc.failed }} task(s) failed</p>
-              </div>
-            </div>
-          </template>
-        </section>
-
-        <!-- Omics task progress + failures -->
-        <section
-          v-if="
-            labRun?.Platform === 'AWS HealthOmics' &&
-            (omicsFailureReason ||
-              omicsFailedTasks.length ||
-              (omicsProgress?.progress && !TERMINAL_STATUSES.has(labRun.Status)))
-          "
-          class="stroke-light flex flex-col rounded-none rounded-b-2xl border border-solid bg-white p-6 max-md:px-5"
-        >
-          <h3 class="mb-4 text-sm font-medium text-black">
-            {{ labRun.Status === 'FAILED' ? 'Failed Tasks' : 'Task Progress' }}
-          </h3>
-          <div v-if="omicsProgress?.progress && !TERMINAL_STATUSES.has(labRun.Status)" class="mb-4">
-            <EGProgressBar
-              :percent="omicsProgress.progress.percent"
-              :completed="omicsProgress.progress.tasksCompleted"
-              :total="omicsProgress.progress.tasksTotal"
-            />
-            <ul class="mt-3 flex flex-wrap gap-6 text-sm" aria-label="Task counts by status">
-              <li>
-                <span class="font-medium text-green-700">Completed:</span>
-                {{ omicsProgress.progress.tasksCompleted }}
-              </li>
-              <li>
-                <span class="text-body font-medium">Running:</span>
-                {{ omicsProgress.progress.tasksRunning }}
-              </li>
-              <li>
-                <span class="font-medium text-red-700">Failed:</span>
-                {{ omicsProgress.progress.tasksFailed }}
-              </li>
-              <li>
-                <span class="text-muted font-medium">Total known:</span>
-                {{ omicsProgress.progress.tasksTotal }}
-              </li>
-            </ul>
-          </div>
-          <div v-if="omicsFailureReason" class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm">
-            <p class="font-medium text-red-800">Failure reason</p>
-            <p class="text-red-700">{{ omicsFailureReason }}</p>
-          </div>
-          <div class="space-y-2">
-            <div
-              v-for="task in omicsFailedTasks"
-              :key="task.taskId"
-              class="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm"
-            >
-              <p class="font-medium text-red-800">
-                <span class="sr-only">Failed task:</span>
-                Task {{ task.taskId }} — {{ task.name }}
-              </p>
-            </div>
           </div>
         </section>
       </div>

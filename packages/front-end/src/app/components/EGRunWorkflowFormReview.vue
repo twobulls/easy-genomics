@@ -168,7 +168,6 @@
           <dd class="text-muted whitespace-pre-wrap break-words text-left">{{ wipOmicsRun.description }}</dd>
         </div>
         <EGRunCostRow :estimate="costEstimate" :loading="costEstimateLoading" class="border-b" />
-
       </dl>
     </section>
   </EGCard>

@@ -1626,6 +1626,8 @@ components:
           maximum: 300
         EnableNewWorkflowsByDefault:
           type: boolean
+        NotificationsEnabled:
+          type: boolean
         EnableNewBucketsByDefault:
           type: boolean
         HealthOmicsLlmProvider:
@@ -1706,6 +1708,12 @@ components:
             When true, workflows/pipelines without a DENY row are allowed (new AWS-console workflows included).
             When false/omitted, only explicit ALLOW rows grant access.
           type: boolean
+        NotificationsEnabled:
+          description: |-
+            Lab-manager kill switch for run-completion email notifications. Defaults to `true`
+            (enabled) at the application layer when absent. Does not itself subscribe anyone —
+            individual opt-in still gates whether any email is actually sent.
+          type: boolean
         EnableNewBucketsByDefault:
           description: |-
             When true, data buckets without a DENY row are allowed for this lab.
@@ -1783,11 +1791,11 @@ components:
     ReadLaboratory:
       type: object
       properties:
+        OrganizationId:
+          type: string
         Name:
           type: string
         LaboratoryId:
-          type: string
-        OrganizationId:
           type: string
         Status:
           enum:
@@ -1828,6 +1836,8 @@ components:
         RunDetailProgressPollIntervalSeconds:
           type: number
         EnableNewWorkflowsByDefault:
+          type: boolean
+        NotificationsEnabled:
           type: boolean
         EnableNewBucketsByDefault:
           type: boolean
@@ -1934,6 +1944,8 @@ components:
     LaboratoryRun:
       type: object
       properties:
+        OrganizationId:
+          type: string
         LaboratoryId:
           type: string
         UserId:
@@ -1942,8 +1954,6 @@ components:
           enum:
             - AWS HealthOmics
             - Seqera Cloud
-          type: string
-        OrganizationId:
           type: string
         Status:
           type: string
@@ -2192,6 +2202,8 @@ components:
     ReadLaboratoryRun:
       type: object
       properties:
+        OrganizationId:
+          type: string
         LaboratoryId:
           type: string
         UserId:
@@ -2200,8 +2212,6 @@ components:
           enum:
             - AWS HealthOmics
             - Seqera Cloud
-          type: string
-        OrganizationId:
           type: string
         Status:
           type: string
@@ -2536,6 +2546,8 @@ components:
           maximum: 300
         EnableNewWorkflowsByDefault:
           type: boolean
+        NotificationsEnabled:
+          type: boolean
         EnableNewBucketsByDefault:
           type: boolean
         HealthOmicsLlmProvider:
@@ -2628,6 +2640,12 @@ components:
           type: string
         Status:
           $ref: '#/components/schemas/Status'
+        NotifyOnLabRuns:
+          type: boolean
+        NotifyOnLabRunsAdditionalEmails:
+          type: array
+          items:
+            type: string
         LabManager:
           type: boolean
         LabTechnician:
@@ -2723,6 +2741,39 @@ components:
         - LaboratoryId
         - UserId
       additionalProperties: false
+    UpdateLaboratoryUserNotificationPreferenceRequest:
+      type: object
+      properties:
+        NotifyOnLabRuns:
+          type: boolean
+        NotifyOnLabRunsAdditionalEmails:
+          type: array
+          items:
+            type: string
+            format: email
+          maxItems: 10
+      required:
+        - NotifyOnLabRuns
+      additionalProperties: false
+    CreateOrganizationLogoUploadRequestRequest:
+      type: object
+      properties:
+        OrganizationId:
+          type: string
+        ContentType:
+          type: string
+          enum:
+            - image/png
+            - image/jpeg
+        ContentLength:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 2097152
+      required:
+        - OrganizationId
+        - ContentType
+        - ContentLength
+      additionalProperties: false
     CreateOrganizationRequest:
       type: object
       properties:
@@ -2738,6 +2789,15 @@ components:
           type: boolean
         NextFlowTowerApiBaseUrl:
           type: string
+        EmailBrandingLogoUrl:
+          anyOf:
+            - anyOf:
+                - not: {}
+                - type: string
+                  format: uri
+            - type: string
+              enum:
+                - ''
       required:
         - Name
       additionalProperties: false
@@ -2758,6 +2818,8 @@ components:
           type: boolean
         NextFlowTowerApiBaseUrl:
           type: string
+        EmailBrandingLogoUrl:
+          type: string
         BillingContact:
           type: string
         BillingMethod:
@@ -2773,6 +2835,17 @@ components:
       required:
         - Name
         - OrganizationId
+    RequestOrganizationBrandingTestEmailRequest:
+      type: object
+      properties:
+        OrganizationId:
+          type: string
+        EmailBrandingLogoUrl:
+          type: string
+          format: uri
+      required:
+        - OrganizationId
+      additionalProperties: false
     EditS3AccessBatchRequest:
       type: object
       properties:
@@ -2861,6 +2934,15 @@ components:
           type: boolean
         NextFlowTowerApiBaseUrl:
           type: string
+        EmailBrandingLogoUrl:
+          anyOf:
+            - anyOf:
+                - not: {}
+                - type: string
+                  format: uri
+            - type: string
+              enum:
+                - ''
       required:
         - Name
       additionalProperties: false
@@ -2943,11 +3025,11 @@ components:
     OrganizationUserDetails:
       type: object
       properties:
+        OrganizationId:
+          type: string
         OrganizationAdmin:
           type: boolean
         UserId:
-          type: string
-        OrganizationId:
           type: string
         UserStatus:
           enum:
@@ -3333,6 +3415,14 @@ components:
             - granted
             - unset
           type: string
+        NotifyOnOwnRuns:
+          type: boolean
+        NotificationEventFilter:
+          enum:
+            - all_terminal
+            - failures_only
+            - successes_only
+          type: string
         CreatedAt:
           type: string
         CreatedBy:
@@ -3399,6 +3489,14 @@ components:
             - unset
             - granted
             - denied
+        NotifyOnOwnRuns:
+          type: boolean
+        NotificationEventFilter:
+          type: string
+          enum:
+            - all_terminal
+            - failures_only
+            - successes_only
       additionalProperties: false
     CreateWorkflowRunPresetRequest:
       type: object
@@ -9305,6 +9403,39 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalError'
+  /easy-genomics/laboratory/user/update-laboratory-user-notification-preference/{id}:
+    put:
+      operationId: updateLaboratoryUserNotificationPreference
+      summary: Update Laboratory User Notification Preference
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLaboratoryUserNotificationPreferenceRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LaboratoryUser'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
   /easy-genomics/list-api-docs:
     get:
       operationId: listApiDocs
@@ -9330,6 +9461,32 @@ paths:
     get:
       operationId: listBuckets
       summary: List Buckets
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/organization/create-organization-logo-upload-request:
+    post:
+      operationId: createOrganizationLogoUploadRequest
+      summary: Create Organization Logo Upload Request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationLogoUploadRequestRequest'
       responses:
         '200':
           description: Success
@@ -9437,6 +9594,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Organization'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/organization/request-organization-branding-test-email:
+    post:
+      operationId: requestOrganizationBrandingTestEmail
+      summary: Request Organization Branding Test Email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestOrganizationBrandingTestEmailRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema: {}
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

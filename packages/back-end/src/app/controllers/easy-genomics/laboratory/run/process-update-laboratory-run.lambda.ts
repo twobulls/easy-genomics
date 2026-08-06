@@ -80,6 +80,68 @@ async function safePublishForClassification(run: LaboratoryRun): Promise<void> {
 }
 
 /**
+ * Best-effort SQS publish that hands a freshly-terminal run off to the notification sender.
+ * Only called when `markTerminalNotified` won its conditional write — see that method's
+ * docstring for why this closes the duplicate-status-check race.
+ *
+ * Returns whether the publish actually succeeded so the caller can compensate: `markTerminalNotified`
+ * already committed NotifiedAt and removed PollStatus, so a swallowed failure here would otherwise
+ * drop the notification permanently — nothing else re-checks a run once it looks notified.
+ */
+async function safePublishForNotification(run: LaboratoryRun): Promise<boolean> {
+  const queueUrl = process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL;
+  if (!queueUrl) {
+    console.warn(`SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL not configured, skipping notify for RunId=${run.RunId}`);
+    return false;
+  }
+  try {
+    const record: SnsProcessingEvent = {
+      Operation: 'UPDATE',
+      Type: 'LaboratoryRun',
+      Record: run,
+    };
+    await sqsService.sendMessage({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify(record),
+      MessageGroupId: `notify-laboratory-run-${run.RunId}`,
+      MessageDeduplicationId: uuidv4(),
+    });
+    return true;
+  } catch (err) {
+    console.warn('Failed to publish terminal run to notification queue (continuing):', err);
+    return false;
+  }
+}
+
+/**
+ * Reverts a winning `markTerminalNotified` conditional write after its notification publish
+ * failed: removes `NotifiedAt` and restores `PollStatus: 'ACTIVE'` so the run re-enters the
+ * `PollStatus_Index` poller and the backfill branch above picks it up for another notify attempt.
+ */
+async function compensateFailedNotification(run: LaboratoryRun): Promise<void> {
+  try {
+    await laboratoryRunService.updateWithAttributeRemoval(
+      {
+        ...run,
+        PollStatus: 'ACTIVE',
+        ModifiedAt: new Date().toISOString(),
+        ModifiedBy: 'Status Check',
+      },
+      ['NotifiedAt'],
+    );
+  } catch (err) {
+    console.error(`Failed to compensate unpublished notification for RunId=${run.RunId}:`, err);
+  }
+}
+
+async function publishForNotificationWithCompensation(run: LaboratoryRun): Promise<void> {
+  const published = await safePublishForNotification(run);
+  if (!published) {
+    await compensateFailedNotification(run);
+  }
+}
+
+/**
  * Best-effort mirror of a run's ExpiresAt into each input file's `LaboratoryRunUsages` entry.
  * Logs and swallows so tagging-side failures never break the status-check pipeline.
  */
@@ -217,12 +279,22 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
     const missingTerminalAt = existingRun.TerminalAt == null;
     const missingExpiresAt = existingRun.ExpiresAt == null && shouldExpireWithRetentionMonths(retentionMonths);
     const missingDuration = existingRun.RunDurationSeconds == null;
+    const missingNotification = existingRun.NotifiedAt == null;
 
     // Backfill branch: run is already terminal but missing one or more of
-    // TerminalAt / ExpiresAt / RunDurationSeconds / RunCostOutcome. Fetch platform data once so we can heal
-    // historical rows without waiting for another status transition.
+    // TerminalAt / ExpiresAt / RunDurationSeconds / RunCostOutcome / NotifiedAt. Fetch platform
+    // data once so we can heal historical rows without waiting for another status transition.
+    // The NotifiedAt case closes a rare gap: if the status-change branch below's `update()` call
+    // previously succeeded but its subsequent `markTerminalNotified()` call then failed with a
+    // transient (non-conditional) error, `existingRun.Status` is already terminal on SQS retry,
+    // so that branch never runs again and the run would otherwise never get notified. The
+    // poller's routine re-enqueue of this already-terminal-but-unnotified run lands here
+    // instead, giving notification another chance.
     const missingCost = existingRun.RunCostOutcome?.CostCapturedAt == null;
-    if (isAlreadyTerminal && (missingTerminalAt || missingExpiresAt || missingDuration || missingCost)) {
+    if (
+      isAlreadyTerminal &&
+      (missingTerminalAt || missingExpiresAt || missingDuration || missingCost || missingNotification)
+    ) {
       const now = new Date();
       const terminalAtIso = getTerminalAtIsoString(existingRun, now);
 
@@ -256,6 +328,19 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       });
       void updated;
       await safePropagateExpiresAt(laboratory, updated, backfilledExpiresAt);
+
+      if (missingNotification) {
+        const { published, run: notifiedRun } = await laboratoryRunService.markTerminalNotified({
+          LaboratoryId: updated.LaboratoryId,
+          RunId: updated.RunId,
+          ModifiedAt: now.toISOString(),
+          ModifiedBy: 'Status Check',
+        });
+        if (published) {
+          await publishForNotificationWithCompensation(notifiedRun);
+        }
+      }
+
       return true;
     }
 
@@ -325,6 +410,17 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       await safePropagateExpiresAt(laboratory, laboratoryRun, newExpiresAt);
       if (newStatusNormalized === 'FAILED' && existingRun.FailureOwner == null) {
         await safePublishForClassification(laboratoryRun);
+      }
+      if (nextStatusTerminal) {
+        const { published, run: notifiedRun } = await laboratoryRunService.markTerminalNotified({
+          LaboratoryId: laboratoryRun.LaboratoryId,
+          RunId: laboratoryRun.RunId,
+          ModifiedAt: now.toISOString(),
+          ModifiedBy: 'Status Check',
+        });
+        if (published) {
+          await publishForNotificationWithCompensation(notifiedRun);
+        }
       }
     } else if (
       (snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null) ||

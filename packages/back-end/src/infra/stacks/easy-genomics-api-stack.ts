@@ -352,6 +352,15 @@ export class EasyGenomicsApiStack extends Stack {
           },
         },
         {
+          partitionKey: {
+            // Sparse GSI: only runs currently non-terminal carry this attribute, so the index
+            // stays small regardless of total historical run volume. Backs the notification
+            // poller's "every active run" query.
+            name: 'PollStatus',
+            type: AttributeType.STRING,
+          },
+        },
+        {
           // Historical cost estimator: query completed runs by workflow identity + terminal time.
           partitionKey: {
             name: 'WorkflowExternalId',

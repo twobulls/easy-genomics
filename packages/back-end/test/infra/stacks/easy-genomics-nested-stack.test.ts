@@ -2,6 +2,7 @@ import { App, Stack } from 'aws-cdk-lib';
 import { IamConstruct } from '../../../src/infra/constructs/iam-construct';
 import { LambdaConstruct } from '../../../src/infra/constructs/lambda-construct';
 import { SesConstruct } from '../../../src/infra/constructs/ses-construct';
+import { SqsConstruct } from '../../../src/infra/constructs/sqs-construct';
 import { EasyGenomicsNestedStack } from '../../../src/infra/stacks/easy-genomics-nested-stack';
 
 jest.mock('aws-cdk-lib/aws-lambda-event-sources', () => ({
@@ -42,6 +43,7 @@ jest.mock('../../../src/infra/constructs/sqs-construct', () => ({
       ['laboratory-management-queue', { queueUrl: 'https://sqs/lab', queueArn: 'arn:aws:sqs:lab' }],
       ['user-management-queue', { queueUrl: 'https://sqs/user', queueArn: 'arn:aws:sqs:user' }],
       ['laboratory-run-update-queue', { queueUrl: 'https://sqs/run', queueArn: 'arn:aws:sqs:run' }],
+      ['laboratory-run-notification-queue', { queueUrl: 'https://sqs/run-notify', queueArn: 'arn:aws:sqs:run-notify' }],
       ['user-invite-queue', { queueUrl: 'https://sqs/invite', queueArn: 'arn:aws:sqs:invite' }],
       [
         'laboratory-run-failure-classification-queue',
@@ -132,6 +134,33 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
     expect(sesProps.envName).toBe('sandbox');
   });
 
+  it('wires the notification queue with a dead-letter queue', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const sqsConstructMock = SqsConstruct as unknown as jest.Mock;
+    const sqsProps = sqsConstructMock.mock.calls[0][2];
+    const notificationQueueConfig = sqsProps.queues['laboratory-run-notification-queue'];
+
+    expect(notificationQueueConfig.fifo).toBe(true);
+    expect(notificationQueueConfig.deadLetterQueue).toBeDefined();
+    expect(notificationQueueConfig.deadLetterQueue.maxReceiveCount).toBe(3);
+  });
+
+  it('wires the new notification queue URL into the existing process-update-laboratory-run lambda', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const lambdaConstructMock = LambdaConstruct as unknown as jest.Mock;
+    const lambdaProps = lambdaConstructMock.mock.calls[0][2];
+    const triggerConfig =
+      lambdaProps.lambdaFunctionsResources['/easy-genomics/laboratory/run/process-update-laboratory-run'];
+
+    expect(triggerConfig.environment.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL).toBe('https://sqs/run-notify');
+  });
+
   it('adds IAM policy statements for top-level bucket objects endpoint', () => {
     const app = new App();
     const parentStack = new Stack(app, 'parent-stack');
@@ -148,6 +177,64 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
         }),
         expect.objectContaining({
           actions: expect.arrayContaining(['s3:ListBucket']),
+        }),
+      ]),
+    );
+  });
+
+  it('adds IAM policy statements for create-organization-logo-upload-request endpoint', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/organization/create-organization-logo-upload-request',
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['s3:PutObject']),
+        }),
+      ]),
+    );
+  });
+
+  it('adds IAM policy statements for request-organization-branding-test-email endpoint', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/organization/request-organization-branding-test-email',
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['ses:SendTemplatedEmail']),
+        }),
+      ]),
+    );
+  });
+
+  it('adds IAM policy statements for process-notify-laboratory-run-completion endpoint', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/laboratory/run/process-notify-laboratory-run-completion',
+      expect.arrayContaining([
+        expect.objectContaining({
+          resources: expect.arrayContaining([expect.stringContaining('organization-table')]),
+          actions: expect.arrayContaining(['dynamodb:GetItem']),
+        }),
+        expect.objectContaining({
+          actions: expect.arrayContaining(['ses:SendTemplatedEmail']),
         }),
       ]),
     );
@@ -323,5 +410,51 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
         ]),
       );
     }
+  });
+
+  it('adds sqs:SendMessage IAM policy for process-poll-active-runs to re-enqueue status checks', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/laboratory/run/process-poll-active-runs',
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['sqs:SendMessage']),
+        }),
+      ]),
+    );
+  });
+
+  it('schedules the active-run poller on a 2-minute interval', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const lambdaConstructMock = LambdaConstruct as unknown as jest.Mock;
+    const lambdaProps = lambdaConstructMock.mock.calls[0][2];
+    const pollerConfig = lambdaProps.lambdaFunctionsResources['/easy-genomics/laboratory/run/process-poll-active-runs'];
+
+    expect(pollerConfig).toBeDefined();
+    expect(pollerConfig.environment.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL).toBe('https://sqs/run');
+    expect(pollerConfig.callbacks).toHaveLength(1);
+  });
+
+  it('wires the notification sender to the notification queue', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const lambdaConstructMock = LambdaConstruct as unknown as jest.Mock;
+    const lambdaProps = lambdaConstructMock.mock.calls[0][2];
+    const senderConfig =
+      lambdaProps.lambdaFunctionsResources['/easy-genomics/laboratory/run/process-notify-laboratory-run-completion'];
+
+    expect(senderConfig).toBeDefined();
+    expect(senderConfig.events).toHaveLength(1);
   });
 });

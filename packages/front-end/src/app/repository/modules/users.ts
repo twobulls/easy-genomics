@@ -138,6 +138,8 @@ class UsersModule extends HttpFactory {
         LaboratoryId: string;
       }>;
       AnalyticsConsent?: 'unset' | 'granted' | 'denied';
+      NotifyOnOwnRuns?: boolean;
+      NotificationEventFilter?: 'all_terminal' | 'failures_only' | 'successes_only';
     },
   ) {
     const parseResult = UpdateUserSchema.safeParse(data);

@@ -137,6 +137,32 @@ describe('update-laboratory.lambda', () => {
     );
   });
 
+  it('passes NotificationsEnabled through to the service update call', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+    });
+
+    (mockLabService.prototype.update as jest.Mock).mockResolvedValue({
+      OrganizationId: 'org-1',
+      LaboratoryId: 'lab-1',
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, { ...baseRequest, NotificationsEnabled: false }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockLabService.prototype.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        NotificationsEnabled: false,
+      }),
+      expect.anything(),
+    );
+  });
+
   it('preserves existing polling intervals when they are omitted from the request', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: ORG_ID,

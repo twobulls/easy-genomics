@@ -5,6 +5,7 @@ import InfraModules from '@FE/repository/modules/infra';
 import LabsModule from '@FE/repository/modules/labs';
 import OmicsRunsModule from '@FE/repository/modules/omics-runs';
 import OmicsWorkflowsModule from '@FE/repository/modules/omics-workflows';
+import OrganizationEmailBrandingModule from '@FE/repository/modules/organization-email-branding';
 import OrgsModule from '@FE/repository/modules/orgs';
 import S3AccessModule from '@FE/repository/modules/s3-access';
 import SeqeraPipelinesModule from '@FE/repository/modules/seqera-pipelines';
@@ -20,6 +21,7 @@ interface IApiInstance {
   infra: InfraModules;
   labs: LabsModule;
   orgs: OrgsModule;
+  organizationEmailBranding: OrganizationEmailBrandingModule;
   seqeraPipelines: SeqeraPipelinesModule;
   seqeraRuns: SeqeraRunsModules;
   omicsWorkflows: OmicsWorkflowsModule;
@@ -45,6 +47,7 @@ const createApiInstance = (apiFetcher: any): IApiInstance => ({
   infra: new InfraModules(apiFetcher),
   labs: new LabsModule(apiFetcher),
   orgs: new OrgsModule(apiFetcher),
+  organizationEmailBranding: new OrganizationEmailBrandingModule(apiFetcher),
   seqeraPipelines: new SeqeraPipelinesModule(apiFetcher),
   seqeraRuns: new SeqeraRunsModules(apiFetcher),
   omicsWorkflows: new OmicsWorkflowsModule(apiFetcher),

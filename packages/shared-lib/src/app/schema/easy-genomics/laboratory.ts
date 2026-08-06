@@ -26,6 +26,12 @@ export const LaboratorySchema = z
     EnableNewWorkflowsByDefault: z.boolean().optional(),
     EnableNewBucketsByDefault: z.boolean().optional(),
     /**
+     * Lab-manager kill switch for run-completion email notifications. Defaults to `true`
+     * (enabled) at the application layer when absent. Does not itself subscribe anyone —
+     * individual opt-in still gates whether any email is actually sent.
+     */
+    NotificationsEnabled: z.boolean().optional(),
+    /**
      * BYOK provider selection per integration. Setting a provider IS the enable
      * signal — when set, ambiguous HealthOmics failures (WORKFLOW_RUN_FAILED,
      * generic RUN_TASK_FAILED) and free-text Seqera errors are sent to the
@@ -79,6 +85,7 @@ export const CreateLaboratorySchema = z
     RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
     RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
+    NotificationsEnabled: z.boolean().optional(),
     EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),
@@ -123,6 +130,7 @@ export const ReadLaboratorySchema = z
     RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
     RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
+    NotificationsEnabled: z.boolean().optional(),
     EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),
@@ -168,6 +176,7 @@ export const UpdateLaboratorySchema = z
     RunListStatusPollIntervalSeconds: z.number().int().min(30).max(1800).optional(),
     RunDetailProgressPollIntervalSeconds: z.number().int().min(10).max(300).optional(),
     EnableNewWorkflowsByDefault: z.boolean().optional(),
+    NotificationsEnabled: z.boolean().optional(),
     EnableNewBucketsByDefault: z.boolean().optional(),
     HealthOmicsLlmProvider: z.enum(['bedrock', 'openai', 'anthropic']).optional(),
     HealthOmicsLlmModelId: z.string().optional(),

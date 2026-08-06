@@ -282,6 +282,10 @@ export interface paths {
     /** Request Laboratory User */
     post: operations["requestLaboratoryUser"];
   };
+  "/easy-genomics/laboratory/user/update-laboratory-user-notification-preference/{id}": {
+    /** Update Laboratory User Notification Preference */
+    put: operations["updateLaboratoryUserNotificationPreference"];
+  };
   "/easy-genomics/list-api-docs": {
     /** List Api Docs */
     get: operations["listApiDocs"];
@@ -289,6 +293,10 @@ export interface paths {
   "/easy-genomics/list-buckets": {
     /** List Buckets */
     get: operations["listBuckets"];
+  };
+  "/easy-genomics/organization/create-organization-logo-upload-request": {
+    /** Create Organization Logo Upload Request */
+    post: operations["createOrganizationLogoUploadRequest"];
   };
   "/easy-genomics/organization/create-organization": {
     /** Create Organization */
@@ -305,6 +313,10 @@ export interface paths {
   "/easy-genomics/organization/read-organization/{id}": {
     /** Read Organization */
     get: operations["readOrganization"];
+  };
+  "/easy-genomics/organization/request-organization-branding-test-email": {
+    /** Request Organization Branding Test Email */
+    post: operations["requestOrganizationBrandingTestEmail"];
   };
   "/easy-genomics/organization/s3-access/edit-s3-access-batch": {
     /** Edit S3 Access Batch */
@@ -1078,6 +1090,7 @@ export interface components {
       RunListStatusPollIntervalSeconds?: number;
       RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
+      NotificationsEnabled?: boolean;
       EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */
       HealthOmicsLlmProvider?: "bedrock" | "openai" | "anthropic";
@@ -1120,6 +1133,12 @@ export interface components {
        * When false/omitted, only explicit ALLOW rows grant access.
        */
       EnableNewWorkflowsByDefault?: boolean;
+      /**
+       * @description Lab-manager kill switch for run-completion email notifications. Defaults to `true`
+       * (enabled) at the application layer when absent. Does not itself subscribe anyone —
+       * individual opt-in still gates whether any email is actually sent.
+       */
+      NotificationsEnabled?: boolean;
       /**
        * @description When true, data buckets without a DENY row are allowed for this lab.
        * When false/omitted, only explicit ALLOW rows grant bucket access.
@@ -1174,9 +1193,9 @@ export interface components {
       ModifiedBy?: string;
     };
     ReadLaboratory: {
+      OrganizationId: string;
       Name: string;
       LaboratoryId: string;
-      OrganizationId: string;
       /** @enum {string} */
       Status: "Active" | "Inactive";
       Description?: string;
@@ -1196,6 +1215,7 @@ export interface components {
       RunListStatusPollIntervalSeconds?: number;
       RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
+      NotificationsEnabled?: boolean;
       EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */
       HealthOmicsLlmProvider?: "anthropic" | "bedrock" | "openai";
@@ -1241,11 +1261,11 @@ export interface components {
       };
     };
     LaboratoryRun: {
+      OrganizationId: string;
       LaboratoryId: string;
       UserId: string;
       /** @enum {string} */
       Platform: "AWS HealthOmics" | "Seqera Cloud";
-      OrganizationId: string;
       Status: string;
       RunId: string;
       RunName: string;
@@ -1398,11 +1418,11 @@ export interface components {
       };
     };
     ReadLaboratoryRun: {
+      OrganizationId: string;
       LaboratoryId: string;
       UserId: string;
       /** @enum {string} */
       Platform: "AWS HealthOmics" | "Seqera Cloud";
-      OrganizationId: string;
       Status: string;
       RunId: string;
       RunName: string;
@@ -1536,6 +1556,7 @@ export interface components {
       RunListStatusPollIntervalSeconds?: number;
       RunDetailProgressPollIntervalSeconds?: number;
       EnableNewWorkflowsByDefault?: boolean;
+      NotificationsEnabled?: boolean;
       EnableNewBucketsByDefault?: boolean;
       /** @enum {string} */
       HealthOmicsLlmProvider?: "bedrock" | "openai" | "anthropic";
@@ -1572,6 +1593,8 @@ export interface components {
       UserId: string;
       OrganizationId: string;
       Status: components["schemas"]["Status"];
+      NotifyOnLabRuns?: boolean;
+      NotifyOnLabRunsAdditionalEmails?: string[];
       LabManager: boolean;
       LabTechnician: boolean;
       CreatedAt?: string;
@@ -1611,6 +1634,16 @@ export interface components {
       /** Format: uuid */
       UserId: string;
     };
+    UpdateLaboratoryUserNotificationPreferenceRequest: {
+      NotifyOnLabRuns: boolean;
+      NotifyOnLabRunsAdditionalEmails?: string[];
+    };
+    CreateOrganizationLogoUploadRequestRequest: {
+      OrganizationId: string;
+      /** @enum {string} */
+      ContentType: "image/png" | "image/jpeg";
+      ContentLength: number;
+    };
     CreateOrganizationRequest: {
       Name: string;
       Description?: string;
@@ -1618,6 +1651,7 @@ export interface components {
       AwsHealthOmicsEnabled?: boolean;
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
+      EmailBrandingLogoUrl?: unknown;
     };
     Organization: {
       OrganizationId: string;
@@ -1627,12 +1661,18 @@ export interface components {
       AwsHealthOmicsEnabled?: boolean;
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
+      EmailBrandingLogoUrl?: string;
       BillingContact?: string;
       BillingMethod?: string;
       CreatedAt?: string;
       CreatedBy?: string;
       ModifiedAt?: string;
       ModifiedBy?: string;
+    };
+    RequestOrganizationBrandingTestEmailRequest: {
+      OrganizationId: string;
+      /** Format: uri */
+      EmailBrandingLogoUrl?: string;
     };
     EditS3AccessBatchRequest: {
       assignments: {
@@ -1670,6 +1710,7 @@ export interface components {
       AwsHealthOmicsEnabled?: boolean;
       NextFlowTowerEnabled?: boolean;
       NextFlowTowerApiBaseUrl?: string;
+      EmailBrandingLogoUrl?: unknown;
     };
     AddOrganizationUserRequest: {
       /** Format: uuid */
@@ -1702,9 +1743,9 @@ export interface components {
       OrganizationAdmin: boolean;
     };
     OrganizationUserDetails: {
+      OrganizationId: string;
       OrganizationAdmin: boolean;
       UserId: string;
-      OrganizationId: string;
       /** @enum {string} */
       UserStatus: "Active" | "Inactive" | "Invited";
       /** @enum {string} */
@@ -1855,6 +1896,9 @@ export interface components {
       FavouriteWorkflows?: components["schemas"]["FavouriteWorkflow"][];
       /** @enum {string} */
       AnalyticsConsent?: "denied" | "granted" | "unset";
+      NotifyOnOwnRuns?: boolean;
+      /** @enum {string} */
+      NotificationEventFilter?: "all_terminal" | "failures_only" | "successes_only";
       CreatedAt?: string;
       CreatedBy?: string;
       ModifiedAt?: string;
@@ -1884,6 +1928,9 @@ export interface components {
         })[];
       /** @enum {string} */
       AnalyticsConsent?: "unset" | "granted" | "denied";
+      NotifyOnOwnRuns?: boolean;
+      /** @enum {string} */
+      NotificationEventFilter?: "all_terminal" | "failures_only" | "successes_only";
     };
     CreateWorkflowRunPresetRequest: {
       /** Format: uuid */
@@ -5200,6 +5247,32 @@ export interface operations {
       500: components["responses"]["InternalError"];
     };
   };
+  /** Update Laboratory User Notification Preference */
+  updateLaboratoryUserNotificationPreference: {
+    parameters: {
+      path: {
+        id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateLaboratoryUserNotificationPreferenceRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["LaboratoryUser"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
   /** List Api Docs */
   listApiDocs: {
     responses: {
@@ -5218,6 +5291,27 @@ export interface operations {
   };
   /** List Buckets */
   listBuckets: {
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Create Organization Logo Upload Request */
+  createOrganizationLogoUploadRequest: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateOrganizationLogoUploadRequestRequest"];
+      };
+    };
     responses: {
       /** @description Success */
       200: {
@@ -5302,6 +5396,27 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["Organization"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Request Organization Branding Test Email */
+  requestOrganizationBrandingTestEmail: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RequestOrganizationBrandingTestEmailRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": unknown;
         };
       };
       400: components["responses"]["BadRequest"];

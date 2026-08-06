@@ -178,8 +178,6 @@ describe('list-shared-workflows.lambda', () => {
     const res = await handler(createEvent({ laboratoryId: LAB_ID }), createContext(), () => {});
     expect(res?.statusCode).toBe(200);
     const body = JSON.parse(res?.body ?? '{}');
-    expect(body.items).toEqual([
-      { id: 'wf-ok', name: 'Ok', source: 'SHARED', ownerAccountId: '111122223333' },
-    ]);
+    expect(body.items).toEqual([{ id: 'wf-ok', name: 'Ok', source: 'SHARED', ownerAccountId: '111122223333' }]);
   });
 });

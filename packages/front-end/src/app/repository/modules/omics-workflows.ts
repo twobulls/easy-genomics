@@ -108,7 +108,11 @@ class OmicsWorkflowsModule extends HttpFactory {
     return res;
   }
 
-  async listVersions(labId: string, workflowId: string, workflowOwnerId?: string): Promise<ListWorkflowVersionsResponse> {
+  async listVersions(
+    labId: string,
+    workflowId: string,
+    workflowOwnerId?: string,
+  ): Promise<ListWorkflowVersionsResponse> {
     const ownerQuery = workflowOwnerId ? `&workflowOwnerId=${encodeURIComponent(workflowOwnerId)}` : '';
     const res = await this.callOmics<ListWorkflowVersionsResponse>(
       'GET',

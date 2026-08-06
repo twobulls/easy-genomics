@@ -9,6 +9,7 @@ import { NagSuppressions } from 'cdk-nag';
 import { Construct } from 'constructs';
 import { IamConstruct, IamConstructProps } from '../constructs/iam-construct';
 import { LambdaConstruct } from '../constructs/lambda-construct';
+import { OrgEmailAssetsBucketConstruct } from '../constructs/org-email-assets-bucket-construct';
 import { SesConstruct } from '../constructs/ses-construct';
 import { QueueDetails, Queues, SqsConstruct } from '../constructs/sqs-construct';
 import { EasyGenomicsNestedStackProps } from '../types/back-end-stack';
@@ -38,6 +39,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
   iam: IamConstruct;
   lambda: LambdaConstruct;
+  orgEmailAssetsBucket: OrgEmailAssetsBucketConstruct;
   ses: SesConstruct;
   sqs: SqsConstruct;
   /**
@@ -46,10 +48,22 @@ export class EasyGenomicsNestedStack extends NestedStack {
    * Lambda's event source via `lambdaFunctionsResources` below.
    */
   laboratoryRunStreamDlq!: Queue;
+  /** DLQ for the run-completion notification sender queue. See constructor for wiring detail. */
+  notificationDlq!: Queue;
 
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
     super(scope, id);
     this.props = props;
+
+    // Dead-letter queue for the run-completion notification sender. A message that fails to
+    // send (systemic SES failure, not a single bad address — those are caught inside the
+    // sender) lands here after 3 attempts for manual inspection instead of blocking the queue.
+    this.notificationDlq = new Queue(this, `${this.props.namePrefix}-laboratory-run-notification-dlq`, {
+      queueName: `${this.props.namePrefix}-laboratory-run-notification-dlq.fifo`,
+      fifo: true,
+      retentionPeriod: Duration.days(14),
+      enforceSSL: true,
+    });
 
     this.sqs = new SqsConstruct(this, `${this.props.constructNamespace}-sqs`, {
       namePrefix: this.props.namePrefix,
@@ -87,6 +101,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(5),
           enforceSSL: true,
+        },
+        ['laboratory-run-notification-queue']: <QueueDetails>{
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(5),
+          enforceSSL: true,
+          deadLetterQueue: { queue: this.notificationDlq, maxReceiveCount: 3 },
         },
         ['user-invite-queue']: <QueueDetails>{
           fifo: true,
@@ -128,6 +149,18 @@ export class EasyGenomicsNestedStack extends NestedStack {
         `EasyGenomicsNestedStack: missing required injected table "${this.props.namePrefix}-laboratory-run-table".`,
       );
     }
+
+    // Constructed ahead of `setupIamPolicies()` (rather than alongside `this.ses` below) because
+    // that method's IAM policy statement reads `this.orgEmailAssetsBucket.bucket.bucketArn`.
+    this.orgEmailAssetsBucket = new OrgEmailAssetsBucketConstruct(
+      this,
+      `${this.props.constructNamespace}-org-email-assets`,
+      {
+        bucketName: `${this.props.namePrefix}-org-email-assets-bucket`,
+        envType: this.props.envType,
+        appDomainName: this.props.appDomainName,
+      },
+    );
 
     this.setupIamPolicies();
 
@@ -211,6 +244,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
           },
         },
+        '/easy-genomics/organization/create-organization-logo-upload-request': {
+          environment: {
+            ORG_EMAIL_ASSETS_BUCKET_NAME: this.orgEmailAssetsBucket.bucket.bucketName,
+          },
+        },
         '/easy-genomics/organization/delete-organization': {
           environment: {
             SQS_ORGANIZATION_DELETION_QUEUE_URL:
@@ -254,6 +292,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
             SQS_LABORATORY_RUN_FAILURE_CLASSIFICATION_QUEUE_URL:
               this.sqs.sqsQueues.get('laboratory-run-failure-classification-queue')?.queueUrl || '',
+            SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL:
+              this.sqs.sqsQueues.get('laboratory-run-notification-queue')?.queueUrl || '',
           },
         },
         // Async classifier consumer for FAILED runs. Idempotent (skips runs that already
@@ -295,6 +335,29 @@ export class EasyGenomicsNestedStack extends NestedStack {
           environment: {
             SQS_LABORATORY_RUN_UPDATE_QUEUE_URL: this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueUrl || '',
           },
+        },
+        // Scheduled poller (every 2 minutes, matching the front-end's own poll cadence) that
+        // finds every non-terminal run and re-enqueues a status check, so terminal
+        // transitions are detected without an open browser. See process-poll-active-runs.lambda.ts.
+        '/easy-genomics/laboratory/run/process-poll-active-runs': {
+          environment: {
+            SQS_LABORATORY_RUN_UPDATE_QUEUE_URL: this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueUrl || '',
+          },
+          callbacks: [
+            (lambdaFunction) => {
+              new Rule(this, `${this.props.namePrefix}-poll-active-runs-schedule`, {
+                ruleName: `${this.props.namePrefix}-poll-active-runs-schedule`,
+                schedule: Schedule.rate(Duration.minutes(2)),
+                description: 'Finds non-terminal runs and re-enqueues status checks for the notification pipeline.',
+                targets: [new LambdaFunction(lambdaFunction)],
+              });
+            },
+          ],
+        },
+        // SQS consumer for the run-completion notification queue. See
+        // process-notify-laboratory-run-completion.lambda.ts and NotificationService.
+        '/easy-genomics/laboratory/run/process-notify-laboratory-run-completion': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('laboratory-run-notification-queue')!, { batchSize: 5 })],
         },
         '/easy-genomics/organization/workflow-access/list-workflow-catalog': {
           environment: {
@@ -449,6 +512,31 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ],
         actions: ['dynamodb:DeleteItem', 'dynamodb:PutItem'],
         effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/organization/create-organization-logo-upload-request
+    this.iam.addPolicyStatements('/easy-genomics/organization/create-organization-logo-upload-request', [
+      new PolicyStatement({
+        resources: [`${this.orgEmailAssetsBucket.bucket.bucketArn}/*`],
+        actions: ['s3:PutObject'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+    // /easy-genomics/organization/request-organization-branding-test-email
+    this.iam.addPolicyStatements('/easy-genomics/organization/request-organization-branding-test-email', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.appDomainName}`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@*`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
+        ],
+        actions: ['ses:SendTemplatedEmail'],
+        effect: Effect.ALLOW,
+        conditions: {
+          StringEquals: {
+            'ses:FromAddress': `no.reply@${this.props.appDomainName}`,
+          },
+        },
       }),
     ]);
     // /easy-genomics/organization/delete-organization
@@ -906,6 +994,16 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
     ]);
+    // /easy-genomics/laboratory/user/update-laboratory-user-notification-preference
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/user/update-laboratory-user-notification-preference', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+        ],
+        actions: ['dynamodb:GetItem', 'dynamodb:UpdateItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
     // /easy-genomics/laboratory/user/list-laboratory-users
     this.iam.addPolicyStatements('/easy-genomics/laboratory/user/list-laboratory-users', [
       new PolicyStatement({
@@ -1210,6 +1308,59 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
     ]);
 
+    // /easy-genomics/laboratory/run/process-poll-active-runs
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/process-poll-active-runs', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sqs.sqsQueues.get('laboratory-run-update-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
+    // /easy-genomics/laboratory/run/process-notify-laboratory-run-completion
+    this.iam.addPolicyStatements('/easy-genomics/laboratory/run/process-notify-laboratory-run-completion', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-table/index/*`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-user-table/index/*`,
+        ],
+        actions: ['dynamodb:Query'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-user-table`,
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-organization-table`,
+        ],
+        actions: ['dynamodb:GetItem', 'dynamodb:BatchGetItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/${this.props.appDomainName}`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:identity/*@*`,
+          `arn:aws:ses:${this.props.env.region!}:${this.props.env.account!}:template/*`,
+        ],
+        actions: ['ses:SendTemplatedEmail'],
+        effect: Effect.ALLOW,
+        conditions: {
+          StringEquals: {
+            'ses:FromAddress': `no.reply@${this.props.appDomainName}`,
+          },
+        },
+      }),
+    ]);
+
     // Data tagging table ARNs reused by run-side lambdas that propagate `ExpiresAt` into
     // `LaboratoryRunUsages` entries. Re-declared inline because the canonical declaration of
     // `laboratoryDataTaggingTableArn` lives further down in this method body for proximity to
@@ -1300,6 +1451,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [`${this.sqs.sqsQueues.get('laboratory-run-failure-classification-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [`${this.sqs.sqsQueues.get('laboratory-run-notification-queue')?.queueArn || ''}`],
         actions: ['sqs:SendMessage'],
         effect: Effect.ALLOW,
       }),

@@ -39,6 +39,31 @@ const runCostEstimationService = new RunCostEstimationService();
 const sqsService = new SqsService();
 
 /**
+ * Best-effort SQS publish that queues the first status check for a newly-submitted run.
+ * The run is already persisted by this point; a queue outage here must never fail run
+ * creation — the scheduled active-run poller will pick this run up on its next pass.
+ */
+async function safeQueueStatusCheck(laboratoryRun: LaboratoryRun): Promise<void> {
+  const queueUrl = process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL;
+  if (!queueUrl) return;
+  try {
+    const record: SnsProcessingEvent = {
+      Operation: 'UPDATE',
+      Type: 'LaboratoryRun',
+      Record: laboratoryRun,
+    };
+    await sqsService.sendMessage({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify(record),
+      MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
+      MessageDeduplicationId: uuidv4(),
+    });
+  } catch (err) {
+    console.warn('Failed to queue status check for newly-created run (continuing):', err);
+  }
+}
+
+/**
  * Best-effort input profile + pre-run estimate. Runs after laboratoryRunService.addOrGetExisting()
  * so a timeout here cannot leave an externally-submitted run untracked.
  */
@@ -144,7 +169,7 @@ export const handler: Handler = async (
         Settings: JSON.stringify(request.Settings || {}),
         CreatedAt: createdAt.toISOString(),
         CreatedBy: currentUserId,
-        ...(isTerminalAtCreate ? { TerminalAt: createdAt.toISOString() } : {}),
+        ...(isTerminalAtCreate ? { TerminalAt: createdAt.toISOString() } : { PollStatus: 'ACTIVE' as const }),
         ...(laboratorioRunExpiresAt !== undefined ? { ExpiresAt: laboratorioRunExpiresAt } : {}),
       },
       currentUserId,
@@ -163,18 +188,7 @@ export const handler: Handler = async (
     });
 
     if (laboratoryRun.ExternalRunId) {
-      // Queue up run status checks
-      const record: SnsProcessingEvent = {
-        Operation: 'UPDATE',
-        Type: 'LaboratoryRun',
-        Record: laboratoryRun,
-      };
-      await sqsService.sendMessage({
-        QueueUrl: process.env.SQS_LABORATORY_RUN_UPDATE_QUEUE_URL,
-        MessageBody: JSON.stringify(record),
-        MessageGroupId: `update-laboratory-run-${laboratoryRun.RunId}`,
-        MessageDeduplicationId: uuidv4(),
-      });
+      await safeQueueStatusCheck(laboratoryRun);
     }
 
     return buildResponse(200, JSON.stringify(laboratoryRun), event);

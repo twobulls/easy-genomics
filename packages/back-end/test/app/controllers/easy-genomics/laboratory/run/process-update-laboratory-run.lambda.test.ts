@@ -3,13 +3,6 @@ import { GetParameterCommandOutput, ParameterNotFound } from '@aws-sdk/client-ss
 import { Context } from 'aws-lambda';
 import { SQSEvent, SQSRecord } from 'aws-lambda/trigger/sqs';
 
-import {
-  handler,
-  getAWSHealthOmicsStatus,
-  getSeqeraCloudStatus,
-  processStatusCheckEvent,
-} from '../../../../../../src/app/controllers/easy-genomics/laboratory/run/process-update-laboratory-run.lambda';
-
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-service');
 jest.mock('../../../../../../src/app/services/easy-genomics/laboratory-run-service');
 jest.mock('../../../../../../src/app/services/easy-genomics/run-cost-capture-service');
@@ -26,6 +19,22 @@ import { SqsService } from '../../../../../../src/app/services/sqs-service';
 import { SsmService } from '../../../../../../src/app/services/ssm-service';
 import { getNextFlowApiQueryParameters, httpRequest } from '../../../../../../src/app/utils/rest-api-utils';
 
+// `markTerminalNotified` is a genuine prototype method on LaboratoryRunService (unlike its other,
+// arrow-function-field methods), so Jest's automock snapshots this mock onto the lambda's
+// module-level `laboratoryRunService` singleton the instant it's constructed by the import below.
+// Reassigning `LaboratoryRunService.prototype.markTerminalNotified` after that point never reaches
+// the already-constructed singleton, so capture the reference now and mutate it in place everywhere
+// else in this file (beforeEach and individual tests) rather than replacing it.
+const mockMarkTerminalNotifiedRef: jest.Mock = jest.fn();
+LaboratoryRunService.prototype.markTerminalNotified = mockMarkTerminalNotifiedRef;
+
+import {
+  handler,
+  getAWSHealthOmicsStatus,
+  getSeqeraCloudStatus,
+  processStatusCheckEvent,
+} from '../../../../../../src/app/controllers/easy-genomics/laboratory/run/process-update-laboratory-run.lambda';
+
 describe('process-update-laboratory-run.lambda', () => {
   let mockLabService: jest.MockedClass<typeof LaboratoryService>;
   let mockRunService: jest.MockedClass<typeof LaboratoryRunService>;
@@ -34,6 +43,7 @@ describe('process-update-laboratory-run.lambda', () => {
 
   let mockQueryByRunId: jest.Mock;
   let mockUpdateRun: jest.Mock;
+  let mockMarkTerminalNotified: jest.Mock;
   let mockUpdateWithAttributeRemoval: jest.Mock;
   let mockQueryByLaboratoryId: jest.Mock;
   let mockGetParameter: jest.Mock;
@@ -80,6 +90,12 @@ describe('process-update-laboratory-run.lambda', () => {
     mockGetRun = jest.fn();
     mockPublish = jest.fn().mockResolvedValue({});
 
+    // Same mock instance as the module-level `laboratoryRunService` singleton's own
+    // `markTerminalNotified` (see the comment at the top of this file) — mutate it in place,
+    // don't replace it, or the singleton will never see the new behavior.
+    mockMarkTerminalNotified = mockMarkTerminalNotifiedRef;
+    mockMarkTerminalNotified.mockResolvedValue({ published: false, run: {} });
+
     mockRunService.prototype.queryByRunId = mockQueryByRunId;
     mockRunService.prototype.update = mockUpdateRun;
     mockRunService.prototype.updateWithAttributeRemoval = mockUpdateWithAttributeRemoval;
@@ -101,6 +117,7 @@ describe('process-update-laboratory-run.lambda', () => {
 
     (getNextFlowApiQueryParameters as jest.Mock).mockReturnValue('workspaceId=ws-1');
     process.env.SEQERA_API_BASE_URL = 'https://tower.example.com';
+    delete process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL;
   });
 
   it('updates run status for AWS HealthOmics platform', async () => {
@@ -986,5 +1003,228 @@ describe('process-update-laboratory-run.lambda', () => {
     expect(updateArg.Status).toBe('COMPLETED');
     expect(updateArg.CurrentProcessName).toBeUndefined();
     expect(removeArg).toEqual(['CurrentProcessName']);
+  });
+
+  it('backfill branch: does not call markTerminalNotified again when NotifiedAt is already set, even if other fields still need healing', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'FAILED',
+      Platform: 'AWS HealthOmics',
+      // TerminalAt intentionally omitted so the backfill branch is still entered.
+      ExpiresAt: 1234567890,
+      RunDurationSeconds: 120,
+      NotifiedAt: '2026-07-20T00:05:00.000Z',
+    });
+    mockUpdateRun.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Status: 'FAILED',
+    });
+
+    const result = await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(result).toBe(true);
+    expect(mockRunService.prototype.update).toHaveBeenCalled();
+    expect(mockMarkTerminalNotified).not.toHaveBeenCalled();
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('backfill branch: heals a missing notification on an already-terminal run whose other fields are already populated', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'FAILED',
+      Platform: 'AWS HealthOmics',
+      TerminalAt: '2026-07-20T00:00:00.000Z',
+      ExpiresAt: 1234567890,
+      RunDurationSeconds: 120,
+    });
+    mockUpdateRun.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Status: 'FAILED',
+    });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'FAILED' },
+    });
+    process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/notification-queue.fifo';
+
+    const result = await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(result).toBe(true);
+    // TerminalAt / ExpiresAt / RunDurationSeconds are already populated, so the platform
+    // should never be queried for this purely notification-healing pass.
+    expect(mockGetRun).not.toHaveBeenCalled();
+    expect(mockMarkTerminalNotified).toHaveBeenCalledWith(
+      expect.objectContaining({ LaboratoryId: 'lab-1', RunId: 'run-1' }),
+    );
+    expect(mockPublish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        QueueUrl: 'https://sqs.region.amazonaws.com/acct/notification-queue.fifo',
+        MessageGroupId: 'notify-laboratory-run-run-1',
+      }),
+    );
+  });
+
+  it('does not publish to the notification topic when markTerminalNotified reports published: false', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: false,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+
+    const snsBody = {
+      Message: JSON.stringify({
+        Operation: 'UPDATE',
+        Type: 'LaboratoryRun',
+        Record: { RunId: 'run-1', LaboratoryId: 'lab-1' },
+      }),
+    };
+    const event = createEvent([{ body: JSON.stringify(snsBody) } as any]);
+
+    await handler(event, createContext(), () => {});
+
+    expect(mockPublish).not.toHaveBeenCalledWith(
+      expect.objectContaining({ QueueUrl: expect.stringContaining('notification') }),
+    );
+  });
+
+  it('publishes to the notification topic exactly once on a non-terminal -> terminal transition', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/notification-queue.fifo';
+
+    const snsBody = {
+      Message: JSON.stringify({
+        Operation: 'UPDATE',
+        Type: 'LaboratoryRun',
+        Record: { RunId: 'run-1', LaboratoryId: 'lab-1' },
+      }),
+    };
+    const event = createEvent([{ body: JSON.stringify(snsBody) } as any]);
+
+    await handler(event, createContext(), () => {});
+
+    expect(mockMarkTerminalNotified).toHaveBeenCalledWith(
+      expect.objectContaining({ LaboratoryId: 'lab-1', RunId: 'run-1' }),
+    );
+    expect(mockPublish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        QueueUrl: 'https://sqs.region.amazonaws.com/acct/notification-queue.fifo',
+        MessageGroupId: 'notify-laboratory-run-run-1',
+      }),
+    );
+  });
+
+  it('safePublishForNotification: swallows SQS errors so the status-check pipeline completes', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/notification-queue.fifo';
+    mockPublish.mockRejectedValue(new Error('SQS unavailable'));
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+    expect(mockPublish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        QueueUrl: 'https://sqs.region.amazonaws.com/acct/notification-queue.fifo',
+        MessageGroupId: 'notify-laboratory-run-run-1',
+      }),
+    );
+  });
+
+  it('compensates a failed notification publish by restoring PollStatus and clearing NotifiedAt', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/notification-queue.fifo';
+    mockPublish.mockRejectedValue(new Error('SQS unavailable'));
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+
+    // The failed run stays retryable: PollStatus is restored so the poller finds it again,
+    // and NotifiedAt is removed so the backfill branch's missingNotification check re-fires.
+    expect(mockUpdateWithAttributeRemoval).toHaveBeenCalledWith(
+      expect.objectContaining({ RunId: 'run-1', LaboratoryId: 'lab-1', PollStatus: 'ACTIVE' }),
+      ['NotifiedAt'],
+    );
+  });
+
+  it('compensates a failed notification publish when the notification queue URL is not configured', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({ RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    delete process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL;
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+
+    expect(mockPublish).not.toHaveBeenCalled();
+    expect(mockUpdateWithAttributeRemoval).toHaveBeenCalledWith(
+      expect.objectContaining({ RunId: 'run-1', LaboratoryId: 'lab-1', PollStatus: 'ACTIVE' }),
+      ['NotifiedAt'],
+    );
   });
 });

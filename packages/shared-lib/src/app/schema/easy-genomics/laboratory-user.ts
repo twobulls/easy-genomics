@@ -8,6 +8,10 @@ export const LaboratoryUserSchema = z
     Status: z.enum(['Active', 'Inactive']),
     LabManager: z.boolean(),
     LabTechnician: z.boolean(),
+    /** Per-membership opt-in: email this user for every run in this lab, regardless of owner. */
+    NotifyOnLabRuns: z.boolean().optional(),
+    /** Additional raw email addresses to CC whenever NotifyOnLabRuns fires for this membership. */
+    NotifyOnLabRunsAdditionalEmails: z.array(z.string().email()).max(10).optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -65,3 +69,14 @@ export const AddBulkLaboratoryUsersSchema = z
   })
   .strict();
 export type AddBulkLaboratoryUsers = z.infer<typeof AddBulkLaboratoryUsersSchema>;
+
+export const UpdateLaboratoryUserNotificationPreferenceSchema = z
+  .object({
+    NotifyOnLabRuns: z.boolean(),
+    // Optional: when omitted, the caller's existing additional-recipients list is left untouched.
+    NotifyOnLabRunsAdditionalEmails: z.array(z.string().email()).max(10).optional(),
+  })
+  .strict();
+export type UpdateLaboratoryUserNotificationPreference = z.infer<
+  typeof UpdateLaboratoryUserNotificationPreferenceSchema
+>;

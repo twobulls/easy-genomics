@@ -45,9 +45,14 @@ import {
   EditLaboratoryUserSchema,
   RemoveLaboratoryUserSchema,
   RequestLaboratoryUserSchema,
+  UpdateLaboratoryUserNotificationPreferenceSchema,
 } from '../schema/easy-genomics/laboratory-user';
 import { BatchUpdateLaboratoryWorkflowAccessRequestSchema } from '../schema/easy-genomics/laboratory-workflow-access';
 import { CreateOrganizationSchema, UpdateOrganizationSchema } from '../schema/easy-genomics/organization';
+import {
+  OrganizationBrandingTestEmailRequestSchema,
+  OrganizationLogoUploadRequestSchema,
+} from '../schema/easy-genomics/organization-email-branding';
 import {
   AddOrganizationUserSchema,
   EditOrganizationUserSchema,
@@ -104,6 +109,20 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
   'PUT /easy-genomics/organization/update-organization/{id}': {
     request: UpdateOrganizationSchema,
     response: 'Organization',
+  },
+  // OrganizationId travels in the request body rather than as a path parameter: the 'create-'
+  // verb never registers a path-level {id} resource (see ALLOWED_LAMBDA_FUNCTION_OPERATIONS_WITH_RESOURCE_ID
+  // in verb-operations.ts), so this mirrors the LaboratoryId-in-body pattern used by
+  // 'POST /easy-genomics/upload/create-file-upload-request' below.
+  'POST /easy-genomics/organization/create-organization-logo-upload-request': {
+    request: OrganizationLogoUploadRequestSchema,
+  },
+  // OrganizationId travels in the request body rather than as a path parameter: the 'request-'
+  // verb never registers a path-level {id} resource (see ALLOWED_LAMBDA_FUNCTION_OPERATIONS_WITH_RESOURCE_ID
+  // in verb-operations.ts), so this mirrors the OrganizationId-in-body pattern used by
+  // 'POST /easy-genomics/organization/create-organization-logo-upload-request' above.
+  'POST /easy-genomics/organization/request-organization-branding-test-email': {
+    request: OrganizationBrandingTestEmailRequestSchema,
   },
   'DELETE /easy-genomics/organization/delete-organization/{id}': {},
   'GET /easy-genomics/organization/list-organizations': {
@@ -207,6 +226,10 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
   },
   'POST /easy-genomics/laboratory/user/edit-laboratory-user': {
     request: EditLaboratoryUserSchema,
+    response: 'LaboratoryUser',
+  },
+  'PUT /easy-genomics/laboratory/user/update-laboratory-user-notification-preference/{id}': {
+    request: UpdateLaboratoryUserNotificationPreferenceSchema,
     response: 'LaboratoryUser',
   },
   'GET /easy-genomics/laboratory/user/list-laboratory-users': {

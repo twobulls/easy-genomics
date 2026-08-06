@@ -191,8 +191,8 @@ export async function main(): Promise<void> {
   if (currentProcessNameErrors > 0 || pollStatusErrors > 0 || notifiedAtErrors > 0) process.exit(1);
 }
 
-// Auto-run only when executed as a CLI script — not when imported by tests.
-if (require.main === module) {
+// Skip auto-run under Jest (JEST_WORKER_ID is set) so tests can import and await `main`.
+if (!process.env.JEST_WORKER_ID) {
   main().catch((e) => {
     console.error(e);
     process.exit(1);

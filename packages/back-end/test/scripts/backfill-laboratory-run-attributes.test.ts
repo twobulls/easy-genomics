@@ -24,10 +24,9 @@ interface ScriptRunResult {
 }
 
 /**
- * The script's CLI entry is gated behind `require.main === module`, so tests import the
- * module, mock the service it depends on, then await the exported `main()` directly.
- * `jest.resetModules()` per call ensures each test gets a fresh module registry that
- * picks up that call's mocked implementations.
+ * Re-running the script per test requires a fresh module registry so the service it imports
+ * picks up this call's mocked implementations. `main` is exported and awaited (auto-run is
+ * skipped under Jest via JEST_WORKER_ID) to avoid racing a fire-and-forget side effect.
  */
 async function runScript(
   argv: string[],

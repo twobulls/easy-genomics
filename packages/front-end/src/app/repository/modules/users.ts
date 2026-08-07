@@ -19,8 +19,28 @@ import {
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/easy-genomics-api';
 import { User } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/user';
 import HttpFactory from '@FE/repository/factory';
+import { decodeJwt } from '@FE/utils/jwt-utils';
 
 class UsersModule extends HttpFactory {
+  /**
+   * update-user* Lambdas authorize path id against cognito:username.
+   * currentUserDetails.id prefers DynamoDB UserId (for run ownership filters), which can
+   * differ for seeded Cognito users — always resolve the Cognito username from the JWT here.
+   */
+  private async resolveSelfUpdatePathUserId(fallbackUserId?: string | null): Promise<string> {
+    const { getToken } = useAuth();
+    const token = await getToken();
+    const decodedToken: Record<string, unknown> = decodeJwt(token);
+    const cognitoUsername = decodedToken['cognito:username'];
+    if (typeof cognitoUsername === 'string' && cognitoUsername !== '') {
+      return cognitoUsername;
+    }
+    if (typeof fallbackUserId === 'string' && fallbackUserId !== '') {
+      return fallbackUserId;
+    }
+    throw new Error('Unable to resolve Cognito username for user update');
+  }
+
   async list(): Promise<User | undefined> {
     const res = await this.call<User>('GET', '/user/list-users');
 
@@ -148,7 +168,8 @@ class UsersModule extends HttpFactory {
       throw new Error(`Error; updateUser; safe parse failed; parseResult: ${JSON.stringify(parseResult, null, 2)}`);
     }
 
-    const res = await this.call<User>('PUT', `/user/update-user-request/${userId}`, data);
+    const pathUserId = await this.resolveSelfUpdatePathUserId(userId);
+    const res = await this.call<User>('PUT', `/user/update-user-request/${pathUserId}`, data);
 
     if (!res) {
       throw new Error('Error updating user details');
@@ -180,7 +201,8 @@ class UsersModule extends HttpFactory {
       );
     }
 
-    const res = await this.call<{}>('PUT', `/user/update-user-last-accessed-info/${userId}`, data);
+    const pathUserId = await this.resolveSelfUpdatePathUserId(userId);
+    const res = await this.call<{}>('PUT', `/user/update-user-last-accessed-info/${pathUserId}`, data);
     if (!res) {
       throw new Error('Error updating user last accessed info');
     }

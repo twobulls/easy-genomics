@@ -58,6 +58,11 @@ async function runScript(
 }
 
 describe('backfill-laboratory-run-attributes script', () => {
+  // Every test here calls jest.resetModules() and re-imports the script and its whole dependency
+  // tree via runScript(). That's inherently heavier than a typical unit test, and under CI's
+  // parallel Jest workers the resulting CPU contention has pushed it past the 5s default.
+  jest.setTimeout(15000);
+
   const originalArgv = process.argv;
   let exitSpy: jest.SpyInstance;
 

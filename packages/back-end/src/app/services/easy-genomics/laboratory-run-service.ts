@@ -278,9 +278,9 @@ export class LaboratoryRunService extends DynamoDBService implements Service<Lab
    * Used when clearing optional fields (e.g. NotifiedAt) that must not linger
    * after a SET-only update would leave the previous value in place.
    *
-   * Always scrubs legacy `CurrentProcessName` (removed from the schema) so
-   * older DynamoDB items do not fail `.strict()` validation or leave the
-   * attribute behind after a write.
+   * Attributes in `remove` are stripped from the write payload before `.strict()`
+   * schema validation so callers can REMOVE legacy fields that are no longer on
+   * the schema (e.g. one-time backfill of `CurrentProcessName`).
    */
   public updateWithAttributeRemoval = async (
     laboratoryRun: LaboratoryRun,
@@ -289,18 +289,16 @@ export class LaboratoryRunService extends DynamoDBService implements Service<Lab
     const logRequestMessage = `Update LaboratoryRun LaboratoryId=${laboratoryRun.LaboratoryId}, RunId=${laboratoryRun.RunId} request`;
     console.info(logRequestMessage);
 
-    const LEGACY_REMOVE = 'CurrentProcessName';
+    const removeAttrs = [...new Set(remove.filter((key) => key.length > 0))];
     const runForUpdate = { ...laboratoryRun } as LaboratoryRun & Record<string, unknown>;
-    delete runForUpdate[LEGACY_REMOVE];
-
-    // Data validation safety check
-    if (!LaboratoryRunSchema.safeParse(runForUpdate).success) throw new Error('Invalid request');
-
-    const removeAttrs = [...new Set([...remove.filter((key) => key.length > 0), LEGACY_REMOVE])];
-    // Ensure removed attributes are not also SET
+    // Strip before validation so REMOVEd keys (including schema-removed legacy
+    // attributes) do not fail LaboratoryRunSchema.strict().
     for (const key of removeAttrs) {
       delete runForUpdate[key];
     }
+
+    // Data validation safety check
+    if (!LaboratoryRunSchema.safeParse(runForUpdate).success) throw new Error('Invalid request');
 
     const updateExclusions: string[] = [
       'LaboratoryId',

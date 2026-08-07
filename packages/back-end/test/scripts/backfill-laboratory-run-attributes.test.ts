@@ -3,7 +3,7 @@ import type { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy
 const SERVICE_MODULE_PATH = '../../src/app/services/easy-genomics/laboratory-run-service';
 const SCRIPT_MODULE_PATH = '../../scripts/backfill-laboratory-run-attributes';
 
-function buildRun(overrides: Partial<LaboratoryRun> = {}): LaboratoryRun {
+function buildRun(overrides: Partial<LaboratoryRun> & { CurrentProcessName?: string } = {}): LaboratoryRun {
   return {
     LaboratoryId: 'lab-1',
     RunId: 'run-1',
@@ -20,6 +20,7 @@ function buildRun(overrides: Partial<LaboratoryRun> = {}): LaboratoryRun {
 interface ScriptRunResult {
   listAllLaboratoryRuns: jest.Mock;
   update: jest.Mock;
+  updateWithAttributeRemoval: jest.Mock;
 }
 
 /**
@@ -32,6 +33,7 @@ async function runScript(
   argv: string[],
   runs: LaboratoryRun[],
   updateImpl: (run: LaboratoryRun) => Promise<LaboratoryRun> = async (run) => run,
+  updateWithAttributeRemovalImpl: (run: LaboratoryRun, remove: string[]) => Promise<LaboratoryRun> = async (run) => run,
 ): Promise<ScriptRunResult> {
   jest.resetModules();
   jest.doMock(SERVICE_MODULE_PATH);
@@ -41,14 +43,16 @@ async function runScript(
   const { LaboratoryRunService } = (await import(SERVICE_MODULE_PATH)) as any;
   const listAllLaboratoryRuns = jest.fn().mockResolvedValue(runs);
   const update = jest.fn(updateImpl);
+  const updateWithAttributeRemoval = jest.fn(updateWithAttributeRemovalImpl);
   LaboratoryRunService.prototype.listAllLaboratoryRuns = listAllLaboratoryRuns;
   LaboratoryRunService.prototype.update = update;
+  LaboratoryRunService.prototype.updateWithAttributeRemoval = updateWithAttributeRemoval;
 
   process.argv = ['node', 'backfill-laboratory-run-attributes.ts', ...argv];
   const { main } = await import(SCRIPT_MODULE_PATH);
   await main();
 
-  return { listAllLaboratoryRuns, update };
+  return { listAllLaboratoryRuns, update, updateWithAttributeRemoval };
 }
 
 describe('backfill-laboratory-run-attributes script', () => {
@@ -73,7 +77,47 @@ describe('backfill-laboratory-run-attributes script', () => {
     jest.restoreAllMocks();
   });
 
-  describe('Pass 1 - PollStatus backfill', () => {
+  describe('Pass 1 - CurrentProcessName removal', () => {
+    it('REMOVEs CurrentProcessName when present and skips runs that lack it', async () => {
+      const runs = [
+        buildRun({ RunId: 'run-with-legacy', CurrentProcessName: 'process_foo', PollStatus: 'ACTIVE' }),
+        buildRun({ RunId: 'run-clean', PollStatus: 'ACTIVE' }),
+      ];
+
+      const { update, updateWithAttributeRemoval } = await runScript([], runs);
+
+      expect(updateWithAttributeRemoval).toHaveBeenCalledTimes(1);
+      expect(updateWithAttributeRemoval.mock.calls[0][0].RunId).toBe('run-with-legacy');
+      expect(updateWithAttributeRemoval.mock.calls[0][0]).not.toHaveProperty('CurrentProcessName');
+      expect(updateWithAttributeRemoval.mock.calls[0][1]).toEqual(['CurrentProcessName']);
+      expect(update).not.toHaveBeenCalled();
+      expect(exitSpy).not.toHaveBeenCalled();
+    });
+
+    it('only patches runs in the laboratory given via --lab', async () => {
+      const runs = [
+        buildRun({
+          RunId: 'run-lab-1',
+          LaboratoryId: 'lab-1',
+          CurrentProcessName: 'proc',
+          PollStatus: 'ACTIVE',
+        }),
+        buildRun({
+          RunId: 'run-lab-2',
+          LaboratoryId: 'lab-2',
+          CurrentProcessName: 'proc',
+          PollStatus: 'ACTIVE',
+        }),
+      ];
+
+      const { updateWithAttributeRemoval } = await runScript(['--lab', 'lab-1'], runs);
+
+      expect(updateWithAttributeRemoval).toHaveBeenCalledTimes(1);
+      expect(updateWithAttributeRemoval.mock.calls[0][0].RunId).toBe('run-lab-1');
+    });
+  });
+
+  describe('Pass 2 - PollStatus backfill', () => {
     it('patches non-terminal runs missing PollStatus and skips runs that already have it', async () => {
       const runs = [
         buildRun({ RunId: 'run-missing', Status: 'RUNNING' }),
@@ -81,8 +125,9 @@ describe('backfill-laboratory-run-attributes script', () => {
         buildRun({ RunId: 'run-pending', Status: 'PENDING' }),
       ];
 
-      const { update } = await runScript([], runs);
+      const { update, updateWithAttributeRemoval } = await runScript([], runs);
 
+      expect(updateWithAttributeRemoval).not.toHaveBeenCalled();
       expect(update).toHaveBeenCalledTimes(2);
       const patchedRunIds = update.mock.calls.map(([run]) => run.RunId);
       expect(patchedRunIds).toEqual(expect.arrayContaining(['run-missing', 'run-pending']));
@@ -101,15 +146,26 @@ describe('backfill-laboratory-run-attributes script', () => {
       expect(update).toHaveBeenCalledTimes(1);
       expect(update.mock.calls[0][0].RunId).toBe('run-lab-1');
     });
+
+    it('strips CurrentProcessName from the SET payload when both passes apply', async () => {
+      const runs = [buildRun({ RunId: 'run-both', Status: 'RUNNING', CurrentProcessName: 'proc' })];
+
+      const { update, updateWithAttributeRemoval } = await runScript([], runs);
+
+      expect(updateWithAttributeRemoval).toHaveBeenCalledTimes(1);
+      expect(update).toHaveBeenCalledTimes(1);
+      expect(update.mock.calls[0][0]).not.toHaveProperty('CurrentProcessName');
+      expect(update.mock.calls[0][0].PollStatus).toBe('ACTIVE');
+    });
   });
 
-  describe('Pass 2 - NotifiedAt backfill', () => {
+  describe('Pass 3 - NotifiedAt backfill', () => {
     it('patches terminal runs missing NotifiedAt and skips runs that already have it or are non-terminal', async () => {
       const runs = [
         buildRun({ RunId: 'run-completed', Status: 'COMPLETED', ModifiedAt: '2024-06-01T00:00:00.000Z' }),
         buildRun({ RunId: 'run-already-notified', Status: 'COMPLETED', NotifiedAt: '2024-03-03T00:00:00.000Z' }),
-        // PollStatus already set so Pass 1 (PollStatus backfill) also skips this run — this
-        // test only asserts Pass 2 (NotifiedAt) behavior, and both passes run per invocation.
+        // PollStatus already set so Pass 2 (PollStatus backfill) also skips this run — this
+        // test only asserts Pass 3 (NotifiedAt) behavior, and all passes run per invocation.
         buildRun({ RunId: 'run-running', Status: 'RUNNING', PollStatus: 'ACTIVE' }),
       ];
 
@@ -158,20 +214,42 @@ describe('backfill-laboratory-run-attributes script', () => {
   });
 
   describe('--dry-run', () => {
-    it('performs no writes for either pass', async () => {
+    it('performs no writes for any pass', async () => {
       const runs = [
+        buildRun({ RunId: 'run-legacy', CurrentProcessName: 'proc', PollStatus: 'ACTIVE' }),
         buildRun({ RunId: 'run-poll-candidate', Status: 'RUNNING' }),
         buildRun({ RunId: 'run-notified-candidate', Status: 'COMPLETED' }),
       ];
 
-      const { update } = await runScript(['--dry-run'], runs);
+      const { update, updateWithAttributeRemoval } = await runScript(['--dry-run'], runs);
 
       expect(update).not.toHaveBeenCalled();
+      expect(updateWithAttributeRemoval).not.toHaveBeenCalled();
       expect(exitSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('exit behavior', () => {
+    it('exits with code 1 but still attempts remaining runs when a CurrentProcessName update fails', async () => {
+      const runs = [
+        buildRun({ RunId: 'run-fail', CurrentProcessName: 'proc', PollStatus: 'ACTIVE' }),
+        buildRun({ RunId: 'run-ok', CurrentProcessName: 'proc', PollStatus: 'ACTIVE' }),
+      ];
+
+      const { updateWithAttributeRemoval } = await runScript(
+        [],
+        runs,
+        async (run) => run,
+        async (run) => {
+          if (run.RunId === 'run-fail') throw new Error('ddb write failed');
+          return run;
+        },
+      );
+
+      expect(updateWithAttributeRemoval).toHaveBeenCalledTimes(2);
+      expect(exitSpy).toHaveBeenCalledWith(1);
+    });
+
     it('exits with code 1 but still attempts remaining runs when a PollStatus update fails', async () => {
       const runs = [
         buildRun({ RunId: 'run-fail', Status: 'RUNNING' }),
@@ -204,6 +282,7 @@ describe('backfill-laboratory-run-attributes script', () => {
 
     it('does not call process.exit when every candidate is patched successfully', async () => {
       const runs = [
+        buildRun({ RunId: 'run-legacy', CurrentProcessName: 'proc', PollStatus: 'ACTIVE' }),
         buildRun({ RunId: 'run-poll', Status: 'RUNNING' }),
         buildRun({ RunId: 'run-notified', Status: 'COMPLETED' }),
       ];

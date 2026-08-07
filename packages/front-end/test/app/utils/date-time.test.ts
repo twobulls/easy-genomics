@@ -1,4 +1,4 @@
-import { getDate, getDateOrTimeIfToday, getTime } from '../../../src/app/utils/date-time';
+import { getDate, formatRelativeDateTime, getTime } from '../../../src/app/utils/date-time';
 
 describe('getDate', () => {
   it('formats a valid ISO date as yyyy-MM-dd in local time', () => {
@@ -25,7 +25,7 @@ describe('getTime', () => {
   });
 });
 
-describe('getDateOrTimeIfToday', () => {
+describe('formatRelativeDateTime', () => {
   // Fixed local "now": Friday 7 Aug 2026, noon — avoids depending on the machine clock.
   const NOW = new Date(2026, 7, 7, 12, 0, 0);
 
@@ -44,14 +44,14 @@ describe('getDateOrTimeIfToday', () => {
   });
 
   it('returns null for missing input', () => {
-    expect(getDateOrTimeIfToday(null)).toBeNull();
-    expect(getDateOrTimeIfToday(undefined)).toBeNull();
-    expect(getDateOrTimeIfToday('')).toBeNull();
+    expect(formatRelativeDateTime(null)).toBeNull();
+    expect(formatRelativeDateTime(undefined)).toBeNull();
+    expect(formatRelativeDateTime('')).toBeNull();
   });
 
   it('returns null for an invalid date string', () => {
     const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    expect(getDateOrTimeIfToday('not-a-date')).toBeNull();
+    expect(formatRelativeDateTime('not-a-date')).toBeNull();
     errorSpy.mockRestore();
   });
 
@@ -59,80 +59,80 @@ describe('getDateOrTimeIfToday', () => {
     it('returns the time for today at early morning and late evening', () => {
       const early = localIso(2026, 7, 7, 0, 15);
       const late = localIso(2026, 7, 7, 23, 45);
-      expect(getDateOrTimeIfToday(early)).toBe(getTime(early));
-      expect(getDateOrTimeIfToday(late)).toBe(getTime(late));
+      expect(formatRelativeDateTime(early)).toBe(getTime(early));
+      expect(formatRelativeDateTime(late)).toBe(getTime(late));
     });
 
     it('returns "Yesterday" for late evening yesterday and early morning yesterday', () => {
-      expect(getDateOrTimeIfToday(localIso(2026, 7, 6, 23, 45))).toBe('Yesterday');
-      expect(getDateOrTimeIfToday(localIso(2026, 7, 6, 0, 15))).toBe('Yesterday');
+      expect(formatRelativeDateTime(localIso(2026, 7, 6, 23, 45))).toBe('Yesterday');
+      expect(formatRelativeDateTime(localIso(2026, 7, 6, 0, 15))).toBe('Yesterday');
     });
 
     it('classifies by local calendar day after UTC serialization round-trip', () => {
       // toISOString() is UTC; classification must still use the local calendar day.
       const yesterdayLateLocal = new Date(2026, 7, 6, 23, 0, 0);
-      expect(getDateOrTimeIfToday(yesterdayLateLocal.toISOString())).toBe('Yesterday');
+      expect(formatRelativeDateTime(yesterdayLateLocal.toISOString())).toBe('Yesterday');
     });
   });
 
   describe('days ago (2–30 inclusive)', () => {
     it('returns "2 days ago" at the lower bound, regardless of time of day', () => {
-      expect(getDateOrTimeIfToday(localIso(2026, 7, 5, 0, 0))).toBe('2 days ago');
-      expect(getDateOrTimeIfToday(localIso(2026, 7, 5, 23, 59))).toBe('2 days ago');
+      expect(formatRelativeDateTime(localIso(2026, 7, 5, 0, 0))).toBe('2 days ago');
+      expect(formatRelativeDateTime(localIso(2026, 7, 5, 23, 59))).toBe('2 days ago');
     });
 
     it('returns "30 days ago" at the upper bound (prefers days over months)', () => {
       // Jul 8 is both 30 calendar days and 1 calendar month before Aug 7 — days bucket wins.
-      expect(getDateOrTimeIfToday(localIso(2026, 6, 8))).toBe('30 days ago');
+      expect(formatRelativeDateTime(localIso(2026, 6, 8))).toBe('30 days ago');
     });
 
     it('crosses a month boundary while still in the days bucket', () => {
-      expect(getDateOrTimeIfToday(localIso(2026, 6, 20))).toBe('18 days ago');
+      expect(formatRelativeDateTime(localIso(2026, 6, 20))).toBe('18 days ago');
     });
   });
 
   describe('months ago (1–12 inclusive)', () => {
     it('switches to months once past 30 calendar days', () => {
       // Jul 7 is 31 days and 1 calendar month before Aug 7.
-      expect(getDateOrTimeIfToday(localIso(2026, 6, 7))).toBe('1 month ago');
+      expect(formatRelativeDateTime(localIso(2026, 6, 7))).toBe('1 month ago');
     });
 
     it('returns "12 months ago" at the upper bound (prefers months over years)', () => {
       // Exactly one year earlier is 12 months and 1 calendar year — months bucket wins.
-      expect(getDateOrTimeIfToday(localIso(2025, 7, 7))).toBe('12 months ago');
+      expect(formatRelativeDateTime(localIso(2025, 7, 7))).toBe('12 months ago');
     });
 
     it('handles end-of-month month arithmetic', () => {
       jest.setSystemTime(new Date(2026, 2, 31, 12, 0, 0)); // Mar 31
-      expect(getDateOrTimeIfToday(localIso(2026, 0, 31))).toBe('2 months ago'); // Jan 31
-      expect(getDateOrTimeIfToday(localIso(2026, 1, 28))).toBe('1 month ago'); // Feb 28
+      expect(formatRelativeDateTime(localIso(2026, 0, 31))).toBe('2 months ago'); // Jan 31
+      expect(formatRelativeDateTime(localIso(2026, 1, 28))).toBe('1 month ago'); // Feb 28
     });
   });
 
   describe('years ago (older than 12 months)', () => {
     it('returns "1 year ago" just past the 12-month boundary', () => {
-      expect(getDateOrTimeIfToday(localIso(2025, 6, 7))).toBe('1 year ago'); // 13 months
+      expect(formatRelativeDateTime(localIso(2025, 6, 7))).toBe('1 year ago'); // 13 months
     });
 
     it('returns plural years for multi-year-old timestamps', () => {
-      expect(getDateOrTimeIfToday(localIso(2020, 7, 7))).toBe('6 years ago');
+      expect(formatRelativeDateTime(localIso(2020, 7, 7))).toBe('6 years ago');
     });
 
     it('handles a leap-day source date', () => {
-      expect(getDateOrTimeIfToday(localIso(2024, 1, 29))).toBe('2 years ago');
+      expect(formatRelativeDateTime(localIso(2024, 1, 29))).toBe('2 years ago');
     });
   });
 
   describe('calendar / year-boundary edges', () => {
     it('returns "Yesterday" across New Year (Jan 1 ← Dec 31)', () => {
       jest.setSystemTime(new Date(2026, 0, 1, 12, 0, 0));
-      expect(getDateOrTimeIfToday(localIso(2025, 11, 31, 23, 30))).toBe('Yesterday');
+      expect(formatRelativeDateTime(localIso(2025, 11, 31, 23, 30))).toBe('Yesterday');
     });
 
     it('returns an absolute date for future timestamps (does not say years ago)', () => {
       const tomorrow = localIso(2026, 7, 8);
-      expect(getDateOrTimeIfToday(tomorrow)).toBe(getDate(tomorrow));
-      expect(getDateOrTimeIfToday(tomorrow)).not.toMatch(/ago$/);
+      expect(formatRelativeDateTime(tomorrow)).toBe(getDate(tomorrow));
+      expect(formatRelativeDateTime(tomorrow)).not.toMatch(/ago$/);
     });
   });
 });

@@ -66,7 +66,7 @@ function pluralize(count: number, singular: string, plural: string): string {
  * - older → "N year(s) ago"
  * - future → absolute date (yyyy-MM-dd)
  */
-export function getDateOrTimeIfToday(input: string | null | undefined): string | null {
+export function formatRelativeDateTime(input: string | null | undefined): string | null {
   if (!input) {
     return null;
   }

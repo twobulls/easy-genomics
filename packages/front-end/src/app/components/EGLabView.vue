@@ -266,6 +266,7 @@
     { key: 'CreatedAt', label: 'Created At', sortable: true },
     { key: 'lastUpdated', label: 'Last Updated', sortable: true },
     { key: 'Status', label: 'Status', sortable: true },
+    { key: 'WorkflowName', label: 'Workflow name', sortable: true },
     { key: 'WorkflowVersionName', label: 'Workflow version', sortable: true },
     { key: 'Owner', label: 'Owner', sortable: true },
     { key: 'actions', label: 'Actions' },
@@ -973,7 +974,6 @@
     >
       <template #RunName-data="{ row: run }">
         <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
-        <div v-if="run.WorkflowName" class="text-muted text-xs font-normal">{{ run.WorkflowName }}</div>
         <div v-if="run.Description" class="text-muted line-clamp-1 text-xs font-normal">{{ run.Description }}</div>
       </template>
 
@@ -1002,6 +1002,12 @@
 
       <template #Status-data="{ row: run }">
         <EGStatusChip :status="run.Status" />
+      </template>
+
+      <template #WorkflowName-data="{ row: run }">
+        <div class="text-body text-sm font-medium">
+          {{ run.WorkflowName || '—' }}
+        </div>
       </template>
 
       <template #WorkflowVersionName-data="{ row: run }">

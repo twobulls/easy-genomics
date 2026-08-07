@@ -351,6 +351,7 @@
 
   const recentRunsTableColumns = [
     { key: 'RunName', label: 'Run Name', sortable: true },
+    { key: 'WorkflowName', label: 'Workflow', sortable: true },
     { key: 'lastUpdated', label: 'Last Updated', sortable: true },
     { key: 'Status', label: 'Status', sortable: true },
     { key: 'actions', label: 'Actions' },
@@ -381,6 +382,8 @@
     return [...items].sort((a, b) => {
       if (column === 'lastUpdated') return (toSortableTime(a.lastUpdated) - toSortableTime(b.lastUpdated)) * dir;
       if (column === 'RunName') return toSortableString(a.RunName).localeCompare(toSortableString(b.RunName)) * dir;
+      if (column === 'WorkflowName')
+        return toSortableString(a.WorkflowName).localeCompare(toSortableString(b.WorkflowName)) * dir;
       if (column === 'Status') return toSortableString(a.Status).localeCompare(toSortableString(b.Status)) * dir;
 
       const av = (a as any)?.[column];
@@ -617,7 +620,7 @@
           <UIcon name="i-heroicons-arrow-left" class="h-4 w-4" aria-hidden="true" />
           Back to laboratories
         </button>
-        <EGText tag="h1" class="mb-0">Laboratory of {{ labName }}</EGText>
+        <EGText tag="h1" size="md" class="mb-0">Laboratory of {{ labName }}</EGText>
       </div>
       <div class="relative w-[320px]">
         <label :for="searchInputId" class="sr-only">Search runs, workflows, and results</label>
@@ -698,7 +701,7 @@
 
     <!-- In progress -->
     <section v-if="inProgressRuns.length > 0" class="mt-8" :aria-labelledby="inProgressHeadingId">
-      <EGText :id="inProgressHeadingId" tag="h2" class="mb-3">In progress</EGText>
+      <EGText :id="inProgressHeadingId" tag="h2" size="sm" class="mb-3">In progress</EGText>
       <div class="flex flex-col gap-3">
         <EGInProgressRunCard v-for="run in inProgressRuns" :key="run.RunId" :run="run" :lab-id="labId" />
       </div>
@@ -707,7 +710,7 @@
     <!-- Favourite Workflows -->
     <section class="mt-10" :aria-labelledby="favouriteWorkflowsHeadingId">
       <div class="mb-8">
-        <EGText :id="favouriteWorkflowsHeadingId" tag="h2" class="mb-0">Favourite Workflows</EGText>
+        <EGText :id="favouriteWorkflowsHeadingId" tag="h2" size="sm" class="mb-0">Favourite Workflows</EGText>
         <p class="text-muted text-sm">Quick launch your most used workflows.</p>
       </div>
 
@@ -746,7 +749,7 @@
     <!-- Recent Runs -->
     <section class="mt-10" :aria-labelledby="recentRunsHeadingId">
       <div class="mb-8 flex items-center justify-between gap-4">
-        <EGText :id="recentRunsHeadingId" tag="h2" class="mb-0">Recent Runs</EGText>
+        <EGText :id="recentRunsHeadingId" tag="h2" size="sm" class="mb-0">Recent Runs</EGText>
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-2">
             <UToggle
@@ -780,11 +783,12 @@
       >
         <template #RunName-data="{ row: run }">
           <div v-if="run.RunName" class="text-body text-sm font-medium">{{ run.RunName }}</div>
-          <div v-if="run.WorkflowName || run.Owner" class="text-muted text-xs font-normal">
-            <template v-if="run.WorkflowName && run.Owner">{{ run.WorkflowName }} · {{ run.Owner }}</template>
-            <template v-else>{{ run.WorkflowName || run.Owner }}</template>
-          </div>
+          <div v-if="run.Owner" class="text-muted text-xs font-normal">{{ run.Owner }}</div>
           <div v-if="run.Description" class="text-muted line-clamp-1 text-xs font-normal">{{ run.Description }}</div>
+        </template>
+
+        <template #WorkflowName-data="{ row: run }">
+          <div class="text-body text-sm font-medium">{{ run.WorkflowName || '—' }}</div>
         </template>
 
         <template #lastUpdated-data="{ row: run }">
@@ -818,7 +822,7 @@
     <!-- Lab metrics -->
     <section class="mt-10" :aria-labelledby="overviewHeadingId">
       <div class="flex items-center justify-between">
-        <EGText :id="overviewHeadingId" tag="h2" class="mb-0">Lab metrics</EGText>
+        <EGText :id="overviewHeadingId" tag="h2" size="sm" class="mb-0">Lab metrics</EGText>
         <div>
           <label :for="overviewTimeFilterId" class="sr-only">Overview time period</label>
           <select

@@ -799,8 +799,7 @@
         </template>
 
         <template #lastUpdated-data="{ row: run }">
-          <div class="text-body text-sm font-medium">{{ getDate(run.lastUpdated) }}</div>
-          <div class="text-muted text-xs">{{ getTime(run.lastUpdated) }}</div>
+          <div class="text-body text-sm font-medium">{{ formatRelativeDateTime(run.lastUpdated) }}</div>
         </template>
 
         <template #Status-data="{ row: run }">

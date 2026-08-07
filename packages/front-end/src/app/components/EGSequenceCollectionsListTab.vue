@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import type { LaboratorySequenceCollection } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/samples';
   import EGActionButton from '@FE/components/EGActionButton.vue';
+  import { formatRelativeDateTime } from '@FE/utils/date-time';
 
   const props = defineProps<{
     collections: LaboratorySequenceCollection[];
@@ -65,7 +66,7 @@
             <td class="p-3">
               <div class="font-medium">{{ c.Name }}</div>
               <div v-if="c.CreatedAt" class="text-xs text-gray-400">
-                Created {{ new Date(c.CreatedAt).toLocaleDateString() }}
+                Created {{ formatRelativeDateTime(c.CreatedAt) }}
               </div>
             </td>
             <td class="p-3">{{ c.SampleCount }}</td>

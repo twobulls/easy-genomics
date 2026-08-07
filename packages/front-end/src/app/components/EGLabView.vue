@@ -1021,7 +1021,7 @@
       </template>
 
       <template #CreatedAt-data="{ row: run }">
-        <div class="text-body text-sm font-medium">{{ getDateOrTimeIfToday(run.CreatedAt) }}</div>
+        <div class="text-body text-sm font-medium">{{ formatRelativeDateTime(run.CreatedAt) }}</div>
       </template>
 
       <template #lastUpdated-data="{ row: run }">
@@ -1036,8 +1036,7 @@
           :total="run.TasksTotal"
         />
         <template v-else>
-          <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
-          <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
+          <div class="text-body text-sm font-medium">{{ formatRelativeDateTime(run.ModifiedAt) }}</div>
         </template>
       </template>
 

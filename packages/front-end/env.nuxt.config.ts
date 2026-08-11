@@ -23,7 +23,9 @@ export function loadNuxtSettings() {
 
   const localEnvPath = path.join(configDir, '.env.nuxt.local');
   if (fs.existsSync(localEnvPath)) {
-    dotenv.config({ path: localEnvPath });
+    // dotenv skips keys that are already set unless override is true. Without
+    // this, .env.nuxt.local cannot replace Cognito IDs rewritten by nuxt-load-settings.
+    dotenv.config({ path: localEnvPath, override: true });
   }
 
   // Env var toggle: use local back-end without renaming/editing .env.nuxt.local

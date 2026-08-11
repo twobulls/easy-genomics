@@ -12,8 +12,6 @@
       variant?: 'default' | 'inline' | 'full';
       /** Compact alias kept for callers that still pass it; maps to inline. */
       compact?: boolean;
-      /** Optional process name for the metaline (e.g. BOWTIE2_ALIGN). */
-      processName?: string | null;
       /** Optional remaining-time label (e.g. "~12 min remaining"). */
       remainingLabel?: string | null;
     }>(),
@@ -23,7 +21,6 @@
       total: null,
       variant: 'default',
       compact: false,
-      processName: null,
       remainingLabel: null,
     },
   );
@@ -54,7 +51,6 @@
   const metaline = computed(() => {
     const parts: string[] = [];
     if (countsLabel.value) parts.push(countsLabel.value);
-    if (props.processName) parts.push(props.processName);
     if (props.remainingLabel) parts.push(props.remainingLabel);
     return parts.length ? parts.join(' · ') : null;
   });

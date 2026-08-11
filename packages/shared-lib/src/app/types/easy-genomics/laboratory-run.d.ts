@@ -198,10 +198,4 @@ export interface LaboratoryRun extends BaseAttributes {
 
   /** Tasks in FAILED status at last status check. */
   TasksFailed?: number;
-
-  /**
-   * Name of the first currently RUNNING (or STARTING) task/process at last status check.
-   * Cleared when the run is terminal or no tasks are actively running.
-   */
-  CurrentProcessName?: string;
 }

@@ -1,14 +1,19 @@
 /**
- * One-time, idempotent backfill for two attributes that the run-completion-notification feature
- * depends on but that pre-existing rows in the laboratory-run table won't have. Run once before
- * deploying this feature.
+ * One-time, idempotent backfill for laboratory-run attributes that pre-existing rows
+ * may be missing or still carrying after schema changes. Run once before/with deploying
+ * the related feature.
  *
- * Pass 1 — PollStatus: sets `PollStatus='ACTIVE'` onto every currently non-terminal run that
+ * Pass 1 — CurrentProcessName: REMOVEs the legacy `CurrentProcessName` attribute from
+ * every run that still has it. The field was dropped from LaboratoryRunSchema (.strict()),
+ * so leaving it on DynamoDB items causes get-then-update callers to fail validation and
+ * would keep surfacing an unintelligible process name if anything still read it.
+ *
+ * Pass 2 — PollStatus: sets `PollStatus='ACTIVE'` onto every currently non-terminal run that
  * predates the PollStatus GSI. Without this, a run already in flight at deploy time is invisible
  * to `process-poll-active-runs` until its next natural status-change write sets the attribute
  * itself.
  *
- * Pass 2 — NotifiedAt: stamps `NotifiedAt` onto every currently terminal run that predates the
+ * Pass 3 — NotifiedAt: stamps `NotifiedAt` onto every currently terminal run that predates the
  * notification feature. Without this, `process-update-laboratory-run.lambda.ts`'s backfill
  * healing branch (which also heals a terminal run missing `NotifiedAt`) would treat every
  * pre-existing terminal run as "never notified" the next time it's touched — which happens
@@ -19,7 +24,7 @@
  * already existed before this migration ran, and only genuinely new stranded runs (created after
  * this script runs) can ever trigger it.
  *
- * Both passes are idempotent — re-runs simply re-set the same value on runs that still qualify.
+ * All passes are idempotent — re-runs skip rows that no longer qualify.
  *
  * Run from packages/back-end:
  *   pnpm exec esrun scripts/backfill-laboratory-run-attributes.ts [-- --dry-run] [--lab <laboratoryId>]
@@ -32,6 +37,11 @@ import dotenv from 'dotenv';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { LaboratoryRunService } from '../src/app/services/easy-genomics/laboratory-run-service';
 import { isTerminalLaboratoryRunStatus } from '../src/app/utils/laboratory-run-ttl-utils';
+
+/** Legacy attribute removed from LaboratoryRunSchema; still present on some DynamoDB items. */
+const LEGACY_CURRENT_PROCESS_NAME = 'CurrentProcessName';
+
+type LaboratoryRunWithLegacy = LaboratoryRun & { CurrentProcessName?: string };
 
 function loadEnv(): void {
   const envPath = path.resolve(process.cwd(), '.env.local');
@@ -55,7 +65,18 @@ function getFlagValue(flag: string): string | undefined {
   return undefined;
 }
 
-async function main(): Promise<void> {
+/** Strip schema-removed legacy attrs so SET-only updates pass LaboratoryRunSchema.strict(). */
+function withoutLegacyAttributes(run: LaboratoryRun): LaboratoryRun {
+  const cleaned = { ...run } as LaboratoryRunWithLegacy;
+  delete cleaned.CurrentProcessName;
+  return cleaned;
+}
+
+function hasLegacyCurrentProcessName(run: LaboratoryRun): boolean {
+  return Object.prototype.hasOwnProperty.call(run, LEGACY_CURRENT_PROCESS_NAME);
+}
+
+export async function main(): Promise<void> {
   const dryRun = process.argv.includes('--dry-run');
   const labFilter = getFlagValue('--lab');
 
@@ -67,7 +88,36 @@ async function main(): Promise<void> {
   console.log('Scanning laboratory-run table...');
   const allRuns = await runService.listAllLaboratoryRuns();
 
-  // Pass 1: non-terminal runs missing PollStatus.
+  // Pass 1: REMOVE legacy CurrentProcessName (must run before SET-only passes that
+  // would otherwise re-read in-memory objects still carrying the attribute).
+  const currentProcessNameCandidates = allRuns.filter(
+    (r: LaboratoryRun) => hasLegacyCurrentProcessName(r) && (!labFilter || r.LaboratoryId === labFilter),
+  );
+  console.log(
+    `Found ${currentProcessNameCandidates.length} run(s) with legacy CurrentProcessName (of ${allRuns.length} total).\n`,
+  );
+
+  let currentProcessNamePatched = 0;
+  let currentProcessNameErrors = 0;
+
+  for (const run of currentProcessNameCandidates) {
+    if (dryRun) {
+      console.log(`  [dry-run] Would REMOVE CurrentProcessName on run ${run.RunId} (lab ${run.LaboratoryId})`);
+      currentProcessNamePatched++;
+      continue;
+    }
+    try {
+      await runService.updateWithAttributeRemoval(withoutLegacyAttributes(run), [LEGACY_CURRENT_PROCESS_NAME]);
+      currentProcessNamePatched++;
+      // Keep later passes from spreading the legacy attr off the in-memory scan result.
+      delete (run as LaboratoryRunWithLegacy).CurrentProcessName;
+    } catch (err) {
+      console.error(`  Error removing CurrentProcessName for run ${run.RunId}:`, (err as Error).message ?? err);
+      currentProcessNameErrors++;
+    }
+  }
+
+  // Pass 2: non-terminal runs missing PollStatus.
   const pollStatusCandidates = allRuns.filter(
     (r: LaboratoryRun) =>
       !isTerminalLaboratoryRunStatus(r.Status) &&
@@ -88,7 +138,7 @@ async function main(): Promise<void> {
       continue;
     }
     try {
-      await runService.update({ ...run, PollStatus: 'ACTIVE' as const });
+      await runService.update({ ...withoutLegacyAttributes(run), PollStatus: 'ACTIVE' as const });
       pollStatusPatched++;
     } catch (err) {
       console.error(`  Error patching PollStatus for run ${run.RunId}:`, (err as Error).message ?? err);
@@ -96,7 +146,7 @@ async function main(): Promise<void> {
     }
   }
 
-  // Pass 2: terminal runs missing NotifiedAt.
+  // Pass 3: terminal runs missing NotifiedAt.
   const notifiedAtCandidates = allRuns.filter(
     (r: LaboratoryRun) =>
       isTerminalLaboratoryRunStatus(r.Status) && r.NotifiedAt == null && (!labFilter || r.LaboratoryId === labFilter),
@@ -123,7 +173,7 @@ async function main(): Promise<void> {
       continue;
     }
     try {
-      await runService.update({ ...run, NotifiedAt: notifiedAtSentinel });
+      await runService.update({ ...withoutLegacyAttributes(run), NotifiedAt: notifiedAtSentinel });
       notifiedAtPatched++;
     } catch (err) {
       console.error(`  Error patching NotifiedAt for run ${run.RunId}:`, (err as Error).message ?? err);
@@ -133,12 +183,18 @@ async function main(): Promise<void> {
 
   const verb = dryRun ? 'Would have patched' : 'Patched';
   console.log(`\nDone.`);
-  console.log(`  PollStatus:  ${verb} ${pollStatusPatched} run(s), errors: ${pollStatusErrors}.`);
-  console.log(`  NotifiedAt:  ${verb} ${notifiedAtPatched} run(s), errors: ${notifiedAtErrors}.`);
-  if (pollStatusErrors > 0 || notifiedAtErrors > 0) process.exit(1);
+  console.log(
+    `  CurrentProcessName: ${verb} ${currentProcessNamePatched} run(s), errors: ${currentProcessNameErrors}.`,
+  );
+  console.log(`  PollStatus:          ${verb} ${pollStatusPatched} run(s), errors: ${pollStatusErrors}.`);
+  console.log(`  NotifiedAt:          ${verb} ${notifiedAtPatched} run(s), errors: ${notifiedAtErrors}.`);
+  if (currentProcessNameErrors > 0 || pollStatusErrors > 0 || notifiedAtErrors > 0) process.exit(1);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Auto-run only when executed as a CLI script — not when imported by tests.
+if (require.main === module) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

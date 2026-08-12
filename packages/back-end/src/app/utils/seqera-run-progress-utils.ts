@@ -1,8 +1,4 @@
-import {
-  ProgressData,
-  ProcessLoad,
-  WorkflowLoad,
-} from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
+import { ProgressData, WorkflowLoad } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
 
 /**
  * Same shape as OmicsTaskProgress so status-check persistence can stay platform-agnostic.
@@ -13,8 +9,6 @@ export type SeqeraTaskProgress = {
   tasksRunning: number;
   tasksFailed: number;
   percent: number;
-  /** First process with running > 0 in processesProgress order, if any. */
-  currentProcessName?: string;
 };
 
 function asNonNegInt(value: unknown): number {
@@ -41,21 +35,11 @@ export function aggregateSeqeraProgress(progress: ProgressData | undefined | nul
   const tasksTotal = pending + submitted + running + succeeded + failed + cached;
   const percent = tasksTotal > 0 ? Math.round((tasksCompleted / tasksTotal) * 100) : 0;
 
-  const processes: ProcessLoad[] = progress.processesProgress ?? [];
-  let currentProcessName: string | undefined;
-  for (const proc of processes) {
-    if (asNonNegInt(proc.running) > 0 && proc.process) {
-      currentProcessName = proc.process;
-      break;
-    }
-  }
-
   return {
     tasksTotal,
     tasksCompleted,
     tasksRunning,
     tasksFailed,
     percent,
-    ...(currentProcessName != null ? { currentProcessName } : {}),
   };
 }

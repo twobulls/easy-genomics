@@ -132,11 +132,6 @@ export const LaboratoryRunSchema = z
     TasksRunning: z.number().nonnegative().optional(),
     /** Tasks in FAILED status at last status check. */
     TasksFailed: z.number().nonnegative().optional(),
-    /**
-     * Name of the first currently RUNNING (or STARTING) task/process at last status check.
-     * Cleared when the run is terminal or no tasks are actively running.
-     */
-    CurrentProcessName: z.string().optional(),
   })
   .strict();
 export type LaboratoryRun = z.infer<typeof LaboratoryRunSchema>;
@@ -183,7 +178,6 @@ export const ReadLaboratoryRunSchema = z
     TasksCompleted: z.number().nonnegative().optional(),
     TasksRunning: z.number().nonnegative().optional(),
     TasksFailed: z.number().nonnegative().optional(),
-    CurrentProcessName: z.string().optional(),
   })
   .strict();
 export type ReadLaboratoryRun = z.infer<typeof ReadLaboratoryRunSchema>;

@@ -169,3 +169,71 @@ describe('LaboratoryRunService.queryActiveForPolling', () => {
     queryItems.mockRestore();
   });
 });
+
+describe('LaboratoryRunService.updateWithAttributeRemoval', () => {
+  const validRun = (overrides: Partial<LaboratoryRun> = {}): LaboratoryRun =>
+    ({
+      LaboratoryId: '00000000-0000-0000-0000-000000000001',
+      RunId: '00000000-0000-0000-0000-000000000002',
+      UserId: '00000000-0000-0000-0000-000000000003',
+      OrganizationId: '00000000-0000-0000-0000-000000000004',
+      RunName: 'Test Run',
+      Platform: 'AWS HealthOmics',
+      Status: 'RUNNING',
+      Owner: 'user@example.com',
+      CreatedAt: '2024-01-01T00:00:00.000Z',
+      CreatedBy: 'user@example.com',
+      ...overrides,
+    }) as LaboratoryRun;
+
+  it('REMOVEs an explicit legacy attribute present on the item and still validates under .strict()', async () => {
+    const svc = new LaboratoryRunService();
+    const runWithLegacy = {
+      ...validRun({ Status: 'RUNNING', ModifiedAt: '2024-06-01T00:00:00.000Z', ModifiedBy: 'tester' }),
+      CurrentProcessName: 'process_foo',
+    } as LaboratoryRun & { CurrentProcessName: string };
+
+    const returned = { ...validRun({ Status: 'RUNNING' }), ModifiedAt: '2024-06-01T00:00:00.000Z' };
+    const updateItem = jest.spyOn(svc as unknown as { updateItem: jest.Mock }, 'updateItem').mockResolvedValue({
+      $metadata: { httpStatusCode: 200 },
+      Attributes: marshall(returned),
+    });
+
+    const result = await svc.updateWithAttributeRemoval(runWithLegacy, ['CurrentProcessName']);
+
+    expect(result.RunId).toBe(returned.RunId);
+    const call = updateItem.mock.calls[0][0];
+    expect(call.UpdateExpression).toEqual(expect.stringContaining('REMOVE #RemoveCurrentProcessName'));
+    expect(call.ExpressionAttributeNames['#RemoveCurrentProcessName']).toBe('CurrentProcessName');
+    expect(call.UpdateExpression).not.toEqual(expect.stringContaining('CurrentProcessName ='));
+    updateItem.mockRestore();
+  });
+
+  it('does not REMOVE CurrentProcessName when it is absent and remove is empty', async () => {
+    const svc = new LaboratoryRunService();
+    const run = validRun({ Status: 'COMPLETED', ModifiedAt: '2024-06-01T00:00:00.000Z', ModifiedBy: 'tester' });
+    const updateItem = jest.spyOn(svc as unknown as { updateItem: jest.Mock }, 'updateItem').mockResolvedValue({
+      $metadata: { httpStatusCode: 200 },
+      Attributes: marshall(run),
+    });
+
+    await svc.updateWithAttributeRemoval(run, []);
+
+    const call = updateItem.mock.calls[0][0];
+    expect(call.UpdateExpression).not.toEqual(expect.stringContaining('REMOVE'));
+    expect(call.ExpressionAttributeNames).not.toHaveProperty('#RemoveCurrentProcessName');
+    updateItem.mockRestore();
+  });
+
+  it('rejects invalid payloads that are not explained by the remove list', async () => {
+    const svc = new LaboratoryRunService();
+    const updateItem = jest.spyOn(svc as unknown as { updateItem: jest.Mock }, 'updateItem');
+
+    await expect(svc.updateWithAttributeRemoval(validRun({ LaboratoryId: 'not-a-uuid' }), [])).rejects.toThrow(
+      'Invalid request',
+    );
+
+    expect(updateItem).not.toHaveBeenCalled();
+    updateItem.mockRestore();
+  });
+});

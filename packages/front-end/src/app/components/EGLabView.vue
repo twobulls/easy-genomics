@@ -992,7 +992,6 @@
           :percent="run.ProgressPercent"
           :completed="run.TasksCompleted"
           :total="run.TasksTotal"
-          :process-name="run.CurrentProcessName"
         />
         <template v-else>
           <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>

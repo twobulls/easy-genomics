@@ -6,8 +6,6 @@ export type OmicsTaskProgress = {
   tasksRunning: number;
   tasksFailed: number;
   percent: number;
-  /** First RUNNING/STARTING task name in ListRunTasks order, if any. */
-  currentProcessName?: string;
 };
 
 const RUNNING_STATUSES: ReadonlySet<string> = new Set<TaskStatus>(['RUNNING', 'STARTING']);
@@ -22,7 +20,6 @@ export function aggregateTaskProgress(items: TaskListItem[]): OmicsTaskProgress 
   let tasksCompleted = 0;
   let tasksRunning = 0;
   let tasksFailed = 0;
-  let currentProcessName: string | undefined;
 
   for (const item of items) {
     const status = item.status;
@@ -32,9 +29,6 @@ export function aggregateTaskProgress(items: TaskListItem[]): OmicsTaskProgress 
       tasksFailed += 1;
     } else if (status != null && RUNNING_STATUSES.has(status)) {
       tasksRunning += 1;
-      if (currentProcessName == null && item.name) {
-        currentProcessName = item.name;
-      }
     }
   }
 
@@ -46,6 +40,5 @@ export function aggregateTaskProgress(items: TaskListItem[]): OmicsTaskProgress 
     tasksRunning,
     tasksFailed,
     percent,
-    ...(currentProcessName != null ? { currentProcessName } : {}),
   };
 }

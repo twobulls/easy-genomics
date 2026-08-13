@@ -43,8 +43,9 @@ Full documentation lives in [`docs/`](./docs/), organised by audience:
   **[your first workflow run](./docs/getting-started/first-workflow-run.md)**.
 - **[Deployment](./docs/deployment/)** — AWS setup, `easy-genomics.yaml` configuration, upgrading, and
   **[production deployment](./docs/deployment/production.md)**.
-- **[Development](./docs/development/)** — local back-end development, contributing conventions, architecture, and
-  **[Graphify](./docs/development/graphify.md)** (knowledge graph for AI assistants).
+- **[Development](./docs/development/)** — local back-end development, contributing conventions,
+  **[architecture](./docs/development/architecture.md)**, and **[Graphify](./docs/development/graphify.md)** (knowledge
+  graph for AI assistants).
 - **[Operations](./docs/operations/)** — troubleshooting and migration runbooks.
 
 New to Easy Genomics? Start with **[docs/getting-started/prerequisites.md](./docs/getting-started/prerequisites.md)**,

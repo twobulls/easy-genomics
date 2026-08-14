@@ -22,10 +22,12 @@ export async function runDeployMigrations(opts: RunDeployMigrationsOptions): Pro
 
   const ledger = await loadLedger(ssmService, namePrefix);
   const pending = forceId ? phaseEntries.filter((m) => m.id === forceId) : phaseEntries.filter((m) => !ledger[m.id]);
-  const skipped = phaseEntries.filter((m) => !pending.includes(m));
 
-  for (const entry of skipped) {
-    console.log(`[run-deploy-migrations] skip (already applied): ${entry.id}`);
+  if (!forceId) {
+    const skipped = phaseEntries.filter((m) => !pending.includes(m));
+    for (const entry of skipped) {
+      console.log(`[run-deploy-migrations] skip (already applied): ${entry.id}`);
+    }
   }
 
   if (dryRun) {
@@ -43,14 +45,21 @@ export async function runDeployMigrations(opts: RunDeployMigrationsOptions): Pro
   }
 }
 
-function parseArgs(argv: string[]): { phase: DeployMigrationPhase; dryRun: boolean; forceId?: string } {
+export function parseArgs(argv: string[]): { phase: DeployMigrationPhase; dryRun: boolean; forceId?: string } {
   const phaseArg = argv.find((a) => a.startsWith('--phase='))?.split('=')[1];
   if (phaseArg !== 'pre' && phaseArg !== 'post') {
     throw new Error('Missing or invalid --phase=pre|post');
   }
   const dryRun = argv.includes('--dry-run');
   const forceIndex = argv.indexOf('--force');
-  const forceId = forceIndex >= 0 ? argv[forceIndex + 1] : undefined;
+  let forceId: string | undefined;
+  if (forceIndex >= 0) {
+    const next = argv[forceIndex + 1];
+    if (!next || next.startsWith('--')) {
+      throw new Error('--force requires an id argument');
+    }
+    forceId = next;
+  }
   return { phase: phaseArg, dryRun, forceId };
 }
 

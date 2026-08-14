@@ -49,6 +49,9 @@ function loadEnv(): void {
   if (process.env.REGION && !process.env.AWS_REGION) {
     process.env.AWS_REGION = process.env.REGION;
   }
+  if (!process.env.REGION && process.env.AWS_REGION) {
+    process.env.REGION = process.env.AWS_REGION;
+  }
   const required = ['NAME_PREFIX', 'REGION'];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length > 0) {
@@ -85,7 +88,17 @@ export async function main(): Promise<void> {
   const runService = new LaboratoryRunService();
 
   console.log('Scanning laboratory-run table...');
-  const allRuns = await runService.listAllLaboratoryRuns();
+  let allRuns: LaboratoryRun[];
+  try {
+    allRuns = await runService.listAllLaboratoryRuns();
+  } catch (err: any) {
+    // Fresh/greenfield deploy: laboratory-run table may not exist yet.
+    if (err?.name === 'ResourceNotFoundException' || err?.__type?.includes('ResourceNotFoundException')) {
+      console.log('Laboratory-run table not found; nothing to backfill.');
+      return;
+    }
+    throw err;
+  }
 
   // Pass 1: REMOVE legacy CurrentProcessName (must run before SET-only passes that
   // would otherwise re-read in-memory objects still carrying the attribute).

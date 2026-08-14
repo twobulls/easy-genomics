@@ -27,6 +27,13 @@ not written to the ledger, which fails the deploy non-zero.
    the migration depends on tables/GSIs that only exist after `cdk deploy`), and `main`.
 3. Keep the script's own standalone `pnpm run <script-name>` entry in `package.json` for manual re-runs — registering a
    script for auto-run doesn't remove its manual entry point.
+4. A `pre`-phase migration must tolerate its target tables not existing yet: greenfield deploys run `pre`-phase
+   migrations before `cdk deploy` creates any tables, so a scan/list against a not-yet-created table must catch
+   `ResourceNotFoundException`, log, and return rather than throw (see `backfill-laboratory-run-attributes.ts` and
+   `migrate-laboratory-s3-access-seed.ts` for the pattern).
+5. A registered `main()` runs in the same process as the `run-deploy-migrations` CLI and shares its `process.argv` —
+   don't read flags beyond ones the script defines for its own standalone use, since the runner's own flags (`--phase`,
+   `--dry-run`, `--force`) will also be present on `argv` during an auto-run.
 
 **Flags:**
 

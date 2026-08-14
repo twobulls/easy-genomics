@@ -5,7 +5,7 @@ jest.mock('../../../scripts/deploy-migrations/registry', () => ({ DEPLOY_MIGRATI
 
 import { ledgerParamName } from '../../../scripts/deploy-migrations/ledger';
 import type { DeployMigration } from '../../../scripts/deploy-migrations/registry';
-import { runDeployMigrations } from '../../../scripts/run-deploy-migrations';
+import { parseArgs, runDeployMigrations } from '../../../scripts/run-deploy-migrations';
 import { SsmService } from '../../../src/app/services/ssm-service';
 
 function buildSsmService(initialLedger: Record<string, { appliedAt: string }> = {}): jest.Mocked<SsmService> {
@@ -143,5 +143,60 @@ describe('runDeployMigrations', () => {
     ).rejects.toThrow("'post-a' is not registered for phase 'pre'");
 
     expect(registry[0].main).not.toHaveBeenCalled();
+  });
+
+  it('--force skip-logging: only logs "already applied" for entries that were never selected as forced/pending, and never for the forced run itself', async () => {
+    const registry: DeployMigration[] = [
+      buildMigration({ id: 'pre-a', phase: 'pre' }),
+      buildMigration({ id: 'pre-b', phase: 'pre' }),
+    ];
+    const ssmService = buildSsmService({ 'pre-a': { appliedAt: '2020-01-01T00:00:00.000Z' } });
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    await runDeployMigrations({
+      phase: 'pre',
+      dryRun: false,
+      forceId: 'pre-a',
+      registry,
+      ssmService,
+      namePrefix: 'dev-mylab',
+    });
+
+    const alreadyAppliedLogs = logSpy.mock.calls.filter((call) => String(call[0]).includes('already applied'));
+    expect(alreadyAppliedLogs).toHaveLength(0);
+  });
+});
+
+describe('parseArgs', () => {
+  it('parses a valid --phase=pre', () => {
+    expect(parseArgs(['--phase=pre'])).toEqual({ phase: 'pre', dryRun: false, forceId: undefined });
+  });
+
+  it('parses a valid --phase=post', () => {
+    expect(parseArgs(['--phase=post'])).toEqual({ phase: 'post', dryRun: false, forceId: undefined });
+  });
+
+  it('throws when --phase is missing', () => {
+    expect(() => parseArgs([])).toThrow('Missing or invalid --phase=pre|post');
+  });
+
+  it('throws when --phase is invalid', () => {
+    expect(() => parseArgs(['--phase=bogus'])).toThrow('Missing or invalid --phase=pre|post');
+  });
+
+  it('detects --dry-run', () => {
+    expect(parseArgs(['--phase=pre', '--dry-run']).dryRun).toBe(true);
+  });
+
+  it('extracts the id following --force', () => {
+    expect(parseArgs(['--phase=pre', '--force', 'my-migration-id']).forceId).toBe('my-migration-id');
+  });
+
+  it('throws when --force is the last argument', () => {
+    expect(() => parseArgs(['--phase=pre', '--force'])).toThrow('--force requires an id argument');
+  });
+
+  it('throws when --force is immediately followed by another flag', () => {
+    expect(() => parseArgs(['--phase=pre', '--force', '--dry-run'])).toThrow('--force requires an id argument');
   });
 });

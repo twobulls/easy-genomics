@@ -52,8 +52,7 @@ function loadEnv(): void {
   const required = ['NAME_PREFIX', 'REGION'];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length > 0) {
-    console.error(`Missing required env: ${missing.join(', ')}. Set in .env.local or environment.`);
-    process.exit(1);
+    throw new Error(`Missing required env: ${missing.join(', ')}. Set in .env.local or environment.`);
   }
 }
 
@@ -188,7 +187,12 @@ export async function main(): Promise<void> {
   );
   console.log(`  PollStatus:          ${verb} ${pollStatusPatched} run(s), errors: ${pollStatusErrors}.`);
   console.log(`  NotifiedAt:          ${verb} ${notifiedAtPatched} run(s), errors: ${notifiedAtErrors}.`);
-  if (currentProcessNameErrors > 0 || pollStatusErrors > 0 || notifiedAtErrors > 0) process.exit(1);
+  if (currentProcessNameErrors > 0 || pollStatusErrors > 0 || notifiedAtErrors > 0) {
+    throw new Error(
+      `backfill-laboratory-run-attributes failed: ${currentProcessNameErrors} CurrentProcessName error(s), ` +
+        `${pollStatusErrors} PollStatus error(s), ${notifiedAtErrors} NotifiedAt error(s).`,
+    );
+  }
 }
 
 // Auto-run only when executed as a CLI script — not when imported by tests.

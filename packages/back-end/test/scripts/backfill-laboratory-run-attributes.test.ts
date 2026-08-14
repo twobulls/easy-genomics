@@ -21,6 +21,7 @@ interface ScriptRunResult {
   listAllLaboratoryRuns: jest.Mock;
   update: jest.Mock;
   updateWithAttributeRemoval: jest.Mock;
+  error?: Error;
 }
 
 /**
@@ -28,6 +29,10 @@ interface ScriptRunResult {
  * module, mock the service it depends on, then await the exported `main()` directly.
  * `jest.resetModules()` per call ensures each test gets a fresh module registry that
  * picks up that call's mocked implementations.
+ *
+ * `main()`'s own rejection is caught here rather than left to reject the returned promise,
+ * so failure-path tests can still inspect the service mocks (which pass and error assertions
+ * both need) instead of losing them to an unresolved destructuring assignment.
  */
 async function runScript(
   argv: string[],
@@ -50,9 +55,15 @@ async function runScript(
 
   process.argv = ['node', 'backfill-laboratory-run-attributes.ts', ...argv];
   const { main } = await import(SCRIPT_MODULE_PATH);
-  await main();
 
-  return { listAllLaboratoryRuns, update, updateWithAttributeRemoval };
+  let error: Error | undefined;
+  try {
+    await main();
+  } catch (e) {
+    error = e as Error;
+  }
+
+  return { listAllLaboratoryRuns, update, updateWithAttributeRemoval, error };
 }
 
 describe('backfill-laboratory-run-attributes script', () => {
@@ -62,12 +73,10 @@ describe('backfill-laboratory-run-attributes script', () => {
   jest.setTimeout(15000);
 
   const originalArgv = process.argv;
-  let exitSpy: jest.SpyInstance;
 
   beforeEach(() => {
     process.env.NAME_PREFIX = 'test-prefix';
     process.env.REGION = 'us-east-1';
-    exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
     jest.spyOn(console, 'log').mockImplementation(() => undefined);
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
   });
@@ -91,7 +100,6 @@ describe('backfill-laboratory-run-attributes script', () => {
       expect(updateWithAttributeRemoval.mock.calls[0][0]).not.toHaveProperty('CurrentProcessName');
       expect(updateWithAttributeRemoval.mock.calls[0][1]).toEqual(['CurrentProcessName']);
       expect(update).not.toHaveBeenCalled();
-      expect(exitSpy).not.toHaveBeenCalled();
     });
 
     it('only patches runs in the laboratory given via --lab', async () => {
@@ -132,7 +140,6 @@ describe('backfill-laboratory-run-attributes script', () => {
       const patchedRunIds = update.mock.calls.map(([run]) => run.RunId);
       expect(patchedRunIds).toEqual(expect.arrayContaining(['run-missing', 'run-pending']));
       expect(update.mock.calls.every(([run]) => run.PollStatus === 'ACTIVE')).toBe(true);
-      expect(exitSpy).not.toHaveBeenCalled();
     });
 
     it('only patches runs in the laboratory given via --lab', async () => {
@@ -225,18 +232,17 @@ describe('backfill-laboratory-run-attributes script', () => {
 
       expect(update).not.toHaveBeenCalled();
       expect(updateWithAttributeRemoval).not.toHaveBeenCalled();
-      expect(exitSpy).not.toHaveBeenCalled();
     });
   });
 
-  describe('exit behavior', () => {
-    it('exits with code 1 but still attempts remaining runs when a CurrentProcessName update fails', async () => {
+  describe('failure behavior', () => {
+    it('throws but still attempts remaining runs when a CurrentProcessName update fails', async () => {
       const runs = [
         buildRun({ RunId: 'run-fail', CurrentProcessName: 'proc', PollStatus: 'ACTIVE' }),
         buildRun({ RunId: 'run-ok', CurrentProcessName: 'proc', PollStatus: 'ACTIVE' }),
       ];
 
-      const { updateWithAttributeRemoval } = await runScript(
+      const { updateWithAttributeRemoval, error } = await runScript(
         [],
         runs,
         async (run) => run,
@@ -247,49 +253,49 @@ describe('backfill-laboratory-run-attributes script', () => {
       );
 
       expect(updateWithAttributeRemoval).toHaveBeenCalledTimes(2);
-      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(error?.message).toContain('1 CurrentProcessName error(s)');
     });
 
-    it('exits with code 1 but still attempts remaining runs when a PollStatus update fails', async () => {
+    it('throws but still attempts remaining runs when a PollStatus update fails', async () => {
       const runs = [
         buildRun({ RunId: 'run-fail', Status: 'RUNNING' }),
         buildRun({ RunId: 'run-ok', Status: 'PENDING' }),
       ];
 
-      const { update } = await runScript([], runs, async (run) => {
+      const { update, error } = await runScript([], runs, async (run) => {
         if (run.RunId === 'run-fail') throw new Error('ddb write failed');
         return run;
       });
 
       expect(update).toHaveBeenCalledTimes(2);
-      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(error?.message).toContain('1 PollStatus error(s)');
     });
 
-    it('exits with code 1 when a NotifiedAt update fails', async () => {
+    it('throws when a NotifiedAt update fails', async () => {
       const runs = [
         buildRun({ RunId: 'run-fail', Status: 'COMPLETED' }),
         buildRun({ RunId: 'run-ok', Status: 'FAILED' }),
       ];
 
-      const { update } = await runScript([], runs, async (run) => {
+      const { update, error } = await runScript([], runs, async (run) => {
         if (run.RunId === 'run-fail') throw new Error('ddb write failed');
         return run;
       });
 
       expect(update).toHaveBeenCalledTimes(2);
-      expect(exitSpy).toHaveBeenCalledWith(1);
+      expect(error?.message).toContain('1 NotifiedAt error(s)');
     });
 
-    it('does not call process.exit when every candidate is patched successfully', async () => {
+    it('does not throw when every candidate is patched successfully', async () => {
       const runs = [
         buildRun({ RunId: 'run-legacy', CurrentProcessName: 'proc', PollStatus: 'ACTIVE' }),
         buildRun({ RunId: 'run-poll', Status: 'RUNNING' }),
         buildRun({ RunId: 'run-notified', Status: 'COMPLETED' }),
       ];
 
-      await runScript([], runs);
+      const { error } = await runScript([], runs);
 
-      expect(exitSpy).not.toHaveBeenCalled();
+      expect(error).toBeUndefined();
     });
   });
 });

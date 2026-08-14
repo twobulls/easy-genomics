@@ -40,7 +40,7 @@ class LaboratoryScanService extends DynamoDBService {
   }
 }
 
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   console.log(`Seeding laboratory S3 access for NAME_PREFIX=${namePrefix}`);
 
   const scanService = new LaboratoryScanService();

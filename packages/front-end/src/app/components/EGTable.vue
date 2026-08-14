@@ -18,10 +18,16 @@
       canSelect?: boolean;
       rowClasses?: (row: any) => string;
       labelledBy?: string;
+      /**
+       * Flexible leading columns; Favourite and Run (last two) stay narrow and centered.
+       * Use when columns end with [favourite, run] in that order.
+       */
+      narrowRunAndFavouriteColumns?: boolean;
     }>(),
     {
       showPagination: true,
       noResultsMsg: 'No results found',
+      narrowRunAndFavouriteColumns: false,
     },
   );
 
@@ -80,7 +86,12 @@
 </script>
 
 <template>
-  <UCard class="rounded-2xl border-none shadow-none" :ui="{ body: 'p-0' }" :aria-busy="isLoading">
+  <UCard
+    class="rounded-2xl border-none shadow-none"
+    :class="{ 'eg-table--narrow-run-favourite': narrowRunAndFavouriteColumns }"
+    :ui="{ body: 'p-0' }"
+    :aria-busy="isLoading"
+  >
     <div v-if="isLoading" class="sr-only" role="status">Loading table data…</div>
     <UTable
       :aria-labelledby="labelledBy"
@@ -197,6 +208,79 @@
       width: 50px;
       padding-right: 40px;
       text-align: right;
+    }
+  }
+
+  /*
+   * Leading columns flexible; Favourite + Run (last two) narrow and centered.
+   * Do NOT use display:flex on th/td — it breaks table layout and stacks columns.
+   */
+  .eg-table--narrow-run-favourite :deep(table) {
+    table-layout: fixed;
+    width: 100%;
+
+    thead tr th:first-child {
+      width: 28%;
+      min-width: 0;
+      padding-left: 40px;
+      text-align: left;
+    }
+
+    thead tr th:not(:nth-last-child(-n + 2)) {
+      min-width: 0;
+      text-align: left;
+    }
+
+    thead tr th:nth-last-child(2),
+    thead tr th:nth-last-child(1),
+    tbody tr td:nth-last-child(2),
+    tbody tr td:nth-last-child(1) {
+      text-align: center !important;
+      vertical-align: middle;
+      padding-top: 0.875rem;
+      padding-bottom: 0.875rem;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+      box-sizing: border-box;
+    }
+
+    thead tr th:nth-last-child(2),
+    tbody tr td:nth-last-child(2) {
+      width: 9.5rem;
+    }
+
+    thead tr th:nth-last-child(1),
+    tbody tr td:nth-last-child(1) {
+      width: 5.5rem;
+      white-space: nowrap;
+      padding-right: 0.75rem;
+    }
+
+    thead tr th:nth-last-child(2) button,
+    thead tr th:nth-last-child(1) button {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    tbody tr td:first-child {
+      width: 28%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    tbody tr td:not(:nth-last-child(-n + 2)) {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* Icon buttons in body: inline-flex + auto margins centers under the header text */
+    tbody tr td:nth-last-child(2) button,
+    tbody tr td:nth-last-child(1) button {
+      display: inline-flex;
+      margin-left: auto;
+      margin-right: auto;
     }
   }
 </style>

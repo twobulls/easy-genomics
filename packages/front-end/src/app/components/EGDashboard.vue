@@ -707,10 +707,10 @@
       </div>
     </section>
 
-    <!-- Favourite Workflows -->
+    <!-- Favorite Workflows -->
     <section class="mt-10" :aria-labelledby="favouriteWorkflowsHeadingId">
       <div class="mb-8">
-        <EGText :id="favouriteWorkflowsHeadingId" tag="h2" size="sm" class="mb-0">Favourite Workflows</EGText>
+        <EGText :id="favouriteWorkflowsHeadingId" tag="h2" size="sm" class="mb-0">Favorite Workflows</EGText>
         <p class="text-muted text-sm">Quick launch your most used workflows.</p>
       </div>
 
@@ -741,7 +741,7 @@
         </template>
 
         <template #empty-state>
-          <div class="text-muted flex h-24 items-center justify-center font-normal">No favourite workflows yet</div>
+          <div class="text-muted flex h-24 items-center justify-center font-normal">No favorite workflows yet</div>
         </template>
       </EGTable>
     </section>
@@ -860,3 +860,20 @@
     </section>
   </div>
 </template>
+
+<style scoped lang="scss">
+  @use '@/styles/helpers';
+
+  // Match design: compact dashboard titles (EGText defaults h1/h2 to 36px).
+  .dashboard {
+    :deep(h1) {
+      font-size: toRem(24px);
+      line-height: toRem(32px);
+    }
+
+    :deep(h2) {
+      font-size: toRem(20px);
+      line-height: toRem(28px);
+    }
+  }
+</style>

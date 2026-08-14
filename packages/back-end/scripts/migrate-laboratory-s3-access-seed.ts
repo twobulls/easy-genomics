@@ -83,7 +83,9 @@ async function main(): Promise<void> {
   console.log(`Done. Seeded=${seeded} skipped=${skipped} totalLabs=${laboratories.length}`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

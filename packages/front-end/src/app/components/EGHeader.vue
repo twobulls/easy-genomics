@@ -190,19 +190,22 @@
 </script>
 
 <template>
-  <header class="flex flex-row items-center px-8">
-    <div class="header-container" :class="{ 'flex w-full flex-row items-center justify-between': props.isAuthed }">
+  <header class="flex flex-row items-center px-4 md:px-8">
+    <div
+      class="header-container"
+      :class="{ 'flex w-full min-w-0 flex-row items-center justify-between gap-3': props.isAuthed }"
+    >
       <template v-if="props.isAuthed">
         <NuxtLink
           :to="homePath"
-          class="focus-visible:outline-primary-500 mr-2 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          class="focus-visible:outline-primary-500 mr-2 shrink-0 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label="Easy Genomics home"
         >
-          <img class="w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
+          <img class="w-[120px] md:w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
         </NuxtLink>
 
-        <div class="flex min-w-0 items-center gap-4">
-          <nav aria-label="Primary" class="flex min-w-0 items-center gap-4">
+        <div class="flex min-w-0 items-center gap-2 md:gap-4">
+          <nav aria-label="Primary" class="flex min-w-0 items-center gap-2 md:gap-4">
             <ULink
               v-if="!userStore.isSuperuser"
               :to="labsPath"
@@ -211,7 +214,7 @@
               inactive-class="text-body"
               active-class="text-primary-dark bg-primary-muted"
               :class="isSubpath(labsPath) ? 'text-primary-dark bg-primary-muted' : ''"
-              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] max-w-[min(100%,18rem)] items-center justify-center rounded-xl px-4 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] max-w-[min(100%,12rem)] items-center justify-center rounded-xl px-3 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 md:max-w-[min(100%,18rem)] md:px-4"
             >
               <span class="truncate">{{ labsNavLabel }}</span>
             </ULink>
@@ -222,7 +225,7 @@
               inactive-class="text-body"
               active-class="text-primary-dark bg-primary-muted"
               :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"
-              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-3 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 md:px-4"
             >
               Organizations
             </ULink>

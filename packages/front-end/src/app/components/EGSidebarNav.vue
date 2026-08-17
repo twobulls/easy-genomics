@@ -146,7 +146,11 @@
       </span>
     </div>
 
-    <div role="tablist" aria-orientation="vertical" class="sidebar-nav__tabs flex min-h-0 flex-1 flex-col">
+    <div
+      role="tablist"
+      aria-orientation="vertical"
+      class="sidebar-nav__tabs flex min-h-0 flex-1 flex-col overflow-y-auto"
+    >
       <template v-for="(item, index) in items" :key="item.key">
         <div
           v-if="item.dividerBefore"

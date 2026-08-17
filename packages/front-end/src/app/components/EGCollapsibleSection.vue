@@ -10,11 +10,14 @@
       headingId: string;
       title: string;
       description?: string;
+      /** Extra detail shown in a hover tooltip next to the description, e.g. why a feature exists. */
+      descriptionTooltip?: string;
       badges?: Badge[];
       defaultOpen?: boolean;
     }>(),
     {
       description: '',
+      descriptionTooltip: '',
       badges: () => [],
       defaultOpen: false,
     },
@@ -29,34 +32,51 @@
 
 <template>
   <EGCard :padding="0">
-    <button
-      type="button"
-      class="hover:bg-primary-muted flex w-full items-center justify-between gap-4 px-6 py-4 text-left"
-      :aria-expanded="isOpen"
-      :aria-controls="`${headingId}-content`"
-      @click="isOpen = !isOpen"
-    >
-      <span>
+    <div>
+      <button
+        type="button"
+        class="hover:bg-primary-muted flex w-full items-center justify-between gap-4 px-6 pt-4 text-left"
+        :class="description ? 'pb-1' : 'pb-4'"
+        :aria-expanded="isOpen"
+        :aria-controls="`${headingId}-content`"
+        @click="isOpen = !isOpen"
+      >
         <span :id="headingId" class="block text-sm font-medium text-black">{{ title }}</span>
-        <span v-if="description" class="text-muted mt-1 block text-xs">{{ description }}</span>
-      </span>
-      <span class="flex shrink-0 items-center gap-2">
-        <UBadge
-          v-for="badge in badges"
-          :key="badge.label"
-          :ui="{ rounded: 'rounded-xl', base: 'uppercase' }"
-          :class="badgeClass(badge.tone)"
+        <span class="flex shrink-0 items-center gap-2">
+          <UBadge
+            v-for="badge in badges"
+            :key="badge.label"
+            :ui="{ rounded: 'rounded-xl', base: 'uppercase' }"
+            :class="badgeClass(badge.tone)"
+          >
+            {{ badge.label }}
+          </UBadge>
+          <UIcon
+            name="i-heroicons-chevron-down"
+            class="h-5 w-5 shrink-0 transition-transform"
+            :class="{ 'rotate-180': isOpen }"
+            aria-hidden="true"
+          />
+        </span>
+      </button>
+      <div v-if="description" class="flex items-center gap-1.5 px-6 pb-4">
+        <p class="text-muted text-xs">{{ description }}</p>
+        <UTooltip
+          v-if="descriptionTooltip"
+          :delay-duration="0"
+          :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }"
         >
-          {{ badge.label }}
-        </UBadge>
-        <UIcon
-          name="i-heroicons-chevron-down"
-          class="h-5 w-5 shrink-0 transition-transform"
-          :class="{ 'rotate-180': isOpen }"
-          aria-hidden="true"
-        />
-      </span>
-    </button>
+          <template #text>
+            <p>{{ descriptionTooltip }}</p>
+          </template>
+          <UIcon
+            name="i-heroicons-information-circle"
+            class="text-muted h-4 w-4 shrink-0"
+            :aria-label="`${title} guidance`"
+          />
+        </UTooltip>
+      </div>
+    </div>
     <div
       v-if="isOpen"
       :id="`${headingId}-content`"

@@ -265,10 +265,10 @@
 
   const runsTableColumns = [
     { key: 'RunName', label: 'Run Name', sortable: true },
+    { key: 'WorkflowName', label: 'Workflow name', sortable: true },
     { key: 'CreatedAt', label: 'Created At', sortable: true },
     { key: 'lastUpdated', label: 'Last Updated', sortable: true },
     { key: 'Status', label: 'Status', sortable: true },
-    { key: 'WorkflowName', label: 'Workflow name', sortable: true },
     { key: 'WorkflowVersionName', label: 'Workflow version', sortable: true },
     { key: 'Owner', label: 'Owner', sortable: true },
     { key: 'actions', label: 'Actions' },

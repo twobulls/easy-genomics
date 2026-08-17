@@ -352,6 +352,7 @@
   const recentRunsTableColumns = [
     { key: 'RunName', label: 'Run Name', sortable: true },
     { key: 'WorkflowName', label: 'Workflow', sortable: true },
+    { key: 'CreatedAt', label: 'Created', sortable: true },
     { key: 'lastUpdated', label: 'Last Updated', sortable: true },
     { key: 'Status', label: 'Status', sortable: true },
     { key: 'actions', label: 'Actions' },
@@ -381,6 +382,7 @@
 
     return [...items].sort((a, b) => {
       if (column === 'lastUpdated') return (toSortableTime(a.lastUpdated) - toSortableTime(b.lastUpdated)) * dir;
+      if (column === 'CreatedAt') return (toSortableTime(a.CreatedAt) - toSortableTime(b.CreatedAt)) * dir;
       if (column === 'RunName') return toSortableString(a.RunName).localeCompare(toSortableString(b.RunName)) * dir;
       if (column === 'WorkflowName')
         return toSortableString(a.WorkflowName).localeCompare(toSortableString(b.WorkflowName)) * dir;
@@ -789,6 +791,11 @@
 
         <template #WorkflowName-data="{ row: run }">
           <div class="text-body text-sm font-medium">{{ run.WorkflowName || '—' }}</div>
+        </template>
+
+        <template #CreatedAt-data="{ row: run }">
+          <div class="text-body text-sm font-medium">{{ getDate(run.CreatedAt) }}</div>
+          <div class="text-muted text-xs">{{ getTime(run.CreatedAt) }}</div>
         </template>
 
         <template #lastUpdated-data="{ row: run }">

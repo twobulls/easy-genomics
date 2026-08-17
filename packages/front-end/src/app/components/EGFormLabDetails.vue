@@ -1393,7 +1393,6 @@
         :badges="[healthOmicsVpcNetworkingBadge]"
       >
         <div class="mb-3 flex items-center gap-1.5">
-          <p class="text-muted text-xs">Routes this lab's HealthOmics runs through a saved VPC configuration.</p>
           <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
             <template #text>
               <p>
@@ -1493,27 +1492,33 @@
         <USkeleton v-if="isLoadingNotificationPrefs" class="mt-4 h-24 w-full" aria-hidden="true" />
         <template v-else>
           <!-- Per-user preferences: staged locally like every other field, saved via Save Changes -->
-          <div class="mt-4 flex items-center justify-between">
-            <span :id="notifyOwnRunsToggleLabelId" class="text-sm text-black">Email me about my own runs</span>
-            <UToggle
-              class="ml-2"
-              v-model="notifyOnOwnRunsEnabled"
-              :disabled="!isEditing || isSubmittingFormData"
-              :aria-labelledby="notifyOwnRunsToggleLabelId"
-            />
-          </div>
+          <EGFormGroup name="NotifyOnOwnRuns" eager-validation>
+            <div class="flex items-center justify-between">
+              <span :id="notifyOwnRunsToggleLabelId" class="text-sm text-black">Email me about my own runs</span>
+              <UToggle
+                class="ml-2"
+                v-model="notifyOnOwnRunsEnabled"
+                :disabled="!isEditing || isSubmittingFormData"
+                :aria-labelledby="notifyOwnRunsToggleLabelId"
+              />
+            </div>
+          </EGFormGroup>
 
-          <div class="mt-3 flex items-center justify-between">
-            <span :id="notifyLabRunsToggleLabelId" class="text-sm text-black">Email me about all runs in this lab</span>
-            <UToggle
-              class="ml-2"
-              v-model="notifyOnLabRunsEnabled"
-              :disabled="!isEditing || isSubmittingFormData"
-              :aria-labelledby="notifyLabRunsToggleLabelId"
-            />
-          </div>
+          <EGFormGroup name="NotifyOnLabRuns" eager-validation>
+            <div class="flex items-center justify-between">
+              <span :id="notifyLabRunsToggleLabelId" class="text-sm text-black">
+                Email me about all runs in this lab
+              </span>
+              <UToggle
+                class="ml-2"
+                v-model="notifyOnLabRunsEnabled"
+                :disabled="!isEditing || isSubmittingFormData"
+                :aria-labelledby="notifyLabRunsToggleLabelId"
+              />
+            </div>
+          </EGFormGroup>
 
-          <div v-if="notifyOnLabRunsEnabled" class="mt-3">
+          <EGFormGroup v-if="notifyOnLabRunsEnabled" name="NotifyOnLabRunsAdditionalEmailsInput" eager-validation>
             <label :for="notifyLabRunsAdditionalEmailsInputId" class="mb-1 block text-sm text-black">
               Also CC these emails on every lab run
             </label>
@@ -1529,9 +1534,9 @@
             <p v-else class="text-muted mt-1 text-xs">
               Comma-separated, up to 10. Sent whenever your own "all runs in this lab" notification fires.
             </p>
-          </div>
+          </EGFormGroup>
 
-          <div v-if="showNotificationEventFilter" class="mt-4">
+          <EGFormGroup v-if="showNotificationEventFilter" name="NotificationEventFilter" eager-validation>
             <p class="mb-2 text-sm text-black">Notify me when a run</p>
             <div class="flex flex-col gap-2">
               <UCheckbox
@@ -1547,7 +1552,7 @@
                 @update:model-value="onToggleNotifyFailures"
               />
             </div>
-          </div>
+          </EGFormGroup>
         </template>
       </EGCollapsibleSection>
     </div>

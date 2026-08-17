@@ -17,8 +17,8 @@
       estimate: null,
       labRun: null,
       loading: false,
-      labelClass: 'w-48 text-black',
-      valueClass: 'text-muted text-left',
+      labelClass: 'w-48 shrink-0 text-black',
+      valueClass: 'min-w-0 flex-1 break-words text-muted text-left',
     },
   );
 

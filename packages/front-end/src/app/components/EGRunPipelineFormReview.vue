@@ -191,20 +191,22 @@
     <section class="stroke-light flex flex-col bg-white">
       <dl>
         <div class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Pipeline</dt>
-          <dd class="text-muted text-left">{{ pipeline?.name }}</dd>
+          <dt class="w-48 shrink-0 text-black">Pipeline</dt>
+          <dd class="text-muted min-w-0 flex-1 break-words text-left">{{ pipeline?.name }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Laboratory</dt>
-          <dd class="text-muted text-left">{{ labName }}</dd>
+          <dt class="w-48 shrink-0 text-black">Laboratory</dt>
+          <dd class="text-muted min-w-0 flex-1 break-words text-left">{{ labName }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ wipSeqeraRun?.runName }}</dd>
+          <dt class="w-48 shrink-0 text-black">Run Name</dt>
+          <dd class="text-muted min-w-0 flex-1 break-words text-left">{{ wipSeqeraRun?.runName }}</dd>
         </div>
         <div v-if="wipSeqeraRun?.description?.trim()" class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Description</dt>
-          <dd class="text-muted whitespace-pre-wrap break-words text-left">{{ wipSeqeraRun.description }}</dd>
+          <dt class="w-48 shrink-0 text-black">Description</dt>
+          <dd class="text-muted min-w-0 flex-1 whitespace-pre-wrap break-words text-left">
+            {{ wipSeqeraRun.description }}
+          </dd>
         </div>
         <EGRunCostRow :estimate="costEstimate" :loading="costEstimateLoading" class="border-b" />
       </dl>

@@ -12,15 +12,37 @@
 
   const userStore = useUserStore();
   const orgsStore = useOrgsStore();
+  const labsStore = useLabsStore();
 
   const { signOutAndRedirect } = useAuth();
   const $router = useRouter();
+  const $route = useRoute();
+  const homePath = '/';
   const labsPath = '/labs';
   const orgsPath = '/orgs';
 
   function isSubpath(url: string) {
     return $router.currentRoute.value.path.includes(url);
   }
+
+  const currentLabId = computed<string | null>(() => {
+    const labId = $route.params.labId;
+    return typeof labId === 'string' && labId.length > 0 ? labId : null;
+  });
+
+  const currentLabName = computed<string | null>(() => {
+    if (!currentLabId.value) {
+      return null;
+    }
+    return labsStore.labs[currentLabId.value]?.Name ?? null;
+  });
+
+  const labsNavLabel = computed<string>(() => {
+    if (currentLabName.value) {
+      return `Labs · ${currentLabName.value}`;
+    }
+    return 'Labs';
+  });
 
   const acctDropdownIsOpen = ref<boolean>(false);
 
@@ -171,20 +193,27 @@
   <header class="flex flex-row items-center px-8">
     <div class="header-container" :class="{ 'flex w-full flex-row items-center justify-between': props.isAuthed }">
       <template v-if="props.isAuthed">
-        <img class="mr-2 w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
+        <NuxtLink
+          :to="homePath"
+          class="focus-visible:outline-primary-500 mr-2 rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          aria-label="Easy Genomics home"
+        >
+          <img class="w-[140px]" src="@/assets/images/easy-genomics-logo.svg" alt="EasyGenomics logo" />
+        </NuxtLink>
 
-        <div class="flex items-center gap-4">
-          <nav aria-label="Primary" class="flex items-center gap-4">
+        <div class="flex min-w-0 items-center gap-4">
+          <nav aria-label="Primary" class="flex min-w-0 items-center gap-4">
             <ULink
               v-if="!userStore.isSuperuser"
               :to="labsPath"
               :aria-current="isSubpath(labsPath) ? 'page' : undefined"
+              :aria-label="currentLabName ? `Labs, currently viewing ${currentLabName}` : 'Labs'"
               inactive-class="text-body"
               active-class="text-primary-dark bg-primary-muted"
               :class="isSubpath(labsPath) ? 'text-primary-dark bg-primary-muted' : ''"
-              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-4 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] max-w-[min(100%,18rem)] items-center justify-center rounded-xl px-4 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             >
-              Labs
+              <span class="truncate">{{ labsNavLabel }}</span>
             </ULink>
             <ULink
               v-if="userStore.canManageAnyOrgs()"

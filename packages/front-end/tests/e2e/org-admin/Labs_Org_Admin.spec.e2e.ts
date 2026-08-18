@@ -205,7 +205,6 @@ test('04 - Update a Laboratory Successfully', async ({ page, baseURL }) => {
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000); // this waits for s3 bucket info to load
     await page.getByRole('tab', { name: 'Settings' }).click();
-    await page.getByRole('button', { name: 'Edit' }).click();
 
     await page.getByPlaceholder('Enter lab name (required and').click();
     await page.getByPlaceholder('Enter lab name (required and').fill(labNameUpdated);
@@ -377,7 +376,6 @@ test('08 - Enable HealthOmics Integration Successfully', async ({ page, baseURL 
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000); // this waits for s3 bucket info to load
     await page.getByRole('tab', { name: 'Settings' }).click();
-    await page.getByRole('button', { name: 'Edit' }).click();
 
     let omicsEnabled = true;
     try {

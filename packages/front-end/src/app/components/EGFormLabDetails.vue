@@ -40,7 +40,7 @@
       formMode?: LabDetailsFormMode;
     }>(),
     {
-      formMode: LabDetailsFormModeEnum.enum.ReadOnly,
+      formMode: LabDetailsFormModeEnum.enum.Edit,
     },
   );
 
@@ -465,8 +465,6 @@
     }
   }
 
-  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLabDetails());
-
   /**
    * Retrieves the lab details from the server and sets the form state.
    */
@@ -516,8 +514,8 @@
   /**
    * Cancel current edit operation.
    *
-   * It resets the state value to the original unedited lab details,  turns off the editing mode for the Nextflow Tower
-   * access token, disables the submit button, and switches the form mode to read-only.
+   * It resets the state value to the original unedited lab details, turns off the editing mode for the Nextflow Tower
+   * access token, and disables the submit button. Fields remain editable — there is no read-only mode to revert to.
    *
    * @return {void}
    */
@@ -532,7 +530,6 @@
     canSubmit.value = false;
     retentionPreviewCacheMonths.value = null;
     retentionPreviewCounts.value = null;
-    switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
   }
 
   const isSubmittingFormData = computed(
@@ -671,7 +668,6 @@
       emit('updated');
       isEditingNextFlowTowerAccessToken.value = false;
       isEditingGitHubAccessToken.value = false;
-      switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
       retentionPreviewCacheMonths.value = null;
       retentionPreviewCounts.value = null;
       await getLabDetails();
@@ -745,7 +741,6 @@
 
     isEditingNextFlowTowerAccessToken.value = false;
     isEditingGitHubAccessToken.value = false;
-    switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
     await getLabDetails();
 
     useToastStore().success(`${lab.Name} successfully updated`);
@@ -1559,17 +1554,6 @@
         label="Cancel"
         name="cancel"
         @click="$router.push(useUiStore().previousPageRoute)"
-      />
-    </div>
-
-    <!-- Form Buttons: Read Mode -->
-    <div v-if="formMode === LabDetailsFormModeEnum.enum.ReadOnly" class="mt-6 flex space-x-2">
-      <EGButton
-        :size="ButtonSizeEnum.enum.sm"
-        u-button-type="button"
-        label="Edit"
-        :disabled="useUserStore().isSuperuser || !hasEditPermission"
-        @click="switchToFormMode(LabDetailsFormModeEnum.enum.Edit)"
       />
     </div>
 

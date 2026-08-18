@@ -166,7 +166,7 @@
     }
     items.push(dataCollectionsTab);
     items.push({ ...usersTab, dividerBefore: items.length > 0 });
-    items.push(detailsTab);
+    if (!userStore.isSuperuser && userStore.canEditLabDetails()) items.push(detailsTab);
 
     return items;
   });

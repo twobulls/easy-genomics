@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-type PendingRequest =
+export type PendingRequest =
   | 'signIn'
   | 'forgotPassword'
   | 'resetPassword'

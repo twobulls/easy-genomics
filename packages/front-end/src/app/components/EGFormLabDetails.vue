@@ -76,7 +76,7 @@
   const formMode = ref(props.formMode);
   const s3Directories = ref([]);
   const isLoadingBuckets = ref(false);
-  const isLoadingFormData = ref(false);
+  const isLoadingFormData = ref(props.formMode !== LabDetailsFormModeEnum.enum.Create);
   const canSubmit = ref(false);
 
   const isEditing = computed<boolean>(() => formMode.value !== LabDetailsFormModeEnum.enum.ReadOnly);
@@ -417,12 +417,10 @@
   }
 
   onMounted(async () => {
-    await getS3Buckets();
-
     if (formMode.value !== LabDetailsFormModeEnum.enum.Create) {
-      await getLabDetails();
-      await loadNotificationPreferences();
+      await Promise.all([getS3Buckets(), getLabDetails(), loadNotificationPreferences()]);
     } else {
+      await getS3Buckets();
       isLoadingNotificationPrefs.value = false;
     }
     switchToFormMode(formMode.value);
@@ -713,7 +711,7 @@
       isEditingGitHubAccessToken.value = false;
       retentionPreviewCacheMonths.value = null;
       retentionPreviewCounts.value = null;
-      await getLabDetails();
+      await getLabDetails({ showLoader: false });
 
       useToastStore().success(`${lab.Name} successfully updated`);
     } catch (error: any) {
@@ -788,7 +786,7 @@
 
     isEditingNextFlowTowerAccessToken.value = false;
     isEditingGitHubAccessToken.value = false;
-    await getLabDetails();
+    await getLabDetails({ showLoader: false });
 
     useToastStore().success(`${lab.Name} successfully updated`);
   }
@@ -996,108 +994,124 @@
 </script>
 
 <template>
-  <div v-if="isLoadingFormData" :aria-busy="true" aria-labelledby="lab-settings-loading-status">
-    <p id="lab-settings-loading-status" class="sr-only" role="status" aria-live="polite">Loading lab settings…</p>
-    <USkeleton class="min-h-96 w-full" aria-hidden="true" />
-  </div>
+  <p v-if="isLoadingFormData" id="lab-settings-loading-status" class="sr-only" role="status" aria-live="polite">
+    Loading lab settings…
+  </p>
   <UForm
-    v-else
     :validate="validate"
     :state="state"
     :aria-labelledby="formMode !== LabDetailsFormModeEnum.enum.Create ? settingsHeadingId : undefined"
-    :aria-busy="isSubmittingFormData || isLoadingRetentionPreview"
+    :aria-busy="isSubmittingFormData || isLoadingRetentionPreview || isLoadingFormData"
+    :aria-describedby="isLoadingFormData ? 'lab-settings-loading-status' : undefined"
     @submit="onSubmit"
   >
     <EGText v-if="formMode !== LabDetailsFormModeEnum.enum.Create" :id="settingsHeadingId" tag="h2" class="sr-only">
       Lab settings
     </EGText>
     <EGCollapsibleSection heading-id="lab-settings-details-heading" title="Lab details" default-open>
-      <!-- Lab Name -->
-      <EGFormGroup label="Lab Name" name="Name" eager-validation required>
-        <EGInput
-          v-model="state.Name"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Enter lab name (required and must be unique)"
-          autofocus
-        />
-      </EGFormGroup>
+      <div v-if="isLoadingFormData" class="flex flex-col" aria-hidden="true">
+        <div class="mb-6 space-y-2">
+          <USkeleton class="h-4 w-24" />
+          <USkeleton class="h-12 w-full" />
+        </div>
+        <div class="mb-6 space-y-2">
+          <USkeleton class="h-4 w-32" />
+          <USkeleton class="h-20 w-full" />
+        </div>
+        <div v-for="n in 4" :key="n" class="mb-6 space-y-2 last:mb-0">
+          <USkeleton class="h-4 w-48" />
+          <USkeleton class="h-12 w-full" />
+          <USkeleton class="h-3 w-64" />
+        </div>
+      </div>
+      <template v-else>
+        <!-- Lab Name -->
+        <EGFormGroup label="Lab Name" name="Name" eager-validation required>
+          <EGInput
+            v-model="state.Name"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Enter lab name (required and must be unique)"
+            autofocus
+          />
+        </EGFormGroup>
 
-      <!-- Lab Description -->
-      <EGFormGroup label="Lab Description" name="Description" eager-validation>
-        <EGTextArea
-          v-model="state.Description"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Describe your lab and what runs should be launched by Lab users."
-        />
-      </EGFormGroup>
+        <!-- Lab Description -->
+        <EGFormGroup label="Lab Description" name="Description" eager-validation>
+          <EGTextArea
+            v-model="state.Description"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Describe your lab and what runs should be launched by Lab users."
+          />
+        </EGFormGroup>
 
-      <EGFormGroup label="Run retention (months)" name="RunRetentionMonths" eager-validation>
-        <EGInput
-          v-model.number="state.RunRetentionMonths"
-          type="number"
-          min="0"
-          max="120"
-          step="1"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Enter number of months (0 for never)"
-          :aria-describedby="retentionHelpId"
-        />
-        <p :id="retentionHelpId" class="text-muted mt-1 text-xs">0 = never delete run records</p>
-      </EGFormGroup>
+        <EGFormGroup label="Run retention (months)" name="RunRetentionMonths" eager-validation>
+          <EGInput
+            v-model.number="state.RunRetentionMonths"
+            type="number"
+            min="0"
+            max="120"
+            step="1"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Enter number of months (0 for never)"
+            :aria-describedby="retentionHelpId"
+          />
+          <p :id="retentionHelpId" class="text-muted mt-1 text-xs">0 = never delete run records</p>
+        </EGFormGroup>
 
-      <EGFormGroup
-        label="Runs list status poll interval (seconds)"
-        name="RunListStatusPollIntervalSeconds"
-        eager-validation
-      >
-        <EGInput
-          v-model.number="state.RunListStatusPollIntervalSeconds"
-          type="number"
-          min="30"
-          max="1800"
-          step="1"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Enter seconds between list updates"
-          :aria-describedby="runsListPollHelpId"
-        />
-        <p :id="runsListPollHelpId" class="text-muted mt-1 text-xs">
-          Controls how often the lab runs list refreshes run statuses. Allowed range: 30 to 1800 seconds.
-        </p>
-      </EGFormGroup>
+        <EGFormGroup
+          label="Runs list status poll interval (seconds)"
+          name="RunListStatusPollIntervalSeconds"
+          eager-validation
+        >
+          <EGInput
+            v-model.number="state.RunListStatusPollIntervalSeconds"
+            type="number"
+            min="30"
+            max="1800"
+            step="1"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Enter seconds between list updates"
+            :aria-describedby="runsListPollHelpId"
+          />
+          <p :id="runsListPollHelpId" class="text-muted mt-1 text-xs">
+            Controls how often the lab runs list refreshes run statuses. Allowed range: 30 to 1800 seconds.
+          </p>
+        </EGFormGroup>
 
-      <EGFormGroup
-        label="Run detail progress poll interval (seconds)"
-        name="RunDetailProgressPollIntervalSeconds"
-        eager-validation
-      >
-        <EGInput
-          v-model.number="state.RunDetailProgressPollIntervalSeconds"
-          type="number"
-          min="10"
-          max="300"
-          step="1"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Enter seconds between run detail updates"
-          :aria-describedby="runDetailPollHelpId"
-        />
-        <p :id="runDetailPollHelpId" class="text-muted mt-1 text-xs">
-          Controls how often the run detail page refreshes task progress. Allowed range: 10 to 300 seconds.
-        </p>
-      </EGFormGroup>
+        <EGFormGroup
+          label="Run detail progress poll interval (seconds)"
+          name="RunDetailProgressPollIntervalSeconds"
+          eager-validation
+        >
+          <EGInput
+            v-model.number="state.RunDetailProgressPollIntervalSeconds"
+            type="number"
+            min="10"
+            max="300"
+            step="1"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Enter seconds between run detail updates"
+            :aria-describedby="runDetailPollHelpId"
+          />
+          <p :id="runDetailPollHelpId" class="text-muted mt-1 text-xs">
+            Controls how often the run detail page refreshes task progress. Allowed range: 10 to 300 seconds.
+          </p>
+        </EGFormGroup>
 
-      <EGFormGroup v-if="useUserStore().isOrgAdmin()" label="Default S3 bucket directory" name="S3Bucket" required>
-        <EGSelect
-          :options="s3Directories"
-          v-model="selectedS3Bucket"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Please select an S3 bucket from the list below"
-          searchable-placeholder="Search existing S3 buckets..."
-        />
-        <p v-if="isEditing && persistedBucketNoLongerGranted" class="text-alert-danger-dark mt-1 text-xs">
-          This lab’s previous default bucket ({{ uneditedLabDetails?.S3Bucket }}) is no longer accessible, likely
-          because access was revoked. Select a currently available S3 bucket to continue.
-        </p>
-      </EGFormGroup>
+        <EGFormGroup v-if="useUserStore().isOrgAdmin()" label="Default S3 bucket directory" name="S3Bucket" required>
+          <EGSelect
+            :options="s3Directories"
+            v-model="selectedS3Bucket"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Please select an S3 bucket from the list below"
+            searchable-placeholder="Search existing S3 buckets..."
+          />
+          <p v-if="isEditing && persistedBucketNoLongerGranted" class="text-alert-danger-dark mt-1 text-xs">
+            This lab’s previous default bucket ({{ uneditedLabDetails?.S3Bucket }}) is no longer accessible, likely
+            because access was revoked. Select a currently available S3 bucket to continue.
+          </p>
+        </EGFormGroup>
+      </template>
     </EGCollapsibleSection>
 
     <div class="mt-6 flex flex-col gap-6">

@@ -33,6 +33,12 @@
   const labsStore = useLabsStore();
   const userStore = useUserStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests(
+    'dataCollectionsTags',
+    'dataCollectionsSamples',
+    'dataCollectionsRunSequenceCollections',
+    'dataCollectionsList',
+  );
   const toast = useToastStore();
 
   type View = 'main' | 'import' | 'builder';
@@ -142,6 +148,7 @@
   function clearUnlinkedFiles(): void {
     unlinkedFiles.value = [];
     unlinkedMeta.value = { s3Bucket: '', resolvedPrefix: '', lastScanLabel: '' };
+    uiStore.setRequestComplete('dataCollectionsList');
   }
 
   async function ensureLabDetailsLoaded(): Promise<void> {

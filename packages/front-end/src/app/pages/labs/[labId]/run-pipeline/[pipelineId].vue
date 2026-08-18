@@ -18,6 +18,7 @@
   const labsStore = useLabsStore();
   const userStore = useUserStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadSeqeraPipeline');
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;

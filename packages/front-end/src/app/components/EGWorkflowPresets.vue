@@ -23,6 +23,7 @@
 
   const presetsStore = useWorkflowRunPresetsStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadWorkflowRunPresets');
   const toast = useToastStore();
 
   const appliedPresetId = ref<string | null>(null);

@@ -14,6 +14,7 @@
   const runStore = useRunStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadOmicsWorkflow');
   const userStore = useUserStore();
   const labsStore = useLabsStore();
 

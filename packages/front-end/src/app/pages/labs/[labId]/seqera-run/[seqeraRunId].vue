@@ -36,6 +36,8 @@
   ]);
   const seqeraRun = computed(() => runStore.seqeraRuns[labId]?.[seqeraRunId] || null);
 
+  useInitialPendingRequests('loadSeqeraRun', 'loadRunReports');
+
   usePageTitle(() => (seqeraRun.value?.runName ? seqeraRun.value.runName : 'Seqera run'));
 
   const createdDateTime = computed(() => formatDateTime(seqeraRun.value?.dateCreated));
@@ -90,7 +92,12 @@
   }
 
   async function fetchSeqeraRun(): Promise<void> {
-    await runStore.loadSingleSeqeraRun(labId, seqeraRunId);
+    useUiStore().setRequestPending('loadSeqeraRun');
+    try {
+      await runStore.loadSingleSeqeraRun(labId, seqeraRunId);
+    } finally {
+      useUiStore().setRequestComplete('loadSeqeraRun');
+    }
   }
 
   function handleTabChange(newIndex: number) {

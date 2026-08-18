@@ -40,7 +40,7 @@
       formMode?: LabDetailsFormMode;
     }>(),
     {
-      formMode: LabDetailsFormModeEnum.enum.ReadOnly,
+      formMode: LabDetailsFormModeEnum.enum.Edit,
     },
   );
 
@@ -465,8 +465,6 @@
     }
   }
 
-  const hasEditPermission = computed<boolean>(() => useUserStore().canEditLabDetails());
-
   /**
    * Retrieves the lab details from the server and sets the form state.
    */
@@ -516,8 +514,8 @@
   /**
    * Cancel current edit operation.
    *
-   * It resets the state value to the original unedited lab details,  turns off the editing mode for the Nextflow Tower
-   * access token, disables the submit button, and switches the form mode to read-only.
+   * It resets the state value to the original unedited lab details, turns off the editing mode for the Nextflow Tower
+   * access token, and disables the submit button. Fields remain editable — there is no read-only mode to revert to.
    *
    * @return {void}
    */
@@ -532,7 +530,6 @@
     canSubmit.value = false;
     retentionPreviewCacheMonths.value = null;
     retentionPreviewCounts.value = null;
-    switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
   }
 
   const isSubmittingFormData = computed(
@@ -671,7 +668,6 @@
       emit('updated');
       isEditingNextFlowTowerAccessToken.value = false;
       isEditingGitHubAccessToken.value = false;
-      switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
       retentionPreviewCacheMonths.value = null;
       retentionPreviewCounts.value = null;
       await getLabDetails();
@@ -745,7 +741,6 @@
 
     isEditingNextFlowTowerAccessToken.value = false;
     isEditingGitHubAccessToken.value = false;
-    switchToFormMode(LabDetailsFormModeEnum.enum.ReadOnly);
     await getLabDetails();
 
     useToastStore().success(`${lab.Name} successfully updated`);
@@ -1390,25 +1385,9 @@
         heading-id="lab-settings-healthomics-vpc-networking-heading"
         title="HealthOmics VPC Networking"
         description="Route this lab's HealthOmics runs through a custom VPC configuration."
+        description-tooltip="Lets runs reach resources outside the default restricted network — for example internet reference datasets, license servers, or private VPC and on-prem data."
         :badges="[healthOmicsVpcNetworkingBadge]"
       >
-        <div class="mb-3 flex items-center gap-1.5">
-          <p class="text-muted text-xs">Routes this lab's HealthOmics runs through a saved VPC configuration.</p>
-          <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
-            <template #text>
-              <p>
-                Lets runs reach resources outside the default restricted network — for example internet reference
-                datasets, license servers, or private VPC and on-prem data.
-              </p>
-            </template>
-            <UIcon
-              name="i-heroicons-information-circle"
-              class="text-muted h-4 w-4 shrink-0"
-              aria-label="VPC networking guidance"
-            />
-          </UTooltip>
-        </div>
-
         <EGFormGroup label="Networking mode" name="AwsHealthOmicsNetworkingMode" eager-validation>
           <div class="mb-2 flex items-center gap-1.5">
             <p class="text-muted text-xs">Only available when HealthOmics is enabled.</p>
@@ -1493,27 +1472,33 @@
         <USkeleton v-if="isLoadingNotificationPrefs" class="mt-4 h-24 w-full" aria-hidden="true" />
         <template v-else>
           <!-- Per-user preferences: staged locally like every other field, saved via Save Changes -->
-          <div class="mt-4 flex items-center justify-between">
-            <span :id="notifyOwnRunsToggleLabelId" class="text-sm text-black">Email me about my own runs</span>
-            <UToggle
-              class="ml-2"
-              v-model="notifyOnOwnRunsEnabled"
-              :disabled="!isEditing || isSubmittingFormData"
-              :aria-labelledby="notifyOwnRunsToggleLabelId"
-            />
-          </div>
+          <EGFormGroup name="NotifyOnOwnRuns" eager-validation>
+            <div class="flex items-center justify-between">
+              <span :id="notifyOwnRunsToggleLabelId" class="text-sm text-black">Email me about my own runs</span>
+              <UToggle
+                class="ml-2"
+                v-model="notifyOnOwnRunsEnabled"
+                :disabled="!isEditing || isSubmittingFormData"
+                :aria-labelledby="notifyOwnRunsToggleLabelId"
+              />
+            </div>
+          </EGFormGroup>
 
-          <div class="mt-3 flex items-center justify-between">
-            <span :id="notifyLabRunsToggleLabelId" class="text-sm text-black">Email me about all runs in this lab</span>
-            <UToggle
-              class="ml-2"
-              v-model="notifyOnLabRunsEnabled"
-              :disabled="!isEditing || isSubmittingFormData"
-              :aria-labelledby="notifyLabRunsToggleLabelId"
-            />
-          </div>
+          <EGFormGroup name="NotifyOnLabRuns" eager-validation>
+            <div class="flex items-center justify-between">
+              <span :id="notifyLabRunsToggleLabelId" class="text-sm text-black">
+                Email me about all runs in this lab
+              </span>
+              <UToggle
+                class="ml-2"
+                v-model="notifyOnLabRunsEnabled"
+                :disabled="!isEditing || isSubmittingFormData"
+                :aria-labelledby="notifyLabRunsToggleLabelId"
+              />
+            </div>
+          </EGFormGroup>
 
-          <div v-if="notifyOnLabRunsEnabled" class="mt-3">
+          <EGFormGroup v-if="notifyOnLabRunsEnabled" name="NotifyOnLabRunsAdditionalEmailsInput" eager-validation>
             <label :for="notifyLabRunsAdditionalEmailsInputId" class="mb-1 block text-sm text-black">
               Also CC these emails on every lab run
             </label>
@@ -1529,9 +1514,9 @@
             <p v-else class="text-muted mt-1 text-xs">
               Comma-separated, up to 10. Sent whenever your own "all runs in this lab" notification fires.
             </p>
-          </div>
+          </EGFormGroup>
 
-          <div v-if="showNotificationEventFilter" class="mt-4">
+          <EGFormGroup v-if="showNotificationEventFilter" name="NotificationEventFilter" eager-validation>
             <p class="mb-2 text-sm text-black">Notify me when a run</p>
             <div class="flex flex-col gap-2">
               <UCheckbox
@@ -1547,7 +1532,7 @@
                 @update:model-value="onToggleNotifyFailures"
               />
             </div>
-          </div>
+          </EGFormGroup>
         </template>
       </EGCollapsibleSection>
     </div>
@@ -1569,17 +1554,6 @@
         label="Cancel"
         name="cancel"
         @click="$router.push(useUiStore().previousPageRoute)"
-      />
-    </div>
-
-    <!-- Form Buttons: Read Mode -->
-    <div v-if="formMode === LabDetailsFormModeEnum.enum.ReadOnly" class="mt-6 flex space-x-2">
-      <EGButton
-        :size="ButtonSizeEnum.enum.sm"
-        u-button-type="button"
-        label="Edit"
-        :disabled="useUserStore().isSuperuser || !hasEditPermission"
-        @click="switchToFormMode(LabDetailsFormModeEnum.enum.Edit)"
       />
     </div>
 

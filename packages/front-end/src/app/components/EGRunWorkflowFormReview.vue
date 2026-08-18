@@ -148,24 +148,28 @@
     <section class="stroke-light flex flex-col bg-white">
       <dl>
         <div class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Workflow</dt>
-          <dd class="text-muted text-left">{{ props.workflowName }}</dd>
+          <dt class="w-48 shrink-0 text-black">Workflow</dt>
+          <dd class="text-muted min-w-0 flex-1 break-words text-left">{{ props.workflowName }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Workflow version</dt>
-          <dd class="text-muted text-left">{{ props.workflowVersionName || 'Default version' }}</dd>
+          <dt class="w-48 shrink-0 text-black">Workflow version</dt>
+          <dd class="text-muted min-w-0 flex-1 break-words text-left">
+            {{ props.workflowVersionName || 'Default version' }}
+          </dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Laboratory</dt>
-          <dd class="text-muted text-left">{{ labName }}</dd>
+          <dt class="w-48 shrink-0 text-black">Laboratory</dt>
+          <dd class="text-muted min-w-0 flex-1 break-words text-left">{{ labName }}</dd>
         </div>
         <div class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Run Name</dt>
-          <dd class="text-muted text-left">{{ props.runName }}</dd>
+          <dt class="w-48 shrink-0 text-black">Run Name</dt>
+          <dd class="text-muted min-w-0 flex-1 break-words text-left">{{ props.runName }}</dd>
         </div>
         <div v-if="wipOmicsRun?.description?.trim()" class="text-md flex border-b px-4 py-4">
-          <dt class="w-48 text-black">Description</dt>
-          <dd class="text-muted whitespace-pre-wrap break-words text-left">{{ wipOmicsRun.description }}</dd>
+          <dt class="w-48 shrink-0 text-black">Description</dt>
+          <dd class="text-muted min-w-0 flex-1 whitespace-pre-wrap break-words text-left">
+            {{ wipOmicsRun.description }}
+          </dd>
         </div>
         <EGRunCostRow :estimate="costEstimate" :loading="costEstimateLoading" class="border-b" />
       </dl>

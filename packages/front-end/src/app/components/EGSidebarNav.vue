@@ -65,7 +65,8 @@
     const key = props.items[index]?.key;
     if (!key) return;
     nextTick(() => {
-      document.getElementById(panelId(key))?.focus();
+      // preventScroll avoids the page jumping when focus moves into the tabpanel
+      document.getElementById(panelId(key))?.focus({ preventScroll: true });
     });
   }
 
@@ -79,7 +80,7 @@
   }
 
   // WAI-ARIA tabs with automatic activation: arrow keys move between tabs (wrapping),
-  // Home/End jump to first/last. Click moves focus into the matching panel.
+  // Home/End jump to first/last. Click moves focus into the matching panel without scrolling.
   function onKeydown(event: KeyboardEvent, index: number) {
     const lastIndex = props.items.length - 1;
     if (lastIndex < 0) return;
@@ -128,27 +129,9 @@
     :class="[isDark ? 'sidebar-nav--dark' : 'bg-white', { 'sidebar-nav--collapsed': isCollapsed }]"
     :aria-label="ariaLabel"
   >
-    <button
-      type="button"
-      class="sidebar-nav__toggle focus-visible:outline-primary-500 flex h-8 w-8 items-center justify-center rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-      :class="[
-        isDark ? 'text-[#c5c4d0] hover:bg-white/10' : 'text-body hover:bg-background-light-grey',
-        isCollapsed ? 'sidebar-nav__toggle--collapsed' : 'sidebar-nav__toggle--expanded',
-      ]"
-      :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
-      :aria-expanded="!isCollapsed"
-      @click="toggleCollapsed"
-    >
-      <UIcon
-        :name="isCollapsed ? 'i-heroicons-chevron-right' : 'i-heroicons-chevron-left'"
-        class="h-5 w-5"
-        aria-hidden="true"
-      />
-    </button>
-
     <div
       v-if="calloutTitle"
-      class="sidebar-callout mb-6 flex items-start gap-3 rounded-lg p-3"
+      class="sidebar-callout mb-6 flex shrink-0 items-start gap-3 rounded-lg p-3"
       :class="{ 'sidebar-callout--collapsed justify-center p-2': isCollapsed }"
       role="note"
     >
@@ -163,7 +146,7 @@
       </span>
     </div>
 
-    <div role="tablist" aria-orientation="vertical" class="flex flex-col">
+    <div role="tablist" aria-orientation="vertical" class="sidebar-nav__tabs flex min-h-0 flex-1 flex-col">
       <template v-for="(item, index) in items" :key="item.key">
         <div
           v-if="item.dividerBefore"
@@ -209,12 +192,47 @@
         </button>
       </template>
     </div>
+
+    <div class="sidebar-nav__footer shrink-0">
+      <div
+        class="border-t"
+        :class="[isCollapsed ? 'my-2' : 'my-3', isDark ? 'border-white/10' : 'border-background-dark-grey']"
+        role="presentation"
+      />
+      <UTooltip v-if="isCollapsed" :open-delay="400">
+        <template #text>Expand</template>
+        <button
+          type="button"
+          class="sidebar-nav__toggle focus-visible:outline-primary-500 flex w-full items-center justify-center rounded-lg px-2 py-2.5 font-serif text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          :class="isDark ? 'text-[#c5c4d0] hover:bg-white/10' : 'text-body hover:bg-background-light-grey'"
+          aria-label="Expand sidebar"
+          :aria-expanded="false"
+          @click="toggleCollapsed"
+        >
+          <UIcon name="i-heroicons-chevron-right" class="h-5 w-5 shrink-0" aria-hidden="true" />
+        </button>
+      </UTooltip>
+      <button
+        v-else
+        type="button"
+        class="sidebar-nav__toggle focus-visible:outline-primary-500 flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left font-serif text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        :class="isDark ? 'text-[#c5c4d0] hover:bg-white/10' : 'text-body hover:bg-background-light-grey'"
+        aria-label="Collapse sidebar"
+        :aria-expanded="true"
+        @click="toggleCollapsed"
+      >
+        <UIcon name="i-heroicons-chevron-left" class="h-5 w-5 shrink-0" aria-hidden="true" />
+        <span>Collapse</span>
+      </button>
+    </div>
   </nav>
 </template>
 
 <style scoped lang="scss">
   .sidebar-nav {
     position: absolute;
+    display: flex;
+    flex-direction: column;
     left: calc(-1 * var(--sidebar-width) - var(--sidebar-content-gap));
     top: -1.5rem;
     bottom: 0;
@@ -235,17 +253,8 @@
     }
   }
 
-  .sidebar-nav__toggle {
-    &--expanded {
-      position: absolute;
-      top: 0;
-      right: 0;
-      z-index: 1;
-    }
-
-    &--collapsed {
-      margin: 0 auto 1rem;
-    }
+  .sidebar-nav__footer {
+    margin-top: auto;
   }
 
   // Dark treatment used by the org-admin area to read as a distinct place from the light lab workspace.

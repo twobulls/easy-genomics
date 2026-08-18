@@ -308,8 +308,8 @@
   }
 
   const rowStyle = 'flex border-b p-6 text-sm';
-  const rowLabelStyle = 'w-[200px] font-medium text-black';
-  const rowContentStyle = 'text-muted text-left';
+  const rowLabelStyle = 'w-[200px] shrink-0 font-medium text-black';
+  const rowContentStyle = 'min-w-0 flex-1 break-words text-muted text-left';
 
   const showSeqeraProgressCard = computed<boolean>(() =>
     showSeqeraTaskProgressCard(labRun.value, {
@@ -476,7 +476,7 @@
 
             <div v-if="labRun.Description" :class="rowStyle">
               <dt :class="rowLabelStyle">Description</dt>
-              <dd :class="rowContentStyle">{{ labRun.Description }}</dd>
+              <dd :class="[rowContentStyle, 'whitespace-pre-wrap']">{{ labRun.Description }}</dd>
             </div>
 
             <div :class="rowStyle">

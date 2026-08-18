@@ -56,7 +56,7 @@ test('03 - Hide Organization link', async ({ page, baseURL }) => {
   await expect(page.getByRole('link', { name: 'Organizations' })).toBeHidden();
 });
 
-test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
+test('04 - Hide Lab Settings tab', async ({ page, baseURL }) => {
   await page.goto(`${baseURL}/labs`);
   await page.waitForLoadState('networkidle');
 
@@ -70,10 +70,9 @@ test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
   if (hasTestLab == true) {
     await page.getByRole('row', { name: labName }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Settings' }).click();
 
-    // check if Edit is disabled
-    await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
+    // Lab managers cannot edit lab details, so the Settings tab is not shown
+    await expect(page.getByRole('tab', { name: 'Settings' })).toBeHidden();
   } else {
     console.log('Cannot find ' + labName);
   }
@@ -91,10 +90,9 @@ test('04 - Disable Editing Lab Details', async ({ page, baseURL }) => {
   if (hasUpdatedTestLab == true) {
     await page.getByRole('row', { name: labNameUpdated }).locator('button').click();
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
-    await page.getByRole('tab', { name: 'Settings' }).click();
 
-    // check if Edit is disabled
-    await expect(page.getByRole('button', { name: 'Edit' })).toBeDisabled();
+    // Lab managers cannot edit lab details, so the Settings tab is not shown
+    await expect(page.getByRole('tab', { name: 'Settings' })).toBeHidden();
   } else {
     console.log('Cannot find ' + labNameUpdated);
   }

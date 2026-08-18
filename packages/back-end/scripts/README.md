@@ -12,10 +12,13 @@ Most scripts in this directory are manual (see below). A small subset are **regi
 Only routine, idempotent, low-blast-radius scripts should be registered — expensive backfills (Cost Explorer syncs,
 history rebuilds) and anything Tier-3 / irreversible stay manual.
 
-**How it works:** `run-deploy-migrations.ts` filters the registry by `--phase` (`pre` runs before `cdk deploy`, `post`
-runs after), skips any id already recorded in the SSM ledger at `/${NAME_PREFIX}/deploy-migrations/applied`, and calls
-each pending entry's exported `main()` directly — no shell spawn. A failure stops the run immediately (fail-fast) and is
-not written to the ledger, which fails the deploy non-zero.
+**How it works:** before touching AWS, the CLI loads `.env.local` and reconciles `REGION`/`AWS_REGION`
+(`lib/load-env.ts`'s `loadDotEnvAndReconcileRegion()`) — the AWS SDK only recognizes `AWS_REGION`, but `.env.local`
+conventionally only sets `REGION`, so this must run before `resolveNamePrefix()` or any AWS client is constructed. It
+then filters the registry by `--phase` (`pre` runs before `cdk deploy`, `post` runs after), skips any id already
+recorded in the SSM ledger at `/${NAME_PREFIX}/deploy-migrations/applied`, and calls each pending entry's exported
+`main()` directly — no shell spawn. A failure stops the run immediately (fail-fast) and is not written to the ledger,
+which fails the deploy non-zero.
 
 **To add a migration:**
 

@@ -1,5 +1,10 @@
 import type { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 
+// Without this, dotenv.config() reads whatever real .env.local exists on the machine running
+// the test and repopulates REGION/AWS_REGION regardless of what a test deleted beforehand —
+// passing only in CI (no .env.local there) and silently broken for local runs.
+jest.mock('dotenv', () => ({ config: jest.fn() }));
+
 const SERVICE_MODULE_PATH = '../../src/app/services/easy-genomics/laboratory-run-service';
 const SCRIPT_MODULE_PATH = '../../scripts/backfill-laboratory-run-attributes';
 

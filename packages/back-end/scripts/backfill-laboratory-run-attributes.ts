@@ -32,11 +32,10 @@
  * Requires .env.local (or env) with: NAME_PREFIX, REGION.
  */
 
-import path from 'path';
-import dotenv from 'dotenv';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { LaboratoryRunService } from '../src/app/services/easy-genomics/laboratory-run-service';
 import { isTerminalLaboratoryRunStatus } from '../src/app/utils/laboratory-run-ttl-utils';
+import { loadDotEnvAndReconcileRegion } from './lib/load-env';
 
 /** Legacy attribute removed from LaboratoryRunSchema; still present on some DynamoDB items. */
 const LEGACY_CURRENT_PROCESS_NAME = 'CurrentProcessName';
@@ -44,14 +43,7 @@ const LEGACY_CURRENT_PROCESS_NAME = 'CurrentProcessName';
 type LaboratoryRunWithLegacy = LaboratoryRun & { CurrentProcessName?: string };
 
 function loadEnv(): void {
-  const envPath = path.resolve(process.cwd(), '.env.local');
-  dotenv.config({ path: envPath });
-  if (process.env.REGION && !process.env.AWS_REGION) {
-    process.env.AWS_REGION = process.env.REGION;
-  }
-  if (!process.env.REGION && process.env.AWS_REGION) {
-    process.env.REGION = process.env.AWS_REGION;
-  }
+  loadDotEnvAndReconcileRegion();
   const required = ['NAME_PREFIX', 'REGION'];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length > 0) {

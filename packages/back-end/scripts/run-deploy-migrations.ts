@@ -1,5 +1,6 @@
 import { applyToLedger, loadLedger } from './deploy-migrations/ledger';
 import { DEPLOY_MIGRATIONS, DeployMigration, DeployMigrationPhase } from './deploy-migrations/registry';
+import { loadDotEnvAndReconcileRegion } from './lib/load-env';
 import { resolveNamePrefix } from './lib/resolve-name-prefix';
 import { SsmService } from '../src/app/services/ssm-service';
 
@@ -64,6 +65,9 @@ export function parseArgs(argv: string[]): { phase: DeployMigrationPhase; dryRun
 }
 
 if (require.main === module) {
+  // Must run before resolveNamePrefix()/SsmService: both the AWS SDK (AWS_REGION) and the
+  // NAME_PREFIX fallback chain can depend on values that only .env.local provides locally.
+  loadDotEnvAndReconcileRegion();
   const { phase, dryRun, forceId } = parseArgs(process.argv.slice(2));
   const namePrefix = resolveNamePrefix();
   process.env.NAME_PREFIX = namePrefix;

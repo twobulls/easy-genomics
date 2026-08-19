@@ -128,11 +128,14 @@
   const isEditingGitHubAccessToken = ref(false);
 
   // BYOK provider dropdown options + per-provider hints/placeholders for the
-  // Model ID input. The leading `null` option lets users reset back to "no
+  // Model ID input. The leading `''` option lets users reset back to "no
   // provider" — USelect's placeholder is only shown when the value is empty,
-  // so without an explicit reset option the dropdown becomes one-way.
+  // so without an explicit reset option the dropdown becomes one-way. `null`
+  // doesn't work here: USelect renders a native <select>, whose <option value>
+  // can only carry strings, so a `null` value falls back to the option's label
+  // text instead — which then fails the LlmProvider enum on save.
   const llmProviderOptions = [
-    { value: null, label: 'None — disable AI analysis' },
+    { value: '', label: 'None — disable AI analysis' },
     { value: 'bedrock', label: 'Amazon Bedrock (uses platform IAM, no key required)' },
     { value: 'openai', label: 'OpenAI' },
     { value: 'anthropic', label: 'Anthropic' },
@@ -637,7 +640,7 @@
   async function handleConfirmSaveRetentionPolicyChange() {
     useUiStore().setRequestPending('updateLab');
     try {
-      const parseResult = UpdateLaboratorySchema.safeParse(state.value);
+      const parseResult = UpdateLaboratorySchema.safeParse(withNormalizedLlmFields(state.value));
       if (!parseResult.success) {
         const message = 'Update lab failed to parse lab details';
         console.error(`${message}; parseResult: `, parseResult);

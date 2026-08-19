@@ -12,6 +12,7 @@
     RunRetentionMonthsSchema,
     NetworkingModeSchema,
     VpcConfigurationNameSchema,
+    LlmModelIdSchema,
     LabDetailsFormModeEnum,
     LabDetailsFormMode,
   } from '@FE/types/labs';
@@ -21,6 +22,7 @@
   import { ButtonSizeEnum, ButtonVariantEnum } from '@FE/types/buttons';
   import { useToastStore, useUiStore } from '@FE/stores';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
+  import { extractApiErrorMessage, formatValidationIssues } from '@FE/utils/api-utils';
   import {
     CreateLaboratory,
     CreateLaboratorySchema,
@@ -128,12 +130,12 @@
   const isEditingGitHubAccessToken = ref(false);
 
   // BYOK provider dropdown options + per-provider hints/placeholders for the
-  // Model ID input. The leading `''` option lets users reset back to "no
-  // provider" — USelect's placeholder is only shown when the value is empty,
-  // so without an explicit reset option the dropdown becomes one-way. `null`
-  // doesn't work here: USelect renders a native <select>, whose <option value>
-  // can only carry strings, so a `null` value falls back to the option's label
-  // text instead — which then fails the LlmProvider enum on save.
+  // Model ID input. The leading option lets users reset back to "no provider".
+  // Its value is '' rather than null: USelect renders a native <select>, whose
+  // <option value> can only carry strings, so a null-valued option falls back
+  // to the option's label text instead — which then fails the LlmProvider enum
+  // on save. '' also collides with the empty-string value USelect's own
+  // :placeholder prop injects, so :placeholder is skipped on the USelects below.
   const llmProviderOptions = [
     { value: '', label: 'None — disable AI analysis' },
     { value: 'bedrock', label: 'Amazon Bedrock (uses platform IAM, no key required)' },
@@ -337,6 +339,34 @@
         return '';
     }
   }
+  // Maps CreateLaboratorySchema/UpdateLaboratorySchema field names to the section and label
+  // shown for them in this form, so a safeParse failure can name which section to fix.
+  const LAB_DETAILS_FIELD_LABELS: Record<string, string> = {
+    Name: 'Lab details – Name',
+    Description: 'Lab details – Description',
+    S3Bucket: 'Lab details – Default S3 bucket directory',
+    Status: 'Lab details – Status',
+    RunRetentionMonths: 'Lab details – Run retention',
+    RunListStatusPollIntervalSeconds: 'Lab details – Run list poll interval',
+    RunDetailProgressPollIntervalSeconds: 'Lab details – Run detail poll interval',
+    NextFlowTowerEnabled: 'Integrations – Seqera enabled',
+    NextFlowTowerApiBaseUrl: 'Integrations – Seqera API base URL',
+    NextFlowTowerWorkspaceId: 'Integrations – Seqera workspace ID',
+    NextFlowTowerAccessToken: 'Integrations – Seqera access token',
+    GitHubAccessToken: 'Integrations – GitHub access token',
+    AwsHealthOmicsEnabled: 'Integrations – HealthOmics enabled',
+    AwsHealthOmicsNetworkingMode: 'HealthOmics VPC Networking – Networking mode',
+    AwsHealthOmicsVpcConfigurationName: 'HealthOmics VPC Networking – VPC configuration name',
+    HealthOmicsLogEnrichmentEnabled: 'AI Failure Analysis (HealthOmics) – Log enrichment enabled',
+    HealthOmicsLlmProvider: 'AI Failure Analysis (HealthOmics) – LLM provider',
+    HealthOmicsLlmModelId: 'AI Failure Analysis (HealthOmics) – Model ID',
+    HealthOmicsLlmApiKey: 'AI Failure Analysis (HealthOmics) – API key',
+    SeqeraLlmProvider: 'AI Failure Analysis (Seqera) – LLM provider',
+    SeqeraLlmModelId: 'AI Failure Analysis (Seqera) – Model ID',
+    SeqeraLlmApiKey: 'AI Failure Analysis (Seqera) – API key',
+    NotificationsEnabled: 'Run Notifications – Enabled',
+  };
+
   /**
    * USelect's "reset to none" option uses `null` as the value, but the backend
    * Zod schemas only accept `string | undefined`. Normalize before submitting
@@ -609,7 +639,9 @@
       } else if (error.message === `Request error: ${ERROR_CODES['EG-308']}`) {
         useToastStore().error('Invalid Workspace ID or Personal Access Token. Please try again.');
       } else {
-        useToastStore().error('An unknown error occurred. Please refresh the page and try again.');
+        useToastStore().error(
+          extractApiErrorMessage(error) ?? 'An unknown error occurred. Please refresh the page and try again.',
+        );
       }
     } finally {
       useUiStore().setRequestComplete('createLab');
@@ -642,9 +674,10 @@
     try {
       const parseResult = UpdateLaboratorySchema.safeParse(withNormalizedLlmFields(state.value));
       if (!parseResult.success) {
-        const message = 'Update lab failed to parse lab details';
-        console.error(`${message}; parseResult: `, parseResult);
-        throw new Error(message);
+        console.error('Update lab failed to parse lab details; parseResult: ', parseResult);
+        throw new Error(
+          `Couldn't save — check: ${formatValidationIssues(parseResult.error.issues, LAB_DETAILS_FIELD_LABELS)}`,
+        );
       }
 
       const lab = parseResult.data as UpdateLaboratory;
@@ -682,7 +715,9 @@
       } else if (error.message === `Request error: ${ERROR_CODES['EG-308']}`) {
         useToastStore().error('Invalid Workspace ID or Personal Access Token. Please try again.');
       } else {
-        useToastStore().error('An unknown error occurred. Please refresh the page and try again.');
+        useToastStore().error(
+          extractApiErrorMessage(error) ?? 'An unknown error occurred. Please refresh the page and try again.',
+        );
       }
     } finally {
       useUiStore().setRequestComplete('updateLab');
@@ -701,9 +736,10 @@
 
     const parseResult = CreateLaboratorySchema.safeParse(lab);
     if (!parseResult.success) {
-      const message = 'Create lab failed to parse lab details';
-      console.error(`${message}; parseResult: `, parseResult);
-      throw new Error(message);
+      console.error('Create lab failed to parse lab details; parseResult: ', parseResult);
+      throw new Error(
+        `Couldn't save — check: ${formatValidationIssues(parseResult.error.issues, LAB_DETAILS_FIELD_LABELS)}`,
+      );
     }
 
     const newLab = parseResult.data as CreateLaboratory;
@@ -726,9 +762,10 @@
     const parseResult = UpdateLaboratorySchema.safeParse(withNormalizedLlmFields(state.value));
 
     if (!parseResult.success) {
-      const message = 'Update lab failed to parse lab details';
-      console.error(`${message}; parseResult: `, parseResult);
-      throw new Error(message);
+      console.error('Update lab failed to parse lab details; parseResult: ', parseResult);
+      throw new Error(
+        `Couldn't save — check: ${formatValidationIssues(parseResult.error.issues, LAB_DETAILS_FIELD_LABELS)}`,
+      );
     }
 
     const lab: UpdateLaboratory = parseResult.data;
@@ -806,6 +843,14 @@
         'AwsHealthOmicsVpcConfigurationName',
         state.AwsHealthOmicsVpcConfigurationName,
       );
+    }
+
+    // Model ID is only meaningful once a provider is picked for that integration.
+    if (state.HealthOmicsLlmProvider) {
+      maybeAddFieldValidationErrors(errors, LlmModelIdSchema, 'HealthOmicsLlmModelId', state.HealthOmicsLlmModelId);
+    }
+    if (state.SeqeraLlmProvider) {
+      maybeAddFieldValidationErrors(errors, LlmModelIdSchema, 'SeqeraLlmModelId', state.SeqeraLlmModelId);
     }
 
     if (notifyOnLabRunsEnabled.value && additionalEmailsError.value) {
@@ -1261,7 +1306,6 @@
               :options="llmProviderOptions"
               value-attribute="value"
               option-attribute="label"
-              placeholder="None — disable AI analysis for HealthOmics"
               :disabled="!isEditing || isSubmittingFormData"
             />
           </EGFormGroup>
@@ -1271,6 +1315,7 @@
             label="Model ID"
             name="HealthOmicsLlmModelId"
             eager-validation
+            required
             :hint="modelIdHintFor(state.HealthOmicsLlmProvider)"
           >
             <EGInput
@@ -1333,7 +1378,6 @@
               :options="llmProviderOptions"
               value-attribute="value"
               option-attribute="label"
-              placeholder="None — disable AI analysis for Seqera"
               :disabled="!isEditing || isSubmittingFormData"
             />
           </EGFormGroup>
@@ -1343,6 +1387,7 @@
             label="Model ID"
             name="SeqeraLlmModelId"
             eager-validation
+            required
             :hint="modelIdHintFor(state.SeqeraLlmProvider)"
           >
             <EGInput

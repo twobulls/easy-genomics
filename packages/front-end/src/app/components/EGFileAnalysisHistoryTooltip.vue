@@ -4,8 +4,8 @@
    * Card view: dot (+ count chip when N>1) + trailing chevron. Table view: dot + status text. Panel lists runs;
    * left opens run detail; right zone selects input files for that run.
    */
-  import { format } from 'date-fns';
   import type { LaboratoryRunUsageSummary } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/data-collections';
+  import { formatRelativeDateTime } from '@FE/utils/date-time';
 
   const props = defineProps<{
     labId: string;
@@ -62,17 +62,10 @@
     return parts;
   });
 
-  function formatRunDate(iso: string): string {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '';
-    return format(d, 'yyyy-MM-dd');
-  }
-
   function runRowSubtitle(run: LaboratoryRunUsageSummary): string {
     const parts: string[] = [];
     if (run.WorkflowName?.trim()) parts.push(run.WorkflowName.trim());
-    const date = formatRunDate(run.RunCreatedAt);
+    const date = formatRelativeDateTime(run.RunCreatedAt);
     if (date) parts.push(date);
     const sampleNoun = run.InputFileCount === 1 ? 'file' : 'files';
     parts.push(`${run.InputFileCount} ${sampleNoun}`);

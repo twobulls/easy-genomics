@@ -34,6 +34,7 @@
     DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
     DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
   } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
+  import { fetchLabS3BucketOptions } from '@FE/utils/lab-s3-bucket-options';
 
   const props = withDefaults(
     defineProps<{
@@ -452,12 +453,12 @@
   async function getS3Buckets() {
     try {
       isLoadingBuckets.value = true;
-      if (formMode.value !== LabDetailsFormModeEnum.enum.Create && labId) {
-        const granted = await $api.s3Access.listGrantedBuckets(labId);
-        s3Directories.value = granted.buckets;
-      } else {
-        s3Directories.value = await $api.infra.s3Buckets().then((res) => res.map((bucket) => bucket.Name));
-      }
+      s3Directories.value = await fetchLabS3BucketOptions({
+        isCreateMode: formMode.value === LabDetailsFormModeEnum.enum.Create,
+        labId,
+        orgId: useUserStore().currentOrgId,
+        api: $api.s3Access,
+      });
     } catch (error) {
       useToastStore().error('Failed to retrieve S3 buckets');
     } finally {

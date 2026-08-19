@@ -261,11 +261,32 @@ function hasProgressChanged(existingRun: LaboratoryRun, progress: OmicsTaskProgr
   );
 }
 
-/** Merge existing run with a progress snapshot for persistence. */
-function buildProgressUpdate(existingRun: LaboratoryRun, progress: OmicsTaskProgress | undefined): LaboratoryRun {
+const LABORATORY_RUN_PROGRESS_ATTRIBUTES = [
+  'ProgressPercent',
+  'TasksTotal',
+  'TasksCompleted',
+  'TasksRunning',
+  'TasksFailed',
+] as const;
+
+/** Merge existing run with a progress snapshot for persistence; strip progress attrs when terminal. */
+function buildProgressUpdate(
+  existingRun: LaboratoryRun,
+  progress: OmicsTaskProgress | undefined,
+  clearProgressOnTerminal: boolean,
+): { update: LaboratoryRun; remove: string[] } {
+  if (clearProgressOnTerminal) {
+    return {
+      update: { ...existingRun },
+      remove: [...LABORATORY_RUN_PROGRESS_ATTRIBUTES],
+    };
+  }
   return {
-    ...existingRun,
-    ...progressFieldsFromSnapshot(progress),
+    update: {
+      ...existingRun,
+      ...progressFieldsFromSnapshot(progress),
+    },
+    remove: [],
   };
 }
 
@@ -455,7 +476,7 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       // No status change, but duration and/or task progress need persisting.
       // Progress can change continuously while Status stays RUNNING.
       const now = new Date();
-      const progressUpdate = buildProgressUpdate(existingRun, snapshot.progress);
+      const { update: progressUpdate } = buildProgressUpdate(existingRun, snapshot.progress, false);
       laboratoryRun = await laboratoryRunService.update({
         ...progressUpdate,
         ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null

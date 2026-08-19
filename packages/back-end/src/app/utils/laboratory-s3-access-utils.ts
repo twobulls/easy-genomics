@@ -71,17 +71,11 @@ export function grantedBucketNamesForLaboratory(
   accessRows: LaboratoryS3Access[],
   catalog: S3BucketCatalogEntry[],
 ): string[] {
+  const catalogNames = new Set(catalog.map((entry) => entry.name));
   const defaultOn = laboratory.EnableNewBucketsByDefault === true;
   if (!defaultOn) {
     const allowed = allowBucketNames(accessRows);
-    // Unmigrated labs: surface the configured default so the UI matches assert fallback.
-    if (allowed.size === 0 && accessRows.length === 0) {
-      const configured = laboratory.S3Bucket?.trim();
-      if (configured) {
-        allowed.add(configured);
-      }
-    }
-    return [...allowed].sort();
+    return [...allowed].filter((name) => catalogNames.has(name)).sort();
   }
   const denied = denyBucketNames(accessRows);
   return catalog

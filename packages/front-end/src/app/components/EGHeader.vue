@@ -214,9 +214,9 @@
               inactive-class="text-body"
               active-class="text-primary-dark bg-primary-muted"
               :class="isSubpath(labsPath) ? 'text-primary-dark bg-primary-muted' : ''"
-              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] max-w-[min(100%,12rem)] items-center justify-center rounded-xl px-3 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 md:max-w-[min(100%,18rem)] md:px-4"
+              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] min-w-0 max-w-[12rem] items-center justify-center rounded-xl px-3 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 md:max-w-[18rem] md:px-4"
             >
-              <span class="truncate">{{ labsNavLabel }}</span>
+              <span class="min-w-0 truncate">{{ labsNavLabel }}</span>
             </ULink>
             <ULink
               v-if="userStore.canManageAnyOrgs()"
@@ -225,13 +225,13 @@
               inactive-class="text-body"
               active-class="text-primary-dark bg-primary-muted"
               :class="isSubpath(orgsPath) ? 'text-primary-dark bg-primary-muted' : ''"
-              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] items-center justify-center whitespace-nowrap rounded-xl px-3 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 md:px-4"
+              class="ULink text-body focus-visible:outline-primary-500 flex h-[30px] shrink-0 items-center justify-center whitespace-nowrap rounded-xl px-3 py-1 font-serif text-sm tracking-normal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 md:px-4"
             >
               Organizations
             </ULink>
           </nav>
 
-          <div ref="accountMenuRoot" class="relative" @focusout="onAccountMenuFocusOut">
+          <div ref="accountMenuRoot" class="relative shrink-0" @focusout="onAccountMenuFocusOut">
             <button
               ref="accountMenuTrigger"
               type="button"

@@ -1119,8 +1119,20 @@
         heading-id="lab-settings-integrations-heading"
         title="Integrations"
         description="Seqera and HealthOmics connections for this lab."
-        :badges="integrationsBadges"
+        :badges="isLoadingFormData ? [] : integrationsBadges"
       >
+        <!-- Don't render Seqera/HealthOmics Off from defaultState while lab details are still loading. -->
+        <div v-if="isLoadingFormData" class="flex flex-col" aria-hidden="true">
+          <div class="mb-6 flex items-center justify-between">
+            <USkeleton class="h-4 w-48" />
+            <USkeleton class="h-6 w-12" />
+          </div>
+          <div class="flex items-center justify-between">
+            <USkeleton class="h-4 w-56" />
+            <USkeleton class="h-6 w-12" />
+          </div>
+        </div>
+        <template v-else>
         <section :aria-labelledby="seqeraSectionId">
           <h3 :id="seqeraSectionId" class="sr-only">Seqera integration</h3>
 
@@ -1259,6 +1271,7 @@
             />
           </EGFormGroup>
         </section>
+        </template>
       </EGCollapsibleSection>
 
       <!-- AI Failure Analysis: BYOK per integration. HealthOmics and Seqera each get
@@ -1272,7 +1285,7 @@
         heading-id="lab-settings-ai-failure-analysis-heading"
         title="AI Failure Analysis"
         description="When a run fails, classify the cause by responsible party using an LLM."
-        :badges="[aiFailureAnalysisBadge]"
+        :badges="isLoadingFormData ? [] : [aiFailureAnalysisBadge]"
       >
         <div class="mb-3 flex items-center gap-1.5">
           <p class="text-muted text-xs">
@@ -1456,7 +1469,7 @@
         title="HealthOmics VPC Networking"
         description="Route this lab's HealthOmics runs through a custom VPC configuration."
         description-tooltip="Lets runs reach resources outside the default restricted network — for example internet reference datasets, license servers, or private VPC and on-prem data."
-        :badges="[healthOmicsVpcNetworkingBadge]"
+        :badges="isLoadingFormData ? [] : [healthOmicsVpcNetworkingBadge]"
       >
         <EGFormGroup label="Networking mode" name="AwsHealthOmicsNetworkingMode" eager-validation>
           <div class="mb-2 flex items-center gap-1.5">
@@ -1513,7 +1526,7 @@
         heading-id="lab-settings-run-notifications-heading"
         title="Run Notifications"
         description="Control who gets emailed when runs in this lab finish."
-        :badges="[runNotificationsBadge]"
+        :badges="isLoadingFormData ? [] : [runNotificationsBadge]"
       >
         <!-- Lab-wide kill switch -->
         <EGFormGroup

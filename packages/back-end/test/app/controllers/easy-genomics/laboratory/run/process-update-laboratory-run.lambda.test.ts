@@ -803,6 +803,7 @@ describe('process-update-laboratory-run.lambda', () => {
       expect.objectContaining({
         Status: 'SUCCEEDED',
       }),
+      terminalProgressRemoval,
     );
     expect(mockUpdateRun).not.toHaveBeenCalledWith(expect.objectContaining({ RunCostOutcome: expect.anything() }));
   });

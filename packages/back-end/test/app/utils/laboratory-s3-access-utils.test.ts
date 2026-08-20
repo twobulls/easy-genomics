@@ -89,8 +89,16 @@ describe('laboratory-s3-access-utils', () => {
       expect(grantedBucketNamesForLaboratory(labStrict, [allowRow('bucket-b')], catalog)).toEqual(['bucket-b']);
     });
 
-    it('strict mode with zero rows includes configured S3Bucket', () => {
-      expect(grantedBucketNamesForLaboratory(labStrict, [], catalog)).toEqual(['bucket-a']);
+    it('strict mode with zero rows returns empty list (configured default handled by warning UX)', () => {
+      expect(grantedBucketNamesForLaboratory(labStrict, [], catalog)).toEqual([]);
+    });
+
+    it('strict mode excludes ALLOW buckets that are no longer in the catalog', () => {
+      expect(grantedBucketNamesForLaboratory(labStrict, [allowRow('stale-bucket')], catalog)).toEqual([]);
+    });
+
+    it('strict mode includes ALLOW buckets that remain in the catalog', () => {
+      expect(grantedBucketNamesForLaboratory(labStrict, [allowRow('bucket-a')], catalog)).toEqual(['bucket-a']);
     });
 
     it('default-on excludes DENY buckets', () => {

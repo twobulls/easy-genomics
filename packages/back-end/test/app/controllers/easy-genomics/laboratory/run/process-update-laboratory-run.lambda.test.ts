@@ -36,6 +36,8 @@ import {
 } from '../../../../../../src/app/controllers/easy-genomics/laboratory/run/process-update-laboratory-run.lambda';
 
 describe('process-update-laboratory-run.lambda', () => {
+  const terminalProgressRemoval = ['ProgressPercent', 'TasksTotal', 'TasksCompleted', 'TasksRunning', 'TasksFailed'];
+
   let mockLabService: jest.MockedClass<typeof LaboratoryService>;
   let mockRunService: jest.MockedClass<typeof LaboratoryRunService>;
   let mockSsmService: jest.MockedClass<typeof SsmService>;
@@ -563,6 +565,7 @@ describe('process-update-laboratory-run.lambda', () => {
         FailureReason: 'OUT_OF_MEMORY_ERROR',
         FailureStatusMessage: 'Task nf-core/rnaseq:FASTQC ran out of memory — see CloudWatch',
       }),
+      terminalProgressRemoval,
     );
   });
 
@@ -606,6 +609,7 @@ describe('process-update-laboratory-run.lambda', () => {
         FailureReason: 'Sample sheet parsing failed',
         FailureErrorReport: 'Caused by:\n  Missing required column "sample" in samplesheet.csv',
       }),
+      terminalProgressRemoval,
     );
   });
 
@@ -772,6 +776,7 @@ describe('process-update-laboratory-run.lambda', () => {
       expect.objectContaining({
         Status: 'SUCCEEDED',
       }),
+      terminalProgressRemoval,
     );
     expect(mockUpdateRun).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -798,7 +803,7 @@ describe('process-update-laboratory-run.lambda', () => {
       expect.objectContaining({
         Status: 'SUCCEEDED',
       }),
-      expect.any(Array),
+      terminalProgressRemoval,
     );
     expect(mockUpdateRun).not.toHaveBeenCalledWith(expect.objectContaining({ RunCostOutcome: expect.anything() }));
   });

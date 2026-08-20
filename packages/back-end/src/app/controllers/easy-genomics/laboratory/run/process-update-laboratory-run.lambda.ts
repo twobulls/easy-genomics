@@ -389,38 +389,31 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
           ? calculateExpiresAtEpochSeconds(new Date(terminalAtIso), retentionMonths)
           : undefined;
 
-      const { update: progressUpdate, remove: progressRemove } = buildProgressUpdate(
-        existingRun,
-        snapshot.progress,
-        nextStatusTerminal,
-      );
+      const progressUpdate = buildProgressUpdate(existingRun, snapshot.progress);
 
       // Write status (and terminal metadata) before cost capture. Large Omics runs
       // can spend minutes in ListRunTasks; blocking here left Status stuck at RUNNING
       // until the Lambda timed out and SQS retried forever.
-      laboratoryRun = await laboratoryRunService.updateWithAttributeRemoval(
-        {
-          ...progressUpdate,
-          Status: newStatusNormalized,
-          ...(shouldSetTerminalAt ? { TerminalAt: terminalAtIso } : {}),
-          ...(newExpiresAt !== undefined ? { ExpiresAt: newExpiresAt } : {}),
-          ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
-            ? { RunDurationSeconds: snapshot.durationSeconds }
-            : {}),
-          ...(newStatusNormalized === 'FAILED' && snapshot.failureReason && existingRun.FailureReason == null
-            ? { FailureReason: snapshot.failureReason }
-            : {}),
-          ...(newStatusNormalized === 'FAILED' && snapshot.statusMessage && existingRun.FailureReason == null
-            ? { FailureStatusMessage: snapshot.statusMessage }
-            : {}),
-          ...(newStatusNormalized === 'FAILED' && snapshot.errorReport && existingRun.FailureReason == null
-            ? { FailureErrorReport: snapshot.errorReport }
-            : {}),
-          ModifiedAt: now.toISOString(),
-          ModifiedBy: 'Status Check',
-        },
-        progressRemove,
-      );
+      laboratoryRun = await laboratoryRunService.update({
+        ...progressUpdate,
+        Status: newStatusNormalized,
+        ...(shouldSetTerminalAt ? { TerminalAt: terminalAtIso } : {}),
+        ...(newExpiresAt !== undefined ? { ExpiresAt: newExpiresAt } : {}),
+        ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
+          ? { RunDurationSeconds: snapshot.durationSeconds }
+          : {}),
+        ...(newStatusNormalized === 'FAILED' && snapshot.failureReason && existingRun.FailureReason == null
+          ? { FailureReason: snapshot.failureReason }
+          : {}),
+        ...(newStatusNormalized === 'FAILED' && snapshot.statusMessage && existingRun.FailureReason == null
+          ? { FailureStatusMessage: snapshot.statusMessage }
+          : {}),
+        ...(newStatusNormalized === 'FAILED' && snapshot.errorReport && existingRun.FailureReason == null
+          ? { FailureErrorReport: snapshot.errorReport }
+          : {}),
+        ModifiedAt: now.toISOString(),
+        ModifiedBy: 'Status Check',
+      });
       await safePropagateExpiresAt(laboratory, laboratoryRun, newExpiresAt);
       if (newStatusNormalized === 'FAILED' && existingRun.FailureOwner == null) {
         await safePublishForClassification(laboratoryRun);

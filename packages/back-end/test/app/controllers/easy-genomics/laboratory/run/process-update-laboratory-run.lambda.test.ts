@@ -803,8 +803,12 @@ describe('process-update-laboratory-run.lambda', () => {
       expect.objectContaining({
         Status: 'SUCCEEDED',
       }),
+      expect.any(Array),
     );
-    expect(mockUpdateRun).not.toHaveBeenCalledWith(expect.objectContaining({ RunCostOutcome: expect.anything() }));
+    expect(mockUpdateRun).not.toHaveBeenCalledWith(
+      expect.objectContaining({ RunCostOutcome: expect.anything() }),
+      expect.any(Array),
+    );
   });
 
   it('backfills RunCostOutcome for already-terminal runs missing cost', async () => {

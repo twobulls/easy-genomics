@@ -300,6 +300,74 @@ describe('process-update-laboratory-run.lambda', () => {
     );
   });
 
+  it('getAWSHealthOmicsStatus continues without progress when listAllRunTasks fails', async () => {
+    const listAllRunTasks = jest.fn().mockRejectedValue(new Error('ListRunTasks unavailable'));
+    (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
+      getRun: mockGetRun,
+      listAllRunTasks,
+    });
+    mockGetRun.mockResolvedValue({ status: 'RUNNING' } as any);
+
+    const snapshot = await getAWSHealthOmicsStatus({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+    } as any);
+
+    expect(snapshot.status).toBe('RUNNING');
+    expect(snapshot.progress).toBeUndefined();
+    expect(listAllRunTasks).toHaveBeenCalledWith('ext-1');
+  });
+
+  it('getAWSHealthOmicsStatus does not call listAllRunTasks when status is terminal', async () => {
+    const listAllRunTasks = jest.fn().mockResolvedValue([]);
+    (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
+      getRun: mockGetRun,
+      listAllRunTasks,
+    });
+    mockGetRun.mockResolvedValue({ status: 'COMPLETED' } as any);
+
+    const snapshot = await getAWSHealthOmicsStatus({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+    } as any);
+
+    expect(snapshot.status).toBe('COMPLETED');
+    expect(snapshot.progress).toBeUndefined();
+    expect(listAllRunTasks).not.toHaveBeenCalled();
+  });
+
+  it('getAWSHealthOmicsStatus omits durationSeconds when stopTime is before startTime', async () => {
+    const start = new Date('2026-04-01T13:00:00.000Z');
+    const stop = new Date('2026-04-01T12:00:00.000Z');
+    mockGetRun.mockResolvedValue({ status: 'COMPLETED', startTime: start, stopTime: stop } as any);
+
+    const snapshot = await getAWSHealthOmicsStatus({
+      RunId: 'run-1',
+      ExternalRunId: 'ext-1',
+    } as any);
+
+    expect(snapshot.status).toBe('COMPLETED');
+    expect(snapshot.durationSeconds).toBeUndefined();
+  });
+
+  it('getAWSHealthOmicsStatus passes laboratoryRun.UserId to createOmicsServiceForLab when present', async () => {
+    mockGetRun.mockResolvedValue({ status: 'RUNNING' } as any);
+
+    await getAWSHealthOmicsStatus({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      UserId: 'user-42',
+    } as any);
+
+    expect(createOmicsServiceForLab).toHaveBeenCalledWith('lab-1', 'org-1', 'user-42');
+  });
+
   it('getSeqeraCloudStatus builds NF Tower URL with workspaceId and returns workflow status', async () => {
     mockQueryByLaboratoryId.mockResolvedValue({
       OrganizationId: 'org-1',

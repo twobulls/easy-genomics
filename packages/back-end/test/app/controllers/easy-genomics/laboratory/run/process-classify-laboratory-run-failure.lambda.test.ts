@@ -215,6 +215,104 @@ describe('process-classify-laboratory-run-failure.lambda', () => {
     expect(mockClassify.mock.calls[0][1].apiKey).toBe('sk-omics-key');
   });
 
+  it('uses HealthOmics anthropic provider and healthomics SSM key', async () => {
+    mockQueryByLaboratoryId.mockResolvedValue({
+      ...labMixedProviders,
+      HealthOmicsLlmProvider: 'anthropic',
+      HealthOmicsLlmModelId: 'claude-sonnet-4-20250514',
+    });
+    mockGetParameter.mockResolvedValue({ Parameter: { Value: 'sk-anthropic-omics' } });
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Platform: 'AWS HealthOmics',
+      Status: 'FAILED',
+      FailureReason: 'WORKFLOW_RUN_FAILED',
+    });
+    mockClassify.mockResolvedValue({ owner: 'Ambiguous', summary: 's', action: 'a' });
+
+    await processClassificationEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(mockGetParameter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Name: '/easy-genomics/organization/org-1/laboratory/lab-1/llm-api-key-healthomics',
+        WithDecryption: true,
+      }),
+    );
+    const config = mockClassify.mock.calls[0][1];
+    expect(config.provider).toBe('anthropic');
+    expect(config.modelId).toBe('claude-sonnet-4-20250514');
+    expect(config.apiKey).toBe('sk-anthropic-omics');
+  });
+
+  it('skips HealthOmics OpenAI when SSM key is missing and keeps lookup', async () => {
+    mockQueryByLaboratoryId.mockResolvedValue({
+      ...labMixedProviders,
+      HealthOmicsLlmProvider: 'openai',
+      HealthOmicsLlmModelId: 'gpt-4o-mini',
+      HealthOmicsLogEnrichmentEnabled: true,
+    });
+    mockGetParameter.mockResolvedValue({ Parameter: undefined });
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Platform: 'AWS HealthOmics',
+      Status: 'FAILED',
+      FailureReason: 'OUT_OF_MEMORY_ERROR',
+    });
+
+    await processClassificationEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(mockClassify).not.toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ FailureOwner: 'Bioinformatician', FailureClassifiedBy: 'lookup' }),
+    );
+  });
+
+  it('skips HealthOmics LLM when getParameter throws and keeps lookup', async () => {
+    mockQueryByLaboratoryId.mockResolvedValue({
+      ...labMixedProviders,
+      HealthOmicsLlmProvider: 'openai',
+      HealthOmicsLlmModelId: 'gpt-4o-mini',
+      HealthOmicsLogEnrichmentEnabled: true,
+    });
+    mockGetParameter.mockRejectedValue(new Error('SSM unavailable'));
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Platform: 'AWS HealthOmics',
+      Status: 'FAILED',
+      FailureReason: 'OUT_OF_MEMORY_ERROR',
+    });
+
+    await processClassificationEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(mockClassify).not.toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ FailureOwner: 'Bioinformatician', FailureClassifiedBy: 'lookup' }),
+    );
+  });
+
+  it('returns lookup only when laboratory cannot be loaded', async () => {
+    const { LaboratoryNotFoundError } = await import('@easy-genomics/shared-lib/lib/app/utils/HttpError');
+    mockQueryByLaboratoryId.mockRejectedValue(new LaboratoryNotFoundError());
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-missing',
+      Platform: 'AWS HealthOmics',
+      Status: 'FAILED',
+      FailureReason: 'OUT_OF_MEMORY_ERROR',
+    });
+
+    await processClassificationEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(mockClassify).not.toHaveBeenCalled();
+    expect(mockGetParameter).not.toHaveBeenCalled();
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ FailureOwner: 'Bioinformatician', FailureClassifiedBy: 'lookup' }),
+    );
+  });
+
   it('skips when the integration toggle is on but the integration has no provider configured', async () => {
     mockQueryByLaboratoryId.mockResolvedValue({
       ...labMixedProviders,

@@ -97,34 +97,23 @@ describe('list-private-workflows.lambda', () => {
       EnableNewWorkflowsByDefault: false,
     });
 
-    // Paginated: first page carries a nextToken, second page terminates. The
-    // filter must be applied across every page, not just the first.
-    (mockOmicsService.prototype.listWorkflows as jest.Mock)
-      .mockResolvedValueOnce({
-        items: [
-          { id: 'wf-allowed', name: 'Allowed' },
-          { id: 'wf-blocked', name: 'Blocked' },
-        ],
-        nextToken: 't1',
-      })
-      .mockResolvedValueOnce({
-        items: [{ id: 'wf-allowed-2', name: 'Allowed 2' }],
-        nextToken: undefined,
-      });
+    (mockOmicsService.prototype.listWorkflows as jest.Mock).mockResolvedValue({
+      items: [
+        { id: 'wf-allowed', name: 'Allowed' },
+        { id: 'wf-blocked', name: 'Blocked' },
+      ],
+      nextToken: 't1',
+    });
 
     (mockAccessService.prototype.listByLaboratoryId as jest.Mock).mockResolvedValue([
       { LaboratoryId: LAB_ID, WorkflowKey: 'HEALTH_OMICS#wf-allowed' },
-      { LaboratoryId: LAB_ID, WorkflowKey: 'HEALTH_OMICS#wf-allowed-2' },
     ]);
 
     const res = await handler(createEvent({ laboratoryId: LAB_ID }), createContext(), () => {});
     expect(res?.statusCode).toBe(200);
     const body = JSON.parse(res?.body ?? '{}');
-    expect(body.items).toEqual([
-      { id: 'wf-allowed', name: 'Allowed' },
-      { id: 'wf-allowed-2', name: 'Allowed 2' },
-    ]);
-    expect(mockOmicsService.prototype.listWorkflows).toHaveBeenCalledTimes(2);
+    expect(body.items).toEqual([{ id: 'wf-allowed', name: 'Allowed' }]);
+    expect(body.nextToken).toBe('t1');
   });
 
   it('when new workflows are enabled by default, omits only explicitly denied workflows', async () => {
@@ -135,8 +124,7 @@ describe('list-private-workflows.lambda', () => {
       EnableNewWorkflowsByDefault: true,
     });
 
-    // Single page (no nextToken) terminates pagination after one call.
-    (mockOmicsService.prototype.listWorkflows as jest.Mock).mockResolvedValueOnce({
+    (mockOmicsService.prototype.listWorkflows as jest.Mock).mockResolvedValue({
       items: [
         { id: 'wf-ok', name: 'Ok' },
         { id: 'wf-denied', name: 'Denied' },

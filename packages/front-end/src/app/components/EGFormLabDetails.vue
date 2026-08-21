@@ -198,6 +198,12 @@
   const uneditedNotificationEventFilter = ref<NotificationEventFilter>('all_terminal');
   const uneditedNotifyOnLabRunsAdditionalEmailsInput = ref('');
 
+  // Per-user preferences have no effect while the lab-wide switch is off, so lock them
+  // instead of letting a user edit settings that won't take effect until it's back on.
+  const runNotificationPreferencesDisabled = computed(
+    () => !isEditing.value || isSubmittingFormData.value || !state.value.NotificationsEnabled,
+  );
+
   // The event filter only has an effect once at least one of the two "email me" toggles is on.
   const showNotificationEventFilter = computed(() => notifyOnOwnRunsEnabled.value || notifyOnLabRunsEnabled.value);
   // 'all_terminal' means both checked; 'failures_only' / 'successes_only' mean only that one.
@@ -1498,7 +1504,7 @@
         <EGFormGroup
           name="NotificationsEnabled"
           eager-validation
-          hint="Turns run notification emails on or off for this lab. Individual users still choose which runs they're emailed about below."
+          hint="Turns off run-completion emails for everyone in this lab and disables the preferences below until this is re-enabled."
         >
           <div class="flex items-center justify-between">
             <label
@@ -1506,7 +1512,7 @@
               :for="`${notificationsToggleLabelId}-input`"
               class="text-sm text-black"
             >
-              Enable run notifications
+              Enable email notifications for this lab
             </label>
             <UToggle
               :id="`${notificationsToggleLabelId}-input`"
@@ -1527,7 +1533,7 @@
               <UToggle
                 class="ml-2"
                 v-model="notifyOnOwnRunsEnabled"
-                :disabled="!isEditing || isSubmittingFormData"
+                :disabled="runNotificationPreferencesDisabled"
                 :aria-labelledby="notifyOwnRunsToggleLabelId"
               />
             </div>
@@ -1541,7 +1547,7 @@
               <UToggle
                 class="ml-2"
                 v-model="notifyOnLabRunsEnabled"
-                :disabled="!isEditing || isSubmittingFormData"
+                :disabled="runNotificationPreferencesDisabled"
                 :aria-labelledby="notifyLabRunsToggleLabelId"
               />
             </div>
@@ -1555,7 +1561,7 @@
               :id="notifyLabRunsAdditionalEmailsInputId"
               v-model="notifyOnLabRunsAdditionalEmailsInput"
               placeholder="team-distro@example.com, oncall@example.com"
-              :disabled="!isEditing || isSubmittingFormData"
+              :disabled="runNotificationPreferencesDisabled"
             />
             <p v-if="additionalEmailsError" class="text-alert-danger-dark mt-1 text-xs font-medium">
               {{ additionalEmailsError }}
@@ -1571,13 +1577,13 @@
               <UCheckbox
                 label="Succeeds"
                 :model-value="eventFilterSuccessChecked"
-                :disabled="!isEditing || isSubmittingFormData"
+                :disabled="runNotificationPreferencesDisabled"
                 @update:model-value="onToggleNotifySuccesses"
               />
               <UCheckbox
                 label="Fails"
                 :model-value="eventFilterFailureChecked"
-                :disabled="!isEditing || isSubmittingFormData"
+                :disabled="runNotificationPreferencesDisabled"
                 @update:model-value="onToggleNotifyFailures"
               />
             </div>

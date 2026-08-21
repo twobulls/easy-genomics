@@ -259,6 +259,7 @@
 
   // Stay pinned to the viewport so Collapse remains visible on long pages.
   // Horizontal padding matches the sidebar so the control lines up with nav items.
+  // border-right mirrors the sidebar so the fixed footer does not cover the divider.
   .sidebar-nav__footer {
     position: fixed;
     left: 0;
@@ -268,6 +269,7 @@
     width: var(--sidebar-width);
     padding: 0 2rem 1rem;
     background-color: #ffffff;
+    border-right: 1px solid #e5e5e5;
     transition:
       width 0.2s ease,
       padding 0.2s ease;
@@ -280,6 +282,7 @@
 
   .sidebar-nav--dark .sidebar-nav__footer {
     background-color: #1b1a29;
+    border-right-color: #1b1a29;
   }
 
   // Dark treatment used by the org-admin area to read as a distinct place from the light lab workspace.

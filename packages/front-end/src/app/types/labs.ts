@@ -46,7 +46,11 @@ const RunDetailProgressPollIntervalSecondsSchema = z
   .max(300, 'Run detail polling interval must be between 10 and 300 seconds');
 
 const LlmProviderSchema = z.enum(['bedrock', 'openai', 'anthropic']);
-const LlmModelIdSchema = z.string().trim().max(256, 'Model ID must be no more than 256 characters');
+const LlmModelIdSchema = z
+  .string()
+  .trim()
+  .min(1, 'Model ID is required')
+  .max(256, 'Model ID must be no more than 256 characters');
 const LlmApiKeySchema = z.string().trim().min(1, 'API key cannot be empty');
 
 const NetworkingModeSchema = z.enum(['RESTRICTED', 'VPC']);

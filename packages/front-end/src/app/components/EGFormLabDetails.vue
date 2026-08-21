@@ -1276,7 +1276,8 @@
                 <p class="font-medium text-black">Which provider should I choose?</p>
                 <p>
                   <span class="font-medium text-black">Amazon Bedrock</span>
-                  — no API key; the error text stays inside your AWS account. Simplest setup and tightest data control.
+                  — no API key; calls run under the platform's own AWS account and IAM role, not your lab's. Simplest
+                  setup, and the error text stays within AWS, but it isn't isolated to your own AWS account.
                 </p>
                 <p>
                   <span class="font-medium text-black">Anthropic (Claude)</span>

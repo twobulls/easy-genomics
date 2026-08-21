@@ -25,11 +25,11 @@ Vue SFCs were not unit-mounted (no Vue Test Utils in stack; branch extraction ou
 assume full unit safety for Collections modal, Dashboard, or Workflow Lab Access UI without additional e2e or
 post-extraction tests.
 
-## Note on process-update compile fix
+## Note on process-update
 
-While adding coverage, `process-update-laboratory-run.lambda.ts` failed to typecheck: a prior change had broken the
-status-change branch’s `buildProgressUpdate` / `updateWithAttributeRemoval` call. That call was restored to the prior
-correct pattern so the HealthOmics status-check tests can compile and run. This is not Seqera removal work.
+`process-update-laboratory-run.lambda.ts` required no production code changes in this work — only new HealthOmics
+status-check coverage was added in its test file. An earlier merge already restored the type-correct
+`buildProgressUpdate` / `updateWithAttributeRemoval` call site.
 
 ## Verification
 

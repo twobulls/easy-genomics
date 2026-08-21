@@ -245,38 +245,23 @@ describe('process-classify-laboratory-run-failure.lambda', () => {
     expect(config.apiKey).toBe('sk-anthropic-omics');
   });
 
-  it('skips HealthOmics OpenAI when SSM key is missing and keeps lookup', async () => {
+  it.each([
+    {
+      mode: 'SSM key is missing',
+      setupSsm: () => mockGetParameter.mockResolvedValue({ Parameter: undefined }),
+    },
+    {
+      mode: 'getParameter throws',
+      setupSsm: () => mockGetParameter.mockRejectedValue(new Error('SSM unavailable')),
+    },
+  ])('skips HealthOmics OpenAI when $mode and keeps lookup', async ({ setupSsm }) => {
     mockQueryByLaboratoryId.mockResolvedValue({
       ...labMixedProviders,
       HealthOmicsLlmProvider: 'openai',
       HealthOmicsLlmModelId: 'gpt-4o-mini',
       HealthOmicsLogEnrichmentEnabled: true,
     });
-    mockGetParameter.mockResolvedValue({ Parameter: undefined });
-    mockQueryByRunId.mockResolvedValue({
-      RunId: 'run-1',
-      LaboratoryId: 'lab-1',
-      Platform: 'AWS HealthOmics',
-      Status: 'FAILED',
-      FailureReason: 'OUT_OF_MEMORY_ERROR',
-    });
-
-    await processClassificationEvent('UPDATE', { RunId: 'run-1' } as any);
-
-    expect(mockClassify).not.toHaveBeenCalled();
-    expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ FailureOwner: 'Bioinformatician', FailureClassifiedBy: 'lookup' }),
-    );
-  });
-
-  it('skips HealthOmics LLM when getParameter throws and keeps lookup', async () => {
-    mockQueryByLaboratoryId.mockResolvedValue({
-      ...labMixedProviders,
-      HealthOmicsLlmProvider: 'openai',
-      HealthOmicsLlmModelId: 'gpt-4o-mini',
-      HealthOmicsLogEnrichmentEnabled: true,
-    });
-    mockGetParameter.mockRejectedValue(new Error('SSM unavailable'));
+    setupSsm();
     mockQueryByRunId.mockResolvedValue({
       RunId: 'run-1',
       LaboratoryId: 'lab-1',

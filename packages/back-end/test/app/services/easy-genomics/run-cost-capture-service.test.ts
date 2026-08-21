@@ -16,6 +16,28 @@ import { createOmicsServiceForLab } from '../../../../src/app/services/omics-lab
 import { SsmService } from '../../../../src/app/services/ssm-service';
 import { getNextFlowApiQueryParameters, httpRequest } from '../../../../src/app/utils/rest-api-utils';
 
+function mockOmicsServiceForLab(options?: { storageCapacity?: number }) {
+  const start = new Date('2026-01-01T00:00:00Z');
+  const stop = new Date('2026-01-01T01:00:00Z');
+  (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
+    listAllRunTasks: jest.fn().mockResolvedValue([
+      {
+        instanceType: 'omics.c.large',
+        startTime: start,
+        stopTime: stop,
+        status: 'COMPLETED',
+        cacheHit: false,
+      },
+    ]),
+    getRun: jest.fn().mockResolvedValue({
+      storageType: 'STATIC',
+      ...(options?.storageCapacity !== undefined ? { storageCapacity: options.storageCapacity } : {}),
+      startTime: start,
+      stopTime: stop,
+    }),
+  });
+}
+
 describe('captureRunCostOutcome', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -36,25 +58,7 @@ describe('captureRunCostOutcome', () => {
   });
 
   it('captures HealthOmics compute and storage costs', async () => {
-    const start = new Date('2026-01-01T00:00:00Z');
-    const stop = new Date('2026-01-01T01:00:00Z');
-    (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
-      listAllRunTasks: jest.fn().mockResolvedValue([
-        {
-          instanceType: 'omics.c.large',
-          startTime: start,
-          stopTime: stop,
-          status: 'COMPLETED',
-          cacheHit: false,
-        },
-      ]),
-      getRun: jest.fn().mockResolvedValue({
-        storageType: 'STATIC',
-        storageCapacity: 1200,
-        startTime: start,
-        stopTime: stop,
-      }),
-    });
+    mockOmicsServiceForLab({ storageCapacity: 1200 });
 
     const result = await captureRunCostOutcome({
       Platform: 'AWS HealthOmics',
@@ -82,25 +86,7 @@ describe('captureRunCostOutcome', () => {
   });
 
   it('uses cost-capture as Omics userId when UserId is absent', async () => {
-    const start = new Date('2026-01-01T00:00:00Z');
-    const stop = new Date('2026-01-01T01:00:00Z');
-    (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
-      listAllRunTasks: jest.fn().mockResolvedValue([
-        {
-          instanceType: 'omics.c.large',
-          startTime: start,
-          stopTime: stop,
-          status: 'COMPLETED',
-          cacheHit: false,
-        },
-      ]),
-      getRun: jest.fn().mockResolvedValue({
-        storageType: 'STATIC',
-        storageCapacity: 1200,
-        startTime: start,
-        stopTime: stop,
-      }),
-    });
+    mockOmicsServiceForLab({ storageCapacity: 1200 });
 
     await captureRunCostOutcome({
       Platform: 'AWS HealthOmics',
@@ -113,25 +99,8 @@ describe('captureRunCostOutcome', () => {
   });
 
   it('omits ActualStorageCostUsd when storage cost cannot be calculated', async () => {
-    const start = new Date('2026-01-01T00:00:00Z');
-    const stop = new Date('2026-01-01T01:00:00Z');
-    (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
-      listAllRunTasks: jest.fn().mockResolvedValue([
-        {
-          instanceType: 'omics.c.large',
-          startTime: start,
-          stopTime: stop,
-          status: 'COMPLETED',
-          cacheHit: false,
-        },
-      ]),
-      getRun: jest.fn().mockResolvedValue({
-        storageType: 'STATIC',
-        // capacity missing → storage calculator returns undefined
-        startTime: start,
-        stopTime: stop,
-      }),
-    });
+    // capacity omitted → storage calculator returns undefined
+    mockOmicsServiceForLab();
 
     const result = await captureRunCostOutcome({
       Platform: 'AWS HealthOmics',

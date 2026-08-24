@@ -8,9 +8,12 @@
  * CORS preflight) is injected here at synth time, never written to the file.
  */
 
-// Cors.ALL_METHODS — replicated so the generated CORS preflight matches the
-// behaviour of the previous `defaultCorsPreflightOptions` on the imperative API.
-export const CORS_ALLOW_METHODS = 'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD';
+import { ACCESS_CONTROL_ALLOW_METHODS } from '@easy-genomics/shared-lib/src/app/utils/common';
+
+// Same method list the Lambda responses advertise, so the generated CORS preflight matches the
+// behaviour of the previous `defaultCorsPreflightOptions` on the imperative API. The header is
+// order-insensitive, so sharing shared-lib's ordering is safe.
+export const CORS_ALLOW_METHODS = ACCESS_CONTROL_ALLOW_METHODS.join(',');
 
 const HTTP_METHODS = ['get', 'put', 'post', 'patch', 'delete', 'head', 'options'];
 const RESOURCE_ID_SUFFIX = '/{id}';

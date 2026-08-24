@@ -2,6 +2,11 @@ import { APIGatewayProxyWithCognitoAuthorizerEvent } from 'aws-lambda';
 import { buildErrorResponse, buildResponse } from '../../../src/app/utils/common';
 import { NotFoundError, InvalidRequestError } from '../../../src/app/utils/HttpError';
 
+// Spelled out rather than derived from ACCESS_CONTROL_ALLOW_METHODS so a typo in the constant —
+// which used to be sourced from aws-cdk-lib's `Cors.ALL_METHODS` — fails here instead of silently
+// narrowing CORS at runtime.
+const EXPECTED_ALLOW_METHODS = 'GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE';
+
 const createMockEvent = (): APIGatewayProxyWithCognitoAuthorizerEvent => ({
   body: null,
   isBase64Encoded: false,
@@ -52,6 +57,15 @@ describe('buildErrorResponse', () => {
     expect(JSON.parse(result.body)).toMatchObject({ ErrorCode: 'EG-100' });
     expect(consoleSpy).toHaveBeenCalledWith('Unexpected error:', err);
   });
+
+  it('returns the CORS headers', () => {
+    const result = buildErrorResponse(new NotFoundError(), createMockEvent());
+
+    expect(result.headers).toMatchObject({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': EXPECTED_ALLOW_METHODS,
+    });
+  });
 });
 
 describe('buildResponse', () => {
@@ -61,6 +75,9 @@ describe('buildResponse', () => {
 
     expect(result.statusCode).toBe(200);
     expect(result.body).toBe(body);
-    expect(result.headers).toMatchObject({ 'Access-Control-Allow-Origin': '*' });
+    expect(result.headers).toMatchObject({
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': EXPECTED_ALLOW_METHODS,
+    });
   });
 });

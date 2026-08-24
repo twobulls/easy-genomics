@@ -51,6 +51,9 @@ export class Nx extends Component {
             // subsequent job to fetch artifacts.
             // Do NOT cache cdk.out: each Lambda asset is tens of MB and a full
             // assembly is multi‑GB; Nx was duplicating it under node_modules/.cache.
+            // Because a cache hit therefore cannot restore the cloud assembly that
+            // `deploy --app cdk.out` consumes, the local build-back-end/build-front-end
+            // scripts run `nx reset` first and each `deploy` script asserts cdk.out exists.
             outputs: ['{projectRoot}/lib'],
           },
           deploy: { dependsOn: ['build'] },

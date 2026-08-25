@@ -33,6 +33,39 @@ export type SharedWorkflowSummary = {
   ownerAccountId?: string;
 };
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTooManyRequestsError(error: unknown): boolean {
+  const err = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+  return err?.name === 'TooManyRequestsException' || err?.$metadata?.httpStatusCode === 429;
+}
+
+/**
+ * ListShares is aggressively rate-limited; SDK default retries (~3 attempts, sub-second
+ * backoff) are often insufficient under concurrent lab-page loads.
+ */
+async function listSharedWorkflowsPage(
+  omicsService: Pick<OmicsService, 'listSharedWorkflows'>,
+  input: ListSharesCommandInput,
+  maxAttempts = 5,
+): Promise<Awaited<ReturnType<OmicsService['listSharedWorkflows']>>> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await omicsService.listSharedWorkflows(input);
+    } catch (error) {
+      lastError = error;
+      if (!isTooManyRequestsError(error) || attempt === maxAttempts) {
+        throw error;
+      }
+      await sleep(Math.min(1000 * 2 ** (attempt - 1), 8000));
+    }
+  }
+  throw lastError;
+}
+
 /**
  * Paginates ListShares (resourceOwner OTHER) and returns ACTIVE shared workflows.
  */
@@ -42,7 +75,7 @@ export async function listAllSharedWorkflowSummaries(
   const out: SharedWorkflowSummary[] = [];
   let nextToken: string | undefined;
   do {
-    const page = await omicsService.listSharedWorkflows(<ListSharesCommandInput>{
+    const page = await listSharedWorkflowsPage(omicsService, <ListSharesCommandInput>{
       resourceOwner: 'OTHER',
       maxResults: 100,
       nextToken,

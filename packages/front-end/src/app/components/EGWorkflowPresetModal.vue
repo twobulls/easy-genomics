@@ -63,8 +63,13 @@
     return null;
   });
 
+  // A full tier only blocks adding a preset; renaming one that is already there is always allowed.
   const canSubmit = computed<boolean>(
-    () => trimmedName.value.length > 0 && !nameError.value && !props.saving && !tierIsFull(scope.value),
+    () =>
+      trimmedName.value.length > 0 &&
+      !nameError.value &&
+      !props.saving &&
+      !(props.mode === 'create' && tierIsFull(scope.value)),
   );
 
   // Reset to the caller's starting values each time the modal opens.

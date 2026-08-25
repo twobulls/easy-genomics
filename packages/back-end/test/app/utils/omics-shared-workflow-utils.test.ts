@@ -1,9 +1,46 @@
 import {
+  listAllSharedWorkflowSummaries,
   ownerAccountIdFromOmicsShare,
   resolveSharedWorkflowOwnerId,
 } from '../../../src/app/utils/omics-shared-workflow-utils';
 
 describe('omics-shared-workflow-utils', () => {
+  describe('listAllSharedWorkflowSummaries', () => {
+    it('retries TooManyRequestsException then returns ACTIVE shares', async () => {
+      jest.useFakeTimers();
+      try {
+        const tooMany = Object.assign(new Error('Too Many Requests'), {
+          name: 'TooManyRequestsException',
+          $metadata: { httpStatusCode: 429 },
+        });
+        const omicsService = {
+          listSharedWorkflows: jest
+            .fn()
+            .mockRejectedValueOnce(tooMany)
+            .mockResolvedValueOnce({
+              shares: [
+                {
+                  resourceId: 'wf-shared',
+                  shareName: 'Shared WF',
+                  ownerId: '111122223333',
+                  status: 'ACTIVE',
+                },
+              ],
+            }),
+        };
+
+        const resultPromise = listAllSharedWorkflowSummaries(omicsService);
+        await jest.advanceTimersByTimeAsync(1000);
+        await expect(resultPromise).resolves.toEqual([
+          { id: 'wf-shared', name: 'Shared WF', ownerAccountId: '111122223333' },
+        ]);
+        expect(omicsService.listSharedWorkflows).toHaveBeenCalledTimes(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
   describe('ownerAccountIdFromOmicsShare', () => {
     it('prefers ownerId', () => {
       expect(

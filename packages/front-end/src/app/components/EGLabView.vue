@@ -755,6 +755,8 @@
     const runId = runToCancel.value?.RunId;
     const runName = runToCancel.value?.RunName;
     const runPlatform = runToCancel.value?.Platform;
+    // Cancellation targets the compute platform's own run id, not the Easy Genomics RunId.
+    const externalRunId = runToCancel.value?.ExternalRunId;
 
     if (!runId || !runName || !runPlatform) {
       throw new Error('runToCancel is missing required information');
@@ -762,13 +764,19 @@
 
     const statusAtCancel = runToCancel.value?.Status || 'unknown';
 
+    if (!externalRunId) {
+      useToastStore().error('This run is not yet registered with its compute platform, so it cannot be cancelled');
+      isCancelDialogOpen.value = false;
+      return;
+    }
+
     try {
       if (runPlatform === 'Seqera Cloud') {
         uiStore.setRequestPending('cancelSeqeraRun');
-        await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
+        await $api.seqeraRuns.cancelPipelineRun(props.labId, externalRunId);
       } else {
         uiStore.setRequestPending('cancelOmicsRun');
-        await $api.omicsRuns.cancelWorkflowRun(props.labId, runId);
+        await $api.omicsRuns.cancelWorkflowRun(props.labId, externalRunId);
       }
       // Analytics: run cancelled (platform + status only; no run name / id).
       useAnalytics().track('run_cancelled', {

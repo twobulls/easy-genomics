@@ -17,12 +17,25 @@
 
   const titleId = useId();
 
+  const isLocked = computed(() => Boolean(props.buttonsDisabled || props.loading));
+
   function handleCancel() {
+    if (isLocked.value) {
+      return;
+    }
     emit('update:modelValue', false);
   }
 
   function handleClick() {
     emit('action-triggered');
+  }
+
+  function onModelValueUpdate(value: boolean) {
+    // Allow Escape / overlay dismiss when the dialog is not mid-action; keep locked while loading.
+    if (value === false && isLocked.value) {
+      return;
+    }
+    emit('update:modelValue', value);
   }
 </script>
 
@@ -37,8 +50,8 @@
       width: 'sm:max-w-2xl',
     }"
     :modelValue="modelValue"
-    @update:modelValue="(value) => emit('update:modelValue', value)"
-    prevent-close
+    @update:modelValue="onModelValueUpdate"
+    :prevent-close="isLocked"
     role="dialog"
     aria-modal="true"
     :aria-labelledby="titleId"
@@ -64,7 +77,7 @@
                 color="black"
                 variant="ghost"
                 :ui="{ rounded: 'rounded-full' }"
-                :disabled="buttonsDisabled || loading"
+                :disabled="isLocked"
                 aria-label="Close dialog"
               />
             </div>
@@ -72,14 +85,14 @@
           <div v-if="secondaryMessage">
             <EGText tag="p" class="mb-6 whitespace-pre-line break-words">{{ secondaryMessage }}</EGText>
           </div>
-          <div class="flex justify-end gap-4">
+          <div class="flex flex-wrap justify-end gap-4">
             <div v-if="cancelLabel">
               <EGButton
                 @click="handleCancel"
                 :label="cancelLabel"
                 :variant="ButtonVariantEnum.enum.secondary"
                 :size="ButtonSizeEnum.enum.sm"
-                :disabled="buttonsDisabled || loading"
+                :disabled="isLocked"
               />
             </div>
             <EGButton
@@ -87,7 +100,7 @@
               :label="actionLabel"
               :size="ButtonSizeEnum.enum.sm"
               :variant="actionVariant"
-              :disabled="buttonsDisabled || loading"
+              :disabled="isLocked"
               :loading="loading"
               autofocus
             />

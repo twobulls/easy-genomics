@@ -12,6 +12,7 @@
     RunRetentionMonthsSchema,
     NetworkingModeSchema,
     VpcConfigurationNameSchema,
+    LlmModelIdSchema,
     LabDetailsFormModeEnum,
     LabDetailsFormMode,
   } from '@FE/types/labs';
@@ -21,6 +22,7 @@
   import { ButtonSizeEnum, ButtonVariantEnum } from '@FE/types/buttons';
   import { useToastStore, useUiStore } from '@FE/stores';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
+  import { extractApiErrorMessage, formatValidationIssues } from '@FE/utils/api-utils';
   import {
     CreateLaboratory,
     CreateLaboratorySchema,
@@ -34,6 +36,7 @@
     DEFAULT_RUN_DETAIL_PROGRESS_POLL_INTERVAL_SECONDS,
     DEFAULT_RUN_LIST_STATUS_POLL_INTERVAL_SECONDS,
   } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
+  import { fetchLabS3BucketOptions } from '@FE/utils/lab-s3-bucket-options';
 
   const props = withDefaults(
     defineProps<{
@@ -128,11 +131,14 @@
   const isEditingGitHubAccessToken = ref(false);
 
   // BYOK provider dropdown options + per-provider hints/placeholders for the
-  // Model ID input. The leading `null` option lets users reset back to "no
-  // provider" — USelect's placeholder is only shown when the value is empty,
-  // so without an explicit reset option the dropdown becomes one-way.
+  // Model ID input. The leading option lets users reset back to "no provider".
+  // Its value is '' rather than null: USelect renders a native <select>, whose
+  // <option value> can only carry strings, so a null-valued option falls back
+  // to the option's label text instead — which then fails the LlmProvider enum
+  // on save. '' also collides with the empty-string value USelect's own
+  // :placeholder prop injects, so :placeholder is skipped on the USelects below.
   const llmProviderOptions = [
-    { value: null, label: 'None — disable AI analysis' },
+    { value: '', label: 'None — disable AI analysis' },
     { value: 'bedrock', label: 'Amazon Bedrock (uses platform IAM, no key required)' },
     { value: 'openai', label: 'OpenAI' },
     { value: 'anthropic', label: 'Anthropic' },
@@ -191,6 +197,12 @@
   const uneditedNotifyOnLabRunsEnabled = ref(false);
   const uneditedNotificationEventFilter = ref<NotificationEventFilter>('all_terminal');
   const uneditedNotifyOnLabRunsAdditionalEmailsInput = ref('');
+
+  // Per-user preferences have no effect while the lab-wide switch is off, so lock them
+  // instead of letting a user edit settings that won't take effect until it's back on.
+  const runNotificationPreferencesDisabled = computed(
+    () => !isEditing.value || isSubmittingFormData.value || !state.value.NotificationsEnabled,
+  );
 
   // The event filter only has an effect once at least one of the two "email me" toggles is on.
   const showNotificationEventFilter = computed(() => notifyOnOwnRunsEnabled.value || notifyOnLabRunsEnabled.value);
@@ -334,6 +346,34 @@
         return '';
     }
   }
+  // Maps CreateLaboratorySchema/UpdateLaboratorySchema field names to the section and label
+  // shown for them in this form, so a safeParse failure can name which section to fix.
+  const LAB_DETAILS_FIELD_LABELS: Record<string, string> = {
+    Name: 'Lab details – Name',
+    Description: 'Lab details – Description',
+    S3Bucket: 'Lab details – Default S3 bucket directory',
+    Status: 'Lab details – Status',
+    RunRetentionMonths: 'Lab details – Run retention',
+    RunListStatusPollIntervalSeconds: 'Lab details – Run list poll interval',
+    RunDetailProgressPollIntervalSeconds: 'Lab details – Run detail poll interval',
+    NextFlowTowerEnabled: 'Integrations – Seqera enabled',
+    NextFlowTowerApiBaseUrl: 'Integrations – Seqera API base URL',
+    NextFlowTowerWorkspaceId: 'Integrations – Seqera workspace ID',
+    NextFlowTowerAccessToken: 'Integrations – Seqera access token',
+    GitHubAccessToken: 'Integrations – GitHub access token',
+    AwsHealthOmicsEnabled: 'Integrations – HealthOmics enabled',
+    AwsHealthOmicsNetworkingMode: 'HealthOmics VPC Networking – Networking mode',
+    AwsHealthOmicsVpcConfigurationName: 'HealthOmics VPC Networking – VPC configuration name',
+    HealthOmicsLogEnrichmentEnabled: 'AI Failure Analysis (HealthOmics) – Log enrichment enabled',
+    HealthOmicsLlmProvider: 'AI Failure Analysis (HealthOmics) – LLM provider',
+    HealthOmicsLlmModelId: 'AI Failure Analysis (HealthOmics) – Model ID',
+    HealthOmicsLlmApiKey: 'AI Failure Analysis (HealthOmics) – API key',
+    SeqeraLlmProvider: 'AI Failure Analysis (Seqera) – LLM provider',
+    SeqeraLlmModelId: 'AI Failure Analysis (Seqera) – Model ID',
+    SeqeraLlmApiKey: 'AI Failure Analysis (Seqera) – API key',
+    NotificationsEnabled: 'Run Notifications – Enabled',
+  };
+
   /**
    * USelect's "reset to none" option uses `null` as the value, but the backend
    * Zod schemas only accept `string | undefined`. Normalize before submitting
@@ -452,12 +492,12 @@
   async function getS3Buckets() {
     try {
       isLoadingBuckets.value = true;
-      if (formMode.value !== LabDetailsFormModeEnum.enum.Create && labId) {
-        const granted = await $api.s3Access.listGrantedBuckets(labId);
-        s3Directories.value = granted.buckets;
-      } else {
-        s3Directories.value = await $api.infra.s3Buckets().then((res) => res.map((bucket) => bucket.Name));
-      }
+      s3Directories.value = await fetchLabS3BucketOptions({
+        isCreateMode: formMode.value === LabDetailsFormModeEnum.enum.Create,
+        labId,
+        orgId: useUserStore().currentOrgId,
+        api: $api.s3Access,
+      });
     } catch (error) {
       useToastStore().error('Failed to retrieve S3 buckets');
     } finally {
@@ -606,7 +646,9 @@
       } else if (error.message === `Request error: ${ERROR_CODES['EG-308']}`) {
         useToastStore().error('Invalid Workspace ID or Personal Access Token. Please try again.');
       } else {
-        useToastStore().error('An unknown error occurred. Please refresh the page and try again.');
+        useToastStore().error(
+          extractApiErrorMessage(error) ?? 'An unknown error occurred. Please refresh the page and try again.',
+        );
       }
     } finally {
       useUiStore().setRequestComplete('createLab');
@@ -637,11 +679,12 @@
   async function handleConfirmSaveRetentionPolicyChange() {
     useUiStore().setRequestPending('updateLab');
     try {
-      const parseResult = UpdateLaboratorySchema.safeParse(state.value);
+      const parseResult = UpdateLaboratorySchema.safeParse(withNormalizedLlmFields(state.value));
       if (!parseResult.success) {
-        const message = 'Update lab failed to parse lab details';
-        console.error(`${message}; parseResult: `, parseResult);
-        throw new Error(message);
+        console.error('Update lab failed to parse lab details; parseResult: ', parseResult);
+        throw new Error(
+          `Couldn't save — check: ${formatValidationIssues(parseResult.error.issues, LAB_DETAILS_FIELD_LABELS)}`,
+        );
       }
 
       const lab = parseResult.data as UpdateLaboratory;
@@ -679,7 +722,9 @@
       } else if (error.message === `Request error: ${ERROR_CODES['EG-308']}`) {
         useToastStore().error('Invalid Workspace ID or Personal Access Token. Please try again.');
       } else {
-        useToastStore().error('An unknown error occurred. Please refresh the page and try again.');
+        useToastStore().error(
+          extractApiErrorMessage(error) ?? 'An unknown error occurred. Please refresh the page and try again.',
+        );
       }
     } finally {
       useUiStore().setRequestComplete('updateLab');
@@ -698,9 +743,10 @@
 
     const parseResult = CreateLaboratorySchema.safeParse(lab);
     if (!parseResult.success) {
-      const message = 'Create lab failed to parse lab details';
-      console.error(`${message}; parseResult: `, parseResult);
-      throw new Error(message);
+      console.error('Create lab failed to parse lab details; parseResult: ', parseResult);
+      throw new Error(
+        `Couldn't save — check: ${formatValidationIssues(parseResult.error.issues, LAB_DETAILS_FIELD_LABELS)}`,
+      );
     }
 
     const newLab = parseResult.data as CreateLaboratory;
@@ -723,9 +769,10 @@
     const parseResult = UpdateLaboratorySchema.safeParse(withNormalizedLlmFields(state.value));
 
     if (!parseResult.success) {
-      const message = 'Update lab failed to parse lab details';
-      console.error(`${message}; parseResult: `, parseResult);
-      throw new Error(message);
+      console.error('Update lab failed to parse lab details; parseResult: ', parseResult);
+      throw new Error(
+        `Couldn't save — check: ${formatValidationIssues(parseResult.error.issues, LAB_DETAILS_FIELD_LABELS)}`,
+      );
     }
 
     const lab: UpdateLaboratory = parseResult.data;
@@ -803,6 +850,14 @@
         'AwsHealthOmicsVpcConfigurationName',
         state.AwsHealthOmicsVpcConfigurationName,
       );
+    }
+
+    // Model ID is only meaningful once a provider is picked for that integration.
+    if (state.HealthOmicsLlmProvider) {
+      maybeAddFieldValidationErrors(errors, LlmModelIdSchema, 'HealthOmicsLlmModelId', state.HealthOmicsLlmModelId);
+    }
+    if (state.SeqeraLlmProvider) {
+      maybeAddFieldValidationErrors(errors, LlmModelIdSchema, 'SeqeraLlmModelId', state.SeqeraLlmModelId);
     }
 
     if (notifyOnLabRunsEnabled.value && additionalEmailsError.value) {
@@ -1221,7 +1276,8 @@
                 <p class="font-medium text-black">Which provider should I choose?</p>
                 <p>
                   <span class="font-medium text-black">Amazon Bedrock</span>
-                  — no API key; the error text stays inside your AWS account. Simplest setup and tightest data control.
+                  — no API key; calls run under the platform's own AWS account and IAM role, not your lab's. Simplest
+                  setup, and the error text stays within AWS, but it isn't isolated to your own AWS account.
                 </p>
                 <p>
                   <span class="font-medium text-black">Anthropic (Claude)</span>
@@ -1258,7 +1314,6 @@
               :options="llmProviderOptions"
               value-attribute="value"
               option-attribute="label"
-              placeholder="None — disable AI analysis for HealthOmics"
               :disabled="!isEditing || isSubmittingFormData"
             />
           </EGFormGroup>
@@ -1268,6 +1323,7 @@
             label="Model ID"
             name="HealthOmicsLlmModelId"
             eager-validation
+            required
             :hint="modelIdHintFor(state.HealthOmicsLlmProvider)"
           >
             <EGInput
@@ -1330,7 +1386,6 @@
               :options="llmProviderOptions"
               value-attribute="value"
               option-attribute="label"
-              placeholder="None — disable AI analysis for Seqera"
               :disabled="!isEditing || isSubmittingFormData"
             />
           </EGFormGroup>
@@ -1340,6 +1395,7 @@
             label="Model ID"
             name="SeqeraLlmModelId"
             eager-validation
+            required
             :hint="modelIdHintFor(state.SeqeraLlmProvider)"
           >
             <EGInput
@@ -1449,7 +1505,7 @@
         <EGFormGroup
           name="NotificationsEnabled"
           eager-validation
-          hint="Turns run notification emails on or off for this lab. Individual users still choose which runs they're emailed about below."
+          hint="Turns off run-completion emails for everyone in this lab and disables the preferences below until this is re-enabled."
         >
           <div class="flex items-center justify-between">
             <label
@@ -1457,7 +1513,7 @@
               :for="`${notificationsToggleLabelId}-input`"
               class="text-sm text-black"
             >
-              Enable run notifications
+              Enable email notifications for this lab
             </label>
             <UToggle
               :id="`${notificationsToggleLabelId}-input`"
@@ -1478,7 +1534,7 @@
               <UToggle
                 class="ml-2"
                 v-model="notifyOnOwnRunsEnabled"
-                :disabled="!isEditing || isSubmittingFormData"
+                :disabled="runNotificationPreferencesDisabled"
                 :aria-labelledby="notifyOwnRunsToggleLabelId"
               />
             </div>
@@ -1492,7 +1548,7 @@
               <UToggle
                 class="ml-2"
                 v-model="notifyOnLabRunsEnabled"
-                :disabled="!isEditing || isSubmittingFormData"
+                :disabled="runNotificationPreferencesDisabled"
                 :aria-labelledby="notifyLabRunsToggleLabelId"
               />
             </div>
@@ -1506,7 +1562,7 @@
               :id="notifyLabRunsAdditionalEmailsInputId"
               v-model="notifyOnLabRunsAdditionalEmailsInput"
               placeholder="team-distro@example.com, oncall@example.com"
-              :disabled="!isEditing || isSubmittingFormData"
+              :disabled="runNotificationPreferencesDisabled"
             />
             <p v-if="additionalEmailsError" class="text-alert-danger-dark mt-1 text-xs font-medium">
               {{ additionalEmailsError }}
@@ -1522,13 +1578,13 @@
               <UCheckbox
                 label="Succeeds"
                 :model-value="eventFilterSuccessChecked"
-                :disabled="!isEditing || isSubmittingFormData"
+                :disabled="runNotificationPreferencesDisabled"
                 @update:model-value="onToggleNotifySuccesses"
               />
               <UCheckbox
                 label="Fails"
                 :model-value="eventFilterFailureChecked"
-                :disabled="!isEditing || isSubmittingFormData"
+                :disabled="runNotificationPreferencesDisabled"
                 @update:model-value="onToggleNotifyFailures"
               />
             </div>

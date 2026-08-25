@@ -981,13 +981,13 @@
   <div v-if="activeTabKey === 'runs'" role="tabpanel" id="panel-runs" aria-labelledby="tab-runs" tabindex="0">
     <h2 class="sr-only">Pipeline runs</h2>
     <div class="mb-6">
-      <div class="flex flex-row items-center gap-4">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
         <EGSearchInput
           @input-event="updateRunsSearchQuery"
           label="Search runs"
           placeholder="Search runs"
           :disabled="useUiStore().anyRequestPending(['loadLabData', 'loadLabRuns'])"
-          class="w-[408px]"
+          class="w-full max-w-[408px]"
         />
         <div class="flex items-center gap-2">
           <UToggle
@@ -1021,8 +1021,7 @@
       </template>
 
       <template #CreatedAt-data="{ row: run }">
-        <div class="text-body text-sm font-medium">{{ getDate(run.CreatedAt) }}</div>
-        <div class="text-muted">{{ getTime(run.CreatedAt) }}</div>
+        <div class="text-body text-sm font-medium">{{ formatRelativeDateTime(run.CreatedAt) }}</div>
       </template>
 
       <template #lastUpdated-data="{ row: run }">
@@ -1037,8 +1036,7 @@
           :total="run.TasksTotal"
         />
         <template v-else>
-          <div class="text-body text-sm font-medium">{{ getDate(run.ModifiedAt) }}</div>
-          <div class="text-muted">{{ getTime(run.ModifiedAt) }}</div>
+          <div class="text-body text-sm font-medium">{{ formatRelativeDateTime(run.ModifiedAt) }}</div>
         </template>
       </template>
 
@@ -1230,7 +1228,7 @@
         label="Search users"
         placeholder="Search user"
         :disabled="useUiStore().anyRequestPending(['loadLabData', 'getLabUsers', 'addUserToLab'])"
-        class="my-6 w-[408px]"
+        class="my-6 w-full max-w-[408px]"
       />
       <p class="sr-only" aria-live="polite" aria-atomic="true">{{ usersSearchStatusMessage }}</p>
 

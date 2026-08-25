@@ -30,10 +30,12 @@ interface ScriptRunResult {
 }
 
 /**
- * The script's CLI entry is gated behind `require.main === module`, so tests import the
- * module, mock the service it depends on, then await the exported `main()` directly.
- * `jest.resetModules()` per call ensures each test gets a fresh module registry that
- * picks up that call's mocked implementations.
+ * The script's CLI entry is gated behind `require.main === module && !process.env.JEST_WORKER_ID`
+ * (the latter skips auto-run under Jest; the former also keeps it from auto-running when
+ * imported as a dependency outside Jest, e.g. registry.ts statically importing `main` for
+ * run-deploy-migrations.ts), so tests import the module, mock the service it depends on, then
+ * await the exported `main()` directly. `jest.resetModules()` per call ensures each test gets a
+ * fresh module registry that picks up that call's mocked implementations.
  *
  * `main()`'s own rejection is caught here rather than left to reject the returned promise,
  * so failure-path tests can still inspect the service mocks (which pass and error assertions
@@ -76,9 +78,10 @@ async function runScript(
 
 describe('backfill-laboratory-run-attributes script', () => {
   // Every test here calls jest.resetModules() and re-imports the script and its whole dependency
-  // tree via runScript(). That's inherently heavier than a typical unit test, and under CI's
-  // parallel Jest workers the resulting CPU contention has pushed it past the 5s default.
-  jest.setTimeout(15000);
+  // tree via runScript(). That's inherently heavier than a typical unit test, and under a full
+  // parallel Jest run the resulting CPU contention has pushed individual cases past both the
+  // 5s default and a later 15s bump (suite wall time observed >3min for this file alone).
+  jest.setTimeout(60000);
 
   const originalArgv = process.argv;
 

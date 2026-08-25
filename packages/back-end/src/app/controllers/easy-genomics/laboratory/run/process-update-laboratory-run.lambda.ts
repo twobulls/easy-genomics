@@ -42,11 +42,30 @@ const ssmService = new SsmService();
 
 /**
  * Best-effort platform cost capture. Must never break the status-check pipeline.
+ *
+ * HealthOmics cost uses paginated ListRunTasks; large runs can take well over the
+ * Lambda timeout (observed: 5k+ tasks / ~2min). Cap wait time so status/notify
+ * writes always complete; uncaptured cost can be healed by process-sync-run-costs.
  */
+const COST_CAPTURE_BUDGET_MS = 8_000;
+
 async function safeCaptureRunCost(run: LaboratoryRun): Promise<LaboratoryRun['RunCostOutcome'] | undefined> {
   if (run.RunCostOutcome?.CostCapturedAt) return run.RunCostOutcome;
   try {
-    return await captureRunCostOutcome(run);
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const result = await Promise.race([
+      captureRunCostOutcome(run),
+      new Promise<undefined>((resolve) => {
+        timeoutId = setTimeout(() => {
+          console.warn(
+            `Cost capture timed out after ${COST_CAPTURE_BUDGET_MS}ms for RunId=${run.RunId} (continuing without cost)`,
+          );
+          resolve(undefined);
+        }, COST_CAPTURE_BUDGET_MS);
+      }),
+    ]);
+    if (timeoutId) clearTimeout(timeoutId);
+    return result;
   } catch (err) {
     console.warn(`Failed to capture run cost for RunId=${run.RunId} (continuing):`, err);
     return undefined;
@@ -167,7 +186,13 @@ async function safePropagateExpiresAt(
   }
 }
 
-export const handler: Handler = async (event: SQSEvent): Promise<APIGatewayProxyResult> => {
+export const handler: Handler = async (event: SQSEvent, context): Promise<APIGatewayProxyResult> => {
+  // Cost capture may leave paginated Omics ListRunTasks requests in flight after we
+  // abandon them via Promise.race; do not wait for the empty event loop or those
+  // requests will hold the invocation until the Lambda timeout and redrive SQS.
+  if (context && typeof context === 'object') {
+    (context as { callbackWaitsForEmptyEventLoop?: boolean }).callbackWaitsForEmptyEventLoop = false;
+  }
   console.log('EVENT: \n' + JSON.stringify(event, null, 2));
   try {
     const sqsRecords: SQSRecord[] = event.Records;
@@ -236,11 +261,32 @@ function hasProgressChanged(existingRun: LaboratoryRun, progress: OmicsTaskProgr
   );
 }
 
-/** Merge existing run with a progress snapshot for persistence. */
-function buildProgressUpdate(existingRun: LaboratoryRun, progress: OmicsTaskProgress | undefined): LaboratoryRun {
+const LABORATORY_RUN_PROGRESS_ATTRIBUTES = [
+  'ProgressPercent',
+  'TasksTotal',
+  'TasksCompleted',
+  'TasksRunning',
+  'TasksFailed',
+] as const;
+
+/** Merge existing run with a progress snapshot for persistence; strip progress attrs when terminal. */
+function buildProgressUpdate(
+  existingRun: LaboratoryRun,
+  progress: OmicsTaskProgress | undefined,
+  clearProgressOnTerminal: boolean,
+): { update: LaboratoryRun; remove: string[] } {
+  if (clearProgressOnTerminal) {
+    return {
+      update: { ...existingRun },
+      remove: [...LABORATORY_RUN_PROGRESS_ATTRIBUTES],
+    };
+  }
   return {
-    ...existingRun,
-    ...progressFieldsFromSnapshot(progress),
+    update: {
+      ...existingRun,
+      ...progressFieldsFromSnapshot(progress),
+    },
+    remove: [],
   };
 }
 
@@ -290,12 +336,12 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
         }
       }
 
-      const costOutcome = missingCost ? await safeCaptureRunCost(existingRun) : undefined;
-
       const backfilledExpiresAt = missingExpiresAt
         ? calculateExpiresAtEpochSeconds(new Date(terminalAtIso), retentionMonths)
         : undefined;
 
+      // Persist terminal metadata / duration before cost capture so a slow
+      // ListRunTasks cannot block notification or leave ExpiresAt unset.
       const updated = await laboratoryRunService.update({
         ...existingRun,
         ...(missingTerminalAt ? { TerminalAt: terminalAtIso } : {}),
@@ -303,7 +349,6 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
         ...(snapshot?.durationSeconds != null && existingRun.RunDurationSeconds == null
           ? { RunDurationSeconds: snapshot.durationSeconds }
           : {}),
-        ...(costOutcome ? { RunCostOutcome: costOutcome } : {}),
         ModifiedAt: now.toISOString(),
         ModifiedBy: 'Status Check',
       });
@@ -319,6 +364,18 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
         });
         if (published) {
           await publishForNotificationWithCompensation(notifiedRun);
+        }
+      }
+
+      if (missingCost) {
+        const costOutcome = await safeCaptureRunCost(updated);
+        if (costOutcome) {
+          await laboratoryRunService.update({
+            ...updated,
+            RunCostOutcome: costOutcome,
+            ModifiedAt: new Date().toISOString(),
+            ModifiedBy: 'Status Check',
+          });
         }
       }
 
@@ -353,34 +410,38 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
           ? calculateExpiresAtEpochSeconds(new Date(terminalAtIso), retentionMonths)
           : undefined;
 
-      const costOutcome =
-        nextStatusTerminal && existingRun.RunCostOutcome?.CostCapturedAt == null
-          ? await safeCaptureRunCost(existingRun)
-          : undefined;
+      const { update: progressUpdate, remove: progressRemove } = buildProgressUpdate(
+        existingRun,
+        snapshot.progress,
+        nextStatusTerminal,
+      );
 
-      const progressUpdate = buildProgressUpdate(existingRun, snapshot.progress);
-
-      laboratoryRun = await laboratoryRunService.update({
-        ...progressUpdate,
-        Status: newStatusNormalized,
-        ...(shouldSetTerminalAt ? { TerminalAt: terminalAtIso } : {}),
-        ...(newExpiresAt !== undefined ? { ExpiresAt: newExpiresAt } : {}),
-        ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
-          ? { RunDurationSeconds: snapshot.durationSeconds }
-          : {}),
-        ...(costOutcome ? { RunCostOutcome: costOutcome } : {}),
-        ...(newStatusNormalized === 'FAILED' && snapshot.failureReason && existingRun.FailureReason == null
-          ? { FailureReason: snapshot.failureReason }
-          : {}),
-        ...(newStatusNormalized === 'FAILED' && snapshot.statusMessage && existingRun.FailureReason == null
-          ? { FailureStatusMessage: snapshot.statusMessage }
-          : {}),
-        ...(newStatusNormalized === 'FAILED' && snapshot.errorReport && existingRun.FailureReason == null
-          ? { FailureErrorReport: snapshot.errorReport }
-          : {}),
-        ModifiedAt: now.toISOString(),
-        ModifiedBy: 'Status Check',
-      });
+      // Write status (and terminal metadata) before cost capture. Large Omics runs
+      // can spend minutes in ListRunTasks; blocking here left Status stuck at RUNNING
+      // until the Lambda timed out and SQS retried forever.
+      laboratoryRun = await laboratoryRunService.updateWithAttributeRemoval(
+        {
+          ...progressUpdate,
+          Status: newStatusNormalized,
+          ...(shouldSetTerminalAt ? { TerminalAt: terminalAtIso } : {}),
+          ...(newExpiresAt !== undefined ? { ExpiresAt: newExpiresAt } : {}),
+          ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null
+            ? { RunDurationSeconds: snapshot.durationSeconds }
+            : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.failureReason && existingRun.FailureReason == null
+            ? { FailureReason: snapshot.failureReason }
+            : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.statusMessage && existingRun.FailureReason == null
+            ? { FailureStatusMessage: snapshot.statusMessage }
+            : {}),
+          ...(newStatusNormalized === 'FAILED' && snapshot.errorReport && existingRun.FailureReason == null
+            ? { FailureErrorReport: snapshot.errorReport }
+            : {}),
+          ModifiedAt: now.toISOString(),
+          ModifiedBy: 'Status Check',
+        },
+        progressRemove,
+      );
       await safePropagateExpiresAt(laboratory, laboratoryRun, newExpiresAt);
       if (newStatusNormalized === 'FAILED' && existingRun.FailureOwner == null) {
         await safePublishForClassification(laboratoryRun);
@@ -396,6 +457,18 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
           await publishForNotificationWithCompensation(notifiedRun);
         }
       }
+
+      if (nextStatusTerminal && existingRun.RunCostOutcome?.CostCapturedAt == null) {
+        const costOutcome = await safeCaptureRunCost(laboratoryRun);
+        if (costOutcome) {
+          laboratoryRun = await laboratoryRunService.update({
+            ...laboratoryRun,
+            RunCostOutcome: costOutcome,
+            ModifiedAt: new Date().toISOString(),
+            ModifiedBy: 'Status Check',
+          });
+        }
+      }
     } else if (
       (snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null) ||
       hasProgressChanged(existingRun, snapshot.progress)
@@ -403,7 +476,7 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       // No status change, but duration and/or task progress need persisting.
       // Progress can change continuously while Status stays RUNNING.
       const now = new Date();
-      const progressUpdate = buildProgressUpdate(existingRun, snapshot.progress);
+      const { update: progressUpdate } = buildProgressUpdate(existingRun, snapshot.progress, false);
       laboratoryRun = await laboratoryRunService.update({
         ...progressUpdate,
         ...(snapshot.durationSeconds != null && existingRun.RunDurationSeconds == null

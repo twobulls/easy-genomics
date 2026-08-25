@@ -36,6 +36,8 @@ import {
 } from '../../../../../../src/app/controllers/easy-genomics/laboratory/run/process-update-laboratory-run.lambda';
 
 describe('process-update-laboratory-run.lambda', () => {
+  const terminalProgressRemoval = ['ProgressPercent', 'TasksTotal', 'TasksCompleted', 'TasksRunning', 'TasksFailed'];
+
   let mockLabService: jest.MockedClass<typeof LaboratoryService>;
   let mockRunService: jest.MockedClass<typeof LaboratoryRunService>;
   let mockSsmService: jest.MockedClass<typeof SsmService>;
@@ -563,6 +565,7 @@ describe('process-update-laboratory-run.lambda', () => {
         FailureReason: 'OUT_OF_MEMORY_ERROR',
         FailureStatusMessage: 'Task nf-core/rnaseq:FASTQC ran out of memory — see CloudWatch',
       }),
+      terminalProgressRemoval,
     );
   });
 
@@ -606,6 +609,7 @@ describe('process-update-laboratory-run.lambda', () => {
         FailureReason: 'Sample sheet parsing failed',
         FailureErrorReport: 'Caused by:\n  Missing required column "sample" in samplesheet.csv',
       }),
+      terminalProgressRemoval,
     );
   });
 
@@ -766,9 +770,16 @@ describe('process-update-laboratory-run.lambda', () => {
     await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
 
     expect(captureRunCostOutcome).toHaveBeenCalled();
-    expect(mockUpdateRun).toHaveBeenCalledWith(
+    // Status is written first; cost is a follow-up update when capture succeeds.
+    expect(mockUpdateRun).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         Status: 'SUCCEEDED',
+      }),
+      terminalProgressRemoval,
+    );
+    expect(mockUpdateRun).toHaveBeenCalledWith(
+      expect.objectContaining({
         RunCostOutcome: expect.objectContaining({ ActualComputeCostUsd: 4.2 }),
       }),
     );
@@ -792,8 +803,9 @@ describe('process-update-laboratory-run.lambda', () => {
       expect.objectContaining({
         Status: 'SUCCEEDED',
       }),
+      terminalProgressRemoval,
     );
-    expect(mockUpdateRun).toHaveBeenCalledWith(expect.not.objectContaining({ RunCostOutcome: expect.anything() }));
+    expect(mockUpdateRun).not.toHaveBeenCalledWith(expect.objectContaining({ RunCostOutcome: expect.anything() }));
   });
 
   it('backfills RunCostOutcome for already-terminal runs missing cost', async () => {
@@ -817,6 +829,7 @@ describe('process-update-laboratory-run.lambda', () => {
     await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
 
     expect(captureRunCostOutcome).toHaveBeenCalled();
+    // Terminal metadata update first, then cost-only update.
     expect(mockUpdateRun).toHaveBeenCalledWith(
       expect.objectContaining({
         RunCostOutcome: expect.objectContaining({ ActualComputeCostUsd: 9 }),

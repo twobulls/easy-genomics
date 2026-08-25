@@ -122,4 +122,18 @@ describe('list-granted-buckets.lambda', () => {
     expect(result.statusCode).toBe(200);
     expect(JSON.parse(result.body)).toEqual({ buckets: ['bucket-b'] });
   });
+
+  it('does not return a legacy configured default when it is off-catalog and there are zero access rows', async () => {
+    mockLabService.prototype.queryByLaboratoryId = jest.fn().mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      EnableNewBucketsByDefault: false,
+      S3Bucket: 'stale-bucket',
+    });
+    (mockAccessService.prototype.listByLaboratoryId as jest.Mock).mockResolvedValue([]);
+
+    const result = await handler(createEvent(LAB_ID), createContext(), () => {});
+    expect(result.statusCode).toBe(200);
+    expect(JSON.parse(result.body)).toEqual({ buckets: [] });
+  });
 });

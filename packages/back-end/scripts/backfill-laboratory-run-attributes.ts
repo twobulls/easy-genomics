@@ -200,8 +200,9 @@ export async function main(): Promise<void> {
   }
 }
 
-// Auto-run only when executed as a CLI script — not when imported by tests.
-if (require.main === module) {
+// Auto-run only when this file is the actual CLI entry point — not when it's imported as a
+// dependency (registry.ts statically imports `main` for run-deploy-migrations.ts) or under Jest.
+if (require.main === module && !process.env.JEST_WORKER_ID) {
   main().catch((e) => {
     console.error(e);
     process.exit(1);

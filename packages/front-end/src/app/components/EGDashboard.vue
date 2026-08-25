@@ -612,8 +612,8 @@
 <template>
   <div class="dashboard" :aria-busy="uiStore.isRequestPending('loadDashboardData')">
     <!-- Header: Title + Search -->
-    <div class="mb-2 flex items-center justify-between">
-      <div>
+    <div class="mb-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0">
         <button
           type="button"
           class="text-primary focus-visible:outline-primary-500 mb-2 flex items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
@@ -624,7 +624,7 @@
         </button>
         <EGText tag="h1" size="md" class="mb-0">Laboratory of {{ labName }}</EGText>
       </div>
-      <div class="relative w-[320px]">
+      <div class="relative w-full max-w-[320px] sm:shrink-0">
         <label :for="searchInputId" class="sr-only">Search runs, workflows, and results</label>
         <UInput
           :id="searchInputId"
@@ -657,7 +657,7 @@
 
         <div
           v-if="showDropdown"
-          class="absolute right-0 top-full z-50 mt-1 w-[420px] overflow-hidden rounded-xl border border-neutral-100 bg-white shadow-lg"
+          class="absolute left-0 right-0 top-full z-50 mt-1 w-full overflow-hidden rounded-xl border border-neutral-100 bg-white shadow-lg sm:left-auto sm:w-[420px]"
           role="presentation"
         >
           <div v-if="searchResults.length === 0" class="text-muted px-4 py-6 text-center text-sm" role="status">
@@ -799,8 +799,7 @@
         </template>
 
         <template #lastUpdated-data="{ row: run }">
-          <div class="text-body text-sm font-medium">{{ getDate(run.lastUpdated) }}</div>
-          <div class="text-muted text-xs">{{ getTime(run.lastUpdated) }}</div>
+          <div class="text-body text-sm font-medium">{{ formatRelativeDateTime(run.lastUpdated) }}</div>
         </template>
 
         <template #Status-data="{ row: run }">
@@ -845,22 +844,29 @@
         </div>
       </div>
 
-      <dl class="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <dl class="mt-4 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
         <div
           v-for="stat in overviewStats"
           :key="stat.key"
-          class="flex items-center gap-4 rounded-2xl border border-neutral-100 bg-white p-6"
+          class="flex min-w-0 items-center gap-3 rounded-2xl border border-neutral-100 bg-white p-4 sm:gap-4 sm:p-6"
         >
           <div
-            class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12"
             :class="stat.bgColor"
             aria-hidden="true"
           >
-            <UIcon :name="stat.icon" class="h-6 w-6" :class="stat.iconColor" />
+            <UIcon :name="stat.icon" class="h-5 w-5 sm:h-6 sm:w-6" :class="stat.iconColor" />
           </div>
-          <div>
-            <dt class="text-muted text-sm">{{ stat.label }}</dt>
-            <dd class="text-heading m-0 font-serif text-3xl font-semibold">{{ stat.value }}</dd>
+          <div class="min-w-0">
+            <dt class="text-muted leading-snug" :class="stat.key === 'run-spend' ? 'text-xs' : 'text-xs sm:text-sm'">
+              {{ stat.label }}
+            </dt>
+            <dd
+              class="text-heading m-0 break-words font-serif font-semibold"
+              :class="stat.key === 'run-spend' ? 'text-xl sm:text-2xl' : 'text-2xl sm:text-3xl'"
+            >
+              {{ stat.value }}
+            </dd>
           </div>
         </div>
       </dl>

@@ -51,7 +51,12 @@ jobs:
         id: diff
         run: |-
           set -euo pipefail
-          git show "origin/${GITHUB_BASE_REF}:packages/shared-lib/src/app/openapi/easy-genomics-api.yaml" > /tmp/api-base.yaml
+          # The spec has no baseline to diff against when it does not exist in the base branch yet
+          # (first release PR into a long-lived branch, or the PR adds the spec).
+          if ! git show "origin/${GITHUB_BASE_REF}:packages/shared-lib/src/app/openapi/easy-genomics-api.yaml" > /tmp/api-base.yaml 2>/dev/null; then
+            echo "### ℹ️ API diff: no baseline spec in origin/${GITHUB_BASE_REF}, skipping diff" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
 
           # No changes — annotate step summary and exit
           if diff -q /tmp/api-base.yaml packages/shared-lib/src/app/openapi/easy-genomics-api.yaml > /dev/null 2>&1; then

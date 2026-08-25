@@ -262,11 +262,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
           },
+          nodeModules: ['@aws-sdk/client-omics'],
         },
         '/easy-genomics/laboratory/update-laboratory': {
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
           },
+          nodeModules: ['@aws-sdk/client-omics'],
         },
         '/easy-genomics/laboratory/delete-laboratory': {
           environment: {

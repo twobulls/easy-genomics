@@ -17,11 +17,8 @@ import { DynamoDBService } from '../src/app/services/dynamodb-service';
 import { shouldSeedAllowForLaboratory } from './lib/migrate-laboratory-s3-access-seed-lib';
 import { resolveNamePrefix } from './lib/resolve-name-prefix';
 
-const namePrefix = resolveNamePrefix();
-process.env.NAME_PREFIX = namePrefix;
-
 class LaboratoryScanService extends DynamoDBService {
-  readonly TABLE_NAME = `${namePrefix}-laboratory-table`;
+  readonly TABLE_NAME = `${process.env.NAME_PREFIX}-laboratory-table`;
 
   async scanAll(): Promise<Laboratory[]> {
     const labs: Laboratory[] = [];
@@ -41,6 +38,10 @@ class LaboratoryScanService extends DynamoDBService {
 }
 
 export async function main(): Promise<void> {
+  // Resolved here, not at module top level: registry.ts imports this module's `main` statically,
+  // which would otherwise run before run-deploy-migrations.ts's entrypoint has loaded .env.local.
+  const namePrefix = resolveNamePrefix();
+  process.env.NAME_PREFIX = namePrefix;
   console.log(`Seeding laboratory S3 access for NAME_PREFIX=${namePrefix}`);
 
   const scanService = new LaboratoryScanService();

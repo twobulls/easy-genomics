@@ -36,6 +36,7 @@
   const runStore = useRunStore();
   const labStore = useLabsStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadLabData');
   const userStore = useUserStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
@@ -911,6 +912,7 @@
       :show-back="true"
       show-org-breadcrumb
       show-lab-breadcrumb
+      :is-loading="uiStore.isRequestPending('loadLabData')"
     >
       <EGButton
         v-if="!superuser && activeTabKey === 'omicsWorkflows' && canCreateOmicsWorkflows"

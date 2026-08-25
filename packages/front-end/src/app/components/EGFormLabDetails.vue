@@ -76,7 +76,7 @@
   const formMode = ref(props.formMode);
   const s3Directories = ref([]);
   const isLoadingBuckets = ref(false);
-  const isLoadingFormData = ref(false);
+  const isLoadingFormData = ref(props.formMode !== LabDetailsFormModeEnum.enum.Create);
   const canSubmit = ref(false);
 
   const isEditing = computed<boolean>(() => formMode.value !== LabDetailsFormModeEnum.enum.ReadOnly);
@@ -417,12 +417,10 @@
   }
 
   onMounted(async () => {
-    await getS3Buckets();
-
     if (formMode.value !== LabDetailsFormModeEnum.enum.Create) {
-      await getLabDetails();
-      await loadNotificationPreferences();
+      await Promise.all([getS3Buckets(), getLabDetails(), loadNotificationPreferences()]);
     } else {
+      await getS3Buckets();
       isLoadingNotificationPrefs.value = false;
     }
     switchToFormMode(formMode.value);
@@ -713,7 +711,7 @@
       isEditingGitHubAccessToken.value = false;
       retentionPreviewCacheMonths.value = null;
       retentionPreviewCounts.value = null;
-      await getLabDetails();
+      await getLabDetails({ showLoader: false });
 
       useToastStore().success(`${lab.Name} successfully updated`);
     } catch (error: any) {
@@ -788,7 +786,7 @@
 
     isEditingNextFlowTowerAccessToken.value = false;
     isEditingGitHubAccessToken.value = false;
-    await getLabDetails();
+    await getLabDetails({ showLoader: false });
 
     useToastStore().success(`${lab.Name} successfully updated`);
   }
@@ -996,108 +994,124 @@
 </script>
 
 <template>
-  <div v-if="isLoadingFormData" :aria-busy="true" aria-labelledby="lab-settings-loading-status">
-    <p id="lab-settings-loading-status" class="sr-only" role="status" aria-live="polite">Loading lab settings…</p>
-    <USkeleton class="min-h-96 w-full" aria-hidden="true" />
-  </div>
+  <p v-if="isLoadingFormData" id="lab-settings-loading-status" class="sr-only" role="status" aria-live="polite">
+    Loading lab settings…
+  </p>
   <UForm
-    v-else
     :validate="validate"
     :state="state"
     :aria-labelledby="formMode !== LabDetailsFormModeEnum.enum.Create ? settingsHeadingId : undefined"
-    :aria-busy="isSubmittingFormData || isLoadingRetentionPreview"
+    :aria-busy="isSubmittingFormData || isLoadingRetentionPreview || isLoadingFormData"
+    :aria-describedby="isLoadingFormData ? 'lab-settings-loading-status' : undefined"
     @submit="onSubmit"
   >
     <EGText v-if="formMode !== LabDetailsFormModeEnum.enum.Create" :id="settingsHeadingId" tag="h2" class="sr-only">
       Lab settings
     </EGText>
     <EGCollapsibleSection heading-id="lab-settings-details-heading" title="Lab details" default-open>
-      <!-- Lab Name -->
-      <EGFormGroup label="Lab Name" name="Name" eager-validation required>
-        <EGInput
-          v-model="state.Name"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Enter lab name (required and must be unique)"
-          autofocus
-        />
-      </EGFormGroup>
+      <div v-if="isLoadingFormData" class="flex flex-col" aria-hidden="true">
+        <div class="mb-6 space-y-2">
+          <USkeleton class="h-4 w-24" />
+          <USkeleton class="h-12 w-full" />
+        </div>
+        <div class="mb-6 space-y-2">
+          <USkeleton class="h-4 w-32" />
+          <USkeleton class="h-20 w-full" />
+        </div>
+        <div v-for="n in 4" :key="n" class="mb-6 space-y-2 last:mb-0">
+          <USkeleton class="h-4 w-48" />
+          <USkeleton class="h-12 w-full" />
+          <USkeleton class="h-3 w-64" />
+        </div>
+      </div>
+      <template v-else>
+        <!-- Lab Name -->
+        <EGFormGroup label="Lab Name" name="Name" eager-validation required>
+          <EGInput
+            v-model="state.Name"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Enter lab name (required and must be unique)"
+            autofocus
+          />
+        </EGFormGroup>
 
-      <!-- Lab Description -->
-      <EGFormGroup label="Lab Description" name="Description" eager-validation>
-        <EGTextArea
-          v-model="state.Description"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Describe your lab and what runs should be launched by Lab users."
-        />
-      </EGFormGroup>
+        <!-- Lab Description -->
+        <EGFormGroup label="Lab Description" name="Description" eager-validation>
+          <EGTextArea
+            v-model="state.Description"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Describe your lab and what runs should be launched by Lab users."
+          />
+        </EGFormGroup>
 
-      <EGFormGroup label="Run retention (months)" name="RunRetentionMonths" eager-validation>
-        <EGInput
-          v-model.number="state.RunRetentionMonths"
-          type="number"
-          min="0"
-          max="120"
-          step="1"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Enter number of months (0 for never)"
-          :aria-describedby="retentionHelpId"
-        />
-        <p :id="retentionHelpId" class="text-muted mt-1 text-xs">0 = never delete run records</p>
-      </EGFormGroup>
+        <EGFormGroup label="Run retention (months)" name="RunRetentionMonths" eager-validation>
+          <EGInput
+            v-model.number="state.RunRetentionMonths"
+            type="number"
+            min="0"
+            max="120"
+            step="1"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Enter number of months (0 for never)"
+            :aria-describedby="retentionHelpId"
+          />
+          <p :id="retentionHelpId" class="text-muted mt-1 text-xs">0 = never delete run records</p>
+        </EGFormGroup>
 
-      <EGFormGroup
-        label="Runs list status poll interval (seconds)"
-        name="RunListStatusPollIntervalSeconds"
-        eager-validation
-      >
-        <EGInput
-          v-model.number="state.RunListStatusPollIntervalSeconds"
-          type="number"
-          min="30"
-          max="1800"
-          step="1"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Enter seconds between list updates"
-          :aria-describedby="runsListPollHelpId"
-        />
-        <p :id="runsListPollHelpId" class="text-muted mt-1 text-xs">
-          Controls how often the lab runs list refreshes run statuses. Allowed range: 30 to 1800 seconds.
-        </p>
-      </EGFormGroup>
+        <EGFormGroup
+          label="Runs list status poll interval (seconds)"
+          name="RunListStatusPollIntervalSeconds"
+          eager-validation
+        >
+          <EGInput
+            v-model.number="state.RunListStatusPollIntervalSeconds"
+            type="number"
+            min="30"
+            max="1800"
+            step="1"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Enter seconds between list updates"
+            :aria-describedby="runsListPollHelpId"
+          />
+          <p :id="runsListPollHelpId" class="text-muted mt-1 text-xs">
+            Controls how often the lab runs list refreshes run statuses. Allowed range: 30 to 1800 seconds.
+          </p>
+        </EGFormGroup>
 
-      <EGFormGroup
-        label="Run detail progress poll interval (seconds)"
-        name="RunDetailProgressPollIntervalSeconds"
-        eager-validation
-      >
-        <EGInput
-          v-model.number="state.RunDetailProgressPollIntervalSeconds"
-          type="number"
-          min="10"
-          max="300"
-          step="1"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Enter seconds between run detail updates"
-          :aria-describedby="runDetailPollHelpId"
-        />
-        <p :id="runDetailPollHelpId" class="text-muted mt-1 text-xs">
-          Controls how often the run detail page refreshes task progress. Allowed range: 10 to 300 seconds.
-        </p>
-      </EGFormGroup>
+        <EGFormGroup
+          label="Run detail progress poll interval (seconds)"
+          name="RunDetailProgressPollIntervalSeconds"
+          eager-validation
+        >
+          <EGInput
+            v-model.number="state.RunDetailProgressPollIntervalSeconds"
+            type="number"
+            min="10"
+            max="300"
+            step="1"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Enter seconds between run detail updates"
+            :aria-describedby="runDetailPollHelpId"
+          />
+          <p :id="runDetailPollHelpId" class="text-muted mt-1 text-xs">
+            Controls how often the run detail page refreshes task progress. Allowed range: 10 to 300 seconds.
+          </p>
+        </EGFormGroup>
 
-      <EGFormGroup v-if="useUserStore().isOrgAdmin()" label="Default S3 bucket directory" name="S3Bucket" required>
-        <EGSelect
-          :options="s3Directories"
-          v-model="selectedS3Bucket"
-          :disabled="!isEditing || isSubmittingFormData"
-          placeholder="Please select an S3 bucket from the list below"
-          searchable-placeholder="Search existing S3 buckets..."
-        />
-        <p v-if="isEditing && persistedBucketNoLongerGranted" class="text-alert-danger-dark mt-1 text-xs">
-          This lab’s previous default bucket ({{ uneditedLabDetails?.S3Bucket }}) is no longer accessible, likely
-          because access was revoked. Select a currently available S3 bucket to continue.
-        </p>
-      </EGFormGroup>
+        <EGFormGroup v-if="useUserStore().isOrgAdmin()" label="Default S3 bucket directory" name="S3Bucket" required>
+          <EGSelect
+            :options="s3Directories"
+            v-model="selectedS3Bucket"
+            :disabled="!isEditing || isSubmittingFormData"
+            placeholder="Please select an S3 bucket from the list below"
+            searchable-placeholder="Search existing S3 buckets..."
+          />
+          <p v-if="isEditing && persistedBucketNoLongerGranted" class="text-alert-danger-dark mt-1 text-xs">
+            This lab’s previous default bucket ({{ uneditedLabDetails?.S3Bucket }}) is no longer accessible, likely
+            because access was revoked. Select a currently available S3 bucket to continue.
+          </p>
+        </EGFormGroup>
+      </template>
     </EGCollapsibleSection>
 
     <div class="mt-6 flex flex-col gap-6">
@@ -1105,146 +1119,159 @@
         heading-id="lab-settings-integrations-heading"
         title="Integrations"
         description="Seqera and HealthOmics connections for this lab."
-        :badges="integrationsBadges"
+        :badges="isLoadingFormData ? [] : integrationsBadges"
       >
-        <section :aria-labelledby="seqeraSectionId">
-          <h3 :id="seqeraSectionId" class="sr-only">Seqera integration</h3>
+        <!-- Don't render Seqera/HealthOmics Off from defaultState while lab details are still loading. -->
+        <div v-if="isLoadingFormData" class="flex flex-col" aria-hidden="true">
+          <div class="mb-6 flex items-center justify-between">
+            <USkeleton class="h-4 w-48" />
+            <USkeleton class="h-6 w-12" />
+          </div>
+          <div class="flex items-center justify-between">
+            <USkeleton class="h-4 w-56" />
+            <USkeleton class="h-6 w-12" />
+          </div>
+        </div>
+        <template v-else>
+          <section :aria-labelledby="seqeraSectionId">
+            <h3 :id="seqeraSectionId" class="sr-only">Seqera integration</h3>
 
-          <!-- Next Flow Tower: Toggle -->
-          <EGFormGroup
-            label="Enable Seqera Integration"
-            name="NextFlowTowerEnable"
-            eager-validation
-            class="flex items-center justify-between"
-          >
-            <label :id="seqeraToggleLabelId" :for="`${seqeraToggleLabelId}-input`" class="sr-only">
-              Enable Seqera Integration
-            </label>
-            <UToggle
-              :id="`${seqeraToggleLabelId}-input`"
-              class="ml-2"
-              v-model="state.NextFlowTowerEnabled"
-              :disabled="!isEditing || isSubmittingFormData"
-              :aria-labelledby="seqeraToggleLabelId"
-            />
-          </EGFormGroup>
-
-          <!-- Next Flow Tower: Endpoint -->
-          <EGFormGroup
-            v-if="state.NextFlowTowerEnabled"
-            label="Seqera Endpoint URL"
-            name="NextFlowTowerApiBaseUrl"
-            eager-validation
-            required
-          >
-            <EGInput v-model="state.NextFlowTowerApiBaseUrl" :disabled="!isEditing || isSubmittingFormData" />
-          </EGFormGroup>
-
-          <!-- Next Flow Tower: Workspace ID -->
-          <EGFormGroup
-            v-if="state.NextFlowTowerEnabled"
-            label="Workspace ID"
-            name="NextFlowTowerWorkspaceId"
-            eager-validation
-          >
-            <EGInput
-              v-model="state.NextFlowTowerWorkspaceId"
-              placeholder="Defaults to the Next Flow Tower personal workspace if not specified."
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
-
-          <!-- Next Flow Tower: Access Token -->
-          <EGFormGroup
-            v-if="isEditing && state.NextFlowTowerEnabled"
-            label="Personal Access Token"
-            name="NextFlowTowerAccessToken"
-            eager-validation
-            :required="formMode === LabDetailsFormModeEnum.enum.Create"
-          >
-            <!-- Next Flow Tower: Access Token: Create  Mode -->
-            <EGPasswordInput
-              v-if="formMode === LabDetailsFormModeEnum.enum.Create"
-              v-model="state.NextFlowTowerAccessToken"
-              :password="true"
-              :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-            <!-- Next Flow Tower: Access Token: Edit  Mode -->
-            <EGPasswordInput
-              v-if="formMode === LabDetailsFormModeEnum.enum.Edit"
-              v-model="state.NextFlowTowerAccessToken"
-              :select-on-focus="true"
-              :password="true"
-              placeholder="Add or update the Next Flow Tower personal access token. Note: A previously set token will never be shown."
-              :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
-              :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+            <!-- Next Flow Tower: Toggle -->
+            <EGFormGroup
+              label="Enable Seqera Integration"
+              name="NextFlowTowerEnable"
               eager-validation
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
-        </section>
+              class="flex items-center justify-between"
+            >
+              <label :id="seqeraToggleLabelId" :for="`${seqeraToggleLabelId}-input`" class="sr-only">
+                Enable Seqera Integration
+              </label>
+              <UToggle
+                :id="`${seqeraToggleLabelId}-input`"
+                class="ml-2"
+                v-model="state.NextFlowTowerEnabled"
+                :disabled="!isEditing || isSubmittingFormData"
+                :aria-labelledby="seqeraToggleLabelId"
+              />
+            </EGFormGroup>
 
-        <section :aria-labelledby="healthOmicsSectionId">
-          <h3 :id="healthOmicsSectionId" class="sr-only">HealthOmics integration</h3>
-
-          <!-- HealthOmics Toggle -->
-          <EGFormGroup
-            label="Enable HealthOmics Integration"
-            name="HealthOmicsEnable"
-            eager-validation
-            class="flex items-center justify-between"
-          >
-            <label :id="healthOmicsToggleLabelId" :for="`${healthOmicsToggleLabelId}-input`" class="sr-only">
-              Enable HealthOmics Integration
-            </label>
-            <UToggle
-              :id="`${healthOmicsToggleLabelId}-input`"
-              class="ml-2"
-              v-model="state.AwsHealthOmicsEnabled"
-              :disabled="!isEditing || isSubmittingFormData"
-              :aria-labelledby="healthOmicsToggleLabelId"
-            />
-          </EGFormGroup>
-          <EGFormGroup
-            v-if="isEditing && state.AwsHealthOmicsEnabled"
-            label="GitHub Personal Access Token"
-            name="GitHubAccessToken"
-            eager-validation
-            :required="formMode === LabDetailsFormModeEnum.enum.Create"
-          >
-            <div v-if="formMode === LabDetailsFormModeEnum.enum.Edit" class="mb-2 flex items-center gap-2">
-              <UBadge
-                size="sm"
-                class="bg-alert-danger-muted text-alert-danger rounded-xl border-0 ring-0"
-                aria-hidden="true"
-              >
-                TOKEN SAVED
-              </UBadge>
-              <p class="text-alert-danger-dark text-xs font-medium">
-                Saving a new value will replace the existing token.
-              </p>
-            </div>
-            <EGPasswordInput
-              v-if="formMode === LabDetailsFormModeEnum.enum.Create"
-              v-model="state.GitHubAccessToken"
-              :password="true"
-              :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-            <EGPasswordInput
-              v-if="formMode === LabDetailsFormModeEnum.enum.Edit"
-              v-model="state.GitHubAccessToken"
-              :select-on-focus="true"
-              :password="true"
-              placeholder="Add or update the GitHub personal access token. Note: A previously set token will never be shown."
-              :show-toggle-password-button="isEditingGitHubAccessToken"
-              :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+            <!-- Next Flow Tower: Endpoint -->
+            <EGFormGroup
+              v-if="state.NextFlowTowerEnabled"
+              label="Seqera Endpoint URL"
+              name="NextFlowTowerApiBaseUrl"
               eager-validation
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
-        </section>
+              required
+            >
+              <EGInput v-model="state.NextFlowTowerApiBaseUrl" :disabled="!isEditing || isSubmittingFormData" />
+            </EGFormGroup>
+
+            <!-- Next Flow Tower: Workspace ID -->
+            <EGFormGroup
+              v-if="state.NextFlowTowerEnabled"
+              label="Workspace ID"
+              name="NextFlowTowerWorkspaceId"
+              eager-validation
+            >
+              <EGInput
+                v-model="state.NextFlowTowerWorkspaceId"
+                placeholder="Defaults to the Next Flow Tower personal workspace if not specified."
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+            </EGFormGroup>
+
+            <!-- Next Flow Tower: Access Token -->
+            <EGFormGroup
+              v-if="isEditing && state.NextFlowTowerEnabled"
+              label="Personal Access Token"
+              name="NextFlowTowerAccessToken"
+              eager-validation
+              :required="formMode === LabDetailsFormModeEnum.enum.Create"
+            >
+              <!-- Next Flow Tower: Access Token: Create  Mode -->
+              <EGPasswordInput
+                v-if="formMode === LabDetailsFormModeEnum.enum.Create"
+                v-model="state.NextFlowTowerAccessToken"
+                :password="true"
+                :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+              <!-- Next Flow Tower: Access Token: Edit  Mode -->
+              <EGPasswordInput
+                v-if="formMode === LabDetailsFormModeEnum.enum.Edit"
+                v-model="state.NextFlowTowerAccessToken"
+                :select-on-focus="true"
+                :password="true"
+                placeholder="Add or update the Next Flow Tower personal access token. Note: A previously set token will never be shown."
+                :show-toggle-password-button="isEditingNextFlowTowerAccessToken"
+                :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+                eager-validation
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+            </EGFormGroup>
+          </section>
+
+          <section :aria-labelledby="healthOmicsSectionId">
+            <h3 :id="healthOmicsSectionId" class="sr-only">HealthOmics integration</h3>
+
+            <!-- HealthOmics Toggle -->
+            <EGFormGroup
+              label="Enable HealthOmics Integration"
+              name="HealthOmicsEnable"
+              eager-validation
+              class="flex items-center justify-between"
+            >
+              <label :id="healthOmicsToggleLabelId" :for="`${healthOmicsToggleLabelId}-input`" class="sr-only">
+                Enable HealthOmics Integration
+              </label>
+              <UToggle
+                :id="`${healthOmicsToggleLabelId}-input`"
+                class="ml-2"
+                v-model="state.AwsHealthOmicsEnabled"
+                :disabled="!isEditing || isSubmittingFormData"
+                :aria-labelledby="healthOmicsToggleLabelId"
+              />
+            </EGFormGroup>
+            <EGFormGroup
+              v-if="isEditing && state.AwsHealthOmicsEnabled"
+              label="GitHub Personal Access Token"
+              name="GitHubAccessToken"
+              eager-validation
+              :required="formMode === LabDetailsFormModeEnum.enum.Create"
+            >
+              <div v-if="formMode === LabDetailsFormModeEnum.enum.Edit" class="mb-2 flex items-center gap-2">
+                <UBadge
+                  size="sm"
+                  class="bg-alert-danger-muted text-alert-danger rounded-xl border-0 ring-0"
+                  aria-hidden="true"
+                >
+                  TOKEN SAVED
+                </UBadge>
+                <p class="text-alert-danger-dark text-xs font-medium">
+                  Saving a new value will replace the existing token.
+                </p>
+              </div>
+              <EGPasswordInput
+                v-if="formMode === LabDetailsFormModeEnum.enum.Create"
+                v-model="state.GitHubAccessToken"
+                :password="true"
+                :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+              <EGPasswordInput
+                v-if="formMode === LabDetailsFormModeEnum.enum.Edit"
+                v-model="state.GitHubAccessToken"
+                :select-on-focus="true"
+                :password="true"
+                placeholder="Add or update the GitHub personal access token. Note: A previously set token will never be shown."
+                :show-toggle-password-button="isEditingGitHubAccessToken"
+                :autocomplete="AutoCompleteOptionsEnum.enum.Off"
+                eager-validation
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+            </EGFormGroup>
+          </section>
+        </template>
       </EGCollapsibleSection>
 
       <!-- AI Failure Analysis: BYOK per integration. HealthOmics and Seqera each get
@@ -1258,178 +1285,192 @@
         heading-id="lab-settings-ai-failure-analysis-heading"
         title="AI Failure Analysis"
         description="When a run fails, classify the cause by responsible party using an LLM."
-        :badges="[aiFailureAnalysisBadge]"
+        :badges="isLoadingFormData ? [] : [aiFailureAnalysisBadge]"
       >
-        <div class="mb-3 flex items-center gap-1.5">
-          <p class="text-muted text-xs">
-            Documented HealthOmics error codes use a built-in lookup; the LLM only handles ambiguous or free-text cases.
-          </p>
-          <!-- Provider guidance: helps an admin decide which LLM to bring (Bedrock vs OpenAI vs Anthropic)
-               before they pick one in the dropdowns below. -->
-          <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
-            <template #text>
-              <div class="space-y-1.5 py-1">
-                <p>
-                  Each integration can use a different provider — for example a cheaper model for high-volume Seqera
-                  traffic, a more accurate model for HealthOmics ambiguous cases.
-                </p>
-                <p class="font-medium text-black">Which provider should I choose?</p>
-                <p>
-                  <span class="font-medium text-black">Amazon Bedrock</span>
-                  — no API key; calls run under the platform's own AWS account and IAM role, not your lab's. Simplest
-                  setup, and the error text stays within AWS, but it isn't isolated to your own AWS account.
-                </p>
-                <p>
-                  <span class="font-medium text-black">Anthropic (Claude)</span>
-                  — best accuracy on nuanced or ambiguous errors. Requires an Anthropic API key.
-                </p>
-                <p>
-                  <span class="font-medium text-black">OpenAI (GPT)</span>
-                  — low-cost small models (e.g. gpt-4o-mini) suited to high-volume traffic. Requires an OpenAI API key.
-                </p>
-                <p class="italic">
-                  OpenAI and Anthropic send the error text to that provider; Bedrock does not leave AWS.
-                </p>
-              </div>
-            </template>
-            <UIcon
-              name="i-heroicons-information-circle"
-              class="text-muted h-4 w-4 shrink-0"
-              aria-label="LLM provider guidance"
-            />
-          </UTooltip>
+        <!-- Don't render provider/enablement state from defaultState while lab details are still loading. -->
+        <div v-if="isLoadingFormData" class="flex flex-col gap-6" aria-hidden="true">
+          <USkeleton class="h-3 w-3/4" />
+          <div v-for="n in 2" :key="n" class="space-y-2">
+            <USkeleton class="h-4 w-32" />
+            <USkeleton class="h-12 w-full" />
+          </div>
         </div>
+        <template v-else>
+          <div class="mb-3 flex items-center gap-1.5">
+            <p class="text-muted text-xs">
+              Documented HealthOmics error codes use a built-in lookup; the LLM only handles ambiguous or free-text
+              cases.
+            </p>
+            <!-- Provider guidance: helps an admin decide which LLM to bring (Bedrock vs OpenAI vs Anthropic)
+               before they pick one in the dropdowns below. -->
+            <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
+              <template #text>
+                <div class="space-y-1.5 py-1">
+                  <p>
+                    Each integration can use a different provider — for example a cheaper model for high-volume Seqera
+                    traffic, a more accurate model for HealthOmics ambiguous cases.
+                  </p>
+                  <p class="font-medium text-black">Which provider should I choose?</p>
+                  <p>
+                    <span class="font-medium text-black">Amazon Bedrock</span>
+                    — no API key; calls run under the platform's own AWS account and IAM role, not your lab's. Simplest
+                    setup, and the error text stays within AWS, but it isn't isolated to your own AWS account.
+                  </p>
+                  <p>
+                    <span class="font-medium text-black">Anthropic (Claude)</span>
+                    — best accuracy on nuanced or ambiguous errors. Requires an Anthropic API key.
+                  </p>
+                  <p>
+                    <span class="font-medium text-black">OpenAI (GPT)</span>
+                    — low-cost small models (e.g. gpt-4o-mini) suited to high-volume traffic. Requires an OpenAI API
+                    key.
+                  </p>
+                  <p class="italic">
+                    OpenAI and Anthropic send the error text to that provider; Bedrock does not leave AWS.
+                  </p>
+                </div>
+              </template>
+              <UIcon
+                name="i-heroicons-information-circle"
+                class="text-muted h-4 w-4 shrink-0"
+                aria-label="LLM provider guidance"
+              />
+            </UTooltip>
+          </div>
 
-        <p v-if="!state.AwsHealthOmicsEnabled && !state.NextFlowTowerEnabled" class="text-muted text-xs">
-          Enable HealthOmics or Seqera integration above to configure AI failure analysis for that integration.
-        </p>
+          <p v-if="!state.AwsHealthOmicsEnabled && !state.NextFlowTowerEnabled" class="text-muted text-xs">
+            Enable HealthOmics or Seqera integration above to configure AI failure analysis for that integration.
+          </p>
 
-        <!-- HealthOmics sub-section -->
-        <div v-if="state.AwsHealthOmicsEnabled" class="mb-6 rounded border border-gray-200 p-4">
-          <p class="mb-3 text-sm font-medium text-black">HealthOmics</p>
+          <!-- HealthOmics sub-section -->
+          <div v-if="state.AwsHealthOmicsEnabled" class="mb-6 rounded border border-gray-200 p-4">
+            <p class="mb-3 text-sm font-medium text-black">HealthOmics</p>
 
-          <EGFormGroup label="LLM Provider" name="HealthOmicsLlmProvider" eager-validation>
-            <USelect
-              v-model="state.HealthOmicsLlmProvider"
-              :options="llmProviderOptions"
-              value-attribute="value"
-              option-attribute="label"
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
-
-          <EGFormGroup
-            v-if="state.HealthOmicsLlmProvider"
-            label="Model ID"
-            name="HealthOmicsLlmModelId"
-            eager-validation
-            required
-            :hint="modelIdHintFor(state.HealthOmicsLlmProvider)"
-          >
-            <EGInput
-              v-model="state.HealthOmicsLlmModelId"
-              :placeholder="modelIdPlaceholderFor(state.HealthOmicsLlmProvider)"
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
-
-          <EGFormGroup
-            v-if="
-              isEditing && (state.HealthOmicsLlmProvider === 'openai' || state.HealthOmicsLlmProvider === 'anthropic')
-            "
-            label="API Key"
-            name="HealthOmicsLlmApiKey"
-            eager-validation
-            :required="formMode === LabDetailsFormModeEnum.enum.Create || !uneditedLabDetails?.HasHealthOmicsLlmApiKey"
-          >
-            <div v-if="uneditedLabDetails?.HasHealthOmicsLlmApiKey" class="mb-2 flex items-center gap-2">
-              <UBadge size="sm" class="bg-alert-danger-muted text-alert-danger rounded-xl border-0 ring-0">
-                KEY SAVED
-              </UBadge>
-              <p class="text-alert-danger-dark text-xs font-medium">
-                Saving a new value will replace the existing key.
-              </p>
-            </div>
-            <EGPasswordInput
-              v-model="state.HealthOmicsLlmApiKey"
-              :select-on-focus="true"
-              :password="true"
-              placeholder="Paste your provider API key. A previously set key is never shown."
-              :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
-
-          <EGFormGroup
-            v-if="state.HealthOmicsLlmProvider"
-            name="HealthOmicsLogEnrichmentEnabled"
-            hint="Sends a redacted excerpt of the failed run's CloudWatch logs to the AI for deeper analysis. Identifiers, paths, and secrets are stripped before sending."
-          >
-            <div class="flex items-center">
-              <span class="text-sm text-black">Analyse run logs on failure</span>
-              <UToggle
-                class="ml-2"
-                v-model="state.HealthOmicsLogEnrichmentEnabled"
+            <EGFormGroup label="LLM Provider" name="HealthOmicsLlmProvider" eager-validation>
+              <USelect
+                v-model="state.HealthOmicsLlmProvider"
+                :options="llmProviderOptions"
+                value-attribute="value"
+                option-attribute="label"
                 :disabled="!isEditing || isSubmittingFormData"
               />
-            </div>
-          </EGFormGroup>
-        </div>
+            </EGFormGroup>
 
-        <!-- Seqera sub-section -->
-        <div v-if="state.NextFlowTowerEnabled" class="mb-6 rounded border border-gray-200 p-4">
-          <p class="mb-3 text-sm font-medium text-black">Seqera</p>
+            <EGFormGroup
+              v-if="state.HealthOmicsLlmProvider"
+              label="Model ID"
+              name="HealthOmicsLlmModelId"
+              eager-validation
+              required
+              :hint="modelIdHintFor(state.HealthOmicsLlmProvider)"
+            >
+              <EGInput
+                v-model="state.HealthOmicsLlmModelId"
+                :placeholder="modelIdPlaceholderFor(state.HealthOmicsLlmProvider)"
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+            </EGFormGroup>
 
-          <EGFormGroup label="LLM Provider" name="SeqeraLlmProvider" eager-validation>
-            <USelect
-              v-model="state.SeqeraLlmProvider"
-              :options="llmProviderOptions"
-              value-attribute="value"
-              option-attribute="label"
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
+            <EGFormGroup
+              v-if="
+                isEditing && (state.HealthOmicsLlmProvider === 'openai' || state.HealthOmicsLlmProvider === 'anthropic')
+              "
+              label="API Key"
+              name="HealthOmicsLlmApiKey"
+              eager-validation
+              :required="
+                formMode === LabDetailsFormModeEnum.enum.Create || !uneditedLabDetails?.HasHealthOmicsLlmApiKey
+              "
+            >
+              <div v-if="uneditedLabDetails?.HasHealthOmicsLlmApiKey" class="mb-2 flex items-center gap-2">
+                <UBadge size="sm" class="bg-alert-danger-muted text-alert-danger rounded-xl border-0 ring-0">
+                  KEY SAVED
+                </UBadge>
+                <p class="text-alert-danger-dark text-xs font-medium">
+                  Saving a new value will replace the existing key.
+                </p>
+              </div>
+              <EGPasswordInput
+                v-model="state.HealthOmicsLlmApiKey"
+                :select-on-focus="true"
+                :password="true"
+                placeholder="Paste your provider API key. A previously set key is never shown."
+                :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+            </EGFormGroup>
 
-          <EGFormGroup
-            v-if="state.SeqeraLlmProvider"
-            label="Model ID"
-            name="SeqeraLlmModelId"
-            eager-validation
-            required
-            :hint="modelIdHintFor(state.SeqeraLlmProvider)"
-          >
-            <EGInput
-              v-model="state.SeqeraLlmModelId"
-              :placeholder="modelIdPlaceholderFor(state.SeqeraLlmProvider)"
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
+            <EGFormGroup
+              v-if="state.HealthOmicsLlmProvider"
+              name="HealthOmicsLogEnrichmentEnabled"
+              hint="Sends a redacted excerpt of the failed run's CloudWatch logs to the AI for deeper analysis. Identifiers, paths, and secrets are stripped before sending."
+            >
+              <div class="flex items-center">
+                <span class="text-sm text-black">Analyse run logs on failure</span>
+                <UToggle
+                  class="ml-2"
+                  v-model="state.HealthOmicsLogEnrichmentEnabled"
+                  :disabled="!isEditing || isSubmittingFormData"
+                />
+              </div>
+            </EGFormGroup>
+          </div>
 
-          <EGFormGroup
-            v-if="isEditing && (state.SeqeraLlmProvider === 'openai' || state.SeqeraLlmProvider === 'anthropic')"
-            label="API Key"
-            name="SeqeraLlmApiKey"
-            eager-validation
-            :required="formMode === LabDetailsFormModeEnum.enum.Create || !uneditedLabDetails?.HasSeqeraLlmApiKey"
-          >
-            <div v-if="uneditedLabDetails?.HasSeqeraLlmApiKey" class="mb-2 flex items-center gap-2">
-              <UBadge size="sm" class="bg-alert-danger-muted text-alert-danger rounded-xl border-0 ring-0">
-                KEY SAVED
-              </UBadge>
-              <p class="text-alert-danger-dark text-xs font-medium">
-                Saving a new value will replace the existing key.
-              </p>
-            </div>
-            <EGPasswordInput
-              v-model="state.SeqeraLlmApiKey"
-              :select-on-focus="true"
-              :password="true"
-              placeholder="Paste your provider API key. A previously set key is never shown."
-              :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
-              :disabled="!isEditing || isSubmittingFormData"
-            />
-          </EGFormGroup>
-        </div>
+          <!-- Seqera sub-section -->
+          <div v-if="state.NextFlowTowerEnabled" class="mb-6 rounded border border-gray-200 p-4">
+            <p class="mb-3 text-sm font-medium text-black">Seqera</p>
+
+            <EGFormGroup label="LLM Provider" name="SeqeraLlmProvider" eager-validation>
+              <USelect
+                v-model="state.SeqeraLlmProvider"
+                :options="llmProviderOptions"
+                value-attribute="value"
+                option-attribute="label"
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+            </EGFormGroup>
+
+            <EGFormGroup
+              v-if="state.SeqeraLlmProvider"
+              label="Model ID"
+              name="SeqeraLlmModelId"
+              eager-validation
+              required
+              :hint="modelIdHintFor(state.SeqeraLlmProvider)"
+            >
+              <EGInput
+                v-model="state.SeqeraLlmModelId"
+                :placeholder="modelIdPlaceholderFor(state.SeqeraLlmProvider)"
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+            </EGFormGroup>
+
+            <EGFormGroup
+              v-if="isEditing && (state.SeqeraLlmProvider === 'openai' || state.SeqeraLlmProvider === 'anthropic')"
+              label="API Key"
+              name="SeqeraLlmApiKey"
+              eager-validation
+              :required="formMode === LabDetailsFormModeEnum.enum.Create || !uneditedLabDetails?.HasSeqeraLlmApiKey"
+            >
+              <div v-if="uneditedLabDetails?.HasSeqeraLlmApiKey" class="mb-2 flex items-center gap-2">
+                <UBadge size="sm" class="bg-alert-danger-muted text-alert-danger rounded-xl border-0 ring-0">
+                  KEY SAVED
+                </UBadge>
+                <p class="text-alert-danger-dark text-xs font-medium">
+                  Saving a new value will replace the existing key.
+                </p>
+              </div>
+              <EGPasswordInput
+                v-model="state.SeqeraLlmApiKey"
+                :select-on-focus="true"
+                :password="true"
+                placeholder="Paste your provider API key. A previously set key is never shown."
+                :autocomplete="AutoCompleteOptionsEnum.enum.NewPassword"
+                :disabled="!isEditing || isSubmittingFormData"
+              />
+            </EGFormGroup>
+          </div>
+        </template>
       </EGCollapsibleSection>
 
       <!-- HealthOmics VPC Networking: always visible (badge communicates on/off status) so an
@@ -1442,49 +1483,57 @@
         title="HealthOmics VPC Networking"
         description="Route this lab's HealthOmics runs through a custom VPC configuration."
         description-tooltip="Lets runs reach resources outside the default restricted network — for example internet reference datasets, license servers, or private VPC and on-prem data."
-        :badges="[healthOmicsVpcNetworkingBadge]"
+        :badges="isLoadingFormData ? [] : [healthOmicsVpcNetworkingBadge]"
       >
-        <EGFormGroup label="Networking mode" name="AwsHealthOmicsNetworkingMode" eager-validation>
-          <div class="mb-2 flex items-center gap-1.5">
-            <p class="text-muted text-xs">Only available when HealthOmics is enabled.</p>
-            <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
-              <template #text>
-                <p>
-                  Restricted (default) reaches only S3 and ECR in-region. VPC routes this lab's runs through a saved
-                  configuration.
-                </p>
-              </template>
-              <UIcon
-                name="i-heroicons-information-circle"
-                class="text-muted h-4 w-4 shrink-0"
-                aria-label="Networking mode guidance"
-              />
-            </UTooltip>
-          </div>
-          <USelect
-            v-model="state.AwsHealthOmicsNetworkingMode"
-            :options="networkingModeOptions"
-            value-attribute="value"
-            option-attribute="label"
-            :disabled="!isEditing || isSubmittingFormData || !state.AwsHealthOmicsEnabled"
-          />
-        </EGFormGroup>
+        <!-- Don't render the RESTRICTED default from defaultState while lab details are still loading. -->
+        <div v-if="isLoadingFormData" class="space-y-2" aria-hidden="true">
+          <USkeleton class="h-4 w-36" />
+          <USkeleton class="h-3 w-64" />
+          <USkeleton class="h-12 w-full" />
+        </div>
+        <template v-else>
+          <EGFormGroup label="Networking mode" name="AwsHealthOmicsNetworkingMode" eager-validation>
+            <div class="mb-2 flex items-center gap-1.5">
+              <p class="text-muted text-xs">Only available when HealthOmics is enabled.</p>
+              <UTooltip :delay-duration="0" :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }">
+                <template #text>
+                  <p>
+                    Restricted (default) reaches only S3 and ECR in-region. VPC routes this lab's runs through a saved
+                    configuration.
+                  </p>
+                </template>
+                <UIcon
+                  name="i-heroicons-information-circle"
+                  class="text-muted h-4 w-4 shrink-0"
+                  aria-label="Networking mode guidance"
+                />
+              </UTooltip>
+            </div>
+            <USelect
+              v-model="state.AwsHealthOmicsNetworkingMode"
+              :options="networkingModeOptions"
+              value-attribute="value"
+              option-attribute="label"
+              :disabled="!isEditing || isSubmittingFormData || !state.AwsHealthOmicsEnabled"
+            />
+          </EGFormGroup>
 
-        <EGFormGroup
-          v-if="state.AwsHealthOmicsNetworkingMode === 'VPC'"
-          label="VPC configuration name"
-          name="AwsHealthOmicsVpcConfigurationName"
-          eager-validation
-          required
-          hint="Name of an ACTIVE HealthOmics configuration set up by ops."
-        >
-          <EGInput
-            v-model="state.AwsHealthOmicsVpcConfigurationName"
-            maxlength="50"
-            placeholder="wslh-prod-vpc"
-            :disabled="!isEditing || isSubmittingFormData || !state.AwsHealthOmicsEnabled"
-          />
-        </EGFormGroup>
+          <EGFormGroup
+            v-if="state.AwsHealthOmicsNetworkingMode === 'VPC'"
+            label="VPC configuration name"
+            name="AwsHealthOmicsVpcConfigurationName"
+            eager-validation
+            required
+            hint="Name of an ACTIVE HealthOmics configuration set up by ops."
+          >
+            <EGInput
+              v-model="state.AwsHealthOmicsVpcConfigurationName"
+              maxlength="50"
+              placeholder="wslh-prod-vpc"
+              :disabled="!isEditing || isSubmittingFormData || !state.AwsHealthOmicsEnabled"
+            />
+          </EGFormGroup>
+        </template>
       </EGCollapsibleSection>
 
       <!-- Run Notifications: all five controls save via this page's normal Save Changes /
@@ -1499,96 +1548,106 @@
         heading-id="lab-settings-run-notifications-heading"
         title="Run Notifications"
         description="Control who gets emailed when runs in this lab finish."
-        :badges="[runNotificationsBadge]"
+        :badges="isLoadingFormData ? [] : [runNotificationsBadge]"
       >
-        <!-- Lab-wide kill switch -->
-        <EGFormGroup
-          name="NotificationsEnabled"
-          eager-validation
-          hint="Turns off run-completion emails for everyone in this lab and disables the preferences below until this is re-enabled."
-        >
+        <!-- Don't render the lab-wide kill switch from defaultState while lab details are still loading. -->
+        <div v-if="isLoadingFormData" class="flex flex-col gap-6" aria-hidden="true">
           <div class="flex items-center justify-between">
-            <label
-              :id="notificationsToggleLabelId"
-              :for="`${notificationsToggleLabelId}-input`"
-              class="text-sm text-black"
-            >
-              Enable email notifications for this lab
-            </label>
-            <UToggle
-              :id="`${notificationsToggleLabelId}-input`"
-              class="ml-2"
-              v-model="state.NotificationsEnabled"
-              :disabled="!isEditing || isSubmittingFormData"
-              :aria-labelledby="notificationsToggleLabelId"
-            />
+            <USkeleton class="h-4 w-64" />
+            <USkeleton class="h-6 w-12" />
           </div>
-        </EGFormGroup>
-
-        <USkeleton v-if="isLoadingNotificationPrefs" class="mt-4 h-24 w-full" aria-hidden="true" />
+          <USkeleton class="h-24 w-full" />
+        </div>
         <template v-else>
-          <!-- Per-user preferences: staged locally like every other field, saved via Save Changes -->
-          <EGFormGroup name="NotifyOnOwnRuns" eager-validation>
+          <!-- Lab-wide kill switch -->
+          <EGFormGroup
+            name="NotificationsEnabled"
+            eager-validation
+            hint="Turns off run-completion emails for everyone in this lab and disables the preferences below until this is re-enabled."
+          >
             <div class="flex items-center justify-between">
-              <span :id="notifyOwnRunsToggleLabelId" class="text-sm text-black">Email me about my own runs</span>
+              <label
+                :id="notificationsToggleLabelId"
+                :for="`${notificationsToggleLabelId}-input`"
+                class="text-sm text-black"
+              >
+                Enable email notifications for this lab
+              </label>
               <UToggle
+                :id="`${notificationsToggleLabelId}-input`"
                 class="ml-2"
-                v-model="notifyOnOwnRunsEnabled"
-                :disabled="runNotificationPreferencesDisabled"
-                :aria-labelledby="notifyOwnRunsToggleLabelId"
+                v-model="state.NotificationsEnabled"
+                :disabled="!isEditing || isSubmittingFormData"
+                :aria-labelledby="notificationsToggleLabelId"
               />
             </div>
           </EGFormGroup>
 
-          <EGFormGroup name="NotifyOnLabRuns" eager-validation>
-            <div class="flex items-center justify-between">
-              <span :id="notifyLabRunsToggleLabelId" class="text-sm text-black">
-                Email me about all runs in this lab
-              </span>
-              <UToggle
-                class="ml-2"
-                v-model="notifyOnLabRunsEnabled"
-                :disabled="runNotificationPreferencesDisabled"
-                :aria-labelledby="notifyLabRunsToggleLabelId"
-              />
-            </div>
-          </EGFormGroup>
+          <USkeleton v-if="isLoadingNotificationPrefs" class="mt-4 h-24 w-full" aria-hidden="true" />
+          <template v-else>
+            <!-- Per-user preferences: staged locally like every other field, saved via Save Changes -->
+            <EGFormGroup name="NotifyOnOwnRuns" eager-validation>
+              <div class="flex items-center justify-between">
+                <span :id="notifyOwnRunsToggleLabelId" class="text-sm text-black">Email me about my own runs</span>
+                <UToggle
+                  class="ml-2"
+                  v-model="notifyOnOwnRunsEnabled"
+                  :disabled="runNotificationPreferencesDisabled"
+                  :aria-labelledby="notifyOwnRunsToggleLabelId"
+                />
+              </div>
+            </EGFormGroup>
 
-          <EGFormGroup v-if="notifyOnLabRunsEnabled" name="NotifyOnLabRunsAdditionalEmailsInput" eager-validation>
-            <label :for="notifyLabRunsAdditionalEmailsInputId" class="mb-1 block text-sm text-black">
-              Also CC these emails on every lab run
-            </label>
-            <EGInput
-              :id="notifyLabRunsAdditionalEmailsInputId"
-              v-model="notifyOnLabRunsAdditionalEmailsInput"
-              placeholder="team-distro@example.com, oncall@example.com"
-              :disabled="runNotificationPreferencesDisabled"
-            />
-            <p v-if="additionalEmailsError" class="text-alert-danger-dark mt-1 text-xs font-medium">
-              {{ additionalEmailsError }}
-            </p>
-            <p v-else class="text-muted mt-1 text-xs">
-              Comma-separated, up to 10. Sent whenever your own "all runs in this lab" notification fires.
-            </p>
-          </EGFormGroup>
+            <EGFormGroup name="NotifyOnLabRuns" eager-validation>
+              <div class="flex items-center justify-between">
+                <span :id="notifyLabRunsToggleLabelId" class="text-sm text-black">
+                  Email me about all runs in this lab
+                </span>
+                <UToggle
+                  class="ml-2"
+                  v-model="notifyOnLabRunsEnabled"
+                  :disabled="runNotificationPreferencesDisabled"
+                  :aria-labelledby="notifyLabRunsToggleLabelId"
+                />
+              </div>
+            </EGFormGroup>
 
-          <EGFormGroup v-if="showNotificationEventFilter" name="NotificationEventFilter" eager-validation>
-            <p class="mb-2 text-sm text-black">Notify me when a run</p>
-            <div class="flex flex-col gap-2">
-              <UCheckbox
-                label="Succeeds"
-                :model-value="eventFilterSuccessChecked"
+            <EGFormGroup v-if="notifyOnLabRunsEnabled" name="NotifyOnLabRunsAdditionalEmailsInput" eager-validation>
+              <label :for="notifyLabRunsAdditionalEmailsInputId" class="mb-1 block text-sm text-black">
+                Also CC these emails on every lab run
+              </label>
+              <EGInput
+                :id="notifyLabRunsAdditionalEmailsInputId"
+                v-model="notifyOnLabRunsAdditionalEmailsInput"
+                placeholder="team-distro@example.com, oncall@example.com"
                 :disabled="runNotificationPreferencesDisabled"
-                @update:model-value="onToggleNotifySuccesses"
               />
-              <UCheckbox
-                label="Fails"
-                :model-value="eventFilterFailureChecked"
-                :disabled="runNotificationPreferencesDisabled"
-                @update:model-value="onToggleNotifyFailures"
-              />
-            </div>
-          </EGFormGroup>
+              <p v-if="additionalEmailsError" class="text-alert-danger-dark mt-1 text-xs font-medium">
+                {{ additionalEmailsError }}
+              </p>
+              <p v-else class="text-muted mt-1 text-xs">
+                Comma-separated, up to 10. Sent whenever your own "all runs in this lab" notification fires.
+              </p>
+            </EGFormGroup>
+
+            <EGFormGroup v-if="showNotificationEventFilter" name="NotificationEventFilter" eager-validation>
+              <p class="mb-2 text-sm text-black">Notify me when a run</p>
+              <div class="flex flex-col gap-2">
+                <UCheckbox
+                  label="Succeeds"
+                  :model-value="eventFilterSuccessChecked"
+                  :disabled="runNotificationPreferencesDisabled"
+                  @update:model-value="onToggleNotifySuccesses"
+                />
+                <UCheckbox
+                  label="Fails"
+                  :model-value="eventFilterFailureChecked"
+                  :disabled="runNotificationPreferencesDisabled"
+                  @update:model-value="onToggleNotifyFailures"
+                />
+              </div>
+            </EGFormGroup>
+          </template>
         </template>
       </EGCollapsibleSection>
     </div>

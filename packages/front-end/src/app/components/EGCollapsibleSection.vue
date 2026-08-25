@@ -32,10 +32,10 @@
 
 <template>
   <EGCard :padding="0">
-    <div>
+    <div class="isolate overflow-hidden" :class="isOpen || description ? 'rounded-t-2xl' : 'rounded-2xl'">
       <button
         type="button"
-        class="hover:bg-primary-muted flex w-full items-center justify-between gap-4 px-6 pt-4 text-left"
+        class="hover:bg-primary-muted flex w-full appearance-none items-center justify-between gap-4 border-0 bg-transparent px-6 pt-4 text-left transition-colors"
         :class="description ? 'pb-1' : 'pb-4'"
         :aria-expanded="isOpen"
         :aria-controls="`${headingId}-content`"
@@ -59,23 +59,23 @@
           />
         </span>
       </button>
-      <div v-if="description" class="flex items-center gap-1.5 px-6 pb-4">
-        <p class="text-muted text-xs">{{ description }}</p>
-        <UTooltip
-          v-if="descriptionTooltip"
-          :delay-duration="0"
-          :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }"
-        >
-          <template #text>
-            <p>{{ descriptionTooltip }}</p>
-          </template>
-          <UIcon
-            name="i-heroicons-information-circle"
-            class="text-muted h-4 w-4 shrink-0"
-            :aria-label="`${title} guidance`"
-          />
-        </UTooltip>
-      </div>
+    </div>
+    <div v-if="description" class="flex items-center gap-1.5 px-6 pb-4">
+      <p class="text-muted text-xs">{{ description }}</p>
+      <UTooltip
+        v-if="descriptionTooltip"
+        :delay-duration="0"
+        :ui="{ base: 'h-auto w-auto max-w-sm whitespace-normal text-left' }"
+      >
+        <template #text>
+          <p>{{ descriptionTooltip }}</p>
+        </template>
+        <UIcon
+          name="i-heroicons-information-circle"
+          class="text-muted h-4 w-4 shrink-0"
+          :aria-label="`${title} guidance`"
+        />
+      </UTooltip>
     </div>
     <div
       v-if="isOpen"

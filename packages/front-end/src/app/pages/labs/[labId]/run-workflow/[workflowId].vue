@@ -14,6 +14,7 @@
   const runStore = useRunStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadOmicsWorkflow');
   const userStore = useUserStore();
   const labsStore = useLabsStore();
 
@@ -23,11 +24,13 @@
 
   // check permissions to be on this page
   if (!userStore.canViewLab(labId)) {
+    uiStore.setRequestComplete('loadOmicsWorkflow');
     $router.push('/labs');
   }
 
   onBeforeMount(async () => {
     if (await ensureLabInActiveOrg({ labId, forceReload: true })) {
+      uiStore.setRequestComplete('loadOmicsWorkflow');
       return;
     }
   });
@@ -149,96 +152,98 @@
   async function initialize() {
     uiStore.setRequestPending('loadOmicsWorkflow');
 
-    // reset state refs
-    hasLaunched.value = false;
-    selectedStepIndex.value = 0;
-
-    steps.value.forEach((step) => (step.disabled = true));
-    steps.value[0].disabled = false;
-
-    // get full workflow details from API and save them in the store
-    const cachedOwnerId = omicsWorkflowsStore.workflows[workflowId]?.ownerAccountId;
-    const omicsWorkflow: ReadWorkflow = await $api.omicsWorkflows.get(labId, workflowId, cachedOwnerId);
-    omicsWorkflowsStore.workflows[workflowId] = {
-      ...omicsWorkflowsStore.workflows[workflowId],
-      ...omicsWorkflow,
-      ...(cachedOwnerId ? { ownerAccountId: cachedOwnerId } : {}),
-    };
-
     try {
-      const versionsRes = await $api.omicsWorkflows.listVersions(labId, workflowId, cachedOwnerId);
-      const names = (versionsRes.items ?? [])
-        .map((v) => v.versionName)
-        .filter((n): n is string => !!n)
-        .sort((a, b) => a.localeCompare(b));
-      if (names.length > 0) {
-        workflowVersionOptions.value = [
-          { value: OMICS_DEFAULT_WORKFLOW_VERSION, label: 'Default version' },
-          ...names.map((n) => ({ value: n, label: n })),
-        ];
-      } else {
+      // reset state refs
+      hasLaunched.value = false;
+      selectedStepIndex.value = 0;
+
+      steps.value.forEach((step) => (step.disabled = true));
+      steps.value[0].disabled = false;
+
+      // get full workflow details from API and save them in the store
+      const cachedOwnerId = omicsWorkflowsStore.workflows[workflowId]?.ownerAccountId;
+      const omicsWorkflow: ReadWorkflow = await $api.omicsWorkflows.get(labId, workflowId, cachedOwnerId);
+      omicsWorkflowsStore.workflows[workflowId] = {
+        ...omicsWorkflowsStore.workflows[workflowId],
+        ...omicsWorkflow,
+        ...(cachedOwnerId ? { ownerAccountId: cachedOwnerId } : {}),
+      };
+
+      try {
+        const versionsRes = await $api.omicsWorkflows.listVersions(labId, workflowId, cachedOwnerId);
+        const names = (versionsRes.items ?? [])
+          .map((v) => v.versionName)
+          .filter((n): n is string => !!n)
+          .sort((a, b) => a.localeCompare(b));
+        if (names.length > 0) {
+          workflowVersionOptions.value = [
+            { value: OMICS_DEFAULT_WORKFLOW_VERSION, label: 'Default version' },
+            ...names.map((n) => ({ value: n, label: n })),
+          ];
+        } else {
+          workflowVersionOptions.value = undefined;
+        }
+      } catch {
         workflowVersionOptions.value = undefined;
       }
-    } catch {
-      workflowVersionOptions.value = undefined;
-    }
 
-    // GetWorkflowResponse.parameterTemplate is optional per the AWS SDK type — HealthOmics can
-    // legitimately return a workflow with no parameter template (e.g. one that takes no params).
-    const parameterTemplate = omicsWorkflow.parameterTemplate ?? {};
+      // GetWorkflowResponse.parameterTemplate is optional per the AWS SDK type — HealthOmics can
+      // legitimately return a workflow with no parameter template (e.g. one that takes no params).
+      const parameterTemplate = omicsWorkflow.parameterTemplate ?? {};
 
-    // Identify AWS HealthOmics workflow schema required parameters
-    const paramsRequired: string[] = Object.entries(parameterTemplate)
-      .map((param: [string, object]) => {
-        const paramName: string = param[0];
-        const paramDetails: any = param[1];
+      // Identify AWS HealthOmics workflow schema required parameters
+      const paramsRequired: string[] = Object.entries(parameterTemplate)
+        .map((param: [string, object]) => {
+          const paramName: string = param[0];
+          const paramDetails: any = param[1];
 
-        if (paramDetails.optional === false) {
-          return paramName;
+          if (paramDetails.optional === false) {
+            return paramName;
+          }
+        })
+        .filter((_) => _ != undefined);
+
+      // fetch user defaults for this workflow (if any), scoped to current parameter template keys
+      const userId = userStore.currentUserDetails.id;
+      let workflowDefaultParams: Record<string, unknown> = {};
+      let rawSavedDefaults: Record<string, unknown> = {};
+      if (userId) {
+        const user = await $api.users.getUser();
+        rawSavedDefaults = user.OmicsWorkflowDefaultParams?.[workflowId] ?? {};
+        workflowDefaultParams = Object.fromEntries(
+          Object.entries(rawSavedDefaults).filter(([paramName]) =>
+            Object.prototype.hasOwnProperty.call(parameterTemplate, paramName),
+          ),
+        );
+      }
+      hasOmicsWorkflowSavedParameterDefaults.value =
+        typeof rawSavedDefaults === 'object' && Object.keys(rawSavedDefaults).length > 0;
+
+      if (retryFromRunId.value) {
+        // Retry: seed the wip run from the failed run instead of the user's saved defaults.
+        await prefillFromFailedRun(paramsRequired);
+      } else {
+        // initialize wip run in store
+        runStore.updateWipOmicsRun(omicsRunTempId.value, {
+          transactionId: omicsRunTempId.value,
+          paramsRequired: paramsRequired,
+        });
+
+        const existingWip = runStore.wipOmicsRuns[omicsRunTempId.value];
+        const paramsToApply = { ...workflowDefaultParams };
+        if (existingWip?.params?.input) {
+          paramsToApply.input = existingWip.params.input;
         }
-      })
-      .filter((_) => _ != undefined);
+        if (existingWip?.params?.outdir) {
+          paramsToApply.outdir = existingWip.params.outdir;
+        }
+        runStore.updateWipOmicsRunParams(omicsRunTempId.value, paramsToApply);
 
-    // fetch user defaults for this workflow (if any), scoped to current parameter template keys
-    const userId = userStore.currentUserDetails.id;
-    let workflowDefaultParams: Record<string, unknown> = {};
-    let rawSavedDefaults: Record<string, unknown> = {};
-    if (userId) {
-      const user = await $api.users.getUser();
-      rawSavedDefaults = user.OmicsWorkflowDefaultParams?.[workflowId] ?? {};
-      workflowDefaultParams = Object.fromEntries(
-        Object.entries(rawSavedDefaults).filter(([paramName]) =>
-          Object.prototype.hasOwnProperty.call(parameterTemplate, paramName),
-        ),
-      );
-    }
-    hasOmicsWorkflowSavedParameterDefaults.value =
-      typeof rawSavedDefaults === 'object' && Object.keys(rawSavedDefaults).length > 0;
-
-    if (retryFromRunId.value) {
-      // Retry: seed the wip run from the failed run instead of the user's saved defaults.
-      await prefillFromFailedRun(paramsRequired);
-    } else {
-      // initialize wip run in store
-      runStore.updateWipOmicsRun(omicsRunTempId.value, {
-        transactionId: omicsRunTempId.value,
-        paramsRequired: paramsRequired,
-      });
-
-      const existingWip = runStore.wipOmicsRuns[omicsRunTempId.value];
-      const paramsToApply = { ...workflowDefaultParams };
-      if (existingWip?.params?.input) {
-        paramsToApply.input = existingWip.params.input;
+        await applySequenceCollectionsPrepopulation();
       }
-      if (existingWip?.params?.outdir) {
-        paramsToApply.outdir = existingWip.params.outdir;
-      }
-      runStore.updateWipOmicsRunParams(omicsRunTempId.value, paramsToApply);
-
-      await applySequenceCollectionsPrepopulation();
+    } finally {
+      uiStore.setRequestComplete('loadOmicsWorkflow');
     }
-
-    uiStore.setRequestComplete('loadOmicsWorkflow');
   }
 
   /** When opened from Data Collections with a pre-built sample sheet, skip to parameter configuration. */

@@ -25,7 +25,7 @@
   onBeforeMount(loadOrgs);
 
   // table data stuff
-  const isLoading = ref(false);
+  const isLoading = ref(true);
   const orgsDisplayList = computed<Organization[]>(() =>
     Object.values(orgsStore.orgs).sort((orgA, orgB) => useSort().stringSortCompare(orgA.Name, orgB.Name)),
   );

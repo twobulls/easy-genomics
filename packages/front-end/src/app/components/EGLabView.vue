@@ -791,8 +791,14 @@
     uiStore.setRequestComplete('cancelSeqeraRun');
     uiStore.setRequestComplete('cancelOmicsRun');
 
-    await getSeqeraRuns();
-    await getOmicsRuns();
+    // Only refresh a platform the lab can actually reach; otherwise the fetch fails and toasts a
+    // misleading error about the platform the user never touched.
+    if (lab.value?.NextFlowTowerEnabled && !missingPAT.value) {
+      await getSeqeraRuns();
+    }
+    if (lab.value?.AwsHealthOmicsEnabled) {
+      await getOmicsRuns();
+    }
   }
 
   async function handleDetailsUpdated() {

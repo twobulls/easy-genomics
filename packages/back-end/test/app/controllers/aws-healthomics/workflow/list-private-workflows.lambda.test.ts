@@ -86,7 +86,6 @@ describe('list-private-workflows.lambda', () => {
 
     mockLabService.prototype.queryByLaboratoryId = jest.fn();
     mockOmicsService.prototype.listWorkflows = jest.fn();
-    mockOmicsService.prototype.listSharedWorkflows = jest.fn().mockResolvedValue({ shares: [] });
     mockAccessService.prototype.listByLaboratoryId = jest.fn();
   });
 
@@ -126,39 +125,6 @@ describe('list-private-workflows.lambda', () => {
       { id: 'wf-allowed-2', name: 'Allowed 2' },
     ]);
     expect(mockOmicsService.prototype.listWorkflows).toHaveBeenCalledTimes(2);
-  });
-
-  it('merges in workflows shared into this account from another account via RAM, subject to the same access filter', async () => {
-    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
-      OrganizationId: ORG_ID,
-      LaboratoryId: LAB_ID,
-      AwsHealthOmicsEnabled: true,
-      EnableNewWorkflowsByDefault: false,
-    });
-
-    (mockOmicsService.prototype.listWorkflows as jest.Mock).mockResolvedValue({
-      items: [{ id: 'wf-own', name: 'Own' }],
-    });
-
-    (mockOmicsService.prototype.listSharedWorkflows as jest.Mock).mockResolvedValue({
-      shares: [
-        { resourceId: 'wf-shared-allowed', shareName: 'Shared Allowed', ownerId: '654654609030' },
-        { resourceId: 'wf-shared-blocked', shareName: 'Shared Blocked', ownerId: '654654609030' },
-      ],
-    });
-
-    (mockAccessService.prototype.listByLaboratoryId as jest.Mock).mockResolvedValue([
-      { LaboratoryId: LAB_ID, WorkflowKey: 'HEALTH_OMICS#wf-own' },
-      { LaboratoryId: LAB_ID, WorkflowKey: 'HEALTH_OMICS#wf-shared-allowed' },
-    ]);
-
-    const res = await handler(createEvent({ laboratoryId: LAB_ID }), createContext(), () => {});
-    expect(res?.statusCode).toBe(200);
-    const body = JSON.parse(res?.body ?? '{}');
-    expect(body.items).toEqual([
-      { id: 'wf-own', name: 'Own' },
-      { id: 'wf-shared-allowed', name: 'Shared Allowed' },
-    ]);
   });
 
   it('when new workflows are enabled by default, omits only explicitly denied workflows', async () => {

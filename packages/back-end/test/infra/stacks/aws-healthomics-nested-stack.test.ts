@@ -68,12 +68,11 @@ describe('AwsHealthOmicsNestedStack cross-account shared workflow IAM access', (
   // ListShares and passed explicitly as `workflowOwnerId` — see resolveSharedWorkflowOwnerId.
   const sharesResourceArn = `arn:aws:omics:${region}:${account}:/shares`;
 
-  it.each([
-    '/aws-healthomics/workflow/list-private-workflows',
-    '/aws-healthomics/workflow/read-private-workflow',
-    '/aws-healthomics/workflow/list-workflow-versions',
-  ])('grants %s access to ListShares so the shared workflow owner account can be resolved', (policyName) => {
-    const stack = createStack();
-    expect(resourcesFor(stack, policyName, 'omics:ListShares')).toContain(sharesResourceArn);
-  });
+  it.each(['/aws-healthomics/workflow/read-private-workflow', '/aws-healthomics/workflow/list-workflow-versions'])(
+    'grants %s access to ListShares so the shared workflow owner account can be resolved',
+    (policyName) => {
+      const stack = createStack();
+      expect(resourcesFor(stack, policyName, 'omics:ListShares')).toContain(sharesResourceArn);
+    },
+  );
 });

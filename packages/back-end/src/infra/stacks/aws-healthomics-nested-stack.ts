@@ -515,13 +515,6 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         actions: ['omics:ListWorkflows'],
         effect: Effect.ALLOW,
       }),
-      // ListWorkflows never includes cross-account RAM-shared workflows — this account's own
-      // ListShares view is merged in alongside it so the lab's browsing list includes both.
-      new PolicyStatement({
-        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
-        actions: ['omics:ListShares'],
-        effect: Effect.ALLOW,
-      }),
     ]);
     // /aws-healthomics/workflow/create-private-workflow
     this.iam.addPolicyStatements('/aws-healthomics/workflow/create-private-workflow', [

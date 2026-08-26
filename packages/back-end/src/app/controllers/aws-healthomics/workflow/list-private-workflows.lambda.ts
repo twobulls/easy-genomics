@@ -17,7 +17,6 @@ import {
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
 import { isWorkflowAccessAllowed } from '@BE/utils/laboratory-workflow-access-utils';
-import { listAllSharedWorkflowSummaries } from '@BE/utils/omics-shared-workflow-utils';
 import { AwsHealthOmicsQueryParameters, getAwsHealthOmicsApiQueryParameters } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
@@ -94,18 +93,7 @@ export const handler: Handler = async (
     }
 
     const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
-    const [ownWorkflows, sharedWorkflows] = await Promise.all([
-      listAllPrivateWorkflows(queryParameters.name),
-      // ListWorkflows never includes cross-account RAM-shared workflows — only ListShares(resourceOwner:
-      // 'OTHER') surfaces those, so they're merged in here.
-      listAllSharedWorkflowSummaries(omicsService),
-    ]);
-
-    const ownWorkflowIds = new Set(ownWorkflows.map((w) => w.id).filter((id): id is string => id != null));
-    const allItems = [
-      ...ownWorkflows,
-      ...sharedWorkflows.filter((w) => !ownWorkflowIds.has(w.id)).map((w) => ({ id: w.id, name: w.name })),
-    ];
+    const allItems = await listAllPrivateWorkflows(queryParameters.name);
 
     const accessRows = await laboratoryWorkflowAccessService.listByLaboratoryId(laboratoryId);
     const items = allItems.filter(

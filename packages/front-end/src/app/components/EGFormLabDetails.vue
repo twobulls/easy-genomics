@@ -13,6 +13,7 @@
     NetworkingModeSchema,
     VpcConfigurationNameSchema,
     LlmModelIdSchema,
+    LlmApiKeySchema,
     LabDetailsFormModeEnum,
     LabDetailsFormMode,
   } from '@FE/types/labs';
@@ -407,6 +408,25 @@
       default:
         return '';
     }
+  }
+
+  /**
+   * A saved API key is scoped to whichever provider it was entered for, so it can't cover a
+   * provider the admin has since switched to — a fresh key is required in that case even
+   * though `hasSavedApiKey` is still true for the (now-stale) key from the original provider.
+   */
+  function isLlmApiKeyRequired(
+    currentProvider: string | undefined,
+    originalProvider: string | undefined,
+    hasSavedApiKey: boolean | undefined,
+  ): boolean {
+    if (formMode.value === LabDetailsFormModeEnum.enum.Create) {
+      return true;
+    }
+    if (currentProvider !== originalProvider) {
+      return true;
+    }
+    return !hasSavedApiKey;
   }
 
   /**
@@ -858,6 +878,20 @@
       maybeAddFieldValidationErrors(errors, LlmModelIdSchema, 'SeqeraLlmModelId', state.SeqeraLlmModelId);
     }
 
+    // openai/anthropic are BYOK: an API key is required unless one is already saved
+    // for the currently-selected provider specifically (see isLlmApiKeyRequired).
+    if (state.HealthOmicsLlmProvider === 'openai' || state.HealthOmicsLlmProvider === 'anthropic') {
+      if (
+        isLlmApiKeyRequired(
+          state.HealthOmicsLlmProvider,
+          uneditedLabDetails.value?.HealthOmicsLlmProvider,
+          uneditedLabDetails.value?.HasHealthOmicsLlmApiKey,
+        )
+      ) {
+        maybeAddFieldValidationErrors(errors, LlmApiKeySchema, 'HealthOmicsLlmApiKey', state.HealthOmicsLlmApiKey);
+      }
+    }
+
     if (notifyOnLabRunsEnabled.value && additionalEmailsError.value) {
       errors.push({ path: 'NotifyOnLabRunsAdditionalEmailsInput', message: additionalEmailsError.value });
     }
@@ -983,6 +1017,21 @@
       validate(newState);
     },
     { deep: true },
+  );
+
+  // Model ID and API Key are provider-specific and must not silently carry over when the
+  // admin switches HealthOmics LLM provider. Skipped when the new value matches the
+  // originally-saved provider — e.g. the initial load, or Cancel resetting the form —
+  // since state.HealthOmicsLlmModelId/ApiKey were just (re)set to the correct saved values.
+  watch(
+    () => state.value.HealthOmicsLlmProvider,
+    (newProvider) => {
+      if (newProvider === uneditedLabDetails.value?.HealthOmicsLlmProvider) {
+        return;
+      }
+      state.value.HealthOmicsLlmModelId = '';
+      state.value.HealthOmicsLlmApiKey = '';
+    },
   );
 
   // The four per-user notification controls aren't part of `state`, so they need their own
@@ -1379,10 +1428,20 @@
               name="HealthOmicsLlmApiKey"
               eager-validation
               :required="
-                formMode === LabDetailsFormModeEnum.enum.Create || !uneditedLabDetails?.HasHealthOmicsLlmApiKey
+                isLlmApiKeyRequired(
+                  state.HealthOmicsLlmProvider,
+                  uneditedLabDetails?.HealthOmicsLlmProvider,
+                  uneditedLabDetails?.HasHealthOmicsLlmApiKey,
+                )
               "
             >
-              <div v-if="uneditedLabDetails?.HasHealthOmicsLlmApiKey" class="mb-2 flex items-center gap-2">
+              <div
+                v-if="
+                  uneditedLabDetails?.HasHealthOmicsLlmApiKey &&
+                  state.HealthOmicsLlmProvider === uneditedLabDetails?.HealthOmicsLlmProvider
+                "
+                class="mb-2 flex items-center gap-2"
+              >
                 <UBadge size="sm" class="bg-alert-danger-muted text-alert-danger rounded-xl border-0 ring-0">
                   KEY SAVED
                 </UBadge>

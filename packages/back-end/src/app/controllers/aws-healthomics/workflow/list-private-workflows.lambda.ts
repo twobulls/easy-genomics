@@ -1,3 +1,4 @@
+import { ListSharesCommandInput, WorkflowListItem } from '@aws-sdk/client-omics';
 import { ListWorkflowsCommandInput } from '@aws-sdk/client-omics/dist-types/commands/ListWorkflowsCommand';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
@@ -16,8 +17,28 @@ import {
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
-import { isWorkflowAccessAllowed } from '@BE/utils/laboratory-workflow-access-utils';
+import { isWorkflowAccessAllowed, workflowIdFromOmicsShare } from '@BE/utils/laboratory-workflow-access-utils';
 import { AwsHealthOmicsQueryParameters, getAwsHealthOmicsApiQueryParameters } from '@BE/utils/rest-api-utils';
+
+async function listSharedWorkflowSummaries(omicsService: OmicsService): Promise<WorkflowListItem[]> {
+  const items: WorkflowListItem[] = [];
+  let nextToken: string | undefined;
+  do {
+    const page = await omicsService.listSharedWorkflows(<ListSharesCommandInput>{
+      resourceOwner: 'OTHER',
+      maxResults: 100,
+      nextToken,
+    });
+    for (const share of page.shares ?? []) {
+      const id = workflowIdFromOmicsShare(share);
+      if (id) {
+        items.push({ id, name: share.shareName ?? id });
+      }
+    }
+    nextToken = page.nextToken;
+  } while (nextToken);
+  return items;
+}
 
 const laboratoryService = new LaboratoryService();
 const omicsService = new OmicsService();
@@ -68,14 +89,22 @@ export const handler: Handler = async (
     }
 
     const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
-    const response = await omicsService.listWorkflows(<ListWorkflowsCommandInput>{
-      type: 'PRIVATE',
-      ...queryParameters,
-      status: undefined, // Explicitly exclude status filter for Workflows
-    });
+    const [response, sharedWorkflows] = await Promise.all([
+      omicsService.listWorkflows(<ListWorkflowsCommandInput>{
+        type: 'PRIVATE',
+        ...queryParameters,
+        status: undefined, // Explicitly exclude status filter for Workflows
+      }),
+      // AWS HealthOmics never includes cross-account RAM-shared workflows in ListWorkflows — only
+      // ListShares(resourceOwner: 'OTHER') surfaces those, so they're merged in here.
+      listSharedWorkflowSummaries(omicsService),
+    ]);
+
+    const ownWorkflowIds = new Set((response.items ?? []).map((w) => w.id).filter((id): id is string => id != null));
+    const combinedItems = [...(response.items ?? []), ...sharedWorkflows.filter((w) => !ownWorkflowIds.has(w.id!))];
 
     const accessRows = await laboratoryWorkflowAccessService.listByLaboratoryId(laboratoryId);
-    const items = (response.items ?? []).filter(
+    const items = combinedItems.filter(
       (w) => w.id != null && isWorkflowAccessAllowed(laboratory, accessRows, 'HEALTH_OMICS', w.id),
     );
 

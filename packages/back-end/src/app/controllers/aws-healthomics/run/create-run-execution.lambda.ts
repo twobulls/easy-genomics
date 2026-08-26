@@ -1,4 +1,4 @@
-import { StartRunCommandInput } from '@aws-sdk/client-omics';
+import { ResourceNotFoundException, StartRunCommandInput } from '@aws-sdk/client-omics';
 import { CreateRunRequestSchema } from '@easy-genomics/shared-lib/lib/app/schema/aws-healthomics/aws-healthomics-api';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
@@ -19,6 +19,7 @@ import {
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
 import { assertLaboratoryHasWorkflowAccess } from '@BE/utils/laboratory-workflow-access-utils';
+import { resolveSharedWorkflowOwnerId } from '@BE/utils/omics-shared-workflow-utils';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
@@ -94,7 +95,7 @@ export const handler: Handler = async (
 
     const parameters = JSON.parse(request.parameters!.toString());
     const { workflowVersionName, ...startRunRequestWithoutVersion } = request;
-    const response = await omicsService.startRun(<StartRunCommandInput>{
+    const startRunInput = <StartRunCommandInput>{
       ...startRunRequestWithoutVersion,
       ...(workflowVersionName ? { workflowVersionName } : {}),
       parameters: {
@@ -114,6 +115,20 @@ export const handler: Handler = async (
         Application: 'easy-genomics',
         Platform: 'AWS HealthOmics',
       },
+    };
+
+    const response = await omicsService.startRun(startRunInput).catch(async (error: any) => {
+      if (!(error instanceof ResourceNotFoundException)) {
+        throw error;
+      }
+
+      // Not found under our own account — the workflow may be RAM-shared into it from another account.
+      const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, request.workflowId!);
+      if (!workflowOwnerId) {
+        throw error;
+      }
+
+      return omicsService.startRun({ ...startRunInput, workflowOwnerId });
     });
 
     return buildResponse(200, JSON.stringify(response), event);

@@ -1,4 +1,4 @@
-import { ListWorkflowVersionsCommandInput, WorkflowStatus } from '@aws-sdk/client-omics';
+import { ListWorkflowVersionsCommandInput, ResourceNotFoundException, WorkflowStatus } from '@aws-sdk/client-omics';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
   LaboratoryNotFoundError,
@@ -15,6 +15,7 @@ import {
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+import { resolveSharedWorkflowOwnerId } from '@BE/utils/omics-shared-workflow-utils';
 import { AwsHealthOmicsQueryParameters, getAwsHealthOmicsApiQueryParameters } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
@@ -64,11 +65,26 @@ export const handler: Handler = async (
     }
 
     const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
-    const response = await omicsService.listWorkflowVersions(<ListWorkflowVersionsCommandInput>{
-      workflowId,
-      type: 'PRIVATE',
-      ...queryParameters,
-    });
+    const response = await omicsService
+      .listWorkflowVersions(<ListWorkflowVersionsCommandInput>{ workflowId, type: 'PRIVATE', ...queryParameters })
+      .catch(async (error: any) => {
+        if (!(error instanceof ResourceNotFoundException)) {
+          throw error;
+        }
+
+        // Not found under our own account — the workflow may be RAM-shared into it from another account.
+        const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, workflowId);
+        if (!workflowOwnerId) {
+          throw error;
+        }
+
+        return omicsService.listWorkflowVersions(<ListWorkflowVersionsCommandInput>{
+          workflowId,
+          type: 'PRIVATE',
+          workflowOwnerId,
+          ...queryParameters,
+        });
+      });
 
     const items = (response.items ?? []).filter((v) => v.status === undefined || v.status === WorkflowStatus.ACTIVE);
 

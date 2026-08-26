@@ -1,4 +1,4 @@
-import { WorkflowStatus } from '@aws-sdk/client-omics';
+import { ResourceNotFoundException, WorkflowStatus } from '@aws-sdk/client-omics';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, Context } from 'aws-lambda';
 import { handler } from '../../../../../src/app/controllers/aws-healthomics/workflow/list-workflow-versions.lambda';
 
@@ -84,6 +84,7 @@ describe('list-workflow-versions.lambda', () => {
 
     mockLabService.prototype.queryByLaboratoryId = jest.fn();
     mockOmicsService.prototype.listWorkflowVersions = jest.fn();
+    mockOmicsService.prototype.listSharedWorkflows = jest.fn();
   });
 
   it('returns ACTIVE and unset-status versions only', async () => {
@@ -119,6 +120,36 @@ describe('list-workflow-versions.lambda', () => {
         workflowId: WF_ID,
         type: 'PRIVATE',
       }),
+    );
+  });
+
+  it('resolves the owner account via ListShares and retries when the workflow is cross-account shared', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      AwsHealthOmicsEnabled: true,
+    });
+
+    (mockOmicsService.prototype.listWorkflowVersions as jest.Mock)
+      .mockRejectedValueOnce(new ResourceNotFoundException({ message: 'not found', $metadata: {} }))
+      .mockResolvedValueOnce({ items: [{ versionName: 'v1', status: WorkflowStatus.ACTIVE }] });
+
+    (mockOmicsService.prototype.listSharedWorkflows as jest.Mock).mockResolvedValue({
+      shares: [{ resourceId: WF_ID, ownerId: '654654609030' }],
+    });
+
+    const result = await handler(
+      createEvent({ laboratoryId: LAB_ID, workflowId: WF_ID }) as any,
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    const body = JSON.parse(result.body);
+    expect(body.items.map((i: { versionName?: string }) => i.versionName)).toEqual(['v1']);
+    expect(mockOmicsService.prototype.listWorkflowVersions).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ workflowId: WF_ID, workflowOwnerId: '654654609030' }),
     );
   });
 

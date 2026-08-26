@@ -17,6 +17,7 @@ import {
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+import { resolveSharedWorkflowOwnerId } from '@BE/utils/omics-shared-workflow-utils';
 
 const laboratoryService = new LaboratoryService();
 const omicsService = new OmicsService();
@@ -68,16 +69,26 @@ export const handler: Handler = async (
     }
 
     const response = await omicsService
-      .getWorkflow(<GetWorkflowCommandInput>{
-        type: 'PRIVATE',
-        id: id,
-      })
-      .catch((error: any) => {
-        if (error instanceof ResourceNotFoundException) {
-          throw new OmicsWorkflowNotFoundError(id);
-        } else {
+      .getWorkflow(<GetWorkflowCommandInput>{ type: 'PRIVATE', id })
+      .catch(async (error: any) => {
+        if (!(error instanceof ResourceNotFoundException)) {
           throw error;
         }
+
+        // Not found under our own account — the workflow may be RAM-shared into it from another account.
+        const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, id);
+        if (!workflowOwnerId) {
+          throw new OmicsWorkflowNotFoundError(id);
+        }
+
+        return omicsService
+          .getWorkflow(<GetWorkflowCommandInput>{ type: 'PRIVATE', id, workflowOwnerId })
+          .catch((retryError: any) => {
+            if (retryError instanceof ResourceNotFoundException) {
+              throw new OmicsWorkflowNotFoundError(id);
+            }
+            throw retryError;
+          });
       });
 
     return buildResponse(200, JSON.stringify(response), event);

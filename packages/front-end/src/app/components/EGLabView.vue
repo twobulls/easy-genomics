@@ -264,6 +264,15 @@
 
   type LaboratoryRunTableItem = LaboratoryRun & { lastUpdated: string; searchIndex: string };
 
+  const TERMINAL_STATUSES = ['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED'];
+
+  /**
+   * Runs cancelled during this session. Cancelling only signals the compute platform; the
+   * LaboratoryRun record is updated later by the status check pipeline, so these are shown as
+   * cancelled until the server reports a terminal status of its own.
+   */
+  const locallyCancelledRunIds = ref<Set<string>>(new Set());
+
   const runsTableColumns = [
     { key: 'RunName', label: 'Run Name', sortable: true },
     { key: 'WorkflowName', label: 'Workflow name', sortable: true },
@@ -327,11 +336,17 @@
   }
 
   const filteredRunsTableItems = computed<LaboratoryRunTableItem[]>(() => {
-    if (!runsSearchQuery.value.trim()) {
-      return runsTableItems.value;
-    }
+    const items = !runsSearchQuery.value.trim()
+      ? runsTableItems.value
+      : runsTableItems.value.filter((run) => matchesRunSearch(run, runsSearchQuery.value));
 
-    return runsTableItems.value.filter((run) => matchesRunSearch(run, runsSearchQuery.value));
+    // Display-only override. Status checks read the untouched runsTableItems, so the server keeps
+    // being polled for the run's real status.
+    return items.map((run) =>
+      locallyCancelledRunIds.value.has(run.RunId) && !TERMINAL_STATUSES.includes(run.Status)
+        ? { ...run, Status: 'CANCELLED' }
+        : run,
+    );
   });
 
   // fetch the runs any time any of the inputs change; apply "My runs only" client-side
@@ -664,7 +679,6 @@
   }
 
   async function requestLabRunStatusCheck() {
-    const TERMINAL_STATUSES = ['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED'];
     try {
       const nonTerminalRunIds = runsTableItems.value
         .filter((run) => !TERMINAL_STATUSES.includes(run.Status))
@@ -778,6 +792,9 @@
         uiStore.setRequestPending('cancelOmicsRun');
         await $api.omicsRuns.cancelWorkflowRun(props.labId, externalRunId);
       }
+
+      locallyCancelledRunIds.value = new Set(locallyCancelledRunIds.value).add(runId);
+
       // Analytics: run cancelled (platform + status only; no run name / id).
       useAnalytics().track('run_cancelled', {
         platform: runPlatform === 'Seqera Cloud' ? 'seqera' : 'omics',

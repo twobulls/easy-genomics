@@ -69,6 +69,17 @@ export const handler: Handler = async (
       throw new LaboratorySeqeraCredentialsIncorrectError();
     }
 
+    // A saved API key is scoped to whichever provider it was entered for. If the admin
+    // switches HealthOmics LLM provider to one that requires a key (openai/anthropic),
+    // the previously-saved key belongs to the old provider and must not be silently reused.
+    if (
+      (request.HealthOmicsLlmProvider === 'openai' || request.HealthOmicsLlmProvider === 'anthropic') &&
+      request.HealthOmicsLlmProvider !== existing.HealthOmicsLlmProvider &&
+      !request.HealthOmicsLlmApiKey
+    ) {
+      throw new InvalidRequestError('A new API key is required when changing the AI Failure Analysis provider.');
+    }
+
     // Re-validated on every save while mode stays VPC, even for edits unrelated to networking
     // (e.g. renaming a disabled lab). If ops deletes the referenced Configuration, such a lab
     // becomes un-editable until an admin switches mode back to RESTRICTED — an accepted tradeoff

@@ -20,10 +20,12 @@
 
   const orgsStore = useOrgsStore();
 
+  usePageTitle('Organizations');
+
   onBeforeMount(loadOrgs);
 
   // table data stuff
-  const isLoading = ref(false);
+  const isLoading = ref(true);
   const orgsDisplayList = computed<Organization[]>(() =>
     Object.values(orgsStore.orgs).sort((orgA, orgB) => useSort().stringSortCompare(orgA.Name, orgB.Name)),
   );
@@ -54,7 +56,7 @@
     },
     {
       key: 'actions',
-      label: '',
+      label: 'Actions',
     },
   ];
 
@@ -73,6 +75,7 @@
         {
           label: 'Remove',
           class: 'text-alert-danger-dark',
+          isHighlighted: true,
           click: () => {
             orgToRemove.value = org;
             isRemoveOrgDialogOpen.value = true;
@@ -143,6 +146,7 @@
     :is-loading="isLoading"
     :action-items="actionItems"
     :show-pagination="!isLoading"
+    no-results-msg="No organizations found"
   />
 
   <EGDialog

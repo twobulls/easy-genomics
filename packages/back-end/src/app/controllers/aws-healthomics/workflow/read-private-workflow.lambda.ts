@@ -11,23 +11,27 @@ import {
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { LaboratoryWorkflowAccessService } from '@BE/services/easy-genomics/laboratory-workflow-access-service';
 import { OmicsService } from '@BE/services/omics-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+import { assertLaboratoryHasWorkflowAccess } from '@BE/utils/laboratory-workflow-access-utils';
 import { resolveSharedWorkflowOwnerId } from '@BE/utils/omics-shared-workflow-utils';
 
 const laboratoryService = new LaboratoryService();
+const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
 const omicsService = new OmicsService();
 
 /**
  * This GET /aws-healthomics/workflow/read-private-workflow/{:id}?laboratoryId={laboratoryId}
- * API queries the same region's AWS HealthOmics service to retrieve a Private Workflow.
- * This endpoint expects:
+ * API queries the same region's AWS HealthOmics service to retrieve a Private or
+ * Shared (cross-account) Workflow. workflowOwnerId is always resolved server-side
+ * via ListShares (never taken from the client). Per-lab access grants are enforced.
  *  - Required Path Parameter:
- *    - 'id': NextFlow Tower Workflow Id
+ *    - 'id': HealthOmics Workflow Id
  *  - Required Query Parameter:
  *    - 'laboratoryId': to retrieve the Laboratory to verify access to AWS HealthOmics
  *
@@ -68,27 +72,23 @@ export const handler: Handler = async (
       throw new MissingAWSHealthOmicsAccessError();
     }
 
+    await assertLaboratoryHasWorkflowAccess(laboratory, 'HEALTH_OMICS', id, laboratoryWorkflowAccessService);
+
+    // Never trust a client-supplied workflowOwnerId — resolve from ACTIVE shares only.
+    const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, id);
+
     const response = await omicsService
-      .getWorkflow(<GetWorkflowCommandInput>{ type: 'PRIVATE', id })
-      .catch(async (error: any) => {
-        if (!(error instanceof ResourceNotFoundException)) {
+      .getWorkflow(<GetWorkflowCommandInput>{
+        type: 'PRIVATE',
+        id: id,
+        ...(workflowOwnerId ? { workflowOwnerId } : {}),
+      })
+      .catch((error: any) => {
+        if (error instanceof ResourceNotFoundException) {
+          throw new OmicsWorkflowNotFoundError(id);
+        } else {
           throw error;
         }
-
-        // Not found under our own account — the workflow may be RAM-shared into it from another account.
-        const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, id);
-        if (!workflowOwnerId) {
-          throw new OmicsWorkflowNotFoundError(id);
-        }
-
-        return omicsService
-          .getWorkflow(<GetWorkflowCommandInput>{ type: 'PRIVATE', id, workflowOwnerId })
-          .catch((retryError: any) => {
-            if (retryError instanceof ResourceNotFoundException) {
-              throw new OmicsWorkflowNotFoundError(id);
-            }
-            throw retryError;
-          });
       });
 
     return buildResponse(200, JSON.stringify(response), event);

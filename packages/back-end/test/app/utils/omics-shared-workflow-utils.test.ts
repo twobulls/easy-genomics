@@ -1,46 +1,100 @@
-import { resolveSharedWorkflowOwnerId } from '../../../src/app/utils/omics-shared-workflow-utils';
+import {
+  listAllSharedWorkflowSummaries,
+  ownerAccountIdFromOmicsShare,
+  resolveSharedWorkflowOwnerId,
+} from '../../../src/app/utils/omics-shared-workflow-utils';
 
-describe('resolveSharedWorkflowOwnerId', () => {
-  it('returns the owner account ID of a workflow shared into this account', async () => {
-    const listSharedWorkflows = jest.fn().mockResolvedValue({
-      shares: [
-        {
-          resourceId: '1226079',
-          resourceArn: 'arn:aws:omics:us-west-2:654654609030:workflow/1226079',
-          ownerId: '654654609030',
-        },
-      ],
+describe('omics-shared-workflow-utils', () => {
+  describe('listAllSharedWorkflowSummaries', () => {
+    it('retries TooManyRequestsException then returns ACTIVE shares', async () => {
+      jest.useFakeTimers();
+      try {
+        const tooMany = Object.assign(new Error('Too Many Requests'), {
+          name: 'TooManyRequestsException',
+          $metadata: { httpStatusCode: 429 },
+        });
+        const omicsService = {
+          listSharedWorkflows: jest
+            .fn()
+            .mockRejectedValueOnce(tooMany)
+            .mockResolvedValueOnce({
+              shares: [
+                {
+                  resourceId: 'wf-shared',
+                  shareName: 'Shared WF',
+                  ownerId: '111122223333',
+                  status: 'ACTIVE',
+                },
+              ],
+            }),
+        };
+
+        const resultPromise = listAllSharedWorkflowSummaries(omicsService);
+        await jest.advanceTimersByTimeAsync(1000);
+        await expect(resultPromise).resolves.toEqual([
+          { id: 'wf-shared', name: 'Shared WF', ownerAccountId: '111122223333' },
+        ]);
+        expect(omicsService.listSharedWorkflows).toHaveBeenCalledTimes(2);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
+  describe('ownerAccountIdFromOmicsShare', () => {
+    it('prefers ownerId', () => {
+      expect(
+        ownerAccountIdFromOmicsShare({
+          ownerId: '111122223333',
+          resourceArn: 'arn:aws:omics:us-east-1:999988887777:workflow/wf-1',
+        }),
+      ).toBe('111122223333');
     });
 
-    const ownerId = await resolveSharedWorkflowOwnerId({ listSharedWorkflows } as any, '1226079');
+    it('falls back to account id in resourceArn', () => {
+      expect(
+        ownerAccountIdFromOmicsShare({
+          resourceArn: 'arn:aws:omics:us-east-1:999988887777:workflow/wf-1',
+        }),
+      ).toBe('999988887777');
+    });
 
-    expect(ownerId).toBe('654654609030');
-    expect(listSharedWorkflows).toHaveBeenCalledWith(expect.objectContaining({ resourceOwner: 'OTHER' }));
+    it('returns undefined when neither is available', () => {
+      expect(ownerAccountIdFromOmicsShare({})).toBeUndefined();
+    });
   });
 
-  it('walks pagination until it finds the matching share', async () => {
-    const listSharedWorkflows = jest
-      .fn()
-      .mockResolvedValueOnce({
-        shares: [{ resourceId: 'other-workflow', ownerId: '111111111111' }],
-        nextToken: 'page-2',
-      })
-      .mockResolvedValueOnce({
-        shares: [{ resourceId: '1226079', ownerId: '654654609030' }],
-      });
+  describe('resolveSharedWorkflowOwnerId', () => {
+    it('returns owner account id when workflow id matches an ACTIVE share', async () => {
+      const omicsService = {
+        listSharedWorkflows: jest.fn().mockResolvedValue({
+          shares: [
+            {
+              resourceId: 'wf-shared',
+              ownerId: '111122223333',
+              status: 'ACTIVE',
+            },
+          ],
+        }),
+      };
 
-    const ownerId = await resolveSharedWorkflowOwnerId({ listSharedWorkflows } as any, '1226079');
+      await expect(resolveSharedWorkflowOwnerId(omicsService, 'wf-shared')).resolves.toBe('111122223333');
+    });
 
-    expect(ownerId).toBe('654654609030');
-    expect(listSharedWorkflows).toHaveBeenCalledTimes(2);
-    expect(listSharedWorkflows).toHaveBeenNthCalledWith(2, expect.objectContaining({ nextToken: 'page-2' }));
-  });
+    it('returns undefined when workflow is not shared', async () => {
+      const omicsService = {
+        listSharedWorkflows: jest.fn().mockResolvedValue({
+          shares: [
+            {
+              resourceId: 'other',
+              ownerId: '111122223333',
+              status: 'ACTIVE',
+            },
+          ],
+        }),
+      };
 
-  it('returns undefined when no share matches the workflow ID', async () => {
-    const listSharedWorkflows = jest.fn().mockResolvedValue({ shares: [] });
-
-    const ownerId = await resolveSharedWorkflowOwnerId({ listSharedWorkflows } as any, '1226079');
-
-    expect(ownerId).toBeUndefined();
+      await expect(resolveSharedWorkflowOwnerId(omicsService, 'wf-private')).resolves.toBeUndefined();
+    });
   });
 });

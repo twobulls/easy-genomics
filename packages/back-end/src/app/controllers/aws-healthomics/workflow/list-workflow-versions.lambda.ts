@@ -1,4 +1,4 @@
-import { ListWorkflowVersionsCommandInput, ResourceNotFoundException, WorkflowStatus } from '@aws-sdk/client-omics';
+import { ListWorkflowVersionsCommandInput, WorkflowStatus } from '@aws-sdk/client-omics';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
   LaboratoryNotFoundError,
@@ -9,21 +9,26 @@ import {
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { LaboratoryWorkflowAccessService } from '@BE/services/easy-genomics/laboratory-workflow-access-service';
 import { OmicsService } from '@BE/services/omics-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+import { assertLaboratoryHasWorkflowAccess } from '@BE/utils/laboratory-workflow-access-utils';
 import { resolveSharedWorkflowOwnerId } from '@BE/utils/omics-shared-workflow-utils';
 import { AwsHealthOmicsQueryParameters, getAwsHealthOmicsApiQueryParameters } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
+const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
 const omicsService = new OmicsService();
 
 /**
  * This GET /aws-healthomics/workflow/list-workflow-versions?laboratoryId={LaboratoryId}&workflowId={WorkflowId}
- * API queries AWS HealthOmics for workflow versions for a private workflow.
+ * API queries AWS HealthOmics for workflow versions for a private or shared workflow.
+ * workflowOwnerId is always resolved server-side via ListShares. Per-lab access grants
+ * are enforced for workflowId.
  *
  * Required query parameters:
  *  - laboratoryId
@@ -64,27 +69,18 @@ export const handler: Handler = async (
       throw new MissingAWSHealthOmicsAccessError();
     }
 
+    await assertLaboratoryHasWorkflowAccess(laboratory, 'HEALTH_OMICS', workflowId, laboratoryWorkflowAccessService);
+
     const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
-    const response = await omicsService
-      .listWorkflowVersions(<ListWorkflowVersionsCommandInput>{ workflowId, type: 'PRIVATE', ...queryParameters })
-      .catch(async (error: any) => {
-        if (!(error instanceof ResourceNotFoundException)) {
-          throw error;
-        }
+    // Never trust a client-supplied workflowOwnerId — resolve from ACTIVE shares only.
+    const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, workflowId);
 
-        // Not found under our own account — the workflow may be RAM-shared into it from another account.
-        const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, workflowId);
-        if (!workflowOwnerId) {
-          throw error;
-        }
-
-        return omicsService.listWorkflowVersions(<ListWorkflowVersionsCommandInput>{
-          workflowId,
-          type: 'PRIVATE',
-          workflowOwnerId,
-          ...queryParameters,
-        });
-      });
+    const response = await omicsService.listWorkflowVersions(<ListWorkflowVersionsCommandInput>{
+      workflowId,
+      type: 'PRIVATE',
+      ...(workflowOwnerId ? { workflowOwnerId } : {}),
+      ...queryParameters,
+    });
 
     const items = (response.items ?? []).filter((v) => v.status === undefined || v.status === WorkflowStatus.ACTIVE);
 

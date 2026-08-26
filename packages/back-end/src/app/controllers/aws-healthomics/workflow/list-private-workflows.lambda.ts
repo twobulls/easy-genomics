@@ -1,4 +1,3 @@
-import { ListSharesCommandInput, WorkflowListItem } from '@aws-sdk/client-omics';
 import { ListWorkflowsCommandInput } from '@aws-sdk/client-omics/dist-types/commands/ListWorkflowsCommand';
 import { buildErrorResponse, buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import {
@@ -17,32 +16,38 @@ import {
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
-import { isWorkflowAccessAllowed, workflowIdFromOmicsShare } from '@BE/utils/laboratory-workflow-access-utils';
+import { isWorkflowAccessAllowed } from '@BE/utils/laboratory-workflow-access-utils';
+import { listAllSharedWorkflowSummaries } from '@BE/utils/omics-shared-workflow-utils';
 import { AwsHealthOmicsQueryParameters, getAwsHealthOmicsApiQueryParameters } from '@BE/utils/rest-api-utils';
 
-async function listSharedWorkflowSummaries(omicsService: OmicsService): Promise<WorkflowListItem[]> {
-  const items: WorkflowListItem[] = [];
+const laboratoryService = new LaboratoryService();
+const omicsService = new OmicsService();
+const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
+
+/**
+ * Retrieves every PRIVATE workflow across all pages so the workflow-access filter
+ * is applied to the complete set. Fetching only a single page would hide any
+ * granted workflow that happens to fall beyond the first page from every user,
+ * even though it appears in the (fully paginated) admin workflow catalog.
+ */
+async function listAllPrivateWorkflows(name?: string) {
+  const items: NonNullable<Awaited<ReturnType<OmicsService['listWorkflows']>>['items']> = [];
   let nextToken: string | undefined;
   do {
-    const page = await omicsService.listSharedWorkflows(<ListSharesCommandInput>{
-      resourceOwner: 'OTHER',
+    const page = await omicsService.listWorkflows(<ListWorkflowsCommandInput>{
+      type: 'PRIVATE',
       maxResults: 100,
-      nextToken,
+      startingToken: nextToken,
+      status: undefined, // Explicitly exclude status filter for Workflows
+      ...(name ? { name } : {}),
     });
-    for (const share of page.shares ?? []) {
-      const id = workflowIdFromOmicsShare(share);
-      if (id) {
-        items.push({ id, name: share.shareName ?? id });
-      }
+    if (page.items?.length) {
+      items.push(...page.items);
     }
     nextToken = page.nextToken;
   } while (nextToken);
   return items;
 }
-
-const laboratoryService = new LaboratoryService();
-const omicsService = new OmicsService();
-const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
 
 /**
  * This GET /aws-healthomics/workflow/list-private-workflows?laboratoryId={LaboratoryId}
@@ -89,26 +94,25 @@ export const handler: Handler = async (
     }
 
     const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
-    const [response, sharedWorkflows] = await Promise.all([
-      omicsService.listWorkflows(<ListWorkflowsCommandInput>{
-        type: 'PRIVATE',
-        ...queryParameters,
-        status: undefined, // Explicitly exclude status filter for Workflows
-      }),
-      // AWS HealthOmics never includes cross-account RAM-shared workflows in ListWorkflows — only
-      // ListShares(resourceOwner: 'OTHER') surfaces those, so they're merged in here.
-      listSharedWorkflowSummaries(omicsService),
+    const [ownWorkflows, sharedWorkflows] = await Promise.all([
+      listAllPrivateWorkflows(queryParameters.name),
+      // ListWorkflows never includes cross-account RAM-shared workflows — only ListShares(resourceOwner:
+      // 'OTHER') surfaces those, so they're merged in here.
+      listAllSharedWorkflowSummaries(omicsService),
     ]);
 
-    const ownWorkflowIds = new Set((response.items ?? []).map((w) => w.id).filter((id): id is string => id != null));
-    const combinedItems = [...(response.items ?? []), ...sharedWorkflows.filter((w) => !ownWorkflowIds.has(w.id!))];
+    const ownWorkflowIds = new Set(ownWorkflows.map((w) => w.id).filter((id): id is string => id != null));
+    const allItems = [
+      ...ownWorkflows,
+      ...sharedWorkflows.filter((w) => !ownWorkflowIds.has(w.id)).map((w) => ({ id: w.id, name: w.name })),
+    ];
 
     const accessRows = await laboratoryWorkflowAccessService.listByLaboratoryId(laboratoryId);
-    const items = combinedItems.filter(
+    const items = allItems.filter(
       (w) => w.id != null && isWorkflowAccessAllowed(laboratory, accessRows, 'HEALTH_OMICS', w.id),
     );
 
-    return buildResponse(200, JSON.stringify({ ...response, items }), event);
+    return buildResponse(200, JSON.stringify({ items }), event);
   } catch (err: any) {
     console.error(err);
     return buildErrorResponse(err, event);

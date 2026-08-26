@@ -1,4 +1,3 @@
-import { ResourceNotFoundException } from '@aws-sdk/client-omics';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, Context } from 'aws-lambda';
 import { handler } from '../../../../../src/app/controllers/aws-healthomics/run/create-run-execution.lambda';
 
@@ -11,9 +10,8 @@ jest.mock('../../../../../src/app/services/omics-lab-factory', () => ({
 }));
 jest.mock('../../../../../src/app/utils/auth-utils');
 jest.mock('../../../../../src/app/utils/laboratory-workflow-access-utils', () => ({
+  ...jest.requireActual('../../../../../src/app/utils/laboratory-workflow-access-utils'),
   assertLaboratoryHasWorkflowAccess: jest.fn(),
-  workflowIdFromOmicsShare: (share: { resourceId?: string; resourceArn?: string }) =>
-    share.resourceId ?? share.resourceArn?.split('/').pop(),
 }));
 jest.mock('@easy-genomics/shared-lib/lib/app/schema/aws-healthomics/aws-healthomics-api', () => ({
   CreateRunRequestSchema: {
@@ -113,7 +111,7 @@ describe('create-run-execution.lambda', () => {
     mockLabService.prototype.queryByLaboratoryId = jest.fn();
     mockLabRunService.prototype.add = jest.fn().mockResolvedValue(undefined);
     mockOmicsService.prototype.startRun = jest.fn();
-    mockOmicsService.prototype.listSharedWorkflows = jest.fn();
+    mockOmicsService.prototype.listSharedWorkflows = jest.fn().mockResolvedValue({ shares: [] });
     (createOmicsServiceForLab as jest.Mock).mockResolvedValue({
       startRun: mockOmicsService.prototype.startRun,
       listSharedWorkflows: mockOmicsService.prototype.listSharedWorkflows,
@@ -173,6 +171,64 @@ describe('create-run-execution.lambda', () => {
     expect(startRunInput.workflowVersionName).toBe('my-version-1');
   });
 
+  it('resolves workflowOwnerId from ListShares for shared workflows', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      AwsHealthOmicsEnabled: true,
+    });
+
+    (mockOmicsService.prototype.listSharedWorkflows as jest.Mock).mockResolvedValue({
+      shares: [
+        {
+          resourceId: baseRequest.workflowId,
+          ownerId: '111122223333',
+          status: 'ACTIVE',
+        },
+      ],
+    });
+
+    (mockOmicsService.prototype.startRun as jest.Mock).mockResolvedValue({
+      id: 'run-123',
+    });
+
+    const result = await handler(createEvent(baseRequest), createContext(), () => {});
+
+    expect(result.statusCode).toBe(200);
+    const startRunInput = (mockOmicsService.prototype.startRun as jest.Mock).mock.calls[0][0];
+    expect(startRunInput.workflowOwnerId).toBe('111122223333');
+    expect(startRunInput.workflowType).toBe('PRIVATE');
+  });
+
+  it('ignores a client-supplied workflowOwnerId and uses ListShares resolution', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      AwsHealthOmicsEnabled: true,
+    });
+
+    (mockOmicsService.prototype.listSharedWorkflows as jest.Mock).mockResolvedValue({
+      shares: [
+        {
+          resourceId: baseRequest.workflowId,
+          ownerId: '111122223333',
+          status: 'ACTIVE',
+        },
+      ],
+    });
+
+    (mockOmicsService.prototype.startRun as jest.Mock).mockResolvedValue({
+      id: 'run-123',
+    });
+
+    const body = { ...baseRequest, workflowOwnerId: '999988887777' };
+    const result = await handler(createEvent(body), createContext(), () => {});
+
+    expect(result.statusCode).toBe(200);
+    const startRunInput = (mockOmicsService.prototype.startRun as jest.Mock).mock.calls[0][0];
+    expect(startRunInput.workflowOwnerId).toBe('111122223333');
+  });
+
   it('omits user tags when claims are missing', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: ORG_ID,
@@ -203,29 +259,40 @@ describe('create-run-execution.lambda', () => {
     expect(startRunInput.tags.UserEmail).toBeUndefined();
   });
 
-  it('resolves the owner account via ListShares and retries StartRun when the workflow is cross-account shared', async () => {
+  it('adds networkingMode and configurationName to StartRun when the lab is VPC-mode', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      AwsHealthOmicsEnabled: true,
+      AwsHealthOmicsNetworkingMode: 'VPC',
+      AwsHealthOmicsVpcConfigurationName: 'wslh-prod-vpc',
+    });
+
+    (mockOmicsService.prototype.startRun as jest.Mock).mockResolvedValue({ id: 'run-123' });
+
+    const result = await handler(createEvent(baseRequest), createContext(), () => {});
+
+    expect(result.statusCode).toBe(200);
+    const startRunInput = (mockOmicsService.prototype.startRun as jest.Mock).mock.calls[0][0];
+    expect(startRunInput.networkingMode).toBe('VPC');
+    expect(startRunInput.configurationName).toBe('wslh-prod-vpc');
+  });
+
+  it('omits networkingMode and configurationName when the lab is RESTRICTED/omitted', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: ORG_ID,
       LaboratoryId: LAB_ID,
       AwsHealthOmicsEnabled: true,
     });
 
-    (mockOmicsService.prototype.startRun as jest.Mock)
-      .mockRejectedValueOnce(new ResourceNotFoundException({ message: 'not found', $metadata: {} }))
-      .mockResolvedValueOnce({ id: 'run-123' });
-
-    (mockOmicsService.prototype.listSharedWorkflows as jest.Mock).mockResolvedValue({
-      shares: [{ resourceId: baseRequest.workflowId, ownerId: '654654609030' }],
-    });
+    (mockOmicsService.prototype.startRun as jest.Mock).mockResolvedValue({ id: 'run-123' });
 
     const result = await handler(createEvent(baseRequest), createContext(), () => {});
 
     expect(result.statusCode).toBe(200);
-    expect(mockOmicsService.prototype.startRun).toHaveBeenCalledTimes(2);
-    expect(mockOmicsService.prototype.startRun).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({ workflowId: baseRequest.workflowId, workflowOwnerId: '654654609030' }),
-    );
+    const startRunInput = (mockOmicsService.prototype.startRun as jest.Mock).mock.calls[0][0];
+    expect(startRunInput.networkingMode).toBeUndefined();
+    expect(startRunInput.configurationName).toBeUndefined();
   });
 
   it('rejects invalid request body', async () => {

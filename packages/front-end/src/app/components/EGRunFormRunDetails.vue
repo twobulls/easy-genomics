@@ -72,14 +72,17 @@
   const formStateSchema = computed(() =>
     z.object({
       runName: getRunNameSchema(),
+      description: z.string().max(500, 'Run description must be 500 characters or less').optional(),
     }),
   );
   type FormState = {
     runName: string;
+    description: string;
   };
 
   const formState = reactive<FormState>({
     runName: '',
+    description: '',
   });
 
   const selectedWorkflowVersion = ref<string>(OMICS_VERSION_DEFAULT);
@@ -99,8 +102,11 @@
   const canProceed = ref(false);
 
   const runNameCharCount = computed(() => formState.runName.length);
+  const descriptionCharCount = computed(() => formState.description.length);
 
   const pipelineOrWorkflow = computed<string>(() => platformToPipelineOrWorkflow(props.platform));
+
+  const pipelineOrWorkflowDescriptionLabel = computed<string>(() => `${pipelineOrWorkflow.value} description`);
 
   const wipRunUpdateFunction = computed<Function>(() => platformToWipRunUpdateFunction(props.platform));
 
@@ -120,11 +126,16 @@
     return selectValue;
   }
 
-  // when the wipRun is loaded and has a runName value, fill it into the box
+  // Restore form from WIP run on mount / store changes; skip when already in sync.
   watch(
     wipRun,
     (val) => {
-      if (val.runName) formState.runName = val.runName;
+      if (val.runName != null && val.runName !== formState.runName) {
+        formState.runName = val.runName;
+      }
+      if ((val.description ?? '') !== formState.description) {
+        formState.description = val.description ?? '';
+      }
       selectedWorkflowVersion.value = workflowVersionToSelectValue(val.workflowVersionName);
       validate(formState);
     },
@@ -158,6 +169,12 @@
     const errors: FormError[] = [];
 
     maybeAddFieldValidationErrors(errors, getRunNameSchema(), 'runName', currentState.runName);
+    maybeAddFieldValidationErrors(
+      errors,
+      z.string().max(500, 'Run description must be 500 characters or less'),
+      'description',
+      currentState.description,
+    );
 
     canProceed.value = errors.length === 0;
 
@@ -184,15 +201,20 @@
       .replace(/^[^a-zA-Z]+/, '');
   }
 
-  function onRunNameInput(_event: InputEvent) {
-    if (!isAwsHealthOmics.value) {
-      // sanitize Seqera names in-place according to Seqera restrictions
-      formState.runName = getSupportedRunName(formState.runName);
-    }
-
-    // write to wipRun
-    wipRunUpdateFunction.value(props.wipRunTempId, { runName: formState.runName });
+  // Use the emitted value — native @input can run before v-model and persist a truncated name.
+  function onRunNameUpdate(value: string | number) {
+    const rawValue = String(value ?? '');
+    const nextRunName = isAwsHealthOmics.value ? rawValue : getSupportedRunName(rawValue);
+    formState.runName = nextRunName;
+    wipRunUpdateFunction.value(props.wipRunTempId, { runName: nextRunName });
   }
+
+  watch(
+    () => formState.description,
+    (nextDescription) => {
+      wipRunUpdateFunction.value(props.wipRunTempId, { description: nextDescription });
+    },
+  );
 
   function onSubmit() {
     emit('next-step');
@@ -206,8 +228,8 @@
 <template>
   <UForm :schema="formStateSchema" :state="formState" :validate="validate" @submit="onSubmit">
     <EGCard>
-      <EGText tag="small" class="mb-4">Step 01</EGText>
-      <EGText tag="h4" class="mb-0">Run Details</EGText>
+      <p class="text-muted mb-1 text-sm">Step 1 of 4</p>
+      <h2 class="text-heading mb-0 text-lg font-medium">Run Details</h2>
       <UDivider class="py-4" />
       <EGFormGroup :label="pipelineOrWorkflow" name="pipelineName">
         <EGInput :model-value="props.pipelineOrWorkflowName" :disabled="true" />
@@ -240,15 +262,20 @@
 
       <EGFormGroup label="Run Name" :hint="runNameHint" name="runName" eager-validation required>
         <EGInput
-          v-model="formState.runName"
+          :model-value="formState.runName"
           placeholder="Enter a name to identify this pipeline run"
-          @input="onRunNameInput"
           autofocus
+          @update:model-value="onRunNameUpdate"
         />
         <EGCharacterCounter :value="runNameCharCount" :max="maxRunNameLength" />
       </EGFormGroup>
 
-      <EGFormGroup label="Description" name="pipelineDescription">
+      <EGFormGroup label="Run description" name="description" hint="Optional. Visible on the run list and run details.">
+        <EGTextArea v-model="formState.description" placeholder="Add an optional description for this run" />
+        <EGCharacterCounter :value="descriptionCharCount" :max="500" />
+      </EGFormGroup>
+
+      <EGFormGroup :label="pipelineOrWorkflowDescriptionLabel" name="pipelineDescription">
         <EGTextArea :model-value="props.pipelineOrWorkflowDescription" :disabled="true" />
       </EGFormGroup>
     </EGCard>

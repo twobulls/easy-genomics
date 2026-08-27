@@ -1,5 +1,5 @@
 import { CfnResource, RemovalPolicy } from 'aws-cdk-lib';
-import { Attribute, AttributeType, BillingMode, SchemaOptions, Table } from 'aws-cdk-lib/aws-dynamodb';
+import { Attribute, AttributeType, BillingMode, SchemaOptions, StreamViewType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 
 export const baseLSIAttributes: Attribute[] = [
@@ -31,6 +31,12 @@ export type DynamoDBTableDetails = {
    * The attribute value must be a number representing epoch seconds.
    */
   timeToLiveAttribute?: string;
+  /**
+   * Optional DynamoDB Streams view type. When set, the table emits change events that
+   * downstream Lambdas can subscribe to (used by the laboratory-run table to drive the
+   * S3 deletion cascade when TTL removes a run row).
+   */
+  stream?: StreamViewType;
 };
 
 export interface DynamoConstructProps {
@@ -63,7 +69,7 @@ export class DynamoConstruct extends Construct {
     //      equally valuable in non-prod (accidental drop, runaway test).
     //
     // Trade-off: `cdk destroy` will orphan these tables. Fresh sandbox envs
-    // need a manual cleanup step (see `docs/EASY_GENOMICS_PROD_MIGRATION.md`
+    // need a manual cleanup step (see `docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md`
     // "Cleanup / destroy" appendix).
     const removalPolicy = RemovalPolicy.RETAIN;
 
@@ -73,6 +79,7 @@ export class DynamoConstruct extends Construct {
       sortKey: sortKey,
       billingMode: BillingMode.PAY_PER_REQUEST,
       timeToLiveAttribute: settings.timeToLiveAttribute,
+      ...(settings.stream ? { stream: settings.stream } : {}),
       removalPolicy: removalPolicy,
       deletionProtection: true,
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: true },
@@ -117,6 +124,10 @@ export class DynamoConstruct extends Construct {
     if (settings.gsi) {
       // NOTE: Global Secondary Indexes can be added / removed from the table as desired
       settings.gsi.forEach((value: SchemaOptions) => {
+        // aws-cdk-lib >=2.26x marks SchemaOptions.partitionKey as optional; a GSI without one is invalid here
+        if (!value.partitionKey) {
+          throw new Error(`DynamoDB table '${envTableName}' has a GSI definition without a partitionKey`);
+        }
         table.addGlobalSecondaryIndex({
           indexName: `${value.partitionKey.name}_Index`,
           partitionKey: value.partitionKey,

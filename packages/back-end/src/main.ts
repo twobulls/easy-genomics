@@ -1,7 +1,11 @@
 import { randomUUID } from 'crypto';
 import { join } from 'path';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
-import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
+import {
+  getStackEnvName,
+  loadConfigurations,
+  resolveConfiguration,
+} from '@easy-genomics/shared-lib/src/app/utils/configuration';
 import { TestUserDetails, VpcPeering } from '@easy-genomics/shared-lib/src/infra/types/main-stack';
 import { App, Aspects } from 'aws-cdk-lib';
 import { AwsSolutionsChecks } from 'cdk-nag';
@@ -38,6 +42,8 @@ let labTechnicianPassword: string | undefined;
 let seqeraApiBaseUrl: string;
 let githubPatSecretName: string | undefined;
 let vpcPeering: VpcPeering | undefined;
+let analyticsEnabled: boolean = false;
+let costExplorerEnabled: boolean = false;
 
 // Optional: shared public API domain wiring. When both `apiDomainName` and
 // `awsApiCertificateArn` are provided AND `awsHostedZoneId` is available, we
@@ -79,6 +85,8 @@ if (process.env.CI_CD === 'true') {
 
   seqeraApiBaseUrl = process.env.SEQERA_API_BASE_URL || SEQERA_API_BASE_URL;
   githubPatSecretName = process.env.GITHUB_PAT_SECRET_NAME;
+  analyticsEnabled = process.env.ANALYTICS_ENABLED === 'true';
+  costExplorerEnabled = process.env.COST_EXPLORER_ENABLED === 'true';
   apiDomainName = process.env.API_DOMAIN_NAME;
   awsApiCertificateArn = process.env.AWS_API_CERTIFICATE_ARN;
 
@@ -150,18 +158,9 @@ if (process.env.CI_CD === 'true') {
   const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
     join(__dirname, '../../../config/easy-genomics.yaml'),
   );
-  if (configurations.length === 0) {
-    throw new Error('Easy Genomics Configuration missing / invalid, please update: easy-genomics.yaml');
-  } else if (configurations.length > 1) {
-    throw new Error('Too many Easy Genomics Configurations found, please update: easy-genomics.yaml');
-  } else {
-    const configuration: { [p: string]: ConfigurationSettings } | undefined = configurations.shift();
-
-    if (configuration) {
-      envName = Object.keys(configuration).shift();
-      configSettings = Object.values(configuration).shift();
-    }
-  }
+  const configuration = resolveConfiguration(configurations, getStackEnvName() ?? process.env.ENV_NAME);
+  envName = Object.keys(configuration).shift();
+  configSettings = Object.values(configuration).shift();
 
   if (!envName || !configSettings) {
     throw new Error('Easy Genomics Configuration missing / invalid, please check the easy-genomics.yaml configuration');
@@ -196,6 +195,8 @@ if (process.env.CI_CD === 'true') {
 
   seqeraApiBaseUrl = configSettings['back-end']['seqera-api-base-url'] || SEQERA_API_BASE_URL;
   githubPatSecretName = configSettings['back-end']['github-pat-secret-name'] || undefined;
+  analyticsEnabled = configSettings.analytics?.enabled === true;
+  costExplorerEnabled = configSettings['cost-explorer']?.enabled === true;
 
   const vpcPeeringSettings = configSettings['back-end']['vpc-peering'];
   if (vpcPeeringSettings) {
@@ -323,6 +324,8 @@ const sharedStackProps = {
   cognitoDomainPrefix,
   callbackUrls,
   logoutUrls,
+  analyticsEnabled,
+  costExplorerEnabled,
 };
 
 // Shared platform stack: VPC, KMS, Auth, AWS HealthOmics and NF-Tower (sharing one API Gateway).

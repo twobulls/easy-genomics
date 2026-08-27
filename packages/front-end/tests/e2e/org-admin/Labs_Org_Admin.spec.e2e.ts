@@ -205,7 +205,6 @@ test('04 - Update a Laboratory Successfully', async ({ page, baseURL }) => {
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000); // this waits for s3 bucket info to load
     await page.getByRole('tab', { name: 'Settings' }).click();
-    await page.getByRole('button', { name: 'Edit' }).click();
 
     await page.getByPlaceholder('Enter lab name (required and').click();
     await page.getByPlaceholder('Enter lab name (required and').fill(labNameUpdated);
@@ -343,7 +342,8 @@ test('07 - Add a Lab Manager to a Laboratory Successfully', async ({ page, baseU
     await page.keyboard.type(labManagerEmail);
     await page.getByRole('option', { name: labManagerName }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText('Successfully added 1 user to ' + labNameUpdated)).toBeVisible();
+    await expect(page.getByText(/Added 1, Skipped 0, Failed 0/)).toBeVisible();
+    await page.getByRole('button', { name: 'Done' }).click();
 
     // Update Lab Access to 'Lab Manager'
     await page.getByRole('row', { name: labManagerName }).locator('button').click();
@@ -376,7 +376,6 @@ test('08 - Enable HealthOmics Integration Successfully', async ({ page, baseURL 
     await page.getByRole('menuitem', { name: 'View / Edit' }).click();
     await page.waitForTimeout(5 * 1000); // this waits for s3 bucket info to load
     await page.getByRole('tab', { name: 'Settings' }).click();
-    await page.getByRole('button', { name: 'Edit' }).click();
 
     let omicsEnabled = true;
     try {
@@ -426,6 +425,6 @@ test('09 - Add a Lab Technician to a Lab Successfully', async ({ page, baseURL }
     await page.keyboard.type(envConfig.labTechnicianEmail);
     await page.getByRole('option', { name: labTechnicianName }).click();
     await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.getByText('Successfully added 1 user to ' + labNameUpdated)).toBeVisible();
+    await expect(page.getByText(/Added 1, Skipped 0, Failed 0/)).toBeVisible();
   }
 });

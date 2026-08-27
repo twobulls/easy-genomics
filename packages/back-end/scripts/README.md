@@ -165,6 +165,31 @@ pnpm run migrate-laboratory-s3-access-seed
 `preflight-deletion-protection`), plus AWS credentials with DynamoDB read on `laboratory-table` and read/write on
 `laboratory-s3-access-table`.
 
+## `deploy-dynamodb-gsi-waves.ts`
+
+**Purpose:** Works around DynamoDB's one-GSI-per-`UpdateTable` limit so a single `pnpm run deploy` can still land
+multiple new (or removed) global secondary indexes on an **existing** table. CloudFormation otherwise fails with
+`Cannot perform more than one GSI creation or deletion in a single update` — the UAT staging failure when
+`laboratory-run-table` gained both `PollStatus_Index` and `WorkflowExternalId_Index` in one merge.
+
+The script compares the pre-synthesized `cdk.out` templates with the currently deployed stack templates, patches
+`cdk.out` so each existing table takes at most one GSI step, runs an intermediate `cdk deploy`, restores the original
+assembly, and repeats until only one mutation remains. The caller's final `cdk deploy` applies that last index. Tables
+that do not exist yet are left alone (`CreateTable` may define many GSIs). Environments whose indexes already match
+`cdk.out` are a no-op.
+
+**When to use:** Wired into `pnpm run deploy` (after `preflight-deletion-protection`, before the final `cdk deploy`).
+You do not need to run it by hand unless you are debugging a GSI rollout.
+
+```bash
+cd packages/back-end
+pnpm run deploy-dynamodb-gsi-waves -- --dry-run
+```
+
+**Environment:** Same `easy-genomics.yaml` / `CI_CD` + `ENV_NAME` / `ENV_TYPE` / `AWS_REGION` setup as
+`preflight-deletion-protection`, plus CloudFormation `GetTemplate` / `ListStackResources` and permission to run
+`cdk deploy`.
+
 ## `migrate-samples-and-sequence-collections.ts`
 
 **Purpose:** Rewrites DynamoDB rows in `laboratory-data-tagging-table` after the sequence-set → sample and

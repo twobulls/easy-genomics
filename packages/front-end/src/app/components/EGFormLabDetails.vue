@@ -131,6 +131,11 @@
   const isEditingNextFlowTowerAccessToken = ref(false);
   const isEditingGitHubAccessToken = ref(false);
 
+  // Holds unsaved Model ID / API Key input per HealthOmics LLM provider for the duration of the
+  // current edit session, so switching the provider dropdown back and forth doesn't discard what
+  // the admin already typed for a provider. Cleared on Cancel; never persisted or submitted.
+  const healthOmicsLlmProviderDrafts: Ref<Record<string, { modelId: string; apiKey: string }>> = ref({});
+
   // BYOK provider dropdown options + per-provider hints/placeholders for the
   // Model ID input. The leading option lets users reset back to "no provider".
   // Its value is '' rather than null: USelect renders a native <select>, whose
@@ -579,6 +584,7 @@
    */
   function handleCancelEdit() {
     state.value = { ...uneditedLabDetails.value! };
+    healthOmicsLlmProviderDrafts.value = {};
     notifyOnOwnRunsEnabled.value = uneditedNotifyOnOwnRunsEnabled.value;
     notifyOnLabRunsEnabled.value = uneditedNotifyOnLabRunsEnabled.value;
     notificationEventFilter.value = uneditedNotificationEventFilter.value;
@@ -1023,14 +1029,25 @@
   // admin switches HealthOmics LLM provider. Skipped when the new value matches the
   // originally-saved provider — e.g. the initial load, or Cancel resetting the form —
   // since state.HealthOmicsLlmModelId/ApiKey were just (re)set to the correct saved values.
+  //
+  // Otherwise, the values just navigated away from are stashed in healthOmicsLlmProviderDrafts
+  // keyed by the old provider, and restored if the admin switches back to it later in the same
+  // edit session — so re-selecting a provider doesn't wipe out what was already typed for it.
   watch(
     () => state.value.HealthOmicsLlmProvider,
-    (newProvider) => {
+    (newProvider, oldProvider) => {
       if (newProvider === uneditedLabDetails.value?.HealthOmicsLlmProvider) {
         return;
       }
-      state.value.HealthOmicsLlmModelId = '';
-      state.value.HealthOmicsLlmApiKey = '';
+      if (oldProvider) {
+        healthOmicsLlmProviderDrafts.value[oldProvider] = {
+          modelId: state.value.HealthOmicsLlmModelId,
+          apiKey: state.value.HealthOmicsLlmApiKey,
+        };
+      }
+      const draft = newProvider ? healthOmicsLlmProviderDrafts.value[newProvider] : undefined;
+      state.value.HealthOmicsLlmModelId = draft?.modelId ?? '';
+      state.value.HealthOmicsLlmApiKey = draft?.apiKey ?? '';
     },
   );
 

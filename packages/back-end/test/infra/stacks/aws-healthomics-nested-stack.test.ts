@@ -63,16 +63,26 @@ describe('AwsHealthOmicsNestedStack cross-account shared workflow IAM access', (
     expect(statement?.toStatementJson().Resource).toContain(crossAccountWorkflowArnPattern);
   });
 
+  // read-workflow-schema's GetWorkflow/ListShares grants are used only by the GitHub fallback
+  // path (incl. SHARED workflows), but need the same cross-account access as the other handlers.
+  it('grants read-workflow-schema GetWorkflow access to shared workflows owned by another account', () => {
+    const stack = createStack();
+    expect(resourcesFor(stack, '/aws-healthomics/workflow/read-workflow-schema', 'omics:GetWorkflow')).toContain(
+      crossAccountWorkflowArnPattern,
+    );
+  });
+
   // GetWorkflow/ListWorkflowVersions/StartRun only resolve a bare workflow ID within the caller's
   // own account. For a RAM-shared workflow, the true owner account ID must be looked up via
   // ListShares and passed explicitly as `workflowOwnerId` — see resolveSharedWorkflowOwnerId.
   const sharesResourceArn = `arn:aws:omics:${region}:${account}:/shares`;
 
-  it.each(['/aws-healthomics/workflow/read-private-workflow', '/aws-healthomics/workflow/list-workflow-versions'])(
-    'grants %s access to ListShares so the shared workflow owner account can be resolved',
-    (policyName) => {
-      const stack = createStack();
-      expect(resourcesFor(stack, policyName, 'omics:ListShares')).toContain(sharesResourceArn);
-    },
-  );
+  it.each([
+    '/aws-healthomics/workflow/read-private-workflow',
+    '/aws-healthomics/workflow/list-workflow-versions',
+    '/aws-healthomics/workflow/read-workflow-schema',
+  ])('grants %s access to ListShares so the shared workflow owner account can be resolved', (policyName) => {
+    const stack = createStack();
+    expect(resourcesFor(stack, policyName, 'omics:ListShares')).toContain(sharesResourceArn);
+  });
 });

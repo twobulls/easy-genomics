@@ -127,8 +127,8 @@ export class DynamoConstruct extends Construct {
       // UpdateTable, so landing two new indexes on an existing table in a single
       // `cdk deploy` fails with "Cannot perform more than one GSI creation or deletion
       // in a single update". `scripts/deploy-dynamodb-gsi-waves.ts` (wired into `pnpm
-      // run deploy`) splits those mutations across sequential stack updates; keep
-      // declaring the full desired index set here.
+      // run deploy`) updates the currently deployed table one GSI at a time before
+      // the final cdk deploy; keep declaring the full desired index set here.
       settings.gsi.forEach((value: SchemaOptions) => {
         // aws-cdk-lib >=2.26x marks SchemaOptions.partitionKey as optional; a GSI without one is invalid here
         if (!value.partitionKey) {

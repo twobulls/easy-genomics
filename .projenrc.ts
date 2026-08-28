@@ -464,13 +464,13 @@ backEndApp.addScripts({
   // The preflight guard runs AFTER `cdk bootstrap` (which only touches the
   // CDK toolkit stack, not app resources) and BEFORE any app-stack deploy,
   // so a failing guard aborts without any destructive CloudFormation call.
-  // `deploy-dynamodb-gsi-waves` then optionally runs intermediate `cdk deploy`s
-  // when an existing table would create/delete more than one GSI (DynamoDB's
-  // UpdateTable limit). `--app cdk.out` reuses the cloud assembly produced by
-  // the build's synth step instead of synthesizing again (~5 min per synth for
-  // this app). Deploy therefore requires a prior `build` — every flow already
-  // guarantees that (nx deploy dependsOn build; the build-and-deploy scripts
-  // chain build first).
+  // `deploy-dynamodb-gsi-waves` then optionally UpdateStacks currently deployed
+  // tables one GSI at a time when an existing table would create/delete more
+  // than one GSI (DynamoDB's UpdateTable limit). `--app cdk.out` reuses the cloud
+  // assembly produced by the build's synth step instead of synthesizing again
+  // (~5 min per synth for this app). Deploy therefore requires a prior `build` —
+  // every flow already guarantees that (nx deploy dependsOn build; the
+  // build-and-deploy scripts chain build first).
   //
   // After stacks deploy, seed laboratory S3 access rows so existing labs are not
   // locked out by the new assert gates (runtime fallback covers the brief window).

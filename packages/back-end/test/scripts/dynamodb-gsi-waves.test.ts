@@ -1,4 +1,5 @@
 import {
+  applyWaveToCurrentTemplates,
   applyWaveToTemplates,
   advanceCurrentNames,
   collectKeyAttributeNames,
@@ -309,6 +310,63 @@ describe('maxRemainingMutations / advanceCurrentNames', () => {
       ],
     ]);
     expect(applyWaveToTemplates(second, currentGsis)).toEqual([]);
+  });
+});
+
+describe('applyWaveToCurrentTemplates', () => {
+  it('adds one GSI and its attributes on the live template without touching other resources', () => {
+    const current = new Map<string, CfnTemplate>([
+      [
+        'api-stack',
+        {
+          Resources: {
+            Run: {
+              Type: 'AWS::DynamoDB::Table',
+              Properties: {
+                TableName: 'pre-prod-quality-laboratory-run-table',
+                AttributeDefinitions: [
+                  { AttributeName: 'LaboratoryId', AttributeType: 'S' },
+                  { AttributeName: 'RunId', AttributeType: 'S' },
+                  { AttributeName: 'UserId', AttributeType: 'S' },
+                  { AttributeName: 'OrganizationId', AttributeType: 'S' },
+                  { AttributeName: 'CreatedAt', AttributeType: 'S' },
+                ],
+                KeySchema: [
+                  { AttributeName: 'LaboratoryId', KeyType: 'HASH' },
+                  { AttributeName: 'RunId', KeyType: 'RANGE' },
+                ],
+                LocalSecondaryIndexes: [
+                  { IndexName: 'CreatedAt_Index', KeySchema: [{ AttributeName: 'CreatedAt', KeyType: 'RANGE' }] },
+                ],
+                GlobalSecondaryIndexes: ORIGINAL_GSIS,
+              },
+            },
+            SomeLambda: { Type: 'AWS::Lambda::Function', Properties: { Runtime: 'nodejs20.x' } },
+          },
+        },
+      ],
+    ]);
+    const desired = new Map([
+      [
+        'pre-prod-quality-laboratory-run-table',
+        { gsis: DESIRED_GSIS, attributeDefinitions: laboratoryRunTableProps(DESIRED_GSIS).AttributeDefinitions! },
+      ],
+    ]);
+
+    const changes = applyWaveToCurrentTemplates(current, desired);
+    expect(changes).toHaveLength(1);
+    expect(changes[0].add).toBe('PollStatus_Index');
+
+    const props = current.get('api-stack')!.Resources!.Run.Properties!;
+    expect((props.GlobalSecondaryIndexes ?? []).map((g) => g.IndexName)).toEqual([
+      'RunId_Index',
+      'UserId_Index',
+      'OrganizationId_Index',
+      'PollStatus_Index',
+    ]);
+    expect((props.AttributeDefinitions ?? []).map((d) => d.AttributeName)).toContain('PollStatus');
+    expect((props.AttributeDefinitions ?? []).map((d) => d.AttributeName)).not.toContain('WorkflowExternalId');
+    expect(current.get('api-stack')!.Resources!.SomeLambda.Properties).toEqual({ Runtime: 'nodejs20.x' });
   });
 });
 

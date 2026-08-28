@@ -39,6 +39,7 @@ export type CfnTableProperties = {
 export type CfnTableResource = {
   Type: string;
   Properties?: CfnTableProperties;
+  Metadata?: unknown;
   [k: string]: unknown;
 };
 
@@ -219,13 +220,76 @@ export function planTableWave(
   };
 }
 
+export type DesiredTableSchema = {
+  gsis: CfnGlobalSecondaryIndex[];
+  attributeDefinitions: CfnAttributeDefinition[];
+};
+
 /**
- * Mutate `desiredTemplates` so each existing table takes at most one GSI
- * step toward `currentByTableName`. Templates for tables that are being
- * created, or that only need one more mutation, are left as synthesized.
- *
- * Returns the list of tables that were actually patched (empty ⇒ no
- * intermediate deploy is required).
+ * After setting a new GSI list on an existing table, copy any AttributeDefinitions
+ * the new keys need from the desired (cdk.out) schema. Current CFN templates
+ * will not yet list PollStatus / WorkflowExternalId / etc.
+ */
+export function mergeUsedAttributeDefinitions(
+  props: CfnTableProperties,
+  sourceDefs: CfnAttributeDefinition[] | undefined,
+): void {
+  const used = collectKeyAttributeNames(props);
+  const byName = new Map<string, CfnAttributeDefinition>();
+  for (const def of props.AttributeDefinitions ?? []) {
+    if (typeof def.AttributeName === 'string') {
+      byName.set(def.AttributeName, def);
+    }
+  }
+  for (const def of sourceDefs ?? []) {
+    if (typeof def.AttributeName === 'string' && used.has(def.AttributeName)) {
+      byName.set(def.AttributeName, def);
+    }
+  }
+  props.AttributeDefinitions = [...byName.values()].filter(
+    (def) => typeof def.AttributeName === 'string' && used.has(def.AttributeName),
+  );
+}
+
+/**
+ * Patch currently-deployed stack templates so each existing table takes at
+ * most one GSI step toward `desiredByTable`. Other resources are left
+ * untouched so an intermediate CloudFormation update does not ship new
+ * Lambda code. Tables that only exist in cdk.out (creates) are ignored.
+ */
+export function applyWaveToCurrentTemplates(
+  currentTemplates: Map<string, CfnTemplate>,
+  desiredByTable: Map<string, DesiredTableSchema>,
+): TableWaveChange[] {
+  const changes: TableWaveChange[] = [];
+
+  for (const template of currentTemplates.values()) {
+    for (const snapshot of listTableSnapshots(template)) {
+      const desired = desiredByTable.get(snapshot.tableName);
+      if (!desired || !snapshot.resource.Properties) {
+        continue;
+      }
+      const plan = planTableWave(snapshot.gsis, desired.gsis);
+      if (plan.skip) {
+        continue;
+      }
+
+      snapshot.resource.Properties.GlobalSecondaryIndexes = plan.gsis;
+      mergeUsedAttributeDefinitions(snapshot.resource.Properties, desired.attributeDefinitions);
+
+      const change = plan.change!;
+      change.tableName = snapshot.tableName;
+      change.logicalId = snapshot.logicalId;
+      changes.push(change);
+    }
+  }
+
+  return changes;
+}
+
+/**
+ * Mutate synthesized (desired) templates so each existing table takes at most
+ * one GSI step. Kept for tests and for comparing cdk.out against live GSIs.
  */
 export function applyWaveToTemplates(
   desiredTemplates: Map<string, CfnTemplate>,

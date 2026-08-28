@@ -224,7 +224,9 @@ export class GithubActionsCICDRelease extends Component {
         with: {
           'role-to-assume': 'arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC',
           'role-session-name': 'GitHub_to_AWS_via_FederatedOIDC',
-          'role-duration-seconds': 3600,
+          // Two hours: a deploy that adds multiple DynamoDB GSIs waits for each
+          // index to become ACTIVE before the next CloudFormation update.
+          'role-duration-seconds': 7200,
           'aws-region': '${{ secrets.AWS_REGION }}',
           'audience': 'sts.amazonaws.com',
         },

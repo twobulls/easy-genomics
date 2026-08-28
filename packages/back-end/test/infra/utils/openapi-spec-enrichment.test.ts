@@ -176,6 +176,9 @@ describe('enrichSpecForApiGateway', () => {
     expect(
       integration.responses.default.responseParameters['method.response.header.Access-Control-Allow-Methods'],
     ).toBe(`'${CORS_ALLOW_METHODS}'`);
+    // The preflight must advertise exactly what the Lambda responses do (shared-lib's
+    // ACCESS_CONTROL_ALLOW_METHODS), so pin the resolved value rather than only its plumbing.
+    expect(CORS_ALLOW_METHODS).toBe('GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE');
     expect(
       integration.responses.default.responseParameters['method.response.header.Access-Control-Allow-Headers'],
     ).toBe("'Authorization,Content-Type'");

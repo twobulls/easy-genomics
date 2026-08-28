@@ -1,4 +1,3 @@
-import { aws_apigateway } from 'aws-cdk-lib';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, APIGatewayProxyResult, APIGatewayProxyEvent } from 'aws-lambda';
 import HttpError from './HttpError';
 
@@ -16,6 +15,15 @@ function isHttpErrorShape(error: Error): error is HttpError {
  * This defines the HTTP Request types supported for the REST APIs.
  */
 export type HttpRequest = 'POST' | 'GET' | 'PUT' | 'PATCH' | 'DELETE';
+
+/**
+ * This defines the allowed access control methods. Mirrors aws-cdk-lib
+ * `aws_apigateway.Cors.ALL_METHODS` rather than importing it: pulling aws-cdk-lib into this
+ * module added ~40MB+ of infra code to every Lambda bundle. Single source of truth for both the
+ * Lambda responses below and the API Gateway CORS preflight built in the back-end's
+ * `openapi-spec-enrichment`.
+ */
+export const ACCESS_CONTROL_ALLOW_METHODS = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'PATCH', 'POST', 'DELETE'];
 
 /**
  * This defines the allowed access control headers.
@@ -40,7 +48,7 @@ export function buildResponse(
     body,
     headers: {
       'Access-Control-Allow-Origin': event?.headers?.origin || '*',
-      'Access-Control-Allow-Methods': aws_apigateway.Cors.ALL_METHODS.join(','),
+      'Access-Control-Allow-Methods': ACCESS_CONTROL_ALLOW_METHODS.join(','),
       'Access-Control-Allow-Headers': ACCESS_CONTROL_ALLOW_HEADERS.join(','),
     },
   };
@@ -70,7 +78,7 @@ export function buildErrorResponse(
     body,
     headers: {
       'Access-Control-Allow-Origin': event?.headers?.origin || '*',
-      'Access-Control-Allow-Methods': aws_apigateway.Cors.ALL_METHODS.join(','),
+      'Access-Control-Allow-Methods': ACCESS_CONTROL_ALLOW_METHODS.join(','),
       'Access-Control-Allow-Headers': ACCESS_CONTROL_ALLOW_HEADERS.join(','),
     },
   };

@@ -31,6 +31,20 @@ const authorName = 'DEPT Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
 
+// Both CDK apps deploy from a pre-synthesized `cdk.out` (see their `deploy` scripts), so they
+// share the same two helpers around that assembly.
+//
+// `cdk.out` is deliberately NOT an nx `build` output (a full assembly is multi-GB), which means
+// a cached `build` restores `lib/` without it. `build-back-end`/`build-front-end` run `nx reset`
+// first so a real synth always happens; this guard covers the remaining path — invoking the nx
+// `deploy` target directly on top of a cache hit — with an actionable message instead of an
+// obscure `cdk bootstrap --app cdk.out` failure.
+const requireCdkOutScript = (buildScript: string) =>
+  `test -d cdk.out || { echo "cdk.out is missing: run \\"pnpm -w run ${buildScript}\\" first." >&2; exit 1; }`;
+// Stale NodejsFunction asset hashes accumulate across synths (CDK never prunes them), so drop the
+// assembly once a local deploy has succeeded. CI keeps it for post-deploy inspection.
+const cleanLocalCdkOutScript = 'if [ "${CI_CD:-}" != "true" ]; then rm -rf cdk.out; fi';
+
 const prettierOptions: PrettierOptions = {
   settings: {
     printWidth: 120,
@@ -205,14 +219,20 @@ if (root.eslint) {
 root.removeScript('build');
 root.addScripts({
   // Development convenience scripts
+  // `nx reset` before each build: the `build` target is cacheable but `cdk.out` is not one of its
+  // outputs, so a cache hit would leave the deploy step without a cloud assembly. Clearing the
+  // cache forces the synth to run, and it also keeps nx's cache off the local disk budget.
   ['build-back-end']:
-    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true --outputStyle=stream',
+    'nx reset && pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true --outputStyle=stream',
   ['build-front-end']:
     'nx reset && pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true',
+  // Delegates to the build scripts above rather than calling nx directly, so both deploys run
+  // against a freshly synthesized cdk.out. The nx `deploy` targets re-resolve their `build`
+  // dependency from the cache the preceding build just populated, so nothing is built twice.
   ['build-and-deploy']:
-    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/back-end --verbose=true --outputStyle=stream && ' +
+    'pnpm run build-back-end && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/back-end --verbose=true --outputStyle=stream && ' +
-    'pnpm nx run-many --targets=build --projects=@easy-genomics/shared-lib,@easy-genomics/front-end --verbose=true --outputStyle=stream && ' +
+    'pnpm run build-front-end && ' +
     'pnpm nx run-many --targets=deploy --projects=@easy-genomics/front-end --verbose=true --outputStyle=stream',
   ['prettier']: "prettier --write '{**/*,*}.{js,ts,vue,scss,json,md,html,mdx}'",
   ['upgrade']:
@@ -464,9 +484,16 @@ backEndApp.addScripts({
   //
   // After stacks deploy, seed laboratory S3 access rows so existing labs are not
   // locked out by the new assert gates (runtime fallback covers the brief window).
+  //
+  // NEVER pass CLI flags to this script: pnpm appends trailing args to the END of the
+  // resolved script string, so they would land after `clean-cdk-out` instead of reaching
+  // `cdk deploy`. The approval mode is read from CDK_REQUIRE_APPROVAL for that reason;
+  // `never` is the default already set in cdk.json.
+  ['require-cdk-out']: requireCdkOutScript('build-back-end'),
+  ['clean-cdk-out']: cleanLocalCdkOutScript,
   ['deploy']:
-    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices && pnpm run migrate-laboratory-s3-access-seed',
-  ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy --require-approval any-change', // Run root build-back-end script to inc shared-lib
+    'pnpm run require-cdk-out && pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices --require-approval "${CDK_REQUIRE_APPROVAL:-never}" && pnpm run migrate-laboratory-s3-access-seed && pnpm run clean-cdk-out',
+  ['build-and-deploy']: 'pnpm -w run build-back-end && CDK_REQUIRE_APPROVAL=any-change pnpm run deploy', // Run root build-back-end script to inc shared-lib
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
   ['local-server']: 'tsx src/local-server/index.ts',
   ['local-server:watch']: 'tsx watch src/local-server/index.ts',
@@ -631,9 +658,13 @@ frontEndApp.addScripts({
     'pnpm run nuxt-reset && pnpm run nuxt-prepare && pnpm exec projen build && pnpm run nuxt-load-settings && pnpm run nuxt-generate && pnpm exec projen synth:silent',
   // `--app cdk.out` reuses the assembly synthesized at the END of the build script above,
   // which includes the BucketDeployment because `dist/` exists by then.
-  ['deploy']: 'pnpm cdk bootstrap --app cdk.out && pnpm exec projen deploy --app cdk.out',
-  ['build-and-deploy']:
-    'pnpm -w run build-front-end && pnpm cdk bootstrap --app cdk.out && pnpm exec projen deploy --app cdk.out --require-approval any-change', // Run root build-front-end script to inc shared-lib
+  // NEVER pass CLI flags to `deploy` — see the back-end deploy comment for why, and use
+  // CDK_REQUIRE_APPROVAL instead.
+  ['require-cdk-out']: requireCdkOutScript('build-front-end'),
+  ['clean-cdk-out']: cleanLocalCdkOutScript,
+  ['deploy']:
+    'pnpm run require-cdk-out && pnpm cdk bootstrap --app cdk.out && pnpm exec projen deploy --app cdk.out --require-approval "${CDK_REQUIRE_APPROVAL:-never}" && pnpm run clean-cdk-out',
+  ['build-and-deploy']: 'pnpm -w run build-front-end && CDK_REQUIRE_APPROVAL=any-change pnpm run deploy', // Run root build-front-end script to inc shared-lib; deploy cleans cdk.out locally
   ['nuxt-dev']: 'pnpm -w run build-front-end && pnpm kill-port 3000 && nuxt dev',
   ['nuxt-load-settings']: 'npx esrun nuxt-load-configuration-settings.ts',
   ['nuxt-generate']: 'nuxt generate',

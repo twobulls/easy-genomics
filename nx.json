@@ -24,8 +24,7 @@
         "!{projectRoot}/cdk.out/**/*"
       ],
       "outputs": [
-        "{projectRoot}/lib",
-        "{projectRoot}/cdk.out"
+        "{projectRoot}/lib"
       ]
     },
     "deploy": {

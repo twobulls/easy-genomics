@@ -1,14 +1,14 @@
 # Upgrading Easy Genomics
 
-This guide is for lab IT staff who run their own Easy Genomics deployment. DEPT will notify you of new releases via chat
-and share release notes. Once you have the target version, follow the procedure for your upgrade tier.
+This guide is for lab IT staff who run their own Easy Genomics deployment. DEPT® will notify you of new releases via
+chat and share release notes. Once you have the target version, follow the procedure for your upgrade tier.
 
 > Quick-jump: [Tier 1 — Routine](#3-tier-1-routine-upgrade) ·
 > [Tier 2 — Additive DynamoDB](#4-tier-2-additive-dynamodb-changes) ·
 > [Tier 3 — Breaking Migration](#5-tier-3-breaking-migration)
 
 > **Dry-run notice:** This procedure has not yet been validated end-to-end against a live staging environment. Follow it
-> as best-knowledge guidance and report any discrepancies to DEPT.
+> as best-knowledge guidance and report any discrepancies to DEPT®.
 
 ---
 
@@ -26,7 +26,7 @@ Or check your deployment's GitHub [Releases](https://github.com/dept/easy-genomi
 
 ### 1.2 Find the target version
 
-DEPT will share release notes with you when a new version is ready. You can also browse
+DEPT® will share release notes with you when a new version is ready. You can also browse
 [GitHub Releases](https://github.com/dept/easy-genomics/releases) directly.
 
 ### 1.3 Classify your upgrade
@@ -263,7 +263,7 @@ that appears in any of the intermediate steps.
 
 ## 9. Maintainer: Cutting a Release
 
-This section is for **DEPT engineers** preparing a new Easy Genomics release. Lab operators do not need to read this.
+This section is for **DEPT® engineers** preparing a new Easy Genomics release. Lab operators do not need to read this.
 
 ### 9.1 Review what changed
 

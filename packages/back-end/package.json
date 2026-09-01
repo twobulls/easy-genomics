@@ -41,7 +41,7 @@
     "migrate-lab-s3-bucket-refs:dry-run": "tsx scripts/migrate-lab-s3-bucket-refs.ts --dry-run"
   },
   "author": {
-    "name": "DEPT Agency",
+    "name": "DEPT® Agency",
     "organization": true
   },
   "devDependencies": {

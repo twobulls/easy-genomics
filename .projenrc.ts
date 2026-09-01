@@ -27,7 +27,7 @@ const cdkVersion = '2.260.0';
 const nodeVersion = '20.20.2';
 const pnpmVersion = '9.15.0';
 const awsSdkClientOmicsVersion = '^3.1090.0';
-const authorName = 'DEPT Agency';
+const authorName = 'DEPT® Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
 

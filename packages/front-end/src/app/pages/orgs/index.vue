@@ -1,6 +1,8 @@
 <script setup lang="ts">
   import { Organization } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/organization';
 
+  definePageMeta({ fullWidthContent: true });
+
   const $router = useRouter();
   const { switchTo } = useSwitchOrganization();
 

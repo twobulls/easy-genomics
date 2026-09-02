@@ -15,6 +15,12 @@ export class GithubActionsCICDRelease extends Component {
       pnpmVersion: string;
       onPushBranch?: string;
       e2e: boolean;
+      /**
+       * When true, the workflow gets no push trigger and can only be started manually from
+       * the Actions tab (workflow_dispatch). Used for release targets whose AWS environment
+       * is not provisioned yet, so branch pushes never generate guaranteed-failing runs.
+       */
+      manualDispatchOnly?: boolean;
     },
   ) {
     super(<IConstruct>rootProject);
@@ -25,7 +31,9 @@ export class GithubActionsCICDRelease extends Component {
 
     const wf = new github.GithubWorkflow(rootProject.github!, `cicd-release-${this.environment}`);
     const runsOn = ['ubuntu-latest'];
-    if (this.onPushBranch) {
+    if (options.manualDispatchOnly) {
+      wf.on({ workflowDispatch: {} });
+    } else if (this.onPushBranch) {
       wf.on({ push: { branches: [this.onPushBranch] } });
     } else {
       wf.on({ push: { branches: ['main'] } });
@@ -91,23 +99,26 @@ export class GithubActionsCICDRelease extends Component {
           ...this.configureAwsCredentials(),
           this.deriveApiUrlsStep(),
           {
-            name: 'Clear Playwright Cache',
-            run: 'rm -rf /home/runner/.cache/ms-playwright',
+            name: 'Cache Playwright browsers',
+            uses: 'actions/cache@v4',
+            with: {
+              path: '~/.cache/ms-playwright',
+              key: "playwright-${{ hashFiles('**/pnpm-lock.yaml') }}",
+            },
           },
           {
-            name: 'Install Playwright + Chromium Only and Slack Reporter',
-            run: 'pnpm add -Dw @playwright/test && pnpm add -Dw playwright-slack-report && npx playwright install chromium',
+            name: 'Install Playwright Chromium',
+            workingDirectory: 'packages/front-end',
+            run: 'npx playwright install chromium',
           },
           {
+            // E2E tests are currently failing on a login selector bug (EGV-197).
+            // continueOnError keeps deploys unblocked while that fix propagates.
+            // Remove continueOnError once E2E tests are confirmed green in quality.
             name: 'Run E2E Tests',
             workingDirectory: 'packages/front-end',
             run: 'pnpm run test-e2e',
             continueOnError: true,
-          },
-          {
-            name: 'Always Succeed Step',
-            if: 'failure()',
-            run: 'echo "E2E tests failed, but we are allowing the pipeline to succeed."',
           },
         ],
       };
@@ -142,6 +153,10 @@ export class GithubActionsCICDRelease extends Component {
       'TEST_S3_URL': '${{ secrets.TEST_S3_URL }}',
       'TEST_WORKSPACE_ID': '${{ secrets.TEST_WORKSPACE_ID }}',
       'TEST_INVITE_EMAIL': '${{ vars.TEST_INVITE_EMAIL }}',
+      // Privacy-safe upstream analytics (institution opt-in). When unset/false, analytics stays off.
+      'ANALYTICS_ENABLED': '${{ vars.ANALYTICS_ENABLED }}',
+      'ANALYTICS_ALLOW_DEV': '${{ vars.ANALYTICS_ALLOW_DEV }}',
+      'COST_EXPLORER_ENABLED': '${{ vars.COST_EXPLORER_ENABLED }}',
       // Front-End specific settings
       'SLACK_E2E_TEST_WEBHOOK_URL': '${{ vars.SLACK_E2E_TEST_WEBHOOK_URL }}',
     };
@@ -209,7 +224,9 @@ export class GithubActionsCICDRelease extends Component {
         with: {
           'role-to-assume': 'arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC',
           'role-session-name': 'GitHub_to_AWS_via_FederatedOIDC',
-          'role-duration-seconds': 3600,
+          // Two hours: a deploy that adds multiple DynamoDB GSIs waits for each
+          // index to become ACTIVE before the next CloudFormation update.
+          'role-duration-seconds': 7200,
           'aws-region': '${{ secrets.AWS_REGION }}',
           'audience': 'sts.amazonaws.com',
         },

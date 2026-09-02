@@ -49,5 +49,35 @@ export const ConfigurationSettingsSchema = z
 
     // Front-End specific settings
     ['front-end']: z.object({}).nullable().optional(),
+
+    // Optional: Privacy-safe upstream usage analytics.
+    //
+    // Off by default. When `enabled: true` the institution opts in to sending
+    // anonymous usage events to the Easy Genomics project's central PostHog
+    // project. This is a double opt-in design: end users must additionally
+    // accept the in-app consent banner before any event is sent.
+    ['analytics']: z
+      .object({
+        ['enabled']: z.boolean().nullable().optional(), // Defaults to false when unset
+        // Opt-in escape hatch to allow analytics on a 'dev' env-type deployment
+        // (e.g. the project's own dev demo). Defaults to false; local development
+        // therefore never sends events unless this is explicitly enabled.
+        ['allow-dev']: z.boolean().nullable().optional(),
+      })
+      .nullable()
+      .optional(),
+
+    // Optional: AWS Cost Explorer billed per-run cost sync.
+    //
+    // Off by default. When `enabled: true`, CDK deploys the daily CE sync
+    // Lambda and the front-end shows billed-cost pending / 24–48h messaging.
+    // Operators must still Launch Cost Explorer and activate cost allocation
+    // tags in the AWS Billing console (see docs/deployment/production.md).
+    ['cost-explorer']: z
+      .object({
+        ['enabled']: z.boolean().nullable().optional(), // Defaults to false when unset
+      })
+      .nullable()
+      .optional(),
   })
   .strict();

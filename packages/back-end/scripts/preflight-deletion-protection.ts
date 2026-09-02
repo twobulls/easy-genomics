@@ -27,7 +27,7 @@
  *
  *   1. Table-level arming check. If any easy-genomics DynamoDB table is
  *      missing deletion protection or PITR, auto-arm the Phase 0
- *      protections described in `docs/EASY_GENOMICS_PROD_MIGRATION.md`:
+ *      protections described in `docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md`:
  *
  *        a. Take an on-demand backup of each affected table
  *           (belt-and-braces safety net that survives even a rogue
@@ -81,12 +81,11 @@
  *    hard failures; the operator must resolve them (typically IAM) and
  *    rerun.
  *
- * See `docs/EASY_GENOMICS_PROD_MIGRATION.md` for the full migration
+ * See `docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md` for the full migration
  * runbook this guard protects.
  */
 
-import { join } from 'path';
-import { CloudFormationClient, ListStackResourcesCommand, StackResourceSummary } from '@aws-sdk/client-cloudformation';
+import { CloudFormationClient, StackResourceSummary } from '@aws-sdk/client-cloudformation';
 import {
   CreateBackupCommand,
   DescribeContinuousBackupsCommand,
@@ -96,8 +95,8 @@ import {
   UpdateContinuousBackupsCommand,
   UpdateTableCommand,
 } from '@aws-sdk/client-dynamodb';
-import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
-import { loadConfigurations } from '@easy-genomics/shared-lib/src/app/utils/configuration';
+import { isStackMissingError, listAllStackResources } from './lib/cloudformation-stack';
+import { resolveDeployEnv } from './lib/deploy-env';
 import { isEasyGenomicsDomainNestedStack } from './lib/is-easy-genomics-domain-nested-stack';
 
 const EG_TABLE_SUFFIXES = [
@@ -109,6 +108,9 @@ const EG_TABLE_SUFFIXES = [
   'laboratory-run-table',
   'unique-reference-table',
   'laboratory-workflow-access-table',
+  'laboratory-s3-access-table',
+  'laboratory-data-tagging-table',
+  'workflow-run-preset-table',
 ] as const;
 
 type FailureReason = 'deletion-protection-disabled' | 'pitr-disabled';
@@ -116,13 +118,6 @@ type FailureReason = 'deletion-protection-disabled' | 'pitr-disabled';
 type TableCheckFailure = {
   tableName: string;
   reason: FailureReason;
-};
-
-type DeployEnv = {
-  envName: string;
-  envType: string;
-  awsRegion: string;
-  namePrefix: string;
 };
 
 type ArmActionKind = 'backup' | 'deletion-protection' | 'pitr';
@@ -152,41 +147,6 @@ type MigrationState =
   // gives the operator a clean message and a chance to fix it before
   // anything else runs.
   | { kind: 'unknown'; reason: string };
-
-function resolveDeployEnv(): DeployEnv {
-  // Mirror `packages/back-end/src/main.ts` so the preflight check targets
-  // exactly the deployment the subsequent `cdk deploy` will act on.
-  if (process.env.CI_CD === 'true') {
-    const envName = process.env.ENV_NAME;
-    const envType = process.env.ENV_TYPE;
-    const awsRegion = process.env.AWS_REGION;
-    if (!envName || !envType || !awsRegion) {
-      throw new Error(
-        'Preflight: CI_CD=true but ENV_NAME / ENV_TYPE / AWS_REGION are not all set. ' +
-          'Fix the CI environment or run locally without CI_CD=true to fall back to easy-genomics.yaml.',
-      );
-    }
-    return { envName, envType, awsRegion, namePrefix: `${envType}-${envName}` };
-  }
-
-  const configPath = join(__dirname, '../../../config/easy-genomics.yaml');
-  const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(configPath);
-  if (configurations.length !== 1) {
-    throw new Error(
-      `Preflight: expected exactly one configuration collection in easy-genomics.yaml, found ${configurations.length}. ` +
-        'Fix the configuration before running `build-and-deploy`.',
-    );
-  }
-  const [configuration] = configurations;
-  const envName = Object.keys(configuration)[0];
-  const settings = Object.values(configuration)[0];
-  const envType = settings['env-type'];
-  const awsRegion = settings['aws-region'];
-  if (!envName || !envType || !awsRegion) {
-    throw new Error('Preflight: env-name / env-type / aws-region missing from easy-genomics.yaml.');
-  }
-  return { envName, envType, awsRegion, namePrefix: `${envType}-${envName}` };
-}
 
 async function checkTable(client: DynamoDBClient, tableName: string): Promise<TableCheckFailure[] | 'missing'> {
   const failures: TableCheckFailure[] = [];
@@ -302,24 +262,17 @@ async function checkMigrationState(client: CloudFormationClient, oldStackName: s
   // isEasyGenomicsDomainNestedStack so Auth / HealthOmics / NF-Tower siblings
   // (which also contain "easygenomics" when envName is that string) are not
   // treated as migration-pending.
-  const collected: StackResourceSummary[] = [];
-  let nextToken: string | undefined;
+  let collected: StackResourceSummary[];
   try {
-    do {
-      const resp = await client.send(new ListStackResourcesCommand({ StackName: oldStackName, NextToken: nextToken }));
-      if (resp.StackResourceSummaries) {
-        collected.push(...resp.StackResourceSummaries);
-      }
-      nextToken = resp.NextToken;
-    } while (nextToken);
+    collected = await listAllStackResources(client, oldStackName);
   } catch (err) {
     // CloudFormation returns a ValidationError (plain Error with that
     // code) for "stack does not exist". We treat that as a greenfield
     // deploy.
-    const message = err instanceof Error ? err.message : String(err);
-    if (/does not exist/i.test(message)) {
+    if (isStackMissingError(err)) {
       return { kind: 'fresh' };
     }
+    const message = err instanceof Error ? err.message : String(err);
     return { kind: 'unknown', reason: message };
   }
 
@@ -382,7 +335,9 @@ function printMigrationPendingReport(
   console.error('    of this message.');
   console.error('');
   console.error('What to do next:');
-  console.error('  1. Read docs/EASY_GENOMICS_PROD_MIGRATION.md. Phase 0 is already done.');
+  console.error(
+    '  1. Read docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md. Phase 0 is already done.',
+  );
   console.error(`  2. Execute Phases 1-5 for the "${namePrefix}" environment.`);
   console.error('  3. Rerun `pnpm run build-and-deploy`. The preflight will pass and');
   console.error('     `cdk deploy --all` will succeed.');
@@ -457,7 +412,7 @@ function printManualFailureReport(namePrefix: string, awsRegion: string, failure
   console.error('Or drop --no-auto-arm and let the preflight perform these Phase 0 steps');
   console.error('automatically.');
   console.error('');
-  console.error('Then follow docs/EASY_GENOMICS_PROD_MIGRATION.md starting at Phase 1');
+  console.error('Then follow docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md starting at Phase 1');
   console.error(`(retain bridge) to complete the migration for the "${namePrefix}" environment.`);
   console.error('');
   console.error(hr);
@@ -531,7 +486,9 @@ function printAutoArmReport(namePrefix: string, armResults: Map<string, ArmActio
   console.error('');
   console.error('What to do next');
   console.error('---------------');
-  console.error('1. Read docs/EASY_GENOMICS_PROD_MIGRATION.md. You can skip Phase 0 (done).');
+  console.error(
+    '1. Read docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md. You can skip Phase 0 (done).',
+  );
   console.error(`2. Execute Phases 1-5 for the "${namePrefix}" environment.`);
   console.error('3. Rerun `pnpm run build-and-deploy`. The preflight will pass silently and');
   console.error('   `cdk deploy --all` will succeed.');
@@ -543,7 +500,7 @@ function printAutoArmReport(namePrefix: string, armResults: Map<string, ArmActio
 async function main(): Promise<void> {
   const noAutoArmFlag = process.argv.includes('--no-auto-arm');
 
-  const { envName, envType, awsRegion, namePrefix } = resolveDeployEnv();
+  const { envName, envType, awsRegion, namePrefix } = resolveDeployEnv('Preflight');
   console.log(
     `Preflight: checking easy-genomics DynamoDB tables for "${namePrefix}" (envType=${envType}, envName=${envName}) in ${awsRegion}...`,
   );

@@ -1,4 +1,9 @@
+import * as fs from 'fs';
 import { join } from 'path';
+import {
+  AnalyticsDeploymentInfo,
+  getAnalyticsDeploymentInfo,
+} from '@easy-genomics/shared-lib/lib/src/app/utils/analytics-utils';
 import { getApiGatewayInfo } from '@easy-genomics/shared-lib/lib/src/app/utils/api-gateway-utils';
 import {
   getCognitoClientUrls,
@@ -8,15 +13,18 @@ import {
 import { ApiGatewayInfo } from '@easy-genomics/shared-lib/src/app/types/api-gateway-info';
 import { CognitoIdpInfo } from '@easy-genomics/shared-lib/src/app/types/cognito-idp-info';
 import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
-import { loadConfigurations } from '@easy-genomics/shared-lib/lib/src/app/utils/configuration';
-import * as fs from 'fs';
+import {
+  getStackEnvName,
+  loadConfigurations,
+  resolveConfiguration,
+} from '@easy-genomics/shared-lib/lib/src/app/utils/configuration';
 
 /**
  * This script is required to simplify the easy-genomics.yaml configuration and deployment workflow for customers and
  * for the Easy Genomics development team to easily work on various parts of the system in parallel.
  *
  * This script reads the {easy-genomics root dir}/config/easy-genomics.yaml file for the configured shared settings to
- * then asynchronously queries the relevant AWS services for the existing:
+ * then asynchronously queries the relevant AWS services for the existing:44
  *  - API Gateway URL
  *  - Cognito IDP User Pool ID
  *  - Cognito IDP User Pool Client ID
@@ -38,6 +46,9 @@ export async function exportNuxtConfigurationSettings(
   envType: string,
   apiGatewayUrl?: string,
   easyGenomicsApiUrl?: string,
+  analyticsEnabled: boolean = false,
+  analyticsAllowDev: boolean = false,
+  costExplorerEnabled: boolean = false,
 ) {
   const namePrefix: string = `${envType}-${envName}`;
   const apiGatewayRestApiName: string = `${namePrefix}-easy-genomics-apigw`;
@@ -67,6 +78,36 @@ export async function exportNuxtConfigurationSettings(
   console.log(`  AWS_COGNITO_USER_POOL_CLIENT_ID=${cognitoIdpInfo.UserPoolClientId}`);
   console.log(`  AWS_COGNITO_DOMAIN=${cognitoDomain}`);
 
+  // Privacy-safe upstream analytics. Only resolve the anonymous per-deployment
+  // identifiers when the institution has opted in. The CI/CD pipeline may pass
+  // them directly via env vars (ANALYTICS_DEPLOYMENT_ID / ANALYTICS_SALT);
+  // otherwise we read them from Secrets Manager (created by the back-end deploy).
+  let analyticsDeploymentId = '';
+  let analyticsSalt = '';
+  if (analyticsEnabled) {
+    const envDeploymentId = process.env.ANALYTICS_DEPLOYMENT_ID;
+    const envSalt = process.env.ANALYTICS_SALT;
+    if (envDeploymentId && envSalt) {
+      analyticsDeploymentId = envDeploymentId;
+      analyticsSalt = envSalt;
+    } else {
+      const info: AnalyticsDeploymentInfo | undefined = await getAnalyticsDeploymentInfo(namePrefix);
+      if (info) {
+        analyticsDeploymentId = info.deploymentId;
+        analyticsSalt = info.salt;
+      } else {
+        console.warn(
+          '  ANALYTICS: enabled but deployment identifiers were not found in Secrets Manager yet. ' +
+            'This is expected on the very first deploy; redeploy the front-end after the back-end deploy completes.',
+        );
+      }
+    }
+    console.log(`  ANALYTICS_ENABLED=${analyticsEnabled}`);
+    console.log(`  ANALYTICS_DEPLOYMENT_ID=${analyticsDeploymentId ? '<set>' : '<missing>'}`);
+  }
+
+  console.log(`  COST_EXPLORER_ENABLED=${costExplorerEnabled}`);
+
   const normalizedEasyGenomicsApiUrl = easyGenomicsApiUrl?.replace(/\/+$/, '');
   const nuxtConfigurationSettings: string =
     '###\n' +
@@ -81,7 +122,12 @@ export async function exportNuxtConfigurationSettings(
     `AWS_COGNITO_USER_POOL_CLIENT_ID=${cognitoIdpInfo.UserPoolClientId}\n` +
     `AWS_COGNITO_DOMAIN=${cognitoDomain ?? ''}\n` +
     `COGNITO_CALLBACK_URLS=${callbackUrls}\n` +
-    `COGNITO_LOGOUT_URLS=${logoutUrls}\n`;
+    `COGNITO_LOGOUT_URLS=${logoutUrls}\n` +
+    `ANALYTICS_ENABLED=${analyticsEnabled ? 'true' : 'false'}\n` +
+    `ANALYTICS_ALLOW_DEV=${analyticsAllowDev ? 'true' : 'false'}\n` +
+    `ANALYTICS_DEPLOYMENT_ID=${analyticsDeploymentId}\n` +
+    `ANALYTICS_SALT=${analyticsSalt}\n` +
+    `COST_EXPLORER_ENABLED=${costExplorerEnabled ? 'true' : 'false'}\n`;
 
   fs.writeFileSync(join(__dirname, '../../config/.env.nuxt'), nuxtConfigurationSettings, {
     encoding: 'utf8',
@@ -104,42 +150,60 @@ void (async () => {
       const envType = process.env.ENV_TYPE;
       const apiGatewayUrl = process.env.AWS_API_GATEWAY_URL;
       const easyGenomicsApiUrl = process.env.AWS_EASY_GENOMICS_API_URL;
+      const analyticsEnabled = process.env.ANALYTICS_ENABLED === 'true';
+      const analyticsAllowDev = process.env.ANALYTICS_ALLOW_DEV === 'true';
+      const costExplorerEnabled = process.env.COST_EXPLORER_ENABLED === 'true';
       if (!awsRegion || !envName || !envType) {
         throw new Error('Missing required CI/CD env vars: AWS_REGION, ENV_NAME, ENV_TYPE.');
       }
 
-      await exportNuxtConfigurationSettings(awsRegion, envName, envType, apiGatewayUrl, easyGenomicsApiUrl);
+      await exportNuxtConfigurationSettings(
+        awsRegion,
+        envName,
+        envType,
+        apiGatewayUrl,
+        easyGenomicsApiUrl,
+        analyticsEnabled,
+        analyticsAllowDev,
+        costExplorerEnabled,
+      );
     } else {
       // @ts-ignore
       const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(
         // `__dirname` here is `packages/front-end`. The repo-level config lives at `config/easy-genomics.yaml`.
         join(__dirname, '../../config/easy-genomics.yaml'),
       );
-      if (configurations.length === 0) {
-        throw new Error('Easy Genomics Configuration missing / invalid, please update: easy-genomics.yaml');
-      } else if (configurations.length > 1) {
-        throw new Error('Too many Easy Genomics Configurations found, please update: easy-genomics.yaml');
-      } else {
-        const configuration: { [p: string]: ConfigurationSettings } | undefined = configurations.shift();
+      const configuration = resolveConfiguration(configurations, getStackEnvName() ?? process.env.ENV_NAME);
 
-        if (configuration) {
-          const envName: string | undefined = Object.keys(configuration).shift();
-          const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift();
+      const envName: string | undefined = Object.keys(configuration).shift();
+      const configSettings: ConfigurationSettings | undefined = Object.values(configuration).shift() as
+        | ConfigurationSettings
+        | undefined;
 
-          if (!envName || !configSettings) {
-            throw new Error(
-              'Easy Genomics Configuration missing / invalid, please check the easy-genomics.yaml configuration',
-            );
-          }
-
-          const envType: string = configSettings['env-type']; // dev | pre-prod | prod
-          const awsRegion: string = configSettings['aws-region'];
-          const apiGatewayUrl: string | undefined = process.env.AWS_API_GATEWAY_URL;
-          const easyGenomicsApiUrl: string | undefined = configSettings['aws-easy-genomics-api-url'] ?? undefined;
-
-          await exportNuxtConfigurationSettings(awsRegion, envName, envType, apiGatewayUrl, easyGenomicsApiUrl);
-        }
+      if (!envName || !configSettings) {
+        throw new Error(
+          'Easy Genomics Configuration missing / invalid, please check the easy-genomics.yaml configuration',
+        );
       }
+
+      const envType: string = configSettings['env-type']; // dev | pre-prod | prod
+      const awsRegion: string = configSettings['aws-region'];
+      const apiGatewayUrl: string | undefined = process.env.AWS_API_GATEWAY_URL;
+      const easyGenomicsApiUrl: string | undefined = configSettings['aws-easy-genomics-api-url'] ?? undefined;
+      const analyticsEnabled: boolean = configSettings.analytics?.enabled === true;
+      const analyticsAllowDev: boolean = configSettings.analytics?.['allow-dev'] === true;
+      const costExplorerEnabled: boolean = configSettings['cost-explorer']?.enabled === true;
+
+      await exportNuxtConfigurationSettings(
+        awsRegion,
+        envName,
+        envType,
+        apiGatewayUrl,
+        easyGenomicsApiUrl,
+        analyticsEnabled,
+        analyticsAllowDev,
+        costExplorerEnabled,
+      );
     }
   } catch (error) {
     if (isCredentialsError(error)) {

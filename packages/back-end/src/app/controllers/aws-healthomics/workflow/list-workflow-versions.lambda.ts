@@ -9,20 +9,26 @@ import {
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
+import { LaboratoryWorkflowAccessService } from '@BE/services/easy-genomics/laboratory-workflow-access-service';
 import { OmicsService } from '@BE/services/omics-service';
 import {
   validateLaboratoryManagerAccess,
   validateLaboratoryTechnicianAccess,
   validateOrganizationAdminAccess,
 } from '@BE/utils/auth-utils';
+import { assertLaboratoryHasWorkflowAccess } from '@BE/utils/laboratory-workflow-access-utils';
+import { resolveSharedWorkflowOwnerId } from '@BE/utils/omics-shared-workflow-utils';
 import { AwsHealthOmicsQueryParameters, getAwsHealthOmicsApiQueryParameters } from '@BE/utils/rest-api-utils';
 
 const laboratoryService = new LaboratoryService();
+const laboratoryWorkflowAccessService = new LaboratoryWorkflowAccessService();
 const omicsService = new OmicsService();
 
 /**
  * This GET /aws-healthomics/workflow/list-workflow-versions?laboratoryId={LaboratoryId}&workflowId={WorkflowId}
- * API queries AWS HealthOmics for workflow versions for a private workflow.
+ * API queries AWS HealthOmics for workflow versions for a private or shared workflow.
+ * workflowOwnerId is always resolved server-side via ListShares. Per-lab access grants
+ * are enforced for workflowId.
  *
  * Required query parameters:
  *  - laboratoryId
@@ -63,10 +69,16 @@ export const handler: Handler = async (
       throw new MissingAWSHealthOmicsAccessError();
     }
 
+    await assertLaboratoryHasWorkflowAccess(laboratory, 'HEALTH_OMICS', workflowId, laboratoryWorkflowAccessService);
+
     const queryParameters: AwsHealthOmicsQueryParameters = getAwsHealthOmicsApiQueryParameters(event);
+    // Never trust a client-supplied workflowOwnerId — resolve from ACTIVE shares only.
+    const workflowOwnerId = await resolveSharedWorkflowOwnerId(omicsService, workflowId);
+
     const response = await omicsService.listWorkflowVersions(<ListWorkflowVersionsCommandInput>{
       workflowId,
       type: 'PRIVATE',
+      ...(workflowOwnerId ? { workflowOwnerId } : {}),
       ...queryParameters,
     });
 

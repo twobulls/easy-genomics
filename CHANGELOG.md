@@ -110,3 +110,21 @@ Rolling back before Phase 3 is always safe because the tables are retained in-pl
   preflight reports every easy-genomics table as "missing (fresh deploy; skipping)" and exits cleanly. All subsequent
   deploys will continue to pass the preflight because the new construct provisions tables with deletion protection +
   PITR from day one.
+
+## [1.5.1]
+
+### Fixed
+
+- **`org-email-assets` bucket no longer requires a public-read policy.** v1.5 attached an `AnyPrincipal` `s3:GetObject`
+  policy to this bucket and opted out of two Block Public Access controls, so any AWS account with **account-level S3
+  Block Public Access enabled** failed to deploy: CloudFormation returned `AccessDenied` on `AWS::S3::BucketPolicy` and
+  the nested stack rolled back. The bucket is now fully private and its email-branding images are served through a
+  dedicated CloudFront distribution using Origin Access Control.
+
+  **Operators no longer need to relax S3 Block Public Access**, and any local workaround patch replacing
+  `blockPublicAccess` with `BLOCK_ALL` and deleting the `addToResourcePolicy(...)` call can be dropped — this release
+  supersedes it.
+
+  Org logo uploads are unaffected: the browser still `PUT`s to S3 with a presigned URL. Uploaded logo keys are now
+  versioned (`{organizationId}/logo-{timestamp}.{ext}`) so a replaced logo appears in the next email immediately instead
+  of rendering from CloudFront cache.

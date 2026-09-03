@@ -7,7 +7,39 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 
 > For step-by-step upgrade instructions, see [docs/deployment/upgrading.md](./docs/deployment/upgrading.md).
 
-## [Unreleased] — Back-End API stack split
+## [v1.5.1] — Private org email assets
+
+Hotfix for v1.5. **Tier 1** upgrade — no DynamoDB, schema, or configuration changes.
+
+### Fixed
+
+- **`org-email-assets` bucket no longer requires a public-read policy.** v1.5 attached an `AnyPrincipal` `s3:GetObject`
+  policy to this bucket and opted out of two Block Public Access controls, so any AWS account with **account-level S3
+  Block Public Access enabled** failed to deploy: CloudFormation returned `AccessDenied` on `AWS::S3::BucketPolicy` and
+  the nested stack rolled back. The bucket is now fully private and its email-branding images are served through a
+  dedicated CloudFront distribution using Origin Access Control.
+
+  **Operators no longer need to relax S3 Block Public Access**, and any local workaround patch replacing
+  `blockPublicAccess` with `BLOCK_ALL` and deleting the `addToResourcePolicy(...)` call can be dropped — this release
+  supersedes it.
+
+  Org logo uploads are unaffected: the browser still `PUT`s to S3 with a presigned URL. Uploaded logo keys are now
+  versioned (`{organizationId}/logo-{timestamp}.{ext}`) so a replaced logo appears in the next email immediately instead
+  of rendering from CloudFront cache.
+
+### Migration
+
+No schema change, no data migration, and no backfill. Organization logo URLs persisted by v1.5 keep resolving: only the
+host is rewritten at read time, and the object stays at its original key.
+
+> **If your v1.5 deploy failed and rolled back, you cannot deploy v1.5.1 over it.** A rolled-back stack can only be
+> deleted, and deleting it leaves the `{namePrefix}-*` DynamoDB tables behind with deletion protection enabled — the
+> next deploy then fails with `ResourceInUseException: Table already exists` until they are dealt with. See
+> [§7.1 Recovering from a failed deploy](./docs/deployment/upgrading.md#71-recovering-from-a-failed-deploy).
+
+## [v1.5] — Back-End API stack split
+
+Released 2026-09-02.
 
 > **DATA-LOSS HAZARD for existing deployments.** See
 > [`docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md`](./docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md)
@@ -110,21 +142,3 @@ Rolling back before Phase 3 is always safe because the tables are retained in-pl
   preflight reports every easy-genomics table as "missing (fresh deploy; skipping)" and exits cleanly. All subsequent
   deploys will continue to pass the preflight because the new construct provisions tables with deletion protection +
   PITR from day one.
-
-## [1.5.1]
-
-### Fixed
-
-- **`org-email-assets` bucket no longer requires a public-read policy.** v1.5 attached an `AnyPrincipal` `s3:GetObject`
-  policy to this bucket and opted out of two Block Public Access controls, so any AWS account with **account-level S3
-  Block Public Access enabled** failed to deploy: CloudFormation returned `AccessDenied` on `AWS::S3::BucketPolicy` and
-  the nested stack rolled back. The bucket is now fully private and its email-branding images are served through a
-  dedicated CloudFront distribution using Origin Access Control.
-
-  **Operators no longer need to relax S3 Block Public Access**, and any local workaround patch replacing
-  `blockPublicAccess` with `BLOCK_ALL` and deleting the `addToResourcePolicy(...)` call can be dropped — this release
-  supersedes it.
-
-  Org logo uploads are unaffected: the browser still `PUT`s to S3 with a presigned URL. Uploaded logo keys are now
-  versioned (`{organizationId}/logo-{timestamp}.{ext}`) so a replaced logo appears in the next email immediately instead
-  of rendering from CloudFront cache.

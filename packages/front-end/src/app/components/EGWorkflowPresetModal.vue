@@ -51,11 +51,20 @@
 
   const trimmedName = computed<string>(() => name.value.trim());
 
+  /**
+   * The name handed over by the last submit. The preset list refreshes before the modal has
+   * finished closing, so without this the name just saved would read back as already taken.
+   */
+  const submittedName = ref<string | null>(null);
+  // Sync so an edit always clears this before a same-tick submit records the new name.
+  watch(name, () => (submittedName.value = null), { flush: 'sync' });
+
   const nameError = computed<string | null>(() => {
     if (trimmedName.value.length === 0) return null;
     if (trimmedName.value.length > WORKFLOW_RUN_PRESET_NAME_MAX_LENGTH) {
       return `Use ${WORKFLOW_RUN_PRESET_NAME_MAX_LENGTH} characters or fewer.`;
     }
+    if (trimmedName.value === submittedName.value) return null;
     const taken = scope.value === 'LAB' ? props.takenLabNames : props.takenUserNames;
     if (taken.some((existing) => existing.toLowerCase() === trimmedName.value.toLowerCase())) {
       return 'A preset with this name already exists here.';
@@ -63,8 +72,13 @@
     return null;
   });
 
+  // A full tier only blocks adding a preset; renaming one that is already there is always allowed.
   const canSubmit = computed<boolean>(
-    () => trimmedName.value.length > 0 && !nameError.value && !props.saving && !tierIsFull(scope.value),
+    () =>
+      trimmedName.value.length > 0 &&
+      !nameError.value &&
+      !props.saving &&
+      !(props.mode === 'create' && tierIsFull(scope.value)),
   );
 
   // Reset to the caller's starting values each time the modal opens.
@@ -74,6 +88,7 @@
       if (!open) return;
       name.value = props.initialName ?? '';
       scope.value = props.initialScope ?? (tierIsFull('USER') && !tierIsFull('LAB') ? 'LAB' : 'USER');
+      submittedName.value = null;
     },
     { immediate: true },
   );
@@ -84,6 +99,7 @@
 
   function submit(): void {
     if (!canSubmit.value) return;
+    submittedName.value = trimmedName.value;
     emit('submit', { name: trimmedName.value, scope: scope.value });
   }
 </script>

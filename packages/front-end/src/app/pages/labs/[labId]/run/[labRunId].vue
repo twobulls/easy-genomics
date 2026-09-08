@@ -26,6 +26,7 @@
   const labsStore = useLabsStore();
   const runStore = useRunStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadLabRuns');
 
   const labId = $route.params.labId as string;
   const labRunId = $route.params.labRunId as string;
@@ -104,6 +105,7 @@
 
   onBeforeMount(async () => {
     if (await ensureLabInActiveOrg({ labId, forceReload: true })) {
+      uiStore.setRequestComplete('loadLabRuns');
       return;
     }
     if (!labsStore.labs[labId]) {

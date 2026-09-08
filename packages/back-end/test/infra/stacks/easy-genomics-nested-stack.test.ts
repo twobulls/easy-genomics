@@ -1,4 +1,5 @@
 import { App, Stack } from 'aws-cdk-lib';
+import { Template } from 'aws-cdk-lib/assertions';
 import { IamConstruct } from '../../../src/infra/constructs/iam-construct';
 import { LambdaConstruct } from '../../../src/infra/constructs/lambda-construct';
 import { SesConstruct } from '../../../src/infra/constructs/ses-construct';
@@ -107,6 +108,36 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
 
     expect(lambdaProps.environment.ENV_TYPE).toBe('dev');
     expect(lambdaProps.environment.ENV_NAME).toBe('sandbox');
+  });
+
+  it('passes the org-email-assets CloudFront domain to lambda common environment', () => {
+    // Common, not per-lambda: default-email-branding.ts is reached from four different senders
+    // (notification-service, user-invite-service, process-custom-email-sender and
+    // request-organization-branding-test-email), so a per-lambda variable would render
+    // https://undefined/... in whichever one was missed.
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+
+    const nestedStack = new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const lambdaConstructMock = LambdaConstruct as unknown as jest.Mock;
+    const lambdaProps = lambdaConstructMock.mock.calls[0][2];
+
+    // A bare Token.isUnresolved() check can't tell this value apart from the bucket's own
+    // bucketDomainName/bucketRegionalDomainName, which are also unresolved tokens on the same
+    // construct and would silently point email images back at the private S3 bucket. Pin the
+    // token to the CloudFront distribution's own logical id instead.
+    const template = Template.fromStack(nestedStack);
+    const distributions = template.findResources('AWS::CloudFront::Distribution');
+    const distributionLogicalIds = Object.keys(distributions);
+    expect(distributionLogicalIds).toHaveLength(1);
+    const [distributionLogicalId] = distributionLogicalIds;
+
+    expect(nestedStack.resolve(lambdaProps.environment.ORG_EMAIL_ASSETS_CDN_DOMAIN)).toEqual({
+      'Fn::GetAtt': [distributionLogicalId, 'DomainName'],
+    });
+    // Guards against the common env being replaced rather than extended.
+    expect(lambdaProps.environment.NAME_PREFIX).toBe('easy-genomics');
   });
 
   it('wires invitation lambda env with required cognito and jwt values', () => {

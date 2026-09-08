@@ -429,6 +429,134 @@ describe('update-laboratory.lambda', () => {
     });
   });
 
+  it('returns 400 when HealthOmics LLM provider changes to openai without a new API key', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      AwsHealthOmicsEnabled: true,
+      HealthOmicsLlmProvider: 'anthropic',
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, {
+        ...baseRequest,
+        NextFlowTowerEnabled: false,
+        NextFlowTowerApiBaseUrl: undefined,
+        NextFlowTowerWorkspaceId: undefined,
+        NextFlowTowerAccessToken: undefined,
+        HealthOmicsLlmProvider: 'openai',
+        HealthOmicsLlmModelId: 'gpt-4o',
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(400);
+    expect(mockLabService.prototype.update).not.toHaveBeenCalled();
+  });
+
+  it('allows the HealthOmics LLM provider change to openai when a new API key is supplied', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      AwsHealthOmicsEnabled: true,
+      HealthOmicsLlmProvider: 'anthropic',
+    });
+
+    (mockLabService.prototype.update as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, {
+        ...baseRequest,
+        NextFlowTowerEnabled: false,
+        NextFlowTowerApiBaseUrl: undefined,
+        NextFlowTowerWorkspaceId: undefined,
+        NextFlowTowerAccessToken: undefined,
+        HealthOmicsLlmProvider: 'openai',
+        HealthOmicsLlmModelId: 'gpt-4o',
+        HealthOmicsLlmApiKey: 'new-openai-key',
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockSsmService.prototype.putParameter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Name: `/easy-genomics/organization/${ORG_ID}/laboratory/${LAB_ID}/llm-api-key-healthomics`,
+        Value: 'new-openai-key',
+      }),
+    );
+  });
+
+  it('allows saving without a new API key when the HealthOmics LLM provider is unchanged', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      AwsHealthOmicsEnabled: true,
+      HealthOmicsLlmProvider: 'openai',
+    });
+
+    (mockLabService.prototype.update as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, {
+        ...baseRequest,
+        NextFlowTowerEnabled: false,
+        NextFlowTowerApiBaseUrl: undefined,
+        NextFlowTowerWorkspaceId: undefined,
+        NextFlowTowerAccessToken: undefined,
+        HealthOmicsLlmProvider: 'openai',
+        HealthOmicsLlmModelId: 'gpt-4o',
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+    expect(mockSsmService.prototype.putParameter).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        Name: `/easy-genomics/organization/${ORG_ID}/laboratory/${LAB_ID}/llm-api-key-healthomics`,
+      }),
+    );
+  });
+
+  it('allows switching the HealthOmics LLM provider to bedrock without an API key', async () => {
+    (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+      AwsHealthOmicsEnabled: true,
+      HealthOmicsLlmProvider: 'anthropic',
+    });
+
+    (mockLabService.prototype.update as jest.Mock).mockResolvedValue({
+      OrganizationId: ORG_ID,
+      LaboratoryId: LAB_ID,
+    });
+
+    const result = await handler(
+      createEvent(LAB_ID, {
+        ...baseRequest,
+        NextFlowTowerEnabled: false,
+        NextFlowTowerApiBaseUrl: undefined,
+        NextFlowTowerWorkspaceId: undefined,
+        NextFlowTowerAccessToken: undefined,
+        HealthOmicsLlmProvider: 'bedrock',
+        HealthOmicsLlmModelId: 'anthropic.claude-3-sonnet',
+      }),
+      createContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toBe(200);
+  });
+
   it('asserts S3 access when S3Bucket changes', async () => {
     (mockLabService.prototype.queryByLaboratoryId as jest.Mock).mockResolvedValue({
       OrganizationId: ORG_ID,

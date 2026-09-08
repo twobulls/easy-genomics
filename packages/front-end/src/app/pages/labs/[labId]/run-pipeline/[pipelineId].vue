@@ -18,6 +18,7 @@
   const labsStore = useLabsStore();
   const userStore = useUserStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadSeqeraPipeline');
 
   const labId = $route.params.labId as string;
   const pipelineId = $route.params.pipelineId as string;
@@ -25,11 +26,13 @@
 
   // check permissions to be on this page
   if (!userStore.canViewLab(labId)) {
+    uiStore.setRequestComplete('loadSeqeraPipeline');
     $router.push('/labs');
   }
 
   onBeforeMount(async () => {
     if (await ensureLabInActiveOrg({ labId, forceReload: true })) {
+      uiStore.setRequestComplete('loadSeqeraPipeline');
       return;
     }
   });
@@ -124,95 +127,97 @@
   async function initialize() {
     uiStore.setRequestPending('loadSeqeraPipeline');
 
-    // reset state refs
-    hasLaunched.value = false;
-    selectedStepIndex.value = 0;
+    try {
+      // reset state refs
+      hasLaunched.value = false;
+      selectedStepIndex.value = 0;
 
-    schema.value = {};
-    initialParams.value = {};
+      schema.value = {};
+      initialParams.value = {};
 
-    steps.value.forEach((step) => (step.disabled = true));
-    steps.value[0].disabled = false;
+      steps.value.forEach((step) => (step.disabled = true));
+      steps.value[0].disabled = false;
 
-    // get pipeline schema from API
-    const pipelineSchemaResponse: DescribePipelineSchemaResponse = await $api.seqeraPipelines.readPipelineSchema(
-      parseInt(pipelineId),
-      labId,
-    );
-    const originalSchema = JSON.parse(pipelineSchemaResponse.schema);
+      // get pipeline schema from API
+      const pipelineSchemaResponse: DescribePipelineSchemaResponse = await $api.seqeraPipelines.readPipelineSchema(
+        parseInt(pipelineId),
+        labId,
+      );
+      const originalSchema = JSON.parse(pipelineSchemaResponse.schema);
 
-    const definitions = originalSchema.$defs || originalSchema.definitions;
+      const definitions = originalSchema.$defs || originalSchema.definitions;
 
-    // Filter Schema to exclude any sections that do not have any visible parameters for user input
-    const filteredDefinitions = Object.keys(definitions)
-      .flatMap((key) => {
-        const section = definitions[key];
-        const hasAllHiddenSettings: boolean = Object.values(section.properties).every((x) => x?.hidden === true);
-        if (!hasAllHiddenSettings) {
-          return {
-            [key]: section,
-          };
+      // Filter Schema to exclude any sections that do not have any visible parameters for user input
+      const filteredDefinitions = Object.keys(definitions)
+        .flatMap((key) => {
+          const section = definitions[key];
+          const hasAllHiddenSettings: boolean = Object.values(section.properties).every((x) => x?.hidden === true);
+          if (!hasAllHiddenSettings) {
+            return {
+              [key]: section,
+            };
+          }
+        })
+        .filter((_) => _)
+        .reduce((acc, cur) => ({ ...acc, [Object.keys(cur)[0]]: Object.values(cur)[0] }), {});
+
+      // Identify Seqera pipeline schema required parameters
+      const paramsRequired: string[] = definitions.input_output_options.required
+        ? definitions.input_output_options.required
+        : [];
+
+      schema.value = {
+        ...originalSchema,
+        $defs: filteredDefinitions,
+      };
+
+      // create an object with all non-hidden fields' default values
+      function defaultVal(type: 'string' | 'number' | 'boolean'): '' | 0 | false {
+        switch (type) {
+          case 'string':
+            return '';
+          case 'number':
+            return 0;
+          case 'boolean':
+            return false;
         }
-      })
-      .filter((_) => _)
-      .reduce((acc, cur) => ({ ...acc, [Object.keys(cur)[0]]: Object.values(cur)[0] }), {});
-
-    // Identify Seqera pipeline schema required parameters
-    const paramsRequired: string[] = definitions.input_output_options.required
-      ? definitions.input_output_options.required
-      : [];
-
-    schema.value = {
-      ...originalSchema,
-      $defs: filteredDefinitions,
-    };
-
-    // create an object with all non-hidden fields' default values
-    function defaultVal(type: 'string' | 'number' | 'boolean'): '' | 0 | false {
-      switch (type) {
-        case 'string':
-          return '';
-        case 'number':
-          return 0;
-        case 'boolean':
-          return false;
       }
-    }
-    const schemaDefaults: any = {};
-    for (const sectionKey of Object.keys(filteredDefinitions)) {
-      const section: any = filteredDefinitions[sectionKey];
-      for (const propertyKey of Object.keys(section.properties)) {
-        const property: any = section.properties[propertyKey];
-        schemaDefaults[propertyKey] = defaultVal(property.type);
+      const schemaDefaults: any = {};
+      for (const sectionKey of Object.keys(filteredDefinitions)) {
+        const section: any = filteredDefinitions[sectionKey];
+        for (const propertyKey of Object.keys(section.properties)) {
+          const property: any = section.properties[propertyKey];
+          schemaDefaults[propertyKey] = defaultVal(property.type);
+        }
       }
+
+      // initialize wip run with values
+      runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
+        transactionId: seqeraRunTempId.value,
+        paramsRequired: paramsRequired,
+      });
+
+      const existingWip = runStore.wipSeqeraRuns[seqeraRunTempId.value];
+
+      // initialize params and save so that they can be easily reset
+      initialParams.value = {
+        ...schemaDefaults, // default values for all non-hidden fields
+        ...JSON.parse(pipelineSchemaResponse.params!), // overwrite with values from the pipeline schema
+        input: '', // clear the default sample sheet github link that comes from the pipeline itself
+      };
+
+      const paramsToApply = JSON.parse(JSON.stringify(initialParams.value));
+      if (existingWip?.sampleSheetS3Url && existingWip?.params?.input) {
+        paramsToApply.input = existingWip.params.input;
+        paramsToApply.outdir = existingWip.params.outdir;
+      }
+
+      runStore.updateWipSeqeraRunParams(seqeraRunTempId.value, paramsToApply);
+
+      await applySequenceCollectionsPrepopulation();
+    } finally {
+      uiStore.setRequestComplete('loadSeqeraPipeline');
     }
-
-    // initialize wip run with values
-    runStore.updateWipSeqeraRun(seqeraRunTempId.value, {
-      transactionId: seqeraRunTempId.value,
-      paramsRequired: paramsRequired,
-    });
-
-    const existingWip = runStore.wipSeqeraRuns[seqeraRunTempId.value];
-
-    // initialize params and save so that they can be easily reset
-    initialParams.value = {
-      ...schemaDefaults, // default values for all non-hidden fields
-      ...JSON.parse(pipelineSchemaResponse.params!), // overwrite with values from the pipeline schema
-      input: '', // clear the default sample sheet github link that comes from the pipeline itself
-    };
-
-    const paramsToApply = JSON.parse(JSON.stringify(initialParams.value));
-    if (existingWip?.sampleSheetS3Url && existingWip?.params?.input) {
-      paramsToApply.input = existingWip.params.input;
-      paramsToApply.outdir = existingWip.params.outdir;
-    }
-
-    runStore.updateWipSeqeraRunParams(seqeraRunTempId.value, paramsToApply);
-
-    await applySequenceCollectionsPrepopulation();
-
-    uiStore.setRequestComplete('loadSeqeraPipeline');
   }
 
   /** When opened from Data Collections with a pre-built sample sheet, skip to parameter configuration. */

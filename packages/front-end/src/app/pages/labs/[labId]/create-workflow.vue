@@ -13,6 +13,10 @@
     $router.push('/labs');
   }
 
+  if (!labsStore.labs[labId]) {
+    uiStore.setRequestPending('loadLabData');
+  }
+
   onBeforeMount(async () => {
     if (!labsStore.labs[labId]) {
       uiStore.setRequestPending('loadLabData');

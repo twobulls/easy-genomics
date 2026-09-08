@@ -262,11 +262,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
           },
+          nodeModules: ['@aws-sdk/client-omics'],
         },
         '/easy-genomics/laboratory/update-laboratory': {
           environment: {
             SEQERA_API_BASE_URL: this.props.seqeraApiBaseUrl,
           },
+          nodeModules: ['@aws-sdk/client-omics'],
         },
         '/easy-genomics/laboratory/delete-laboratory': {
           environment: {
@@ -428,6 +430,9 @@ export class EasyGenomicsNestedStack extends NestedStack {
         ENV_TYPE: this.props.envType,
         ENV_NAME: this.props.envName,
         NAME_PREFIX: this.props.namePrefix,
+        // Common rather than per-lambda: default-email-branding.ts is reached from several
+        // senders, and a missing value there renders a broken image rather than failing loudly.
+        ORG_EMAIL_ASSETS_CDN_DOMAIN: this.orgEmailAssetsBucket.distributionDomainName,
       },
     });
 

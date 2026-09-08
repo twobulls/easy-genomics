@@ -72,7 +72,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          role-duration-seconds: 3600
+          role-duration-seconds: 7200
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
       - name: Run CI/CD Build & Deploy Back-End
@@ -144,7 +144,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          role-duration-seconds: 3600
+          role-duration-seconds: 7200
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
       - name: Derive API URLs from stack outputs
@@ -250,7 +250,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_to_AWS_via_FederatedOIDC
           role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          role-duration-seconds: 3600
+          role-duration-seconds: 7200
           aws-region: ${{ secrets.AWS_REGION }}
           audience: sts.amazonaws.com
       - name: Derive API URLs from stack outputs

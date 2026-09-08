@@ -18,6 +18,7 @@
   const labStore = useLabsStore();
   const userStore = useUserStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadDashboardData');
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
 

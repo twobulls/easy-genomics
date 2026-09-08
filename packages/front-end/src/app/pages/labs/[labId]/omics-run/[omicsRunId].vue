@@ -29,6 +29,8 @@
 
   const omicsRun = computed<OmicsRun | null>(() => runStore.omicsRuns[labId][omicsRunId]);
 
+  useInitialPendingRequests('loadOmicsRun');
+
   usePageTitle(() => (omicsRun.value?.name ? omicsRun.value.name : 'HealthOmics run'));
 
   const createdDateTime = computed(() => {
@@ -53,7 +55,13 @@
     tabIndex.value = queryTabMatchIndex !== -1 ? queryTabMatchIndex : 0;
   });
 
-  onBeforeMount(async () => await runStore.loadSingleOmicsRun(labId, omicsRunId));
+  onBeforeMount(async () => {
+    try {
+      await runStore.loadSingleOmicsRun(labId, omicsRunId);
+    } finally {
+      useUiStore().setRequestComplete('loadOmicsRun');
+    }
+  });
 
   watch(tabIndex, (index) => {
     if (index === 1) useToastStore().info('Viewing HealthOmics Run results is not yet implemented');

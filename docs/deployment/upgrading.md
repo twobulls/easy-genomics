@@ -83,6 +83,10 @@ No infrastructure or schema changes. Rolling deploy; no downtime expected.
 4. Run [post-upgrade smoke tests](#6-post-upgrade-smoke-tests).
 5. Confirm with users that the app is working normally.
 
+> **Note:** `pnpm run build-and-deploy` may run one or more pending data migrations automatically as part of the deploy
+> (see `packages/back-end/scripts/README.md`). These are opt-in, idempotent, and tracked so each runs at most once per
+> environment — no separate action is required.
+
 **Rollback**
 
 Always safe. Check out the previous tag and redeploy:
@@ -146,6 +150,10 @@ a ~5–10 min deploy window during which old and new application code may briefl
 7. Run [post-upgrade smoke tests](#6-post-upgrade-smoke-tests).
 8. Confirm with users that the app is working normally.
 
+> **Note:** `pnpm run build-and-deploy` may run one or more pending data migrations automatically as part of the deploy
+> (see `packages/back-end/scripts/README.md`). These are opt-in, idempotent, and tracked so each runs at most once per
+> environment — no separate action is required.
+
 **DynamoDB notes**
 
 - New tables are created automatically by CDK on first deploy. No manual setup is needed.
@@ -178,7 +186,7 @@ A CloudFormation topology change or one-way data migration is required. **A dedi
 
 | Breaking release                   | Runbook                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| v1.4 → next (back-end stack split) | [`docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md`](../operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md) |
+| v1.4 → v1.5 (back-end stack split) | [`docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md`](../operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md) |
 
 **Rollback**
 
@@ -238,6 +246,56 @@ minutes across all Lambda log groups. No `ERROR`-level entries should appear aft
 | 2 — Additive DynamoDB | ✅ Safe                | Orphaned empty tables/attributes are harmless; delete manually if desired. |
 | 3 — Breaking          | ⚠️ Phase-dependent     | Before Phase 3: safe. After Phase 3: forward-fix only. See runbook.        |
 
+### 7.1 Recovering from a failed deploy
+
+The table above covers rolling **back** a release that deployed successfully. This section covers the different case: a
+deploy that **never completed** and left CloudFormation mid-rollback. You cannot deploy the next version over it — two
+things block you, in order.
+
+**1. A rolled-back stack must be deleted, not updated.** A stack in `ROLLBACK_COMPLETE` cannot be updated by
+CloudFormation at all. Find the affected root stacks and delete those; nested stacks go with their parent:
+
+```bash
+aws cloudformation list-stacks \
+  --query "StackSummaries[?starts_with(StackName,'<namePrefix>') && StackStatus!='DELETE_COMPLETE'].[StackName,StackStatus]" \
+  --output table
+
+aws cloudformation delete-stack --stack-name <namePrefix>-easy-genomics-api-stack
+aws cloudformation wait stack-delete-complete --stack-name <namePrefix>-easy-genomics-api-stack
+```
+
+Delete in dependency order: `*-easy-genomics-api-stack` imports Cognito and KMS values from `*-main-back-end-stack`, so
+the api stack goes first. Leave the shared `CDKToolkit` bootstrap stack alone.
+
+**2. Deleting the stack orphans the DynamoDB tables.** Tables are provisioned with `RemovalPolicy.RETAIN` **and**
+`deletionProtection: true` unconditionally — deliberate data protection that does **not** depend on `env-type`, so it
+applies to `dev` environments too. They survive the stack deletion (reported as `DELETE_SKIPPED` in the event log) and
+keep their explicit names, so the next deploy fails with `ResourceInUseException: Table already exists`.
+
+If the failed deploy was for a **fresh environment with no data worth keeping**, remove them:
+
+```bash
+# READ THIS LIST FIRST and confirm every entry belongs to the environment you intend to destroy
+aws dynamodb list-tables --query "TableNames[?starts_with(@,'<namePrefix>-')]" --output text
+
+for t in $(aws dynamodb list-tables --query "TableNames[?starts_with(@,'<namePrefix>-')]" --output text); do
+  aws dynamodb update-table --table-name "$t" --no-deletion-protection-enabled
+  aws dynamodb delete-table --table-name "$t"
+done
+```
+
+> **On an environment with real data, do not run the loop above.** Adopt the existing tables into the new stack with
+> `cdk import` instead, following the same approach as a Tier 3 migration. Deleting a production table is not
+> recoverable without a backup.
+
+Before redeploying, also sweep other resources that carry `RETAIN` under the same name prefix:
+
+```bash
+aws s3api list-buckets --query "Buckets[?starts_with(Name,'<namePrefix>')].Name" --output text
+aws logs describe-log-groups --log-group-name-prefix /aws/lambda/<namePrefix> \
+  --query 'logGroups[].logGroupName' --output text
+```
+
 ---
 
 ## 8. Version Compatibility Matrix
@@ -245,16 +303,17 @@ minutes across all Lambda log groups. No `ERROR`-level entries should appear aft
 Use this table to find your upgrade tier. If you are skipping multiple versions (e.g. v1.2 → v1.4), use the highest tier
 that appears in any of the intermediate steps.
 
-| Upgrade         | Tier | Change summary                                                                     | Runbook                                                                                             |
-| --------------- | ---- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| v1.0.1 → v1.1   | 1    | UI only (skip button)                                                              | —                                                                                                   |
-| v1.1 → v1.2     | 2    | Folder download as ZIP, sample sheet upload, smart search; new Lambda dependencies | —                                                                                                   |
-| v1.2 → v1.2.1   | 1    | Build config fixes                                                                 | —                                                                                                   |
-| v1.2.1 → v1.2.2 | 1    | Workflow result file access patches                                                | —                                                                                                   |
-| v1.2.2 → v1.3   | 2    | TTL added to `laboratory-run-table`; HealthOmics run tagging                       | —                                                                                                   |
-| v1.3 → v1.3.1   | 1    | Bug fixes                                                                          | —                                                                                                   |
-| v1.3.1 → v1.4   | 2    | New `laboratory-data-tagging-table`; DynamoDB stream on `laboratory-run-table`     | —                                                                                                   |
-| v1.4 → next     | 3    | Back-end CloudFormation stack split; DynamoDB table re-parenting                   | [EASY_GENOMICS_PROD_MIGRATION.md](../operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md) |
+| Upgrade         | Tier | Change summary                                                                                                                                                           | Runbook                                                                                             |
+| --------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| v1.0.1 → v1.1   | 1    | UI only (skip button)                                                                                                                                                    | —                                                                                                   |
+| v1.1 → v1.2     | 2    | Folder download as ZIP, sample sheet upload, smart search; new Lambda dependencies                                                                                       | —                                                                                                   |
+| v1.2 → v1.2.1   | 1    | Build config fixes                                                                                                                                                       | —                                                                                                   |
+| v1.2.1 → v1.2.2 | 1    | Workflow result file access patches                                                                                                                                      | —                                                                                                   |
+| v1.2.2 → v1.3   | 2    | TTL added to `laboratory-run-table`; HealthOmics run tagging                                                                                                             | —                                                                                                   |
+| v1.3 → v1.3.1   | 1    | Bug fixes                                                                                                                                                                | —                                                                                                   |
+| v1.3.1 → v1.4   | 2    | New `laboratory-data-tagging-table`; DynamoDB stream on `laboratory-run-table`                                                                                           | —                                                                                                   |
+| v1.4 → v1.5     | 3    | Back-end CloudFormation stack split; DynamoDB table re-parenting                                                                                                         | [EASY_GENOMICS_PROD_MIGRATION.md](../operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md) |
+| v1.5 → v1.5.1   | 1    | `org-email-assets` bucket made private, served via a new CloudFront distribution (OAC); no data migration, no configuration change — drop any local BPA workaround patch | [§7.1](#71-recovering-from-a-failed-deploy) if your v1.5 deploy failed                              |
 
 > **Maintainers:** When a new release ships, add a row to this table, classify its tier, and — for Tier 3 releases — add
 > the runbook to `docs/operations/migration-runbooks/` before tagging.

@@ -36,6 +36,7 @@
   const runStore = useRunStore();
   const labStore = useLabsStore();
   const uiStore = useUiStore();
+  useInitialPendingRequests('loadLabData');
   const userStore = useUserStore();
   const seqeraPipelinesStore = useSeqeraPipelinesStore();
   const omicsWorkflowsStore = useOmicsWorkflowsStore();
@@ -263,6 +264,15 @@
 
   type LaboratoryRunTableItem = LaboratoryRun & { lastUpdated: string; searchIndex: string };
 
+  const TERMINAL_STATUSES = ['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED'];
+
+  /**
+   * Runs cancelled during this session. Cancelling only signals the compute platform; the
+   * LaboratoryRun record is updated later by the status check pipeline, so these are shown as
+   * cancelled until the server reports a terminal status of its own.
+   */
+  const locallyCancelledRunIds = ref<Set<string>>(new Set());
+
   const runsTableColumns = [
     { key: 'RunName', label: 'Run Name', sortable: true },
     { key: 'WorkflowName', label: 'Workflow name', sortable: true },
@@ -326,11 +336,17 @@
   }
 
   const filteredRunsTableItems = computed<LaboratoryRunTableItem[]>(() => {
-    if (!runsSearchQuery.value.trim()) {
-      return runsTableItems.value;
-    }
+    const items = !runsSearchQuery.value.trim()
+      ? runsTableItems.value
+      : runsTableItems.value.filter((run) => matchesRunSearch(run, runsSearchQuery.value));
 
-    return runsTableItems.value.filter((run) => matchesRunSearch(run, runsSearchQuery.value));
+    // Display-only override. Status checks read the untouched runsTableItems, so the server keeps
+    // being polled for the run's real status.
+    return items.map((run) =>
+      locallyCancelledRunIds.value.has(run.RunId) && !TERMINAL_STATUSES.includes(run.Status)
+        ? { ...run, Status: 'CANCELLED' }
+        : run,
+    );
   });
 
   // fetch the runs any time any of the inputs change; apply "My runs only" client-side
@@ -663,7 +679,6 @@
   }
 
   async function requestLabRunStatusCheck() {
-    const TERMINAL_STATUSES = ['FAILED', 'SUCCEEDED', 'CANCELLED', 'COMPLETED', 'DELETED'];
     try {
       const nonTerminalRunIds = runsTableItems.value
         .filter((run) => !TERMINAL_STATUSES.includes(run.Status))
@@ -754,6 +769,8 @@
     const runId = runToCancel.value?.RunId;
     const runName = runToCancel.value?.RunName;
     const runPlatform = runToCancel.value?.Platform;
+    // Cancellation targets the compute platform's own run id, not the Easy Genomics RunId.
+    const externalRunId = runToCancel.value?.ExternalRunId;
 
     if (!runId || !runName || !runPlatform) {
       throw new Error('runToCancel is missing required information');
@@ -761,14 +778,23 @@
 
     const statusAtCancel = runToCancel.value?.Status || 'unknown';
 
+    if (!externalRunId) {
+      useToastStore().error('This run is not yet registered with its compute platform, so it cannot be cancelled');
+      isCancelDialogOpen.value = false;
+      return;
+    }
+
     try {
       if (runPlatform === 'Seqera Cloud') {
         uiStore.setRequestPending('cancelSeqeraRun');
-        await $api.seqeraRuns.cancelPipelineRun(props.labId, runId);
+        await $api.seqeraRuns.cancelPipelineRun(props.labId, externalRunId);
       } else {
         uiStore.setRequestPending('cancelOmicsRun');
-        await $api.omicsRuns.cancelWorkflowRun(props.labId, runId);
+        await $api.omicsRuns.cancelWorkflowRun(props.labId, externalRunId);
       }
+
+      locallyCancelledRunIds.value = new Set(locallyCancelledRunIds.value).add(runId);
+
       // Analytics: run cancelled (platform + status only; no run name / id).
       useAnalytics().track('run_cancelled', {
         platform: runPlatform === 'Seqera Cloud' ? 'seqera' : 'omics',
@@ -782,8 +808,14 @@
     uiStore.setRequestComplete('cancelSeqeraRun');
     uiStore.setRequestComplete('cancelOmicsRun');
 
-    await getSeqeraRuns();
-    await getOmicsRuns();
+    // Only refresh a platform the lab can actually reach; otherwise the fetch fails and toasts a
+    // misleading error about the platform the user never touched.
+    if (lab.value?.NextFlowTowerEnabled && !missingPAT.value) {
+      await getSeqeraRuns();
+    }
+    if (lab.value?.AwsHealthOmicsEnabled) {
+      await getOmicsRuns();
+    }
   }
 
   async function handleDetailsUpdated() {
@@ -911,6 +943,7 @@
       :show-back="true"
       show-org-breadcrumb
       show-lab-breadcrumb
+      :is-loading="uiStore.isRequestPending('loadLabData')"
     >
       <EGButton
         v-if="!superuser && activeTabKey === 'omicsWorkflows' && canCreateOmicsWorkflows"

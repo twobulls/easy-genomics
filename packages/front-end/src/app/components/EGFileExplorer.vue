@@ -63,7 +63,7 @@
 
   const hasOpenedStartPath = ref(false);
 
-  const isRootLoading = ref(false);
+  const isRootLoading = ref(true);
 
   // Cache for loaded directory contents to avoid re-fetching
   const loadedDirectories = ref<Map<string, FileTreeNode[]>>(new Map());

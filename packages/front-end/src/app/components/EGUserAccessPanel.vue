@@ -15,6 +15,8 @@
   const { $api } = useNuxtApp();
   const $router = useRouter();
 
+  useInitialPendingRequests('updateUser', 'fetchOrgLabs', 'fetchUserLabs');
+
   const selectedUser = ref<OrganizationUserDetails | null>(null);
 
   const selectedUserNameDetails = computed<NameOptions>(() => ({

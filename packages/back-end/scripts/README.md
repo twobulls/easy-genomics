@@ -211,6 +211,31 @@ pnpm run migrate-laboratory-s3-access-seed
 `preflight-deletion-protection`), plus AWS credentials with DynamoDB read on `laboratory-table` and read/write on
 `laboratory-s3-access-table`.
 
+## `deploy-dynamodb-gsi-waves.ts`
+
+**Purpose:** Works around DynamoDB's one-GSI-per-`UpdateTable` limit so a single `pnpm run deploy` can still land
+multiple new (or removed) global secondary indexes on an **existing** table. CloudFormation otherwise fails with
+`Cannot perform more than one GSI creation or deletion in a single update` — the UAT staging failure when
+`laboratory-run-table` gained both `PollStatus_Index` and `WorkflowExternalId_Index` in one merge.
+
+The script compares cdk.out (desired indexes, including nested-stack templates) with the currently deployed
+CloudFormation templates, then `UpdateStack`s those live templates one GSI at a time. Intermediate updates do **not**
+deploy cdk.out, so new Lambda code cannot go live against a table that is still missing a later index. The caller's
+final `cdk deploy` applies remaining app changes plus at most one leftover GSI. Tables that do not exist yet are left
+alone (`CreateTable` may define many GSIs). Environments whose indexes already match cdk.out are a no-op.
+
+**When to use:** Wired into `pnpm run deploy` (after `preflight-deletion-protection`, before the final `cdk deploy`).
+You do not need to run it by hand unless you are debugging a GSI rollout.
+
+```bash
+cd packages/back-end
+pnpm run deploy-dynamodb-gsi-waves -- --dry-run
+```
+
+**Environment:** Same `easy-genomics.yaml` / `CI_CD` + `ENV_NAME` / `ENV_TYPE` / `AWS_REGION` setup as
+`preflight-deletion-protection`, plus CloudFormation `GetTemplate` / `UpdateStack` / `ListStackResources` and
+`s3:PutObject` on the CDK bootstrap assets bucket.
+
 ## `migrate-samples-and-sequence-collections.ts`
 
 **Purpose:** Rewrites DynamoDB rows in `laboratory-data-tagging-table` after the sequence-set → sample and

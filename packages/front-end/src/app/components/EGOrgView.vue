@@ -30,6 +30,9 @@
 
   const hasNoData = computed<boolean>(() => orgUsersDetailsData.value.length === 0);
   const isLoading = computed<boolean>(() => useUiStore().anyRequestPending(['fetchOrgData', 'editOrg']));
+  const isFetchingOrg = computed<boolean>(() => useUiStore().isRequestPending('fetchOrgData'));
+
+  useInitialPendingRequests('fetchOrgData');
 
   // Dynamic remove user dialog values
   const isRemoveUserModalOpen = ref(false);
@@ -457,6 +460,7 @@
   <div v-if="activeTabKey === 'details'" role="tabpanel" id="panel-details" aria-labelledby="tab-details" tabindex="0">
     <h2 class="sr-only">Organization settings</h2>
     <EGFormOrgDetails
+      v-if="!isFetchingOrg"
       :key="resetFormKey"
       @submit-form-org-details="onSubmit($event)"
       :name="org.Name"
@@ -475,6 +479,7 @@
   >
     <h2 class="sr-only">Email branding</h2>
     <EGFormOrgEmailBranding
+      v-if="!isFetchingOrg"
       :key="resetFormKey"
       :org-id="props.orgId"
       :email-branding-logo-url="org.EmailBrandingLogoUrl"

@@ -13,6 +13,8 @@
   const router = useRouter();
   const labsStore = useLabsStore();
 
+  useInitialPendingRequests('getLabs');
+
   const labsDisplayList = computed<Laboratory[]>(() =>
     labsStore.labsForOrg(props.orgId).sort((labA, labB) => useSort().stringSortCompare(labA.Name, labB.Name)),
   );

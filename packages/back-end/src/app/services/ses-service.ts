@@ -1,5 +1,6 @@
 import { SendTemplatedEmailCommand, SendTemplatedEmailCommandOutput, SESClient } from '@aws-sdk/client-ses';
-import { DEFAULT_EASY_GENOMICS_LOGO_DATA_URI, DEFAULT_LOCK_IMAGE_DATA_URI } from '@BE/utils/default-email-branding';
+import { DEFAULT_EASY_GENOMICS_LOGO_URL, DEFAULT_LOCK_IMAGE_URL } from '@BE/utils/default-email-branding';
+import { resolveEmailBrandingLogoUrl } from '@BE/utils/email-branding-logo-url';
 import { formatRunStatusPhrase } from '@BE/utils/format-run-status-phrase';
 import { formatRunTime } from '@BE/utils/format-run-time';
 
@@ -46,7 +47,7 @@ export class SesService {
         DOMAIN_NAME: this.props.domainName,
         INVITATION_JWT: invitationJwt,
         ORGANIZATION_NAME: organizationName,
-        EASY_GENOMICS_EMAIL_LOGO: branding?.logoUrl || DEFAULT_EASY_GENOMICS_LOGO_DATA_URI,
+        EASY_GENOMICS_EMAIL_LOGO: resolveEmailBrandingLogoUrl(branding?.logoUrl) || DEFAULT_EASY_GENOMICS_LOGO_URL,
       }),
     });
 
@@ -90,7 +91,7 @@ export class SesService {
         COPYRIGHT_YEAR: `${new Date().getFullYear()}`,
         DOMAIN_NAME: this.props.domainName,
         ORGANIZATION_NAME: organizationName,
-        EASY_GENOMICS_EMAIL_LOGO: branding?.logoUrl || DEFAULT_EASY_GENOMICS_LOGO_DATA_URI,
+        EASY_GENOMICS_EMAIL_LOGO: resolveEmailBrandingLogoUrl(branding?.logoUrl) || DEFAULT_EASY_GENOMICS_LOGO_URL,
       }),
     });
 
@@ -123,8 +124,8 @@ export class SesService {
         COPYRIGHT_YEAR: `${new Date().getFullYear()}`,
         DOMAIN_NAME: this.props.domainName,
         FORGOT_PASSWORD_JWT: forgotPasswordJwt,
-        EASY_GENOMICS_EMAIL_LOGO: DEFAULT_EASY_GENOMICS_LOGO_DATA_URI,
-        LOCK_IMAGE: DEFAULT_LOCK_IMAGE_DATA_URI,
+        EASY_GENOMICS_EMAIL_LOGO: DEFAULT_EASY_GENOMICS_LOGO_URL,
+        LOCK_IMAGE: DEFAULT_LOCK_IMAGE_URL,
       }),
     });
 
@@ -171,7 +172,7 @@ export class SesService {
         WORKFLOW_NAME: data.workflowName || 'N/A',
         RUN_TIME: data.runDurationSeconds != null ? formatRunTime(data.runDurationSeconds) : 'N/A',
         RUN_LINK: `https://${this.props.domainName}/labs/${data.laboratoryId}/run/${data.runId}`,
-        EASY_GENOMICS_EMAIL_LOGO: data.logoUrl || DEFAULT_EASY_GENOMICS_LOGO_DATA_URI,
+        EASY_GENOMICS_EMAIL_LOGO: resolveEmailBrandingLogoUrl(data.logoUrl) || DEFAULT_EASY_GENOMICS_LOGO_URL,
       }),
     });
 

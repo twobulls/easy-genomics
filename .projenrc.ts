@@ -27,7 +27,7 @@ const cdkVersion = '2.260.0';
 const nodeVersion = '20.20.2';
 const pnpmVersion = '9.15.0';
 const awsSdkClientOmicsVersion = '^3.1090.0';
-const authorName = 'DEPT Agency';
+const authorName = 'DEPT® Agency';
 const copyrightOwner = authorName;
 const copyrightPeriod = `${new Date().getFullYear()}`;
 
@@ -445,10 +445,21 @@ backEndApp.addScripts({
   // See `scripts/preflight-deletion-protection.ts` and
   // `docs/operations/migration-runbooks/EASY_GENOMICS_PROD_MIGRATION.md`.
   ['preflight-deletion-protection']: 'tsx scripts/preflight-deletion-protection.ts',
-  // Idempotent seed of ALLOW rows for each lab's configured S3Bucket. Runs AFTER
-  // `cdk deploy` so the laboratory-s3-access-table exists. Complements the runtime
-  // fallback in `isS3BucketAccessAllowed` for unmigrated labs.
+  // DynamoDB allows only one GSI create or delete per UpdateTable. When cdk.out
+  // would apply two or more GSI mutations to an existing table (the UAT failure
+  // mode when staging lands PollStatus + WorkflowExternalId together), this
+  // script deploys intermediate waves of one mutation each, then the final
+  // `cdk deploy` below applies the last remaining index. No-op when every
+  // existing table already matches cdk.out or only needs one change.
+  ['deploy-dynamodb-gsi-waves']: 'tsx scripts/deploy-dynamodb-gsi-waves.ts',
+  // Idempotent seed of ALLOW rows for each lab's configured S3Bucket. Kept as a standalone
+  // script for manual re-runs; `deploy` now runs it through `run-deploy-migrations` instead
+  // of calling it directly (see below), so it only executes once per environment.
   ['migrate-laboratory-s3-access-seed']: 'tsx scripts/migrate-laboratory-s3-access-seed.ts',
+  // Deploy-gated, opt-in migration runner. Registered migrations run at most once per
+  // environment, tracked in an SSM ledger at /${NAME_PREFIX}/deploy-migrations/applied. See
+  // `scripts/deploy-migrations/registry.ts` and `scripts/README.md` for the full contract.
+  ['run-deploy-migrations']: 'tsx scripts/run-deploy-migrations.ts',
   // NOTE: `--all` is required now that the back-end synthesizes multiple
   // top-level stacks (`*-main-back-end-stack`, `*-easy-genomics-api-stack`,
   // and optionally `*-api-domain-stack`). Without it, `cdk deploy` refuses to
@@ -457,15 +468,20 @@ backEndApp.addScripts({
   // The preflight guard runs AFTER `cdk bootstrap` (which only touches the
   // CDK toolkit stack, not app resources) and BEFORE any app-stack deploy,
   // so a failing guard aborts without any destructive CloudFormation call.
-  // `--app cdk.out` reuses the cloud assembly produced by the build's synth step instead
-  // of synthesizing again (~5 min per synth for this app). Deploy therefore requires a
-  // prior `build` — every flow already guarantees that (nx deploy dependsOn build; the
+  // `deploy-dynamodb-gsi-waves` then optionally UpdateStacks currently deployed
+  // tables one GSI at a time when an existing table would create/delete more
+  // than one GSI (DynamoDB's UpdateTable limit). `--app cdk.out` reuses the cloud
+  // assembly produced by the build's synth step instead of synthesizing again
+  // (~5 min per synth for this app). Deploy therefore requires a prior `build` —
+  // every flow already guarantees that (nx deploy dependsOn build; the
   // build-and-deploy scripts chain build first).
   //
-  // After stacks deploy, seed laboratory S3 access rows so existing labs are not
-  // locked out by the new assert gates (runtime fallback covers the brief window).
+  // Registered `pre` migrations run after the preflight guard and before any stack
+  // deploys (they may depend on old table shapes that new code will stop reading), and
+  // registered `post` migrations run after stacks deploy (they may depend on
+  // newly-created tables/GSIs, e.g. the laboratory-s3-access-table).
   ['deploy']:
-    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices && pnpm run migrate-laboratory-s3-access-seed',
+    'pnpm cdk bootstrap --app cdk.out && pnpm run preflight-deletion-protection && pnpm run deploy-dynamodb-gsi-waves && pnpm run run-deploy-migrations -- --phase=pre && pnpm exec projen deploy --app cdk.out --all --progress bar --no-color --no-notices && pnpm run run-deploy-migrations -- --phase=post',
   ['build-and-deploy']: 'pnpm -w run build-back-end && pnpm run deploy --require-approval any-change', // Run root build-back-end script to inc shared-lib
   ['lint']: "eslint 'src/**/*.{js,ts}' --fix",
   ['local-server']: 'tsx src/local-server/index.ts',

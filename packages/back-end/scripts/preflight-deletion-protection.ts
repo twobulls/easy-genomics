@@ -85,8 +85,7 @@
  * runbook this guard protects.
  */
 
-import { join } from 'path';
-import { CloudFormationClient, ListStackResourcesCommand, StackResourceSummary } from '@aws-sdk/client-cloudformation';
+import { CloudFormationClient, StackResourceSummary } from '@aws-sdk/client-cloudformation';
 import {
   CreateBackupCommand,
   DescribeContinuousBackupsCommand,
@@ -96,12 +95,8 @@ import {
   UpdateContinuousBackupsCommand,
   UpdateTableCommand,
 } from '@aws-sdk/client-dynamodb';
-import { ConfigurationSettings } from '@easy-genomics/shared-lib/src/app/types/configuration';
-import {
-  getStackEnvName,
-  loadConfigurations,
-  resolveConfiguration,
-} from '@easy-genomics/shared-lib/src/app/utils/configuration';
+import { isStackMissingError, listAllStackResources } from './lib/cloudformation-stack';
+import { resolveDeployEnv } from './lib/deploy-env';
 import { isEasyGenomicsDomainNestedStack } from './lib/is-easy-genomics-domain-nested-stack';
 
 const EG_TABLE_SUFFIXES = [
@@ -123,13 +118,6 @@ type FailureReason = 'deletion-protection-disabled' | 'pitr-disabled';
 type TableCheckFailure = {
   tableName: string;
   reason: FailureReason;
-};
-
-type DeployEnv = {
-  envName: string;
-  envType: string;
-  awsRegion: string;
-  namePrefix: string;
 };
 
 type ArmActionKind = 'backup' | 'deletion-protection' | 'pitr';
@@ -159,35 +147,6 @@ type MigrationState =
   // gives the operator a clean message and a chance to fix it before
   // anything else runs.
   | { kind: 'unknown'; reason: string };
-
-function resolveDeployEnv(): DeployEnv {
-  // Mirror `packages/back-end/src/main.ts` so the preflight check targets
-  // exactly the deployment the subsequent `cdk deploy` will act on.
-  if (process.env.CI_CD === 'true') {
-    const envName = process.env.ENV_NAME;
-    const envType = process.env.ENV_TYPE;
-    const awsRegion = process.env.AWS_REGION;
-    if (!envName || !envType || !awsRegion) {
-      throw new Error(
-        'Preflight: CI_CD=true but ENV_NAME / ENV_TYPE / AWS_REGION are not all set. ' +
-          'Fix the CI environment or run locally without CI_CD=true to fall back to easy-genomics.yaml.',
-      );
-    }
-    return { envName, envType, awsRegion, namePrefix: `${envType}-${envName}` };
-  }
-
-  const configPath = join(__dirname, '../../../config/easy-genomics.yaml');
-  const configurations: { [p: string]: ConfigurationSettings }[] = loadConfigurations(configPath);
-  const configuration = resolveConfiguration(configurations, getStackEnvName() ?? process.env.ENV_NAME);
-  const envName = Object.keys(configuration)[0];
-  const settings = Object.values(configuration)[0];
-  const envType = settings['env-type'];
-  const awsRegion = settings['aws-region'];
-  if (!envName || !envType || !awsRegion) {
-    throw new Error('Preflight: env-name / env-type / aws-region missing from easy-genomics.yaml.');
-  }
-  return { envName, envType, awsRegion, namePrefix: `${envType}-${envName}` };
-}
 
 async function checkTable(client: DynamoDBClient, tableName: string): Promise<TableCheckFailure[] | 'missing'> {
   const failures: TableCheckFailure[] = [];
@@ -303,24 +262,17 @@ async function checkMigrationState(client: CloudFormationClient, oldStackName: s
   // isEasyGenomicsDomainNestedStack so Auth / HealthOmics / NF-Tower siblings
   // (which also contain "easygenomics" when envName is that string) are not
   // treated as migration-pending.
-  const collected: StackResourceSummary[] = [];
-  let nextToken: string | undefined;
+  let collected: StackResourceSummary[];
   try {
-    do {
-      const resp = await client.send(new ListStackResourcesCommand({ StackName: oldStackName, NextToken: nextToken }));
-      if (resp.StackResourceSummaries) {
-        collected.push(...resp.StackResourceSummaries);
-      }
-      nextToken = resp.NextToken;
-    } while (nextToken);
+    collected = await listAllStackResources(client, oldStackName);
   } catch (err) {
     // CloudFormation returns a ValidationError (plain Error with that
     // code) for "stack does not exist". We treat that as a greenfield
     // deploy.
-    const message = err instanceof Error ? err.message : String(err);
-    if (/does not exist/i.test(message)) {
+    if (isStackMissingError(err)) {
       return { kind: 'fresh' };
     }
+    const message = err instanceof Error ? err.message : String(err);
     return { kind: 'unknown', reason: message };
   }
 
@@ -548,7 +500,7 @@ function printAutoArmReport(namePrefix: string, armResults: Map<string, ArmActio
 async function main(): Promise<void> {
   const noAutoArmFlag = process.argv.includes('--no-auto-arm');
 
-  const { envName, envType, awsRegion, namePrefix } = resolveDeployEnv();
+  const { envName, envType, awsRegion, namePrefix } = resolveDeployEnv('Preflight');
   console.log(
     `Preflight: checking easy-genomics DynamoDB tables for "${namePrefix}" (envType=${envType}, envName=${envName}) in ${awsRegion}...`,
   );

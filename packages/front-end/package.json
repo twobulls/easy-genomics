@@ -43,7 +43,7 @@
     "local-server": "USE_LOCAL_BACKEND=1 pnpm run nuxt-dev"
   },
   "author": {
-    "name": "DEPT Agency",
+    "name": "DEPT® Agency",
     "organization": true
   },
   "devDependencies": {

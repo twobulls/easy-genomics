@@ -215,11 +215,13 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       [
         {
           id: 'AwsSolutions-IAM5',
-          reason: 'Need access to all omics runs and workflows',
+          reason:
+            'Need access to all omics runs and workflows, including workflows shared cross-account via AWS RAM, ' +
+            'whose owner account ID is not known at deploy time',
           appliesTo: [
             `Resource::arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`,
             `Resource::arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
-            `Resource::arn:aws:omics:${this.props.env.region!}::workflow/*`,
+            `Resource::arn:aws:omics:${this.props.env.region!}:*:workflow/*`,
           ],
         },
       ],
@@ -486,6 +488,18 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       });
 
+    // A workflow shared cross-account via AWS RAM keeps the real owner account ID in its ARN
+    // (e.g. arn:aws:omics:us-west-2:851725267090:workflow/5425135) — RAM sharing never rewrites
+    // it to an empty account segment. RAM only makes the resource visible/accessible from the
+    // owner side; the recipient's own IAM identity-based policy must still explicitly allow the
+    // action against that ARN, so every statement below needs this pattern alongside the
+    // same-account one. Using a wildcard account segment here (rather than an owner-account
+    // allow-list) because Easy Genomics doesn't track which AWS accounts a lab's workflows may
+    // be shared from — that's decided ad hoc via AWS RAM, not app config. If sharing partners
+    // become a known, bounded set, this can be tightened to an explicit list of owner account
+    // IDs (e.g. sourced from a new `ConfigurationSettingsSchema` field) instead of `*`.
+    const sharedWorkflowArn = `arn:aws:omics:${this.props.env.region!}:*:workflow/*`;
+
     // /aws-healthomics/workflow/list-private-workflows
     this.iam.addPolicyStatements('/aws-healthomics/workflow/list-private-workflows', [
       new PolicyStatement({
@@ -584,14 +598,12 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       }),
       workflowAccessQuery(),
       new PolicyStatement({
-        resources: [
-          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
-          // Cross-account shared workflows use an empty account id in the ARN
-          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
-        ],
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`, sharedWorkflowArn],
         actions: ['omics:GetWorkflow'],
         effect: Effect.ALLOW,
       }),
+      // Needed to resolve the true owner account ID (via ListShares) — GetWorkflow requires that ID
+      // explicitly as `workflowOwnerId` for a cross-account RAM-shared workflow.
       new PolicyStatement({
         resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
         actions: ['omics:ListShares'],
@@ -610,13 +622,12 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       }),
       workflowAccessQuery(),
       new PolicyStatement({
-        resources: [
-          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
-          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
-        ],
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`, sharedWorkflowArn],
         actions: ['omics:ListWorkflowVersions'],
         effect: Effect.ALLOW,
       }),
+      // Needed to resolve the true owner account ID (via ListShares) — ListWorkflowVersions requires
+      // that ID explicitly as `workflowOwnerId` for a cross-account RAM-shared workflow.
       new PolicyStatement({
         resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:/shares`],
         actions: ['omics:ListShares'],
@@ -666,10 +677,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
       }),
       // Permissions below are used by the GitHub fallback path only (incl. SHARED)
       new PolicyStatement({
-        resources: [
-          `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
-          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
-        ],
+        resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`, sharedWorkflowArn],
         actions: ['omics:GetWorkflow'],
         effect: Effect.ALLOW,
       }),
@@ -808,7 +816,7 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
           `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`,
           `arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:workflow/*`,
           // Cross-account shared workflows (StartRun with workflowOwnerId)
-          `arn:aws:omics:${this.props.env.region!}::workflow/*`,
+          sharedWorkflowArn,
         ],
         actions: ['omics:StartRun', 'omics:TagResource'],
         effect: Effect.ALLOW,

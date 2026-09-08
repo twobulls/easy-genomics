@@ -117,21 +117,14 @@ and using it as `sys-admin-email`.
 ### 3.3 Org-level email branding bucket
 
 If your deployment includes the org email branding feature, a second, small S3 bucket
-(`{env-type}-{env-name}-org-email-assets-bucket`) is created for org-uploaded logo images. It's deliberately
-public-read-only (email clients need unauthenticated access to render the image) — no action is needed for this to work,
-but be aware:
+(`{env-type}-{env-name}-org-email-assets-bucket`) is created for org-uploaded logo images (and the platform's own
+default branding images, which are also seeded into this bucket). The bucket itself is fully private — no action is
+needed for this to work:
 
-- **Account-level Block Public Access:** if your AWS account (or an AWS Organizations SCP) has account-level Block
-  Public Access enabled — the default for newer AWS accounts — this bucket's public-read policy will fail to attach, and
-  org-uploaded logos will silently fail to render (the platform's own default branding is unaffected, since it isn't
-  stored in this bucket). Verify before deploying:
-
-  ```bash
-  aws s3control get-public-access-block --account-id <your-account-id>
-  # If any of the four settings is "true", either disable account-level BPA
-  # (the bucket's own settings already restrict everything except public GetObject),
-  # or ask whoever manages your account's SCPs to add an exception for this bucket.
-  ```
+- **Account-level Block Public Access:** images are served through a dedicated CloudFront distribution using Origin
+  Access Control. The bucket policy grants read access only to the `cloudfront.amazonaws.com` service principal, scoped
+  by `AWS:SourceArn` to that specific distribution — this is not a public policy. Account-level Block Public Access can
+  and should remain fully enabled; no BPA change and no SCP exception is required for this bucket.
 
 ---
 
@@ -352,9 +345,6 @@ Run these checks immediately after a successful first deploy:
       `DkimAttributes.Status` / `MailFromAttributes.MailFromDomainStatus` as `SUCCESS` (see Section 3.1)
 - [ ] Invite a test user and confirm the invitation email is actually received — requires either SES production access
       to be approved, or the recipient address to be individually verified (see Section 3.2)
-- [ ] (If the org email branding feature is deployed) Confirm `aws s3control get-public-access-block` shows all four
-      settings `false` for this account, or that an SCP exception exists for the org-email-assets bucket (see Section
-      3.3)
 
 ---
 

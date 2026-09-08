@@ -4,6 +4,52 @@ Utility scripts for one-off data or AWS resource fixes. Run them from the `packa
 otherwise. They expect a `.env.local` file (or equivalent environment variables) and default AWS credentials where
 applicable.
 
+## Deploy-gated migrations
+
+Most scripts in this directory are manual (see below). A small subset are **registered** in
+`deploy-migrations/registry.ts` and run automatically, at most once per environment, as part of `pnpm run deploy` /
+`build-and-deploy` (and therefore also in CI, since `cicd-build-deploy-back-end` runs the same back-end `deploy` task).
+Only routine, idempotent, low-blast-radius scripts should be registered — expensive backfills (Cost Explorer syncs,
+history rebuilds) and anything Tier-3 / irreversible stay manual.
+
+**How it works:** before touching AWS, the CLI loads `.env.local` and reconciles `REGION`/`AWS_REGION`
+(`lib/load-env.ts`'s `loadDotEnvAndReconcileRegion()`) — the AWS SDK only recognizes `AWS_REGION`, but `.env.local`
+conventionally only sets `REGION`, so this must run before `resolveNamePrefix()` or any AWS client is constructed. It
+then filters the registry by `--phase` (`pre` runs before `cdk deploy`, `post` runs after), skips any id already
+recorded in the SSM ledger at `/${NAME_PREFIX}/deploy-migrations/applied`, and calls each pending entry's exported
+`main()` directly — no shell spawn. A failure stops the run immediately (fail-fast) and is not written to the ledger,
+which fails the deploy non-zero.
+
+**To add a migration:**
+
+1. Give the script an exported `async function main(): Promise<void>` that throws on failure (never calls
+   `process.exit`), and guard its own standalone invocation with `if (require.main === module) { main().catch(...) }` so
+   importing it has no side effect.
+2. Add an entry to `DEPLOY_MIGRATIONS` in `deploy-migrations/registry.ts`: a stable `id` (once deployed anywhere, never
+   reuse or change it — the ledger keys on it), a `phase` (`pre` if later code depends on the migrated data, `post` if
+   the migration depends on tables/GSIs that only exist after `cdk deploy`), and `main`.
+3. Keep the script's own standalone `pnpm run <script-name>` entry in `package.json` for manual re-runs — registering a
+   script for auto-run doesn't remove its manual entry point.
+4. A `pre`-phase migration must tolerate its target tables not existing yet: greenfield deploys run `pre`-phase
+   migrations before `cdk deploy` creates any tables, so a scan/list against a not-yet-created table must catch
+   `ResourceNotFoundException`, log, and return rather than throw (see `backfill-laboratory-run-attributes.ts` and
+   `migrate-laboratory-s3-access-seed.ts` for the pattern).
+5. A registered `main()` runs in the same process as the `run-deploy-migrations` CLI and shares its `process.argv` —
+   don't read flags beyond ones the script defines for its own standalone use, since the runner's own flags (`--phase`,
+   `--dry-run`, `--force`) will also be present on `argv` during an auto-run.
+
+**Flags:**
+
+- `--phase pre|post` (required)
+- `--dry-run` — logs which ids are pending vs. already applied; makes no SSM write and calls no registered `main()`.
+- `--force <id>` — re-runs one specific id (which must be registered under the `--phase` given) regardless of ledger
+  state, and updates its `appliedAt` on success.
+
+```bash
+pnpm run run-deploy-migrations -- --phase=pre --dry-run
+pnpm run run-deploy-migrations -- --phase=post --force 2026-08-migrate-laboratory-s3-access-seed
+```
+
 ## `backfill-omics-run-tags.ts`
 
 **Purpose:** Adds tags to existing AWS HealthOmics runs so they match the tags applied when new run executions are
@@ -164,6 +210,31 @@ pnpm run migrate-laboratory-s3-access-seed
 **Environment:** `NAME_PREFIX` (or the same `easy-genomics.yaml` / `CI_CD` + `ENV_NAME` / `ENV_TYPE` setup as
 `preflight-deletion-protection`), plus AWS credentials with DynamoDB read on `laboratory-table` and read/write on
 `laboratory-s3-access-table`.
+
+## `deploy-dynamodb-gsi-waves.ts`
+
+**Purpose:** Works around DynamoDB's one-GSI-per-`UpdateTable` limit so a single `pnpm run deploy` can still land
+multiple new (or removed) global secondary indexes on an **existing** table. CloudFormation otherwise fails with
+`Cannot perform more than one GSI creation or deletion in a single update` — the UAT staging failure when
+`laboratory-run-table` gained both `PollStatus_Index` and `WorkflowExternalId_Index` in one merge.
+
+The script compares cdk.out (desired indexes, including nested-stack templates) with the currently deployed
+CloudFormation templates, then `UpdateStack`s those live templates one GSI at a time. Intermediate updates do **not**
+deploy cdk.out, so new Lambda code cannot go live against a table that is still missing a later index. The caller's
+final `cdk deploy` applies remaining app changes plus at most one leftover GSI. Tables that do not exist yet are left
+alone (`CreateTable` may define many GSIs). Environments whose indexes already match cdk.out are a no-op.
+
+**When to use:** Wired into `pnpm run deploy` (after `preflight-deletion-protection`, before the final `cdk deploy`).
+You do not need to run it by hand unless you are debugging a GSI rollout.
+
+```bash
+cd packages/back-end
+pnpm run deploy-dynamodb-gsi-waves -- --dry-run
+```
+
+**Environment:** Same `easy-genomics.yaml` / `CI_CD` + `ENV_NAME` / `ENV_TYPE` / `AWS_REGION` setup as
+`preflight-deletion-protection`, plus CloudFormation `GetTemplate` / `UpdateStack` / `ListStackResources` and
+`s3:PutObject` on the CDK bootstrap assets bucket.
 
 ## `migrate-samples-and-sequence-collections.ts`
 

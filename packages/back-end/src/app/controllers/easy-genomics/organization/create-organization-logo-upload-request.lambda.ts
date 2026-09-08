@@ -26,8 +26,16 @@ const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
  * verb-operations.ts and lambda-construct.ts), so this mirrors the existing
  * LaboratoryId-in-body pattern used by create-file-upload-request.lambda.ts.
  *
- * The object always lands at a fixed per-org key so re-uploading overwrites the previous
- * logo rather than accumulating orphaned files.
+ * The object key is versioned with Date.now() rather than fixed at {organizationId}/logo.{ext}:
+ * the URL is persisted on the Organization record and served through CloudFront, so a stable key
+ * would let a replaced logo keep rendering from cache for up to a day. A ?v= query parameter
+ * cannot do the job because CACHING_OPTIMIZED excludes query strings from the cache key, and
+ * explicit invalidation is not available — the browser PUTs direct to S3 with a presigned URL, so
+ * this handler never learns the upload completed. The tradeoff is that a re-upload orphans the
+ * previous object; one small image per re-upload per org.
+ *
+ * PublicUrl is on the CloudFront domain because the bucket is private. S3Url stays on the S3
+ * endpoint — it is the presigned PUT the browser uploads to.
  *
  * @param event
  */
@@ -49,7 +57,7 @@ export const handler: Handler = async (
     const bucket = process.env.ORG_EMAIL_ASSETS_BUCKET_NAME!;
     const region = process.env.REGION!;
     const extension = CONTENT_TYPE_EXTENSIONS[request.ContentType];
-    const key = `${organizationId}/logo.${extension}`;
+    const key = `${organizationId}/logo-${Date.now()}.${extension}`;
 
     const s3Url = await s3Service.getPreSignedUploadUrl({
       Bucket: bucket,
@@ -63,7 +71,7 @@ export const handler: Handler = async (
       Key: key,
       Region: region,
       S3Url: s3Url,
-      PublicUrl: `https://${bucket}.s3.${region}.amazonaws.com/${key}`,
+      PublicUrl: `https://${process.env.ORG_EMAIL_ASSETS_CDN_DOMAIN}/${key}`,
     };
     return buildResponse(200, JSON.stringify(response), event);
   } catch (err: any) {

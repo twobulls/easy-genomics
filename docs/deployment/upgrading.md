@@ -83,6 +83,10 @@ No infrastructure or schema changes. Rolling deploy; no downtime expected.
 4. Run [post-upgrade smoke tests](#6-post-upgrade-smoke-tests).
 5. Confirm with users that the app is working normally.
 
+> **Note:** `pnpm run build-and-deploy` may run one or more pending data migrations automatically as part of the deploy
+> (see `packages/back-end/scripts/README.md`). These are opt-in, idempotent, and tracked so each runs at most once per
+> environment — no separate action is required.
+
 **Rollback**
 
 Always safe. Check out the previous tag and redeploy:
@@ -145,6 +149,10 @@ a ~5–10 min deploy window during which old and new application code may briefl
    ```
 7. Run [post-upgrade smoke tests](#6-post-upgrade-smoke-tests).
 8. Confirm with users that the app is working normally.
+
+> **Note:** `pnpm run build-and-deploy` may run one or more pending data migrations automatically as part of the deploy
+> (see `packages/back-end/scripts/README.md`). These are opt-in, idempotent, and tracked so each runs at most once per
+> environment — no separate action is required.
 
 **DynamoDB notes**
 

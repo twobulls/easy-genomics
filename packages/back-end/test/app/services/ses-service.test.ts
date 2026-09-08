@@ -9,10 +9,7 @@ jest.mock('@aws-sdk/client-ses', () => ({
 
 import { SendTemplatedEmailCommand } from '@aws-sdk/client-ses';
 import { SesService } from '../../../src/app/services/ses-service';
-import {
-  DEFAULT_EASY_GENOMICS_LOGO_DATA_URI,
-  DEFAULT_LOCK_IMAGE_DATA_URI,
-} from '../../../src/app/utils/default-email-branding';
+import { DEFAULT_EASY_GENOMICS_LOGO_URL, DEFAULT_LOCK_IMAGE_URL } from '../../../src/app/utils/default-email-branding';
 
 describe('SesService', () => {
   beforeEach(() => {
@@ -123,8 +120,8 @@ describe('SesService', () => {
     expect(cmdInput.Template).toBe('sandbox-dev-UserForgotPasswordEmailTemplate');
     const templateData = JSON.parse(cmdInput.TemplateData);
     expect(templateData.FORGOT_PASSWORD_JWT).toBe('forgot-jwt');
-    expect(templateData.EASY_GENOMICS_EMAIL_LOGO).toBe(DEFAULT_EASY_GENOMICS_LOGO_DATA_URI);
-    expect(templateData.LOCK_IMAGE).toBe(DEFAULT_LOCK_IMAGE_DATA_URI);
+    expect(templateData.EASY_GENOMICS_EMAIL_LOGO).toBe(DEFAULT_EASY_GENOMICS_LOGO_URL);
+    expect(templateData.LOCK_IMAGE).toBe(DEFAULT_LOCK_IMAGE_URL);
   });
 
   it('uses org branding for invitation email when provided', async () => {
@@ -160,7 +157,46 @@ describe('SesService', () => {
 
     const cmdInput = (SendTemplatedEmailCommand as unknown as jest.Mock).mock.calls[0][0];
     const templateData = JSON.parse(cmdInput.TemplateData);
-    expect(templateData.EASY_GENOMICS_EMAIL_LOGO).toBe(DEFAULT_EASY_GENOMICS_LOGO_DATA_URI);
+    expect(templateData.EASY_GENOMICS_EMAIL_LOGO).toBe(DEFAULT_EASY_GENOMICS_LOGO_URL);
+  });
+
+  it('rewrites a legacy stored S3 logo URL onto the CDN domain for invitation email', async () => {
+    const originalCdnDomain = process.env.ORG_EMAIL_ASSETS_CDN_DOMAIN;
+    const originalNamePrefix = process.env.NAME_PREFIX;
+    process.env.ORG_EMAIL_ASSETS_CDN_DOMAIN = 'd111111abcdef8.cloudfront.net';
+    // The matcher in email-branding-logo-url.ts binds the legacy host to this deployment's
+    // NAME_PREFIX, so the stored URL's bucket host below must be built from the same prefix or
+    // the rewrite legitimately declines and this case stops proving the wiring.
+    process.env.NAME_PREFIX = 'dev';
+    try {
+      mockSend.mockResolvedValueOnce({ MessageId: 'msg-legacy' });
+      const service = new SesService({
+        accountId: '123456789012',
+        region: 'us-west-2',
+        domainName: 'example.com',
+        envType: 'dev',
+        envName: 'sandbox',
+      });
+
+      await service.sendNewUserInvitationEmail('test@example.com', 'My Org', 'jwt-token', {
+        logoUrl: 'https://dev-org-email-assets-bucket.s3.us-west-2.amazonaws.com/org-123/logo.png',
+      });
+
+      const cmdInput = (SendTemplatedEmailCommand as unknown as jest.Mock).mock.calls[0][0];
+      const templateData = JSON.parse(cmdInput.TemplateData);
+      expect(templateData.EASY_GENOMICS_EMAIL_LOGO).toBe('https://d111111abcdef8.cloudfront.net/org-123/logo.png');
+    } finally {
+      if (originalCdnDomain === undefined) {
+        delete process.env.ORG_EMAIL_ASSETS_CDN_DOMAIN;
+      } else {
+        process.env.ORG_EMAIL_ASSETS_CDN_DOMAIN = originalCdnDomain;
+      }
+      if (originalNamePrefix === undefined) {
+        delete process.env.NAME_PREFIX;
+      } else {
+        process.env.NAME_PREFIX = originalNamePrefix;
+      }
+    }
   });
 
   it('uses org branding for courtesy email when provided (prod, so SES is actually called)', async () => {
@@ -329,7 +365,7 @@ describe('SesService', () => {
       const defaultData = JSON.parse(calls[1][0].TemplateData);
 
       expect(brandedData.EASY_GENOMICS_EMAIL_LOGO).toBe('https://acme-labs.example/logo.png');
-      expect(defaultData.EASY_GENOMICS_EMAIL_LOGO).toBe(DEFAULT_EASY_GENOMICS_LOGO_DATA_URI);
+      expect(defaultData.EASY_GENOMICS_EMAIL_LOGO).toBe(DEFAULT_EASY_GENOMICS_LOGO_URL);
     });
   });
 });

@@ -1,17 +1,22 @@
 /**
- * Default Easy Genomics email branding assets, served from the org-email-assets S3 bucket
- * (see OrgEmailAssetsBucketConstruct) rather than a base64 data URI or a
- * `https://${domainName}/images/email/*.png` link. Data URIs are stripped by most email
- * clients (Gmail included) as an anti-phishing measure, and the domain-linked form depends on
- * the environment's front-end custom domain being wired to a reachable CloudFront
- * distribution — which isn't guaranteed (see docs/deployment/production.md Section 4). The
- * bucket's direct URL has neither problem. Bucket name and object keys must match
- * OrgEmailAssetsBucketConstruct exactly.
+ * Default Easy Genomics email branding assets, served over the org-email-assets CloudFront
+ * distribution (see OrgEmailAssetsBucketConstruct) rather than a base64 data URI, the bucket's S3
+ * REST endpoint, or a `https://${domainName}/images/email/*.png` link.
+ *
+ * Data URIs are stripped by most email clients (Gmail included) as an anti-phishing measure. The
+ * S3 REST endpoint no longer works because the bucket is private. The app-domain-linked form is
+ * served by the website's distribution, which geo-restricts to AR/AU/US — Gmail fetches images
+ * through Google's image proxy, whose egress country we do not control — and maps 404 to
+ * /index.html with HTTP 200, so a missing asset returns SPA HTML instead of an error.
+ *
+ * ORG_EMAIL_ASSETS_CDN_DOMAIN is set on the common Lambda environment in
+ * easy-genomics-nested-stack.ts. Object keys must match OrgEmailAssetsBucketConstruct exactly;
+ * default-email-branding.test.ts asserts they do.
  */
-function orgEmailAssetsBucketUrl(key: string): string {
-  return `https://${process.env.NAME_PREFIX}-org-email-assets-bucket.s3.${process.env.REGION}.amazonaws.com/${key}`;
+function emailAssetUrl(key: string): string {
+  return `https://${process.env.ORG_EMAIL_ASSETS_CDN_DOMAIN}/${key}`;
 }
 
-export const DEFAULT_EASY_GENOMICS_LOGO_DATA_URI = orgEmailAssetsBucketUrl('defaults/easy-genomics.png');
+export const DEFAULT_EASY_GENOMICS_LOGO_URL = emailAssetUrl('defaults/easy-genomics.png');
 
-export const DEFAULT_LOCK_IMAGE_DATA_URI = orgEmailAssetsBucketUrl('defaults/lock.png');
+export const DEFAULT_LOCK_IMAGE_URL = emailAssetUrl('defaults/lock.png');

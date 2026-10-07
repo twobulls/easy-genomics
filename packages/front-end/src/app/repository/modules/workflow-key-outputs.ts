@@ -1,10 +1,12 @@
 import {
   EditWorkflowKeyOutputs,
   RequestPreviewWorkflowKeyOutputs,
+  RequestRunWorkflowKeyOutputs,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/workflow-key-outputs';
 import type {
   ListWorkflowKeyOutputsResponse,
   PreviewWorkflowKeyOutputsResponse,
+  RunWorkflowKeyOutputsResponse,
   WorkflowKeyOutputs,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/workflow-key-outputs';
 import HttpFactory from '@FE/repository/factory';
@@ -35,6 +37,16 @@ class WorkflowKeyOutputsModule extends HttpFactory {
       body,
     );
     if (!res) throw new Error('Failed to preview key outputs');
+    return res;
+  }
+
+  async runMatches(body: RequestRunWorkflowKeyOutputs): Promise<RunWorkflowKeyOutputsResponse> {
+    const res = await this.call<RunWorkflowKeyOutputsResponse>(
+      'POST',
+      `${BASE_PATH}/request-run-workflow-key-outputs`,
+      body,
+    );
+    if (!res) throw new Error('Failed to load key outputs for this run');
     return res;
   }
 }

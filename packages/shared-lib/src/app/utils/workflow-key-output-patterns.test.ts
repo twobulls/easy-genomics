@@ -4,6 +4,7 @@ import {
   inferKeyOutputLabel,
   inferKeyOutputPattern,
   inferKeyOutputsFromSelection,
+  listKeyOutputMatches,
   matchKeyOutputPattern,
   parseKeyOutputsJson,
   scoreKeyOutputPatterns,
@@ -102,6 +103,23 @@ describe('scoreKeyOutputPatterns', () => {
     );
     expect(scored[0].MatchCount).toEqual(48);
     expect(countKeyOutputMatches('missing/*.txt', allFiles)).toEqual(0);
+  });
+});
+
+describe('listKeyOutputMatches', () => {
+  it('returns the matching files with their sizes', () => {
+    const files = [
+      ...consensusFiles.map((RelativePath, index) => ({
+        Key: `root/${RelativePath}`,
+        RelativePath,
+        Size: 1000 + index,
+      })),
+      { Key: 'root/multiqc/multiqc_report.html', RelativePath: 'multiqc/multiqc_report.html', Size: 3200000 },
+    ];
+
+    const matches = listKeyOutputMatches('variants/ivar/consensus/bcftools/*.consensus.fa', files);
+    expect(matches).toHaveLength(48);
+    expect(matches[0].RelativePath).toEqual(consensusFiles[0]);
   });
 });
 

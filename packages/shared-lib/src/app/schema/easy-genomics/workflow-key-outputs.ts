@@ -74,3 +74,11 @@ export const RequestPreviewWorkflowKeyOutputsSchema = z
     message: 'Provide ObjectKeys to infer patterns or KeyOutputs to score existing ones',
   });
 export type RequestPreviewWorkflowKeyOutputs = z.infer<typeof RequestPreviewWorkflowKeyOutputsSchema>;
+
+export const RequestRunWorkflowKeyOutputsSchema = z
+  .object({
+    LaboratoryId: z.string().uuid(),
+    RunId: z.string().min(1),
+  })
+  .strict();
+export type RequestRunWorkflowKeyOutputs = z.infer<typeof RequestRunWorkflowKeyOutputsSchema>;

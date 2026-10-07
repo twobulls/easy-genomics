@@ -66,15 +66,23 @@
     if (!workflowId) return false;
     return (keyOutputsStore.definitionFor(labId, workflowId)?.KeyOutputs.length ?? 0) > 0;
   });
+  const runKeyOutputs = computed(() => keyOutputsStore.matchesFor(labId, labRunId));
+  const showKeyOutputsPanel = computed(() => (runKeyOutputs.value?.KeyOutputs.length ?? 0) > 0);
 
   watch(
     () => [canDeclareKeyOutputs.value, labRun.value?.WorkflowExternalId] as const,
     ([canDeclare, workflowId]) => {
       if (!canDeclare || !workflowId) return;
       void keyOutputsStore.load(labId, workflowId);
+      void keyOutputsStore.loadRunMatches(labId, labRunId);
     },
     { immediate: true },
   );
+
+  async function onKeyOutputsSaved(): Promise<void> {
+    isDeclaringKeyOutputs.value = false;
+    await keyOutputsStore.loadRunMatches(labId, labRunId);
+  }
 
   const outputPath = computed<string[] | null>(() => {
     const run = labRun.value;
@@ -742,7 +750,7 @@
       </div>
 
       <!-- File Manager -->
-      <div v-if="item.key === 'fileManager'" class="space-y-3">
+      <div v-if="item.key === 'fileManager'" class="space-y-6">
         <EGDeclareKeyOutputsEditor
           v-if="isDeclaringKeyOutputs && labRun && s3Bucket && s3Prefix"
           :lab-id="labId"
@@ -752,17 +760,28 @@
           :s3-prefix="s3Prefix"
           :start-path="outputPath"
           @cancel="isDeclaringKeyOutputs = false"
-          @saved="isDeclaringKeyOutputs = false"
+          @saved="onKeyOutputsSaved"
         />
         <template v-else>
-          <div v-if="canDeclareKeyOutputs" class="flex justify-end">
+          <EGKeyOutputsPanel
+            v-if="showKeyOutputsPanel && runKeyOutputs"
+            :lab-id="labId"
+            :matches="runKeyOutputs"
+            :can-edit="canDeclareKeyOutputs"
+            @edit="isDeclaringKeyOutputs = true"
+          />
+          <div v-else-if="canDeclareKeyOutputs && !hasKeyOutputs" class="flex justify-end">
             <button
               type="button"
               class="text-primary hover:text-primary-dark text-sm font-medium hover:underline"
               @click="isDeclaringKeyOutputs = true"
             >
-              {{ hasKeyOutputs ? 'Edit key outputs' : 'Define key outputs' }}
+              Define key outputs
             </button>
+          </div>
+          <div v-if="showKeyOutputsPanel && runKeyOutputs" class="pt-2">
+            <EGText tag="h3">All files</EGText>
+            <p class="text-muted mb-4 mt-1 text-sm">{{ runKeyOutputs.TotalFileCount.toLocaleString() }} objects</p>
           </div>
           <EGFileExplorer
             v-if="s3Bucket && s3Prefix"

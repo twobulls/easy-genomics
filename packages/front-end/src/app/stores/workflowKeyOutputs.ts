@@ -1,6 +1,7 @@
 import type {
   ListWorkflowKeyOutputsResponse,
   PreviewWorkflowKeyOutput,
+  RunWorkflowKeyOutputsResponse,
   WorkflowKeyOutput,
 } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/workflow-key-outputs';
 import { defineStore } from 'pinia';
@@ -8,14 +9,21 @@ import { defineStore } from 'pinia';
 interface WorkflowKeyOutputsStoreState {
   /** Keyed by `${laboratoryId}/${workflowId}`. */
   definitionsByWorkflow: Record<string, ListWorkflowKeyOutputsResponse>;
+  /** Keyed by `${laboratoryId}/${runId}`. */
+  runMatchesByRun: Record<string, RunWorkflowKeyOutputsResponse>;
 }
 
 const initialState = (): WorkflowKeyOutputsStoreState => ({
   definitionsByWorkflow: {},
+  runMatchesByRun: {},
 });
 
 function cacheKey(laboratoryId: string, workflowId: string): string {
   return `${laboratoryId}/${workflowId}`;
+}
+
+function runCacheKey(laboratoryId: string, runId: string): string {
+  return `${laboratoryId}/${runId}`;
 }
 
 function toastFailure(error: unknown, fallback: string): void {
@@ -31,6 +39,10 @@ const useWorkflowKeyOutputsStore = defineStore('workflowKeyOutputsStore', {
       (state: WorkflowKeyOutputsStoreState) =>
       (laboratoryId: string, workflowId: string): ListWorkflowKeyOutputsResponse | null =>
         state.definitionsByWorkflow[cacheKey(laboratoryId, workflowId)] ?? null,
+    matchesFor:
+      (state: WorkflowKeyOutputsStoreState) =>
+      (laboratoryId: string, runId: string): RunWorkflowKeyOutputsResponse | null =>
+        state.runMatchesByRun[runCacheKey(laboratoryId, runId)] ?? null,
   },
 
   actions: {
@@ -50,6 +62,24 @@ const useWorkflowKeyOutputsStore = defineStore('workflowKeyOutputsStore', {
         return null;
       } finally {
         useUiStore().setRequestComplete('loadWorkflowKeyOutputs');
+      }
+    },
+
+    async loadRunMatches(laboratoryId: string, runId: string): Promise<RunWorkflowKeyOutputsResponse | null> {
+      const { $api } = useNuxtApp();
+      useUiStore().setRequestPending('loadRunWorkflowKeyOutputs');
+      try {
+        const matches = await $api.workflowKeyOutputs.runMatches({
+          LaboratoryId: laboratoryId,
+          RunId: runId,
+        });
+        this.runMatchesByRun[runCacheKey(laboratoryId, runId)] = matches;
+        return matches;
+      } catch (error) {
+        toastFailure(error, 'Unable to load key outputs for this run.');
+        return null;
+      } finally {
+        useUiStore().setRequestComplete('loadRunWorkflowKeyOutputs');
       }
     },
 

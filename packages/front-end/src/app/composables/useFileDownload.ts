@@ -77,13 +77,19 @@ export default function useFileDownload() {
   }
 
   // Creates an async folder zip job and polls until the archive is ready.
-  async function downloadFolder(labId: string, folderS3Path: string, progressVar?: Ref<number> | undefined) {
+  // Creates an async folder zip job and polls until the archive is ready.
+  async function downloadFolder(
+    labId: string,
+    folderS3Path: string,
+    progressVar?: Ref<number> | undefined,
+    options?: { objectKeys?: string[]; archiveName?: string },
+  ) {
     const maxAttempts = 120; // ~10 minutes with 5s polling
     const pollIntervalMs = 5000;
 
     try {
       if (isFolderZipInProgress.value) {
-        toast.error('A folder ZIP download is already in progress. Please wait for it to finish.');
+        toast.error('A ZIP download is already in progress. Please wait for it to finish.');
         return;
       }
       isFolderZipInProgress.value = true;
@@ -92,6 +98,8 @@ export default function useFileDownload() {
       const createJobResponse = await $api.file.requestFolderDownloadJob({
         LaboratoryId: labId,
         S3Prefix: folderS3Path,
+        ObjectKeys: options?.objectKeys,
+        ArchiveName: options?.archiveName,
       });
 
       if (!createJobResponse?.JobId) {

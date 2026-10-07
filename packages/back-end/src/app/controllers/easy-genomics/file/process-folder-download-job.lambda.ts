@@ -17,6 +17,8 @@ type FolderDownloadJobMessage = {
   RequestedPrefix: string;
   ArchiveKey: string;
   StatusKey: string;
+  ObjectKeys?: string[];
+  ArchiveName?: string;
 };
 
 type StoredFolderDownloadJobStatus = {
@@ -31,7 +33,11 @@ type StoredFolderDownloadJobStatus = {
   ErrorMessage?: string;
 };
 
-const getZipRootFolderName = (prefix: string): string => {
+const getZipRootFolderName = (prefix: string, archiveName?: string): string => {
+  if (archiveName) {
+    const cleaned = archiveName.replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '');
+    return cleaned.slice(0, 80) || 'key-outputs';
+  }
   const trimmedPrefix = prefix.replace(/\/+$/, '');
   const lastSegment = trimmedPrefix.split('/').filter(Boolean).pop() || 'folder-download';
   return lastSegment.replace(/[^\w.-]/g, '_');
@@ -55,34 +61,47 @@ const parseSnsWrappedMessage = (body: string): FolderDownloadJobMessage =>
 
 const zipS3Prefix = async (job: FolderDownloadJobMessage): Promise<void> => {
   const normalizedPrefix = normalizeS3Prefix(job.RequestedPrefix);
-  const zipRootFolder = getZipRootFolderName(normalizedPrefix);
+  const zipRootFolder = getZipRootFolderName(normalizedPrefix, job.ArchiveName);
   const entries: S3ZipArchiveEntry[] = [];
 
-  let continuationToken: string | undefined = undefined;
-  let isTruncated = true;
-
-  while (isTruncated) {
-    const page = await s3Service.listBucketObjectsV2({
-      Bucket: job.S3Bucket,
-      Prefix: normalizedPrefix,
-      MaxKeys: 1000,
-      ContinuationToken: continuationToken,
+  const addEntry = (key: string, relativeName: string): void => {
+    entries.push({
+      sourceBucket: job.S3Bucket,
+      sourceKey: key,
+      archivePath: `${zipRootFolder}/${relativeName}`,
     });
+  };
 
-    for (const item of page.Contents || []) {
-      const key = item.Key || '';
+  if (job.ObjectKeys && job.ObjectKeys.length > 0) {
+    for (const key of job.ObjectKeys) {
       if (!key || key.endsWith('/')) continue;
-      const relativeName = key.startsWith(normalizedPrefix) ? key.slice(normalizedPrefix.length) : key;
+      const relativeName = key.startsWith(normalizedPrefix) ? key.slice(normalizedPrefix.length) : key.split('/').pop();
       if (!relativeName) continue;
-      entries.push({
-        sourceBucket: job.S3Bucket,
-        sourceKey: key,
-        archivePath: `${zipRootFolder}/${relativeName}`,
-      });
+      addEntry(key, relativeName);
     }
+  } else {
+    let continuationToken: string | undefined = undefined;
+    let isTruncated = true;
 
-    isTruncated = !!page.IsTruncated;
-    continuationToken = page.NextContinuationToken;
+    while (isTruncated) {
+      const page = await s3Service.listBucketObjectsV2({
+        Bucket: job.S3Bucket,
+        Prefix: normalizedPrefix,
+        MaxKeys: 1000,
+        ContinuationToken: continuationToken,
+      });
+
+      for (const item of page.Contents || []) {
+        const key = item.Key || '';
+        if (!key || key.endsWith('/')) continue;
+        const relativeName = key.startsWith(normalizedPrefix) ? key.slice(normalizedPrefix.length) : key;
+        if (!relativeName) continue;
+        addEntry(key, relativeName);
+      }
+
+      isTruncated = !!page.IsTruncated;
+      continuationToken = page.NextContinuationToken;
+    }
   }
 
   if (entries.length === 0) {

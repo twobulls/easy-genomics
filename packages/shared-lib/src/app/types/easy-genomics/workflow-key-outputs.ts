@@ -67,3 +67,32 @@ export interface PreviewWorkflowKeyOutput extends WorkflowKeyOutput {
 export interface PreviewWorkflowKeyOutputsResponse {
   KeyOutputs: PreviewWorkflowKeyOutput[];
 }
+
+/** One file on a run that matches a declared key-output pattern. */
+export interface RunWorkflowKeyOutputMatch {
+  Key: string;
+  RelativePath: string;
+  Size: number;
+}
+
+/**
+ * A declared role scored against a specific run, including the matching files
+ * so File Manager can pin them without a second listing.
+ */
+export interface RunWorkflowKeyOutput extends WorkflowKeyOutput {
+  MatchCount: number;
+  MatchSizeBytes: number;
+  Matches: RunWorkflowKeyOutputMatch[];
+}
+
+export interface RunWorkflowKeyOutputsResponse {
+  LaboratoryId: string;
+  RunId: string;
+  WorkflowId: string;
+  S3Bucket: string;
+  S3Prefix: string;
+  TotalFileCount: number;
+  MatchedFileCount: number;
+  MatchedSizeBytes: number;
+  KeyOutputs: RunWorkflowKeyOutput[];
+}

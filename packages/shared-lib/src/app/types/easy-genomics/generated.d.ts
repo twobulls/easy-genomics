@@ -450,6 +450,10 @@ export interface paths {
     /** Request Preview Workflow Key Outputs */
     post: operations["requestPreviewWorkflowKeyOutputs"];
   };
+  "/easy-genomics/workflow-key-outputs/request-run-workflow-key-outputs": {
+    /** Request Run Workflow Key Outputs */
+    post: operations["requestRunWorkflowKeyOutputs"];
+  };
   "/easy-genomics/workflow-run-preset/create-workflow-run-preset": {
     /** Create Workflow Run Preset */
     post: operations["createWorkflowRunPreset"];
@@ -1080,6 +1084,8 @@ export interface components {
       LaboratoryId: string;
       S3Bucket?: string;
       S3Prefix: string;
+      ObjectKeys?: string[];
+      ArchiveName?: string;
     };
     RequestListBucketObjectsRequest: {
       LaboratoryId: string;
@@ -2131,6 +2137,42 @@ export interface components {
     };
     PreviewWorkflowKeyOutputsResponse: {
       KeyOutputs: components["schemas"]["PreviewWorkflowKeyOutput"][];
+    };
+    RequestRunWorkflowKeyOutputsRequest: {
+      /** Format: uuid */
+      LaboratoryId: string;
+      RunId: string;
+    };
+    /**
+     * @description A declared role scored against a specific run, including the matching files
+     * so File Manager can pin them without a second listing.
+     */
+    RunWorkflowKeyOutput: {
+      MatchCount: number;
+      MatchSizeBytes: number;
+      Matches: components["schemas"]["RunWorkflowKeyOutputMatch"][];
+      KeyOutputId: string;
+      Label: string;
+      Pattern: string;
+      /** @description Relative path of the file the user ticked when this role was inferred. */
+      ExamplePath?: string;
+    };
+    /** @description One file on a run that matches a declared key-output pattern. */
+    RunWorkflowKeyOutputMatch: {
+      Key: string;
+      RelativePath: string;
+      Size: number;
+    };
+    RunWorkflowKeyOutputsResponse: {
+      LaboratoryId: string;
+      RunId: string;
+      WorkflowId: string;
+      S3Bucket: string;
+      S3Prefix: string;
+      TotalFileCount: number;
+      MatchedFileCount: number;
+      MatchedSizeBytes: number;
+      KeyOutputs: components["schemas"]["RunWorkflowKeyOutput"][];
     };
     CreateWorkflowRunPresetRequest: {
       /** Format: uuid */
@@ -6325,6 +6367,27 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["PreviewWorkflowKeyOutputsResponse"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Request Run Workflow Key Outputs */
+  requestRunWorkflowKeyOutputs: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RequestRunWorkflowKeyOutputsRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RunWorkflowKeyOutputsResponse"];
         };
       };
       400: components["responses"]["BadRequest"];

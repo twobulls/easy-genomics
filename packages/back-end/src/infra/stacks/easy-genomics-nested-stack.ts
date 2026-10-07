@@ -1982,7 +1982,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: ['arn:aws:s3:::*/*'],
-        actions: ['s3:PutObject'],
+        actions: ['s3:PutObject', 's3:GetObject'],
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
@@ -2705,6 +2705,29 @@ export class EasyGenomicsNestedStack extends NestedStack {
 
     this.iam.addPolicyStatements('/easy-genomics/workflow-key-outputs/request-preview-workflow-key-outputs', [
       ...laboratoryReadForWorkflowKeyOutputs,
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+        ],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*'],
+        actions: ['s3:ListBucket'],
+        effect: Effect.ALLOW,
+      }),
+      laboratoryS3AccessReadPolicy,
+      laboratoryS3AccessCatalogCheckPolicy,
+    ]);
+
+    this.iam.addPolicyStatements('/easy-genomics/workflow-key-outputs/request-run-workflow-key-outputs', [
+      ...laboratoryReadForWorkflowKeyOutputs,
+      new PolicyStatement({
+        resources: workflowKeyOutputsDynamoResources,
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
       new PolicyStatement({
         resources: [
           `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,

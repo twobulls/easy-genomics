@@ -1522,6 +1522,18 @@ components:
         S3Prefix:
           type: string
           minLength: 1
+        ObjectKeys:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1024
+          minItems: 1
+          maxItems: 2000
+        ArchiveName:
+          type: string
+          minLength: 1
+          maxLength: 80
       required:
         - LaboratoryId
         - S3Prefix
@@ -3923,6 +3935,96 @@ components:
             $ref: '#/components/schemas/PreviewWorkflowKeyOutput'
       required:
         - KeyOutputs
+    RequestRunWorkflowKeyOutputsRequest:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+          format: uuid
+        RunId:
+          type: string
+          minLength: 1
+      required:
+        - LaboratoryId
+        - RunId
+      additionalProperties: false
+    RunWorkflowKeyOutput:
+      description: |-
+        A declared role scored against a specific run, including the matching files
+        so File Manager can pin them without a second listing.
+      type: object
+      properties:
+        MatchCount:
+          type: number
+        MatchSizeBytes:
+          type: number
+        Matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunWorkflowKeyOutputMatch'
+        KeyOutputId:
+          type: string
+        Label:
+          type: string
+        Pattern:
+          type: string
+        ExamplePath:
+          description: Relative path of the file the user ticked when this role was inferred.
+          type: string
+      required:
+        - KeyOutputId
+        - Label
+        - MatchCount
+        - MatchSizeBytes
+        - Matches
+        - Pattern
+    RunWorkflowKeyOutputMatch:
+      description: One file on a run that matches a declared key-output pattern.
+      type: object
+      properties:
+        Key:
+          type: string
+        RelativePath:
+          type: string
+        Size:
+          type: number
+      required:
+        - Key
+        - RelativePath
+        - Size
+    RunWorkflowKeyOutputsResponse:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+        RunId:
+          type: string
+        WorkflowId:
+          type: string
+        S3Bucket:
+          type: string
+        S3Prefix:
+          type: string
+        TotalFileCount:
+          type: number
+        MatchedFileCount:
+          type: number
+        MatchedSizeBytes:
+          type: number
+        KeyOutputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunWorkflowKeyOutput'
+      required:
+        - KeyOutputs
+        - LaboratoryId
+        - MatchedFileCount
+        - MatchedSizeBytes
+        - RunId
+        - S3Bucket
+        - S3Prefix
+        - TotalFileCount
+        - WorkflowId
     CreateWorkflowRunPresetRequest:
       type: object
       properties:
@@ -10947,6 +11049,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PreviewWorkflowKeyOutputsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-key-outputs/request-run-workflow-key-outputs:
+    post:
+      operationId: requestRunWorkflowKeyOutputs
+      summary: Request Run Workflow Key Outputs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestRunWorkflowKeyOutputsRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunWorkflowKeyOutputsResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

@@ -88,6 +88,17 @@ export function countKeyOutputMatches(pattern: string, allRelativePaths: string[
   return allRelativePaths.filter((path) => !path.endsWith('/') && matchKeyOutputPattern(pattern, path)).length;
 }
 
+export interface KeyOutputListedFile {
+  Key: string;
+  RelativePath: string;
+  Size: number;
+}
+
+/** Files on a run that match one declared pattern, in listing order. */
+export function listKeyOutputMatches(pattern: string, files: KeyOutputListedFile[]): KeyOutputListedFile[] {
+  return files.filter((file) => matchKeyOutputPattern(pattern, file.RelativePath));
+}
+
 /**
  * Collapse selected files into unique inferred roles, most-specific first.
  * Files that share a glob become one row so 48 samples do not produce 48 entries.

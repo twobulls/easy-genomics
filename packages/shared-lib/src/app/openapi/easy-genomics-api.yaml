@@ -3992,6 +3992,29 @@ components:
         - Key
         - RelativePath
         - Size
+    RunWorkflowKeyOutputGroup:
+      description: One representative file for an inferred role, used on the declaring screen.
+      type: object
+      properties:
+        Pattern:
+          type: string
+        Label:
+          type: string
+        ExamplePath:
+          type: string
+        Directory:
+          type: string
+        Size:
+          type: number
+        MatchCount:
+          type: number
+      required:
+        - Directory
+        - ExamplePath
+        - Label
+        - MatchCount
+        - Pattern
+        - Size
     RunWorkflowKeyOutputsResponse:
       type: object
       properties:
@@ -4015,7 +4038,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RunWorkflowKeyOutput'
+        Groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunWorkflowKeyOutputGroup'
       required:
+        - Groups
         - KeyOutputs
         - LaboratoryId
         - MatchedFileCount

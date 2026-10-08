@@ -4,6 +4,7 @@ import {
   inferKeyOutputLabel,
   inferKeyOutputPattern,
   inferKeyOutputsFromSelection,
+  groupKeyOutputExamples,
   listKeyOutputMatches,
   matchKeyOutputPattern,
   parseKeyOutputsJson,
@@ -54,6 +55,21 @@ describe('inferKeyOutputPattern', () => {
     );
   });
 
+  it('generalises a single-sample FastQC file so the next run still matches', () => {
+    expect(
+      inferKeyOutputPattern('pubdir/fastqc/ZRXXLL_R1_fastqc.html', [
+        'pubdir/fastqc/ZRXXLL_R1_fastqc.html',
+        'pubdir/multiqc/multiqc_report.html',
+      ]),
+    ).toEqual('pubdir/fastqc/*_fastqc.html');
+  });
+
+  it('generalises a lone sample.consensus.fa when this run has only one sample', () => {
+    expect(inferKeyOutputPattern('variants/sample01.consensus.fa', ['variants/sample01.consensus.fa'])).toEqual(
+      'variants/*.consensus.fa',
+    );
+  });
+
   it('keeps a unique report as an exact path', () => {
     expect(inferKeyOutputPattern('multiqc/multiqc_report.html', allFiles)).toEqual('multiqc/multiqc_report.html');
   });
@@ -61,12 +77,18 @@ describe('inferKeyOutputPattern', () => {
   it('prefers the most specific dotted suffix that still matches siblings', () => {
     expect(inferKeyOutputPattern(pangolinFiles[3], allFiles)).toEqual('pangolin/*.pangolin.csv');
   });
+
+  it('turns a folder path into a location glob', () => {
+    expect(inferKeyOutputPattern('pubdir/multiqc', ['pubdir/multiqc/multiqc_report.html'])).toEqual('pubdir/multiqc/*');
+  });
 });
 
 describe('inferKeyOutputLabel', () => {
   it('uses the distinctive filename token as a default role name', () => {
     expect(inferKeyOutputLabel('variants/ivar/consensus/bcftools/*.consensus.fa')).toEqual('Consensus');
     expect(inferKeyOutputLabel('pangolin/*.pangolin.csv')).toEqual('Pangolin');
+    expect(inferKeyOutputLabel('pubdir/fastqc/*_fastqc.html')).toEqual('Fastqc');
+    expect(inferKeyOutputLabel('pubdir/multiqc/*')).toEqual('Multiqc');
     expect(inferKeyOutputLabel('multiqc/multiqc_report.html')).toEqual('Multiqc Report');
   });
 });
@@ -103,6 +125,34 @@ describe('scoreKeyOutputPatterns', () => {
     );
     expect(scored[0].MatchCount).toEqual(48);
     expect(countKeyOutputMatches('missing/*.txt', allFiles)).toEqual(0);
+  });
+
+  it('rewrites a saved folder path so it matches the files in that location', () => {
+    const scored = scoreKeyOutputPatterns(
+      [{ Label: 'Multiqc Report', Pattern: 'pubdir/multiqc' }],
+      ['pubdir/multiqc/multiqc_report.html', 'pubdir/fastqc/ZRXXLL_R1_fastqc.html'],
+    );
+    expect(scored[0].Pattern).toEqual('pubdir/multiqc/*');
+    expect(scored[0].MatchCount).toEqual(1);
+  });
+});
+
+describe('groupKeyOutputExamples', () => {
+  it('shows one consensus example and the unique MultiQC report', () => {
+    const files = [
+      ...consensusFiles.map((RelativePath) => ({ Key: `root/${RelativePath}`, RelativePath, Size: 1000 })),
+      { Key: 'root/multiqc/multiqc_report.html', RelativePath: 'multiqc/multiqc_report.html', Size: 3200000 },
+    ];
+    const groups = groupKeyOutputExamples(files);
+    expect(groups).toHaveLength(2);
+    expect(groups.find((group) => group.Pattern.endsWith('*.consensus.fa'))).toMatchObject({
+      MatchCount: 48,
+      Directory: 'variants/ivar/consensus/bcftools',
+    });
+    expect(groups.find((group) => group.ExamplePath === 'multiqc/multiqc_report.html')).toMatchObject({
+      MatchCount: 1,
+      Pattern: 'multiqc/multiqc_report.html',
+    });
   });
 });
 

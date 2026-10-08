@@ -140,12 +140,14 @@
 </script>
 
 <template>
-  <section :aria-labelledby="headingId" class="rounded-2xl border border-neutral-200 bg-white p-5">
-    <header class="mb-5 flex flex-wrap items-start justify-between gap-3">
+  <section :aria-labelledby="headingId" class="bg-primary-muted rounded-2xl p-5">
+    <header class="mb-6 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <EGText :id="headingId" tag="h3">Key outputs</EGText>
-        <p class="text-muted mt-1 text-sm">{{ filesSummary }}</p>
-        <p class="text-muted mt-2 text-sm">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <EGText :id="headingId" tag="h3">Key outputs</EGText>
+          <p class="text-primary text-sm font-medium">{{ filesSummary }}</p>
+        </div>
+        <p class="text-muted mt-1 text-sm">
           Defined for this workflow by your lab.
           <button
             v-if="canEdit"
@@ -168,15 +170,17 @@
       />
     </header>
 
-    <ul class="space-y-3">
-      <li v-for="role in matches.KeyOutputs" :key="role.KeyOutputId" class="rounded-xl border border-neutral-200 p-4">
+    <ul class="list-none space-y-5" role="list">
+      <li v-for="role in matches.KeyOutputs" :key="role.KeyOutputId">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0">
-            <p class="text-heading font-serif text-base font-semibold">{{ role.Label }}</p>
-            <p class="text-muted mt-1 text-sm">{{ roleMeta(role) }}</p>
-            <p class="text-muted mt-1 break-all font-mono text-xs">{{ role.Pattern }}</p>
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <p class="text-heading font-serif text-base font-medium">{{ role.Label }}</p>
+              <p class="text-muted text-sm">{{ roleMeta(role) }}</p>
+            </div>
+            <p class="text-muted mt-0.5 break-all font-mono text-xs">{{ role.Pattern }}</p>
           </div>
-          <div class="flex flex-wrap items-center justify-end gap-2">
+          <div class="flex flex-wrap items-center justify-end gap-3">
             <template v-if="role.MatchCount === 1 && role.Matches[0]">
               <EGButton
                 v-if="isHtmlFile(role.Matches[0])"
@@ -198,7 +202,7 @@
               <button
                 v-if="role.Matches.length > 0"
                 type="button"
-                class="text-primary hover:text-primary-dark text-sm font-medium hover:underline"
+                class="text-primary hover:text-primary-dark hover:bg-background-dark-grey rounded-lg border border-neutral-200 bg-white px-6 py-3 text-sm"
                 @click="toggleExpanded(role.KeyOutputId)"
               >
                 {{ isExpanded(role.KeyOutputId) ? 'Hide' : `View all ${role.MatchCount.toLocaleString()}` }}
@@ -217,7 +221,7 @@
           </div>
         </div>
 
-        <ul v-if="isExpanded(role.KeyOutputId)" class="mt-4 space-y-2 border-t border-neutral-200 pt-3">
+        <ul v-if="isExpanded(role.KeyOutputId)" class="mt-3 list-none space-y-2 pt-1" role="list">
           <li
             v-for="file in role.Matches"
             :key="file.Key"

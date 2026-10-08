@@ -5,7 +5,10 @@ import {
   RequestRunWorkflowKeyOutputsSchema,
 } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/workflow-key-outputs';
 import { RunWorkflowKeyOutputsResponse } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/workflow-key-outputs';
-import { listKeyOutputMatches } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-patterns';
+import {
+  groupKeyOutputExamples,
+  listKeyOutputMatches,
+} from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-patterns';
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryS3AccessService } from '@BE/services/easy-genomics/laboratory-s3-access-service';
@@ -56,27 +59,6 @@ export const handler: Handler = async (
 
     await assertLaboratoryHasS3BucketAccess(laboratory, root.bucket, s3AccessService);
 
-    const emptyResponse = (totalFileCount = 0): RunWorkflowKeyOutputsResponse => ({
-      LaboratoryId: request.LaboratoryId,
-      RunId: request.RunId,
-      WorkflowId: workflowId,
-      S3Bucket: root.bucket,
-      S3Prefix: root.prefix,
-      TotalFileCount: totalFileCount,
-      MatchedFileCount: 0,
-      MatchedSizeBytes: 0,
-      KeyOutputs: [],
-    });
-
-    if (!workflowId) {
-      return buildResponse(200, JSON.stringify(emptyResponse()), event);
-    }
-
-    const definition = await workflowKeyOutputsService.get(request.LaboratoryId, workflowId);
-    if (!definition || definition.KeyOutputs.length === 0) {
-      return buildResponse(200, JSON.stringify(emptyResponse()), event);
-    }
-
     const listed = (await s3Service.listAllObjectsUnderPrefix(root.bucket, root.prefix)).slice(0, MAX_LISTED_FILES);
     const files = listed
       .map((object) => {
@@ -85,10 +67,31 @@ export const handler: Handler = async (
         return { Key: object.Key, RelativePath: relativePath, Size: object.Size ?? 0 };
       })
       .filter((file): file is { Key: string; RelativePath: string; Size: number } => !!file);
+    const groups = groupKeyOutputExamples(files);
 
+    if (!workflowId) {
+      return buildResponse(
+        200,
+        JSON.stringify({
+          LaboratoryId: request.LaboratoryId,
+          RunId: request.RunId,
+          WorkflowId: workflowId,
+          S3Bucket: root.bucket,
+          S3Prefix: root.prefix,
+          TotalFileCount: files.length,
+          MatchedFileCount: 0,
+          MatchedSizeBytes: 0,
+          KeyOutputs: [],
+          Groups: groups,
+        } satisfies RunWorkflowKeyOutputsResponse),
+        event,
+      );
+    }
+
+    const definition = await workflowKeyOutputsService.get(request.LaboratoryId, workflowId);
     const uniqueMatched = new Set<string>();
     let matchedSizeBytes = 0;
-    const keyOutputs = definition.KeyOutputs.map((item) => {
+    const keyOutputs = (definition?.KeyOutputs ?? []).map((item) => {
       const matches = listKeyOutputMatches(item.Pattern, files);
       for (const match of matches) {
         if (!uniqueMatched.has(match.Key)) {
@@ -115,6 +118,7 @@ export const handler: Handler = async (
       MatchedFileCount: uniqueMatched.size,
       MatchedSizeBytes: matchedSizeBytes,
       KeyOutputs: keyOutputs,
+      Groups: groups,
     };
 
     return buildResponse(200, JSON.stringify(response), event);

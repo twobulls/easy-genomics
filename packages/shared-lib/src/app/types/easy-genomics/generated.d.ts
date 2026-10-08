@@ -2171,6 +2171,15 @@ export interface components {
       RelativePath: string;
       Size: number;
     };
+    /** @description One representative file for an inferred role, used on the declaring screen. */
+    RunWorkflowKeyOutputGroup: {
+      Pattern: string;
+      Label: string;
+      ExamplePath: string;
+      Directory: string;
+      Size: number;
+      MatchCount: number;
+    };
     RunWorkflowKeyOutputsResponse: {
       LaboratoryId: string;
       RunId: string;
@@ -2181,6 +2190,7 @@ export interface components {
       MatchedFileCount: number;
       MatchedSizeBytes: number;
       KeyOutputs: components["schemas"]["RunWorkflowKeyOutput"][];
+      Groups: components["schemas"]["RunWorkflowKeyOutputGroup"][];
     };
     CreateWorkflowRunPresetRequest: {
       /** Format: uuid */

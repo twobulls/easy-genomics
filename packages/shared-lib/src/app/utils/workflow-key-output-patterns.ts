@@ -42,16 +42,26 @@ export function basenameRelative(path: string): string {
 /**
  * Infer a glob from one selected file and the rest of the run's relative paths.
  *
- * Tick `sampleA.consensus.fa` next to 47 siblings and this becomes
- * `dir/*.consensus.fa`. A unique file such as `multiqc_report.html` stays exact.
+ * Tick `sampleA.consensus.fa` and this becomes `dir/*.consensus.fa`, even when
+ * this run only has one sample — the sample id must not be stored or the next
+ * run will miss. A unique report such as `multiqc_report.html` stays exact.
+ * A folder path becomes `dir/*` so it matches the files in that location.
  */
 export function inferKeyOutputPattern(relativePath: string, allRelativePaths: string[]): string {
-  const directory = dirnameRelative(relativePath);
-  const filename = basenameRelative(relativePath);
-  if (!filename) return relativePath;
+  const filePaths = allRelativePaths.filter((path) => path && !path.endsWith('/'));
+  const cleaned = relativePath.replace(/\/+$/, '');
+  if (!cleaned) return relativePath;
 
-  const siblingNames = allRelativePaths
-    .filter((path) => !path.endsWith('/') && dirnameRelative(path) === directory)
+  if (isDirectoryPrefix(cleaned, filePaths)) {
+    return `${cleaned}/*`;
+  }
+
+  const directory = dirnameRelative(cleaned);
+  const filename = basenameRelative(cleaned);
+  if (!filename) return cleaned;
+
+  const siblingNames = filePaths
+    .filter((path) => dirnameRelative(path) === directory)
     .map((path) => basenameRelative(path))
     .filter(Boolean);
 
@@ -59,25 +69,79 @@ export function inferKeyOutputPattern(relativePath: string, allRelativePaths: st
   return directory ? `${directory}/${globName}` : globName;
 }
 
-function inferFilenameGlob(filename: string, siblingNames: string[]): string {
-  const parts = filename.split('.');
-  if (parts.length < 2) return filename;
+/** Rewrite a saved exact path to a folder glob when it names a directory, not a file. */
+export function normalizeKeyOutputPattern(pattern: string, allRelativePaths: string[]): string {
+  if (!pattern || pattern.includes('*')) return pattern;
+  return inferKeyOutputPattern(pattern, allRelativePaths);
+}
 
-  for (let index = 1; index < parts.length; index += 1) {
-    const suffix = `.${parts.slice(index).join('.')}`;
+function isDirectoryPrefix(path: string, filePaths: string[]): boolean {
+  if (filePaths.includes(path)) return false;
+  const prefix = `${path}/`;
+  return filePaths.some((filePath) => filePath.startsWith(prefix));
+}
+
+function inferFilenameGlob(filename: string, siblingNames: string[]): string {
+  const suffixes = filenameTypeSuffixes(filename);
+  let singleSampleFallback: string | null = null;
+
+  for (const suffix of suffixes) {
+    const prefix = filename.slice(0, filename.length - suffix.length);
     const matches = siblingNames.filter((name) => name.endsWith(suffix) && name.length > suffix.length);
     if (matches.length >= 2) {
       return `*${suffix}`;
     }
+    if (!singleSampleFallback && matches.length >= 1 && looksLikeSamplePrefix(prefix)) {
+      singleSampleFallback = `*${suffix}`;
+    }
   }
 
-  return filename;
+  return singleSampleFallback ?? filename;
+}
+
+/**
+ * Type suffixes, longest first: `_fastqc.html`, `.consensus.fa`, `.html`.
+ * Underscore tool suffixes are preferred over a bare extension so one FastQC
+ * file becomes `*_fastqc.html` rather than `ZRXXLL_R1_fastqc.html`.
+ */
+function filenameTypeSuffixes(filename: string): string[] {
+  const suffixes: string[] = [];
+  const lastUnderscore = filename.lastIndexOf('_');
+  if (lastUnderscore > 0 && filename.indexOf('.', lastUnderscore) !== -1) {
+    suffixes.push(filename.slice(lastUnderscore));
+  }
+
+  const parts = filename.split('.');
+  if (parts.length >= 2) {
+    for (let index = 1; index < parts.length; index += 1) {
+      suffixes.push(`.${parts.slice(index).join('.')}`);
+    }
+  }
+
+  return [...new Set(suffixes)].sort((left, right) => right.length - left.length);
+}
+
+function looksLikeSamplePrefix(prefix: string): boolean {
+  if (!prefix) return false;
+  if (/\d/.test(prefix)) return true;
+  const letters = prefix.replace(/[^A-Za-z]/g, '');
+  return letters.length >= 4 && letters === letters.toUpperCase();
 }
 
 export function inferKeyOutputLabel(pattern: string): string {
   const filename = basenameRelative(pattern);
-  const stem = filename.startsWith('*.') ? filename.slice(2) : filename;
+  if (filename === '*' || filename === '') {
+    const folder = basenameRelative(dirnameRelative(pattern));
+    return titleCaseRole(folder || 'Key output');
+  }
+
+  let stem = filename.startsWith('*') ? filename.slice(1) : filename;
+  if (stem.startsWith('.') || stem.startsWith('_')) stem = stem.slice(1);
   const role = stem.includes('.') ? stem.slice(0, stem.indexOf('.')) : stem;
+  return titleCaseRole(role);
+}
+
+function titleCaseRole(role: string): string {
   const words = role.replace(/[_-]+/g, ' ').trim();
   if (!words) return 'Key output';
   const labelled = words.replace(/\b\w/g, (character) => character.toUpperCase());
@@ -94,9 +158,54 @@ export interface KeyOutputListedFile {
   Size: number;
 }
 
+export interface KeyOutputExampleGroup {
+  Pattern: string;
+  Label: string;
+  ExamplePath: string;
+  Directory: string;
+  Size: number;
+  MatchCount: number;
+}
+
+export const WORKFLOW_KEY_OUTPUT_GROUPS_LIMIT = 200;
+
 /** Files on a run that match one declared pattern, in listing order. */
 export function listKeyOutputMatches(pattern: string, files: KeyOutputListedFile[]): KeyOutputListedFile[] {
   return files.filter((file) => matchKeyOutputPattern(pattern, file.RelativePath));
+}
+
+/**
+ * Collapse every file on a run into one example per inferred role so the
+ * declaring screen can tick a type, not 48 sample files.
+ */
+export function groupKeyOutputExamples(files: KeyOutputListedFile[]): KeyOutputExampleGroup[] {
+  const paths = files.map((file) => file.RelativePath);
+  const byPattern = new Map<string, KeyOutputListedFile[]>();
+
+  for (const file of files) {
+    const pattern = inferKeyOutputPattern(file.RelativePath, paths).slice(0, WORKFLOW_KEY_OUTPUT_PATTERN_MAX_LENGTH);
+    const matches = byPattern.get(pattern) ?? [];
+    matches.push(file);
+    byPattern.set(pattern, matches);
+  }
+
+  return [...byPattern.entries()]
+    .map(([pattern, matches]) => {
+      const example = matches[0];
+      return {
+        Pattern: pattern,
+        Label: inferKeyOutputLabel(pattern),
+        ExamplePath: example.RelativePath,
+        Directory: dirnameRelative(example.RelativePath),
+        Size: example.Size,
+        MatchCount: matches.length,
+      };
+    })
+    .sort((left, right) => {
+      const directoryOrder = left.Directory.localeCompare(right.Directory);
+      return directoryOrder !== 0 ? directoryOrder : left.ExamplePath.localeCompare(right.ExamplePath);
+    })
+    .slice(0, WORKFLOW_KEY_OUTPUT_GROUPS_LIMIT);
 }
 
 /**
@@ -107,7 +216,7 @@ export function inferKeyOutputsFromSelection(
   selectedRelativePaths: string[],
   allRelativePaths: string[],
 ): InferredKeyOutputPattern[] {
-  const uniqueSelected = [...new Set(selectedRelativePaths.filter((path) => path && !path.endsWith('/')))];
+  const uniqueSelected = [...new Set(selectedRelativePaths.map((path) => path.replace(/\/+$/, '')).filter(Boolean))];
   const byPattern = new Map<string, InferredKeyOutputPattern>();
 
   for (const relativePath of uniqueSelected) {
@@ -132,12 +241,15 @@ export function scoreKeyOutputPatterns(
   drafts: KeyOutputPatternDraft[],
   allRelativePaths: string[],
 ): InferredKeyOutputPattern[] {
-  return drafts.map((draft) => ({
-    Label: draft.Label,
-    Pattern: draft.Pattern,
-    ExamplePath: draft.ExamplePath,
-    MatchCount: countKeyOutputMatches(draft.Pattern, allRelativePaths),
-  }));
+  return drafts.map((draft) => {
+    const pattern = normalizeKeyOutputPattern(draft.Pattern, allRelativePaths);
+    return {
+      Label: draft.Label,
+      Pattern: pattern,
+      ExamplePath: draft.ExamplePath,
+      MatchCount: countKeyOutputMatches(pattern, allRelativePaths),
+    };
+  });
 }
 
 export type ParseKeyOutputsJsonResult = { ok: true; outputs: KeyOutputPatternDraft[] } | { ok: false; error: string };

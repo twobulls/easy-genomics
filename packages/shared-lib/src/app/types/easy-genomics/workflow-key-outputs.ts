@@ -85,6 +85,16 @@ export interface RunWorkflowKeyOutput extends WorkflowKeyOutput {
   Matches: RunWorkflowKeyOutputMatch[];
 }
 
+/** One representative file for an inferred role, used on the declaring screen. */
+export interface RunWorkflowKeyOutputGroup {
+  Pattern: string;
+  Label: string;
+  ExamplePath: string;
+  Directory: string;
+  Size: number;
+  MatchCount: number;
+}
+
 export interface RunWorkflowKeyOutputsResponse {
   LaboratoryId: string;
   RunId: string;
@@ -95,4 +105,5 @@ export interface RunWorkflowKeyOutputsResponse {
   MatchedFileCount: number;
   MatchedSizeBytes: number;
   KeyOutputs: RunWorkflowKeyOutput[];
+  Groups: RunWorkflowKeyOutputGroup[];
 }

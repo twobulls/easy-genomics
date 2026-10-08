@@ -106,7 +106,7 @@ describe('request-run-workflow-key-outputs Lambda', () => {
       mockListAllObjectsUnderPrefix;
   });
 
-  it('returns an empty panel payload when nothing has been declared', async () => {
+  it('returns grouped file examples when nothing has been declared yet', async () => {
     const result = await handler(
       createMockEvent({ LaboratoryId: LAB_ID, RunId: RUN_ID }),
       createMockContext(),
@@ -117,7 +117,9 @@ describe('request-run-workflow-key-outputs Lambda', () => {
     expect(result.statusCode).toEqual(200);
     expect(body.KeyOutputs).toEqual([]);
     expect(body.MatchedFileCount).toEqual(0);
-    expect(mockListAllObjectsUnderPrefix).not.toHaveBeenCalled();
+    expect(body.TotalFileCount).toEqual(50);
+    expect(body.Groups.length).toBeGreaterThan(0);
+    expect(body.Groups.some((group: { Pattern: string }) => group.Pattern.endsWith('*.consensus.fa'))).toBe(true);
   });
 
   it('groups matching files by role and reports unique counts and sizes', async () => {
@@ -156,6 +158,7 @@ describe('request-run-workflow-key-outputs Lambda', () => {
     );
     expect(body.KeyOutputs[1].MatchCount).toEqual(1);
     expect(body.KeyOutputs[1].MatchSizeBytes).toEqual(3200000);
+    expect(body.Groups.some((group: { Pattern: string }) => group.Pattern.endsWith('*.consensus.fa'))).toBe(true);
   });
 
   it('rejects a malformed body', async () => {

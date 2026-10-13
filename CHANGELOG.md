@@ -16,10 +16,9 @@ draft release note for operators.
 
 - **The two back-end REST APIs now have distinct names and descriptions.** Both were deployed as
   `{namePrefix}-easy-genomics-apigw` with the same description, so there was no way to tell them apart in the API
-  Gateway console. They are now named after the stack that publishes each one's URL —
-  `{namePrefix}-main-back-end-apigw` (serving `/aws-healthomics` and `/nf-tower`) and
-  `{namePrefix}-easy-genomics-api-apigw` (serving `/easy-genomics`) — and each carries a description saying which paths
-  it serves.
+  Gateway console. They are now named after the stack that publishes each one's URL — `{namePrefix}-main-back-end-apigw`
+  (serving `/aws-healthomics` and `/nf-tower`) and `{namePrefix}-easy-genomics-api-apigw` (serving `/easy-genomics`) —
+  and each carries a description saying which paths it serves.
 
   This also separates their CloudWatch metrics. API Gateway dimensions metrics by `ApiName`, so while the two shared a
   name their `Count`, `Latency` and `4XX`/`5XX` series were silently aggregated and could not be alarmed on
@@ -43,8 +42,8 @@ draft release note for operators.
   status request then went to an API that does not serve those paths and was rejected `403 Forbidden` with
   `MissingAuthenticationTokenException` (API Gateway's response for an undefined path, not an authentication problem),
   while the rest of the platform kept working. The lab page showed "Failed to load workflows / Omics runs / shared
-  workflows". Both URLs now come from the back-end CloudFormation stack outputs, which are unambiguous, so no URL has
-  to be exported or copied into `easy-genomics.yaml` by hand. The build prints each URL with its source and the paths it
+  workflows". Both URLs now come from the back-end CloudFormation stack outputs, which are unambiguous, so no URL has to
+  be exported or copied into `easy-genomics.yaml` by hand. The build prints each URL with its source and the paths it
   serves, and fails rather than producing a bundle in which the two are identical. Deployments that predate the v1.5 API
   split are unaffected and continue to run against a single API.
 

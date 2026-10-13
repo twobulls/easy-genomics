@@ -234,11 +234,14 @@ describe('enrichSpecForApiGateway', () => {
 describe('per-API identity', () => {
   // API Gateway names an imported API from the body, not the CloudFormation `Name`
   // property, so this is the assertion that corresponds to the deployed name.
-  it('overrides the shared spec title and description with this API\'s own', () => {
-    const { document } = enrichSpecForApiGateway(baseSpec(), baseOptions({
-      apiTitle: 'dev-test-main-back-end-apigw',
-      apiDescription: 'Easy Genomics Platform API Gateway (AWS HealthOmics + NF-Tower)',
-    }));
+  it("overrides the shared spec title and description with this API's own", () => {
+    const { document } = enrichSpecForApiGateway(
+      baseSpec(),
+      baseOptions({
+        apiTitle: 'dev-test-main-back-end-apigw',
+        apiDescription: 'Easy Genomics Platform API Gateway (AWS HealthOmics + NF-Tower)',
+      }),
+    );
 
     expect(document.info.title).toBe('dev-test-main-back-end-apigw');
     expect(document.info.description).toBe('Easy Genomics Platform API Gateway (AWS HealthOmics + NF-Tower)');

@@ -1,3 +1,5 @@
+import { UnauthorizedAccessError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
+
 export type ParsedS3Uri = { bucket: string; prefix: string };
 
 const S3_SCHEME = 's3://';
@@ -43,8 +45,32 @@ export function normalizeS3Prefix(prefix: string): string {
   return prefix.endsWith('/') ? prefix : `${prefix}/`;
 }
 
+/**
+ * CopySource must be URL-encoded per segment. A raw `bucket/key with #` silently
+ * copies the wrong object (or none) because `#`, `%`, `+`, and spaces are special.
+ */
+export function encodeS3CopySource(bucket: string, key: string): string {
+  return [bucket, ...key.split('/')].map(encodeURIComponent).join('/');
+}
+
 export function laboratoryPrefix(laboratory: { OrganizationId: string; LaboratoryId: string }): string {
   return `${laboratory.OrganizationId}/${laboratory.LaboratoryId}/`;
+}
+
+/**
+ * Resolves the absolute prefix a laboratory may list. Defaults to the laboratory root;
+ * anything outside `{OrganizationId}/{LaboratoryId}/` is rejected.
+ */
+export function resolveLaboratoryListingPrefix(
+  laboratory: { OrganizationId: string; LaboratoryId: string },
+  requestedPrefix?: string,
+): string {
+  const laboratoryRoot = laboratoryPrefix(laboratory);
+  const resolvedPrefix = normalizeS3Prefix(requestedPrefix || laboratoryRoot);
+  if (!resolvedPrefix.startsWith(laboratoryRoot)) {
+    throw new UnauthorizedAccessError("S3 prefix must be inside this laboratory's folder");
+  }
+  return resolvedPrefix;
 }
 
 /**

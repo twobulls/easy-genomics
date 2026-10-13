@@ -493,7 +493,7 @@
             <div class="mb-1 text-sm font-medium">Amazon S3</div>
             <div class="mb-2 text-xs text-gray-500">Connected</div>
             <p class="text-xs text-gray-500">
-              Import files from this lab's folder, or a folder your organization admin allowed, in a granted bucket.
+              Import files from this lab's folder, or a folder a system admin allowed for it, in a granted bucket.
             </p>
           </button>
 

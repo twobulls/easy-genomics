@@ -6,6 +6,7 @@ import {
   isSampleSheetKey,
   isWithinRunFolder,
   lastPathSegment,
+  encodeS3CopySource,
   normalizeS3Prefix,
   parseS3ObjectUri,
   parseS3Uri,
@@ -220,5 +221,13 @@ describe('isInsideLaboratoryReadablePrefix', () => {
 
   it('rejects a sibling folder that shares the allowed prefix as a string', () => {
     expect(isInsideLaboratoryReadablePrefix('sample-3-18-other/S1.fq.gz', lab, 'sample-3-18/')).toBe(false);
+  });
+});
+
+describe('encodeS3CopySource', () => {
+  it('encodes spaces, hashes, percents, and plus signs in the key', () => {
+    expect(encodeS3CopySource('lab-bucket', 'org/lab/file name#1+%.bam')).toBe(
+      'lab-bucket/org/lab/file%20name%231%2B%25.bam',
+    );
   });
 });

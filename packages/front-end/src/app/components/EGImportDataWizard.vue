@@ -9,6 +9,7 @@
     FileUploadRequest,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/easy-genomics-api';
   import {
+    DEFAULT_REGEX_GROUPING_PRESET_KEY,
     REGEX_GROUPING_PRESETS,
     type RegexGroupingPresetKey,
   } from '@easy-genomics/shared-lib/src/app/utils/sample-regex-grouping';
@@ -78,8 +79,8 @@
       ? buildSourcePrefix(allowedPrefixForBucket.value, sourcePrefix.value)
       : buildLaboratorySourcePrefix(lab, sourcePrefix.value);
   }
-  const presetKey = ref<RegexGroupingPresetKey>('underscore_r1_r2');
-  const regexPattern = ref(REGEX_GROUPING_PRESETS.underscore_r1_r2.pattern);
+  const presetKey = ref<RegexGroupingPresetKey>(DEFAULT_REGEX_GROUPING_PRESET_KEY);
+  const regexPattern = ref(REGEX_GROUPING_PRESETS[DEFAULT_REGEX_GROUPING_PRESET_KEY].pattern);
   const sourceFiles = ref<string[]>([]);
   const { proposedSets, unmatchedFiles, refreshPreview, resetPreview } = useRegexGroupingPreview(
     sourceFiles,

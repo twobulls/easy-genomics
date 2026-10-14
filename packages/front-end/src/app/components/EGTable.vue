@@ -16,7 +16,6 @@
       rowClickAction?: (rowItem: any) => void | undefined;
       noResultsMsg?: string;
       canSelect?: boolean;
-      rowClasses?: (row: any) => string;
       labelledBy?: string;
       /**
        * Flexible leading columns; Favourite and Run (last two) stay narrow and centered.
@@ -124,12 +123,11 @@
 
       <template #default="{ row }">
         <tr
-          :class="[
-            props.rowClasses ? props.rowClasses(row) : '',
+          :class="
             rowClickAction
               ? 'focus-visible:outline-primary-500 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]'
-              : '',
-          ]"
+              : ''
+          "
           :tabindex="rowClickAction ? 0 : undefined"
           :role="rowClickAction ? 'button' : undefined"
           :aria-label="rowAriaLabel(row)"

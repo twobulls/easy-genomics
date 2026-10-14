@@ -132,4 +132,36 @@ describe('edit-workflow-key-output-delivery Lambda', () => {
     expect(result.statusCode).toEqual(400);
     expect(mockSave).not.toHaveBeenCalled();
   });
+
+  it('rejects a non-s3 destination URI', async () => {
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        Enabled: true,
+        DestinationUri: 'https://results-bucket/incoming',
+      }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(400);
+    expect(mockSave).not.toHaveBeenCalled();
+  });
+
+  it('rejects a laboratory data prefix destination', async () => {
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        Enabled: true,
+        DestinationUri: 's3://lab-bucket/b1e0f6a4-1f2b-4a6d-9f1c-1a2b3c4d5e6f/c2f1e7b5-2e3c-5b7e-0a2d-2b3c4d5e6f70/out',
+      }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(400);
+    expect(mockSave).not.toHaveBeenCalled();
+  });
 });

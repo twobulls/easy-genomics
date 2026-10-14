@@ -19,9 +19,6 @@
     labId: string;
     labName: string;
     run: LaboratoryRun;
-    s3Bucket: string;
-    s3Prefix: string;
-    startPath?: string[] | null;
   }>();
 
   const emit = defineEmits<{

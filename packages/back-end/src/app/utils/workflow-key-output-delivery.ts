@@ -1,4 +1,5 @@
 import { matchKeyOutputPattern } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-patterns';
+import { normalizeS3Prefix } from '@BE/utils/s3-uri-utils';
 import { toRunRelativePath } from '@BE/utils/workflow-key-output-utils';
 
 export type KeyOutputDeliveryFile = {
@@ -37,12 +38,8 @@ export function deliveryDestinationOverlapsSource(params: {
   destinationPrefix: string;
 }): boolean {
   if (params.sourceBucket !== params.destinationBucket) return false;
-  const source = params.sourcePrefix.endsWith('/') ? params.sourcePrefix : `${params.sourcePrefix}/`;
-  const destination = params.destinationPrefix
-    ? params.destinationPrefix.endsWith('/')
-      ? params.destinationPrefix
-      : `${params.destinationPrefix}/`
-    : '';
+  const source = normalizeS3Prefix(params.sourcePrefix);
+  const destination = params.destinationPrefix ? normalizeS3Prefix(params.destinationPrefix) : '';
   if (!destination) return false;
   return destination.startsWith(source) || source.startsWith(destination);
 }

@@ -117,3 +117,34 @@ Run against a deployed environment with at least two completed runs in one lab. 
 - [ ] **Large S3 copy timeout** — a huge multi-run S3 export fails with a timeout message rather than leaving PROCESSING
       forever; other labs/jobs can still enqueue.
 - [ ] **E2E** — add a Playwright happy path (preview → enqueue → status) with the UI PR.
+
+---
+
+## Workflow key outputs (declare, download, deliver)
+
+Lab managers declare glob patterns per HealthOmics workflow, pin matching files on a completed run, and optionally copy
+them to an external `s3://` prefix when a run succeeds. Unit tests cover pattern matching, delivery enqueue/copy,
+destination URI validation, technician-vs-manager delivery auth, and protected lab-data prefixes. Playwright E2E for the
+happy path is still outstanding (declare → download on a completed run → save delivery destination).
+
+### Manual steps
+
+Run against a deployed environment with a completed HealthOmics run that has output files. Not yet executed.
+
+- [ ] **Declare** — on a completed HealthOmics run Files tab, define key outputs from suggested groups and save; they
+      appear for later runs of the same workflow.
+- [ ] **Technician declare** — a technician can save key outputs while delivery is off.
+- [ ] **Technician blocked when delivery is on** — with delivery enabled, a technician save of key outputs returns 403.
+- [ ] **Invalid delivery URI** — `https://…` or `s3:///incoming` on the deliver page is rejected and not saved.
+- [ ] **Lab-data prefix blocked** — a destination under `{orgId}/{labId}/` is rejected (400) and the worker will not
+      copy there.
+- [ ] **Foreign output prefix** — a run whose OutputS3Url sits outside `{OrganizationId}/{LaboratoryId}/` cannot list or
+      deliver key outputs.
+- [ ] **Download** — Download all / per-role zip works under the 1000-file-per-role cap and the 2000-key zip-all cap;
+      above either cap the UI toasts instead of silently omitting files.
+- [ ] **Empty matches** — a pattern that matches nothing on this run shows zero files; zip is not offered.
+- [ ] **Unauthorized delivery page** — a technician cannot save the S3 destination.
+- [ ] **Failed enqueue** — if SQS delivery enqueue fails after the run is already COMPLETED, a status-check retry still
+      delivers (notification is not stamped until enqueue succeeds).
+- [ ] **E2E** — add a lab-manager Playwright spec: declare key outputs from a completed HealthOmics run, download from
+      the panel, save a delivery destination.

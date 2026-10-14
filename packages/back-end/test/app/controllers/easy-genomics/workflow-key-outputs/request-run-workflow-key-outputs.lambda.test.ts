@@ -24,7 +24,7 @@ import {
 
 const LAB_ID = 'b1e0f6a4-1f2b-4a6d-9f1c-1a2b3c4d5e6f';
 const RUN_ID = '3f7c1c9e-2222-4222-8222-222222222222';
-const ROOT = 'org/lab/aws-healthomics/run-1/results/1234567/';
+const ROOT = `org-1/${LAB_ID}/aws-healthomics/run-1/results/1234567/`;
 
 describe('request-run-workflow-key-outputs Lambda', () => {
   let mockListAllObjectsUnderPrefix: jest.Mock;
@@ -80,11 +80,12 @@ describe('request-run-workflow-key-outputs Lambda', () => {
       .fn()
       .mockResolvedValue({
         LaboratoryId: LAB_ID,
+        OrganizationId: 'org-1',
         RunId: RUN_ID,
         Platform: 'AWS HealthOmics',
         ExternalRunId: '1234567',
         WorkflowExternalId: 'wf-viralrecon',
-        OutputS3Url: 's3://lab-bucket/org/lab/aws-healthomics/run-1/results',
+        OutputS3Url: `s3://lab-bucket/org-1/${LAB_ID}/aws-healthomics/run-1/results`,
       });
 
     mockGetDefinition = jest.fn().mockResolvedValue(undefined);
@@ -159,6 +160,73 @@ describe('request-run-workflow-key-outputs Lambda', () => {
     expect(body.KeyOutputs[1].MatchCount).toEqual(1);
     expect(body.KeyOutputs[1].MatchSizeBytes).toEqual(3200000);
     expect(body.Groups.some((group: { Pattern: string }) => group.Pattern.endsWith('*.consensus.fa'))).toBe(true);
+  });
+
+  it('caps Matches at 1000 while reporting the full MatchCount', async () => {
+    mockListAllObjectsUnderPrefix.mockResolvedValue(
+      Array.from({ length: 1001 }, (_unused, index) => ({
+        Key: `${ROOT}variants/ivar/consensus/bcftools/sample${String(index + 1).padStart(4, '0')}.consensus.fa`,
+        Size: 100,
+      })),
+    );
+    mockGetDefinition.mockResolvedValue({
+      LaboratoryId: LAB_ID,
+      WorkflowId: 'wf-viralrecon',
+      KeyOutputs: [
+        {
+          KeyOutputId: '11111111-1111-4111-8111-111111111111',
+          Label: 'Consensus genome',
+          Pattern: 'variants/ivar/consensus/bcftools/*.consensus.fa',
+        },
+      ],
+    });
+
+    const result = await handler(
+      createMockEvent({ LaboratoryId: LAB_ID, RunId: RUN_ID }),
+      createMockContext(),
+      () => {},
+    );
+    const body = JSON.parse(result.body);
+
+    expect(result.statusCode).toEqual(200);
+    expect(body.KeyOutputs[0].MatchCount).toEqual(1001);
+    expect(body.KeyOutputs[0].Matches).toHaveLength(1000);
+  });
+
+  it('rejects a run whose output prefix is outside this laboratory folder', async () => {
+    (LaboratoryRunService as jest.MockedClass<typeof LaboratoryRunService>).prototype.get = jest
+      .fn()
+      .mockResolvedValue({
+        LaboratoryId: LAB_ID,
+        OrganizationId: 'org-1',
+        RunId: RUN_ID,
+        Platform: 'AWS HealthOmics',
+        ExternalRunId: '1234567',
+        WorkflowExternalId: 'wf-viralrecon',
+        OutputS3Url: 's3://lab-bucket/other-org/other-lab/secrets/',
+      });
+
+    const result = await handler(
+      createMockEvent({ LaboratoryId: LAB_ID, RunId: RUN_ID }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(400);
+    expect(mockListAllObjectsUnderPrefix).not.toHaveBeenCalled();
+  });
+
+  it('rejects a caller with no laboratory access', async () => {
+    (validateOrganizationAdminAccess as jest.Mock).mockReturnValue(false);
+
+    const result = await handler(
+      createMockEvent({ LaboratoryId: LAB_ID, RunId: RUN_ID }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(403);
+    expect(mockListAllObjectsUnderPrefix).not.toHaveBeenCalled();
   });
 
   it('rejects a malformed body', async () => {

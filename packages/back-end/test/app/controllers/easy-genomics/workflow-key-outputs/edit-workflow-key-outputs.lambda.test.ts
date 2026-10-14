@@ -63,7 +63,7 @@ describe('edit-workflow-key-outputs Lambda', () => {
       .mockResolvedValue({
         LaboratoryId: LAB_ID,
         WorkflowId: WORKFLOW_ID,
-        Delivery: { Enabled: true, DestinationUri: 's3://results-bucket/incoming/' },
+        Delivery: { Enabled: false },
         CreatedAt: '2026-01-01T00:00:00.000Z',
         CreatedBy: 'original-user',
       });
@@ -84,8 +84,92 @@ describe('edit-workflow-key-outputs Lambda', () => {
     const body = JSON.parse(result.body);
 
     expect(result.statusCode).toEqual(200);
-    expect(body.Delivery).toEqual({ Enabled: true, DestinationUri: 's3://results-bucket/incoming/' });
+    expect(body.Delivery).toEqual({ Enabled: false });
     expect(body.KeyOutputs[0].Pattern).toEqual('reports/summary.html');
     expect(body.CreatedBy).toEqual('original-user');
+  });
+
+  it('allows a technician to clear declared key outputs when delivery is off', async () => {
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        KeyOutputs: [],
+      }),
+      createMockContext(),
+      () => {},
+    );
+    const body = JSON.parse(result.body);
+
+    expect(result.statusCode).toEqual(200);
+    expect(body.KeyOutputs).toEqual([]);
+    expect(mockSave).toHaveBeenCalled();
+  });
+
+  it('allows a manager to save key outputs when delivery is already enabled', async () => {
+    (validateLaboratoryTechnicianAccess as jest.Mock).mockReturnValue(false);
+    (validateLaboratoryManagerAccess as jest.Mock).mockReturnValue(true);
+    (WorkflowKeyOutputsService as jest.MockedClass<typeof WorkflowKeyOutputsService>).prototype.get = jest
+      .fn()
+      .mockResolvedValue({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        Delivery: { Enabled: true, DestinationUri: 's3://results-bucket/incoming/' },
+        CreatedAt: '2026-01-01T00:00:00.000Z',
+        CreatedBy: 'original-user',
+      });
+
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        KeyOutputs: [{ Label: 'Summary', Pattern: 'reports/*.html' }],
+      }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(200);
+    expect(mockSave).toHaveBeenCalled();
+  });
+
+  it('rejects a technician when delivery is already enabled', async () => {
+    (WorkflowKeyOutputsService as jest.MockedClass<typeof WorkflowKeyOutputsService>).prototype.get = jest
+      .fn()
+      .mockResolvedValue({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        Delivery: { Enabled: true, DestinationUri: 's3://results-bucket/incoming/' },
+      });
+
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        KeyOutputs: [{ Label: 'Summary', Pattern: 'reports/*.html' }],
+      }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(403);
+    expect(mockSave).not.toHaveBeenCalled();
+  });
+
+  it('rejects a caller with no laboratory access', async () => {
+    (validateLaboratoryTechnicianAccess as jest.Mock).mockReturnValue(false);
+
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        KeyOutputs: [{ Label: 'Summary', Pattern: 'reports/summary.html' }],
+      }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(403);
+    expect(mockSave).not.toHaveBeenCalled();
   });
 });

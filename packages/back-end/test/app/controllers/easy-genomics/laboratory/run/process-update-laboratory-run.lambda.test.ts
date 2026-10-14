@@ -121,6 +121,7 @@ describe('process-update-laboratory-run.lambda', () => {
     (getNextFlowApiQueryParameters as jest.Mock).mockReturnValue('workspaceId=ws-1');
     process.env.SEQERA_API_BASE_URL = 'https://tower.example.com';
     delete process.env.SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL;
+    delete process.env.SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL;
   });
 
   it('updates run status for AWS HealthOmics platform', async () => {
@@ -1252,6 +1253,140 @@ describe('process-update-laboratory-run.lambda', () => {
     expect(mockUpdateWithAttributeRemoval).toHaveBeenCalledWith(
       expect.objectContaining({ RunId: 'run-1', LaboratoryId: 'lab-1', PollStatus: 'ACTIVE' }),
       ['NotifiedAt'],
+    );
+  });
+
+  it('enqueues key-output delivery before stamping notification on a completed HealthOmics run', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      WorkflowExternalId: 'wf-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Status: 'SUCCEEDED',
+      Platform: 'AWS HealthOmics',
+      WorkflowExternalId: 'wf-1',
+    });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    process.env.SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/key-output-delivery-queue.fifo';
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+
+    expect(mockPublish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        QueueUrl: 'https://sqs.region.amazonaws.com/acct/key-output-delivery-queue.fifo',
+        MessageGroupId: 'deliver-key-outputs-lab-1',
+        MessageDeduplicationId: 'deliver-key-outputs-run-1',
+      }),
+    );
+    expect(mockMarkTerminalNotified).toHaveBeenCalled();
+  });
+
+  it('does not enqueue key-output delivery for a failed or Seqera run', async () => {
+    process.env.SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/key-output-delivery-queue.fifo';
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      WorkflowExternalId: 'wf-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'FAILED' } as any);
+    mockUpdateRun.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Status: 'FAILED',
+      Platform: 'AWS HealthOmics',
+      WorkflowExternalId: 'wf-1',
+    });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'FAILED' },
+    });
+
+    await processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any);
+
+    expect(mockPublish).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        QueueUrl: 'https://sqs.region.amazonaws.com/acct/key-output-delivery-queue.fifo',
+      }),
+    );
+  });
+
+  it('fails the status-check when key-output delivery enqueue throws so SQS retries', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      WorkflowExternalId: 'wf-1',
+      Status: 'RUNNING',
+      Platform: 'AWS HealthOmics',
+    });
+    mockGetRun.mockResolvedValue({ status: 'SUCCEEDED' } as any);
+    mockUpdateRun.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Status: 'SUCCEEDED',
+      Platform: 'AWS HealthOmics',
+      WorkflowExternalId: 'wf-1',
+    });
+    process.env.SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/key-output-delivery-queue.fifo';
+    mockPublish.mockRejectedValue(new Error('SQS unavailable'));
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).rejects.toThrow('SQS unavailable');
+    expect(mockMarkTerminalNotified).not.toHaveBeenCalled();
+  });
+
+  it('enqueues key-output delivery from the already-terminal notification backfill', async () => {
+    mockQueryByRunId.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      OrganizationId: 'org-1',
+      ExternalRunId: 'ext-1',
+      WorkflowExternalId: 'wf-1',
+      Status: 'SUCCEEDED',
+      Platform: 'AWS HealthOmics',
+      TerminalAt: '2026-07-20T00:00:00.000Z',
+      ExpiresAt: 1234567890,
+      RunDurationSeconds: 120,
+    });
+    mockUpdateRun.mockResolvedValue({
+      RunId: 'run-1',
+      LaboratoryId: 'lab-1',
+      Status: 'SUCCEEDED',
+      Platform: 'AWS HealthOmics',
+      WorkflowExternalId: 'wf-1',
+    });
+    mockMarkTerminalNotified.mockResolvedValue({
+      published: true,
+      run: { RunId: 'run-1', LaboratoryId: 'lab-1', Status: 'SUCCEEDED' },
+    });
+    process.env.SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL =
+      'https://sqs.region.amazonaws.com/acct/key-output-delivery-queue.fifo';
+
+    await expect(processStatusCheckEvent('UPDATE', { RunId: 'run-1' } as any)).resolves.toBe(true);
+
+    expect(mockPublish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        QueueUrl: 'https://sqs.region.amazonaws.com/acct/key-output-delivery-queue.fifo',
+        MessageDeduplicationId: 'deliver-key-outputs-run-1',
+      }),
     );
   });
 });

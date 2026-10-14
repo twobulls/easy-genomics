@@ -12,7 +12,10 @@ import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handl
 import { v4 as uuidv4 } from 'uuid';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { WorkflowKeyOutputsService } from '@BE/services/easy-genomics/workflow-key-outputs-service';
-import { authorizeLaboratoryKeyOutputsAccess } from '@BE/utils/workflow-key-output-utils';
+import {
+  authorizeLaboratoryKeyOutputsAccess,
+  authorizeLaboratoryManagerKeyOutputsAccess,
+} from '@BE/utils/workflow-key-output-utils';
 
 const laboratoryService = new LaboratoryService();
 const workflowKeyOutputsService = new WorkflowKeyOutputsService();
@@ -37,9 +40,12 @@ export const handler: Handler = async (
       throw new InvalidRequestError();
     }
 
-    await authorizeLaboratoryKeyOutputsAccess(event, laboratoryService, request.LaboratoryId);
-
     const existing = await workflowKeyOutputsService.get(request.LaboratoryId, request.WorkflowId);
+    if (existing?.Delivery?.Enabled) {
+      await authorizeLaboratoryManagerKeyOutputsAccess(event, laboratoryService, request.LaboratoryId);
+    } else {
+      await authorizeLaboratoryKeyOutputsAccess(event, laboratoryService, request.LaboratoryId);
+    }
     const now = new Date().toISOString();
     const keyOutputs: WorkflowKeyOutput[] = request.KeyOutputs.map((item) => ({
       KeyOutputId: item.KeyOutputId || uuidv4(),

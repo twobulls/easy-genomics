@@ -161,23 +161,23 @@ async function compensateFailedNotification(run: LaboratoryRun): Promise<void> {
   }
 }
 
-async function safeEnqueueKeyOutputDelivery(run: LaboratoryRun): Promise<void> {
+/**
+ * Enqueue before notification is stamped. A send failure must fail the status-check so SQS
+ * retries into the already-terminal backfill (missing NotifiedAt) instead of losing delivery.
+ */
+async function enqueueKeyOutputDelivery(run: LaboratoryRun): Promise<void> {
   if (!shouldEnqueueKeyOutputDelivery(run)) return;
   const queueUrl = process.env.SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL;
   if (!queueUrl) {
     console.warn(`SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL not configured, skipping delivery for RunId=${run.RunId}`);
     return;
   }
-  try {
-    await sqsService.sendMessage({
-      QueueUrl: queueUrl,
-      MessageBody: JSON.stringify({ LaboratoryId: run.LaboratoryId, RunId: run.RunId }),
-      MessageGroupId: `deliver-key-outputs-${run.LaboratoryId}`,
-      MessageDeduplicationId: uuidv4(),
-    });
-  } catch (err) {
-    console.warn(`Failed to enqueue key output delivery for RunId=${run.RunId} (continuing):`, err);
-  }
+  await sqsService.sendMessage({
+    QueueUrl: queueUrl,
+    MessageBody: JSON.stringify({ LaboratoryId: run.LaboratoryId, RunId: run.RunId }),
+    MessageGroupId: `deliver-key-outputs-${run.LaboratoryId}`,
+    MessageDeduplicationId: `deliver-key-outputs-${run.RunId}`,
+  });
 }
 
 async function publishForNotificationWithCompensation(run: LaboratoryRun): Promise<void> {
@@ -383,6 +383,7 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       await safePropagateExpiresAt(laboratory, updated, backfilledExpiresAt);
 
       if (missingNotification) {
+        await enqueueKeyOutputDelivery(updated);
         const { published, run: notifiedRun } = await laboratoryRunService.markTerminalNotified({
           LaboratoryId: updated.LaboratoryId,
           RunId: updated.RunId,
@@ -471,6 +472,7 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       );
       await safePropagateExpiresAt(laboratory, laboratoryRun, newExpiresAt);
       if (nextStatusTerminal) {
+        await enqueueKeyOutputDelivery(laboratoryRun);
         const { published, run: notifiedRun } = await laboratoryRunService.markTerminalNotified({
           LaboratoryId: laboratoryRun.LaboratoryId,
           RunId: laboratoryRun.RunId,
@@ -480,9 +482,6 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
         if (published) {
           await publishForNotificationWithCompensation(notifiedRun);
         }
-      }
-      if (nextStatusTerminal) {
-        await safeEnqueueKeyOutputDelivery(laboratoryRun);
       }
 
       if (nextStatusTerminal && existingRun.RunCostOutcome?.CostCapturedAt == null) {

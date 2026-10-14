@@ -768,9 +768,6 @@
           :lab-id="labId"
           :lab-name="lab?.Name ?? ''"
           :run="labRun"
-          :s3-bucket="s3Bucket"
-          :s3-prefix="s3Prefix"
-          :start-path="outputPath"
           @cancel="isDeclaringKeyOutputs = false"
           @saved="onKeyOutputsSaved"
         />

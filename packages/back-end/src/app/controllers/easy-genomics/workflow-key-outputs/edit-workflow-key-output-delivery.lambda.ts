@@ -36,9 +36,6 @@ export const handler: Handler = async (
     await authorizeLaboratoryManagerKeyOutputsAccess(event, laboratoryService, request.LaboratoryId);
 
     const destination = request.DestinationUri ? parseKeyOutputDeliveryUri(request.DestinationUri) : null;
-    if (request.DestinationUri && !destination) {
-      throw new InvalidRequestError('Destination must be an s3://bucket or s3://bucket/prefix URI');
-    }
 
     const existing = await workflowKeyOutputsService.get(request.LaboratoryId, request.WorkflowId);
     const now = new Date().toISOString();

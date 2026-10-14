@@ -16,7 +16,7 @@ function runFixture(overrides?: Partial<LaboratoryRun>): LaboratoryRun {
     Status: 'SUCCEEDED',
     Owner: 'user@example.com',
     ExternalRunId: '1234567',
-    OutputS3Url: 's3://lab-bucket/org/lab/aws-healthomics/run-1/results',
+    OutputS3Url: 's3://lab-bucket/org-1/lab-1/aws-healthomics/run-1/results',
     ...overrides,
   };
 }
@@ -44,7 +44,7 @@ describe('runKeyOutputsRoot', () => {
   it('appends the HealthOmics external run folder so patterns skip the per-run id', () => {
     expect(runKeyOutputsRoot(runFixture())).toEqual({
       bucket: 'lab-bucket',
-      prefix: 'org/lab/aws-healthomics/run-1/results/1234567/',
+      prefix: 'org-1/lab-1/aws-healthomics/run-1/results/1234567/',
     });
   });
 
@@ -52,12 +52,12 @@ describe('runKeyOutputsRoot', () => {
     expect(
       runKeyOutputsRoot(
         runFixture({
-          OutputS3Url: 's3://lab-bucket/org/lab/aws-healthomics/run-1/results/1234567/',
+          OutputS3Url: 's3://lab-bucket/org-1/lab-1/aws-healthomics/run-1/results/1234567/',
         }),
       ),
     ).toEqual({
       bucket: 'lab-bucket',
-      prefix: 'org/lab/aws-healthomics/run-1/results/1234567/',
+      prefix: 'org-1/lab-1/aws-healthomics/run-1/results/1234567/',
     });
   });
 
@@ -67,22 +67,46 @@ describe('runKeyOutputsRoot', () => {
         runFixture({
           Platform: 'Seqera Cloud',
           ExternalRunId: '987',
-          OutputS3Url: 's3://lab-bucket/org/lab/seqera/run-1/results/',
+          OutputS3Url: 's3://lab-bucket/org-1/lab-1/seqera/run-1/results/',
         }),
       ),
     ).toEqual({
       bucket: 'lab-bucket',
-      prefix: 'org/lab/seqera/run-1/results/',
+      prefix: 'org-1/lab-1/seqera/run-1/results/',
     });
   });
 
   it('returns null when the run has no S3 location', () => {
     expect(runKeyOutputsRoot(runFixture({ OutputS3Url: undefined, InputS3Url: undefined }))).toBeNull();
   });
+
+  it('returns null when the recorded location is outside this laboratory folder', () => {
+    expect(
+      runKeyOutputsRoot(
+        runFixture({
+          OutputS3Url: 's3://lab-bucket/other-org/other-lab/aws-healthomics/run-1/results',
+        }),
+      ),
+    ).toBeNull();
+  });
+
+  it('does not append ExternalRunId when falling back to InputS3Url', () => {
+    expect(
+      runKeyOutputsRoot(
+        runFixture({
+          OutputS3Url: undefined,
+          InputS3Url: 's3://lab-bucket/org-1/lab-1/aws-healthomics/run-1/input/',
+        }),
+      ),
+    ).toEqual({
+      bucket: 'lab-bucket',
+      prefix: 'org-1/lab-1/aws-healthomics/run-1/input/',
+    });
+  });
 });
 
 describe('toRunRelativePath', () => {
-  const root = 'org/lab/aws-healthomics/run-1/results/1234567/';
+  const root = 'org-1/lab-1/aws-healthomics/run-1/results/1234567/';
 
   it('strips the run File Manager root from a full S3 key', () => {
     expect(toRunRelativePath(`${root}variants/ivar/consensus/bcftools/sample01.consensus.fa`, root)).toEqual(

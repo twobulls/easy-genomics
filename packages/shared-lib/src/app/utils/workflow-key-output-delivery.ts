@@ -4,6 +4,13 @@ export type KeyOutputDeliveryDestination = {
 };
 
 const BUCKET_NAME = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
+const LAB_DATA_PREFIX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\//i;
+
+/** True when the prefix is an Easy Genomics `{OrganizationId}/{LaboratoryId}/` lab-data root. */
+export function isProtectedLabDataDestination(prefix: string): boolean {
+  return LAB_DATA_PREFIX.test(prefix);
+}
 
 /**
  * Parse a lab-manager destination such as `s3://results-bucket/incoming/viralrecon`.

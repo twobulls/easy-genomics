@@ -1,6 +1,9 @@
 import { buildResponse } from '@easy-genomics/shared-lib/lib/app/utils/common';
 import { LaboratoryRunNotFoundError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
-import { parseKeyOutputDeliveryUri } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-delivery';
+import {
+  isProtectedLabDataDestination,
+  parseKeyOutputDeliveryUri,
+} from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-delivery';
 import { APIGatewayProxyResult, Handler } from 'aws-lambda';
 import { SQSEvent } from 'aws-lambda/trigger/sqs';
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
@@ -69,6 +72,10 @@ async function deliverKeyOutputs(message: DeliverWorkflowKeyOutputsMessage): Pro
   const root = runKeyOutputsRoot(run);
   if (!destination || !root) {
     console.info(`Skip key output delivery for RunId=${run.RunId}: destination or output location is invalid`);
+    return;
+  }
+  if (isProtectedLabDataDestination(destination.prefix)) {
+    console.error(`Skip key output delivery for RunId=${run.RunId}: destination is a laboratory data prefix`);
     return;
   }
   if (

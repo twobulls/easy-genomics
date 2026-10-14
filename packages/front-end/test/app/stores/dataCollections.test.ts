@@ -2,12 +2,14 @@ import { createPinia, setActivePinia } from 'pinia';
 import useDataCollectionsStore, { UNLINKED_SCAN_TTL_MS } from '../../../src/app/stores/dataCollections';
 
 const mockRequestUnlinkedBucketObjects = jest.fn();
+const mockAddFilesToSample = jest.fn();
 const mockToastError = jest.fn();
 
 (global as { useNuxtApp?: () => unknown }).useNuxtApp = () => ({
   $api: {
     dataCollections: {
       requestUnlinkedBucketObjects: mockRequestUnlinkedBucketObjects,
+      addFilesToSample: mockAddFilesToSample,
     },
   },
 });
@@ -138,5 +140,43 @@ describe('dataCollections store unlinked scan cache', () => {
     await pending;
 
     expect(store.unlinkedScan('lab-1')).toBeNull();
+  });
+});
+
+describe('dataCollections store addFilesToSample', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    useDataCollectionsStore().reset();
+    mockAddFilesToSample.mockReset();
+    mockToastError.mockReset();
+  });
+
+  const request = { labId: 'lab-1', s3Bucket: 'bucket', sampleId: 'sample-1', keys: ['org/lab/a_R2.fq.gz'] };
+
+  it('adds the files and invalidates the unlinked scan, since those files are now linked', async () => {
+    const store = useDataCollectionsStore();
+    store.setUnlinkedScan('lab-1', scanResponse('org/lab/a_R2.fq.gz'));
+    mockAddFilesToSample.mockResolvedValueOnce(undefined);
+
+    await expect(store.addFilesToSample(request)).resolves.toBe(true);
+
+    expect(mockAddFilesToSample).toHaveBeenCalledWith({
+      LaboratoryId: 'lab-1',
+      S3Bucket: 'bucket',
+      SampleId: 'sample-1',
+      Keys: ['org/lab/a_R2.fq.gz'],
+    });
+    expect(store.unlinkedScan('lab-1')).toBeNull();
+  });
+
+  it('shows the API error and keeps the scan when the add fails', async () => {
+    const store = useDataCollectionsStore();
+    store.setUnlinkedScan('lab-1', scanResponse('org/lab/a_R2.fq.gz'));
+    mockAddFilesToSample.mockRejectedValueOnce(new Error('Sample not found'));
+
+    await expect(store.addFilesToSample(request)).resolves.toBe(false);
+
+    expect(mockToastError).toHaveBeenCalledWith('Sample not found');
+    expect(store.unlinkedScan('lab-1')).not.toBeNull();
   });
 });

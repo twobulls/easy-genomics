@@ -40,6 +40,23 @@ function refineDeliveryDestination(
 }
 
 const relativePathPattern = /^(?!\/)(?!.*\/\/).+$/;
+const MAX_STARS_PER_SEGMENT = 4;
+
+function refineKeyOutputPattern(pattern: string, ctx: z.RefinementCtx): void {
+  if (pattern.includes('**')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '* matches inside one path segment. ** is not supported.',
+    });
+  }
+  const crowded = pattern.split('/').some((segment) => segment.split('*').length - 1 > MAX_STARS_PER_SEGMENT);
+  if (crowded) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Use at most ${MAX_STARS_PER_SEGMENT} * wildcards in a path segment.`,
+    });
+  }
+}
 
 export const WorkflowKeyOutputSchema = z
   .object({
@@ -53,7 +70,8 @@ export const WorkflowKeyOutputSchema = z
       .regex(relativePathPattern, 'Pattern must be a relative path without a leading slash'),
     ExamplePath: z.string().min(1).max(WORKFLOW_KEY_OUTPUT_PATTERN_MAX_LENGTH).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => refineKeyOutputPattern(value.Pattern, ctx));
 
 export const WorkflowKeyOutputDeliverySchema = z
   .object({
@@ -91,7 +109,8 @@ const EditableKeyOutputSchema = z
       .regex(relativePathPattern, 'Pattern must be a relative path without a leading slash'),
     ExamplePath: z.string().min(1).max(WORKFLOW_KEY_OUTPUT_PATTERN_MAX_LENGTH).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => refineKeyOutputPattern(value.Pattern, ctx));
 
 export const EditWorkflowKeyOutputsSchema = z
   .object({

@@ -12,6 +12,19 @@ export function isProtectedLabDataDestination(prefix: string): boolean {
   return LAB_DATA_PREFIX.test(prefix);
 }
 
+/** A HealthOmics run that finished successfully and names its workflow. */
+export function isCompletedHealthOmicsWorkflowRun(run: {
+  Platform?: string;
+  Status?: string;
+  WorkflowExternalId?: string | null;
+}): boolean {
+  return (
+    run.Platform === 'AWS HealthOmics' &&
+    (run.Status === 'COMPLETED' || run.Status === 'SUCCEEDED') &&
+    Boolean(run.WorkflowExternalId)
+  );
+}
+
 /**
  * Parse a lab-manager destination such as `s3://results-bucket/incoming/viralrecon`.
  * Returns null when the URI is not a bucket plus an optional prefix.

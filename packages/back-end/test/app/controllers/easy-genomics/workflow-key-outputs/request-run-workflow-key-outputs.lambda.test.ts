@@ -1,3 +1,4 @@
+import { S3BucketAccessDeniedError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import { APIGatewayProxyWithCognitoAuthorizerEvent, Context } from 'aws-lambda';
 import { handler } from '../../../../../src/app/controllers/easy-genomics/workflow-key-outputs/request-run-workflow-key-outputs.lambda';
 
@@ -21,6 +22,7 @@ import {
   validateOrganizationAdminAccess,
   validateSystemAdminAccess,
 } from '../../../../../src/app/utils/auth-utils';
+import { assertLaboratoryHasS3BucketAccess } from '../../../../../src/app/utils/laboratory-s3-access-utils';
 
 const LAB_ID = 'b1e0f6a4-1f2b-4a6d-9f1c-1a2b3c4d5e6f';
 const RUN_ID = '3f7c1c9e-2222-4222-8222-222222222222';
@@ -160,6 +162,11 @@ describe('request-run-workflow-key-outputs Lambda', () => {
     expect(body.KeyOutputs[1].MatchCount).toEqual(1);
     expect(body.KeyOutputs[1].MatchSizeBytes).toEqual(3200000);
     expect(body.Groups.some((group: { Pattern: string }) => group.Pattern.endsWith('*.consensus.fa'))).toBe(true);
+    expect(assertLaboratoryHasS3BucketAccess).toHaveBeenCalledWith(
+      expect.objectContaining({ LaboratoryId: LAB_ID }),
+      'lab-bucket',
+      expect.anything(),
+    );
   });
 
   it('caps Matches at 1000 while reporting the full MatchCount', async () => {
@@ -213,6 +220,19 @@ describe('request-run-workflow-key-outputs Lambda', () => {
     );
 
     expect(result.statusCode).toEqual(400);
+    expect(mockListAllObjectsUnderPrefix).not.toHaveBeenCalled();
+  });
+
+  it('does not list objects when the laboratory is not granted the bucket', async () => {
+    (assertLaboratoryHasS3BucketAccess as jest.Mock).mockRejectedValueOnce(new S3BucketAccessDeniedError());
+
+    const result = await handler(
+      createMockEvent({ LaboratoryId: LAB_ID, RunId: RUN_ID }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(403);
     expect(mockListAllObjectsUnderPrefix).not.toHaveBeenCalled();
   });
 

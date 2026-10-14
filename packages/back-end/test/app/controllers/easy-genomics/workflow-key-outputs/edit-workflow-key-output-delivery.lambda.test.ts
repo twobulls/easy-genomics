@@ -149,6 +149,23 @@ describe('edit-workflow-key-output-delivery Lambda', () => {
     expect(mockSave).not.toHaveBeenCalled();
   });
 
+  it('rejects an Easy Genomics platform bucket', async () => {
+    process.env.NAME_PREFIX = 'eg-test';
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        WorkflowId: WORKFLOW_ID,
+        Enabled: true,
+        DestinationUri: 's3://eg-test-org-email-assets-bucket/inbox',
+      }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(400);
+    expect(mockSave).not.toHaveBeenCalled();
+  });
+
   it('rejects a laboratory data prefix destination', async () => {
     const result = await handler(
       createMockEvent({

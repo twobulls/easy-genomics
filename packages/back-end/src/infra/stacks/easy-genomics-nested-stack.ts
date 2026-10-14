@@ -166,8 +166,10 @@ export class EasyGenomicsNestedStack extends NestedStack {
           deadLetterQueue: { queue: this.runExportDlq, maxReceiveCount: 3 },
         },
         ['key-output-delivery-queue']: <QueueDetails>{
-          // Destinations are an external s3:// URI, so the worker role is bucket-wildcard.
-          // The destination bucket policy still has to allow this account to write.
+          // Destinations are an external s3:// URI. Same-account writes succeed on the
+          // role's identity policy alone; another account's bucket must grant this role.
+          // Runtime checks reject platform buckets, laboratory data prefixes, and the
+          // run's own output bucket. s3:CopyObject is not an IAM action.
           fifo: true,
           retentionPeriod: Duration.days(1),
           visibilityTimeout: Duration.minutes(15),
@@ -1608,6 +1610,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-workflow-key-outputs-table`,
+        ],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [
           `arn:aws:iam::${this.props.env.account!}:role/${this.props.namePrefix}-easy-genomics-omics-access-role`,
         ],
         actions: ['sts:AssumeRole', 'sts:TagSession'],
@@ -2803,14 +2812,13 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       new PolicyStatement({
         resources: ['arn:aws:s3:::*/*'],
-        actions: [
-          's3:GetObject',
-          's3:PutObject',
-          's3:CopyObject',
-          's3:AbortMultipartUpload',
-          's3:ListMultipartUploadParts',
-        ],
+        actions: ['s3:GetObject', 's3:PutObject', 's3:AbortMultipartUpload', 's3:ListMultipartUploadParts'],
         effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: [this.orgEmailAssetsBucket.bucket.arnForObjects('*')],
+        actions: ['s3:PutObject', 's3:AbortMultipartUpload', 's3:ListMultipartUploadParts'],
+        effect: Effect.DENY,
       }),
     ]);
 

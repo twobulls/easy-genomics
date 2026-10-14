@@ -18,6 +18,7 @@
   import { LaboratoryUserDetails } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user-details';
   import { LaboratoryUser } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-user';
   import { getRunListStatusPollIntervalMs } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
+  import { isCompletedHealthOmicsWorkflowRun } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-delivery';
   import { v4 as uuidv4 } from 'uuid';
   import { Pipeline as SeqeraPipeline } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import type { LabOmicsWorkflow } from '@FE/stores/omicsWorkflows';
@@ -435,11 +436,7 @@
   }
 
   function canSetKeyOutputsForRun(run: LaboratoryRun): boolean {
-    return (
-      run.Platform === 'AWS HealthOmics' &&
-      ['COMPLETED', 'SUCCEEDED'].includes(run.Status) &&
-      Boolean(run.WorkflowExternalId)
-    );
+    return isCompletedHealthOmicsWorkflowRun(run);
   }
 
   function viewRunDetails(run: LaboratoryRun, tab: string = 'Run Details') {

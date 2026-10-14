@@ -9,6 +9,7 @@ import { parseKeyOutputDeliveryUri } from '@easy-genomics/shared-lib/src/app/uti
 import { APIGatewayProxyResult, APIGatewayProxyWithCognitoAuthorizerEvent, Handler } from 'aws-lambda';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { WorkflowKeyOutputsService } from '@BE/services/easy-genomics/workflow-key-outputs-service';
+import { isPlatformKeyOutputDeliveryBucket } from '@BE/utils/workflow-key-output-delivery';
 import { authorizeLaboratoryManagerKeyOutputsAccess } from '@BE/utils/workflow-key-output-utils';
 
 const laboratoryService = new LaboratoryService();
@@ -36,6 +37,9 @@ export const handler: Handler = async (
     await authorizeLaboratoryManagerKeyOutputsAccess(event, laboratoryService, request.LaboratoryId);
 
     const destination = request.DestinationUri ? parseKeyOutputDeliveryUri(request.DestinationUri) : null;
+    if (destination && isPlatformKeyOutputDeliveryBucket(destination.bucket)) {
+      throw new InvalidRequestError('Destination cannot be an Easy Genomics platform bucket');
+    }
 
     const existing = await workflowKeyOutputsService.get(request.LaboratoryId, request.WorkflowId);
     const now = new Date().toISOString();

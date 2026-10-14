@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { parseKeyOutputDeliveryUri } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-delivery';
+  import { EditWorkflowKeyOutputDeliverySchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/workflow-key-outputs';
 
   const $route = useRoute();
   const $router = useRouter();
@@ -52,13 +52,16 @@
   }
 
   function validateDestination(): boolean {
-    const uri = destinationUri.value.trim();
-    if (enabled.value && !uri) {
-      destinationError.value = 'Enter an s3://bucket/prefix destination';
-      return false;
-    }
-    if (uri && !parseKeyOutputDeliveryUri(uri)) {
-      destinationError.value = 'Destination must be an s3://bucket or s3://bucket/prefix URI';
+    const parsed = EditWorkflowKeyOutputDeliverySchema.safeParse({
+      LaboratoryId: labId,
+      WorkflowId: workflowId,
+      Enabled: enabled.value,
+      DestinationUri: destinationUri.value.trim() || undefined,
+    });
+    if (!parsed.success) {
+      const issue =
+        parsed.error.issues.find((item) => item.path.includes('DestinationUri')) ?? parsed.error.issues[0];
+      destinationError.value = issue?.message ?? 'Enter an s3://bucket/prefix destination';
       return false;
     }
     destinationError.value = '';
@@ -107,7 +110,10 @@
       </EGFormGroup>
     </div>
 
-    <p class="text-muted text-sm">The destination bucket must allow this account to write objects.</p>
+    <p class="text-muted text-sm">
+      A bucket in another AWS account must grant this deployment permission to write. Easy Genomics platform buckets and
+      laboratory data prefixes are rejected.
+    </p>
     <p v-if="keyOutputCount === 0" class="text-muted mt-2 text-sm">
       Nothing will be copied until key outputs are declared for this workflow.
     </p>

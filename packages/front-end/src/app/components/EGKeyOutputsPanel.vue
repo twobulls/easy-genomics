@@ -1,5 +1,10 @@
 <script setup lang="ts">
   import { FOLDER_DOWNLOAD_OBJECT_KEYS_LIMIT } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/file/request-folder-download-job';
+  import {
+    canZipAllKeyOutputs,
+    isKeyOutputRoleTruncated,
+    uniqueKeyOutputObjectKeys,
+  } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-download';
   import type {
     RunWorkflowKeyOutput,
     RunWorkflowKeyOutputMatch,
@@ -33,19 +38,7 @@
   const headingId = useId();
   const runRootUri = computed(() => `s3://${props.matches.S3Bucket}/${props.matches.S3Prefix}`);
 
-  const uniqueMatchedKeys = computed(() => {
-    const seen = new Set<string>();
-    const keys: string[] = [];
-    for (const role of props.matches.KeyOutputs) {
-      for (const file of role.Matches) {
-        if (!seen.has(file.Key)) {
-          seen.add(file.Key);
-          keys.push(file.Key);
-        }
-      }
-    }
-    return keys;
-  });
+  const uniqueMatchedKeys = computed(() => uniqueKeyOutputObjectKeys(props.matches.KeyOutputs));
 
   const filesSummary = computed(() => {
     const matched = props.matches.MatchedFileCount.toLocaleString();
@@ -74,7 +67,7 @@
   }
 
   function isRoleTruncated(role: RunWorkflowKeyOutput): boolean {
-    return role.MatchCount > role.Matches.length;
+    return isKeyOutputRoleTruncated(role);
   }
 
   function isHtmlFile(file: RunWorkflowKeyOutputMatch): boolean {
@@ -138,10 +131,7 @@
   }
 
   function zipAll(): void {
-    if (
-      props.matches.KeyOutputs.some(isRoleTruncated) ||
-      uniqueMatchedKeys.value.length > FOLDER_DOWNLOAD_OBJECT_KEYS_LIMIT
-    ) {
+    if (!canZipAllKeyOutputs(props.matches.KeyOutputs, FOLDER_DOWNLOAD_OBJECT_KEYS_LIMIT)) {
       toast.error('Too many matching files to zip all key outputs. Download a single role or individual files.');
       return;
     }

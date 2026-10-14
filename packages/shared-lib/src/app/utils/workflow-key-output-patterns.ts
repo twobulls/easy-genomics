@@ -23,10 +23,38 @@ export function matchKeyOutputPattern(pattern: string, relativePath: string): bo
   return patternSegments.every((segment, index) => matchPathSegment(segment, pathSegments[index]));
 }
 
+/**
+ * `*` matches any characters inside this one segment. `?` is a literal character.
+ * The scan is linear, so a long run of stars cannot backtrack.
+ */
 function matchPathSegment(pattern: string, value: string): boolean {
-  if (!pattern.includes('*')) return pattern === value;
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*');
-  return new RegExp(`^${escaped}$`).test(value);
+  let patternIndex = 0;
+  let valueIndex = 0;
+  let starIndex = -1;
+  let valueAtStar = 0;
+
+  while (valueIndex < value.length) {
+    if (patternIndex < pattern.length && pattern[patternIndex] === '*') {
+      starIndex = patternIndex;
+      patternIndex += 1;
+      valueAtStar = valueIndex;
+      continue;
+    }
+    if (patternIndex < pattern.length && pattern[patternIndex] === value[valueIndex]) {
+      patternIndex += 1;
+      valueIndex += 1;
+      continue;
+    }
+    if (starIndex === -1) return false;
+    patternIndex = starIndex + 1;
+    valueAtStar += 1;
+    valueIndex = valueAtStar;
+  }
+
+  while (patternIndex < pattern.length && pattern[patternIndex] === '*') {
+    patternIndex += 1;
+  }
+  return patternIndex === pattern.length;
 }
 
 export function dirnameRelative(path: string): string {
@@ -47,12 +75,31 @@ export function basenameRelative(path: string): string {
  * run will miss. A unique report such as `multiqc_report.html` stays exact.
  * A folder path becomes `dir/*` so it matches the files in that location.
  */
-export function inferKeyOutputPattern(relativePath: string, allRelativePaths: string[]): string {
+type FilenameIndex = {
+  filePaths: string[];
+  fileSet: Set<string>;
+  namesByDirectory: Map<string, string[]>;
+};
+
+function filenameIndex(allRelativePaths: string[]): FilenameIndex {
   const filePaths = allRelativePaths.filter((path) => path && !path.endsWith('/'));
+  const namesByDirectory = new Map<string, string[]>();
+  for (const path of filePaths) {
+    const name = basenameRelative(path);
+    if (!name) continue;
+    const directory = dirnameRelative(path);
+    const names = namesByDirectory.get(directory);
+    if (names) names.push(name);
+    else namesByDirectory.set(directory, [name]);
+  }
+  return { filePaths, fileSet: new Set(filePaths), namesByDirectory };
+}
+
+function inferFromIndex(relativePath: string, index: FilenameIndex): string {
   const cleaned = relativePath.replace(/\/+$/, '');
   if (!cleaned) return relativePath;
 
-  if (isDirectoryPrefix(cleaned, filePaths)) {
+  if (isDirectoryPrefix(cleaned, index.fileSet, index.filePaths)) {
     return `${cleaned}/*`;
   }
 
@@ -60,23 +107,26 @@ export function inferKeyOutputPattern(relativePath: string, allRelativePaths: st
   const filename = basenameRelative(cleaned);
   if (!filename) return cleaned;
 
-  const siblingNames = filePaths
-    .filter((path) => dirnameRelative(path) === directory)
-    .map((path) => basenameRelative(path))
-    .filter(Boolean);
-
-  const globName = inferFilenameGlob(filename, siblingNames);
+  const globName = inferFilenameGlob(filename, index.namesByDirectory.get(directory) ?? []);
   return directory ? `${directory}/${globName}` : globName;
 }
 
-/** Rewrite a saved exact path to a folder glob when it names a directory, not a file. */
+export function inferKeyOutputPattern(relativePath: string, allRelativePaths: string[]): string {
+  return inferFromIndex(relativePath, filenameIndex(allRelativePaths));
+}
+
+/**
+ * Score a saved pattern against this run. A glob is kept. An exact directory
+ * becomes `dir/*`. An exact file is widened the same way as ticking it, so a
+ * sample id is not stored. A unique report such as `results/summary.html` stays exact.
+ */
 export function normalizeKeyOutputPattern(pattern: string, allRelativePaths: string[]): string {
   if (!pattern || pattern.includes('*')) return pattern;
   return inferKeyOutputPattern(pattern, allRelativePaths);
 }
 
-function isDirectoryPrefix(path: string, filePaths: string[]): boolean {
-  if (filePaths.includes(path)) return false;
+function isDirectoryPrefix(path: string, fileSet: Set<string>, filePaths: string[]): boolean {
+  if (fileSet.has(path)) return false;
   const prefix = `${path}/`;
   return filePaths.some((filePath) => filePath.startsWith(prefix));
 }
@@ -179,11 +229,11 @@ export function listKeyOutputMatches(pattern: string, files: KeyOutputListedFile
  * declaring screen can tick a type, not 48 sample files.
  */
 export function groupKeyOutputExamples(files: KeyOutputListedFile[]): KeyOutputExampleGroup[] {
-  const paths = files.map((file) => file.RelativePath);
+  const index = filenameIndex(files.map((file) => file.RelativePath));
   const byPattern = new Map<string, KeyOutputListedFile[]>();
 
   for (const file of files) {
-    const pattern = inferKeyOutputPattern(file.RelativePath, paths).slice(0, WORKFLOW_KEY_OUTPUT_PATTERN_MAX_LENGTH);
+    const pattern = inferFromIndex(file.RelativePath, index).slice(0, WORKFLOW_KEY_OUTPUT_PATTERN_MAX_LENGTH);
     const matches = byPattern.get(pattern) ?? [];
     matches.push(file);
     byPattern.set(pattern, matches);
@@ -293,6 +343,9 @@ export function parseKeyOutputsJson(text: string): ParseKeyOutputsJsonResult {
     }
     if (pattern.startsWith('/') || pattern.includes('//')) {
       return { ok: false, error: 'Patterns must be relative paths without a leading slash.' };
+    }
+    if (pattern.includes('**')) {
+      return { ok: false, error: '* matches inside one path segment. ** is not supported.' };
     }
     const examplePath = typeof record.examplePath === 'string' ? record.examplePath : undefined;
     outputs.push({ Label: label, Pattern: pattern, ExamplePath: examplePath });

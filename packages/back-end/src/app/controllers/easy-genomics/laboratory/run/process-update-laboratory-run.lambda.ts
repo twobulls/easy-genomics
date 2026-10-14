@@ -19,6 +19,7 @@ import { LaboratoryDataTaggingService } from '@BE/services/easy-genomics/laborat
 import { LaboratoryRunService } from '@BE/services/easy-genomics/laboratory-run-service';
 import { LaboratoryService } from '@BE/services/easy-genomics/laboratory-service';
 import { captureRunCostOutcome } from '@BE/services/easy-genomics/run-cost-capture-service';
+import { WorkflowKeyOutputsService } from '@BE/services/easy-genomics/workflow-key-outputs-service';
 import { createOmicsServiceForLab } from '@BE/services/omics-lab-factory';
 import { SqsService } from '@BE/services/sqs-service';
 import { SsmService } from '@BE/services/ssm-service';
@@ -37,6 +38,7 @@ import { shouldEnqueueKeyOutputDelivery } from '@BE/utils/workflow-key-output-ut
 
 const laboratoryService = new LaboratoryService();
 const laboratoryRunService = new LaboratoryRunService();
+const workflowKeyOutputsService = new WorkflowKeyOutputsService();
 const laboratoryDataTaggingService = new LaboratoryDataTaggingService();
 const sqsService = new SqsService();
 const ssmService = new SsmService();
@@ -162,8 +164,9 @@ async function compensateFailedNotification(run: LaboratoryRun): Promise<void> {
 }
 
 /**
- * Enqueue before notification is stamped. A send failure must fail the status-check so SQS
- * retries into the already-terminal backfill (missing NotifiedAt) instead of losing delivery.
+ * Best-effort, and only when this workflow opted in. A send failure must not
+ * block the completion email. Already-terminal backfill does not call this,
+ * so older completed runs are not copied when delivery is turned on.
  */
 async function enqueueKeyOutputDelivery(run: LaboratoryRun): Promise<void> {
   if (!shouldEnqueueKeyOutputDelivery(run)) return;
@@ -172,12 +175,18 @@ async function enqueueKeyOutputDelivery(run: LaboratoryRun): Promise<void> {
     console.warn(`SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL not configured, skipping delivery for RunId=${run.RunId}`);
     return;
   }
-  await sqsService.sendMessage({
-    QueueUrl: queueUrl,
-    MessageBody: JSON.stringify({ LaboratoryId: run.LaboratoryId, RunId: run.RunId }),
-    MessageGroupId: `deliver-key-outputs-${run.LaboratoryId}`,
-    MessageDeduplicationId: `deliver-key-outputs-${run.RunId}`,
-  });
+  try {
+    const definition = await workflowKeyOutputsService.get(run.LaboratoryId, run.WorkflowExternalId!);
+    if (!definition?.Delivery?.Enabled) return;
+    await sqsService.sendMessage({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify({ LaboratoryId: run.LaboratoryId, RunId: run.RunId }),
+      MessageGroupId: `deliver-key-outputs-${run.LaboratoryId}`,
+      MessageDeduplicationId: `deliver-key-outputs-${run.RunId}`,
+    });
+  } catch (err) {
+    console.warn(`Failed to enqueue key output delivery for RunId=${run.RunId} (notification continues):`, err);
+  }
 }
 
 async function publishForNotificationWithCompensation(run: LaboratoryRun): Promise<void> {
@@ -383,7 +392,6 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       await safePropagateExpiresAt(laboratory, updated, backfilledExpiresAt);
 
       if (missingNotification) {
-        await enqueueKeyOutputDelivery(updated);
         const { published, run: notifiedRun } = await laboratoryRunService.markTerminalNotified({
           LaboratoryId: updated.LaboratoryId,
           RunId: updated.RunId,
@@ -472,7 +480,6 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
       );
       await safePropagateExpiresAt(laboratory, laboratoryRun, newExpiresAt);
       if (nextStatusTerminal) {
-        await enqueueKeyOutputDelivery(laboratoryRun);
         const { published, run: notifiedRun } = await laboratoryRunService.markTerminalNotified({
           LaboratoryId: laboratoryRun.LaboratoryId,
           RunId: laboratoryRun.RunId,
@@ -482,6 +489,7 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
         if (published) {
           await publishForNotificationWithCompensation(notifiedRun);
         }
+        await enqueueKeyOutputDelivery(laboratoryRun);
       }
 
       if (nextStatusTerminal && existingRun.RunCostOutcome?.CostCapturedAt == null) {

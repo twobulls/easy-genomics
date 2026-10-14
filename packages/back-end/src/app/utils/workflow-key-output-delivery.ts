@@ -30,6 +30,15 @@ export function keyOutputDeliveryObjectKey(relativePath: string, destinationPref
   return `${destinationPrefix}${relativePath}`;
 }
 
+/** Platform infrastructure buckets. A same-account LIMS bucket is still allowed. */
+export function isPlatformKeyOutputDeliveryBucket(bucket: string): boolean {
+  const normalized = bucket.toLowerCase();
+  const namePrefix = process.env.NAME_PREFIX?.trim().toLowerCase();
+  if (namePrefix && normalized === `${namePrefix}-org-email-assets-bucket`) return true;
+  const configured = process.env.ORG_EMAIL_ASSETS_BUCKET_NAME?.trim().toLowerCase();
+  return Boolean(configured && normalized === configured);
+}
+
 /** True when the copy would land inside, or contain, the run output prefix. */
 export function deliveryDestinationOverlapsSource(params: {
   sourceBucket: string;
@@ -40,6 +49,7 @@ export function deliveryDestinationOverlapsSource(params: {
   if (params.sourceBucket !== params.destinationBucket) return false;
   const source = normalizeS3Prefix(params.sourcePrefix);
   const destination = params.destinationPrefix ? normalizeS3Prefix(params.destinationPrefix) : '';
-  if (!destination) return false;
+  // The bucket root contains the run output.
+  if (!destination) return true;
   return destination.startsWith(source) || source.startsWith(destination);
 }

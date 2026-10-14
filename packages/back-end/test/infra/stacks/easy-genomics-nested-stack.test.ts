@@ -240,7 +240,7 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
       '/easy-genomics/workflow-key-outputs/process-deliver-workflow-key-outputs',
       expect.arrayContaining([
         expect.objectContaining({
-          actions: expect.arrayContaining(['s3:GetObject', 's3:PutObject', 's3:CopyObject']),
+          actions: expect.arrayContaining(['s3:GetObject', 's3:PutObject', 's3:AbortMultipartUpload']),
         }),
       ]),
     );

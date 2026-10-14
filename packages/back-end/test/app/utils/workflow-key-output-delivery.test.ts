@@ -40,6 +40,17 @@ describe('deliveryDestinationOverlapsSource', () => {
     ).toBe(true);
   });
 
+  it('treats the root of the run bucket as an overlap', () => {
+    expect(
+      deliveryDestinationOverlapsSource({
+        sourceBucket: 'lab-bucket',
+        sourcePrefix: 'org/lab/results/1234567/',
+        destinationBucket: 'lab-bucket',
+        destinationPrefix: '',
+      }),
+    ).toBe(true);
+  });
+
   it('allows a different bucket', () => {
     expect(
       deliveryDestinationOverlapsSource({

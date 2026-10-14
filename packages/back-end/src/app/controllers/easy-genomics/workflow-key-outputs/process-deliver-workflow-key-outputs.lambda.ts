@@ -13,6 +13,7 @@ import { parseSqsJsonBody } from '@BE/utils/sqs-json-body';
 import {
   deliveryDestinationOverlapsSource,
   filesMatchingKeyOutputs,
+  isPlatformKeyOutputDeliveryBucket,
   keyOutputDeliveryObjectKey,
 } from '@BE/utils/workflow-key-output-delivery';
 import { runKeyOutputsRoot, shouldEnqueueKeyOutputDelivery } from '@BE/utils/workflow-key-output-utils';
@@ -74,8 +75,12 @@ async function deliverKeyOutputs(message: DeliverWorkflowKeyOutputsMessage): Pro
     console.info(`Skip key output delivery for RunId=${run.RunId}: destination or output location is invalid`);
     return;
   }
-  if (isProtectedLabDataDestination(destination.prefix)) {
-    console.error(`Skip key output delivery for RunId=${run.RunId}: destination is a laboratory data prefix`);
+  if (isProtectedLabDataDestination(destination.prefix) || isPlatformKeyOutputDeliveryBucket(destination.bucket)) {
+    console.error(`Skip key output delivery for RunId=${run.RunId}: destination is not an external bucket`);
+    return;
+  }
+  if (destination.bucket === root.bucket) {
+    console.error(`Skip key output delivery for RunId=${run.RunId}: destination is the run output bucket`);
     return;
   }
   if (

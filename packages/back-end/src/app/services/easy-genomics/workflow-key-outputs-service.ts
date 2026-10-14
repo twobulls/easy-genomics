@@ -1,5 +1,6 @@
 import { DeleteItemCommandOutput, GetItemCommandOutput, PutItemCommandOutput } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { InvalidRequestError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import { WorkflowKeyOutputsSchema } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/workflow-key-outputs';
 import { WorkflowKeyOutputs } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/workflow-key-outputs';
 import { Service } from '../../types/service';
@@ -29,7 +30,7 @@ export class WorkflowKeyOutputsService extends DynamoDBService implements Servic
     });
 
     if (response.$metadata.httpStatusCode !== 200) {
-      throw new Error(`${logRequestMessage} unsuccessful: HTTP ${response.$metadata.httpStatusCode}`);
+      throw new InvalidRequestError(`${logRequestMessage} unsuccessful: HTTP ${response.$metadata.httpStatusCode}`);
     }
 
     if (!response.Item) {
@@ -72,7 +73,7 @@ export class WorkflowKeyOutputsService extends DynamoDBService implements Servic
     });
 
     if (response.$metadata.httpStatusCode !== 200) {
-      throw new Error(`${logRequestMessage} unsuccessful: HTTP ${response.$metadata.httpStatusCode}`);
+      throw new InvalidRequestError(`${logRequestMessage} unsuccessful: HTTP ${response.$metadata.httpStatusCode}`);
     }
 
     return true;
@@ -83,7 +84,7 @@ export class WorkflowKeyOutputsService extends DynamoDBService implements Servic
     console.info(logRequestMessage);
 
     if (!WorkflowKeyOutputsSchema.safeParse(definition).success) {
-      throw new Error('Invalid request');
+      throw new InvalidRequestError('Invalid workflow key outputs definition');
     }
 
     const response: PutItemCommandOutput = await this.putItem({
@@ -99,7 +100,7 @@ export class WorkflowKeyOutputsService extends DynamoDBService implements Servic
     });
 
     if (response.$metadata.httpStatusCode !== 200) {
-      throw new Error(`${logRequestMessage} unsuccessful: HTTP ${response.$metadata.httpStatusCode}`);
+      throw new InvalidRequestError(`${logRequestMessage} unsuccessful: HTTP ${response.$metadata.httpStatusCode}`);
     }
 
     return definition;

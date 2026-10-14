@@ -10,6 +10,7 @@ import {
   parseKeyOutputsJson,
   scoreKeyOutputPatterns,
 } from './workflow-key-output-patterns';
+import { WorkflowKeyOutputSchema } from '../schema/easy-genomics/workflow-key-outputs';
 
 const consensusFiles = Array.from({ length: 48 }, (_unused, index) => {
   const sample = `sample${String(index + 1).padStart(2, '0')}`;
@@ -40,6 +41,16 @@ describe('matchKeyOutputPattern', () => {
 
   it('does not let * cross a directory boundary', () => {
     expect(matchKeyOutputPattern('variants/*.fa', 'variants/ivar/file.fa')).toBe(false);
+  });
+
+  it('treats ? as a literal character', () => {
+    expect(matchKeyOutputPattern('sample?*.csv', 'sampl.csv')).toBe(false);
+    expect(matchKeyOutputPattern('sample?*.csv', 'sample?01.csv')).toBe(true);
+  });
+
+  it('does not let ** recurse into nested directories', () => {
+    expect(matchKeyOutputPattern('results/**/*.bam', 'results/a/b/file.bam')).toBe(false);
+    expect(matchKeyOutputPattern('results/*.bam', 'results/file.bam')).toBe(true);
   });
 
   it('matches an exact relative path', () => {
@@ -197,6 +208,17 @@ describe('parseKeyOutputsJson', () => {
   it('rejects a leading slash so patterns stay relative to the run root', () => {
     const result = parseKeyOutputsJson('[{"label":"Bad","pattern":"/multiqc/multiqc_report.html"}]');
     expect(result.ok).toBe(false);
+  });
+
+  it('rejects ** and more than four stars in one segment', () => {
+    const doubleStar = parseKeyOutputsJson('[{"label":"Reads","pattern":"results/**/*.bam"}]');
+    expect(doubleStar.ok).toBe(false);
+    const crowded = WorkflowKeyOutputSchema.safeParse({
+      KeyOutputId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      Label: 'Reads',
+      Pattern: 'results/*a*b*c*d*e.bam',
+    });
+    expect(crowded.success).toBe(false);
   });
 
   it('round-trips through formatKeyOutputsJson', () => {

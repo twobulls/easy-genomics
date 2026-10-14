@@ -1,4 +1,5 @@
 import { UnauthorizedAccessError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
+import { isCompletedHealthOmicsWorkflowRun } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-delivery';
 import { Laboratory } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory';
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
 import { APIGatewayProxyWithCognitoAuthorizerEvent } from 'aws-lambda';
@@ -50,11 +51,7 @@ export function toRunRelativePath(s3Key: string, rootPrefix: string): string | n
 export function shouldEnqueueKeyOutputDelivery(
   run: Pick<LaboratoryRun, 'Platform' | 'Status' | 'WorkflowExternalId'>,
 ): boolean {
-  return (
-    run.Platform === 'AWS HealthOmics' &&
-    ['COMPLETED', 'SUCCEEDED'].includes(run.Status) &&
-    Boolean(run.WorkflowExternalId)
-  );
+  return isCompletedHealthOmicsWorkflowRun(run);
 }
 
 export async function authorizeLaboratoryKeyOutputsAccess(

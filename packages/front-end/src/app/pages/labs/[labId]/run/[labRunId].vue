@@ -6,6 +6,7 @@
     Workflow,
   } from '@easy-genomics/shared-lib/src/app/types/nf-tower/nextflow-tower-api';
   import { getRunDetailProgressPollIntervalMs } from '@easy-genomics/shared-lib/src/app/utils/laboratory-run-progress-polling';
+  import { isCompletedHealthOmicsWorkflowRun } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-delivery';
   import { ReadRunTasks } from '@easy-genomics/shared-lib/src/app/types/aws-healthomics/aws-healthomics-api';
   import { TaskListItem, GetRunResponse } from '@aws-sdk/client-omics';
   import { useLabsStore, useRunStore, useUiStore, useWorkflowKeyOutputsStore } from '@FE/stores';
@@ -55,10 +56,7 @@
   );
   const canDeclareKeyOutputs = computed<boolean>(() => {
     const run = labRun.value;
-    if (!run) return false;
-    if (run.Platform !== 'AWS HealthOmics') return false;
-    if (!['COMPLETED', 'SUCCEEDED'].includes(run.Status)) return false;
-    if (!run.WorkflowExternalId) return false;
+    if (!run || !isCompletedHealthOmicsWorkflowRun(run)) return false;
     return Boolean(s3Bucket.value && s3Prefix.value);
   });
   const hasKeyOutputs = computed<boolean>(() => {
@@ -73,8 +71,11 @@
     () => [canDeclareKeyOutputs.value, labRun.value?.WorkflowExternalId] as const,
     ([canDeclare, workflowId]) => {
       if (!canDeclare || !workflowId) return;
-      void keyOutputsStore.load(labId, workflowId);
-      void keyOutputsStore.loadRunMatches(labId, labRunId);
+      void keyOutputsStore.load(labId, workflowId).then((definition) => {
+        if ((definition?.KeyOutputs.length ?? 0) > 0) {
+          void keyOutputsStore.loadRunMatches(labId, labRunId);
+        }
+      });
     },
     { immediate: true },
   );

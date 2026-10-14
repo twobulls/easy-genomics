@@ -33,15 +33,16 @@ type StoredFolderDownloadJobStatus = {
   ErrorMessage?: string;
 };
 
-const getZipRootFolderName = (prefix: string, archiveName?: string): string => {
+export function zipRootFolderName(prefix: string, archiveName?: string): string {
   if (archiveName) {
     const cleaned = archiveName.replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '');
-    return cleaned.slice(0, 80) || 'key-outputs';
+    if (!cleaned || cleaned === '.' || cleaned === '..' || cleaned.includes('..')) return 'key-outputs';
+    return cleaned.slice(0, 80);
   }
   const trimmedPrefix = prefix.replace(/\/+$/, '');
   const lastSegment = trimmedPrefix.split('/').filter(Boolean).pop() || 'folder-download';
   return lastSegment.replace(/[^\w.-]/g, '_');
-};
+}
 
 const writeStatus = async (input: {
   s3Bucket: string;
@@ -61,7 +62,7 @@ const parseSnsWrappedMessage = (body: string): FolderDownloadJobMessage =>
 
 const zipS3Prefix = async (job: FolderDownloadJobMessage): Promise<void> => {
   const normalizedPrefix = normalizeS3Prefix(job.RequestedPrefix);
-  const zipRootFolder = getZipRootFolderName(normalizedPrefix, job.ArchiveName);
+  const zipRootFolder = zipRootFolderName(normalizedPrefix, job.ArchiveName);
   const entries: S3ZipArchiveEntry[] = [];
 
   const addEntry = (key: string, relativeName: string): void => {

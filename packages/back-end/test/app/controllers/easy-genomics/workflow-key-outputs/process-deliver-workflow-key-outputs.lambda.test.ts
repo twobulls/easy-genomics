@@ -129,6 +129,17 @@ describe('process-deliver-workflow-key-outputs Lambda', () => {
     expect(mockList).not.toHaveBeenCalled();
   });
 
+  it('does not copy into an Easy Genomics platform bucket', async () => {
+    process.env.NAME_PREFIX = 'eg-test';
+    mockGetDefinition.mockResolvedValue(
+      deliveryDefinition({ Delivery: { Enabled: true, DestinationUri: 's3://eg-test-org-email-assets-bucket/inbox' } }),
+    );
+
+    await handler(event(), context, () => {});
+
+    expect(mockCopy).not.toHaveBeenCalled();
+  });
+
   it('does not copy when the destination overlaps the run output', async () => {
     mockGetDefinition.mockResolvedValue(
       deliveryDefinition({

@@ -10,15 +10,18 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/easy-genomics-api';
   import {
     DEFAULT_REGEX_GROUPING_PRESET_KEY,
+    findDuplicateSampleNames,
+    folderBelowLabRoot,
     REGEX_GROUPING_PRESETS,
     type RegexGroupingPresetKey,
   } from '@easy-genomics/shared-lib/src/app/utils/sample-regex-grouping';
   import { delimiterForFilename, parseDelimitedText } from '@easy-genomics/shared-lib/src/app/utils/delimited-text';
   import { TAG_PRESET_COLORS } from '@easy-genomics/shared-lib/src/app/constants/data-collections';
-  import { useToastStore, useUiStore } from '@FE/stores';
+  import { useDataCollectionsStore, useToastStore, useUiStore } from '@FE/stores';
   import { buildImportDestKey, buildS3CopyJobs } from '@FE/utils/data-collections-copy-jobs';
   import { basenameFromS3Key } from '@FE/utils/data-collections-file-type';
   import { exceedsBatchNameMaxLength } from '@FE/utils/data-collections-name-validation';
+  import { describeSourceListing, type SourceListingNotice } from '@FE/utils/data-collections-source-listing';
   import { buildLaboratorySourcePrefix } from '@FE/utils/data-collections-source-prefix';
   import { matchSheetToSamples, type SheetTagMatchResult } from '@FE/utils/sheet-tag-matching';
 
@@ -45,6 +48,7 @@
   const { $api } = useNuxtApp();
   const toast = useToastStore();
   const uiStore = useUiStore();
+  const dataCollectionsStore = useDataCollectionsStore();
 
   const IMPORT_STEPS = ['Source', 'Group files', 'Tags', 'Review samples', 'Confirm'] as const;
 
@@ -56,6 +60,7 @@
   const presetKey = ref<RegexGroupingPresetKey>(DEFAULT_REGEX_GROUPING_PRESET_KEY);
   const regexPattern = ref(REGEX_GROUPING_PRESETS[DEFAULT_REGEX_GROUPING_PRESET_KEY].pattern);
   const sourceFiles = ref<string[]>([]);
+  const sourceListingNotice = ref<SourceListingNotice | null>(null);
   const { proposedSets, unmatchedFiles, refreshPreview, resetPreview } = useRegexGroupingPreview(
     sourceFiles,
     regexPattern,
@@ -93,6 +98,10 @@
     regexPattern.value = REGEX_GROUPING_PRESETS[k].pattern;
   });
 
+  watch([importSource, sourceBucket, sourcePrefix], () => {
+    sourceListingNotice.value = null;
+  });
+
   watch(step, (n) => {
     if (n === 5 && !newBatchName.value.trim()) {
       newBatchName.value = importLabel.value;
@@ -117,7 +126,7 @@
     return trimmed.length > 0 && !newBatchNameInvalid.value;
   });
 
-  const activeSets = computed(() => proposedSets.value.filter((s) => !excludedSamples.value.has(s.sampleId)));
+  const activeSets = computed(() => proposedSets.value.filter((s) => !excludedSamples.value.has(s.groupKey)));
 
   const stats = computed(() => {
     const paired = activeSets.value.filter((s) => s.status === 'paired').length;
@@ -125,6 +134,10 @@
     const review = activeSets.value.filter((s) => s.status === 'needs_review').length;
     return { paired, single, review, total: activeSets.value.length };
   });
+  const duplicateSampleNames = computed(() => findDuplicateSampleNames(activeSets.value));
+  const repeatedSampleIds = computed(
+    () => new Set(findDuplicateSampleNames(proposedSets.value).map((duplicate) => duplicate.sampleId.toLowerCase())),
+  );
 
   const sheetHeaders = computed<string[]>(() => tagSheetRows.value[0] ?? []);
   const columnOptions = computed(() =>
@@ -295,28 +308,31 @@
       toast.error('Selected source bucket is not authorized for this laboratory');
       return;
     }
+    sourceListingNotice.value = null;
     uiStore.setRequestPending('dataCollectionsList');
     try {
-      const res = await $api.dataCollections.requestLaboratoryBucketObjects({
+      const listing = await dataCollectionsStore.fetchLaboratoryBucketObjects({
         LaboratoryId: props.labId,
         S3Bucket: sourceBucket.value,
         S3Prefix: buildLaboratorySourcePrefix(props.lab, sourcePrefix.value),
         MaxTotalKeys: 5000,
       });
-      sourceFiles.value = (res.Contents || []).map((o) => o.Key!);
+      if (!listing) return;
+
+      sourceFiles.value = (listing.Contents || []).map((o) => o.Key!);
       refreshPreview();
+      sourceListingNotice.value = describeSourceListing(listing);
+      if (sourceListingNotice.value?.kind === 'empty') return;
       step.value = 2;
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed to list source files');
     } finally {
       uiStore.setRequestComplete('dataCollectionsList');
     }
   }
 
-  function toggleExclude(sampleId: string): void {
+  function toggleExclude(groupKey: string): void {
     const next = new Set(excludedSamples.value);
-    if (next.has(sampleId)) next.delete(sampleId);
-    else next.add(sampleId);
+    if (next.has(groupKey)) next.delete(groupKey);
+    else next.add(groupKey);
     excludedSamples.value = next;
   }
 
@@ -493,11 +509,19 @@
               placeholder="Select a bucket"
             />
           </UFormGroup>
-          <UFormGroup label="Prefix" hint="folder inside this lab's directory">
+          <UFormGroup
+            label="Prefix"
+            hint="folder inside this lab's directory"
+            required
+            :help="sourcePrefix.trim() ? undefined : 'Enter a folder to continue.'"
+          >
             <UInput v-model="sourcePrefix" placeholder="imports/" class="font-mono" />
           </UFormGroup>
           <p v-if="sourceBucket" class="text-text-muted mt-1 break-all font-mono text-xs" role="status">
             Searches {{ confirmSourceLabel }}
+          </p>
+          <p v-if="sourceListingNotice?.kind === 'empty'" class="mt-2 break-all text-xs text-amber-600" role="status">
+            {{ sourceListingNotice.message }}
           </p>
           <p v-if="!grantedBuckets.length" class="text-text-muted mt-2 text-xs" role="status">
             No authorized S3 buckets for this lab. Ask an organization admin to grant bucket access.
@@ -577,6 +601,9 @@
           From {{ sourceFiles.length }} files →
           <strong>{{ proposedSets.length }} samples</strong>
         </p>
+        <p v-if="sourceListingNotice?.kind === 'truncated'" class="mt-2 text-sm text-amber-600" role="status">
+          {{ sourceListingNotice.message }}
+        </p>
         <EGRegexUnmatchedNotice
           :unmatched-files="unmatchedFiles"
           :proposed-set-count="proposedSets.length"
@@ -638,6 +665,7 @@
             {{ stats.review }} needs review
           </span>
         </div>
+        <EGDuplicateSampleNamesNotice :duplicates="duplicateSampleNames" notice-class="mx-4 mt-4" />
         <div class="flex-1 overflow-y-auto">
           <table class="w-full text-sm">
             <thead class="sticky top-0 bg-gray-50">
@@ -651,18 +679,26 @@
             <tbody>
               <tr
                 v-for="s in proposedSets"
-                :key="s.sampleId"
+                :key="s.groupKey"
                 class="border-t"
-                :class="{ 'opacity-40': excludedSamples.has(s.sampleId) }"
+                :class="{ 'opacity-40': excludedSamples.has(s.groupKey) }"
               >
-                <td class="p-3 font-medium">{{ s.sampleId }}</td>
+                <td class="p-3 font-medium">
+                  {{ s.sampleId }}
+                  <span
+                    v-if="repeatedSampleIds.has(s.sampleId.toLowerCase()) && folderBelowLabRoot(s.folder)"
+                    class="block break-all font-mono text-xs font-normal text-gray-400"
+                  >
+                    {{ folderBelowLabRoot(s.folder) }}
+                  </span>
+                </td>
                 <td class="p-3 font-mono text-xs">
                   {{ s.files.map((f) => basenameFromS3Key(f.fileName)).join(', ') }}
                 </td>
                 <td class="p-3 text-xs">{{ s.status }}</td>
                 <td class="p-3 text-right">
-                  <button type="button" class="text-xs text-red-600" @click="toggleExclude(s.sampleId)">
-                    {{ excludedSamples.has(s.sampleId) ? 'Include' : 'Exclude' }}
+                  <button type="button" class="text-xs text-red-600" @click="toggleExclude(s.groupKey)">
+                    {{ excludedSamples.has(s.groupKey) ? 'Include' : 'Exclude' }}
                   </button>
                 </td>
               </tr>

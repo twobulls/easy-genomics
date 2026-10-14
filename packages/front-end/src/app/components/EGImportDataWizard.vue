@@ -22,7 +22,7 @@
   import { basenameFromS3Key } from '@FE/utils/data-collections-file-type';
   import { exceedsBatchNameMaxLength } from '@FE/utils/data-collections-name-validation';
   import { describeSourceListing, type SourceListingNotice } from '@FE/utils/data-collections-source-listing';
-  import { buildLaboratorySourcePrefix } from '@FE/utils/data-collections-source-prefix';
+  import { buildLaboratorySourcePrefix, buildSourcePrefix } from '@FE/utils/data-collections-source-prefix';
   import { matchSheetToSamples, type SheetTagMatchResult } from '@FE/utils/sheet-tag-matching';
 
   type ImportSourceKind = 's3' | 'upload';
@@ -57,6 +57,32 @@
   const sourceBucket = ref('');
   const sourcePrefix = ref('');
   const grantedBuckets = ref<string[]>([]);
+
+  type SourceRoot = 'laboratory' | 'allowed';
+  const allowedPrefixes = ref<Record<string, string>>({});
+  const sourceRoot = ref<SourceRoot>('laboratory');
+  const allowedPrefixForBucket = computed(() => allowedPrefixes.value[sourceBucket.value] ?? '');
+  const searchesAllowedFolder = computed(() => sourceRoot.value === 'allowed' && !!allowedPrefixForBucket.value);
+  const sourceRootOptions = computed(() => [
+    { label: "This lab's folder", value: 'laboratory' },
+    { label: allowedPrefixForBucket.value, value: 'allowed' },
+  ]);
+  const prefixHint = computed(() =>
+    searchesAllowedFolder.value
+      ? `folder inside ${allowedPrefixForBucket.value}`
+      : "folder inside this lab's directory",
+  );
+
+  watch(sourceBucket, () => {
+    sourceRoot.value = 'laboratory';
+  });
+
+  /** The one place the wizard turns the typed Prefix into the absolute prefix it lists, and later copies from. */
+  function resolveSourcePrefix(lab: Pick<Laboratory, 'OrganizationId' | 'LaboratoryId'>): string {
+    return searchesAllowedFolder.value
+      ? buildSourcePrefix(allowedPrefixForBucket.value, sourcePrefix.value)
+      : buildLaboratorySourcePrefix(lab, sourcePrefix.value);
+  }
   const presetKey = ref<RegexGroupingPresetKey>(DEFAULT_REGEX_GROUPING_PRESET_KEY);
   const regexPattern = ref(REGEX_GROUPING_PRESETS[DEFAULT_REGEX_GROUPING_PRESET_KEY].pattern);
   const sourceFiles = ref<string[]>([]);
@@ -98,7 +124,7 @@
     regexPattern.value = REGEX_GROUPING_PRESETS[k].pattern;
   });
 
-  watch([importSource, sourceBucket, sourcePrefix], () => {
+  watch([importSource, sourceBucket, sourcePrefix, sourceRoot], () => {
     sourceListingNotice.value = null;
   });
 
@@ -167,7 +193,7 @@
       return `Upload from computer (${pendingUploadFiles.value.length} files)`;
     }
     if (!props.lab) return `s3://${sourceBucket.value}/`;
-    return `s3://${sourceBucket.value}/${buildLaboratorySourcePrefix(props.lab, sourcePrefix.value)}`;
+    return `s3://${sourceBucket.value}/${resolveSourcePrefix(props.lab)}`;
   });
 
   const canContinueStep1 = computed(() => {
@@ -287,6 +313,7 @@
     try {
       const res = await $api.s3Access.listGrantedBuckets(props.labId);
       grantedBuckets.value = res.buckets;
+      allowedPrefixes.value = res.allowedPrefixes ?? {};
       if (!sourceBucket.value && res.buckets.length) {
         sourceBucket.value = res.buckets[0];
       }
@@ -314,7 +341,7 @@
       const listing = await dataCollectionsStore.fetchLaboratoryBucketObjects({
         LaboratoryId: props.labId,
         S3Bucket: sourceBucket.value,
-        S3Prefix: buildLaboratorySourcePrefix(props.lab, sourcePrefix.value),
+        S3Prefix: resolveSourcePrefix(props.lab),
         MaxTotalKeys: 5000,
       });
       if (!listing) return;
@@ -401,7 +428,7 @@
     try {
       const labRoot = `${props.lab.OrganizationId}/${props.lab.LaboratoryId}/`;
       const destPrefix = `${labRoot}imports/${importLabel.value}/`;
-      const listedSourcePrefix = buildLaboratorySourcePrefix(props.lab, sourcePrefix.value);
+      const listedSourcePrefix = resolveSourcePrefix(props.lab);
 
       const resolvedTagIds = await resolveSampleTagIds();
 
@@ -483,7 +510,7 @@
             <div class="mb-1 text-sm font-medium">Amazon S3</div>
             <div class="mb-2 text-xs text-gray-500">Connected</div>
             <p class="text-xs text-gray-500">
-              Import files from a folder inside this lab's directory in a granted bucket.
+              Import files from this lab's folder, or a folder a system admin allowed for it, in a granted bucket.
             </p>
           </button>
 
@@ -509,9 +536,12 @@
               placeholder="Select a bucket"
             />
           </UFormGroup>
+          <UFormGroup v-if="allowedPrefixForBucket" label="Search in" class="mb-4">
+            <USelect v-model="sourceRoot" :options="sourceRootOptions" class="font-mono" />
+          </UFormGroup>
           <UFormGroup
             label="Prefix"
-            hint="folder inside this lab's directory"
+            :hint="prefixHint"
             required
             :help="sourcePrefix.trim() ? undefined : 'Enter a folder to continue.'"
           >

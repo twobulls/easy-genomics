@@ -38,6 +38,15 @@ export interface WorkflowKeyOutput {
   ExamplePath?: string;
 }
 
+/**
+ * Where to copy this workflow's key outputs after a run completes successfully.
+ * One destination for now: an external `s3://bucket/prefix` the lab manager sets.
+ */
+export interface WorkflowKeyOutputDelivery {
+  Enabled: boolean;
+  DestinationUri?: string;
+}
+
 export interface WorkflowKeyOutputs extends BaseAttributes {
   LaboratoryId: string;
   WorkflowId: string;
@@ -46,6 +55,7 @@ export interface WorkflowKeyOutputs extends BaseAttributes {
   /** Last completed run the lab used to pick files for this definition. */
   SourceRunId?: string;
   KeyOutputs: WorkflowKeyOutput[];
+  Delivery?: WorkflowKeyOutputDelivery;
 }
 
 export interface ListWorkflowKeyOutputsResponse {
@@ -55,6 +65,7 @@ export interface ListWorkflowKeyOutputsResponse {
   Platform?: string;
   SourceRunId?: string;
   KeyOutputs: WorkflowKeyOutput[];
+  Delivery?: WorkflowKeyOutputDelivery;
   CreatedAt?: string;
   ModifiedAt?: string;
 }

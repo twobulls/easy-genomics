@@ -33,6 +33,7 @@ import { aggregateTaskProgress, OmicsTaskProgress } from '@BE/utils/omics-run-pr
 import { getNextFlowApiQueryParameters, httpRequest, REST_API_METHOD } from '@BE/utils/rest-api-utils';
 import { aggregateSeqeraProgress } from '@BE/utils/seqera-run-progress-utils';
 import { parseSqsJsonBody } from '@BE/utils/sqs-json-body';
+import { shouldEnqueueKeyOutputDelivery } from '@BE/utils/workflow-key-output-utils';
 
 const laboratoryService = new LaboratoryService();
 const laboratoryRunService = new LaboratoryRunService();
@@ -157,6 +158,25 @@ async function compensateFailedNotification(run: LaboratoryRun): Promise<void> {
     );
   } catch (err) {
     console.error(`Failed to compensate unpublished notification for RunId=${run.RunId}:`, err);
+  }
+}
+
+async function safeEnqueueKeyOutputDelivery(run: LaboratoryRun): Promise<void> {
+  if (!shouldEnqueueKeyOutputDelivery(run)) return;
+  const queueUrl = process.env.SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL;
+  if (!queueUrl) {
+    console.warn(`SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL not configured, skipping delivery for RunId=${run.RunId}`);
+    return;
+  }
+  try {
+    await sqsService.sendMessage({
+      QueueUrl: queueUrl,
+      MessageBody: JSON.stringify({ LaboratoryId: run.LaboratoryId, RunId: run.RunId }),
+      MessageGroupId: `deliver-key-outputs-${run.LaboratoryId}`,
+      MessageDeduplicationId: uuidv4(),
+    });
+  } catch (err) {
+    console.warn(`Failed to enqueue key output delivery for RunId=${run.RunId} (continuing):`, err);
   }
 }
 
@@ -460,6 +480,9 @@ export async function processStatusCheckEvent(operation: SnsProcessingOperation,
         if (published) {
           await publishForNotificationWithCompensation(notifiedRun);
         }
+      }
+      if (nextStatusTerminal) {
+        await safeEnqueueKeyOutputDelivery(laboratoryRun);
       }
 
       if (nextStatusTerminal && existingRun.RunCostOutcome?.CostCapturedAt == null) {

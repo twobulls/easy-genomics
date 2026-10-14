@@ -1,0 +1,32 @@
+export type KeyOutputDeliveryDestination = {
+  bucket: string;
+  prefix: string;
+};
+
+const BUCKET_NAME = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
+
+/**
+ * Parse a lab-manager destination such as `s3://results-bucket/incoming/viralrecon`.
+ * Returns null when the URI is not a bucket plus an optional prefix.
+ */
+export function parseKeyOutputDeliveryUri(uri: string | undefined): KeyOutputDeliveryDestination | null {
+  const trimmed = uri?.trim();
+  if (!trimmed || !trimmed.toLowerCase().startsWith('s3://')) return null;
+
+  const rest = trimmed.slice('s3://'.length);
+  const separator = rest.indexOf('/');
+  const bucket = (separator === -1 ? rest : rest.slice(0, separator)).toLowerCase();
+  if (!BUCKET_NAME.test(bucket) || bucket.includes('..') || bucket.includes('.-') || bucket.includes('-.')) {
+    return null;
+  }
+
+  const rawPrefix = separator === -1 ? '' : rest.slice(separator + 1);
+  const segments = rawPrefix
+    .replace(/\\/g, '/')
+    .split('/')
+    .filter((segment) => segment && segment !== '.' && segment !== '..');
+  return {
+    bucket,
+    prefix: segments.length > 0 ? `${segments.join('/')}/` : '',
+  };
+}

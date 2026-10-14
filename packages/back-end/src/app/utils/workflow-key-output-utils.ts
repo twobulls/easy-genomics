@@ -44,6 +44,17 @@ export function toRunRelativePath(s3Key: string, rootPrefix: string): string | n
   return trimmedKey;
 }
 
+/** HealthOmics runs that finished successfully are the only ones that deliver key outputs. */
+export function shouldEnqueueKeyOutputDelivery(
+  run: Pick<LaboratoryRun, 'Platform' | 'Status' | 'WorkflowExternalId'>,
+): boolean {
+  return (
+    run.Platform === 'AWS HealthOmics' &&
+    ['COMPLETED', 'SUCCEEDED'].includes(run.Status) &&
+    Boolean(run.WorkflowExternalId)
+  );
+}
+
 export async function authorizeLaboratoryKeyOutputsAccess(
   event: APIGatewayProxyWithCognitoAuthorizerEvent,
   laboratoryService: LaboratoryService,
@@ -57,6 +68,27 @@ export async function authorizeLaboratoryKeyOutputsAccess(
       validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
       validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId) ||
       validateLaboratoryTechnicianAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
+    )
+  ) {
+    throw new UnauthorizedAccessError();
+  }
+
+  return laboratory;
+}
+
+/** Lab managers, organisation admins, and system admins. Technicians cannot change delivery. */
+export async function authorizeLaboratoryManagerKeyOutputsAccess(
+  event: APIGatewayProxyWithCognitoAuthorizerEvent,
+  laboratoryService: LaboratoryService,
+  laboratoryId: string,
+): Promise<Laboratory> {
+  const laboratory: Laboratory = await laboratoryService.queryByLaboratoryId(laboratoryId);
+
+  if (
+    !(
+      validateSystemAdminAccess(event) ||
+      validateOrganizationAdminAccess(event, laboratory.OrganizationId) ||
+      validateLaboratoryManagerAccess(event, laboratory.OrganizationId, laboratory.LaboratoryId)
     )
   ) {
     throw new UnauthorizedAccessError();

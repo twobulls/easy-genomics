@@ -107,6 +107,7 @@ const useWorkflowKeyOutputsStore = defineStore('workflowKeyOutputsStore', {
           Platform: saved.Platform,
           SourceRunId: saved.SourceRunId,
           KeyOutputs: saved.KeyOutputs,
+          Delivery: saved.Delivery,
           CreatedAt: saved.CreatedAt,
           ModifiedAt: saved.ModifiedAt,
         };
@@ -116,6 +117,40 @@ const useWorkflowKeyOutputsStore = defineStore('workflowKeyOutputsStore', {
         return false;
       } finally {
         useUiStore().setRequestComplete('saveWorkflowKeyOutputs');
+      }
+    },
+
+    async saveDelivery(
+      laboratoryId: string,
+      workflowId: string,
+      delivery: { Enabled: boolean; DestinationUri?: string },
+    ): Promise<boolean> {
+      const { $api } = useNuxtApp();
+      useUiStore().setRequestPending('saveWorkflowKeyOutputDelivery');
+      try {
+        const saved = await $api.workflowKeyOutputs.editDelivery({
+          LaboratoryId: laboratoryId,
+          WorkflowId: workflowId,
+          Enabled: delivery.Enabled,
+          DestinationUri: delivery.DestinationUri,
+        });
+        this.definitionsByWorkflow[cacheKey(laboratoryId, workflowId)] = {
+          LaboratoryId: saved.LaboratoryId,
+          WorkflowId: saved.WorkflowId,
+          WorkflowName: saved.WorkflowName,
+          Platform: saved.Platform,
+          SourceRunId: saved.SourceRunId,
+          KeyOutputs: saved.KeyOutputs,
+          Delivery: saved.Delivery,
+          CreatedAt: saved.CreatedAt,
+          ModifiedAt: saved.ModifiedAt,
+        };
+        return true;
+      } catch (error) {
+        toastFailure(error, 'Unable to save key output delivery.');
+        return false;
+      } finally {
+        useUiStore().setRequestComplete('saveWorkflowKeyOutputDelivery');
       }
     },
 

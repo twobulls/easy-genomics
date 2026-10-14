@@ -38,6 +38,7 @@ export const handler: Handler = async (
           Platform: existing.Platform,
           SourceRunId: existing.SourceRunId,
           KeyOutputs: existing.KeyOutputs,
+          Delivery: existing.Delivery,
           CreatedAt: existing.CreatedAt,
           ModifiedAt: existing.ModifiedAt,
         }

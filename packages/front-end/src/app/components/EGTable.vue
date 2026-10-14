@@ -94,6 +94,7 @@
     :class="{
       'eg-table--narrow-run-favourite': narrowRunAndFavouriteColumns,
       'eg-table--narrow-trailing-3': narrowRunAndFavouriteColumns && narrowTrailingIconCount >= 3,
+      'eg-table--narrow-trailing-4': narrowRunAndFavouriteColumns && narrowTrailingIconCount >= 4,
     }"
     :ui="{ body: 'p-0' }"
     :aria-busy="isLoading"
@@ -316,6 +317,38 @@
 
     thead tr th:nth-last-child(3) button,
     tbody tr td:nth-last-child(3) button {
+      display: inline-flex;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  .eg-table--narrow-run-favourite.eg-table--narrow-trailing-4 :deep(table) {
+    thead tr th:nth-last-child(4),
+    tbody tr td:nth-last-child(4) {
+      text-align: center !important;
+      vertical-align: middle;
+      width: 9.5rem;
+      padding-top: 0.875rem;
+      padding-bottom: 0.875rem;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+      box-sizing: border-box;
+    }
+
+    thead tr th:not(:nth-last-child(-n + 4)) {
+      min-width: 0;
+      text-align: left !important;
+    }
+
+    tbody tr td:not(:nth-last-child(-n + 4)) {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    thead tr th:nth-last-child(4) button,
+    tbody tr td:nth-last-child(4) button {
       display: inline-flex;
       margin-left: auto;
       margin-right: auto;

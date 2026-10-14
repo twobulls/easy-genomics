@@ -39,6 +39,7 @@ export const handler: Handler = async (
 
     await authorizeLaboratoryKeyOutputsAccess(event, laboratoryService, request.LaboratoryId);
 
+    const existing = await workflowKeyOutputsService.get(request.LaboratoryId, request.WorkflowId);
     const now = new Date().toISOString();
     const keyOutputs: WorkflowKeyOutput[] = request.KeyOutputs.map((item) => ({
       KeyOutputId: item.KeyOutputId || uuidv4(),
@@ -54,8 +55,9 @@ export const handler: Handler = async (
       Platform: request.Platform,
       SourceRunId: request.SourceRunId,
       KeyOutputs: keyOutputs,
-      CreatedAt: now,
-      CreatedBy: currentUserId,
+      Delivery: existing?.Delivery,
+      CreatedAt: existing?.CreatedAt ?? now,
+      CreatedBy: existing?.CreatedBy ?? currentUserId,
       ModifiedAt: now,
       ModifiedBy: currentUserId,
     };

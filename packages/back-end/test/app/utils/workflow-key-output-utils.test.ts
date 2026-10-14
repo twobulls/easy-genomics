@@ -1,5 +1,9 @@
 import { LaboratoryRun } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/laboratory-run';
-import { runKeyOutputsRoot, toRunRelativePath } from '../../../src/app/utils/workflow-key-output-utils';
+import {
+  runKeyOutputsRoot,
+  shouldEnqueueKeyOutputDelivery,
+  toRunRelativePath,
+} from '../../../src/app/utils/workflow-key-output-utils';
 
 function runFixture(overrides?: Partial<LaboratoryRun>): LaboratoryRun {
   return {
@@ -16,6 +20,25 @@ function runFixture(overrides?: Partial<LaboratoryRun>): LaboratoryRun {
     ...overrides,
   };
 }
+
+describe('shouldEnqueueKeyOutputDelivery', () => {
+  it('enqueues only a completed HealthOmics run that names its workflow', () => {
+    expect(shouldEnqueueKeyOutputDelivery({ ...runFixture(), WorkflowExternalId: 'wf-1' })).toBe(true);
+    expect(shouldEnqueueKeyOutputDelivery({ ...runFixture(), Status: 'COMPLETED', WorkflowExternalId: 'wf-1' })).toBe(
+      true,
+    );
+  });
+
+  it('does not enqueue a failed, Seqera, or workflow-less run', () => {
+    expect(shouldEnqueueKeyOutputDelivery({ ...runFixture(), Status: 'FAILED', WorkflowExternalId: 'wf-1' })).toBe(
+      false,
+    );
+    expect(
+      shouldEnqueueKeyOutputDelivery({ ...runFixture(), Platform: 'Seqera Cloud', WorkflowExternalId: 'wf-1' }),
+    ).toBe(false);
+    expect(shouldEnqueueKeyOutputDelivery(runFixture())).toBe(false);
+  });
+});
 
 describe('runKeyOutputsRoot', () => {
   it('appends the HealthOmics external run folder so patterns skip the per-run id', () => {

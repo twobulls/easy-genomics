@@ -4,6 +4,7 @@ import {
   WORKFLOW_KEY_OUTPUT_LABEL_MAX_LENGTH,
   WORKFLOW_KEY_OUTPUT_PATTERN_MAX_LENGTH,
 } from '../../types/easy-genomics/workflow-key-outputs';
+import { parseKeyOutputDeliveryUri } from '../../utils/workflow-key-output-delivery';
 
 const relativePathPattern = /^(?!\/)(?!.*\/\/).+$/;
 
@@ -21,6 +22,29 @@ export const WorkflowKeyOutputSchema = z
   })
   .strict();
 
+export const WorkflowKeyOutputDeliverySchema = z
+  .object({
+    Enabled: z.boolean(),
+    DestinationUri: z.string().trim().min(1).max(1024).optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.Enabled && !value.DestinationUri) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['DestinationUri'],
+        message: 'Enter an s3://bucket/prefix destination',
+      });
+    }
+    if (value.DestinationUri && !parseKeyOutputDeliveryUri(value.DestinationUri)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['DestinationUri'],
+        message: 'Destination must be an s3://bucket or s3://bucket/prefix URI',
+      });
+    }
+  });
+
 export const WorkflowKeyOutputsSchema = z
   .object({
     LaboratoryId: z.string().uuid(),
@@ -29,6 +53,7 @@ export const WorkflowKeyOutputsSchema = z
     Platform: z.string().min(1).optional(),
     SourceRunId: z.string().min(1).optional(),
     KeyOutputs: z.array(WorkflowKeyOutputSchema).max(WORKFLOW_KEY_OUTPUTS_LIMIT),
+    Delivery: WorkflowKeyOutputDeliverySchema.optional(),
     CreatedAt: z.string().optional(),
     CreatedBy: z.string().optional(),
     ModifiedAt: z.string().optional(),
@@ -61,6 +86,32 @@ export const EditWorkflowKeyOutputsSchema = z
   })
   .strict();
 export type EditWorkflowKeyOutputs = z.infer<typeof EditWorkflowKeyOutputsSchema>;
+
+export const EditWorkflowKeyOutputDeliverySchema = z
+  .object({
+    LaboratoryId: z.string().uuid(),
+    WorkflowId: z.string().min(1),
+    Enabled: z.boolean(),
+    DestinationUri: z.string().trim().max(1024).optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.Enabled && !value.DestinationUri) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['DestinationUri'],
+        message: 'Enter an s3://bucket/prefix destination',
+      });
+    }
+    if (value.DestinationUri && !parseKeyOutputDeliveryUri(value.DestinationUri)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['DestinationUri'],
+        message: 'Destination must be an s3://bucket or s3://bucket/prefix URI',
+      });
+    }
+  });
+export type EditWorkflowKeyOutputDelivery = z.infer<typeof EditWorkflowKeyOutputDeliverySchema>;
 
 export const RequestPreviewWorkflowKeyOutputsSchema = z
   .object({

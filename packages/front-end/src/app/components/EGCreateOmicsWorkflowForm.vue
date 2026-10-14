@@ -1,5 +1,9 @@
 <script setup lang="ts">
   import { FormError } from '#ui/types';
+  import {
+    revalidateCreateWorkflowFileField,
+    type CreateWorkflowFormValidation,
+  } from '@FE/utils/create-omics-workflow-form-validation';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { z } from 'zod';
   import { v4 as uuidv4 } from 'uuid';
@@ -106,6 +110,7 @@
   });
 
   const canSubmit = ref(false);
+  const createWorkflowForm = ref<CreateWorkflowFormValidation | null>(null);
   const workflowZipFile = ref<File | null>(null);
   const workflowZipFileError = ref<string | null>(null);
   const parameterTemplateFile = ref<File | null>(null);
@@ -174,16 +179,21 @@
     return errors;
   }
 
+  // File inputs are not UForm controls, and the parameter selector is already
+  // FILE, so choosing a file never emits a form change. Revalidate that field
+  // so Create Workflow enables without re-selecting the dropdown.
   function onWorkflowZipChange(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     workflowZipFile.value = file;
     workflowZipFileError.value = null;
+    void revalidateCreateWorkflowFileField(createWorkflowForm.value, 'workflowZipFile');
   }
 
   function onParameterTemplateFileChange(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     parameterTemplateFile.value = file;
     parameterTemplateFileError.value = null;
+    void revalidateCreateWorkflowFileField(createWorkflowForm.value, 'parameterTemplateFile');
   }
 
   async function onSubmit() {
@@ -245,7 +255,7 @@
 <template>
   <EGCard class="mb-6">
     <EGText tag="h5" class="mb-4">Create HealthOmics Workflow</EGText>
-    <UForm :state="formState" :validate="validate" @submit="onSubmit">
+    <UForm ref="createWorkflowForm" :state="formState" :validate="validate" @submit="onSubmit">
       <EGFormGroup label="Workflow name" name="name" required>
         <EGInput v-model="formState.name" placeholder="Enter workflow name" />
       </EGFormGroup>

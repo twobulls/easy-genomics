@@ -85,6 +85,19 @@ const useDataCollectionsStore = defineStore('dataCollectionsStore', {
       this.unlinkedScanGeneration[labId] = (this.unlinkedScanGeneration[labId] ?? 0) + 1;
     },
 
+    /**
+     * The added files are linked now, so they leave the cached scan in place. Clearing the scan instead
+     * would blank the bucket header and force a full rescan. The generation bump discards any scan
+     * that was already in flight and would bring them back.
+     */
+    removeFilesFromUnlinkedScan(labId: string, keys: string[]): void {
+      const scan = this.unlinkedScans[labId];
+      if (!scan) return;
+      const linkedKeys = new Set(keys);
+      this.unlinkedScans[labId] = { ...scan, files: scan.files.filter((file) => !linkedKeys.has(file.Key ?? '')) };
+      this.unlinkedScanGeneration[labId] = (this.unlinkedScanGeneration[labId] ?? 0) + 1;
+    },
+
     async addFilesToSample(request: {
       labId: string;
       s3Bucket: string;
@@ -99,7 +112,7 @@ const useDataCollectionsStore = defineStore('dataCollectionsStore', {
           SampleId: request.sampleId,
           Keys: request.keys,
         });
-        this.clearUnlinkedScan(request.labId);
+        this.removeFilesFromUnlinkedScan(request.labId, request.keys);
         return true;
       } catch (e: unknown) {
         useToastStore().error(e instanceof Error && e.message ? e.message : 'Failed to add files to sample.');

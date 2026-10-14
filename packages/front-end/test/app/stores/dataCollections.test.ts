@@ -155,9 +155,13 @@ describe('dataCollections store addFilesToSample', () => {
 
   const request = { labId: 'lab-1', s3Bucket: 'bucket', sampleId: 'sample-1', keys: ['org/lab/a_R2.fq.gz'] };
 
-  it('adds the files and invalidates the unlinked scan, since those files are now linked', async () => {
+  it('adds the files and drops them from the cached unlinked scan, keeping the rest of the scan', async () => {
     const store = useDataCollectionsStore();
-    store.setUnlinkedScan('lab-1', scanResponse('org/lab/a_R2.fq.gz'));
+    store.setUnlinkedScan('lab-1', {
+      ...scanResponse('org/lab/a_R2.fq.gz'),
+      Contents: [{ Key: 'org/lab/a_R2.fq.gz' }, { Key: 'org/lab/b_R1.fq.gz' }],
+    });
+    const scannedBefore = store.unlinkedScan('lab-1');
     mockAddFilesToSample.mockResolvedValueOnce(undefined);
 
     await expect(store.addFilesToSample(request)).resolves.toBe(true);
@@ -168,7 +172,10 @@ describe('dataCollections store addFilesToSample', () => {
       SampleId: 'sample-1',
       Keys: ['org/lab/a_R2.fq.gz'],
     });
-    expect(store.unlinkedScan('lab-1')).toBeNull();
+    const scanAfter = store.unlinkedScan('lab-1');
+    expect(scanAfter?.files.map((file) => file.Key)).toEqual(['org/lab/b_R1.fq.gz']);
+    expect(scanAfter?.s3Bucket).toBe(scannedBefore?.s3Bucket);
+    expect(scanAfter?.resolvedPrefix).toBe(scannedBefore?.resolvedPrefix);
   });
 
   it('shows the API error and keeps the scan when the add fails', async () => {

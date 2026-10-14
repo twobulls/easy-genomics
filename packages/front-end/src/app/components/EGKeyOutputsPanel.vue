@@ -163,6 +163,8 @@
         v-if="uniqueMatchedKeys.length > 0"
         :size="ButtonSizeEnum.enum.sm"
         :variant="ButtonVariantEnum.enum.secondary"
+        icon="i-heroicons-arrow-down-tray"
+        :icon-right="false"
         label="Download all key outputs"
         :loading="downloadingKey === 'all-key-outputs'"
         :disabled="isFolderZipInProgress && downloadingKey !== 'all-key-outputs'"
@@ -186,6 +188,7 @@
                 v-if="isHtmlFile(role.Matches[0])"
                 :size="ButtonSizeEnum.enum.sm"
                 :variant="ButtonVariantEnum.enum.secondary"
+                icon="i-heroicons-arrow-top-right-on-square"
                 label="Open"
                 :loading="uiStore.isRequestPending(`openKeyOutput-${role.Matches[0].Key}`)"
                 @click="openHtml(role.Matches[0])"
@@ -193,6 +196,8 @@
               <EGButton
                 :size="ButtonSizeEnum.enum.sm"
                 :variant="ButtonVariantEnum.enum.secondary"
+                icon="i-heroicons-arrow-down-tray"
+                :icon-right="false"
                 label="Download"
                 :loading="downloadingKey === role.Matches[0].Key"
                 @click="downloadFile(role.Matches[0])"
@@ -202,15 +207,23 @@
               <button
                 v-if="role.Matches.length > 0"
                 type="button"
-                class="text-primary hover:text-primary-dark hover:bg-background-dark-grey rounded-lg border border-neutral-200 bg-white px-6 py-3 text-sm"
+                class="text-primary hover:text-primary-dark inline-flex items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium"
+                :aria-expanded="isExpanded(role.KeyOutputId)"
                 @click="toggleExpanded(role.KeyOutputId)"
               >
                 {{ isExpanded(role.KeyOutputId) ? 'Hide' : `View all ${role.MatchCount.toLocaleString()}` }}
+                <UIcon
+                  :name="isExpanded(role.KeyOutputId) ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
+                  class="h-4 w-4"
+                  aria-hidden="true"
+                />
               </button>
               <EGButton
                 v-if="role.Matches.length > 0"
                 :size="ButtonSizeEnum.enum.sm"
                 :variant="ButtonVariantEnum.enum.secondary"
+                icon="i-heroicons-arrow-down-tray"
+                :icon-right="false"
                 label="Download as zip"
                 :loading="downloadingKey === `role-${role.KeyOutputId}`"
                 :disabled="isFolderZipInProgress && downloadingKey !== `role-${role.KeyOutputId}`"
@@ -237,6 +250,7 @@
                 v-if="isHtmlFile(file)"
                 :size="ButtonSizeEnum.enum.sm"
                 :variant="ButtonVariantEnum.enum.secondary"
+                icon="i-heroicons-arrow-top-right-on-square"
                 label="Open"
                 :loading="uiStore.isRequestPending(`openKeyOutput-${file.Key}`)"
                 @click="openHtml(file)"
@@ -244,6 +258,8 @@
               <EGButton
                 :size="ButtonSizeEnum.enum.sm"
                 :variant="ButtonVariantEnum.enum.secondary"
+                icon="i-heroicons-arrow-down-tray"
+                :icon-right="false"
                 label="Download"
                 :loading="downloadingKey === file.Key"
                 @click="downloadFile(file)"

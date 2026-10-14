@@ -423,6 +423,10 @@
       [{ label: 'View Files', click: () => viewRunDetails(run, 'File Manager') }],
     ];
 
+    if (canSetKeyOutputsForRun(run)) {
+      buttons.push([{ label: 'Set key outputs', click: () => viewSetKeyOutputsForRun(run) }]);
+    }
+
     if (['SUBMITTED', 'STARTING', 'RUNNING'].includes(run.Status)) {
       buttons.push([{ label: 'Cancel Run', click: () => initCancelRun(run), isHighlighted: true }]);
     }
@@ -430,10 +434,25 @@
     return buttons;
   }
 
+  function canSetKeyOutputsForRun(run: LaboratoryRun): boolean {
+    return (
+      run.Platform === 'AWS HealthOmics' &&
+      ['COMPLETED', 'SUCCEEDED'].includes(run.Status) &&
+      Boolean(run.WorkflowExternalId)
+    );
+  }
+
   function viewRunDetails(run: LaboratoryRun, tab: string = 'Run Details') {
     $router.push({
       path: `/labs/${props.labId}/run/${run.RunId}`,
       query: { tab },
+    });
+  }
+
+  function viewSetKeyOutputsForRun(run: LaboratoryRun): void {
+    $router.push({
+      path: `/labs/${props.labId}/run/${run.RunId}`,
+      query: { tab: 'Files', declareKeyOutputs: '1' },
     });
   }
 
@@ -519,15 +538,6 @@
 
   // Omics Workflows Tab
 
-  const omicsWorkflowsTableColumns = computed(() => [
-    { key: 'Name', label: 'Name' },
-    { key: 'source', label: 'Source' },
-    { key: 'description', label: 'Description' },
-    ...(canCreateOmicsWorkflows.value ? [{ key: 'actions', label: 'Actions' }] : []),
-    { key: 'favourite', label: 'Favorite' },
-    { key: 'run', label: 'Run' },
-  ]);
-
   function canDeleteOmicsWorkflow(workflow: LabOmicsWorkflow): boolean {
     return canDeletePrivateOmicsWorkflow({
       workflow,
@@ -535,6 +545,20 @@
       userIds: [userStore.currentUserDetails.id, userStore.currentUserDetails.internalId],
     });
   }
+
+  const canDeleteAnyOmicsWorkflow = computed(() =>
+    omicsWorkflows.value.some((workflow) => canDeleteOmicsWorkflow(workflow)),
+  );
+
+  const omicsWorkflowsTableColumns = computed(() => [
+    { key: 'Name', label: 'Name' },
+    { key: 'source', label: 'Source' },
+    { key: 'description', label: 'Description' },
+    ...(canDeleteAnyOmicsWorkflow.value ? [{ key: 'actions', label: 'Actions' }] : []),
+    { key: 'keyOutputs', label: 'Key Outputs' },
+    { key: 'favourite', label: 'Favorite' },
+    { key: 'run', label: 'Run' },
+  ]);
 
   function omicsWorkflowsActionItems(workflow: LabOmicsWorkflow) {
     if (!canDeleteOmicsWorkflow(workflow)) {
@@ -552,6 +576,36 @@
         },
       ],
     ];
+  }
+
+  async function viewSetKeyOutputs(workflow: LabOmicsWorkflow): Promise<void> {
+    const workflowId = workflow.id;
+    if (!workflowId) return;
+
+    uiStore.setRequestPending('setWorkflowKeyOutputs');
+    try {
+      const labRuns = await $api.labs.listLabRuns(props.labId);
+      const completed = labRuns
+        .filter((run) => run.WorkflowExternalId === workflowId && canSetKeyOutputsForRun(run))
+        .sort((a, b) => {
+          const aTime = a.TerminalAt ?? a.ModifiedAt ?? a.CreatedAt ?? '';
+          const bTime = b.TerminalAt ?? b.ModifiedAt ?? b.CreatedAt ?? '';
+          return bTime.localeCompare(aTime);
+        });
+      const run = completed[0];
+      if (!run) {
+        useToastStore().error(
+          `No completed run of ${workflow.name || 'this workflow'} was found. Finish a run first, then you can set key outputs from its files.`,
+        );
+        return;
+      }
+      viewSetKeyOutputsForRun(run);
+    } catch (error) {
+      console.error(error);
+      useToastStore().error('Unable to open key outputs for this workflow.');
+    } finally {
+      uiStore.setRequestComplete('setWorkflowKeyOutputs');
+    }
   }
 
   async function handleDeleteOmicsWorkflow(): Promise<void> {
@@ -1209,6 +1263,7 @@
     <h2 class="sr-only">HealthOmics workflows</h2>
     <EGTable
       narrow-run-and-favourite-columns
+      :narrow-trailing-icon-count="3"
       :table-data="omicsWorkflows"
       :columns="omicsWorkflowsTableColumns"
       :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
@@ -1266,6 +1321,19 @@
             @click="$event.stopPropagation()"
           />
         </div>
+      </template>
+
+      <template #keyOutputs-data="{ row: workflow }">
+        <button
+          type="button"
+          class="text-primary hover:text-primary-dark hover:bg-primary-muted focus-visible:outline-primary-500 flex items-center justify-center rounded-full p-1 transition-all duration-150 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          aria-label="Set key outputs"
+          title="Set key outputs"
+          :disabled="uiStore.isRequestPending('setWorkflowKeyOutputs')"
+          @click.stop="viewSetKeyOutputs(workflow)"
+        >
+          <UIcon name="i-heroicons-document-magnifying-glass" class="h-6 w-6" aria-hidden="true" />
+        </button>
       </template>
 
       <template #run-data="{ row: workflow }">

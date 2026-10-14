@@ -1,12 +1,15 @@
+import { UnauthorizedAccessError } from '@easy-genomics/shared-lib/lib/app/utils/HttpError';
 import {
   isBelowRunFolderRoot,
   isRunFolderName,
   isSampleSheetKey,
   isWithinRunFolder,
   lastPathSegment,
+  encodeS3CopySource,
   normalizeS3Prefix,
   parseS3ObjectUri,
   parseS3Uri,
+  resolveLaboratoryListingPrefix,
 } from '../../../src/app/utils/s3-uri-utils';
 
 const laboratory = { OrganizationId: 'org-1', LaboratoryId: 'lab-1' };
@@ -129,5 +132,53 @@ describe('isSampleSheetKey', () => {
     expect(isSampleSheetKey(`${runFolder}results/samplesheet.csv`, runFolder)).toBe(false);
     expect(isSampleSheetKey(`${runFolder}reads_R1.fq.gz`, runFolder)).toBe(false);
     expect(isSampleSheetKey('other/samplesheet.csv', runFolder)).toBe(false);
+  });
+});
+
+describe('resolveLaboratoryListingPrefix', () => {
+  const listingLaboratory = { OrganizationId: 'test-org-id', LaboratoryId: 'test-lab-id' };
+
+  it('defaults to the laboratory root when no prefix is requested', () => {
+    expect(resolveLaboratoryListingPrefix(listingLaboratory)).toBe('test-org-id/test-lab-id/');
+  });
+
+  it('treats an empty prefix as the laboratory root', () => {
+    expect(resolveLaboratoryListingPrefix(listingLaboratory, '')).toBe('test-org-id/test-lab-id/');
+  });
+
+  it('accepts a prefix inside the laboratory root and normalises the trailing slash', () => {
+    expect(resolveLaboratoryListingPrefix(listingLaboratory, 'test-org-id/test-lab-id/aws-healthomics')).toBe(
+      'test-org-id/test-lab-id/aws-healthomics/',
+    );
+  });
+
+  it('accepts the laboratory root written without its trailing slash', () => {
+    expect(resolveLaboratoryListingPrefix(listingLaboratory, 'test-org-id/test-lab-id')).toBe(
+      'test-org-id/test-lab-id/',
+    );
+  });
+
+  it('rejects a prefix outside the laboratory root', () => {
+    expect(() => resolveLaboratoryListingPrefix(listingLaboratory, 'sample-3-18/')).toThrow(UnauthorizedAccessError);
+  });
+
+  it('rejects a sibling laboratory whose id shares the same leading characters', () => {
+    expect(() => resolveLaboratoryListingPrefix(listingLaboratory, 'test-org-id/test-lab-id-2/')).toThrow(
+      UnauthorizedAccessError,
+    );
+  });
+
+  it('rejects a leading slash rather than silently stripping it', () => {
+    expect(() => resolveLaboratoryListingPrefix(listingLaboratory, '/test-org-id/test-lab-id/x/')).toThrow(
+      UnauthorizedAccessError,
+    );
+  });
+});
+
+describe('encodeS3CopySource', () => {
+  it('encodes spaces, hashes, percents, and plus signs in the key', () => {
+    expect(encodeS3CopySource('lab-bucket', 'org/lab/file name#1+%.bam')).toBe(
+      'lab-bucket/org/lab/file%20name%231%2B%25.bam',
+    );
   });
 });

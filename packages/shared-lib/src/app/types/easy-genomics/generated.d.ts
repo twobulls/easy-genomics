@@ -438,6 +438,10 @@ export interface paths {
     /** Update User Request */
     put: operations["updateUserRequest"];
   };
+  "/easy-genomics/workflow-key-outputs/edit-workflow-key-output-delivery": {
+    /** Edit Workflow Key Output Delivery */
+    post: operations["editWorkflowKeyOutputDelivery"];
+  };
   "/easy-genomics/workflow-key-outputs/edit-workflow-key-outputs": {
     /** Edit Workflow Key Outputs */
     post: operations["editWorkflowKeyOutputs"];
@@ -2064,6 +2068,50 @@ export interface components {
       /** @enum {string} */
       NotificationEventFilter?: "all_terminal" | "failures_only" | "successes_only";
     };
+    EditWorkflowKeyOutputDeliveryRequest: {
+      /** Format: uuid */
+      LaboratoryId: string;
+      WorkflowId: string;
+      Enabled: boolean;
+      DestinationUri?: string;
+    };
+    /**
+     * @description One role in the key-outputs definition. `Pattern` is a path glob relative to
+     * the run's File Manager root (`*` matches within a single path segment).
+     */
+    WorkflowKeyOutput: {
+      KeyOutputId: string;
+      Label: string;
+      Pattern: string;
+      /** @description Relative path of the file the user ticked when this role was inferred. */
+      ExamplePath?: string;
+    };
+    /**
+     * @description Where to copy this workflow's key outputs after a run completes successfully.
+     * One destination for now: an external `s3://bucket/prefix` the lab manager sets.
+     */
+    WorkflowKeyOutputDelivery: {
+      Enabled: boolean;
+      DestinationUri?: string;
+    };
+    WorkflowKeyOutputs: {
+      LaboratoryId: string;
+      WorkflowId: string;
+      WorkflowName?: string;
+      Platform?: string;
+      /** @description Last completed run the lab used to pick files for this definition. */
+      SourceRunId?: string;
+      KeyOutputs: components["schemas"]["WorkflowKeyOutput"][];
+      /**
+       * @description Where to copy this workflow's key outputs after a run completes successfully.
+       * One destination for now: an external `s3://bucket/prefix` the lab manager sets.
+       */
+      Delivery?: components["schemas"]["WorkflowKeyOutputDelivery"];
+      CreatedAt?: string;
+      CreatedBy?: string;
+      ModifiedAt?: string;
+      ModifiedBy?: string;
+    };
     EditWorkflowKeyOutputsRequest: {
       /** Format: uuid */
       LaboratoryId: string;
@@ -2079,30 +2127,6 @@ export interface components {
           ExamplePath?: string;
         }[];
     };
-    /**
-     * @description One role in the key-outputs definition. `Pattern` is a path glob relative to
-     * the run's File Manager root (`*` matches within a single path segment).
-     */
-    WorkflowKeyOutput: {
-      KeyOutputId: string;
-      Label: string;
-      Pattern: string;
-      /** @description Relative path of the file the user ticked when this role was inferred. */
-      ExamplePath?: string;
-    };
-    WorkflowKeyOutputs: {
-      LaboratoryId: string;
-      WorkflowId: string;
-      WorkflowName?: string;
-      Platform?: string;
-      /** @description Last completed run the lab used to pick files for this definition. */
-      SourceRunId?: string;
-      KeyOutputs: components["schemas"]["WorkflowKeyOutput"][];
-      CreatedAt?: string;
-      CreatedBy?: string;
-      ModifiedAt?: string;
-      ModifiedBy?: string;
-    };
     ListWorkflowKeyOutputsResponse: {
       LaboratoryId: string;
       WorkflowId: string;
@@ -2110,6 +2134,11 @@ export interface components {
       Platform?: string;
       SourceRunId?: string;
       KeyOutputs: components["schemas"]["WorkflowKeyOutput"][];
+      /**
+       * @description Where to copy this workflow's key outputs after a run completes successfully.
+       * One destination for now: an external `s3://bucket/prefix` the lab manager sets.
+       */
+      Delivery?: components["schemas"]["WorkflowKeyOutputDelivery"];
       CreatedAt?: string;
       ModifiedAt?: string;
     };
@@ -6311,6 +6340,27 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["User"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      401: components["responses"]["Unauthorized"];
+      403: components["responses"]["Forbidden"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalError"];
+    };
+  };
+  /** Edit Workflow Key Output Delivery */
+  editWorkflowKeyOutputDelivery: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["EditWorkflowKeyOutputDeliveryRequest"];
+      };
+    };
+    responses: {
+      /** @description Success */
+      200: {
+        content: {
+          "application/json": components["schemas"]["WorkflowKeyOutputs"];
         };
       };
       400: components["responses"]["BadRequest"];

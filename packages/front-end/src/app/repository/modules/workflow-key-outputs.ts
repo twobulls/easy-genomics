@@ -1,4 +1,5 @@
 import {
+  EditWorkflowKeyOutputDelivery,
   EditWorkflowKeyOutputs,
   RequestPreviewWorkflowKeyOutputs,
   RequestRunWorkflowKeyOutputs,
@@ -27,6 +28,12 @@ class WorkflowKeyOutputsModule extends HttpFactory {
   async edit(body: EditWorkflowKeyOutputs): Promise<WorkflowKeyOutputs> {
     const res = await this.call<WorkflowKeyOutputs>('POST', `${BASE_PATH}/edit-workflow-key-outputs`, body);
     if (!res) throw new Error('Failed to save key outputs');
+    return res;
+  }
+
+  async editDelivery(body: EditWorkflowKeyOutputDelivery): Promise<WorkflowKeyOutputs> {
+    const res = await this.call<WorkflowKeyOutputs>('POST', `${BASE_PATH}/edit-workflow-key-output-delivery`, body);
+    if (!res) throw new Error('Failed to save key output delivery');
     return res;
   }
 

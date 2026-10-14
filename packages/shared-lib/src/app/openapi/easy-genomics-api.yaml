@@ -3737,6 +3737,91 @@ components:
             - failures_only
             - successes_only
       additionalProperties: false
+    EditWorkflowKeyOutputDeliveryRequest:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+          format: uuid
+        WorkflowId:
+          type: string
+          minLength: 1
+        Enabled:
+          type: boolean
+        DestinationUri:
+          type: string
+          maxLength: 1024
+      required:
+        - LaboratoryId
+        - WorkflowId
+        - Enabled
+      additionalProperties: false
+    WorkflowKeyOutput:
+      description: |-
+        One role in the key-outputs definition. `Pattern` is a path glob relative to
+        the run's File Manager root (`*` matches within a single path segment).
+      type: object
+      properties:
+        KeyOutputId:
+          type: string
+        Label:
+          type: string
+        Pattern:
+          type: string
+        ExamplePath:
+          description: Relative path of the file the user ticked when this role was inferred.
+          type: string
+      required:
+        - KeyOutputId
+        - Label
+        - Pattern
+    WorkflowKeyOutputDelivery:
+      description: |-
+        Where to copy this workflow's key outputs after a run completes successfully.
+        One destination for now: an external `s3://bucket/prefix` the lab manager sets.
+      type: object
+      properties:
+        Enabled:
+          type: boolean
+        DestinationUri:
+          type: string
+      required:
+        - Enabled
+    WorkflowKeyOutputs:
+      type: object
+      properties:
+        LaboratoryId:
+          type: string
+        WorkflowId:
+          type: string
+        WorkflowName:
+          type: string
+        Platform:
+          type: string
+        SourceRunId:
+          description: Last completed run the lab used to pick files for this definition.
+          type: string
+        KeyOutputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowKeyOutput'
+        Delivery:
+          description: |-
+            Where to copy this workflow's key outputs after a run completes successfully.
+            One destination for now: an external `s3://bucket/prefix` the lab manager sets.
+          $ref: '#/components/schemas/WorkflowKeyOutputDelivery'
+        CreatedAt:
+          type: string
+        CreatedBy:
+          type: string
+        ModifiedAt:
+          type: string
+        ModifiedBy:
+          type: string
+      required:
+        - KeyOutputs
+        - LaboratoryId
+        - WorkflowId
     EditWorkflowKeyOutputsRequest:
       type: object
       properties:
@@ -3786,55 +3871,6 @@ components:
         - WorkflowId
         - KeyOutputs
       additionalProperties: false
-    WorkflowKeyOutput:
-      description: |-
-        One role in the key-outputs definition. `Pattern` is a path glob relative to
-        the run's File Manager root (`*` matches within a single path segment).
-      type: object
-      properties:
-        KeyOutputId:
-          type: string
-        Label:
-          type: string
-        Pattern:
-          type: string
-        ExamplePath:
-          description: Relative path of the file the user ticked when this role was inferred.
-          type: string
-      required:
-        - KeyOutputId
-        - Label
-        - Pattern
-    WorkflowKeyOutputs:
-      type: object
-      properties:
-        LaboratoryId:
-          type: string
-        WorkflowId:
-          type: string
-        WorkflowName:
-          type: string
-        Platform:
-          type: string
-        SourceRunId:
-          description: Last completed run the lab used to pick files for this definition.
-          type: string
-        KeyOutputs:
-          type: array
-          items:
-            $ref: '#/components/schemas/WorkflowKeyOutput'
-        CreatedAt:
-          type: string
-        CreatedBy:
-          type: string
-        ModifiedAt:
-          type: string
-        ModifiedBy:
-          type: string
-      required:
-        - KeyOutputs
-        - LaboratoryId
-        - WorkflowId
     ListWorkflowKeyOutputsResponse:
       type: object
       properties:
@@ -3852,6 +3888,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WorkflowKeyOutput'
+        Delivery:
+          description: |-
+            Where to copy this workflow's key outputs after a run completes successfully.
+            One destination for now: an external `s3://bucket/prefix` the lab manager sets.
+          $ref: '#/components/schemas/WorkflowKeyOutputDelivery'
         CreatedAt:
           type: string
         ModifiedAt:
@@ -10989,6 +11030,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /easy-genomics/workflow-key-outputs/edit-workflow-key-output-delivery:
+    post:
+      operationId: editWorkflowKeyOutputDelivery
+      summary: Edit Workflow Key Output Delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditWorkflowKeyOutputDeliveryRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowKeyOutputs'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':

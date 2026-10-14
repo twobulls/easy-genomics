@@ -550,11 +550,14 @@
     omicsWorkflows.value.some((workflow) => canDeleteOmicsWorkflow(workflow)),
   );
 
+  const canDeliverKeyOutputs = computed(() => userStore.canEditLabUsers(props.labId));
+
   const omicsWorkflowsTableColumns = computed(() => [
     { key: 'Name', label: 'Name' },
     { key: 'source', label: 'Source' },
     { key: 'description', label: 'Description' },
     ...(canDeleteAnyOmicsWorkflow.value ? [{ key: 'actions', label: 'Actions' }] : []),
+    ...(canDeliverKeyOutputs.value ? [{ key: 'deliver', label: 'Deliver' }] : []),
     { key: 'keyOutputs', label: 'Key Outputs' },
     { key: 'favourite', label: 'Favorite' },
     { key: 'run', label: 'Run' },
@@ -646,6 +649,14 @@
     };
 
     await favouriteWorkflowsStore.toggleFavourite(favourite);
+  }
+
+  function viewDeliverKeyOutputs(workflow: LabOmicsWorkflow): void {
+    if (!workflow.id) return;
+    $router.push({
+      path: `/labs/${props.labId}/deliver-key-outputs/${encodeURIComponent(workflow.id)}`,
+      query: workflow.name ? { workflowName: workflow.name } : {},
+    });
   }
 
   function viewRunOmicsWorkflow(workflow: LabOmicsWorkflow) {
@@ -1263,7 +1274,7 @@
     <h2 class="sr-only">HealthOmics workflows</h2>
     <EGTable
       narrow-run-and-favourite-columns
-      :narrow-trailing-icon-count="3"
+      :narrow-trailing-icon-count="canDeliverKeyOutputs ? 4 : 3"
       :table-data="omicsWorkflows"
       :columns="omicsWorkflowsTableColumns"
       :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
@@ -1321,6 +1332,18 @@
             @click="$event.stopPropagation()"
           />
         </div>
+      </template>
+
+      <template #deliver-data="{ row: workflow }">
+        <button
+          type="button"
+          class="text-primary hover:text-primary-dark hover:bg-primary-muted focus-visible:outline-primary-500 flex items-center justify-center rounded-full p-1 transition-all duration-150 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          aria-label="Deliver key outputs"
+          title="Deliver key outputs"
+          @click.stop="viewDeliverKeyOutputs(workflow)"
+        >
+          <UIcon name="i-heroicons-paper-airplane" class="h-6 w-6" aria-hidden="true" />
+        </button>
       </template>
 
       <template #keyOutputs-data="{ row: workflow }">

@@ -54,6 +54,8 @@ export class EasyGenomicsNestedStack extends NestedStack {
   classificationDlq!: Queue;
   /** DLQ for run-export copies/zips that time out or crash the worker. */
   runExportDlq!: Queue;
+  /** DLQ for key-output copies to an external bucket that time out or keep failing. */
+  keyOutputDeliveryDlq!: Queue;
 
   constructor(scope: Construct, id: string, props: EasyGenomicsNestedStackProps) {
     super(scope, id);
@@ -83,6 +85,14 @@ export class EasyGenomicsNestedStack extends NestedStack {
     // lab-scoped FIFO group, blocks every other export in that laboratory.
     this.runExportDlq = new Queue(this, `${this.props.namePrefix}-run-export-dlq`, {
       queueName: `${this.props.namePrefix}-run-export-dlq.fifo`,
+      fifo: true,
+      retentionPeriod: Duration.days(14),
+      enforceSSL: true,
+    });
+
+    // A failing copy must not sit on the lab's FIFO group and block later deliveries.
+    this.keyOutputDeliveryDlq = new Queue(this, `${this.props.namePrefix}-key-output-delivery-dlq`, {
+      queueName: `${this.props.namePrefix}-key-output-delivery-dlq.fifo`,
       fifo: true,
       retentionPeriod: Duration.days(14),
       enforceSSL: true,
@@ -154,6 +164,15 @@ export class EasyGenomicsNestedStack extends NestedStack {
           visibilityTimeout: Duration.minutes(15),
           enforceSSL: true,
           deadLetterQueue: { queue: this.runExportDlq, maxReceiveCount: 3 },
+        },
+        ['key-output-delivery-queue']: <QueueDetails>{
+          // Destinations are an external s3:// URI, so the worker role is bucket-wildcard.
+          // The destination bucket policy still has to allow this account to write.
+          fifo: true,
+          retentionPeriod: Duration.days(1),
+          visibilityTimeout: Duration.minutes(15),
+          enforceSSL: true,
+          deadLetterQueue: { queue: this.keyOutputDeliveryDlq, maxReceiveCount: 3 },
         },
       },
     });
@@ -330,6 +349,7 @@ export class EasyGenomicsNestedStack extends NestedStack {
               this.sqs.sqsQueues.get('laboratory-run-failure-classification-queue')?.queueUrl || '',
             SQS_LABORATORY_RUN_NOTIFICATION_QUEUE_URL:
               this.sqs.sqsQueues.get('laboratory-run-notification-queue')?.queueUrl || '',
+            SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL: this.sqs.sqsQueues.get('key-output-delivery-queue')?.queueUrl || '',
           },
         },
         // Async classifier consumer for FAILED runs. Idempotent (skips runs that already
@@ -425,6 +445,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
         },
         '/easy-genomics/laboratory/run/process-run-export-job': {
           events: [new SqsEventSource(this.sqs.sqsQueues.get('run-export-queue')!, { batchSize: 1 })],
+          timeoutSeconds: 900,
+          memorySizeMb: 3008,
+        },
+        '/easy-genomics/workflow-key-outputs/process-deliver-workflow-key-outputs': {
+          events: [new SqsEventSource(this.sqs.sqsQueues.get('key-output-delivery-queue')!, { batchSize: 1 })],
           timeoutSeconds: 900,
           memorySizeMb: 3008,
         },
@@ -1572,6 +1597,11 @@ export class EasyGenomicsNestedStack extends NestedStack {
         effect: Effect.ALLOW,
       }),
       new PolicyStatement({
+        resources: [`${this.sqs.sqsQueues.get('key-output-delivery-queue')?.queueArn || ''}`],
+        actions: ['sqs:SendMessage'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
         resources: [`arn:aws:omics:${this.props.env.region!}:${this.props.env.account!}:run/*`],
         actions: ['omics:GetRun', 'omics:ListRunTasks'],
         effect: Effect.ALLOW,
@@ -2703,6 +2733,15 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
     ]);
 
+    this.iam.addPolicyStatements('/easy-genomics/workflow-key-outputs/edit-workflow-key-output-delivery', [
+      ...laboratoryReadForWorkflowKeyOutputs,
+      new PolicyStatement({
+        resources: workflowKeyOutputsDynamoResources,
+        actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
+        effect: Effect.ALLOW,
+      }),
+    ]);
+
     this.iam.addPolicyStatements('/easy-genomics/workflow-key-outputs/request-preview-workflow-key-outputs', [
       ...laboratoryReadForWorkflowKeyOutputs,
       new PolicyStatement({
@@ -2742,6 +2781,37 @@ export class EasyGenomicsNestedStack extends NestedStack {
       }),
       laboratoryS3AccessReadPolicy,
       laboratoryS3AccessCatalogCheckPolicy,
+    ]);
+
+    this.iam.addPolicyStatements('/easy-genomics/workflow-key-outputs/process-deliver-workflow-key-outputs', [
+      new PolicyStatement({
+        resources: [
+          `arn:aws:dynamodb:${this.props.env.region!}:${this.props.env.account!}:table/${this.props.namePrefix}-laboratory-run-table`,
+        ],
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: workflowKeyOutputsDynamoResources,
+        actions: ['dynamodb:GetItem'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*'],
+        actions: ['s3:ListBucket'],
+        effect: Effect.ALLOW,
+      }),
+      new PolicyStatement({
+        resources: ['arn:aws:s3:::*/*'],
+        actions: [
+          's3:GetObject',
+          's3:PutObject',
+          's3:CopyObject',
+          's3:AbortMultipartUpload',
+          's3:ListMultipartUploadParts',
+        ],
+        effect: Effect.ALLOW,
+      }),
     ]);
 
     // /easy-genomics/laboratory/run/process-sync-run-costs

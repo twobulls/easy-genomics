@@ -77,6 +77,7 @@ import {
   ConfirmUserForgotPasswordRequestSchema,
 } from '../schema/easy-genomics/user-password';
 import {
+  EditWorkflowKeyOutputDeliverySchema,
   EditWorkflowKeyOutputsSchema,
   RequestPreviewWorkflowKeyOutputsSchema,
   RequestRunWorkflowKeyOutputsSchema,
@@ -515,6 +516,10 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
 
   'POST /easy-genomics/workflow-key-outputs/edit-workflow-key-outputs': {
     request: EditWorkflowKeyOutputsSchema,
+    response: 'WorkflowKeyOutputs',
+  },
+  'POST /easy-genomics/workflow-key-outputs/edit-workflow-key-output-delivery': {
+    request: EditWorkflowKeyOutputDeliverySchema,
     response: 'WorkflowKeyOutputs',
   },
   'GET /easy-genomics/workflow-key-outputs/list-workflow-key-outputs': {

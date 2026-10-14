@@ -170,6 +170,7 @@ export class EasyGenomicsApiStack extends Stack {
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-run-export-job-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-run-export-job-status-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-run-export-job-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-deliver-workflow-key-outputs-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-update-laboratory-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-list-buckets-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-create-file-upload-request-role/Resource`,

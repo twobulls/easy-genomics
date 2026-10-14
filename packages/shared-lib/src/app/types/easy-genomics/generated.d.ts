@@ -1649,6 +1649,8 @@ export interface components {
     };
     ListGrantedLaboratoryBucketsResponse: {
       buckets: string[];
+      /** @description Granted bucket name → its allowed prefix. Buckets without one are absent; a missing map means no bucket has one. */
+      allowedPrefixes?: Record<string, never>;
     };
     UpdateLaboratoryRequest: {
       Name: string;
@@ -1793,6 +1795,7 @@ export interface components {
           laboratoryId: string;
           bucketName: string;
           granted: boolean;
+          allowedPrefix?: string;
         }[];
     };
     LaboratoryS3Access: {
@@ -1804,6 +1807,11 @@ export interface components {
        * @enum {string}
        */
       Effect?: "ALLOW" | "DENY";
+      /**
+       * @description ALLOW rows only: an absolute prefix (ends in "/") outside `{OrganizationId}/{LaboratoryId}/` that Data Collections
+       * may also list and import from in this bucket. Removed whenever the row is revoked or rewritten without it.
+       */
+      AllowedPrefix?: string;
       CreatedAt?: string;
       ModifiedAt?: string;
     };

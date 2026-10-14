@@ -334,3 +334,58 @@ describe('folderBelowLabRoot', () => {
     expect(folderBelowLabRoot('')).toBe('');
   });
 });
+
+describe('sidecar files under every preset', () => {
+  const presetFixtures = [
+    ['any_separator_r1_r2', 'x_R1_001.fastq.gz', 'x'],
+    ['underscore_r1_r2', 'x_R1_001.fastq.gz', 'x'],
+    ['dash_r1_r2', 'x-R1_001.fastq.gz', 'x'],
+    ['underscore_1_2', 'x_1.fq.gz', 'x'],
+    ['dash_1_2', 'x-2.fastq', 'x'],
+  ] as const;
+  const sidecarSuffixes = ['.md5', '.sha256', '.tmp', '.bak'];
+
+  it.each(presetFixtures)('%s still matches %s as sample %s', (presetKey, fastqName, sampleId) => {
+    const { sets, unmatched } = groupFilenamesByRegex([fastqName], REGEX_GROUPING_PRESETS[presetKey].pattern);
+    expect(unmatched).toEqual([]);
+    expect(sets.map((set) => set.sampleId)).toEqual([sampleId]);
+  });
+
+  it.each(presetFixtures)('%s leaves sidecars of %s unmatched', (presetKey, fastqName) => {
+    const sidecars = sidecarSuffixes.map((suffix) => `${fastqName}${suffix}`);
+    const { sets, unmatched } = groupFilenamesByRegex(
+      [fastqName, ...sidecars],
+      REGEX_GROUPING_PRESETS[presetKey].pattern,
+    );
+    expect(unmatched).toEqual(sidecars);
+    expect(sets).toHaveLength(1);
+    expect(sets[0].files).toHaveLength(1);
+  });
+
+  it('keeps an upper-case extension matching', () => {
+    const { unmatched } = groupFilenamesByRegex(['x_R1_001.FASTQ.GZ'], REGEX_GROUPING_PRESETS.underscore_r1_r2.pattern);
+    expect(unmatched).toEqual([]);
+  });
+});
+
+describe('reference FASTA role', () => {
+  const customPattern = '^(?<sample>[^_]+)_(?:(?<read>R[12])_001\\.fastq\\.gz|ref\\.[a-z0-9.]+)$';
+
+  it.each(['ref.fa', 'ref.fasta', 'ref.fna', 'ref.fa.gz', 'ref.fasta.gz', 'ref.fna.gz', 'ref.FA.GZ'])(
+    'gives %s the reference_fasta role and a paired_end_with_extras layout',
+    (referenceName) => {
+      const { sets } = groupFilenamesByRegex(
+        ['s1_R1_001.fastq.gz', 's1_R2_001.fastq.gz', `s1_${referenceName}`],
+        customPattern,
+      );
+      expect(sets).toHaveLength(1);
+      expect(sets[0].files.find((f) => f.fileName === `s1_${referenceName}`)?.role).toBe('reference_fasta');
+      expect(sets[0].layout).toBe('paired_end_with_extras');
+    },
+  );
+
+  it.each(['ref.fa.gz.md5', 'ref.fai'])('does not treat %s as a reference', (sidecarName) => {
+    const { sets } = groupFilenamesByRegex(['s1_R1_001.fastq.gz', `s1_${sidecarName}`], customPattern);
+    expect(sets[0].files.find((f) => f.fileName === `s1_${sidecarName}`)?.role).toBe('extra');
+  });
+});

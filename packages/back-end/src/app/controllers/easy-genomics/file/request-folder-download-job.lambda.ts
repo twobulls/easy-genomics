@@ -135,15 +135,23 @@ const toObjectKey = (value: string, expectedBucket: string): string => {
   return value.replace(/^\/+/, '');
 };
 
+const HEAD_OBJECT_CONCURRENCY = 25;
+
 const getRequestedObjectKeysSize = async (bucket: string, keys: string[]): Promise<number> => {
   let totalBytes = 0;
-  for (const key of keys) {
-    try {
-      const head = await s3Service.headObject({ Bucket: bucket, Key: key });
-      totalBytes += head.ContentLength || 0;
-    } catch {
-      throw new InvalidRequestError('One of the selected files could not be read');
-    }
+  for (let offset = 0; offset < keys.length; offset += HEAD_OBJECT_CONCURRENCY) {
+    const chunk = keys.slice(offset, offset + HEAD_OBJECT_CONCURRENCY);
+    const sizes = await Promise.all(
+      chunk.map(async (key) => {
+        try {
+          const head = await s3Service.headObject({ Bucket: bucket, Key: key });
+          return head.ContentLength || 0;
+        } catch {
+          throw new InvalidRequestError('One of the selected files could not be read');
+        }
+      }),
+    );
+    totalBytes += sizes.reduce((sum, size) => sum + size, 0);
     if (totalBytes > MAX_DOWNLOAD_SIZE_BYTES) {
       return totalBytes;
     }

@@ -77,7 +77,6 @@ export default function useFileDownload() {
   }
 
   // Creates an async folder zip job and polls until the archive is ready.
-  // Creates an async folder zip job and polls until the archive is ready.
   async function downloadFolder(
     labId: string,
     folderS3Path: string,
@@ -155,9 +154,22 @@ export default function useFileDownload() {
     return supportedExtensions.includes(extension);
   }
 
+  async function openHtmlFromS3(labId: string, s3Uri: string): Promise<void> {
+    const fileDownloadResponse = await $api.file.requestFileDownloadUrl({
+      LaboratoryId: labId,
+      S3Uri: s3Uri,
+    });
+    if (!fileDownloadResponse?.DownloadUrl) {
+      throw new Error('Download URL is undefined or empty');
+    }
+    // Open the S3-origin URL so report HTML cannot run as the Easy Genomics origin.
+    window.open(fileDownloadResponse.DownloadUrl, '_blank', 'noopener,noreferrer');
+  }
+
   return {
     handleS3Download,
     downloadFolder,
+    openHtmlFromS3,
     isSupportedFileType,
     isFolderZipInProgress,
   };

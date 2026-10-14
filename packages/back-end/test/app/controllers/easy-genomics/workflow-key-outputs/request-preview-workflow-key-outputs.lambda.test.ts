@@ -22,7 +22,7 @@ import {
 
 const LAB_ID = 'b1e0f6a4-1f2b-4a6d-9f1c-1a2b3c4d5e6f';
 const RUN_ID = '3f7c1c9e-2222-4222-8222-222222222222';
-const ROOT = 'org/lab/aws-healthomics/run-1/results/1234567/';
+const ROOT = `org-1/${LAB_ID}/aws-healthomics/run-1/results/1234567/`;
 
 describe('request-preview-workflow-key-outputs Lambda', () => {
   let mockListAllObjectKeysUnderPrefix: jest.Mock;
@@ -77,10 +77,11 @@ describe('request-preview-workflow-key-outputs Lambda', () => {
       .fn()
       .mockResolvedValue({
         LaboratoryId: LAB_ID,
+        OrganizationId: 'org-1',
         RunId: RUN_ID,
         Platform: 'AWS HealthOmics',
         ExternalRunId: '1234567',
-        OutputS3Url: 's3://lab-bucket/org/lab/aws-healthomics/run-1/results',
+        OutputS3Url: `s3://lab-bucket/org-1/${LAB_ID}/aws-healthomics/run-1/results`,
       });
 
     mockListAllObjectKeysUnderPrefix = jest.fn().mockResolvedValue(
@@ -126,5 +127,46 @@ describe('request-preview-workflow-key-outputs Lambda', () => {
 
     expect(result.statusCode).toEqual(200);
     expect(body.KeyOutputs[0].MatchCount).toEqual(1);
+  });
+
+  it('rejects a caller with no laboratory access', async () => {
+    (validateOrganizationAdminAccess as jest.Mock).mockReturnValue(false);
+
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        RunId: RUN_ID,
+        KeyOutputs: [{ Label: 'QC report', Pattern: 'multiqc/multiqc_report.html' }],
+      }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(403);
+    expect(mockListAllObjectKeysUnderPrefix).not.toHaveBeenCalled();
+  });
+
+  it('rejects a run whose output prefix is outside this laboratory folder', async () => {
+    (LaboratoryRunService as jest.MockedClass<typeof LaboratoryRunService>).prototype.get = jest.fn().mockResolvedValue({
+      LaboratoryId: LAB_ID,
+      OrganizationId: 'org-1',
+      RunId: RUN_ID,
+      Platform: 'AWS HealthOmics',
+      ExternalRunId: '1234567',
+      OutputS3Url: 's3://lab-bucket/other-org/other-lab/secrets/',
+    });
+
+    const result = await handler(
+      createMockEvent({
+        LaboratoryId: LAB_ID,
+        RunId: RUN_ID,
+        KeyOutputs: [{ Label: 'QC report', Pattern: 'multiqc/multiqc_report.html' }],
+      }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(400);
+    expect(mockListAllObjectKeysUnderPrefix).not.toHaveBeenCalled();
   });
 });

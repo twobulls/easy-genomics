@@ -112,4 +112,17 @@ describe('list-workflow-key-outputs Lambda', () => {
     const result = await handler(createMockEvent({}), createMockContext(), () => {});
     expect(result.statusCode).toEqual(400);
   });
+
+  it('rejects a caller with no laboratory access', async () => {
+    (validateOrganizationAdminAccess as jest.Mock).mockReturnValue(false);
+
+    const result = await handler(
+      createMockEvent({ laboratoryId: LAB_ID, workflowId: WORKFLOW_ID }),
+      createMockContext(),
+      () => {},
+    );
+
+    expect(result.statusCode).toEqual(403);
+    expect(mockGet).not.toHaveBeenCalled();
+  });
 });

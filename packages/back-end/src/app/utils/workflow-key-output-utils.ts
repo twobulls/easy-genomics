@@ -9,25 +9,27 @@ import {
   validateOrganizationAdminAccess,
   validateSystemAdminAccess,
 } from '@BE/utils/auth-utils';
-import { normalizeS3Prefix, parseS3Uri, type ParsedS3Uri } from '@BE/utils/s3-uri-utils';
+import { laboratoryPrefix, normalizeS3Prefix, parseS3Uri, type ParsedS3Uri } from '@BE/utils/s3-uri-utils';
 
 /**
  * File Manager root used when declaring key outputs. Matches the run detail
- * explorer: OutputS3Url (else InputS3Url), then one extra HealthOmics folder
- * named after ExternalRunId so patterns stay stable across runs.
+ * explorer: OutputS3Url (else InputS3Url). HealthOmics only adds the
+ * ExternalRunId folder when OutputS3Url is the chosen root. The prefix must
+ * stay inside this run's laboratory folder, same as run export.
  */
 export function runKeyOutputsRoot(run: LaboratoryRun): ParsedS3Uri | null {
-  const parsed = parseS3Uri(run.OutputS3Url || run.InputS3Url);
+  const sourceUri = run.OutputS3Url || run.InputS3Url;
+  const parsed = parseS3Uri(sourceUri);
   if (!parsed?.bucket) return null;
 
   let prefix = parsed.prefix ? normalizeS3Prefix(parsed.prefix) : '';
-  if (run.Platform === 'AWS HealthOmics' && run.ExternalRunId) {
+  if (run.OutputS3Url && run.Platform === 'AWS HealthOmics' && run.ExternalRunId) {
     const externalFolder = `${run.ExternalRunId}/`;
     if (!prefix.endsWith(externalFolder)) {
       prefix = `${prefix}${externalFolder}`;
     }
   }
-  if (!prefix) return null;
+  if (!prefix || !prefix.startsWith(laboratoryPrefix(run))) return null;
   return { bucket: parsed.bucket, prefix };
 }
 

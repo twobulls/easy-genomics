@@ -11,17 +11,18 @@ import { WorkflowKeyOutputsService } from '../../../../../src/app/services/easy-
 import { S3Service } from '../../../../../src/app/services/s3-service';
 
 const LAB_ID = 'b1e0f6a4-1f2b-4a6d-9f1c-1a2b3c4d5e6f';
-const RUN_PREFIX = 'org/lab/results/1234567/';
+const RUN_PREFIX = `org-1/${LAB_ID}/results/1234567/`;
 
 function completedRun(overrides?: Record<string, unknown>) {
   return {
     LaboratoryId: LAB_ID,
+    OrganizationId: 'org-1',
     RunId: 'run-1',
     Platform: 'AWS HealthOmics',
     Status: 'COMPLETED',
     WorkflowExternalId: 'wf-1',
     ExternalRunId: '1234567',
-    OutputS3Url: 's3://lab-bucket/org/lab/results',
+    OutputS3Url: `s3://lab-bucket/org-1/${LAB_ID}/results`,
     ...overrides,
   };
 }
@@ -131,7 +132,7 @@ describe('process-deliver-workflow-key-outputs Lambda', () => {
   it('does not copy when the destination overlaps the run output', async () => {
     mockGetDefinition.mockResolvedValue(
       deliveryDefinition({
-        Delivery: { Enabled: true, DestinationUri: 's3://lab-bucket/org/lab/results/1234567/out' },
+        Delivery: { Enabled: true, DestinationUri: `s3://lab-bucket/org-1/${LAB_ID}/results/1234567/out` },
       }),
     );
 
@@ -154,5 +155,31 @@ describe('process-deliver-workflow-key-outputs Lambda', () => {
     mockCopy.mockRejectedValue(new Error('copy failed'));
 
     await expect(handler(event(), context, () => {})).rejects.toThrow('copy failed');
+  });
+
+  it('does not list a run whose output prefix is outside this laboratory folder', async () => {
+    mockGetRun.mockResolvedValue(completedRun({ OutputS3Url: 's3://lab-bucket/other-org/other-lab/results' }));
+
+    await handler(event(), context, () => {});
+
+    expect(mockList).not.toHaveBeenCalled();
+    expect(mockCopy).not.toHaveBeenCalled();
+  });
+
+  it('does not copy onto an Easy Genomics laboratory data prefix', async () => {
+    mockGetDefinition.mockResolvedValue(
+      deliveryDefinition({
+        Delivery: {
+          Enabled: true,
+          DestinationUri:
+            's3://lab-bucket/b1e0f6a4-1f2b-4a6d-9f1c-1a2b3c4d5e6f/c2f1e7b5-2e3c-5b7e-0a2d-2b3c4d5e6f70/out',
+        },
+      }),
+    );
+
+    await handler(event(), context, () => {});
+
+    expect(mockList).not.toHaveBeenCalled();
+    expect(mockCopy).not.toHaveBeenCalled();
   });
 });

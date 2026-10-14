@@ -1,9 +1,14 @@
 <script setup lang="ts">
+  import { FOLDER_DOWNLOAD_OBJECT_KEYS_LIMIT } from '@easy-genomics/shared-lib/src/app/schema/easy-genomics/file/request-folder-download-job';
   import type {
     RunWorkflowKeyOutput,
     RunWorkflowKeyOutputMatch,
     RunWorkflowKeyOutputsResponse,
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/workflow-key-outputs';
+  import {
+    basenameRelative,
+    dirnameRelative,
+  } from '@easy-genomics/shared-lib/src/app/utils/workflow-key-output-patterns';
   import { ButtonSizeEnum, ButtonVariantEnum } from '@FE/types/buttons';
   import { formatFileSize } from '@FE/utils/file-size';
   import { useToastStore, useUiStore } from '@FE/stores';
@@ -18,8 +23,7 @@
     edit: [];
   }>();
 
-  const { $api } = useNuxtApp();
-  const { handleS3Download, downloadFolder, isFolderZipInProgress } = useFileDownload();
+  const { handleS3Download, downloadFolder, openHtmlFromS3, isFolderZipInProgress } = useFileDownload();
   const uiStore = useUiStore();
   const toast = useToastStore();
 
@@ -66,8 +70,11 @@
   }
 
   function fileName(file: RunWorkflowKeyOutputMatch): string {
-    const segments = file.RelativePath.split('/');
-    return segments[segments.length - 1] || file.RelativePath;
+    return basenameRelative(file.RelativePath);
+  }
+
+  function isRoleTruncated(role: RunWorkflowKeyOutput): boolean {
+    return role.MatchCount > role.Matches.length;
   }
 
   function isHtmlFile(file: RunWorkflowKeyOutputMatch): boolean {
@@ -75,9 +82,8 @@
   }
 
   function directoryUri(file: RunWorkflowKeyOutputMatch): string {
-    const segments = file.Key.split('/');
-    segments.pop();
-    return `s3://${props.matches.S3Bucket}/${segments.join('/')}`;
+    const parent = dirnameRelative(file.Key);
+    return parent ? `s3://${props.matches.S3Bucket}/${parent}` : `s3://${props.matches.S3Bucket}`;
   }
 
   function objectUri(file: RunWorkflowKeyOutputMatch): string {
@@ -97,14 +103,7 @@
     const requestId = `openKeyOutput-${file.Key}`;
     uiStore.setRequestPending(requestId);
     try {
-      const response = await $api.file.requestFileDownloadUrl({
-        LaboratoryId: props.labId,
-        S3Uri: objectUri(file),
-      });
-      if (!response?.DownloadUrl) return;
-      const html = await fetch(response.DownloadUrl).then((res) => res.text());
-      const blobUrl = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-      window.open(blobUrl, '_blank');
+      await openHtmlFromS3(props.labId, objectUri(file));
     } catch (error) {
       console.error(error);
       toast.error('Failed to open HTML file');
@@ -127,6 +126,10 @@
   }
 
   function zipRole(role: RunWorkflowKeyOutput): void {
+    if (isRoleTruncated(role)) {
+      toast.error('Too many matching files to zip this role. Download individual files or narrow the pattern.');
+      return;
+    }
     void zipKeys(
       role.Matches.map((file) => file.Key),
       role.Label,
@@ -135,6 +138,13 @@
   }
 
   function zipAll(): void {
+    if (
+      props.matches.KeyOutputs.some(isRoleTruncated) ||
+      uniqueMatchedKeys.value.length > FOLDER_DOWNLOAD_OBJECT_KEYS_LIMIT
+    ) {
+      toast.error('Too many matching files to zip all key outputs. Download a single role or individual files.');
+      return;
+    }
     void zipKeys(uniqueMatchedKeys.value, 'key-outputs', 'all-key-outputs');
   }
 </script>

@@ -581,34 +581,25 @@
     ];
   }
 
-  async function viewSetKeyOutputs(workflow: LabOmicsWorkflow): Promise<void> {
+  function viewSetKeyOutputs(workflow: LabOmicsWorkflow): void {
     const workflowId = workflow.id;
     if (!workflowId) return;
 
-    uiStore.setRequestPending('setWorkflowKeyOutputs');
-    try {
-      const labRuns = await $api.labs.listLabRuns(props.labId);
-      const completed = labRuns
-        .filter((run) => run.WorkflowExternalId === workflowId && canSetKeyOutputsForRun(run))
-        .sort((a, b) => {
-          const aTime = a.TerminalAt ?? a.ModifiedAt ?? a.CreatedAt ?? '';
-          const bTime = b.TerminalAt ?? b.ModifiedAt ?? b.CreatedAt ?? '';
-          return bTime.localeCompare(aTime);
-        });
-      const run = completed[0];
-      if (!run) {
-        useToastStore().error(
-          `No completed run of ${workflow.name || 'this workflow'} was found. Finish a run first, then you can set key outputs from its files.`,
-        );
-        return;
-      }
-      viewSetKeyOutputsForRun(run);
-    } catch (error) {
-      console.error(error);
-      useToastStore().error('Unable to open key outputs for this workflow.');
-    } finally {
-      uiStore.setRequestComplete('setWorkflowKeyOutputs');
+    const completed = runsTableItems.value
+      .filter((run) => run.WorkflowExternalId === workflowId && canSetKeyOutputsForRun(run))
+      .sort((a, b) => {
+        const aTime = a.TerminalAt ?? a.ModifiedAt ?? a.CreatedAt ?? '';
+        const bTime = b.TerminalAt ?? b.ModifiedAt ?? b.CreatedAt ?? '';
+        return bTime.localeCompare(aTime);
+      });
+    const run = completed[0];
+    if (!run) {
+      useToastStore().error(
+        `No completed run of ${workflow.name || 'this workflow'} was found. Finish a run first, then you can set key outputs from its files.`,
+      );
+      return;
     }
+    viewSetKeyOutputsForRun(run);
   }
 
   async function handleDeleteOmicsWorkflow(): Promise<void> {
@@ -1352,7 +1343,6 @@
           class="text-primary hover:text-primary-dark hover:bg-primary-muted focus-visible:outline-primary-500 flex items-center justify-center rounded-full p-1 transition-all duration-150 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label="Set key outputs"
           title="Set key outputs"
-          :disabled="uiStore.isRequestPending('setWorkflowKeyOutputs')"
           @click.stop="viewSetKeyOutputs(workflow)"
         >
           <UIcon name="i-heroicons-document-magnifying-glass" class="h-6 w-6" aria-hidden="true" />

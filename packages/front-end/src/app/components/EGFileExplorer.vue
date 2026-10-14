@@ -43,15 +43,11 @@
       s3Contents?: S3Response | null;
       isLoading?: boolean;
       startPath?: string[];
-      /** Tick files to declare key outputs; hides per-row download actions. */
-      selectionMode?: boolean;
     }>(),
-    { isLoading: true, selectionMode: false },
+    { isLoading: true },
   );
 
-  const selectedKeys = defineModel<string[]>('selectedKeys', { default: () => [] });
-
-  const { handleS3Download, downloadFolder, isFolderZipInProgress } = useFileDownload();
+  const { handleS3Download, downloadFolder, openHtmlFromS3, isFolderZipInProgress } = useFileDownload();
   const { $api } = useNuxtApp();
 
   const uiStore = useUiStore();
@@ -331,9 +327,6 @@
       sort: (a: unknown, b: unknown, direction: 'asc' | 'desc') =>
         sortHelpers.stringSortCompare(String(a ?? ''), String(b ?? ''), direction),
     };
-    if (props.selectionMode) {
-      return [nameColumn];
-    }
     return [
       nameColumn,
       {
@@ -359,22 +352,6 @@
       { key: 'actions', label: 'Actions' },
     ];
   });
-
-  function isFileSelected(s3Key?: string): boolean {
-    return !!s3Key && selectedKeys.value.includes(s3Key);
-  }
-
-  function selectionRowClasses(row: FileTreeNode): string {
-    return isFileSelected(row.s3Key) ? 'bg-primary-muted' : '';
-  }
-
-  function toggleFileSelected(s3Key?: string): void {
-    if (!s3Key) return;
-    const next = new Set(selectedKeys.value);
-    if (next.has(s3Key)) next.delete(s3Key);
-    else next.add(s3Key);
-    selectedKeys.value = [...next];
-  }
 
   const fileTableSort = ref<TableSort>({ column: 'name', direction: 'asc' });
 
@@ -642,27 +619,7 @@
     uiStore.setRequestPending(`downloadHtmlFileButton-${nodeId}`);
 
     try {
-      const fileDownloadPath = getNodeS3Uri(node);
-      const fileDownloadResponse = await $api.file.requestFileDownloadUrl({
-        LaboratoryId: props.labId,
-        S3Uri: fileDownloadPath,
-      });
-
-      if (!fileDownloadResponse || !fileDownloadResponse.DownloadUrl) {
-        console.error('Download URL is undefined or empty');
-        return;
-      }
-
-      // Fetch the HTML content
-      const response = await fetch(fileDownloadResponse.DownloadUrl);
-      const htmlContent = await response.text();
-
-      // Create a new blob with the HTML content and proper MIME type
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Open the blob URL in a new tab
-      window.open(blobUrl, '_blank');
+      await openHtmlFromS3(props.labId, getNodeS3Uri(node));
     } catch (error) {
       console.error('Error opening HTML file:', error);
       useToastStore().error('Failed to open HTML file');
@@ -734,12 +691,12 @@
       label="Search files in bucket"
       @input-event="(event: string) => (searchQuery = event)"
       placeholder="Search all files in bucket"
-      :class="selectionMode ? 'mb-4 w-full' : 'mb-6 w-[408px]'"
+      class="mb-6 w-[408px]"
     />
 
     <p class="sr-only" aria-live="polite" aria-atomic="true">{{ searchStatusMessage }}</p>
 
-    <nav :class="selectionMode ? 'mb-3 min-h-[24px]' : 'mb-6 min-h-[24px]'" aria-label="Folder path">
+    <nav class="mb-6 min-h-[24px]" aria-label="Folder path">
       <ol class="flex flex-wrap items-center gap-0">
         <li v-for="(crumb, index) in breadcrumbs" :key="index" class="flex items-center text-sm">
           <button
@@ -765,19 +722,10 @@
       :columns="tableColumns"
       no-results-msg="No files or folders found"
       :is-loading="isRootLoading || isSearchLoading"
-      :show-pagination="!selectionMode"
-      :row-classes="selectionMode ? selectionRowClasses : undefined"
+      show-pagination
     >
       <template #name-data="{ row }">
         <div class="flex items-center gap-2">
-          <UCheckbox
-            v-if="selectionMode && row.type === 'file' && row.s3Key"
-            :model-value="isFileSelected(row.s3Key)"
-            :label="`Select ${row.name} as a key output`"
-            :ui="{ label: 'sr-only' }"
-            @click.stop
-            @update:model-value="toggleFileSelected(row.s3Key)"
-          />
           <button
             v-if="row.type === 'directory' && (!searchQuery.trim() || row.isSearchResult)"
             type="button"
@@ -807,7 +755,7 @@
       <template #size-data="{ row }">
         {{ formatFileSize(row.size) }}
       </template>
-      <template v-if="!selectionMode" #actions-data="{ row }">
+      <template #actions-data="{ row }">
         <div class="flex justify-end gap-4">
           <template v-if="!(row.isSearchResult && row.type === 'directory')">
             <!-- open in new tab -->

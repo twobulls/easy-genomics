@@ -750,8 +750,8 @@ sequenceDiagram
 ### Run result export flow
 
 Completed Pipeline Runs can be exported as a ZIP (≤ 5 GB combined) or copied server-side to a lab-granted S3 / LIMS
-bucket. Source output prefixes and destinations are always confined under `{OrganizationId}/{LaboratoryId}/`. The
-worker re-loads each run and re-checks grants so a stale SQS payload cannot read or write outside the lab.
+bucket. Source output prefixes and destinations are always confined under `{OrganizationId}/{LaboratoryId}/`. The worker
+re-loads each run and re-checks grants so a stale SQS payload cannot read or write outside the lab.
 
 ```mermaid
 sequenceDiagram

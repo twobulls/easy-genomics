@@ -3,6 +3,7 @@ import useDataCollectionsStore, { UNLINKED_SCAN_TTL_MS } from '../../../src/app/
 
 const mockRequestUnlinkedBucketObjects = jest.fn();
 const mockAddFilesToSample = jest.fn();
+const mockRequestLaboratoryBucketObjects = jest.fn();
 const mockToastError = jest.fn();
 
 (global as { useNuxtApp?: () => unknown }).useNuxtApp = () => ({
@@ -10,6 +11,7 @@ const mockToastError = jest.fn();
     dataCollections: {
       requestUnlinkedBucketObjects: mockRequestUnlinkedBucketObjects,
       addFilesToSample: mockAddFilesToSample,
+      requestLaboratoryBucketObjects: mockRequestLaboratoryBucketObjects,
     },
   },
 });
@@ -178,5 +180,52 @@ describe('dataCollections store addFilesToSample', () => {
 
     expect(mockToastError).toHaveBeenCalledWith('Sample not found');
     expect(store.unlinkedScan('lab-1')).not.toBeNull();
+  });
+});
+
+describe('dataCollections store source listing', () => {
+  const body = {
+    LaboratoryId: 'lab-1',
+    S3Bucket: 'lab-bucket',
+    S3Prefix: 'org-1/lab-1/sample-3-18/',
+    MaxTotalKeys: 5000,
+  };
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    mockRequestLaboratoryBucketObjects.mockReset();
+    mockToastError.mockReset();
+  });
+
+  it('returns the listing response unchanged', async () => {
+    const response = {
+      Contents: [],
+      IsTruncated: false,
+      S3Bucket: 'lab-bucket',
+      ResolvedPrefix: 'org-1/lab-1/sample-3-18/',
+      ListingTruncated: false,
+      ReturnedKeyCount: 0,
+    };
+    mockRequestLaboratoryBucketObjects.mockResolvedValue(response);
+
+    await expect(useDataCollectionsStore().fetchLaboratoryBucketObjects(body)).resolves.toEqual(response);
+    expect(mockRequestLaboratoryBucketObjects).toHaveBeenCalledWith(body);
+    expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it('toasts the error message and returns null when the listing fails', async () => {
+    mockRequestLaboratoryBucketObjects.mockRejectedValue(
+      new Error("S3 prefix must be inside this laboratory's folder"),
+    );
+
+    await expect(useDataCollectionsStore().fetchLaboratoryBucketObjects(body)).resolves.toBeNull();
+    expect(mockToastError).toHaveBeenCalledWith("S3 prefix must be inside this laboratory's folder");
+  });
+
+  it('toasts a generic message for a non-Error rejection', async () => {
+    mockRequestLaboratoryBucketObjects.mockRejectedValue('boom');
+
+    await expect(useDataCollectionsStore().fetchLaboratoryBucketObjects(body)).resolves.toBeNull();
+    expect(mockToastError).toHaveBeenCalledWith('Failed to list source files');
   });
 });

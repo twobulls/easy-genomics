@@ -79,6 +79,18 @@
     { immediate: true },
   );
 
+  watch(
+    () => [canDeclareKeyOutputs.value, String($route.query.declareKeyOutputs ?? '')] as const,
+    ([canDeclare, declareFlag]) => {
+      if (!canDeclare || declareFlag !== '1') return;
+      isDeclaringKeyOutputs.value = true;
+      const nextQuery = { ...$route.query };
+      delete nextQuery.declareKeyOutputs;
+      void $router.replace({ path: $route.path, query: nextQuery });
+    },
+    { immediate: true },
+  );
+
   async function onKeyOutputsSaved(): Promise<void> {
     isDeclaringKeyOutputs.value = false;
     await keyOutputsStore.loadRunMatches(labId, labRunId);

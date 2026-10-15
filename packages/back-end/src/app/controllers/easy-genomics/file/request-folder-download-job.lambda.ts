@@ -120,6 +120,43 @@ type FolderDownloadJobMessage = {
   RequestedPrefix: string;
   ArchiveKey: string;
   StatusKey: string;
+  ObjectKeys?: string[];
+  ArchiveName?: string;
+};
+
+const toObjectKey = (value: string, expectedBucket: string): string => {
+  const parsed = parseS3Uri(value);
+  if (parsed) {
+    if (parsed.bucket !== expectedBucket) {
+      throw new InvalidRequestError('S3 bucket mismatch between S3Bucket and ObjectKeys');
+    }
+    return parsed.prefix.replace(/^\/+/, '');
+  }
+  return value.replace(/^\/+/, '');
+};
+
+const HEAD_OBJECT_CONCURRENCY = 25;
+
+const getRequestedObjectKeysSize = async (bucket: string, keys: string[]): Promise<number> => {
+  let totalBytes = 0;
+  for (let offset = 0; offset < keys.length; offset += HEAD_OBJECT_CONCURRENCY) {
+    const chunk = keys.slice(offset, offset + HEAD_OBJECT_CONCURRENCY);
+    const sizes = await Promise.all(
+      chunk.map(async (key) => {
+        try {
+          const head = await s3Service.headObject({ Bucket: bucket, Key: key });
+          return head.ContentLength || 0;
+        } catch {
+          throw new InvalidRequestError('One of the selected files could not be read');
+        }
+      }),
+    );
+    totalBytes += sizes.reduce((sum, size) => sum + size, 0);
+    if (totalBytes > MAX_DOWNLOAD_SIZE_BYTES) {
+      return totalBytes;
+    }
+  }
+  return totalBytes;
 };
 
 /**
@@ -175,9 +212,18 @@ export const handler: Handler = async (
       throw new UnauthorizedAccessError();
     }
 
+    const objectKeys = (request.ObjectKeys ?? []).map((key) => toObjectKey(key, s3Bucket));
+    if (request.ObjectKeys) {
+      if (objectKeys.some((key) => !key || key.endsWith('/') || !key.startsWith(requestedPrefix))) {
+        throw new UnauthorizedAccessError();
+      }
+    }
+
     await cleanupExpiredDownloadArtifacts(s3Bucket, laboratoryOwnedPrefix);
 
-    const folderSizeBytes = await getRequestedPrefixSize(s3Bucket, requestedPrefix);
+    const folderSizeBytes = objectKeys.length
+      ? await getRequestedObjectKeysSize(s3Bucket, objectKeys)
+      : await getRequestedPrefixSize(s3Bucket, requestedPrefix);
     if (folderSizeBytes > MAX_DOWNLOAD_SIZE_BYTES) {
       throw new InvalidRequestError(FOLDER_SIZE_EXCEEDED_MESSAGE);
     }
@@ -195,6 +241,8 @@ export const handler: Handler = async (
         LaboratoryId: laboratory.LaboratoryId,
         Status: 'PENDING',
         RequestedPrefix: requestedPrefix,
+        ObjectKeys: objectKeys.length ? objectKeys : undefined,
+        ArchiveName: request.ArchiveName,
         ArchiveS3Key: archiveKey,
         CreatedAt: new Date().toISOString(),
         ExpiresAt: new Date(Date.now() + DOWNLOAD_EXPIRY_MS).toISOString(),
@@ -214,6 +262,8 @@ export const handler: Handler = async (
       RequestedPrefix: requestedPrefix,
       ArchiveKey: archiveKey,
       StatusKey: statusKey,
+      ObjectKeys: objectKeys.length ? objectKeys : undefined,
+      ArchiveName: request.ArchiveName,
     };
 
     await sqsService.sendMessage({

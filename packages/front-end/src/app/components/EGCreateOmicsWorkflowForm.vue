@@ -1,9 +1,5 @@
 <script setup lang="ts">
-  import { FormError } from '#ui/types';
-  import {
-    revalidateCreateWorkflowFileField,
-    type CreateWorkflowFormValidation,
-  } from '@FE/utils/create-omics-workflow-form-validation';
+  import type { Form, FormError } from '#ui/types';
   import { maybeAddFieldValidationErrors } from '@FE/utils/form-utils';
   import { z } from 'zod';
   import { v4 as uuidv4 } from 'uuid';
@@ -110,7 +106,7 @@
   });
 
   const canSubmit = ref(false);
-  const createWorkflowForm = ref<CreateWorkflowFormValidation | null>(null);
+  const createWorkflowForm = ref<Form<FormState> | null>(null);
   const workflowZipFile = ref<File | null>(null);
   const workflowZipFileError = ref<string | null>(null);
   const parameterTemplateFile = ref<File | null>(null);
@@ -179,21 +175,19 @@
     return errors;
   }
 
-  // File inputs are not UForm controls, and the parameter selector is already
-  // FILE, so choosing a file never emits a form change. Revalidate that field
-  // so Create Workflow enables without re-selecting the dropdown.
+  // Native file inputs aren't UForm controls, so picking a file never triggers validation; silent avoids throwing while other fields are still invalid.
   function onWorkflowZipChange(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     workflowZipFile.value = file;
     workflowZipFileError.value = null;
-    void revalidateCreateWorkflowFileField(createWorkflowForm.value, 'workflowZipFile');
+    void createWorkflowForm.value?.validate('workflowZipFile', { silent: true });
   }
 
   function onParameterTemplateFileChange(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     parameterTemplateFile.value = file;
     parameterTemplateFileError.value = null;
-    void revalidateCreateWorkflowFileField(createWorkflowForm.value, 'parameterTemplateFile');
+    void createWorkflowForm.value?.validate('parameterTemplateFile', { silent: true });
   }
 
   async function onSubmit() {

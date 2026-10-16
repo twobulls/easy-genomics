@@ -148,3 +148,28 @@ Run against a deployed environment with a completed HealthOmics run that has out
       delivers (notification is not stamped until enqueue succeeds).
 - [ ] **E2E** — add a lab-manager Playwright spec: declare key outputs from a completed HealthOmics run, download from
       the panel, save a delivery destination.
+
+---
+
+## Create HealthOmics workflow — preselected parameter file
+
+The parameter selector defaults to "Upload JSON file" (`FILE`). The ZIP and JSON inputs are native file inputs, so
+choosing a file does not emit a `UForm` change event. Create Workflow stayed disabled until the user opened that
+dropdown and chose FILE again. `onWorkflowZipChange` and `onParameterTemplateFileChange` in
+`EGCreateOmicsWorkflowForm.vue` now call `validate(path, { silent: true })` on the form ref, which reruns the existing
+validator and updates `canSubmit`.
+
+Front-end Jest cannot mount this component. There is no Playwright spec for create-workflow. The steps below are the
+manual check.
+
+### Manual steps
+
+Sign in as a lab manager or above, against a lab that can create HealthOmics workflows. Not yet executed (15 Oct 2026) —
+this environment has no local Nuxt config and no signed-in session.
+
+- [ ] **Valid files, FILE left selected** — open Create Workflow, enter a name, leave "Upload JSON file" selected,
+      upload a `.zip` then a `.json`. Create Workflow enables without opening the parameter dropdown.
+- [ ] **Wrong parameter extension** — upload a non-`.json` parameter file. Create Workflow stays disabled, and the
+      parameter file field shows an error.
+- [ ] **Wrong ZIP extension** — upload a non-`.zip` definition. Create Workflow stays disabled, and the ZIP field shows
+      an error.

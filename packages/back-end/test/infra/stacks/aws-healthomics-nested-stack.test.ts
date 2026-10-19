@@ -1,4 +1,5 @@
 import { App, Stack } from 'aws-cdk-lib';
+import { LambdaConstruct } from '../../../src/infra/constructs/lambda-construct';
 import { AwsHealthOmicsNestedStack } from '../../../src/infra/stacks/aws-healthomics-nested-stack';
 
 jest.mock('../../../src/infra/constructs/lambda-construct', () => ({
@@ -53,6 +54,17 @@ describe('AwsHealthOmicsNestedStack cross-account shared workflow IAM access', (
     expect(
       resourcesFor(stack, '/aws-healthomics/workflow/list-workflow-versions', 'omics:ListWorkflowVersions'),
     ).toContain(crossAccountWorkflowArnPattern);
+  });
+
+  // The Node.js 20 Lambda runtime SDK predates HealthOmics VPC networking. With
+  // @aws-sdk/* left external, StartRun silently drops networkingMode and
+  // configurationName, so a lab saved as VPC still launches RESTRICTED.
+  it('bundles the pinned HealthOmics SDK into create-run-execution so VPC networking is sent', () => {
+    createStack();
+    const props = (LambdaConstruct as unknown as jest.Mock).mock.calls.at(-1)?.[2];
+    expect(props.lambdaFunctionsResources['/aws-healthomics/run/create-run-execution']?.nodeModules).toEqual(
+      expect.arrayContaining(['@aws-sdk/client-omics']),
+    );
   });
 
   it('grants create-run-execution StartRun access to shared workflows owned by another account', () => {

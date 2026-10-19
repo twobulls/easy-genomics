@@ -170,6 +170,7 @@ export class EasyGenomicsApiStack extends Stack {
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-run-export-job-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-request-run-export-job-status-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-run-export-job-role/Resource`,
+        `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-process-deliver-workflow-key-outputs-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-update-laboratory-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-list-buckets-role/Resource`,
         `${stackPath}/${nestedId}/${easyGenomicsId}/${easyGenomicsId}-create-file-upload-request-role/Resource`,
@@ -470,5 +471,21 @@ export class EasyGenomicsApiStack extends Stack {
       lsi: baseLSIAttributes,
     });
     this.dynamoDBTables.set(workflowRunPresetTableName, workflowRunPresetTable);
+
+    // Lab-wide key output definitions for a workflow, inferred from files ticked
+    // on a completed run. One item per laboratory + workflow.
+    const workflowKeyOutputsTableName = `${this.props.namePrefix}-workflow-key-outputs-table`;
+    const workflowKeyOutputsTable = this.dynamoDB.createTable(workflowKeyOutputsTableName, {
+      partitionKey: {
+        name: 'LaboratoryId',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'WorkflowId',
+        type: AttributeType.STRING,
+      },
+      lsi: baseLSIAttributes,
+    });
+    this.dynamoDBTables.set(workflowKeyOutputsTableName, workflowKeyOutputsTable);
   };
 }

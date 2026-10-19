@@ -52,6 +52,7 @@ jest.mock('../../../src/infra/constructs/sqs-construct', () => ({
       ],
       ['folder-download-queue', { queueUrl: 'https://sqs/folder', queueArn: 'arn:aws:sqs:folder' }],
       ['run-export-queue', { queueUrl: 'https://sqs/export', queueArn: 'arn:aws:sqs:export' }],
+      ['key-output-delivery-queue', { queueUrl: 'https://sqs/deliver', queueArn: 'arn:aws:sqs:deliver' }],
     ]),
   })),
 }));
@@ -211,6 +212,38 @@ describe('EasyGenomicsNestedStack environment wiring', () => {
     const sqsProps = sqsConstructMock.mock.calls[0][2];
     expect(sqsProps.queues['run-export-queue'].deadLetterQueue).toBeDefined();
     expect(sqsProps.queues['run-export-queue'].deadLetterQueue.maxReceiveCount).toBe(3);
+  });
+
+  it('wires key-output delivery into the status update and the copy worker', () => {
+    const app = new App();
+    const parentStack = new Stack(app, 'parent-stack');
+    new EasyGenomicsNestedStack(parentStack, 'easy-genomics-test-stack', createProps());
+
+    const lambdaConstructMock = LambdaConstruct as unknown as jest.Mock;
+    const lambdaProps = lambdaConstructMock.mock.calls[0][2];
+    const updateConfig =
+      lambdaProps.lambdaFunctionsResources['/easy-genomics/laboratory/run/process-update-laboratory-run'];
+    const processConfig =
+      lambdaProps.lambdaFunctionsResources['/easy-genomics/workflow-key-outputs/process-deliver-workflow-key-outputs'];
+
+    expect(updateConfig.environment.SQS_KEY_OUTPUT_DELIVERY_QUEUE_URL).toBe('https://sqs/deliver');
+    expect(processConfig.timeoutSeconds).toBe(900);
+    expect(processConfig.events).toHaveLength(1);
+
+    const sqsConstructMock = SqsConstruct as unknown as jest.Mock;
+    const sqsProps = sqsConstructMock.mock.calls[0][2];
+    expect(sqsProps.queues['key-output-delivery-queue'].deadLetterQueue.maxReceiveCount).toBe(3);
+
+    const iamConstructMock = IamConstruct as unknown as jest.Mock;
+    const iamInstance = iamConstructMock.mock.results[0].value;
+    expect(iamInstance.addPolicyStatements).toHaveBeenCalledWith(
+      '/easy-genomics/workflow-key-outputs/process-deliver-workflow-key-outputs',
+      expect.arrayContaining([
+        expect.objectContaining({
+          actions: expect.arrayContaining(['s3:GetObject', 's3:PutObject', 's3:AbortMultipartUpload']),
+        }),
+      ]),
+    );
   });
 
   it('adds IAM policy statements for run-export routes', async () => {

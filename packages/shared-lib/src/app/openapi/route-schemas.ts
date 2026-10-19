@@ -77,6 +77,12 @@ import {
   ConfirmUserForgotPasswordRequestSchema,
 } from '../schema/easy-genomics/user-password';
 import {
+  EditWorkflowKeyOutputDeliverySchema,
+  EditWorkflowKeyOutputsSchema,
+  RequestPreviewWorkflowKeyOutputsSchema,
+  RequestRunWorkflowKeyOutputsSchema,
+} from '../schema/easy-genomics/workflow-key-outputs';
+import {
   CreateWorkflowRunPresetSchema,
   UpdateWorkflowRunPresetSchema,
 } from '../schema/easy-genomics/workflow-run-preset';
@@ -504,6 +510,32 @@ export const ROUTE_SCHEMAS: Record<string, RouteSchema> = {
   'PUT /easy-genomics/workflow-run-preset/update-workflow-run-preset/{id}': {
     request: UpdateWorkflowRunPresetSchema,
     response: 'WorkflowRunPreset',
+  },
+
+  // ── easy-genomics/workflow-key-outputs/ ──────────────────────────────────────
+
+  'POST /easy-genomics/workflow-key-outputs/edit-workflow-key-outputs': {
+    request: EditWorkflowKeyOutputsSchema,
+    response: 'WorkflowKeyOutputs',
+  },
+  'POST /easy-genomics/workflow-key-outputs/edit-workflow-key-output-delivery': {
+    request: EditWorkflowKeyOutputDeliverySchema,
+    response: 'WorkflowKeyOutputs',
+  },
+  'GET /easy-genomics/workflow-key-outputs/list-workflow-key-outputs': {
+    response: 'ListWorkflowKeyOutputsResponse',
+    query: [
+      { name: 'laboratoryId', required: true, description: 'Laboratory owning the key-outputs definition' },
+      { name: 'workflowId', required: true, description: 'Workflow the definition applies to' },
+    ],
+  },
+  'POST /easy-genomics/workflow-key-outputs/request-preview-workflow-key-outputs': {
+    request: RequestPreviewWorkflowKeyOutputsSchema,
+    response: 'PreviewWorkflowKeyOutputsResponse',
+  },
+  'POST /easy-genomics/workflow-key-outputs/request-run-workflow-key-outputs': {
+    request: RequestRunWorkflowKeyOutputsSchema,
+    response: 'RunWorkflowKeyOutputsResponse',
   },
 
   // ── aws-healthomics/run/ ─────────────────────────────────────────────────────

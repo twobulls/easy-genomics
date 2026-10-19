@@ -53,9 +53,22 @@ export const REGEX_GROUPING_PRESETS = {
 export type RegexGroupingPresetKey = keyof typeof REGEX_GROUPING_PRESETS;
 
 export const DEFAULT_REGEX_GROUPING_PRESET_KEY: RegexGroupingPresetKey = 'any_separator_r1_r2';
+export const FASTA_REGEX_GROUPING_PRESET_KEY: RegexGroupingPresetKey = 'fasta_one_per_file';
 
 export function isFasta(name: string): boolean {
   return /\.(fasta|fa|fna)(?:\.gz)?$/i.test(name);
+}
+
+export function isFastq(name: string): boolean {
+  return /\.(?:fastq|fq)(?:\.gz)?$/i.test(name);
+}
+
+/**
+ * FASTA files and no FASTQ, so each FASTA is its own sample and grouping needs no regex.
+ * Other files (indexes, checksums, BAM) don't decide it.
+ */
+export function hasFastaButNoFastq(fileNames: string[]): boolean {
+  return fileNames.some(isFasta) && !fileNames.some(isFastq);
 }
 
 function isAssembled(files: ProposedSampleFile[]): boolean {

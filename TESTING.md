@@ -224,6 +224,50 @@ the lab-manager test user, in Test Laboratory. Test files: `WI-01.fasta`, `WI-02
 
 ---
 
+## Data Collections — import wizard "Folder" field, blank in an allowed folder (EGV-329, EGV-334)
+
+The S3 source step's "Prefix" field is now labelled "Folder", and the listing notices say "folder". When Search in is an
+allowed folder, Folder may be left blank to list the allowed folder itself, and the import label defaults to that
+folder's name. In this lab's own folder, a Folder that is blank, spaces only or slashes only still disables Continue.
+Front-end unit tests cover the Continue rule, the label default and the notice copy. There is no Playwright spec for the
+import wizard.
+
+### Automated checks
+
+| Check                   | Result         |
+| ----------------------- | -------------- |
+| `pnpm lint` (front-end) | Passes         |
+| `pnpm test` (front-end) | 365 tests pass |
+
+### Manual steps
+
+Run on 19 Oct 2026 with Playwright, against the branch's front-end and local back-end (`dev-demo` stack). Signed in as
+the lab-manager test user in Test Laboratory, and as the system-admin test user for S3 access. Test files:
+`NA1287820K_R1_001.fastq.gz` and `_R2_` in `egv-329-qa/` at the root of the dev-demo lab bucket, set as the lab's
+allowed folder for the run.
+
+- [x] **Copy** — the field reads **Folder**, with hint "inside this lab's folder" and placeholder `sequencing/run-1/`.
+      `does-not-exist` → Continue shows "No files found in s3://…/does-not-exist/ — check the bucket and folder." No
+      wizard step from Source to Confirm contains the word "prefix".
+- [x] **Lab folder, blank** — with Search in = This lab's folder, a Folder that is empty, spaces only, `/`, or a slash
+      with spaces around it shows the `*` and "Enter a folder to continue.", and Continue is disabled.
+- [x] **Lab folder, typed** — `aws-healthomics/` lists 128 files. The listing request's `S3Prefix` is
+      `{org}/{lab}/aws-healthomics/`, the same as on `development`, and the back-end is unchanged.
+- [x] **Allowed folder, blank** — with Search in = `egv-329-qa/`: no `*`, no help line, hint "optional, inside
+      egv-329-qa/", and Searches `s3://851725267090-dev-demo-lab-bucket/egv-329-qa/`. The same holds for spaces only,
+      `/`, and a slash with spaces around it.
+- [x] **Allowed folder import** — Continue lists the 2 top-level files as 1 paired sample. Confirm shows Source
+      `s3://…/egv-329-qa/` and batch `egv-329-qa`. The import succeeds; `CopyJobs[].DestKey` is
+      `{org}/{lab}/imports/egv-329-qa/NA1287820K_R1_001.fastq.gz` (and `_R2_`), and both copies exist in S3.
+- [x] **Switching back** — with Folder blank, Search in → This lab's folder brings back the `*` and the help line, and
+      Continue disables. Back to the allowed folder enables it. Changing the bucket and back resets Search in to This
+      lab's folder, with Continue disabled.
+- [x] **Clean up** — the allowed folder is cleared (the lab's grants read `allowedPrefixes: {}` again) and `egv-329-qa/`
+      at the bucket root is deleted. The imported sample (batch `egv-329-qa`) and its `imports/egv-329-qa/` copies stay:
+      samples can't be deleted, and the sample points at the copies.
+
+---
+
 ## Data Collections — import wizard skips grouping for FASTA-only listings (EGV-332)
 
 When a listing has FASTA files and no FASTQ, the import wizard applies the "One sample per FASTA file" preset and goes

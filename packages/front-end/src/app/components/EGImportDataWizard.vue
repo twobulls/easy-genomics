@@ -27,7 +27,12 @@
     skipsGroupingStep,
     type SourceListingNotice,
   } from '@FE/utils/data-collections-source-listing';
-  import { buildLaboratorySourcePrefix, buildSourcePrefix } from '@FE/utils/data-collections-source-prefix';
+  import {
+    buildLaboratorySourcePrefix,
+    buildSourcePrefix,
+    defaultS3ImportLabel,
+    isSourceFolderMissing,
+  } from '@FE/utils/data-collections-source-prefix';
   import { matchSheetToSamples, type SheetTagMatchResult } from '@FE/utils/sheet-tag-matching';
 
   type ImportSourceKind = 's3' | 'upload';
@@ -68,14 +73,15 @@
   const sourceRoot = ref<SourceRoot>('laboratory');
   const allowedPrefixForBucket = computed(() => allowedPrefixes.value[sourceBucket.value] ?? '');
   const searchesAllowedFolder = computed(() => sourceRoot.value === 'allowed' && !!allowedPrefixForBucket.value);
+  /** The allowed folder chosen in "Search in", or '' when the wizard searches this lab's own folder. */
+  const selectedAllowedFolder = computed(() => (searchesAllowedFolder.value ? allowedPrefixForBucket.value : ''));
+  const sourceFolderMissing = computed(() => isSourceFolderMissing(sourcePrefix.value, selectedAllowedFolder.value));
   const sourceRootOptions = computed(() => [
     { label: "This lab's folder", value: 'laboratory' },
     { label: allowedPrefixForBucket.value, value: 'allowed' },
   ]);
   const prefixHint = computed(() =>
-    searchesAllowedFolder.value
-      ? `folder inside ${allowedPrefixForBucket.value}`
-      : "folder inside this lab's directory",
+    selectedAllowedFolder.value ? `optional, inside ${selectedAllowedFolder.value}` : "inside this lab's folder",
   );
 
   watch(sourceBucket, () => {
@@ -191,8 +197,7 @@
     if (importSource.value === 'upload') {
       return `upload-${new Date().toISOString().slice(0, 10)}`;
     }
-    const prefix = sourcePrefix.value.split('/').filter(Boolean).pop();
-    return prefix || sourceBucket.value || 'import';
+    return defaultS3ImportLabel(sourcePrefix.value, selectedAllowedFolder.value, sourceBucket.value);
   });
 
   const confirmSourceLabel = computed(() => {
@@ -208,7 +213,7 @@
       return (
         sourceBucket.value.trim().length > 0 &&
         grantedBuckets.value.includes(sourceBucket.value) &&
-        sourcePrefix.value.trim().length > 0
+        !sourceFolderMissing.value
       );
     }
     return pendingUploadFiles.value.length > 0 && !uploading.value;
@@ -565,12 +570,12 @@
             <USelect v-model="sourceRoot" :options="sourceRootOptions" class="font-mono" />
           </UFormGroup>
           <UFormGroup
-            label="Prefix"
+            label="Folder"
             :hint="prefixHint"
-            required
-            :help="sourcePrefix.trim() ? undefined : 'Enter a folder to continue.'"
+            :required="!selectedAllowedFolder"
+            :help="sourceFolderMissing ? 'Enter a folder to continue.' : undefined"
           >
-            <UInput v-model="sourcePrefix" placeholder="imports/" class="font-mono" />
+            <UInput v-model="sourcePrefix" placeholder="sequencing/run-1/" class="font-mono" />
           </UFormGroup>
           <p v-if="sourceBucket" class="text-text-muted mt-1 break-all font-mono text-xs" role="status">
             Searches {{ confirmSourceLabel }}

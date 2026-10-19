@@ -107,10 +107,12 @@ never modified**.
 
 | Source                   | When to use                                                                           |
 | ------------------------ | ------------------------------------------------------------------------------------- |
-| **Amazon S3**            | Point at a bucket/prefix where sequencer or partner files are dropped.                |
+| **Amazon S3**            | Point at a folder in a granted bucket where sequencer or partner files are dropped.   |
 | **Upload from computer** | Drag and drop local files (each file ≤ **5 GB**). Browser upload into the lab bucket. |
 
-For S3, enter bucket and optional prefix, then continue so Easy Genomics can list objects under that location.
+For S3, pick the bucket and type a **Folder** inside the lab's folder, then continue so Easy Genomics can list the files
+in it. If a system admin has set an allowed folder for the lab in that bucket, **Search in** also offers that folder.
+There the **Folder** is optional: leave it blank to list the allowed folder itself.
 
 ### Group files
 

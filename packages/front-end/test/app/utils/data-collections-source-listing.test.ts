@@ -6,7 +6,7 @@ describe('describeSourceListing', () => {
   it('names the bucket and resolved prefix the server searched when nothing is found', () => {
     expect(describeSourceListing({ ...searched, Contents: [], ListingTruncated: false, ReturnedKeyCount: 0 })).toEqual({
       kind: 'empty',
-      message: 'No files found in s3://lab-bucket/org-1/lab-1/sample-3-18/ — check the bucket and prefix.',
+      message: 'No files found in s3://lab-bucket/org-1/lab-1/sample-3-18/ — check the bucket and folder.',
     });
   });
 
@@ -18,7 +18,7 @@ describe('describeSourceListing', () => {
     expect(describeSourceListing({ ...searched, Contents: [], ListingTruncated: true, ReturnedKeyCount: 0 })).toEqual({
       kind: 'empty',
       message:
-        'No files found in s3://lab-bucket/org-1/lab-1/sample-3-18/ before the listing stopped early — try a narrower prefix.',
+        'No files found in s3://lab-bucket/org-1/lab-1/sample-3-18/ before the listing stopped early — try a more specific folder.',
     });
   });
 
@@ -33,7 +33,7 @@ describe('describeSourceListing', () => {
     ).toEqual({
       kind: 'truncated',
       message:
-        'Showing the first 5000 files — the listing stopped early, so results are partial. Try a narrower prefix.',
+        'Showing the first 5000 files — the listing stopped early, so results are partial. Try a more specific folder.',
     });
   });
 

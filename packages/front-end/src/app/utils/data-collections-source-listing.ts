@@ -18,8 +18,8 @@ export function describeSourceListing(listing: SourceListingSummary): SourceList
 
   if (fileCount === 0) {
     const message = listing.ListingTruncated
-      ? `No files found in ${searchedPath} before the listing stopped early — try a narrower prefix.`
-      : `No files found in ${searchedPath} — check the bucket and prefix.`;
+      ? `No files found in ${searchedPath} before the listing stopped early — try a more specific folder.`
+      : `No files found in ${searchedPath} — check the bucket and folder.`;
     return { kind: 'empty', message };
   }
 
@@ -27,7 +27,7 @@ export function describeSourceListing(listing: SourceListingSummary): SourceList
     const returnedKeyCount = listing.ReturnedKeyCount ?? fileCount;
     return {
       kind: 'truncated',
-      message: `Showing the first ${returnedKeyCount} files — the listing stopped early, so results are partial. Try a narrower prefix.`,
+      message: `Showing the first ${returnedKeyCount} files — the listing stopped early, so results are partial. Try a more specific folder.`,
     };
   }
 

@@ -221,3 +221,47 @@ the lab-manager test user, in Test Laboratory. Test files: `WI-01.fasta`, `WI-02
 - [x] **Upload picker accepts `.fna`** — found during this run: the upload input's `accept` list omitted `.fna`, so the
       file dialog could not pick one (drag and drop worked). The list now includes `.fna`, and the running wizard reads
       `.fastq,.fq,.gz,.fasta,.fa,.fna,.fa.gz`.
+
+---
+
+## Data Collections — import wizard skips grouping for FASTA-only listings (EGV-332)
+
+When a listing has FASTA files and no FASTQ, the import wizard applies the "One sample per FASTA file" preset and goes
+from Source straight to Tags. Back still reaches Group files with that preset selected. Review hides the paired and
+single-end counts and lists the files that matched nothing. A truncated listing never skips. FASTQ, mixed FASTA + FASTQ
+and other-file listings keep the grouping step as before. Unit tests in shared-lib and front-end cover the detection and
+the skip rule. There is no Playwright spec for the import wizard.
+
+### Automated checks
+
+| Check                               | Result         |
+| ----------------------------------- | -------------- |
+| `pnpm lint` (shared-lib, front-end) | Passes         |
+| `pnpm test` (shared-lib)            | 402 tests pass |
+| `pnpm test` (front-end)             | 365 tests pass |
+
+### Manual steps
+
+Run on 19 Oct 2026 with Playwright, against the branch's front-end and local back-end (`dev-demo` stack), stacked on
+#985. Signed in as the lab-manager test user, in Test Laboratory. S3 test folders under the lab's `egv-332-qa/`:
+`fasta/` (`WI-01.fasta`, `WI-02.fa`, `WI-03.fna`, `WI-04.fa.gz`, `WI-01.fasta.fai`, `WI-02.fa.gz.md5`), `fastq/`
+(`NA1287820K_R1_001.fastq.gz` and `_R2_`), `mixed/` (the same R1 and R2 plus `ref.fa`) and `bam/` (`QA-01.bam`). Upload
+files: `E332-01.fasta`, `E332-02.fa`, `E332-03.fna` and `E332-04.fa.gz`.
+
+- [x] **S3, FASTA with sidecars** — `fasta/` → Continue lands on Tags. Review shows "4 assembled" with no paired or
+      single-end chip, and the unmatched notice lists `WI-01.fasta.fai` and `WI-02.fa.gz.md5`.
+- [x] **Step stays reachable** — Back from Tags opens Group files with "One sample per FASTA file" selected ("From 6
+      files → 4 samples"). Editing the regex to `(?<sample>WI-0[12])\.(?:fasta|fa)$` changes Review to "2 assembled".
+- [x] **Re-list FASTQ** — back to Source, then `fastq/`. Group files opens on "R1 and R2 (any separator)", and Review
+      shows "1 paired · 0 single-end".
+- [x] **Mixed, unchanged** — `mixed/` opens Group files on the default preset with `ref.fa` unmatched. Review shows "1
+      paired · 0 single-end".
+- [x] **BAM only, unchanged** — `bam/` opens Group files on the default preset with 0 samples and `QA-01.bam` unmatched.
+- [x] **Upload, FASTA only** — the 4 E332 files → Upload & continue lands on Tags, and Review shows "4 assembled".
+      Create 4 samples sends `Layout: "assembled"` for each, and batch `egv-332-qa-upload` lists E332-01 to E332-04.
+- [x] **Launch** — an Assembled collection of the 4 samples, then Launch Workflow, then Continue. The run wizard opens,
+      and the sheet is `sample,fasta` with one row per sample, ending in `.fasta`, `.fa`, `.fna` and `.fa.gz`. No run
+      was submitted.
+- [ ] **Truncated listing** — covered by its unit test only; a 5000-key folder isn't worth building for QA.
+- [x] **Clean up** — the collection and the `egv-332-qa/` S3 folder are deleted. The 4 samples stay, since samples can't
+      be deleted.

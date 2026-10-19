@@ -68,9 +68,7 @@
     { label: allowedPrefixForBucket.value, value: 'allowed' },
   ]);
   const prefixHint = computed(() =>
-    searchesAllowedFolder.value
-      ? `folder inside ${allowedPrefixForBucket.value}`
-      : "folder inside this lab's directory",
+    searchesAllowedFolder.value ? `folder inside ${allowedPrefixForBucket.value}` : "inside this lab's folder",
   );
 
   watch(sourceBucket, () => {
@@ -541,12 +539,12 @@
             <USelect v-model="sourceRoot" :options="sourceRootOptions" class="font-mono" />
           </UFormGroup>
           <UFormGroup
-            label="Prefix"
+            label="Folder"
             :hint="prefixHint"
             required
             :help="sourcePrefix.trim() ? undefined : 'Enter a folder to continue.'"
           >
-            <UInput v-model="sourcePrefix" placeholder="imports/" class="font-mono" />
+            <UInput v-model="sourcePrefix" placeholder="sequencing/run-1/" class="font-mono" />
           </UFormGroup>
           <p v-if="sourceBucket" class="text-text-muted mt-1 break-all font-mono text-xs" role="status">
             Searches {{ confirmSourceLabel }}

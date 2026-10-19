@@ -1,4 +1,4 @@
-import { describeSourceListing } from '../../../src/app/utils/data-collections-source-listing';
+import { describeSourceListing, skipsGroupingStep } from '../../../src/app/utils/data-collections-source-listing';
 
 describe('describeSourceListing', () => {
   const searched = { S3Bucket: 'lab-bucket', ResolvedPrefix: 'org-1/lab-1/sample-3-18/' };
@@ -55,5 +55,25 @@ describe('describeSourceListing', () => {
         ReturnedKeyCount: 1,
       }),
     ).toBeNull();
+  });
+});
+
+describe('skipsGroupingStep', () => {
+  const genomes = ['org/lab/genomes/WI-01.fasta', 'org/lab/genomes/WI-02.fa.gz', 'org/lab/genomes/WI-01.fasta.fai'];
+
+  it('skips for FASTA files with no FASTQ', () => {
+    expect(skipsGroupingStep(genomes, null)).toBe(true);
+  });
+
+  it('keeps the step when the listing also holds FASTQ', () => {
+    expect(skipsGroupingStep([...genomes, 'org/lab/genomes/WI-01_R1.fastq.gz'], null)).toBe(false);
+  });
+
+  it('keeps the step for a listing with neither FASTA nor FASTQ', () => {
+    expect(skipsGroupingStep(['org/lab/aligned/WI-01.bam'], null)).toBe(false);
+  });
+
+  it('keeps the step for a truncated listing, which may hold FASTQ past the cut', () => {
+    expect(skipsGroupingStep(genomes, { kind: 'truncated', message: 'Showing the first 5000 files' })).toBe(false);
   });
 });

@@ -10,6 +10,7 @@
   } from '@easy-genomics/shared-lib/src/app/types/easy-genomics/easy-genomics-api';
   import {
     DEFAULT_REGEX_GROUPING_PRESET_KEY,
+    FASTA_REGEX_GROUPING_PRESET_KEY,
     findDuplicateSampleNames,
     folderBelowLabRoot,
     REGEX_GROUPING_PRESETS,
@@ -21,7 +22,11 @@
   import { buildImportDestKey, buildS3CopyJobs } from '@FE/utils/data-collections-copy-jobs';
   import { basenameFromS3Key } from '@FE/utils/data-collections-file-type';
   import { exceedsBatchNameMaxLength } from '@FE/utils/data-collections-name-validation';
-  import { describeSourceListing, type SourceListingNotice } from '@FE/utils/data-collections-source-listing';
+  import {
+    describeSourceListing,
+    skipsGroupingStep,
+    type SourceListingNotice,
+  } from '@FE/utils/data-collections-source-listing';
   import { buildLaboratorySourcePrefix, buildSourcePrefix } from '@FE/utils/data-collections-source-prefix';
   import { matchSheetToSamples, type SheetTagMatchResult } from '@FE/utils/sheet-tag-matching';
 
@@ -87,6 +92,7 @@
   const regexPattern = ref(REGEX_GROUPING_PRESETS[DEFAULT_REGEX_GROUPING_PRESET_KEY].pattern);
   const sourceFiles = ref<string[]>([]);
   const sourceListingNotice = ref<SourceListingNotice | null>(null);
+  const autoGroupedOnePerFastaFile = ref(false);
   const { proposedSets, unmatchedFiles, refreshPreview, resetPreview } = useRegexGroupingPreview(
     sourceFiles,
     regexPattern,
@@ -324,10 +330,28 @@
     }
   });
 
+  function continueAfterListing(): void {
+    const presetWasAutomatic = autoGroupedOnePerFastaFile.value;
+    autoGroupedOnePerFastaFile.value = skipsGroupingStep(sourceFiles.value, sourceListingNotice.value);
+    // Set the pattern as well as the key: the user may have edited the regex while the key stayed the same.
+    if (autoGroupedOnePerFastaFile.value) {
+      presetKey.value = FASTA_REGEX_GROUPING_PRESET_KEY;
+      regexPattern.value = REGEX_GROUPING_PRESETS[FASTA_REGEX_GROUPING_PRESET_KEY].pattern;
+      step.value = 3;
+      return;
+    }
+    // The FASTA preset came from the previous listing, not from the user, so this listing starts on the default.
+    if (presetWasAutomatic) {
+      presetKey.value = DEFAULT_REGEX_GROUPING_PRESET_KEY;
+      regexPattern.value = REGEX_GROUPING_PRESETS[DEFAULT_REGEX_GROUPING_PRESET_KEY].pattern;
+    }
+    step.value = 2;
+  }
+
   async function loadSourceFiles(): Promise<void> {
     if (importSource.value === 'upload') {
       const ok = await uploadPendingFiles();
-      if (ok) step.value = 2;
+      if (ok) continueAfterListing();
       return;
     }
 
@@ -351,7 +375,7 @@
       refreshPreview();
       sourceListingNotice.value = describeSourceListing(listing);
       if (sourceListingNotice.value?.kind === 'empty') return;
-      step.value = 2;
+      continueAfterListing();
     } finally {
       uiStore.setRequestComplete('dataCollectionsList');
     }
@@ -690,8 +714,10 @@
       <!-- Step 4: Build -->
       <div v-else-if="step === 4" class="flex min-h-0 flex-1 flex-col">
         <div class="flex gap-2 border-b p-4 text-xs">
-          <span class="rounded-full bg-green-100 px-2 py-1 text-green-800">{{ stats.paired }} paired</span>
-          <span class="rounded-full bg-blue-100 px-2 py-1 text-blue-800">{{ stats.single }} single-end</span>
+          <template v-if="!autoGroupedOnePerFastaFile">
+            <span class="rounded-full bg-green-100 px-2 py-1 text-green-800">{{ stats.paired }} paired</span>
+            <span class="rounded-full bg-blue-100 px-2 py-1 text-blue-800">{{ stats.single }} single-end</span>
+          </template>
           <span v-if="stats.assembled" class="rounded-full bg-purple-100 px-2 py-1 text-purple-800">
             {{ stats.assembled }} assembled
           </span>
@@ -699,6 +725,12 @@
             {{ stats.review }} needs review
           </span>
         </div>
+        <EGRegexUnmatchedNotice
+          v-if="autoGroupedOnePerFastaFile"
+          :unmatched-files="unmatchedFiles"
+          :proposed-set-count="proposedSets.length"
+          notice-class="mx-4 mt-4"
+        />
         <EGDuplicateSampleNamesNotice :duplicates="duplicateSampleNames" notice-class="mx-4 mt-4" />
         <div class="flex-1 overflow-y-auto">
           <table class="w-full text-sm">

@@ -1,3 +1,4 @@
+import { hasFastaButNoFastq } from '@easy-genomics/shared-lib/src/app/utils/sample-regex-grouping';
 import type { LaboratoryBucketObjectsResponse } from '@FE/repository/modules/data-collections';
 
 export type SourceListingSummary = Pick<
@@ -32,4 +33,12 @@ export function describeSourceListing(listing: SourceListingSummary): SourceList
   }
 
   return null;
+}
+
+/**
+ * A listing of FASTA files with no FASTQ is grouped one sample per file, so the import wizard skips its
+ * grouping step. A truncated listing never skips: the keys past the cut may be FASTQ.
+ */
+export function skipsGroupingStep(fileNames: string[], notice: SourceListingNotice | null): boolean {
+  return notice?.kind !== 'truncated' && hasFastaButNoFastq(fileNames);
 }

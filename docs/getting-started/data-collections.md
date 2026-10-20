@@ -119,6 +119,10 @@ There the **Folder** is optional: leave it blank to list the allowed folder itse
 Apply a filename **regex** (presets or custom) to propose sample groups. A preview shows how many samples will be
 created. Files that do not match the pattern are listed as unmatched and skipped unless you change the regex.
 
+When the listing has FASTA files and no FASTQ, the wizard skips this step and makes one sample per FASTA file (the **One
+sample per FASTA file** preset). To group several FASTA files into one sample, go **Back** from Tags and change the
+regex.
+
 ### Tags (optional)
 
 Optionally upload a CSV/TSV/TXT sheet that maps sample names to tags:

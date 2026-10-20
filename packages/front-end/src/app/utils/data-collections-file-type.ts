@@ -4,7 +4,7 @@
  * the "hidden by file type" popout breakdown.
  */
 
-import { isFasta } from '@easy-genomics/shared-lib/src/app/utils/sample-regex-grouping';
+import { isFasta, isFastq } from '@easy-genomics/shared-lib/src/app/utils/sample-regex-grouping';
 
 export type DataCollectionFileKind = 'fastq' | 'fasta' | 'other';
 
@@ -42,7 +42,7 @@ export function basenameFromS3Key(s3Key: string): string {
  */
 export function dataCollectionFileKind(s3Key: string): DataCollectionFileKind {
   const name = basenameFromS3Key(s3Key).toLowerCase();
-  if (name.endsWith('.fastq.gz') || name.endsWith('.fq.gz') || name.endsWith('.fastq') || name.endsWith('.fq')) {
+  if (isFastq(name)) {
     return 'fastq';
   }
   if (isFasta(name)) {

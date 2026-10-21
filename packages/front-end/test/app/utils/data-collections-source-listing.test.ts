@@ -1,4 +1,4 @@
-import { describeSourceListing } from '../../../src/app/utils/data-collections-source-listing';
+import { describeSourceListing, skipsGroupingStep } from '../../../src/app/utils/data-collections-source-listing';
 
 describe('describeSourceListing', () => {
   const searched = { S3Bucket: 'lab-bucket', ResolvedPrefix: 'org-1/lab-1/sample-3-18/' };
@@ -6,7 +6,7 @@ describe('describeSourceListing', () => {
   it('names the bucket and resolved prefix the server searched when nothing is found', () => {
     expect(describeSourceListing({ ...searched, Contents: [], ListingTruncated: false, ReturnedKeyCount: 0 })).toEqual({
       kind: 'empty',
-      message: 'No files found in s3://lab-bucket/org-1/lab-1/sample-3-18/ — check the bucket and prefix.',
+      message: 'No files found in s3://lab-bucket/org-1/lab-1/sample-3-18/ — check the bucket and folder.',
     });
   });
 
@@ -18,7 +18,7 @@ describe('describeSourceListing', () => {
     expect(describeSourceListing({ ...searched, Contents: [], ListingTruncated: true, ReturnedKeyCount: 0 })).toEqual({
       kind: 'empty',
       message:
-        'No files found in s3://lab-bucket/org-1/lab-1/sample-3-18/ before the listing stopped early — try a narrower prefix.',
+        'No files found in s3://lab-bucket/org-1/lab-1/sample-3-18/ before the listing stopped early — try a more specific folder.',
     });
   });
 
@@ -33,7 +33,7 @@ describe('describeSourceListing', () => {
     ).toEqual({
       kind: 'truncated',
       message:
-        'Showing the first 5000 files — the listing stopped early, so results are partial. Try a narrower prefix.',
+        'Showing the first 5000 files — the listing stopped early, so results are partial. Try a more specific folder.',
     });
   });
 
@@ -55,5 +55,25 @@ describe('describeSourceListing', () => {
         ReturnedKeyCount: 1,
       }),
     ).toBeNull();
+  });
+});
+
+describe('skipsGroupingStep', () => {
+  const genomes = ['org/lab/genomes/WI-01.fasta', 'org/lab/genomes/WI-02.fa.gz', 'org/lab/genomes/WI-01.fasta.fai'];
+
+  it('skips for FASTA files with no FASTQ', () => {
+    expect(skipsGroupingStep(genomes, null)).toBe(true);
+  });
+
+  it('keeps the step when the listing also holds FASTQ', () => {
+    expect(skipsGroupingStep([...genomes, 'org/lab/genomes/WI-01_R1.fastq.gz'], null)).toBe(false);
+  });
+
+  it('keeps the step for a listing with neither FASTA nor FASTQ', () => {
+    expect(skipsGroupingStep(['org/lab/aligned/WI-01.bam'], null)).toBe(false);
+  });
+
+  it('keeps the step for a truncated listing, which may hold FASTQ past the cut', () => {
+    expect(skipsGroupingStep(genomes, { kind: 'truncated', message: 'Showing the first 5000 files' })).toBe(false);
   });
 });

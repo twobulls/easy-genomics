@@ -1,9 +1,13 @@
+import { isFilenameRegexSafe } from './filename-regex-safety';
 import {
   buildContentsSummary,
   DEFAULT_REGEX_GROUPING_PRESET_KEY,
+  FASTA_REGEX_GROUPING_PRESET_KEY,
   findDuplicateSampleNames,
   folderBelowLabRoot,
   groupFilenamesByRegex,
+  hasFastaButNoFastq,
+  isFastq,
   REGEX_GROUPING_PRESETS,
 } from './sample-regex-grouping';
 
@@ -387,5 +391,139 @@ describe('reference FASTA role', () => {
   it.each(['ref.fa.gz.md5', 'ref.fai'])('does not treat %s as a reference', (sidecarName) => {
     const { sets } = groupFilenamesByRegex(['s1_R1_001.fastq.gz', `s1_${sidecarName}`], customPattern);
     expect(sets[0].files.find((f) => f.fileName === `s1_${sidecarName}`)?.role).toBe('extra');
+  });
+});
+
+describe('FASTA-only samples', () => {
+  const fastaPattern = REGEX_GROUPING_PRESETS.fasta_one_per_file.pattern;
+
+  it('offers the preset after the default one', () => {
+    expect(REGEX_GROUPING_PRESETS.fasta_one_per_file.label).toBe('One sample per FASTA file');
+    expect(Object.keys(REGEX_GROUPING_PRESETS)[0]).toBe(DEFAULT_REGEX_GROUPING_PRESET_KEY);
+  });
+
+  it('passes the filename regex safety check', () => {
+    expect(isFilenameRegexSafe(fastaPattern)).toBe(true);
+  });
+
+  it.each([
+    ['WI-01.fa', 'WI-01'],
+    ['WI-01.fasta', 'WI-01'],
+    ['WI-01.fna', 'WI-01'],
+    ['WI-01.fa.gz', 'WI-01'],
+    ['WI-01.contigs.FASTA.GZ', 'WI-01.contigs'],
+  ])('groups %s as assembled sample %s', (fileName, sampleId) => {
+    const { sets, unmatched } = groupFilenamesByRegex([`org/lab/genomes/${fileName}`], fastaPattern);
+    expect(unmatched).toEqual([]);
+    expect(sets).toHaveLength(1);
+    expect(sets[0]).toMatchObject({ sampleId, status: 'assembled', layout: 'assembled' });
+  });
+
+  it('makes one sample per FASTA file', () => {
+    const { sets } = groupFilenamesByRegex(
+      ['org/lab/genomes/a.fasta', 'org/lab/genomes/b.fa', 'org/lab/genomes/c.fna', 'org/lab/genomes/d.fa.gz'],
+      fastaPattern,
+    );
+    expect(sets.map((set) => set.sampleId)).toEqual(['a', 'b', 'c', 'd']);
+    expect(sets.every((set) => set.layout === 'assembled' && set.files.length === 1)).toBe(true);
+  });
+
+  it.each(['WI-01.fa.gz.md5', 'WI-01.fai', 'WI-01_R1.fastq.gz'])('leaves %s unmatched', (fileName) => {
+    const { sets, unmatched } = groupFilenamesByRegex([fileName], fastaPattern);
+    expect(sets).toEqual([]);
+    expect(unmatched).toEqual([fileName]);
+  });
+
+  it('marks a FASTA-only group from a custom regex assembled', () => {
+    const { sets } = groupFilenamesByRegex(['org/lab/genomes/WI-01.fasta'], '(?<sample>.+)\\.fasta$');
+    expect(sets[0]).toMatchObject({ status: 'assembled', layout: 'assembled' });
+  });
+
+  it('keeps an R1 plus a FASTA single_end', () => {
+    const { sets } = groupFilenamesByRegex(
+      ['s1_R1.fastq.gz', 's1_ref.fa'],
+      '^(?<sample>[^_]+)_(?:(?<read>R[12])\\.fastq\\.gz|ref\\.fa)$',
+    );
+    expect(sets[0]).toMatchObject({ status: 'single_end', layout: 'single_end' });
+  });
+});
+
+describe('listings without FASTQ', () => {
+  const fastaPattern = REGEX_GROUPING_PRESETS[FASTA_REGEX_GROUPING_PRESET_KEY].pattern;
+
+  it('names the FASTA preset', () => {
+    expect(REGEX_GROUPING_PRESETS[FASTA_REGEX_GROUPING_PRESET_KEY].label).toBe('One sample per FASTA file');
+  });
+
+  it.each(['a.fastq.gz', 'a.fq.gz', 'a.fastq', 'a.fq', 'A_R1.FASTQ.GZ'])('treats %s as FASTQ', (fileName) => {
+    expect(isFastq(fileName)).toBe(true);
+  });
+
+  it.each(['a.fastq.gz.md5', 'a.fq.gz.sha256', 'a.fasta', 'a.bam', 'a.fastqc.html'])(
+    'does not treat %s as FASTQ',
+    (fileName) => {
+      expect(isFastq(fileName)).toBe(false);
+    },
+  );
+
+  it.each([
+    { listing: 'FASTA only', fileNames: ['org/lab/g/WI-01.fasta', 'org/lab/g/WI-02.fa.gz'], expected: true },
+    {
+      listing: 'FASTA with index and checksum files',
+      fileNames: ['org/lab/g/WI-01.fasta', 'org/lab/g/WI-01.fasta.fai', 'org/lab/g/WI-01.fasta.md5'],
+      expected: true,
+    },
+    {
+      listing: 'FASTA with a FASTQ checksum but no FASTQ',
+      fileNames: ['org/lab/g/WI-01.fa', 'org/lab/g/x_R1.fastq.gz.md5'],
+      expected: true,
+    },
+    { listing: 'FASTA and FASTQ', fileNames: ['org/lab/g/ref.fa', 'org/lab/g/x_R1.fastq.gz'], expected: false },
+    {
+      listing: 'FASTA and an upper-case FASTQ',
+      fileNames: ['org/lab/g/ref.fa', 'org/lab/g/X_R1.FASTQ.GZ'],
+      expected: false,
+    },
+    {
+      listing: 'FASTQ only',
+      fileNames: ['org/lab/g/x_R1.fastq.gz', 'org/lab/g/x_R2.fastq.gz'],
+      expected: false,
+    },
+    { listing: 'BAM only', fileNames: ['org/lab/g/x.bam', 'org/lab/g/x.bam.bai'], expected: false },
+    { listing: 'nothing', fileNames: [], expected: false },
+  ])('hasFastaButNoFastq is $expected for $listing', ({ fileNames, expected }) => {
+    expect(hasFastaButNoFastq(fileNames)).toBe(expected);
+  });
+
+  it('groups such a listing one sample per FASTA file and leaves the rest unmatched', () => {
+    const listing = [
+      'org/lab/genomes/WI-01.fasta',
+      'org/lab/genomes/WI-01.fasta.fai',
+      'org/lab/genomes/WI-02.fa.gz',
+      'org/lab/genomes/WI-02.fa.gz.md5',
+      'org/lab/genomes/WI-03.fna',
+      'org/lab/genomes/WI-03.bam',
+      'org/lab/genomes/README.txt',
+    ];
+    expect(hasFastaButNoFastq(listing)).toBe(true);
+    const { sets, unmatched } = groupFilenamesByRegex(listing, fastaPattern);
+    expect(sets.map((set) => [set.sampleId, set.files.length, set.layout, set.status])).toEqual([
+      ['WI-01', 1, 'assembled', 'assembled'],
+      ['WI-02', 1, 'assembled', 'assembled'],
+      ['WI-03', 1, 'assembled', 'assembled'],
+    ]);
+    expect(unmatched).toEqual([
+      'org/lab/genomes/WI-01.fasta.fai',
+      'org/lab/genomes/WI-02.fa.gz.md5',
+      'org/lab/genomes/WI-03.bam',
+      'org/lab/genomes/README.txt',
+    ]);
+  });
+
+  it('keeps two FASTA files with the same stem in one folder as one sample', () => {
+    const { sets } = groupFilenamesByRegex(['org/lab/genomes/WI-01.fa', 'org/lab/genomes/WI-01.fa.gz'], fastaPattern);
+    expect(sets).toHaveLength(1);
+    expect(sets[0]).toMatchObject({ sampleId: 'WI-01', layout: 'assembled', status: 'assembled' });
+    expect(sets[0].files).toHaveLength(2);
   });
 });

@@ -200,6 +200,12 @@ export class AwsHealthOmicsNestedStack extends NestedStack {
             GITHUB_PAT_SECRET_NAME: this.githubPatSecretName,
           },
         },
+        // The Node.js 20 runtime SDK predates HealthOmics VPC networking. Leaving
+        // @aws-sdk/* external makes StartRun drop networkingMode and configurationName,
+        // so a lab saved as VPC still launches in RESTRICTED mode.
+        '/aws-healthomics/run/create-run-execution': {
+          nodeModules: ['@aws-sdk/client-omics'],
+        },
       },
       environment: {
         ACCOUNT_ID: this.props.env.account!,

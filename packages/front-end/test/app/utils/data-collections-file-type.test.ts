@@ -36,6 +36,14 @@ describe('dataCollectionFileKind', () => {
   it.each(['ref.fa.gz.md5', 'ref.fai', 'ref.gz'])('does not classify %s as FASTA', (name) => {
     expect(dataCollectionFileKind(`org/lab/${name}`)).toBe('other');
   });
+
+  it('classifies an upper-case FASTQ as FASTQ', () => {
+    expect(dataCollectionFileKind('org/lab/READ_R1.FASTQ.GZ')).toBe('fastq');
+  });
+
+  it.each(['read.fastq.gz.md5', 'read.fq.gz.sha256', 'report.fastqc.html'])('does not classify %s as FASTQ', (name) => {
+    expect(dataCollectionFileKind(`org/lab/${name}`)).toBe('other');
+  });
 });
 
 describe('fileMatchesFileTypeFilter', () => {

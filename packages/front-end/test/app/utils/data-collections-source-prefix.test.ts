@@ -1,4 +1,10 @@
-import { buildLaboratorySourcePrefix, buildSourcePrefix } from '../../../src/app/utils/data-collections-source-prefix';
+import { buildImportDestKey } from '../../../src/app/utils/data-collections-copy-jobs';
+import {
+  buildLaboratorySourcePrefix,
+  buildSourcePrefix,
+  defaultS3ImportLabel,
+  isSourceFolderMissing,
+} from '../../../src/app/utils/data-collections-source-prefix';
 
 describe('buildLaboratorySourcePrefix', () => {
   const laboratory = { OrganizationId: 'org-1', LaboratoryId: 'lab-1' };
@@ -29,5 +35,64 @@ describe('buildSourcePrefix', () => {
   it('returns the allowed folder itself for a blank or slash-only prefix', () => {
     expect(buildSourcePrefix('sample-3-18/', '')).toBe('sample-3-18/');
     expect(buildSourcePrefix('sample-3-18/', '//')).toBe('sample-3-18/');
+  });
+});
+
+describe('a folder that names no folder', () => {
+  it.each(['   ', ' / ', '/  /'])('lists the root itself for %p', (typedPrefix) => {
+    expect(buildSourcePrefix('her-folder/', typedPrefix)).toBe('her-folder/');
+    expect(buildLaboratorySourcePrefix({ OrganizationId: 'org-1', LaboratoryId: 'lab-1' }, typedPrefix)).toBe(
+      'org-1/lab-1/',
+    );
+  });
+});
+
+describe('isSourceFolderMissing', () => {
+  it.each(['', '   ', '/', ' / ', '//'])('requires a folder in the lab folder, so %p is missing', (typedPrefix) => {
+    expect(isSourceFolderMissing(typedPrefix, '')).toBe(true);
+  });
+
+  it('accepts a typed folder in the lab folder', () => {
+    expect(isSourceFolderMissing('run-1', '')).toBe(false);
+    expect(isSourceFolderMissing('/run-1/', '')).toBe(false);
+  });
+
+  it.each(['', '   ', '/', 'run-1'])('never requires a folder in an allowed folder (%p)', (typedPrefix) => {
+    expect(isSourceFolderMissing(typedPrefix, 'her-folder/')).toBe(false);
+  });
+});
+
+describe('defaultS3ImportLabel', () => {
+  it('names the import after the typed folder', () => {
+    expect(defaultS3ImportLabel('sample-3-18/run-1/', '', 'lab-bucket')).toBe('run-1');
+    expect(defaultS3ImportLabel('run-1', 'her-folder/', 'lab-bucket')).toBe('run-1');
+  });
+
+  it.each(['', '   ', '/'])(
+    'names a blank folder (%p) in an allowed folder after the allowed folder',
+    (typedPrefix) => {
+      expect(defaultS3ImportLabel(typedPrefix, 'her-folder/', 'lab-bucket')).toBe('her-folder');
+    },
+  );
+
+  it('uses the last folder of a nested allowed folder', () => {
+    expect(defaultS3ImportLabel('', 'partners/site-a/', 'lab-bucket')).toBe('site-a');
+  });
+
+  it('skips blank segments in the typed folder', () => {
+    expect(defaultS3ImportLabel('run-1/   ', '', 'lab-bucket')).toBe('run-1');
+  });
+
+  it('falls back to the bucket, then to "import", in the lab folder', () => {
+    expect(defaultS3ImportLabel('', '', 'lab-bucket')).toBe('lab-bucket');
+    expect(defaultS3ImportLabel('', '', '')).toBe('import');
+  });
+
+  it('lands a file at the top of an allowed folder under imports/<folder name>/', () => {
+    const listedSourcePrefix = buildSourcePrefix('her-folder/', '');
+    const destPrefix = `org-1/lab-1/imports/${defaultS3ImportLabel('', 'her-folder/', 'lab-bucket')}/`;
+    expect(buildImportDestKey('her-folder/S1_R1_001.fastq.gz', listedSourcePrefix, destPrefix)).toBe(
+      'org-1/lab-1/imports/her-folder/S1_R1_001.fastq.gz',
+    );
   });
 });

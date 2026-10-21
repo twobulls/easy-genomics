@@ -173,3 +173,139 @@ this environment has no local Nuxt config and no signed-in session.
       parameter file field shows an error.
 - [ ] **Wrong ZIP extension** — upload a non-`.zip` definition. Create Workflow stays disabled, and the ZIP field shows
       an error.
+
+---
+
+## Data Collections — samples made only of FASTA files (EGV-331)
+
+A sample holding only FASTA files was saved as `single_end`, so launching it failed with "Single-end sample requires at
+least one FASTQ file." The Assembled preset's `assembly_fasta` column was never filled. This change adds an `assembled`
+layout and a "One sample per FASTA file" grouping preset. The sheet maps `assembled` samples, and `single_end` samples
+holding only FASTA, to `assembly_fasta`. A FASTA-only sample in a collection with a required read column gets an error
+that names the mismatch. Unit tests in shared-lib cover grouping, layout and role mapping for `.fa`, `.fasta`, `.fna`
+and `.fa.gz`. There is no Playwright spec for the import wizard or launch.
+
+### Automated checks
+
+| Check                    | Result                                            |
+| ------------------------ | ------------------------------------------------- |
+| `pnpm lint` (all three)  | Passes                                            |
+| `pnpm test` (shared-lib) | 381 tests pass, including `openapi-guard.test.ts` |
+| `pnpm test` (back-end)   | 1370 tests pass                                   |
+| `pnpm test` (front-end)  | 350 tests pass                                    |
+
+### Manual steps
+
+Run on 16 Oct 2026 with Playwright, against the branch's front-end and local back-end (`dev-demo` stack). Signed in as
+the lab-manager test user, in Test Laboratory. Test files: `WI-01.fasta`, `WI-02.fa`, `WI-03.fna`, `WI-04.fa.gz`,
+`WI-05.fasta`.
+
+- [x] **Group with the FASTA preset** — Import data, Upload from computer, all 5 files, then **One sample per FASTA
+      file**. The regex fills with no typing, and 5 files give 5 samples.
+- [x] **Review counts** — with WI-05 excluded, Review shows "0 paired · 0 single-end · 4 assembled" and no "needs
+      review". Each row's status is `assembled`.
+- [x] **Stored layout** — the 4 created samples list as `Layout: assembled`, `ContentsSummary: 1 file`.
+- [x] **Assembled launch** — an Assembled collection of the 4 samples, then Launch Workflow, then Continue. No error,
+      and the run wizard opens with the sheet as `input`. The sheet is `sample,fasta` with one row per sample, and the
+      URIs end in `.fasta`, `.fa`, `.fna` and `.fa.gz`.
+- [x] **Mismatch** — the same 4 samples in a Paired collection. Continue returns 400 EG-102, and the toast reads "WI-02:
+      this sample holds an assembled genome (FASTA) and no FASTQ reads, but column "fastq_1" needs reads. Use a sequence
+      collection with the Assembled preset." The run wizard does not open.
+- [x] **Manual build pre-selects assembled** — Files tab, WI-05.fasta, Build sample manually. The layout is pre-selected
+      as "Assembled genome (FASTA)".
+- [x] **Fallback for a FASTA-only `single_end` sample** — WI-05 saved as Single-end, then put in an Assembled collection
+      and launched. The request returns 200 and the sheet row is `WI-05,s3://…/WI-05.fasta`.
+- [x] **FASTQ unchanged** — paired fixtures `NA1287820K_R1_001.fastq.gz` and `_R2_` with the default preset. Review
+      shows "1 paired · 0 single-end" and no assembled count. A Paired collection launches with `sample,fastq_1,fastq_2`
+      and R1 and R2 in place.
+- [x] **Upload picker accepts `.fna`** — found during this run: the upload input's `accept` list omitted `.fna`, so the
+      file dialog could not pick one (drag and drop worked). The list now includes `.fna`, and the running wizard reads
+      `.fastq,.fq,.gz,.fasta,.fa,.fna,.fa.gz`.
+
+---
+
+## Data Collections — import wizard "Folder" field, blank in an allowed folder (EGV-329, EGV-334)
+
+The S3 source step's "Prefix" field is now labelled "Folder", and the listing notices say "folder". When Search in is an
+allowed folder, Folder may be left blank to list the allowed folder itself, and the import label defaults to that
+folder's name. In this lab's own folder, a Folder that is blank, spaces only or slashes only still disables Continue.
+Front-end unit tests cover the Continue rule, the label default and the notice copy. There is no Playwright spec for the
+import wizard.
+
+### Automated checks
+
+| Check                   | Result         |
+| ----------------------- | -------------- |
+| `pnpm lint` (front-end) | Passes         |
+| `pnpm test` (front-end) | 365 tests pass |
+
+### Manual steps
+
+Run on 19 Oct 2026 with Playwright, against the branch's front-end and local back-end (`dev-demo` stack). Signed in as
+the lab-manager test user in Test Laboratory, and as the system-admin test user for S3 access. Test files:
+`NA1287820K_R1_001.fastq.gz` and `_R2_` in `egv-329-qa/` at the root of the dev-demo lab bucket, set as the lab's
+allowed folder for the run.
+
+- [x] **Copy** — the field reads **Folder**, with hint "inside this lab's folder" and placeholder `sequencing/run-1/`.
+      `does-not-exist` → Continue shows "No files found in s3://…/does-not-exist/ — check the bucket and folder." No
+      wizard step from Source to Confirm contains the word "prefix".
+- [x] **Lab folder, blank** — with Search in = This lab's folder, a Folder that is empty, spaces only, `/`, or a slash
+      with spaces around it shows the `*` and "Enter a folder to continue.", and Continue is disabled.
+- [x] **Lab folder, typed** — `aws-healthomics/` lists 128 files. The listing request's `S3Prefix` is
+      `{org}/{lab}/aws-healthomics/`, the same as on `development`, and the back-end is unchanged.
+- [x] **Allowed folder, blank** — with Search in = `egv-329-qa/`: no `*`, no help line, hint "optional, inside
+      egv-329-qa/", and Searches `s3://851725267090-dev-demo-lab-bucket/egv-329-qa/`. The same holds for spaces only,
+      `/`, and a slash with spaces around it.
+- [x] **Allowed folder import** — Continue lists the 2 top-level files as 1 paired sample. Confirm shows Source
+      `s3://…/egv-329-qa/` and batch `egv-329-qa`. The import succeeds; `CopyJobs[].DestKey` is
+      `{org}/{lab}/imports/egv-329-qa/NA1287820K_R1_001.fastq.gz` (and `_R2_`), and both copies exist in S3.
+- [x] **Switching back** — with Folder blank, Search in → This lab's folder brings back the `*` and the help line, and
+      Continue disables. Back to the allowed folder enables it. Changing the bucket and back resets Search in to This
+      lab's folder, with Continue disabled.
+- [x] **Clean up** — the allowed folder is cleared (the lab's grants read `allowedPrefixes: {}` again) and `egv-329-qa/`
+      at the bucket root is deleted. The imported sample (batch `egv-329-qa`) and its `imports/egv-329-qa/` copies stay:
+      samples can't be deleted, and the sample points at the copies.
+
+---
+
+## Data Collections — import wizard skips grouping for FASTA-only listings (EGV-332)
+
+When a listing has FASTA files and no FASTQ, the import wizard applies the "One sample per FASTA file" preset and goes
+from Source straight to Tags. Back still reaches Group files with that preset selected. Review hides the paired and
+single-end counts and lists the files that matched nothing. A truncated listing never skips. FASTQ, mixed FASTA + FASTQ
+and other-file listings keep the grouping step as before. Unit tests in shared-lib and front-end cover the detection and
+the skip rule. There is no Playwright spec for the import wizard.
+
+### Automated checks
+
+| Check                               | Result         |
+| ----------------------------------- | -------------- |
+| `pnpm lint` (shared-lib, front-end) | Passes         |
+| `pnpm test` (shared-lib)            | 402 tests pass |
+| `pnpm test` (front-end)             | 365 tests pass |
+
+### Manual steps
+
+Run on 19 Oct 2026 with Playwright, against the branch's front-end and local back-end (`dev-demo` stack), stacked on
+#985. Signed in as the lab-manager test user, in Test Laboratory. S3 test folders under the lab's `egv-332-qa/`:
+`fasta/` (`WI-01.fasta`, `WI-02.fa`, `WI-03.fna`, `WI-04.fa.gz`, `WI-01.fasta.fai`, `WI-02.fa.gz.md5`), `fastq/`
+(`NA1287820K_R1_001.fastq.gz` and `_R2_`), `mixed/` (the same R1 and R2 plus `ref.fa`) and `bam/` (`QA-01.bam`). Upload
+files: `E332-01.fasta`, `E332-02.fa`, `E332-03.fna` and `E332-04.fa.gz`.
+
+- [x] **S3, FASTA with sidecars** — `fasta/` → Continue lands on Tags. Review shows "4 assembled" with no paired or
+      single-end chip, and the unmatched notice lists `WI-01.fasta.fai` and `WI-02.fa.gz.md5`.
+- [x] **Step stays reachable** — Back from Tags opens Group files with "One sample per FASTA file" selected ("From 6
+      files → 4 samples"). Editing the regex to `(?<sample>WI-0[12])\.(?:fasta|fa)$` changes Review to "2 assembled".
+- [x] **Re-list FASTQ** — back to Source, then `fastq/`. Group files opens on "R1 and R2 (any separator)", and Review
+      shows "1 paired · 0 single-end".
+- [x] **Mixed, unchanged** — `mixed/` opens Group files on the default preset with `ref.fa` unmatched. Review shows "1
+      paired · 0 single-end".
+- [x] **BAM only, unchanged** — `bam/` opens Group files on the default preset with 0 samples and `QA-01.bam` unmatched.
+- [x] **Upload, FASTA only** — the 4 E332 files → Upload & continue lands on Tags, and Review shows "4 assembled".
+      Create 4 samples sends `Layout: "assembled"` for each, and batch `egv-332-qa-upload` lists E332-01 to E332-04.
+- [x] **Launch** — an Assembled collection of the 4 samples, then Launch Workflow, then Continue. The run wizard opens,
+      and the sheet is `sample,fasta` with one row per sample, ending in `.fasta`, `.fa`, `.fna` and `.fa.gz`. No run
+      was submitted.
+- [ ] **Truncated listing** — covered by its unit test only; a 5000-key folder isn't worth building for QA.
+- [x] **Clean up** — the collection and the `egv-332-qa/` S3 folder are deleted. The 4 samples stay, since samples can't
+      be deleted.

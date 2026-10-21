@@ -44,14 +44,36 @@ export const REGEX_GROUPING_PRESETS = {
     label: '-1 and -2',
     pattern: '(?<sample>.+?)-(?<read>[12])(?:_\\d*)?\\.(?:fastq|fq)(?:\\.gz)?$',
   },
+  fasta_one_per_file: {
+    label: 'One sample per FASTA file',
+    pattern: '(?<sample>.+?)\\.(?:fasta|fa|fna)(?:\\.gz)?$',
+  },
 } as const satisfies Record<string, RegexGroupingPreset>;
 
 export type RegexGroupingPresetKey = keyof typeof REGEX_GROUPING_PRESETS;
 
 export const DEFAULT_REGEX_GROUPING_PRESET_KEY: RegexGroupingPresetKey = 'any_separator_r1_r2';
+export const FASTA_REGEX_GROUPING_PRESET_KEY: RegexGroupingPresetKey = 'fasta_one_per_file';
 
 export function isFasta(name: string): boolean {
   return /\.(fasta|fa|fna)(?:\.gz)?$/i.test(name);
+}
+
+export function isFastq(name: string): boolean {
+  return /\.(?:fastq|fq)(?:\.gz)?$/i.test(name);
+}
+
+/**
+ * FASTA files and no FASTQ, so each FASTA is its own sample and grouping needs no regex.
+ * Other files (indexes, checksums, BAM) don't decide it.
+ */
+export function hasFastaButNoFastq(fileNames: string[]): boolean {
+  return fileNames.some(isFasta) && !fileNames.some(isFastq);
+}
+
+function isAssembled(files: ProposedSampleFile[]): boolean {
+  const hasReads = files.some((f) => f.role === 'read1' || f.role === 'read2' || f.role === 'reads');
+  return !hasReads && files.some((f) => f.role === 'reference_fasta');
 }
 
 function inferLayout(files: ProposedSampleFile[]): SampleLayout {
@@ -61,6 +83,7 @@ function inferLayout(files: ProposedSampleFile[]): SampleLayout {
   if (hasRef && hasR2) return 'paired_end_with_extras';
   if (hasLongRead) return 'long_reads';
   if (hasR2) return 'paired_end';
+  if (isAssembled(files)) return 'assembled';
   return 'single_end';
 }
 
@@ -72,6 +95,7 @@ function inferStatus(files: ProposedSampleFile[]): SampleGroupingStatus {
   if (hasR1 && hasR2) return 'paired';
   if (hasReads) return 'long_reads';
   if (hasR1) return 'single_end';
+  if (isAssembled(files)) return 'assembled';
   return 'needs_review';
 }
 

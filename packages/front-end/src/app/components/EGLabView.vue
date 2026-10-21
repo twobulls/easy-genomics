@@ -543,39 +543,40 @@
     });
   }
 
-  const canDeleteAnyOmicsWorkflow = computed(() =>
-    omicsWorkflows.value.some((workflow) => canDeleteOmicsWorkflow(workflow)),
-  );
-
   const canDeliverKeyOutputs = computed(() => userStore.canEditLabUsers(props.labId));
 
-  const omicsWorkflowsTableColumns = computed(() => [
+  const omicsWorkflowsTableColumns = [
     { key: 'Name', label: 'Name' },
     { key: 'source', label: 'Source' },
     { key: 'description', label: 'Description' },
-    ...(canDeleteAnyOmicsWorkflow.value ? [{ key: 'actions', label: 'Actions' }] : []),
-    ...(canDeliverKeyOutputs.value ? [{ key: 'deliver', label: 'Deliver' }] : []),
-    { key: 'keyOutputs', label: 'Key Outputs' },
+    { key: 'actions', label: 'Actions' },
     { key: 'favourite', label: 'Favorite' },
     { key: 'run', label: 'Run' },
-  ]);
+  ];
 
   function omicsWorkflowsActionItems(workflow: LabOmicsWorkflow) {
-    if (!canDeleteOmicsWorkflow(workflow)) {
-      return [];
+    const items: object[][] = [];
+
+    if (canDeliverKeyOutputs.value) {
+      items.push([{ label: 'Deliver', click: () => viewDeliverKeyOutputs(workflow) }]);
     }
-    return [
-      [
+
+    items.push([{ label: 'Key Outputs', click: () => viewSetKeyOutputs(workflow) }]);
+
+    if (canDeleteOmicsWorkflow(workflow)) {
+      items.push([
         {
-          label: 'Delete',
+          label: 'Delete workflow',
           click: () => {
             workflowToDelete.value = workflow;
             isDeleteWorkflowDialogOpen.value = true;
           },
           isHighlighted: true,
         },
-      ],
-    ];
+      ]);
+    }
+
+    return items;
   }
 
   function viewSetKeyOutputs(workflow: LabOmicsWorkflow): void {
@@ -1262,7 +1263,6 @@
     <h2 class="sr-only">HealthOmics workflows</h2>
     <EGTable
       narrow-run-and-favourite-columns
-      :narrow-trailing-icon-count="canDeliverKeyOutputs ? 4 : 3"
       :table-data="omicsWorkflows"
       :columns="omicsWorkflowsTableColumns"
       :is-loading="useUiStore().anyRequestPending(['loadLabData', 'getOmicsWorkflows'])"
@@ -1312,7 +1312,7 @@
       </template>
 
       <template #actions-data="{ row: workflow }">
-        <div v-if="canDeleteOmicsWorkflow(workflow)" class="flex justify-end">
+        <div class="flex justify-end">
           <EGActionButton
             menu-label="Workflow actions"
             :items="omicsWorkflowsActionItems(workflow)"
@@ -1320,30 +1320,6 @@
             @click="$event.stopPropagation()"
           />
         </div>
-      </template>
-
-      <template #deliver-data="{ row: workflow }">
-        <button
-          type="button"
-          class="text-primary hover:text-primary-dark hover:bg-primary-muted focus-visible:outline-primary-500 flex items-center justify-center rounded-full p-1 transition-all duration-150 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-          aria-label="Deliver key outputs"
-          title="Deliver key outputs"
-          @click.stop="viewDeliverKeyOutputs(workflow)"
-        >
-          <UIcon name="i-heroicons-paper-airplane" class="h-6 w-6" aria-hidden="true" />
-        </button>
-      </template>
-
-      <template #keyOutputs-data="{ row: workflow }">
-        <button
-          type="button"
-          class="text-primary hover:text-primary-dark hover:bg-primary-muted focus-visible:outline-primary-500 flex items-center justify-center rounded-full p-1 transition-all duration-150 hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-          aria-label="Set key outputs"
-          title="Set key outputs"
-          @click.stop="viewSetKeyOutputs(workflow)"
-        >
-          <UIcon name="i-heroicons-document-magnifying-glass" class="h-6 w-6" aria-hidden="true" />
-        </button>
       </template>
 
       <template #run-data="{ row: workflow }">

@@ -1,3 +1,4 @@
+import { hasFastaButNoFastq } from '@easy-genomics/shared-lib/src/app/utils/sample-regex-grouping';
 import type { LaboratoryBucketObjectsResponse } from '@FE/repository/modules/data-collections';
 
 export type SourceListingSummary = Pick<
@@ -18,8 +19,8 @@ export function describeSourceListing(listing: SourceListingSummary): SourceList
 
   if (fileCount === 0) {
     const message = listing.ListingTruncated
-      ? `No files found in ${searchedPath} before the listing stopped early — try a narrower prefix.`
-      : `No files found in ${searchedPath} — check the bucket and prefix.`;
+      ? `No files found in ${searchedPath} before the listing stopped early — try a more specific folder.`
+      : `No files found in ${searchedPath} — check the bucket and folder.`;
     return { kind: 'empty', message };
   }
 
@@ -27,9 +28,17 @@ export function describeSourceListing(listing: SourceListingSummary): SourceList
     const returnedKeyCount = listing.ReturnedKeyCount ?? fileCount;
     return {
       kind: 'truncated',
-      message: `Showing the first ${returnedKeyCount} files — the listing stopped early, so results are partial. Try a narrower prefix.`,
+      message: `Showing the first ${returnedKeyCount} files — the listing stopped early, so results are partial. Try a more specific folder.`,
     };
   }
 
   return null;
+}
+
+/**
+ * A listing of FASTA files with no FASTQ is grouped one sample per file, so the import wizard skips its
+ * grouping step. A truncated listing never skips: the keys past the cut may be FASTQ.
+ */
+export function skipsGroupingStep(fileNames: string[], notice: SourceListingNotice | null): boolean {
+  return notice?.kind !== 'truncated' && hasFastaButNoFastq(fileNames);
 }

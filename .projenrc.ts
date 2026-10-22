@@ -15,6 +15,7 @@ import { ApacheLicense } from './projenrc/apache-license';
 import { setupProjectFolders } from './projenrc/easy-genomics-project-setup';
 import { GithubActionsApiDiffCheck } from './projenrc/github-actions-api-diff-check';
 import { GithubActionsCICDRelease } from './projenrc/github-actions-cicd-release';
+import { GithubDependabot } from './projenrc/github-dependabot';
 import { Husky } from './projenrc/husky';
 import { Nx } from './projenrc/nx';
 import { PnpmWorkspace } from './projenrc/pnpm';
@@ -22,9 +23,9 @@ import { VscodeSettings } from './projenrc/vscode';
 
 const defaultReleaseBranch = 'main';
 const cdkVersion = '2.260.0';
-// nuxt 3.21.8's oxc-parser requires node ^20.19.0 || >=22.12.0; pnpm silently skips its
-// platform-native bindings on older Node at install time, breaking every nuxt CLI command.
-const nodeVersion = '20.20.2';
+// Keep in step with the Lambda runtime in packages/back-end/src/infra/constructs/lambda-construct.ts
+// and with .nvmrc, which projen does not manage.
+const nodeVersion = '24.22.1';
 const pnpmVersion = '9.15.0';
 const awsSdkClientOmicsVersion = '^3.1090.0';
 const authorName = 'DEPT® Agency';
@@ -731,6 +732,7 @@ new GithubActionsCICDRelease(root, {
   manualDispatchOnly: true,
 });
 new GithubActionsApiDiffCheck(root, { pnpmVersion });
+new GithubDependabot(root, { targetBranch: 'development' });
 new ApacheLicense(root, licenseOptions);
 new ApacheLicense(backEndApp, licenseOptions);
 new ApacheLicense(frontEndApp, licenseOptions);

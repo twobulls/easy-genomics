@@ -2116,7 +2116,7 @@ export interface components {
       Enabled: boolean;
       DestinationUri?: string;
       Microreact?: {
-        Enabled: boolean;
+        Enabled?: boolean;
         /** Format: uuid */
         MetadataKeyOutputId?: string;
         TreeKeyOutputIds?: string[];
